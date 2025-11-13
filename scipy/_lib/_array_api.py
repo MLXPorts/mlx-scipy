@@ -46,12 +46,14 @@ from scipy._lib._array_api_override import (
 )
 from scipy._lib._docscrape import FunctionDoc
 from scipy._lib import array_api_extra as xpx
+from scipy._lib._mlx_compat import is_mlx_array, is_mlx_namespace
 
 
 __all__ = [
     '_asarray', 'array_namespace', 'assert_almost_equal', 'assert_array_almost_equal',
     'default_xp', 'eager_warns', 'is_lazy_array', 'is_marray',
     'is_array_api_strict', 'is_complex', 'is_cupy', 'is_jax', 'is_numpy', 'is_torch',
+    'is_mlx_array', 'is_mlx_namespace',
     'np_compat', 'get_native_namespace_name',
     'SCIPY_ARRAY_API', 'SCIPY_DEVICE', 'scipy_namespace_for',
     'xp_assert_close', 'xp_assert_equal', 'xp_assert_less',

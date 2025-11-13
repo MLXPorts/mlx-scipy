@@ -47,6 +47,7 @@ maintainers = [
 requires-python = ">=3.11"  # keep in sync with `min_python_version` in meson.build
 dependencies = [
     "numpy>=1.26.4",
+    "mlx>=0.29.0",  # MLX framework for Apple Silicon
 ] # keep in sync with `min_numpy_version` in meson.build
 readme = "README.rst"
 classifiers = [
