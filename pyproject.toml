@@ -22,13 +22,8 @@ requires = [
     "pybind11>=2.13.2",     # when updating version, also update check in scipy/meson.build
     "pythran>=0.14.0",
 
-    # numpy requirement for wheel builds for distribution on PyPI - building
-    # against 2.x yields wheels that are also compatible with numpy 1.x at
-    # runtime.
-    # Note that building against numpy 1.x works fine too - users and
-    # redistributors can do this by installing the numpy version they like and
-    # disabling build isolation.
-    "numpy>=2.0.0",
+    # MLX requirement for wheel builds
+    "mlx>=0.20.0",
 ]
 
 [project]
@@ -46,9 +41,8 @@ maintainers = [
 #     https://scipy.github.io/devdocs/dev/core-dev/index.html#version-ranges-for-numpy-and-other-dependencies
 requires-python = ">=3.11"  # keep in sync with `min_python_version` in meson.build
 dependencies = [
-    "numpy>=1.26.4",
-    "mlx>=0.29.0",  # MLX framework for Apple Silicon
-] # keep in sync with `min_numpy_version` in meson.build
+    "mlx>=0.20.0",
+] # MLX as the array backend
 readme = "README.rst"
 classifiers = [
     "Development Status :: 5 - Production/Stable",

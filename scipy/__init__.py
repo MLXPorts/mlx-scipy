@@ -5,9 +5,6 @@ SciPy: A scientific computing package for Python
 Documentation is available in the docstrings and
 online at https://docs.scipy.org/doc/scipy/
 
-This MLX-port version adds support for Apple's MLX framework as an
-alternative backend to NumPy for array operations on Apple Silicon.
-
 Subpackages
 -----------
 ::
@@ -44,7 +41,7 @@ Public API in the main SciPy namespace
 
 import importlib as _importlib
 
-from numpy import __version__ as __numpy_version__
+import mlx.core as mx
 
 
 try:
@@ -62,20 +59,6 @@ from scipy.version import version as __version__
 # Allow distributors to run custom init code
 from . import _distributor_init
 del _distributor_init
-
-
-from scipy._lib import _pep440
-# In maintenance branch, change to np_maxversion N+3 if numpy is at N
-np_minversion = '1.26.4'
-np_maxversion = '9.9.99'
-if (_pep440.parse(__numpy_version__) < _pep440.Version(np_minversion) or
-        _pep440.parse(__numpy_version__) >= _pep440.Version(np_maxversion)):
-    import warnings
-    warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
-                  f" is required for this version of SciPy (detected "
-                  f"version {__numpy_version__})",
-                  UserWarning, stacklevel=2)
-del _pep440
 
 
 # This is the first import of an extension module within SciPy. If there's
