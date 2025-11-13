@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any
 from ._codata import value as _cd
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
+    from typing import Any as ArrayLike
 
 from scipy._lib._array_api import array_namespace, _asarray, xp_capabilities
 
@@ -227,7 +227,7 @@ kgf = kilogram_force = g  # * 1 kg
 
 @xp_capabilities()
 def convert_temperature(
-    val: "npt.ArrayLike",
+    val: "ArrayLike",
     old_scale: str,
     new_scale: str,
 ) -> Any:
@@ -265,8 +265,8 @@ def convert_temperature(
     Examples
     --------
     >>> from scipy.constants import convert_temperature
-    >>> import numpy as np
-    >>> convert_temperature(np.array([-40, 40]), 'Celsius', 'Kelvin')
+    >>> import mlx.core as mx
+    >>> convert_temperature(mx.array([-40, 40]), 'Celsius', 'Kelvin')
     array([ 233.15,  313.15])
 
     """
@@ -306,7 +306,7 @@ def convert_temperature(
 
 
 @xp_capabilities()
-def lambda2nu(lambda_: "npt.ArrayLike") -> Any:
+def lambda2nu(lambda_: "ArrayLike") -> Any:
     """
     Convert wavelength to optical frequency
 
@@ -328,8 +328,8 @@ def lambda2nu(lambda_: "npt.ArrayLike") -> Any:
     Examples
     --------
     >>> from scipy.constants import lambda2nu, speed_of_light
-    >>> import numpy as np
-    >>> lambda2nu(np.array((1, speed_of_light)))
+    >>> import mlx.core as mx
+    >>> lambda2nu(mx.array((1, speed_of_light)))
     array([  2.99792458e+08,   1.00000000e+00])
 
     """
@@ -338,7 +338,7 @@ def lambda2nu(lambda_: "npt.ArrayLike") -> Any:
 
 
 @xp_capabilities()
-def nu2lambda(nu: "npt.ArrayLike") -> Any:
+def nu2lambda(nu: "ArrayLike") -> Any:
     """
     Convert optical frequency to wavelength.
 
@@ -360,8 +360,8 @@ def nu2lambda(nu: "npt.ArrayLike") -> Any:
     Examples
     --------
     >>> from scipy.constants import nu2lambda, speed_of_light
-    >>> import numpy as np
-    >>> nu2lambda(np.array((1, speed_of_light)))
+    >>> import mlx.core as mx
+    >>> nu2lambda(mx.array((1, speed_of_light)))
     array([  2.99792458e+08,   1.00000000e+00])
 
     """
