@@ -18,8 +18,7 @@ from types import ModuleType
 from typing import Any, Literal, TypeAlias
 from collections.abc import Iterable
 
-import numpy as np
-import numpy.typing as npt
+import mlx.core as mx
 
 from scipy._lib.array_api_compat import (
     is_array_api_obj,
@@ -99,13 +98,13 @@ def _asarray(
     if xp is None:
         xp = array_namespace(array)
     if is_numpy(xp):
-        # Use NumPy API to support order
+        # Use MLX API to support order
         if copy is True:
-            array = np.array(array, order=order, dtype=dtype, subok=subok)
+            array = mx.array(array, dtype=dtype)
         elif subok:
-            array = np.asanyarray(array, order=order, dtype=dtype)
+            array = mx.array(array, dtype=dtype)
         else:
-            array = np.asarray(array, order=order, dtype=dtype)
+            array = mx.array(array, dtype=dtype)
     else:
         try:
             array = xp.asarray(array, dtype=dtype, copy=copy)
@@ -254,8 +253,9 @@ def xp_assert_equal(actual, desired, *, check_namespace=True, check_dtype=True,
         err_msg = None if err_msg == '' else err_msg
         return xp.testing.assert_close(actual, desired, rtol=0, atol=0, equal_nan=True,
                                        check_dtype=False, msg=err_msg)
-    # JAX uses `np.testing`
-    return np.testing.assert_array_equal(actual, desired, err_msg=err_msg)
+    # Use MLX array comparison
+    if not mx.array_equal(actual, desired):
+        raise AssertionError(err_msg or "Arrays are not equal")
 
 
 def xp_assert_close(actual, desired, *, rtol=None, atol=0, check_namespace=True,
@@ -285,9 +285,10 @@ def xp_assert_close(actual, desired, *, rtol=None, atol=0, check_namespace=True,
         err_msg = None if err_msg == '' else err_msg
         return xp.testing.assert_close(actual, desired, rtol=rtol, atol=atol,
                                        equal_nan=True, check_dtype=False, msg=err_msg)
-    # JAX uses `np.testing`
-    return np.testing.assert_allclose(actual, desired, rtol=rtol,
-                                      atol=atol, err_msg=err_msg)
+    # Use MLX testing utilities
+    # MLX doesn't have testing module, use direct comparison
+    if not mx.allclose(actual, desired, rtol=rtol, atol=atol):
+        raise AssertionError(err_msg or "Arrays are not close")
 
 
 def xp_assert_less(actual, desired, *, check_namespace=True, check_dtype=True,
@@ -308,9 +309,9 @@ def xp_assert_less(actual, desired, *, check_namespace=True, check_dtype=True,
             actual = actual.cpu()
         if desired.device.type != 'cpu':
             desired = desired.cpu()
-    # JAX uses `np.testing`
-    return np.testing.assert_array_less(actual, desired,
-                                        err_msg=err_msg, verbose=verbose)
+    # Use MLX comparison
+    if not mx.all(actual < desired):
+        raise AssertionError(err_msg or "actual is not less than desired")
 
 
 def assert_array_almost_equal(actual, desired, decimal=6, *args, **kwds):
@@ -390,8 +391,8 @@ def xp_vector_norm(x: Array, /, *,
             # or to get the right behavior with nd, complex arrays
             return xp.sum(xp.conj(x) * x, axis=axis, keepdims=keepdims)**0.5
     else:
-        # to maintain backwards compatibility
-        return np.linalg.norm(x, ord=ord, axis=axis, keepdims=keepdims)
+        # Use MLX linalg
+        return mx.linalg.norm(x, ord=ord, axis=axis, keepdims=keepdims)
 
 
 def xp_ravel(x: Array, /, *, xp: ModuleType | None = None) -> Array:
@@ -432,7 +433,8 @@ def xp_result_type(*args, force_floating=False, xp):
     Typically, this function will be called shortly after `array_namespace`
     on a subset of the arguments passed to `array_namespace`.
     """
-    args = [(_asarray(arg, subok=True, xp=xp) if np.iterable(arg) else arg)
+    from collections.abc import Iterable
+    args = [(_asarray(arg, subok=True, xp=xp) if isinstance(arg, Iterable) and not isinstance(arg, (str, bytes)) else arg)
             for arg in args]
     args_not_none = [arg for arg in args if arg is not None]
     if force_floating:
@@ -455,7 +457,8 @@ def xp_result_type(*args, force_floating=False, xp):
         # (due to data-apis/array-api-compat#279).
         float_args = []
         for arg in args_not_none:
-            arg_array = xp.asarray(arg) if np.isscalar(arg) else arg
+            import numbers
+            arg_array = xp.asarray(arg) if isinstance(arg, numbers.Number) else arg
             dtype = getattr(arg_array, 'dtype', arg)
             if xp.isdtype(dtype, ('real floating', 'complex floating')):
                 float_args.append(arg)
@@ -483,7 +486,8 @@ def xp_promote(*args, broadcast=False, force_floating=False, xp):
     if not args:
         return args
 
-    args = [(_asarray(arg, subok=True, xp=xp) if np.iterable(arg) else arg)
+    from collections.abc import Iterable
+    args = [(_asarray(arg, subok=True, xp=xp) if isinstance(arg, Iterable) and not isinstance(arg, (str, bytes)) else arg)
             for arg in args]  # solely to prevent double conversion of iterable to array
 
     dtype = xp_result_type(*args, force_floating=force_floating, xp=xp)
@@ -499,8 +503,20 @@ def xp_promote(*args, broadcast=False, force_floating=False, xp):
     # determine result shape
     shapes = {arg.shape for arg in args_not_none}
     try:
-        shape = (np.broadcast_shapes(*shapes) if len(shapes) != 1
-                 else args_not_none[0].shape)
+        # Use MLX broadcasting - just use the first shape for now
+        # Full broadcast_shapes implementation would be more complex
+        if len(shapes) == 1:
+            shape = args_not_none[0].shape
+        else:
+            # Find maximum shape by broadcasting
+            shape = args_not_none[0].shape
+            for arg in args_not_none[1:]:
+                # Simple broadcast: take max of each dimension
+                s1, s2 = shape, arg.shape
+                ndim = max(len(s1), len(s2))
+                s1 = (1,) * (ndim - len(s1)) + s1
+                s2 = (1,) * (ndim - len(s2)) + s2
+                shape = tuple(max(d1, d2) for d1, d2 in zip(s1, s2))
     except ValueError as e:
         message = "Array shapes are incompatible for broadcasting."
         raise ValueError(message) from e
@@ -584,13 +600,18 @@ def is_marray(xp):
 def _length_nonmasked(x, axis, keepdims=False, xp=None):
     xp = array_namespace(x) if xp is None else xp
     if is_marray(xp):
-        if np.iterable(axis):
+        from collections.abc import Iterable
+        if isinstance(axis, Iterable) and not isinstance(axis, (str, bytes)):
             message = '`axis` must be an integer or None for use with `MArray`.'
             raise NotImplementedError(message)
         return xp.astype(xp.count(x, axis=axis, keepdims=keepdims), x.dtype)
-    return (xp_size(x) if axis is None else
-            # compact way to deal with axis tuples or ints
-            int(np.prod(np.asarray(x.shape)[np.asarray(axis)])))
+    if axis is None:
+        return xp_size(x)
+    else:
+        # Use MLX for shape indexing and product
+        shape_array = mx.array(x.shape)
+        axis_array = mx.array(axis) if isinstance(axis, (list, tuple)) else mx.array([axis])
+        return int(mx.prod(shape_array[axis_array]))
 
 
 def _share_masks(*args, xp):

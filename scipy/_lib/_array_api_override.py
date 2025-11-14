@@ -11,8 +11,7 @@ from functools import lru_cache
 from types import ModuleType
 from typing import Any, TypeAlias
 
-import numpy as np
-import numpy.typing as npt
+import mlx.core as mx
 
 from scipy._lib import array_api_compat
 import scipy._lib.array_api_compat.numpy as np_compat
@@ -21,7 +20,7 @@ from scipy._lib._sparse import SparseABC
 
 
 Array: TypeAlias = Any  # To be changed to a Protocol later (see array-api#589)
-ArrayLike: TypeAlias = Array | npt.ArrayLike
+ArrayLike: TypeAlias = Array
 
 # To enable array API and strict array-like input validation
 SCIPY_ARRAY_API: str | bool = os.environ.get("SCIPY_ARRAY_API", False)
@@ -31,7 +30,7 @@ SCIPY_DEVICE = os.environ.get("SCIPY_DEVICE", "cpu")
 
 class _ArrayClsInfo(enum.Enum):
     skip = 0
-    numpy = 1
+    mlx = 1
     array_like = 2
     unknown = 3
 
@@ -48,16 +47,11 @@ def _validate_array_cls(cls: type) -> _ArrayClsInfo:
                 'would work instead.')
         raise ValueError(msg)
 
-    if issubclass(cls, np.ma.MaskedArray):
-        raise TypeError("Inputs of type `numpy.ma.MaskedArray` are not supported.")
+    # MLX arrays
+    if hasattr(cls, '__module__') and 'mlx' in cls.__module__:
+        return _ArrayClsInfo.mlx
 
-    if issubclass(cls, np.matrix):
-        raise TypeError("Inputs of type `numpy.matrix` are not supported.")
-
-    if issubclass(cls, (np.ndarray, np.generic)):
-        return _ArrayClsInfo.numpy
-
-    # Note: this must happen after the test for np.generic, because
+    # Note: this must happen after the test for MLX
     # np.float64 and np.complex128 are subclasses of float and complex respectively.
     # This matches the behavior of array_api_compat.
     if issubclass(cls, (int, float, complex, bool, type(None))):
@@ -106,7 +100,7 @@ def array_namespace(*arrays: Array) -> ModuleType:
         # here we could wrap the namespace if needed
         return np_compat
 
-    numpy_arrays = []
+    mlx_arrays = []
     api_arrays = []
 
     for array in arrays:
@@ -114,10 +108,10 @@ def array_namespace(*arrays: Array) -> ModuleType:
         if arr_info is _ArrayClsInfo.skip:
             pass
 
-        elif arr_info is _ArrayClsInfo.numpy:
-            if array.dtype.kind in 'iufcb':  # Numeric or bool
-                numpy_arrays.append(array)
-            elif array.dtype.kind == 'V' and is_jax_array(array):
+        elif arr_info is _ArrayClsInfo.mlx:
+            if hasattr(array, 'dtype') and array.dtype.kind in 'iufcb':  # Numeric or bool
+                mlx_arrays.append(array)
+            elif hasattr(array, 'dtype') and array.dtype.kind == 'V' and is_jax_array(array):
                 # Special case for JAX zero gradient arrays;
                 # see array_api_compat._common._helpers._is_jax_zero_gradient_array
                 api_arrays.append(array)  # JAX zero gradient array
@@ -131,20 +125,20 @@ def array_namespace(*arrays: Array) -> ModuleType:
         else:
             # list, tuple, or arbitrary object
             try:
-                array = np.asanyarray(array)
-            except TypeError:
+                array = mx.array(array)
+            except (TypeError, ValueError):
                 raise TypeError("An argument is neither array API compatible nor "
-                                "coercible by NumPy.")
-            if array.dtype.kind not in 'iufcb':  # Numeric or bool
+                                "coercible by MLX.")
+            if hasattr(array, 'dtype') and array.dtype.kind not in 'iufcb':  # Numeric or bool
                 raise TypeError(f"An argument has dtype `{array.dtype!r}`; "
                                 "only boolean and numerical dtypes are supported.")
-            numpy_arrays.append(array)
+            mlx_arrays.append(array)
 
-    # When there are exclusively NumPy and ArrayLikes, skip calling
+    # When there are exclusively MLX and ArrayLikes, skip calling
     # array_api_compat.array_namespace for performance.
     if not api_arrays:
-        return np_compat
+        return mx
 
-    # In case of mix of NumPy/ArrayLike and non-NumPy Array API arrays,
+    # In case of mix of MLX/ArrayLike and non-MLX Array API arrays,
     # let array_api_compat.array_namespace raise an error.
-    return array_api_compat.array_namespace(*numpy_arrays, *api_arrays)
+    return array_api_compat.array_namespace(*mlx_arrays, *api_arrays)
