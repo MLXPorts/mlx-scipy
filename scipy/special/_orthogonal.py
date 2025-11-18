@@ -75,9 +75,7 @@ References
 # Updated Sep. 2003 (fixed bugs --- tested to be accurate)
 
 # SciPy imports.
-import numpy as np
-from numpy import (exp, inf, pi, sqrt, floor, sin, cos, around,
-                   hstack, arccos, arange)
+import mlx.core as mx
 from scipy.special import airy
 
 # Local imports.
@@ -111,13 +109,13 @@ _rootfuns_map = {'roots_legendre': 'p_roots',
 __all__ = _polyfuns + list(_rootfuns_map.keys())
 
 
-class orthopoly1d(np.poly1d):
+class orthopoly1d(mx.poly1d):
 
     def __init__(self, roots, weights=None, hn=1.0, kn=1.0, wfunc=None,
                  limits=None, monic=False, eval_func=None):
         equiv_weights = [weights[k] / wfunc(roots[k]) for
                          k in range(len(roots))]
-        mu = sqrt(hn)
+        mu = mx.sqrt(hn)
         if monic:
             evf = eval_func
             if evf:
@@ -128,10 +126,10 @@ class orthopoly1d(np.poly1d):
             kn = 1.0
 
         # compute coefficients from roots, then scale
-        poly = np.poly1d(roots, r=True)
-        np.poly1d.__init__(self, poly.coeffs * float(kn))
+        poly = mx.poly1d(roots, r=True)
+        mx.poly1d.__init__(self, poly.coeffs * float(kn))
 
-        self.weights = np.array(list(zip(roots, weights, equiv_weights)))
+        self.weights = mx.array(list(zip(roots, weights, equiv_weights)))
         self.weight_func = wfunc
         self.limits = limits
         self.normcoef = mu
@@ -140,10 +138,10 @@ class orthopoly1d(np.poly1d):
         self._eval_func = eval_func
 
     def __call__(self, v):
-        if self._eval_func and not isinstance(v, np.poly1d):
+        if self._eval_func and not isinstance(v, mx.poly1d):
             return self._eval_func(v)
         else:
-            return np.poly1d.__call__(self, v)
+            return mx.poly1d.__call__(self, v)
 
     def _scale(self, p):
         if p == 1.0:
@@ -173,8 +171,8 @@ def _gen_roots_and_weights(n, mu0, an_func, bn_func, f, df, symmetrize, mu):
     """
     # lazy import to prevent to prevent linalg dependency for whole module (gh-23420)
     from scipy import linalg
-    k = np.arange(n, dtype='d')
-    c = np.zeros((2, n))
+    k = mx.arange(n, dtype='d')
+    c = mx.zeros((2, n))
     c[0,1:] = bn_func(k[1:])
     c[1,:] = an_func(k)
     x = linalg.eigvals_banded(c, overwrite_a_band=True)
@@ -187,10 +185,10 @@ def _gen_roots_and_weights(n, mu0, an_func, bn_func, f, df, symmetrize, mu):
     # fm and dy may contain very large/small values, so we
     # log-normalize them to maintain precision in the product fm*dy
     fm = f(n-1, x)
-    log_fm = np.log(np.abs(fm))
-    log_dy = np.log(np.abs(dy))
-    fm /= np.exp((log_fm.max() + log_fm.min()) / 2.)
-    dy /= np.exp((log_dy.max() + log_dy.min()) / 2.)
+    log_fm = mx.log(mx.abs(fm))
+    log_dy = mx.log(mx.abs(dy))
+    fm /= mx.exp((log_fm.max() + log_fm.min()) / 2.)
+    dy /= mx.exp((log_dy.max() + log_dy.min()) / 2.)
     w = 1.0 / (fm * dy)
 
     if symmetrize:
@@ -231,9 +229,9 @@ def roots_jacobi(n, alpha, beta, mu=False):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Sample points
-    w : ndarray
+    w : array
         Weights
     mu : float
         Sum of the weights
@@ -264,16 +262,16 @@ def roots_jacobi(n, alpha, beta, mu=False):
         mu0 = 2.0**(alpha+beta+1) * _ufuncs.beta(alpha+1, beta+1)
     else:
         # Avoid overflows in pow and beta for very large parameters
-        mu0 = np.exp((alpha + beta + 1) * np.log(2.0)
+        mu0 = mx.exp((alpha + beta + 1) * mx.log(2.0)
                      + _ufuncs.betaln(alpha+1, beta+1))
     a = alpha
     b = beta
     if a + b == 0.0:
         def an_func(k):
-            return np.where(k == 0, (b - a) / (2 + a + b), 0.0)
+            return mx.where(k == 0, (b - a) / (2 + a + b), 0.0)
     else:
         def an_func(k):
-            return np.where(
+            return mx.where(
                 k == 0,
                 (b - a) / (2 + a + b),
                 (b * b - a * a) / ((2.0 * k + a + b) * (2.0 * k + a + b + 2))
@@ -282,8 +280,8 @@ def roots_jacobi(n, alpha, beta, mu=False):
     def bn_func(k):
         return (
             2.0 / (2.0 * k + a + b)
-            * np.sqrt((k + a) * (k + b) / (2 * k + a + b + 1))
-            * np.where(k == 1, 1.0, np.sqrt(k * (k + a + b) / (2.0 * k + a + b - 1)))
+            * mx.sqrt((k + a) * (k + b) / (2 * k + a + b + 1))
+            * mx.where(k == 1, 1.0, mx.sqrt(k * (k + a + b) / (2.0 * k + a + b - 1)))
         )
 
     def f(n, x):
@@ -347,10 +345,10 @@ def jacobi(n, alpha, beta, monic=False):
     This can be verified, for example, for :math:`\alpha = \beta = 2`
     and :math:`n = 1` over the interval :math:`[-1, 1]`:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import jacobi
-    >>> x = np.arange(-1.0, 1.0, 0.01)
-    >>> np.allclose(jacobi(0, 2, 2)(x),
+    >>> x = mx.arange(-1.0, 1.0, 0.01)
+    >>> mx.allclose(jacobi(0, 2, 2)(x),
     ...             jacobi(1, 2, 1)(x) - jacobi(1, 1, 2)(x))
     True
 
@@ -358,11 +356,11 @@ def jacobi(n, alpha, beta, monic=False):
     different values of :math:`\alpha`:
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.arange(-1.0, 1.0, 0.01)
+    >>> x = mx.arange(-1.0, 1.0, 0.01)
     >>> fig, ax = plt.subplots()
     >>> ax.set_ylim(-2.0, 2.0)
     >>> ax.set_title(r'Jacobi polynomials $P_5^{(\alpha, -0.5)}$')
-    >>> for alpha in np.arange(0, 4, 1):
+    >>> for alpha in mx.arange(0, 4, 1):
     ...     ax.plot(x, jacobi(5, alpha, -0.5)(x), label=rf'$\alpha={alpha}$')
     >>> plt.legend(loc='best')
     >>> plt.show()
@@ -375,7 +373,7 @@ def jacobi(n, alpha, beta, monic=False):
         return (1 - x) ** alpha * (1 + x) ** beta
     if n == 0:
         return orthopoly1d([], [], 1.0, 1.0, wfunc, (-1, 1), monic,
-                           eval_func=np.ones_like)
+                           eval_func=mx.ones_like)
     x, w, mu = roots_jacobi(n, alpha, beta, mu=True)
     ab1 = alpha + beta + 1.0
     hn = 2**ab1 / (2 * n + ab1) * _gam(n + alpha + 1)
@@ -413,9 +411,9 @@ def roots_sh_jacobi(n, p1, q1, mu=False):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Sample points
-    w : ndarray
+    w : array
         Weights
     mu : float
         Sum of the weights
@@ -488,7 +486,7 @@ def sh_jacobi(n, p, q, monic=False):
         return (1.0 - x) ** (p - q) * x ** (q - 1.0)
     if n == 0:
         return orthopoly1d([], [], 1.0, 1.0, wfunc, (-1, 1), monic,
-                           eval_func=np.ones_like)
+                           eval_func=mx.ones_like)
     n1 = n
     x, w = roots_sh_jacobi(n1, p, q)
     hn = _gam(n + 1) * _gam(n + q) * _gam(n + p) * _gam(n + p - q + 1)
@@ -524,9 +522,9 @@ def roots_genlaguerre(n, alpha, mu=False):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Sample points
-    w : ndarray
+    w : array
         Weights
     mu : float
         Sum of the weights
@@ -551,8 +549,8 @@ def roots_genlaguerre(n, alpha, mu=False):
     mu0 = _ufuncs.gamma(alpha + 1)
 
     if m == 1:
-        x = np.array([alpha+1.0], 'd')
-        w = np.array([mu0], 'd')
+        x = mx.array([alpha+1.0], 'd')
+        w = mx.array([mu0], 'd')
         if mu:
             return x, w, mu0
         else:
@@ -561,7 +559,7 @@ def roots_genlaguerre(n, alpha, mu=False):
     def an_func(k):
         return 2 * k + alpha + 1
     def bn_func(k):
-        return -np.sqrt(k * (k + alpha))
+        return -mx.sqrt(k * (k + alpha))
     def f(n, x):
         return _ufuncs.eval_genlaguerre(n, alpha, x)
     def df(n, x):
@@ -629,23 +627,23 @@ def genlaguerre(n, alpha, monic=False):
     This can be verified, for example,  for :math:`n = \alpha = 3` over the
     interval :math:`[-1, 1]`:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import binom
     >>> from scipy.special import genlaguerre
     >>> from scipy.special import hyp1f1
-    >>> x = np.arange(-1.0, 1.0, 0.01)
-    >>> np.allclose(genlaguerre(3, 3)(x), binom(6, 3) * hyp1f1(-3, 4, x))
+    >>> x = mx.arange(-1.0, 1.0, 0.01)
+    >>> mx.allclose(genlaguerre(3, 3)(x), binom(6, 3) * hyp1f1(-3, 4, x))
     True
 
     This is the plot of the generalized Laguerre polynomials
     :math:`L_3^{(\alpha)}` for some values of :math:`\alpha`:
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.arange(-4.0, 12.0, 0.01)
+    >>> x = mx.arange(-4.0, 12.0, 0.01)
     >>> fig, ax = plt.subplots()
     >>> ax.set_ylim(-5.0, 10.0)
     >>> ax.set_title(r'Generalized Laguerre polynomials $L_3^{\alpha}$')
-    >>> for alpha in np.arange(0, 5):
+    >>> for alpha in mx.arange(0, 5):
     ...     ax.plot(x, genlaguerre(3, alpha)(x), label=rf'$L_3^{(alpha)}$')
     >>> plt.legend(loc='best')
     >>> plt.show()
@@ -662,12 +660,12 @@ def genlaguerre(n, alpha, monic=False):
         n1 = n
     x, w = roots_genlaguerre(n1, alpha)
     def wfunc(x):
-        return exp(-x) * x ** alpha
+        return mx.exp(-x) * x ** alpha
     if n == 0:
         x, w = [], []
     hn = _gam(n + alpha + 1) / _gam(n + 1)
     kn = (-1)**n / _gam(n + 1)
-    p = orthopoly1d(x, w, hn, kn, wfunc, (0, inf), monic,
+    p = orthopoly1d(x, w, hn, kn, wfunc, (0, mx.inf), monic,
                     lambda x: _ufuncs.eval_genlaguerre(n, alpha, x))
     return p
 
@@ -693,9 +691,9 @@ def roots_laguerre(n, mu=False):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Sample points
-    w : ndarray
+    w : array
         Weights
     mu : float
         Sum of the weights
@@ -760,11 +758,11 @@ def laguerre(n, monic=False):
     :math:`L_n^{(\alpha)}`.
     Let's verify it on the interval :math:`[-1, 1]`:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import genlaguerre
     >>> from scipy.special import laguerre
-    >>> x = np.arange(-1.0, 1.0, 0.01)
-    >>> np.allclose(genlaguerre(3, 0)(x), laguerre(3)(x))
+    >>> x = mx.arange(-1.0, 1.0, 0.01)
+    >>> mx.allclose(genlaguerre(3, 0)(x), laguerre(3)(x))
     True
 
     The polynomials :math:`L_n` also satisfy the recurrence relation:
@@ -774,19 +772,19 @@ def laguerre(n, monic=False):
 
     This can be easily checked on :math:`[0, 1]` for :math:`n = 3`:
 
-    >>> x = np.arange(0.0, 1.0, 0.01)
-    >>> np.allclose(4 * laguerre(4)(x),
+    >>> x = mx.arange(0.0, 1.0, 0.01)
+    >>> mx.allclose(4 * laguerre(4)(x),
     ...             (7 - x) * laguerre(3)(x) - 3 * laguerre(2)(x))
     True
 
     This is the plot of the first few Laguerre polynomials :math:`L_n`:
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.arange(-1.0, 5.0, 0.01)
+    >>> x = mx.arange(-1.0, 5.0, 0.01)
     >>> fig, ax = plt.subplots()
     >>> ax.set_ylim(-5.0, 5.0)
     >>> ax.set_title(r'Laguerre polynomials $L_n$')
-    >>> for n in np.arange(0, 5):
+    >>> for n in mx.arange(0, 5):
     ...     ax.plot(x, laguerre(n)(x), label=rf'$L_{n}$')
     >>> plt.legend(loc='best')
     >>> plt.show()
@@ -804,7 +802,7 @@ def laguerre(n, monic=False):
         x, w = [], []
     hn = 1.0
     kn = (-1)**n / _gam(n + 1)
-    p = orthopoly1d(x, w, hn, kn, lambda x: exp(-x), (0, inf), monic,
+    p = orthopoly1d(x, w, hn, kn, lambda x: mx.exp(-x), (0, mx.inf), monic,
                     lambda x: _ufuncs.eval_laguerre(n, x))
     return p
 
@@ -831,9 +829,9 @@ def roots_hermite(n, mu=False):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Sample points
-    w : ndarray
+    w : array
         Weights
     mu : float
         Sum of the weights
@@ -877,12 +875,12 @@ def roots_hermite(n, mu=False):
     if n < 1 or n != m:
         raise ValueError("n must be a positive integer.")
 
-    mu0 = np.sqrt(np.pi)
+    mu0 = mx.sqrt(mx.pi)
     if n <= 150:
         def an_func(k):
             return 0.0 * k
         def bn_func(k):
-            return np.sqrt(k / 2.0)
+            return mx.sqrt(k / 2.0)
         f = _ufuncs.eval_hermite
         def df(n, x):
             return 2.0 * n * _ufuncs.eval_hermite(n - 1, x)
@@ -905,7 +903,7 @@ def _compute_tauk(n, k, maxit=5):
     ----------
     n : int
         Quadrature order
-    k : ndarray of type int
+    k : array of type int
         Index of roots :math:`\tau_k` to compute
     maxit : int
         Number of Newton maxit performed, the default
@@ -913,7 +911,7 @@ def _compute_tauk(n, k, maxit=5):
 
     Returns
     -------
-    tauk : ndarray
+    tauk : array
         Roots of equation 3.1
 
     See Also
@@ -922,12 +920,12 @@ def _compute_tauk(n, k, maxit=5):
     roots_hermite_asy
     """
     a = n % 2 - 0.5
-    c = (4.0*floor(n/2.0) - 4.0*k + 3.0)*pi / (4.0*floor(n/2.0) + 2.0*a + 2.0)
+    c = (4.0*mx.floor(n/2.0) - 4.0*k + 3.0)*mx.pi / (4.0*mx.floor(n/2.0) + 2.0*a + 2.0)
     def f(x):
-        return x - sin(x) - c
+        return x - mx.sin(x) - c
     def df(x):
-        return 1.0 - cos(x)
-    xi = 0.5*pi
+        return 1.0 - mx.cos(x)
+    xi = 0.5*mx.pi
     for i in range(maxit):
         xi = xi - f(xi)/df(xi)
     return xi
@@ -946,12 +944,12 @@ def _initial_nodes_a(n, k):
     ----------
     n : int
         Quadrature order
-    k : ndarray of type int
+    k : array of type int
         Index of roots to compute
 
     Returns
     -------
-    xksq : ndarray
+    xksq : array
         Square of the approximate roots
 
     See Also
@@ -960,9 +958,9 @@ def _initial_nodes_a(n, k):
     roots_hermite_asy
     """
     tauk = _compute_tauk(n, k)
-    sigk = cos(0.5*tauk)**2
+    sigk = mx.cos(0.5*tauk)**2
     a = n % 2 - 0.5
-    nu = 4.0*floor(n/2.0) + 2.0*a + 2.0
+    nu = 4.0*mx.floor(n/2.0) + 2.0*a + 2.0
     # Initial approximation of Hermite roots (square)
     xksq = nu*sigk - 1.0/(3.0*nu) * (5.0/(4.0*(1.0-sigk)**2) - 1.0/(1.0-sigk) - 0.25)
     return xksq
@@ -981,12 +979,12 @@ def _initial_nodes_b(n, k):
     ----------
     n : int
         Quadrature order
-    k : ndarray of type int
+    k : array of type int
         Index of roots to compute
 
     Returns
     -------
-    xksq : ndarray
+    xksq : array
         Square of the approximate root
 
     See Also
@@ -995,7 +993,7 @@ def _initial_nodes_b(n, k):
     roots_hermite_asy
     """
     a = n % 2 - 0.5
-    nu = 4.0*floor(n/2.0) + 2.0*a + 2.0
+    nu = 4.0*mx.floor(n/2.0) + 2.0*a + 2.0
     # Airy roots by approximation
     ak = _specfun.airyzo(k.max(), 1)[0][::-1]
     # Initial approximation of Hermite roots (square)
@@ -1024,7 +1022,7 @@ def _initial_nodes(n):
 
     Returns
     -------
-    xk : ndarray
+    xk : array
         Approximate roots
 
     See Also
@@ -1034,17 +1032,17 @@ def _initial_nodes(n):
     # Turnover point
     # linear polynomial fit to error of 10, 25, 40, ..., 1000 point rules
     fit = 0.49082003*n - 4.37859653
-    turnover = around(fit).astype(int)
+    turnover = mx.round(fit).astype(int)
     # Compute all approximations
-    ia = arange(1, int(floor(n*0.5)+1))
+    ia = mx.arange(1, int(mx.floor(n*0.5)+1))
     ib = ia[::-1]
     xasq = _initial_nodes_a(n, ia[:turnover+1])
     xbsq = _initial_nodes_b(n, ib[turnover+1:])
     # Combine
-    iv = sqrt(hstack([xasq, xbsq]))
+    iv = mx.sqrt(mx.concatenate([xasq, xbsq]))
     # Central node is always zero
     if n % 2 == 1:
-        iv = hstack([0.0, iv])
+        iv = mx.concatenate([mx.array([0.0]), iv])
     return iv
 
 
@@ -1062,14 +1060,14 @@ def _pbcf(n, theta):
     ----------
     n : int
         Quadrature order
-    theta : ndarray
+    theta : array
         Transformed position variable
 
     Returns
     -------
-    U : ndarray
+    U : array
         Value of the parabolic cylinder function :math:`U(a, \theta)`.
-    Ud : ndarray
+    Ud : array
         Value of the derivative :math:`U^{\prime}(a, \theta)` of
         the parabolic cylinder function.
 
@@ -1082,8 +1080,8 @@ def _pbcf(n, theta):
     .. [parabolic-asymptotics]
        https://dlmf.nist.gov/12.10#vii
     """
-    st = sin(theta)
-    ct = cos(theta)
+    st = mx.sin(theta)
+    ct = mx.cos(theta)
     # https://dlmf.nist.gov/12.10#vii
     mu = 2.0*n + 1.0
     # https://dlmf.nist.gov/12.10#E23
@@ -1109,7 +1107,7 @@ def _pbcf(n, theta):
     # Polynomials
     # https://dlmf.nist.gov/12.10#E9
     # https://dlmf.nist.gov/12.10#E10
-    ctp = ct ** arange(16).reshape((-1,1))
+    ctp = ct ** mx.arange(16).reshape((-1,1))
     u0 = 1.0
     u1 = (1.0*ctp[3,:] - 6.0*ct) / 24.0
     u2 = (-9.0*ctp[4,:] + 249.0*ctp[2,:] + 145.0) / 1152.0
@@ -1133,10 +1131,10 @@ def _pbcf(n, theta):
     # Airy Evaluation (Bi and Bip unused)
     Ai, Aip, Bi, Bip = airy(mu**(4.0/6.0) * zeta)
     # Prefactor for U
-    P = 2.0*sqrt(pi) * mu**(1.0/6.0) * phi
+    P = 2.0*mx.sqrt(mx.pi) * mu**(1.0/6.0) * phi
     # Terms for U
     # https://dlmf.nist.gov/12.10#E42
-    phip = phi ** arange(6, 31, 6).reshape((-1,1))
+    phip = phi ** mx.arange(6, 31, 6).reshape((-1,1))
     A0 = b0*u0
     A1 = (b2*u0 + phip[0,:]*b1*u1 + phip[1,:]*b0*u2) / zeta**3
     A2 = (b4*u0 + phip[0,:]*b3*u1 + phip[1,:]*b2*u2 + phip[2,:]*b1*u3
@@ -1150,7 +1148,7 @@ def _pbcf(n, theta):
     U = P * (Ai * (A0 + A1/mu**2.0 + A2/mu**4.0) +
              Aip * (B0 + B1/mu**2.0 + B2/mu**4.0) / mu**(8.0/6.0))
     # Prefactor for derivative of U
-    Pd = sqrt(2.0*pi) * mu**(2.0/6.0) / phi
+    Pd = mx.sqrt(2.0*mx.pi) * mu**(2.0/6.0) / phi
     # Terms for derivative of U
     # https://dlmf.nist.gov/12.10#E46
     C0 = -(b1*v0 + phip[0,:]*b0*v1) / zeta
@@ -1176,7 +1174,7 @@ def _newton(n, x_initial, maxit=5):
     ----------
     n : int
         Quadrature order
-    x_initial : ndarray
+    x_initial : array
         Initial guesses for the roots
     maxit : int
         Maximal number of Newton iterations.
@@ -1185,9 +1183,9 @@ def _newton(n, x_initial, maxit=5):
 
     Returns
     -------
-    nodes : ndarray
+    nodes : array
         Quadrature nodes
-    weights : ndarray
+    weights : array
         Quadrature weights
 
     See Also
@@ -1195,23 +1193,23 @@ def _newton(n, x_initial, maxit=5):
     roots_hermite_asy
     """
     # Variable transformation
-    mu = sqrt(2.0*n + 1.0)
+    mu = mx.sqrt(2.0*n + 1.0)
     t = x_initial / mu
-    theta = arccos(t)
+    theta = mx.arccos(t)
     # Newton iteration
     for i in range(maxit):
         u, ud = _pbcf(n, theta)
-        dtheta = u / (sqrt(2.0) * mu * sin(theta) * ud)
+        dtheta = u / (mx.sqrt(2.0) * mu * mx.sin(theta) * ud)
         theta = theta + dtheta
         if max(abs(dtheta)) < 1e-14:
             break
     # Undo variable transformation
-    x = mu * cos(theta)
+    x = mu * mx.cos(theta)
     # Central node is always zero
     if n % 2 == 1:
         x[0] = 0.0
     # Compute weights
-    w = exp(-x**2) / (2.0*ud**2)
+    w = mx.exp(-x**2) / (2.0*ud**2)
     return x, w
 
 
@@ -1235,9 +1233,9 @@ def _roots_hermite_asy(n):
 
     Returns
     -------
-    nodes : ndarray
+    nodes : array
         Quadrature nodes
-    weights : ndarray
+    weights : array
         Quadrature weights
 
     See Also
@@ -1262,13 +1260,13 @@ def _roots_hermite_asy(n):
     nodes, weights = _newton(n, iv)
     # Combine with negative parts
     if n % 2 == 0:
-        nodes = hstack([-nodes[::-1], nodes])
-        weights = hstack([weights[::-1], weights])
+        nodes = mx.concatenate([-nodes[::-1], nodes])
+        weights = mx.concatenate([weights[::-1], weights])
     else:
-        nodes = hstack([-nodes[-1:0:-1], nodes])
-        weights = hstack([weights[-1:0:-1], weights])
+        nodes = mx.concatenate([-nodes[-1:0:-1], nodes])
+        weights = mx.concatenate([weights[-1:0:-1], weights])
     # Scale weights
-    weights *= sqrt(pi) / sum(weights)
+    weights *= mx.sqrt(mx.pi) / sum(weights)
     return nodes, weights
 
 
@@ -1305,14 +1303,14 @@ def hermite(n, monic=False):
     --------
     >>> from scipy import special
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     >>> p_monic = special.hermite(3, monic=True)
     >>> p_monic
     poly1d([ 1. ,  0. , -1.5,  0. ])
     >>> p_monic(1)
     -0.49999999999999983
-    >>> x = np.linspace(-3, 3, 400)
+    >>> x = mx.linspace(-3, 3, 400)
     >>> y = p_monic(x)
     >>> plt.plot(x, y)
     >>> plt.title("Monic Hermite polynomial of degree 3")
@@ -1330,12 +1328,12 @@ def hermite(n, monic=False):
         n1 = n
     x, w = roots_hermite(n1)
     def wfunc(x):
-        return exp(-x * x)
+        return mx.exp(-x * x)
     if n == 0:
         x, w = [], []
-    hn = 2**n * _gam(n + 1) * sqrt(pi)
+    hn = 2**n * _gam(n + 1) * mx.sqrt(mx.pi)
     kn = 2**n
-    p = orthopoly1d(x, w, hn, kn, wfunc, (-inf, inf), monic,
+    p = orthopoly1d(x, w, hn, kn, wfunc, (-mx.inf, mx.inf), monic,
                     lambda x: _ufuncs.eval_hermite(n, x))
     return p
 
@@ -1362,9 +1360,9 @@ def roots_hermitenorm(n, mu=False):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Sample points
-    w : ndarray
+    w : array
         Weights
     mu : float
         Sum of the weights
@@ -1397,12 +1395,12 @@ def roots_hermitenorm(n, mu=False):
     if n < 1 or n != m:
         raise ValueError("n must be a positive integer.")
 
-    mu0 = np.sqrt(2.0*np.pi)
+    mu0 = mx.sqrt(2.0*mx.pi)
     if n <= 150:
         def an_func(k):
             return 0.0 * k
         def bn_func(k):
-            return np.sqrt(k)
+            return mx.sqrt(k)
         f = _ufuncs.eval_hermitenorm
         def df(n, x):
             return n * _ufuncs.eval_hermitenorm(n - 1, x)
@@ -1410,8 +1408,8 @@ def roots_hermitenorm(n, mu=False):
     else:
         nodes, weights = _roots_hermite_asy(m)
         # Transform
-        nodes *= sqrt(2)
-        weights *= sqrt(2)
+        nodes *= mx.sqrt(mx.array(2.0, dtype=nodes.dtype))
+        weights *= mx.sqrt(mx.array(2.0, dtype=weights.dtype))
         if mu:
             return nodes, weights, mu0
         else:
@@ -1458,12 +1456,12 @@ def hermitenorm(n, monic=False):
         n1 = n
     x, w = roots_hermitenorm(n1)
     def wfunc(x):
-        return exp(-x * x / 2.0)
+        return mx.exp(-x * x / 2.0)
     if n == 0:
         x, w = [], []
-    hn = sqrt(2 * pi) * _gam(n + 1)
+    hn = mx.sqrt(2 * mx.pi) * _gam(n + 1)
     kn = 1.0
-    p = orthopoly1d(x, w, hn, kn, wfunc=wfunc, limits=(-inf, inf), monic=monic,
+    p = orthopoly1d(x, w, hn, kn, wfunc=wfunc, limits=(-mx.inf, mx.inf), monic=monic,
                     eval_func=lambda x: _ufuncs.eval_hermitenorm(n, x))
     return p
 
@@ -1494,9 +1492,9 @@ def roots_gegenbauer(n, alpha, mu=False):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Sample points
-    w : ndarray
+    w : array
         Weights
     mu : float
         Sum of the weights
@@ -1525,23 +1523,23 @@ def roots_gegenbauer(n, alpha, mu=False):
         return roots_chebyt(n, mu)
 
     if alpha <= 170:
-        mu0 = (np.sqrt(np.pi) * _ufuncs.gamma(alpha + 0.5)) \
+        mu0 = (mx.sqrt(mx.pi) * _ufuncs.gamma(alpha + 0.5)) \
               / _ufuncs.gamma(alpha + 1)
     else:
         # For large alpha we use a Taylor series expansion around inf,
         # expressed as a 6th order polynomial of a^-1 and using Horner's
         # method to minimize computation and maximize precision
         inv_alpha = 1. / alpha
-        coeffs = np.array([0.000207186, -0.00152206, -0.000640869,
+        coeffs = mx.array([0.000207186, -0.00152206, -0.000640869,
                            0.00488281, 0.0078125, -0.125, 1.])
         mu0 = coeffs[0]
         for term in range(1, len(coeffs)):
             mu0 = mu0 * inv_alpha + coeffs[term]
-        mu0 = mu0 * np.sqrt(np.pi / alpha)
+        mu0 = mu0 * mx.sqrt(mx.pi / alpha)
     def an_func(k):
         return 0.0 * k
     def bn_func(k):
-        return np.sqrt(k * (k + 2 * alpha - 1) / (4 * (k + alpha) * (k + alpha - 1)))
+        return mx.sqrt(k * (k + 2 * alpha - 1) / (4 * (k + alpha) * (k + alpha - 1)))
     def f(n, x):
         return _ufuncs.eval_gegenbauer(n, alpha, x)
     def df(n, x):
@@ -1588,7 +1586,7 @@ def gegenbauer(n, alpha, monic=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import special
     >>> import matplotlib.pyplot as plt
 
@@ -1604,7 +1602,7 @@ def gegenbauer(n, alpha, monic=False):
     To evaluate ``p`` at various points ``x`` in the interval ``(-3, 3)``,
     simply pass an array ``x`` to ``p`` as follows:
 
-    >>> x = np.linspace(-3, 3, 400)
+    >>> x = mx.linspace(-3, 3, 400)
     >>> y = p(x)
 
     We can then visualize ``x, y`` using `matplotlib.pyplot`.
@@ -1617,7 +1615,7 @@ def gegenbauer(n, alpha, monic=False):
     >>> plt.show()
 
     """
-    if not np.isfinite(alpha) or alpha <= -0.5 :
+    if not mx.isfinite(alpha) or alpha <= -0.5 :
         raise ValueError("`alpha` must be a finite number greater than -1/2")
     base = jacobi(n, alpha - 0.5, alpha - 0.5, monic=monic)
     if monic or n == 0:
@@ -1655,9 +1653,9 @@ def roots_chebyt(n, mu=False):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Sample points
-    w : ndarray
+    w : array
         Weights
     mu : float
         Sum of the weights
@@ -1677,10 +1675,10 @@ def roots_chebyt(n, mu=False):
     m = int(n)
     if n < 1 or n != m:
         raise ValueError('n must be a positive integer.')
-    x = _ufuncs._sinpi(np.arange(-m + 1, m, 2) / (2*m))
-    w = np.full_like(x, pi/m)
+    x = _ufuncs._sinpi(mx.arange(-m + 1, m, 2) / (2*m))
+    w = mx.full_like(x, mx.pi/m)
     if mu:
-        return x, w, pi
+        return x, w, mx.pi
     else:
         return x, w
 
@@ -1731,18 +1729,18 @@ def chebyt(n, monic=False):
     the determinant of the following :math:`3 \times 3` matrix
     lay exactly on :math:`T_3`:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.linalg import det
     >>> from scipy.special import chebyt
-    >>> x = np.arange(-1.0, 1.0, 0.01)
+    >>> x = mx.arange(-1.0, 1.0, 0.01)
     >>> fig, ax = plt.subplots()
     >>> ax.set_ylim(-2.0, 2.0)
     >>> ax.set_title(r'Chebyshev polynomial $T_3$')
     >>> ax.plot(x, chebyt(3)(x), label=rf'$T_3$')
-    >>> for p in np.arange(-1.0, 1.0, 0.1):
+    >>> for p in mx.arange(-1.0, 1.0, 0.1):
     ...     ax.plot(p,
-    ...             det(np.array([[p, 1, 0], [1, 2*p, 1], [0, 1, 2*p]])),
+    ...             det(mx.array([[p, 1, 0], [1, 2*p, 1], [0, 1, 2*p]])),
     ...             'rx')
     >>> plt.legend(loc='best')
     >>> plt.show()
@@ -1757,19 +1755,19 @@ def chebyt(n, monic=False):
 
     >>> from scipy.special import binom
     >>> from scipy.special import jacobi
-    >>> x = np.arange(-1.0, 1.0, 0.01)
-    >>> np.allclose(jacobi(3, -0.5, -0.5)(x),
+    >>> x = mx.arange(-1.0, 1.0, 0.01)
+    >>> mx.allclose(jacobi(3, -0.5, -0.5)(x),
     ...             1/64 * binom(6, 3) * chebyt(3)(x))
     True
 
     We can plot the Chebyshev polynomials :math:`T_n` for some values
     of :math:`n`:
 
-    >>> x = np.arange(-1.5, 1.5, 0.01)
+    >>> x = mx.arange(-1.5, 1.5, 0.01)
     >>> fig, ax = plt.subplots()
     >>> ax.set_ylim(-4.0, 4.0)
     >>> ax.set_title(r'Chebyshev polynomials $T_n$')
-    >>> for n in np.arange(2,5):
+    >>> for n in mx.arange(2,5):
     ...     ax.plot(x, chebyt(n)(x), label=rf'$T_n={n}$')
     >>> plt.legend(loc='best')
     >>> plt.show()
@@ -1779,13 +1777,13 @@ def chebyt(n, monic=False):
         raise ValueError("n must be nonnegative.")
 
     def wfunc(x):
-        return 1.0 / sqrt(1 - x * x)
+        return 1.0 / mx.sqrt(1 - x * x)
     if n == 0:
-        return orthopoly1d([], [], pi, 1.0, wfunc, (-1, 1), monic,
+        return orthopoly1d([], [], mx.pi, 1.0, wfunc, (-1, 1), monic,
                            lambda x: _ufuncs.eval_chebyt(n, x))
     n1 = n
     x, w, mu = roots_chebyt(n1, mu=True)
-    hn = pi / 2
+    hn = mx.pi / 2
     kn = 2**(n - 1)
     p = orthopoly1d(x, w, hn, kn, wfunc, (-1, 1), monic,
                     lambda x: _ufuncs.eval_chebyt(n, x))
@@ -1815,9 +1813,9 @@ def roots_chebyu(n, mu=False):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Sample points
-    w : ndarray
+    w : array
         Weights
     mu : float
         Sum of the weights
@@ -1836,11 +1834,11 @@ def roots_chebyu(n, mu=False):
     m = int(n)
     if n < 1 or n != m:
         raise ValueError('n must be a positive integer.')
-    t = np.arange(m, 0, -1) * pi / (m + 1)
-    x = np.cos(t)
-    w = pi * np.sin(t)**2 / (m + 1)
+    t = mx.arange(m, 0, -1) * mx.pi / (m + 1)
+    x = mx.cos(t)
+    w = mx.pi * mx.sin(t)**2 / (m + 1)
     if mu:
-        return x, w, pi / 2
+        return x, w, mx.pi / 2
     else:
         return x, w
 
@@ -1892,18 +1890,18 @@ def chebyu(n, monic=False):
     the determinant of the following :math:`3 \times 3` matrix
     lay exactly on :math:`U_3`:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.linalg import det
     >>> from scipy.special import chebyu
-    >>> x = np.arange(-1.0, 1.0, 0.01)
+    >>> x = mx.arange(-1.0, 1.0, 0.01)
     >>> fig, ax = plt.subplots()
     >>> ax.set_ylim(-2.0, 2.0)
     >>> ax.set_title(r'Chebyshev polynomial $U_3$')
     >>> ax.plot(x, chebyu(3)(x), label=rf'$U_3$')
-    >>> for p in np.arange(-1.0, 1.0, 0.1):
+    >>> for p in mx.arange(-1.0, 1.0, 0.1):
     ...     ax.plot(p,
-    ...             det(np.array([[2*p, 1, 0], [1, 2*p, 1], [0, 1, 2*p]])),
+    ...             det(mx.array([[2*p, 1, 0], [1, 2*p, 1], [0, 1, 2*p]])),
     ...             'rx')
     >>> plt.legend(loc='best')
     >>> plt.show()
@@ -1917,18 +1915,18 @@ def chebyu(n, monic=False):
     Let's verify it for :math:`n = 2`:
 
     >>> from scipy.special import chebyt
-    >>> x = np.arange(-1.0, 1.0, 0.01)
-    >>> np.allclose(chebyu(3)(x), 2 * chebyt(2)(x) * chebyu(1)(x))
+    >>> x = mx.arange(-1.0, 1.0, 0.01)
+    >>> mx.allclose(chebyu(3)(x), 2 * chebyt(2)(x) * chebyu(1)(x))
     True
 
     We can plot the Chebyshev polynomials :math:`U_n` for some values
     of :math:`n`:
 
-    >>> x = np.arange(-1.0, 1.0, 0.01)
+    >>> x = mx.arange(-1.0, 1.0, 0.01)
     >>> fig, ax = plt.subplots()
     >>> ax.set_ylim(-1.5, 1.5)
     >>> ax.set_title(r'Chebyshev polynomials $U_n$')
-    >>> for n in np.arange(1,5):
+    >>> for n in mx.arange(1,5):
     ...     ax.plot(x, chebyu(n)(x), label=rf'$U_n={n}$')
     >>> plt.legend(loc='best')
     >>> plt.show()
@@ -1937,7 +1935,7 @@ def chebyu(n, monic=False):
     base = jacobi(n, 0.5, 0.5, monic=monic)
     if monic:
         return base
-    factor = sqrt(pi) / 2.0 * _gam(n + 2) / _gam(n + 1.5)
+    factor = mx.sqrt(mx.pi) / 2.0 * _gam(n + 2) / _gam(n + 1.5)
     base._scale(factor)
     return base
 
@@ -1964,9 +1962,9 @@ def roots_chebyc(n, mu=False):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Sample points
-    w : ndarray
+    w : array
         Weights
     mu : float
         Sum of the weights
@@ -2036,10 +2034,10 @@ def chebyc(n, monic=False):
     x, w = roots_chebyc(n1)
     if n == 0:
         x, w = [], []
-    hn = 4 * pi * ((n == 0) + 1)
+    hn = 4 * mx.pi * ((n == 0) + 1)
     kn = 1.0
     p = orthopoly1d(x, w, hn, kn,
-                    wfunc=lambda x: 1.0 / sqrt(1 - x * x / 4.0),
+                    wfunc=lambda x: 1.0 / mx.sqrt(1 - x * x / 4.0),
                     limits=(-2, 2), monic=monic)
     if not monic:
         p._scale(2.0 / p(2))
@@ -2069,9 +2067,9 @@ def roots_chebys(n, mu=False):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Sample points
-    w : ndarray
+    w : array
         Weights
     mu : float
         Sum of the weights
@@ -2141,10 +2139,10 @@ def chebys(n, monic=False):
     x, w = roots_chebys(n1)
     if n == 0:
         x, w = [], []
-    hn = pi
+    hn = mx.pi
     kn = 1.0
     p = orthopoly1d(x, w, hn, kn,
-                    wfunc=lambda x: sqrt(1 - x * x / 4.0),
+                    wfunc=lambda x: mx.sqrt(1 - x * x / 4.0),
                     limits=(-2, 2), monic=monic)
     if not monic:
         factor = (n + 1.0) / p(2)
@@ -2175,9 +2173,9 @@ def roots_sh_chebyt(n, mu=False):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Sample points
-    w : ndarray
+    w : array
         Weights
     mu : float
         Sum of the weights
@@ -2254,9 +2252,9 @@ def roots_sh_chebyu(n, mu=False):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Sample points
-    w : ndarray
+    w : array
         Weights
     mu : float
         Sum of the weights
@@ -2336,9 +2334,9 @@ def roots_legendre(n, mu=False):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Sample points
-    w : ndarray
+    w : array
         Weights
     mu : float
         Sum of the weights
@@ -2358,7 +2356,7 @@ def roots_legendre(n, mu=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import roots_legendre, eval_legendre
     >>> roots, weights = roots_legendre(9)
 
@@ -2421,7 +2419,7 @@ def roots_legendre(n, mu=False):
 
     Compare that to the exact result, which is 3/2 + log(2):
 
-    >>> 1.5 + np.log(2)
+    >>> 1.5 + mx.log(2)
     2.1931471805599454
 
     """
@@ -2433,7 +2431,7 @@ def roots_legendre(n, mu=False):
     def an_func(k):
         return 0.0 * k
     def bn_func(k):
-        return k * np.sqrt(1.0 / (4 * k * k - 1))
+        return k * mx.sqrt(1.0 / (4 * k * k - 1))
     f = _ufuncs.eval_legendre
     def df(n, x):
         return (-n * x * _ufuncs.eval_legendre(n, x)
@@ -2518,9 +2516,9 @@ def roots_sh_legendre(n, mu=False):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Sample points
-    w : ndarray
+    w : array
         Weights
     mu : float
         Sum of the weights
