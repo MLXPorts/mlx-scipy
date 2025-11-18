@@ -16,17 +16,14 @@ __all__ = ['eig', 'eigvals', 'eigh', 'eigvalsh',
            'eig_banded', 'eigvals_banded',
            'eigh_tridiagonal', 'eigvalsh_tridiagonal', 'hessenberg', 'cdf2rdf']
 
-import numpy as np
-from numpy import (array, isfinite, inexact, nonzero, iscomplexobj,
-                   flatnonzero, conj, asarray, argsort, empty,
-                   iscomplex, zeros, einsum, eye, inf)
+import mlx.core as mx
 # Local imports
 from scipy._lib._util import _asarray_validated, _apply_over_batch
 from ._misc import LinAlgError, _datacopied, norm
 from .lapack import get_lapack_funcs, _compute_lwork
 
 
-_I = np.array(1j, dtype='F')
+_I = mx.array(1j, dtype='F')
 
 
 def _make_complex_eigvecs(w, vin, dtype):
@@ -34,38 +31,38 @@ def _make_complex_eigvecs(w, vin, dtype):
     Produce complex-valued eigenvectors from LAPACK DGGEV real-valued output
     """
     # - see LAPACK man page DGGEV at ALPHAI
-    v = np.array(vin, dtype=dtype)
+    v = mx.array(vin, dtype=dtype)
     m = (w.imag > 0)
     m[:-1] |= (w.imag[1:] < 0)  # workaround for LAPACK bug, cf. ticket #709
-    for i in flatnonzero(m):
+    for i in mx.flatnonzero(m):
         v.imag[:, i] = vin[:, i+1]
-        conj(v[:, i], v[:, i+1])
+        v[:, i+1] = mx.conj(v[:, i])
     return v
 
 
 def _make_eigvals(alpha, beta, homogeneous_eigvals):
     if homogeneous_eigvals:
         if beta is None:
-            return np.vstack((alpha, np.ones_like(alpha)))
+            return mx.vstack((alpha, mx.ones_like(alpha)))
         else:
-            return np.vstack((alpha, beta))
+            return mx.vstack((alpha, beta))
     else:
         if beta is None:
             return alpha
         else:
-            w = np.empty_like(alpha)
+            w = mx.empty_like(alpha)
             alpha_zero = (alpha == 0)
             beta_zero = (beta == 0)
             beta_nonzero = ~beta_zero
             w[beta_nonzero] = alpha[beta_nonzero]/beta[beta_nonzero]
-            # Use np.inf for complex values too since
-            # 1/np.inf = 0, i.e., it correctly behaves as projective
+            # Use mx.inf for complex values too since
+            # 1/mx.inf = 0, i.e., it correctly behaves as projective
             # infinity.
-            w[~alpha_zero & beta_zero] = np.inf
-            if np.all(alpha.imag == 0):
-                w[alpha_zero & beta_zero] = np.nan
+            w[~alpha_zero & beta_zero] = mx.inf
+            if mx.all(alpha.imag == 0):
+                w[alpha_zero & beta_zero] = mx.nan
             else:
-                w[alpha_zero & beta_zero] = complex(np.nan, np.nan)
+                w[alpha_zero & beta_zero] = complex(mx.nan, mx.nan)
             return w
 
 
@@ -74,7 +71,7 @@ def _geneig(a1, b1, left, right, overwrite_a, overwrite_b,
     ggev, = get_lapack_funcs(('ggev',), (a1, b1))
     cvl, cvr = left, right
     res = ggev(a1, b1, lwork=-1)
-    lwork = res[-2][0].real.astype(np.int_)
+    lwork = res[-2][0].real.astype(mx.int_)
     if ggev.typecode in 'cz':
         alpha, beta, vl, vr, work, info = ggev(a1, b1, cvl, cvr, lwork,
                                                overwrite_a, overwrite_b)
@@ -87,7 +84,7 @@ def _geneig(a1, b1, left, right, overwrite_a, overwrite_b,
         w = _make_eigvals(alpha, beta, homogeneous_eigvals)
     _check_info(info, 'generalized eig algorithm (ggev)')
 
-    only_real = np.all(w.imag == 0.0)
+    only_real = mx.all(w.imag == 0.0)
     if not (ggev.typecode in 'cz' or only_real):
         t = w.dtype.char
         if left:
@@ -154,15 +151,15 @@ def eig(a, b=None, left=False, right=True, overwrite_a=False,
 
     Returns
     -------
-    w : (M,) or (2, M) double or complex ndarray
+    w : (M,) or (2, M) double or complex array
         The eigenvalues, each repeated according to its
         multiplicity. The shape is (M,) unless
         ``homogeneous_eigvals=True``.
-    vl : (M, M) double or complex ndarray
+    vl : (M, M) double or complex array
         The left eigenvector corresponding to the eigenvalue
         ``w[i]`` is the column ``vl[:,i]``. Only returned if ``left=True``.
         The left eigenvector is not normalized.
-    vr : (M, M) double or complex ndarray
+    vr : (M, M) double or complex array
         The normalized right eigenvector corresponding to the eigenvalue
         ``w[i]`` is the column ``vr[:,i]``.  Only returned if ``right=True``.
 
@@ -182,22 +179,22 @@ def eig(a, b=None, left=False, right=True, overwrite_a=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> a = np.array([[0., -1.], [1., 0.]])
+    >>> a = mx.array([[0., -1.], [1., 0.]])
     >>> linalg.eigvals(a)
     array([0.+1.j, 0.-1.j])
 
-    >>> b = np.array([[0., 1.], [1., 1.]])
+    >>> b = mx.array([[0., 1.], [1., 1.]])
     >>> linalg.eigvals(a, b)
     array([ 1.+0.j, -1.+0.j])
 
-    >>> a = np.array([[3., 0., 0.], [0., 8., 0.], [0., 0., 7.]])
+    >>> a = mx.array([[3., 0., 0.], [0., 8., 0.], [0., 0., 7.]])
     >>> linalg.eigvals(a, homogeneous_eigvals=True)
     array([[3.+0.j, 8.+0.j, 7.+0.j],
            [1.+0.j, 1.+0.j, 1.+0.j]])
 
-    >>> a = np.array([[0., -1.], [1., 0.]])
+    >>> a = mx.array([[0., -1.], [1., 0.]])
     >>> linalg.eigvals(a) == linalg.eig(a)[0]
     array([ True,  True])
     >>> linalg.eig(a, left=True, right=False)[1] # normalized left eigenvector
@@ -216,11 +213,11 @@ def eig(a, b=None, left=False, right=True, overwrite_a=False,
 
     # accommodate square empty matrices
     if a1.size == 0:
-        w_n, vr_n = eig(np.eye(2, dtype=a1.dtype))
-        w = np.empty_like(a1, shape=(0,), dtype=w_n.dtype)
+        w_n, vr_n = eig(mx.eye(2, dtype=a1.dtype))
+        w = mx.empty_like(a1, shape=(0,), dtype=w_n.dtype)
         w = _make_eigvals(w, None, homogeneous_eigvals)
-        vl = np.empty_like(a1, shape=(0, 0), dtype=vr_n.dtype)
-        vr = np.empty_like(a1, shape=(0, 0), dtype=vr_n.dtype)
+        vl = mx.empty_like(a1, shape=(0, 0), dtype=vr_n.dtype)
+        vr = mx.empty_like(a1, shape=(0, 0), dtype=vr_n.dtype)
         if not (left or right):
             return w
         if left:
@@ -265,7 +262,7 @@ def eig(a, b=None, left=False, right=True, overwrite_a=False,
                 positive='did not converge (only eigenvalues '
                          'with order >= %d have converged)')
 
-    only_real = np.all(w.imag == 0.0)
+    only_real = mx.all(w.imag == 0.0)
     if not (geev.typecode in 'cz' or only_real):
         t = w.dtype.char
         if left:
@@ -325,7 +322,7 @@ def eigh(a, b=None, *, lower=True, eigvals_only=False, overwrite_a=False,
         If provided, this two-element iterable defines the half-open interval
         ``(a, b]`` that, if any, only the eigenvalues between these values
         are returned. Only available with "evr", "evx", and "gvx" drivers. Use
-        ``np.inf`` for the unconstrained ends.
+        ``mx.inf`` for the unconstrained ends.
     driver : str, optional
         Defines which LAPACK driver should be used. Valid options are "ev",
         "evd", "evr", "evx" for standard problems and "gv", "gvd", "gvx" for
@@ -355,10 +352,10 @@ def eigh(a, b=None, *, lower=True, eigvals_only=False, overwrite_a=False,
 
     Returns
     -------
-    w : (N,) ndarray
+    w : (N,) array
         The N (N<=M) selected eigenvalues, in ascending order, each
         repeated according to its multiplicity.
-    v : (M, N) ndarray
+    v : (M, N) array
         The normalized eigenvector corresponding to the eigenvalue ``w[i]`` is
         the column ``v[:,i]``. Only returned if ``eigvals_only=False``.
 
@@ -417,11 +414,11 @@ def eigh(a, b=None, *, lower=True, eigvals_only=False, overwrite_a=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import eigh
-    >>> A = np.array([[6, 3, 1, 5], [3, 0, 5, 1], [1, 5, 6, 2], [5, 1, 2, 2]])
+    >>> A = mx.array([[6, 3, 1, 5], [3, 0, 5, 1], [1, 5, 6, 2], [5, 1, 2, 2]])
     >>> w, v = eigh(A)
-    >>> np.allclose(A @ v - v @ np.diag(w), np.zeros((4, 4)))
+    >>> mx.allclose(A @ v - v @ mx.diag(w), mx.zeros((4, 4)))
     True
 
     Request only the eigenvalues
@@ -430,12 +427,12 @@ def eigh(a, b=None, *, lower=True, eigvals_only=False, overwrite_a=False,
 
     Request eigenvalues that are less than 10.
 
-    >>> A = np.array([[34, -4, -10, -7, 2],
+    >>> A = mx.array([[34, -4, -10, -7, 2],
     ...               [-4, 7, 2, 12, 0],
     ...               [-10, 2, 44, 2, -19],
     ...               [-7, 12, 2, 79, -34],
     ...               [2, 0, -19, -34, 29]])
-    >>> eigh(A, eigvals_only=True, subset_by_value=[-np.inf, 10])
+    >>> eigh(A, eigvals_only=True, subset_by_value=[-mx.inf, 10])
     array([6.69199443e-07, 9.11938152e+00])
 
     Request the second smallest eigenvalue and its eigenvector
@@ -463,17 +460,17 @@ def eigh(a, b=None, *, lower=True, eigvals_only=False, overwrite_a=False,
 
     # accommodate square empty matrices
     if a1.size == 0:
-        w_n, v_n = eigh(np.eye(2, dtype=a1.dtype))
+        w_n, v_n = eigh(mx.eye(2, dtype=a1.dtype))
 
-        w = np.empty_like(a1, shape=(0,), dtype=w_n.dtype)
-        v = np.empty_like(a1, shape=(0, 0), dtype=v_n.dtype)
+        w = mx.empty_like(a1, shape=(0,), dtype=w_n.dtype)
+        v = mx.empty_like(a1, shape=(0, 0), dtype=v_n.dtype)
         if eigvals_only:
             return w
         else:
             return w, v
 
     overwrite_a = overwrite_a or (_datacopied(a1, a))
-    cplx = True if iscomplexobj(a1) else False
+    cplx = True if mx.iscomplexobj(a1) else False
     n = a1.shape[0]
     drv_args = {'overwrite_a': overwrite_a}
 
@@ -489,7 +486,7 @@ def eigh(a, b=None, *, lower=True, eigvals_only=False, overwrite_a=False,
         if type not in [1, 2, 3]:
             raise ValueError('"type" keyword only accepts 1, 2, and 3.')
 
-        cplx = True if iscomplexobj(b1) else (cplx or False)
+        cplx = True if mx.iscomplexobj(b1) else (cplx or False)
         drv_args.update({'overwrite_b': overwrite_b, 'itype': type})
 
     subset = (subset_by_index is not None) or (subset_by_value is not None)
@@ -510,7 +507,7 @@ def eigh(a, b=None, *, lower=True, eigvals_only=False, overwrite_a=False,
 
     if subset_by_value:
         lo, hi = subset_by_value
-        if not (-inf <= lo < hi <= inf):
+        if not (-mx.inf <= lo < hi <= mx.inf):
             raise ValueError('Requested eigenvalue bounds are not valid. '
                              'Valid range is (-inf, inf) and low < high, but '
                              f'low={lo}, high={hi} is given')
@@ -636,7 +633,7 @@ def _check_select(select, select_range, max_ev, max_len):
     vl, vu = 0., 1.
     il = iu = 1
     if select != 0:  # (non-all)
-        sr = asarray(select_range)
+        sr = mx.asarray(select_range)
         if sr.ndim != 1 or sr.size != 2 or sr[1] < sr[0]:
             raise ValueError('select_range must be a 2-element array-like '
                              'in nondecreasing order')
@@ -727,10 +724,10 @@ def eig_banded(a_band, lower=False, eigvals_only=False, overwrite_a_band=False,
 
     Returns
     -------
-    w : (M,) ndarray
+    w : (M,) array
         The eigenvalues, in ascending order, each repeated according to its
         multiplicity.
-    v : (M, M) float or complex ndarray
+    v : (M, M) float or complex array
         The normalized eigenvector corresponding to the eigenvalue w[i] is
         the column v[:,i]. Only returned if ``eigvals_only=False``.
 
@@ -749,12 +746,12 @@ def eig_banded(a_band, lower=False, eigvals_only=False, overwrite_a_band=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import eig_banded
-    >>> A = np.array([[1, 5, 2, 0], [5, 2, 5, 2], [2, 5, 3, 5], [0, 2, 5, 4]])
-    >>> Ab = np.array([[1, 2, 3, 4], [5, 5, 5, 0], [2, 2, 0, 0]])
+    >>> A = mx.array([[1, 5, 2, 0], [5, 2, 5, 2], [2, 5, 3, 5], [0, 2, 5, 4]])
+    >>> Ab = mx.array([[1, 2, 3, 4], [5, 5, 5, 0], [2, 2, 0, 0]])
     >>> w, v = eig_banded(Ab, lower=True)
-    >>> np.allclose(A @ v - v @ np.diag(w), np.zeros((4, 4)))
+    >>> mx.allclose(A @ v - v @ mx.diag(w), mx.zeros((4, 4)))
     True
     >>> w = eig_banded(Ab, lower=True, eigvals_only=True)
     >>> w
@@ -771,8 +768,8 @@ def eig_banded(a_band, lower=False, eigvals_only=False, overwrite_a_band=False,
         a1 = _asarray_validated(a_band, check_finite=check_finite)
         overwrite_a_band = overwrite_a_band or (_datacopied(a1, a_band))
     else:
-        a1 = array(a_band)
-        if issubclass(a1.dtype.type, inexact) and not isfinite(a1).all():
+        a1 = mx.array(a_band)
+        if issubclass(a1.dtype.type, inexact) and not mx.isfinite(a1).all():
             raise ValueError("array must not contain infs or NaNs")
         overwrite_a_band = 1
 
@@ -781,10 +778,10 @@ def eig_banded(a_band, lower=False, eigvals_only=False, overwrite_a_band=False,
 
     # accommodate square empty matrices
     if a1.size == 0:
-        w_n, v_n = eig_banded(np.array([[0, 0], [1, 1]], dtype=a1.dtype))
+        w_n, v_n = eig_banded(mx.array([[0, 0], [1, 1]], dtype=a1.dtype))
 
-        w = np.empty_like(a1, shape=(0,), dtype=w_n.dtype)
-        v = np.empty_like(a1, shape=(0, 0), dtype=v_n.dtype)
+        w = mx.empty_like(a1, shape=(0,), dtype=w_n.dtype)
+        v = mx.empty_like(a1, shape=(0, 0), dtype=v_n.dtype)
         if eigvals_only:
             return w
         else:
@@ -814,9 +811,9 @@ def eig_banded(a_band, lower=False, eigvals_only=False, overwrite_a_band=False,
             max_ev = 1
         # calculate optimal abstol for dsbevx (see manpage)
         if a1.dtype.char in 'fF':  # single precision
-            lamch, = get_lapack_funcs(('lamch',), (array(0, dtype='f'),))
+            lamch, = get_lapack_funcs(('lamch',), (mx.array(0, dtype='f'),))
         else:
-            lamch, = get_lapack_funcs(('lamch',), (array(0, dtype='d'),))
+            lamch, = get_lapack_funcs(('lamch',), (mx.array(0, dtype='d'),))
         abstol = 2 * lamch('s')
         if a1.dtype.char in 'GFD':
             internal_name = 'hbevx'
@@ -873,7 +870,7 @@ def eigvals(a, b=None, overwrite_a=False, check_finite=True,
 
     Returns
     -------
-    w : (M,) or (2, M) double or complex ndarray
+    w : (M,) or (2, M) double or complex array
         The eigenvalues, each repeated according to its multiplicity
         but not in any specific order. The shape is (M,) unless
         ``homogeneous_eigvals=True``.
@@ -893,17 +890,17 @@ def eigvals(a, b=None, overwrite_a=False, check_finite=True,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> a = np.array([[0., -1.], [1., 0.]])
+    >>> a = mx.array([[0., -1.], [1., 0.]])
     >>> linalg.eigvals(a)
     array([0.+1.j, 0.-1.j])
 
-    >>> b = np.array([[0., 1.], [1., 1.]])
+    >>> b = mx.array([[0., 1.], [1., 1.]])
     >>> linalg.eigvals(a, b)
     array([ 1.+0.j, -1.+0.j])
 
-    >>> a = np.array([[3., 0., 0.], [0., 8., 0.], [0., 0., 7.]])
+    >>> a = mx.array([[3., 0., 0.], [0., 8., 0.], [0., 0., 7.]])
     >>> linalg.eigvals(a, homogeneous_eigvals=True)
     array([[3.+0.j, 8.+0.j, 7.+0.j],
            [1.+0.j, 1.+0.j, 1.+0.j]])
@@ -974,7 +971,7 @@ def eigvalsh(a, b=None, *, lower=True, overwrite_a=False,
         If provided, this two-element iterable defines the half-open interval
         ``(a, b]`` that, if any, only the eigenvalues between these values
         are returned. Only available with "evr", "evx", and "gvx" drivers. Use
-        ``np.inf`` for the unconstrained ends.
+        ``mx.inf`` for the unconstrained ends.
     driver : str, optional
         Defines which LAPACK driver should be used. Valid options are "ev",
         "evd", "evr", "evx" for standard problems and "gv", "gvd", "gvx" for
@@ -983,7 +980,7 @@ def eigvalsh(a, b=None, *, lower=True, overwrite_a=False,
 
     Returns
     -------
-    w : (N,) ndarray
+    w : (N,) array
         The N (N<=M) selected eigenvalues, in ascending order, each
         repeated according to its multiplicity.
 
@@ -1019,9 +1016,9 @@ def eigvalsh(a, b=None, *, lower=True, overwrite_a=False,
     --------
     For more examples see `scipy.linalg.eigh`.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import eigvalsh
-    >>> A = np.array([[6, 3, 1, 5], [3, 0, 5, 1], [1, 5, 6, 2], [5, 1, 2, 2]])
+    >>> A = mx.array([[6, 3, 1, 5], [3, 0, 5, 1], [1, 5, 6, 2], [5, 1, 2, 2]])
     >>> w = eigvalsh(A)
     >>> w
     array([-3.74637491, -0.76263923,  6.08502336, 12.42399079])
@@ -1093,7 +1090,7 @@ def eigvals_banded(a_band, lower=False, overwrite_a_band=False,
 
     Returns
     -------
-    w : (M,) ndarray
+    w : (M,) array
         The eigenvalues, in ascending order, each repeated according to its
         multiplicity.
 
@@ -1114,10 +1111,10 @@ def eigvals_banded(a_band, lower=False, overwrite_a_band=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import eigvals_banded
-    >>> A = np.array([[1, 5, 2, 0], [5, 2, 5, 2], [2, 5, 3, 5], [0, 2, 5, 4]])
-    >>> Ab = np.array([[1, 2, 3, 4], [5, 5, 5, 0], [2, 2, 0, 0]])
+    >>> A = mx.array([[1, 5, 2, 0], [5, 2, 5, 2], [2, 5, 3, 5], [0, 2, 5, 4]])
+    >>> Ab = mx.array([[1, 2, 3, 4], [5, 5, 5, 0], [2, 2, 0, 0]])
     >>> w = eigvals_banded(Ab, lower=True)
     >>> w
     array([-4.26200532, -2.22987175,  3.95222349, 12.53965359])
@@ -1143,9 +1140,9 @@ def eigvalsh_tridiagonal(d, e, select='a', select_range=None,
 
     Parameters
     ----------
-    d : ndarray, shape (ndim,)
+    d : array, shape (ndim,)
         The diagonal elements of the array.
-    e : ndarray, shape (ndim-1,)
+    e : array, shape (ndim-1,)
         The off-diagonal elements of the array.
     select : {'a', 'v', 'i'}, optional
         Which eigenvalues to calculate
@@ -1178,7 +1175,7 @@ def eigvalsh_tridiagonal(d, e, select='a', select_range=None,
 
     Returns
     -------
-    w : (M,) ndarray
+    w : (M,) array
         The eigenvalues, in ascending order, each repeated according to its
         multiplicity.
 
@@ -1194,14 +1191,14 @@ def eigvalsh_tridiagonal(d, e, select='a', select_range=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import eigvalsh_tridiagonal, eigvalsh
-    >>> d = 3*np.ones(4)
-    >>> e = -1*np.ones(3)
+    >>> d = 3*mx.ones(4)
+    >>> e = -1*mx.ones(3)
     >>> w = eigvalsh_tridiagonal(d, e)
-    >>> A = np.diag(d) + np.diag(e, k=1) + np.diag(e, k=-1)
+    >>> A = mx.diag(d) + mx.diag(e, k=1) + mx.diag(e, k=-1)
     >>> w2 = eigvalsh(A)  # Verify with other eigenvalue routines
-    >>> np.allclose(w - w2, np.zeros(4))
+    >>> mx.allclose(w - w2, mx.zeros(4))
     True
     """
     return eigh_tridiagonal(
@@ -1225,9 +1222,9 @@ def eigh_tridiagonal(d, e, eigvals_only=False, select='a', select_range=None,
 
     Parameters
     ----------
-    d : ndarray, shape (ndim,)
+    d : array, shape (ndim,)
         The diagonal elements of the array.
-    e : ndarray, shape (ndim-1,)
+    e : array, shape (ndim-1,)
         The off-diagonal elements of the array.
     eigvals_only : bool, optional
         Compute only the eigenvalues and no eigenvectors.
@@ -1266,10 +1263,10 @@ def eigh_tridiagonal(d, e, eigvals_only=False, select='a', select_range=None,
 
     Returns
     -------
-    w : (M,) ndarray
+    w : (M,) array
         The eigenvalues, in ascending order, each repeated according to its
         multiplicity.
-    v : (M, M) ndarray
+    v : (M, M) array
         The normalized eigenvector corresponding to the eigenvalue ``w[i]`` is
         the column ``v[:,i]``. Only returned if ``eigvals_only=False``.
 
@@ -1293,13 +1290,13 @@ def eigh_tridiagonal(d, e, eigvals_only=False, select='a', select_range=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import eigh_tridiagonal
-    >>> d = 3*np.ones(4)
-    >>> e = -1*np.ones(3)
+    >>> d = 3*mx.ones(4)
+    >>> e = -1*mx.ones(3)
     >>> w, v = eigh_tridiagonal(d, e)
-    >>> A = np.diag(d) + np.diag(e, k=1) + np.diag(e, k=-1)
-    >>> np.allclose(A @ v - v @ np.diag(w), np.zeros((4, 4)))
+    >>> A = mx.diag(d) + mx.diag(e, k=1) + mx.diag(e, k=-1)
+    >>> mx.allclose(A @ v - v @ mx.diag(w), mx.zeros((4, 4)))
     True
     """
     d = _asarray_validated(d, check_finite=check_finite)
@@ -1325,11 +1322,11 @@ def eigh_tridiagonal(d, e, eigvals_only=False, select='a', select_range=None,
     # Quick exit for 1x1 case
     if len(d) == 1:
         if select == 1 and (not (vl < d[0] <= vu)):  # request by value
-            w = array([])
-            v = empty([1, 0], dtype=d.dtype)
+            w = mx.array([])
+            v = mx.array([], dtype=d.dtype).reshape(1, 0)
         else:  # all and request by index
-            w = array([d[0]], dtype=d.dtype)
-            v = array([[1.]], dtype=d.dtype)
+            w = mx.array([d[0]], dtype=d.dtype)
+            v = mx.array([[1.]], dtype=d.dtype)
 
         if eigvals_only:
             return w
@@ -1367,7 +1364,7 @@ def eigh_tridiagonal(d, e, eigvals_only=False, select='a', select_range=None,
                                            order)
     else:   # 'stemr'
         # ?STEMR annoyingly requires size N instead of N-1
-        e_ = empty(e.size+1, e.dtype)
+        e_ = mx.empty(e.size+1, e.dtype)
         e_[:-1] = e
         stemr_lwork, = get_lapack_funcs(('stemr_lwork',), (d, e))
         lwork, liwork, info = stemr_lwork(d, e_, select, vl, vu, il, iu,
@@ -1387,7 +1384,7 @@ def eigh_tridiagonal(d, e, eigvals_only=False, select='a', select_range=None,
             _check_info(info, 'stein (eigh_tridiagonal)',
                         positive='%d eigenvectors failed to converge')
             # Convert block-order to matrix-order
-            order = argsort(w)
+            order = mx.argsort(w)
             w, v = w[order], v[:, order]
         else:
             v = v[:, :m]
@@ -1430,24 +1427,24 @@ def hessenberg(a, calc_q=False, overwrite_a=False, check_finite=True):
 
     Returns
     -------
-    H : (M, M) ndarray
+    H : (M, M) array
         Hessenberg form of `a`.
-    Q : (M, M) ndarray
+    Q : (M, M) array
         Unitary/orthogonal similarity transformation matrix ``A = Q H Q^H``.
         Only returned if ``calc_q=True``.
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import hessenberg
-    >>> A = np.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]])
+    >>> A = mx.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]])
     >>> H, Q = hessenberg(A, calc_q=True)
     >>> H
     array([[  2.        , -11.65843866,   1.42005301,   0.25349066],
            [ -9.94987437,  14.53535354,  -5.31022304,   2.43081618],
            [  0.        ,  -1.83299243,   0.38969961,  -0.51527034],
            [  0.        ,   0.        ,  -3.83189513,   1.07494686]])
-    >>> np.allclose(Q @ H @ Q.conj().T - A, np.zeros((4, 4)))
+    >>> mx.allclose(Q @ H @ Q.conj().T - A, mx.zeros((4, 4)))
     True
     """
     a1 = _asarray_validated(a, check_finite=check_finite)
@@ -1456,14 +1453,14 @@ def hessenberg(a, calc_q=False, overwrite_a=False, check_finite=True):
     overwrite_a = overwrite_a or (_datacopied(a1, a))
 
     if a1.size == 0:
-        h3 = hessenberg(np.eye(3, dtype=a1.dtype))
-        h = np.empty(a1.shape, dtype=h3.dtype)
+        h3 = hessenberg(mx.eye(3, dtype=a1.dtype))
+        h = mx.empty(a1.shape, dtype=h3.dtype)
         if not calc_q:
             return h
         else:
-            h3, q3 = hessenberg(np.eye(3, dtype=a1.dtype), calc_q=True)
-            q = np.empty(a1.shape, dtype=q3.dtype)
-            h = np.empty(a1.shape, dtype=h3.dtype)
+            h3, q3 = hessenberg(mx.eye(3, dtype=a1.dtype), calc_q=True)
+            q = mx.empty(a1.shape, dtype=q3.dtype)
+            h = mx.empty(a1.shape, dtype=h3.dtype)
             return h, q
 
     # if 2x2 or smaller: already in Hessenberg
@@ -1482,7 +1479,7 @@ def hessenberg(a, calc_q=False, overwrite_a=False, check_finite=True):
 
     hq, tau, info = gehrd(ba, lo=lo, hi=hi, lwork=lwork, overwrite_a=1)
     _check_info(info, 'gehrd (hessenberg)', positive=False)
-    h = np.triu(hq, -1)
+    h = mx.triu(hq, -1)
     if not calc_q:
         return h
 
@@ -1528,9 +1525,9 @@ def cdf2rdf(w, v):
 
     Returns
     -------
-    wr : (..., M, M) ndarray
+    wr : (..., M, M) array
         Real diagonal block form of eigenvalues
-    vr : (..., M, M) ndarray
+    vr : (..., M, M) array
         Real eigenvectors associated with ``wr``
 
     See Also
@@ -1549,8 +1546,8 @@ def cdf2rdf(w, v):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> X = np.array([[1, 2, 3], [0, 4, 5], [0, -5, 4]])
+    >>> import mlx.core as mx
+    >>> X = mx.array([[1, 2, 3], [0, 4, 5], [0, -5, 4]])
     >>> X
     array([[ 1,  2,  3],
            [ 0,  4,  5],
@@ -1606,7 +1603,7 @@ def cdf2rdf(w, v):
                          'eigenvectors')
 
     # get indices for each first pair of complex eigenvalues
-    complex_mask = iscomplex(w)
+    complex_mask = mx.iscomplex(w)
     n_complex = complex_mask.sum(axis=-1)
 
     # check if all complex eigenvalues have conjugate pairs
@@ -1629,7 +1626,7 @@ def cdf2rdf(w, v):
         stack_ind += (i[0::2],)
 
     # all eigenvalues to diagonal form
-    wr = zeros(M + (n, n), dtype=w.real.dtype)
+    wr = mx.zeros(M + (n, n), dtype=w.real.dtype)
     di = range(n)
     wr[..., di, di] = w.real
 
@@ -1638,7 +1635,7 @@ def cdf2rdf(w, v):
     wr[stack_ind + (k, j)] = w[stack_ind + (k,)].imag
 
     # compute real eigenvectors associated with real block diagonal eigenvalues
-    u = zeros(M + (n, n), dtype=np.cdouble)
+    u = mx.zeros(M + (n, n), dtype=mx.cdouble)
     u[..., di, di] = 1.0
     u[stack_ind + (j, j)] = 0.5j
     u[stack_ind + (j, k)] = 0.5
@@ -1646,6 +1643,6 @@ def cdf2rdf(w, v):
     u[stack_ind + (k, k)] = 0.5
 
     # multiply matrices v and u (equivalent to v @ u)
-    vr = einsum('...ij,...jk->...ik', v, u).real
+    vr = mx.einsum('...ij,...jk->...ik', v, u).real
 
     return wr, vr

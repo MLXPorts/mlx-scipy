@@ -1,7 +1,6 @@
 import warnings
 
-import numpy as np
-from numpy import asarray_chkfinite
+import mlx.core as mx
 from scipy._lib._util import _apply_over_batch
 from ._misc import LinAlgError, _datacopied, LinAlgWarning
 from .lapack import get_lapack_funcs
@@ -32,25 +31,25 @@ def _select_function(sort):
 
 
 def _lhp(x, y):
-    out = np.empty_like(x, dtype=bool)
+    out = mx.empty_like(x, dtype=bool)
     nonzero = (y != 0)
     # handles (x, y) = (0, 0) too
     out[~nonzero] = False
-    out[nonzero] = (np.real(x[nonzero]/y[nonzero]) < 0.0)
+    out[nonzero] = (mx.real(x[nonzero]/y[nonzero]) < 0.0)
     return out
 
 
 def _rhp(x, y):
-    out = np.empty_like(x, dtype=bool)
+    out = mx.empty_like(x, dtype=bool)
     nonzero = (y != 0)
     # handles (x, y) = (0, 0) too
     out[~nonzero] = False
-    out[nonzero] = (np.real(x[nonzero]/y[nonzero]) > 0.0)
+    out[nonzero] = (mx.real(x[nonzero]/y[nonzero]) > 0.0)
     return out
 
 
 def _iuc(x, y):
-    out = np.empty_like(x, dtype=bool)
+    out = mx.empty_like(x, dtype=bool)
     nonzero = (y != 0)
     # handles (x, y) = (0, 0) too
     out[~nonzero] = False
@@ -59,7 +58,7 @@ def _iuc(x, y):
 
 
 def _ouc(x, y):
-    out = np.empty_like(x, dtype=bool)
+    out = mx.empty_like(x, dtype=bool)
     xzero = (x == 0)
     yzero = (y == 0)
     out[xzero & yzero] = False
@@ -79,11 +78,11 @@ def _qz(A, B, output='real', lwork=None, sort=None, overwrite_a=False,
         raise ValueError("argument must be 'real', or 'complex'")
 
     if check_finite:
-        a1 = asarray_chkfinite(A)
-        b1 = asarray_chkfinite(B)
+        a1 = mx.asarray_chkfinite(A)
+        b1 = mx.asarray_chkfinite(B)
     else:
-        a1 = np.asarray(A)
-        b1 = np.asarray(B)
+        a1 = mx.asarray(A)
+        b1 = mx.asarray(B)
 
     a_m, a_n = a1.shape
     b_m, b_n = b1.shape
@@ -210,13 +209,13 @@ def qz(A, B, output='real', lwork=None, sort=None, overwrite_a=False,
 
     Returns
     -------
-    AA : (N, N) ndarray
+    AA : (N, N) array
         Generalized Schur form of A.
-    BB : (N, N) ndarray
+    BB : (N, N) array
         Generalized Schur form of B.
-    Q : (N, N) ndarray
+    Q : (N, N) array
         The left Schur vectors.
-    Z : (N, N) ndarray
+    Z : (N, N) array
         The right Schur vectors.
 
     See Also
@@ -231,11 +230,11 @@ def qz(A, B, output='real', lwork=None, sort=None, overwrite_a=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import qz
 
-    >>> A = np.array([[1, 2, -1], [5, 5, 5], [2, 4, -8]])
-    >>> B = np.array([[1, 1, -3], [3, 1, -1], [5, 6, -2]])
+    >>> A = mx.array([[1, 2, -1], [5, 5, 5], [2, 4, -8]])
+    >>> B = mx.array([[1, 1, -3], [3, 1, -1], [5, 6, -2]])
 
     Compute the decomposition.  The QZ decomposition is not unique, so
     depending on the underlying library that is used, there may be
@@ -275,10 +274,10 @@ def qz(A, B, output='real', lwork=None, sort=None, overwrite_a=False,
 
     >>> AA, BB, Q, Z = qz(A, B, output='complex')
 
-    For conciseness in the output, we use ``np.set_printoptions()`` to set
+    For conciseness in the output, we use ``mx.set_printoptions()`` to set
     the output precision of NumPy arrays to 3 and display tiny values as 0.
 
-    >>> np.set_printoptions(precision=3, suppress=True)
+    >>> mx.set_printoptions(precision=3, suppress=True)
     >>> AA
     array([[-1.369+0.j   ,  2.248+4.237j,  4.861-5.022j],
            [ 0.   +0.j   ,  7.037+2.922j,  0.794+4.932j],
@@ -366,17 +365,17 @@ def ordqz(A, B, sort='lhp', output='real', overwrite_a=False,
 
     Returns
     -------
-    AA : (N, N) ndarray
+    AA : (N, N) array
         Generalized Schur form of A.
-    BB : (N, N) ndarray
+    BB : (N, N) array
         Generalized Schur form of B.
-    alpha : (N,) ndarray
+    alpha : (N,) array
         alpha = alphar + alphai * 1j. See notes.
-    beta : (N,) ndarray
+    beta : (N,) array
         See notes.
-    Q : (N, N) ndarray
+    Q : (N, N) array
         The left Schur vectors.
-    Z : (N, N) ndarray
+    Z : (N, N) array
         The right Schur vectors.
 
     See Also
@@ -398,10 +397,10 @@ def ordqz(A, B, sort='lhp', output='real', overwrite_a=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import ordqz
-    >>> A = np.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]])
-    >>> B = np.array([[0, 6, 0, 0], [5, 0, 2, 1], [5, 2, 6, 6], [4, 7, 7, 7]])
+    >>> A = mx.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]])
+    >>> B = mx.array([[0, 6, 0, 0], [5, 0, 2, 1], [5, 2, 6, 6], [4, 7, 7, 7]])
     >>> AA, BB, alpha, beta, Q, Z = ordqz(A, B, sort='lhp')
 
     Since we have sorted for left half plane eigenvalues, negatives come first
@@ -416,7 +415,7 @@ def ordqz(A, B, sort='lhp', output='real', overwrite_a=False,
                                             check_finite=check_finite)
 
     if typ == 's':
-        alpha, beta = ab[0] + ab[1]*np.complex64(1j), ab[2]
+        alpha, beta = ab[0] + ab[1]*mx.complex64(1j), ab[2]
     elif typ == 'd':
         alpha, beta = ab[0] + ab[1]*1.j, ab[2]
     else:
@@ -434,7 +433,7 @@ def ordqz(A, B, sort='lhp', output='real', overwrite_a=False,
 
     # Once more for tgsen output
     if typ == 's':
-        alpha, beta = ab[0] + ab[1]*np.complex64(1j), ab[2]
+        alpha, beta = ab[0] + ab[1]*mx.complex64(1j), ab[2]
     elif typ == 'd':
         alpha, beta = ab[0] + ab[1]*1.j, ab[2]
     else:

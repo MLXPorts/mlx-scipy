@@ -199,6 +199,9 @@ Low-level routines
 
 """  # noqa: E501
 
+# Import MLX compatibility layer first to expose missing functions
+from . import _mlx_compat  # noqa: F401
+
 from ._misc import *
 from ._cythonized_array_utils import *
 from ._basic import *

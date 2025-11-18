@@ -7,8 +7,7 @@
 import warnings
 from warnings import warn
 from itertools import product
-import numpy as np
-from numpy import atleast_1d, atleast_2d
+import mlx.core as mx
 from scipy._lib._util import _apply_over_batch
 from .lapack import get_lapack_funcs, _compute_lwork, _normalize_lapack_dtype
 from ._misc import LinAlgError, _datacopied, LinAlgWarning
@@ -53,7 +52,7 @@ def _find_matrix_structure(a):
         kind = 'upper triangular'
     elif n_above <= 1 and n_below <= 1 and n > 3:
         kind = 'tridiagonal'
-    elif np.issubdtype(a.dtype, np.complexfloating) and ishermitian(a):
+    elif mx.issubdtype(a.dtype, mx.complexfloating) and ishermitian(a):
         kind = 'hermitian'
     elif issymmetric(a):
         kind = 'symmetric'
@@ -120,7 +119,7 @@ def solve(a, b, lower=None, overwrite_a=False,
 
     Returns
     -------
-    x : ndarray, shape (N, NRHS) or (..., N)
+    x : array, shape (N, NRHS) or (..., N)
         The solution array.
 
     Raises
@@ -154,9 +153,9 @@ def solve(a, b, lower=None, overwrite_a=False,
     --------
     Given `a` and `b`, solve for `x`:
 
-    >>> import numpy as np
-    >>> a = np.array([[3, 2, 0], [1, -1, 0], [0, 5, 1]])
-    >>> b = np.array([2, 4, -1])
+    >>> import mlx.core as mx
+    >>> a = mx.array([[3, 2, 0], [1, -1, 0], [0, 5, 1]])
+    >>> b = mx.array([2, 4, -1])
     >>> from scipy.linalg import solve
     >>> x = solve(a, b)
     >>> x
@@ -166,9 +165,9 @@ def solve(a, b, lower=None, overwrite_a=False,
 
     Batches of matrices are supported, with and without structure detection:
 
-    >>> a = np.arange(12).reshape(3, 2, 2)   # a batch of 3 2x2 matrices
+    >>> a = mx.arange(12).reshape(3, 2, 2)   # a batch of 3 2x2 matrices
     >>> A = a.transpose(0, 2, 1) @ a    # A is a batch of 3 positive definite matrices
-    >>> b = np.ones(2)
+    >>> b = mx.ones(2)
     >>> solve(A, b)      # this automatically detects that A is pos.def.
     array([[ 1. , -0.5],
            [ 3. , -2.5],
@@ -212,8 +211,8 @@ def solve(a, b, lower=None, overwrite_a=False,
     if lower is None:
         lower = False
 
-    a1 = np.atleast_2d(_asarray_validated(a, check_finite=check_finite))
-    b1 = np.atleast_1d(_asarray_validated(b, check_finite=check_finite))
+    a1 = mx.atleast_2d(_asarray_validated(a, check_finite=check_finite))
+    b1 = mx.atleast_1d(_asarray_validated(b, check_finite=check_finite))
     a1, b1 = _ensure_dtype_cdsz(a1, b1)   # XXX; b upcasts a?
     a1, overwrite_a = _normalize_lapack_dtype(a1, overwrite_a)
 
@@ -223,7 +222,7 @@ def solve(a, b, lower=None, overwrite_a=False,
         raise ValueError(f"Expected square matrix, got {a1.shape=}")
 
     # backwards compatibility
-    if np.issubdtype(a1.dtype, np.complexfloating) and transposed:
+    if mx.issubdtype(a1.dtype, mx.complexfloating) and transposed:
         raise NotImplementedError('scipy.linalg.solve can currently '
                                   'not solve a^T x = b or a^H x = b '
                                   'for complex matrices.')
@@ -247,13 +246,13 @@ def solve(a, b, lower=None, overwrite_a=False,
         raise ValueError(f"incompatible shapes: {a1.shape=} and {b1.shape=}")
 
     # 2. broadcast the batch dimensions of b1 and a1
-    batch_shape = np.broadcast_shapes(a1.shape[:-2], b1.shape[:-2])
-    a1 = np.broadcast_to(a1, batch_shape + a1.shape[-2:])
-    b1 = np.broadcast_to(b1, batch_shape + b1.shape[-2:])
+    batch_shape = mx.broadcast_shapes(a1.shape[:-2], b1.shape[:-2])
+    a1 = mx.broadcast_to(a1, batch_shape + a1.shape[-2:])
+    b1 = mx.broadcast_to(b1, batch_shape + b1.shape[-2:])
 
     # catch empty inputs
     if a1.size == 0 or b1.size == 0:
-        x = np.empty_like(b1)
+        x = mx.empty_like(b1)
         if b_is_1D:
             x = x[..., 0]
         return x
@@ -332,7 +331,7 @@ def solve0(a, b, lower=False, overwrite_a=False,
 
     Returns
     -------
-    x : (N, NRHS) ndarray
+    x : (N, NRHS) array
         The solution array.
 
     Raises
@@ -366,14 +365,14 @@ def solve0(a, b, lower=False, overwrite_a=False,
     --------
     Given `a` and `b`, solve for `x`:
 
-    >>> import numpy as np
-    >>> a = np.array([[3, 2, 0], [1, -1, 0], [0, 5, 1]])
-    >>> b = np.array([2, 4, -1])
+    >>> import mlx.core as mx
+    >>> a = mx.array([[3, 2, 0], [1, -1, 0], [0, 5, 1]])
+    >>> b = mx.array([2, 4, -1])
     >>> from scipy import linalg
     >>> x = linalg.solve(a, b)
     >>> x
     array([ 2., -2.,  9.])
-    >>> np.dot(a, x) == b
+    >>> mx.dot(a, x) == b
     array([ True,  True,  True], dtype=bool)
 
     """
@@ -381,8 +380,8 @@ def solve0(a, b, lower=False, overwrite_a=False,
     b_is_1D = False
 
     # check finite after determining structure
-    a1 = atleast_2d(_asarray_validated(a, check_finite=False))
-    b1 = atleast_1d(_asarray_validated(b, check_finite=False))
+    a1 = mx.atleast_2d(_asarray_validated(a, check_finite=False))
+    b1 = mx.atleast_1d(_asarray_validated(b, check_finite=False))
     a1, b1 = _ensure_dtype_cdsz(a1, b1)
     n = a1.shape[0]
 
@@ -400,8 +399,8 @@ def solve0(a, b, lower=False, overwrite_a=False,
 
     # accommodate empty arrays
     if b1.size == 0:
-        dt = solve(np.eye(2, dtype=a1.dtype), np.ones(2, dtype=b1.dtype)).dtype
-        return np.empty_like(b1, dtype=dt)
+        dt = solve(mx.eye(2, dtype=a1.dtype), mx.ones(2, dtype=b1.dtype)).dtype
+        return mx.empty_like(b1, dtype=dt)
 
     # regularize 1-D b arrays to 2D
     if b1.ndim == 1:
@@ -418,7 +417,7 @@ def solve0(a, b, lower=False, overwrite_a=False,
 
     # for a real matrix, describe it as "symmetric", not "hermitian"
     # (lapack doesn't know what to do with real hermitian matrices)
-    if assume_a in {'hermitian', 'her'} and not np.iscomplexobj(a1):
+    if assume_a in {'hermitian', 'her'} and not mx.iscomplexobj(a1):
         assume_a = 'symmetric'
 
     n_below, n_above = None, None
@@ -441,7 +440,7 @@ def solve0(a, b, lower=False, overwrite_a=False,
     if transposed:
         trans = 1
         norm = 'I'
-        if np.iscomplexobj(a1):
+        if mx.iscomplexobj(a1):
             raise NotImplementedError('scipy.linalg.solve can currently '
                                       'not solve a^T x = b or a^H x = b '
                                       'for complex matrices.')
@@ -467,7 +466,7 @@ def solve0(a, b, lower=False, overwrite_a=False,
     else:
         anorm = _matrix_norm_general(norm, a1, check_finite)
 
-    info, rcond = 0, np.inf
+    info, rcond = 0, mx.inf
 
     # Generalized case 'gesv'
     if assume_a in {'general', 'gen'}:
@@ -503,15 +502,15 @@ def solve0(a, b, lower=False, overwrite_a=False,
         rcond, info = sycon(lu, ipvt, anorm, lower=lower)
     # Diagonal case
     elif assume_a == 'diagonal':
-        diag_a = np.diag(a1)
+        diag_a = mx.diag(a1)
         x = (b1.T / diag_a).T
-        abs_diag_a = np.abs(diag_a)
+        abs_diag_a = mx.abs(diag_a)
         diag_min = abs_diag_a.min()
         rcond = diag_min if diag_min == 0 else diag_min / abs_diag_a.max()
     # Tri-diagonal case
     elif assume_a == 'tridiagonal':
         a1 = a1.T if transposed else a1
-        dl, d, du = np.diag(a1, -1), np.diag(a1, 0), np.diag(a1, 1)
+        dl, d, du = mx.diag(a1, -1), mx.diag(a1, 0), mx.diag(a1, 1)
         _gttrf, _gttrs, _gtcon = get_lapack_funcs(('gttrf', 'gttrs', 'gtcon'), (a1, b1))
         dl, d, du, du2, ipiv, info = _gttrf(dl, d, du)
         _solve_check(n, info)
@@ -522,7 +521,7 @@ def solve0(a, b, lower=False, overwrite_a=False,
     elif assume_a == 'banded':
         gbsv, gbcon = get_lapack_funcs(('gbsv', 'gbcon'), (a1, b1))
         # Next two lines copied from `solve_banded`
-        a2 = np.zeros((2*n_below + n_above + 1, ab.shape[1]), dtype=gbsv.dtype)
+        a2 = mx.zeros((2*n_below + n_above + 1, ab.shape[1]), dtype=gbsv.dtype)
         a2[n_below:, :] = ab
         lu, piv, x, info = gbsv(n_below, n_above, a2, b1,
                                 overwrite_ab=True, overwrite_b=overwrite_b)
@@ -557,9 +556,9 @@ def solve0(a, b, lower=False, overwrite_a=False,
 def _matrix_norm_diagonal(a, check_finite):
     # Equivalent of dlange for diagonal matrix, assuming
     # norm is either 'I' or '1' (really just not the Frobenius norm)
-    d = np.diag(a)
-    d = np.asarray_chkfinite(d) if check_finite else d
-    return np.abs(d).max()
+    d = mx.diag(a)
+    d = mx.asarray_chkfinite(d) if check_finite else d
+    return mx.abs(d).max()
 
 
 def _matrix_norm_tridiagonal(norm, a, check_finite):
@@ -568,28 +567,28 @@ def _matrix_norm_tridiagonal(norm, a, check_finite):
     if norm == 'I':
         a = a.T
     # Context to avoid warning before error in cases like -inf + inf
-    with np.errstate(invalid='ignore'):
-        d = np.abs(np.diag(a))
-        d[1:] += np.abs(np.diag(a, 1))
-        d[:-1] += np.abs(np.diag(a, -1))
-    d = np.asarray_chkfinite(d) if check_finite else d
+    with mx.errstate(invalid='ignore'):
+        d = mx.abs(mx.diag(a))
+        d[1:] += mx.abs(mx.diag(a, 1))
+        d[:-1] += mx.abs(mx.diag(a, -1))
+    d = mx.asarray_chkfinite(d) if check_finite else d
     return d.max()
 
 
 def _matrix_norm_triangular(structure, norm, a, check_finite):
-    a = np.asarray_chkfinite(a) if check_finite else a
+    a = mx.asarray_chkfinite(a) if check_finite else a
     lantr = get_lapack_funcs('lantr', (a,))
     return lantr(norm, a, 'L' if structure == 'lower triangular' else 'U' )
 
 
 def _matrix_norm_banded(kl, ku, norm, ab, check_finite):
-    ab = np.asarray_chkfinite(ab) if check_finite else ab
+    ab = mx.asarray_chkfinite(ab) if check_finite else ab
     langb = get_lapack_funcs('langb', (ab,))
     return langb(norm, kl, ku, ab)
 
 
 def _matrix_norm_general(norm, a, check_finite):
-    a = np.asarray_chkfinite(a) if check_finite else a
+    a = mx.asarray_chkfinite(a) if check_finite else a
     lange = get_lapack_funcs('lange', (a,))
     return lange(norm, a)
 
@@ -597,12 +596,12 @@ def _matrix_norm_general(norm, a, check_finite):
 def _to_banded(n_below, n_above, a):
     n = a.shape[0]
     rows = n_above + n_below + 1
-    ab = np.zeros((rows, n), dtype=a.dtype)
-    ab[n_above] = np.diag(a)
+    ab = mx.zeros((rows, n), dtype=a.dtype)
+    ab[n_above] = mx.diag(a)
     for i in range(1, n_above + 1):
-        ab[n_above - i, i:] = np.diag(a, i)
+        ab[n_above - i, i:] = mx.diag(a, i)
     for i in range(1, n_below + 1):
-        ab[n_above + i, :-i] = np.diag(a, -i)
+        ab[n_above + i, :-i] = mx.diag(a, -i)
     return ab
 
 
@@ -610,14 +609,14 @@ def _ensure_dtype_cdsz(*arrays):
     # Ensure that the dtype of arrays is one of the standard types
     # compatible with LAPACK functions (single or double precision
     # real or complex).
-    dtype = np.result_type(*arrays)
-    if not np.issubdtype(dtype, np.inexact):
-        return (array.astype(np.float64) for array in arrays)
-    complex = np.issubdtype(dtype, np.complexfloating)
-    if np.finfo(dtype).bits <= 32:
-        dtype = np.complex64 if complex else np.float32
-    elif np.finfo(dtype).bits >= 64:
-        dtype = np.complex128 if complex else np.float64
+    dtype = mx.result_type(*arrays)
+    if not mx.issubdtype(dtype, mx.inexact):
+        return (array.astype(mx.float64) for array in arrays)
+    complex = mx.issubdtype(dtype, mx.complexfloating)
+    if mx.finfo(dtype).bits <= 32:
+        dtype = mx.complex64 if complex else mx.float32
+    elif mx.finfo(dtype).bits >= 64:
+        dtype = mx.complex128 if complex else mx.float64
     return (array.astype(dtype, copy=False) for array in arrays)
 
 
@@ -658,7 +657,7 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
 
     Returns
     -------
-    x : (M,) or (M, N) ndarray
+    x : (M,) or (M, N) array
         Solution to the system ``a x = b``.  Shape of return matches `b`.
 
     Raises
@@ -679,10 +678,10 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
              [1  0  1  0]       [4]
              [1  1  1  1]       [2]
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import solve_triangular
-    >>> a = np.array([[3, 0, 0, 0], [2, 1, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]])
-    >>> b = np.array([4, 2, 4, 2])
+    >>> a = mx.array([[3, 0, 0, 0], [2, 1, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]])
+    >>> b = mx.array([4, 2, 4, 2])
     >>> x = solve_triangular(a, b, lower=True)
     >>> x
     array([ 1.33333333, -0.66666667,  2.66666667, -1.33333333])
@@ -703,9 +702,9 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
     # accommodate empty arrays
     if b1.size == 0:
         dt_nonempty = solve_triangular(
-            np.eye(2, dtype=a1.dtype), np.ones(2, dtype=b1.dtype)
+            mx.eye(2, dtype=a1.dtype), mx.ones(2, dtype=b1.dtype)
         ).dtype
-        return np.empty_like(b1, dtype=dt_nonempty)
+        return mx.empty_like(b1, dtype=dt_nonempty)
 
     overwrite_b = overwrite_b or _datacopied(b1, b)
 
@@ -775,7 +774,7 @@ def solve_banded(l_and_u, ab, b, overwrite_ab=False, overwrite_b=False,
 
     Returns
     -------
-    x : (M,) or (M, K) ndarray
+    x : (M,) or (M, K) array
         The solution to the system a x = b. Returned shape depends on the
         shape of `b`.
 
@@ -797,13 +796,13 @@ def solve_banded(l_and_u, ab, b, overwrite_ab=False, overwrite_b=False,
              [5  4  3  2  1]
              [1  1  1  1  *]
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import solve_banded
-    >>> ab = np.array([[0,  0, -1, -1, -1],
+    >>> ab = mx.array([[0,  0, -1, -1, -1],
     ...                [0,  2,  2,  2,  2],
     ...                [5,  4,  3,  2,  1],
     ...                [1,  1,  1,  1,  0]])
-    >>> b = np.array([0, 1, 2, 2, 3])
+    >>> b = mx.array([0, 1, 2, 2, 3])
     >>> x = solve_banded((1, 2), ab, b)
     >>> x
     array([-2.37288136,  3.93220339, -4.        ,  4.3559322 , -1.3559322 ])
@@ -831,12 +830,12 @@ def _solve_banded(nlower, nupper, ab, b, overwrite_ab, overwrite_b, check_finite
 
     # accommodate empty arrays
     if b1.size == 0:
-        dt = solve(np.eye(1, dtype=a1.dtype), np.ones(1, dtype=b1.dtype)).dtype
-        return np.empty_like(b1, dtype=dt)
+        dt = solve(mx.eye(1, dtype=a1.dtype), mx.ones(1, dtype=b1.dtype)).dtype
+        return mx.empty_like(b1, dtype=dt)
 
     overwrite_b = overwrite_b or _datacopied(b1, b)
     if a1.shape[-1] == 1:
-        b2 = np.array(b1, copy=(not overwrite_b))
+        b2 = mx.array(b1, copy=(not overwrite_b))
         # a1.shape[-1] == 1 -> original matrix is 1x1. Typically, the user
         # will pass u = l = 0 and `a1` will be 1x1. However, the rest of the
         # function works with unnecessary rows in `a1` as long as
@@ -854,7 +853,7 @@ def _solve_banded(nlower, nupper, ab, b, overwrite_ab, overwrite_b, check_finite
                                    overwrite_ab, overwrite_b)
     else:
         gbsv, = get_lapack_funcs(('gbsv',), (a1, b1))
-        a2 = np.zeros((2*nlower + nupper + 1, a1.shape[1]), dtype=gbsv.dtype)
+        a2 = mx.zeros((2*nlower + nupper + 1, a1.shape[1]), dtype=gbsv.dtype)
         a2[nlower:, :] = a1
         lu, piv, x, info = gbsv(nlower, nupper, a2, b1, overwrite_ab=True,
                                 overwrite_b=overwrite_b)
@@ -916,7 +915,7 @@ def solveh_banded(ab, b, overwrite_ab=False, overwrite_b=False, lower=False,
 
     Returns
     -------
-    x : (M,) or (M, K) ndarray
+    x : (M,) or (M, K) array
         The solution to the system ``a x = b``. Shape of return matches shape
         of `b`.
 
@@ -936,16 +935,16 @@ def solveh_banded(ab, b, overwrite_ab=False, overwrite_b=False, lower=False,
             [ 0  0 -1  2  8  2]       [3]
             [ 0  0  0 -1  2  9]       [3]
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import solveh_banded
 
     ``ab`` contains the main diagonal and the nonzero diagonals below the
     main diagonal. That is, we use the lower form:
 
-    >>> ab = np.array([[ 4,  5,  6,  7, 8, 9],
+    >>> ab = mx.array([[ 4,  5,  6,  7, 8, 9],
     ...                [ 2,  2,  2,  2, 2, 0],
     ...                [-1, -1, -1, -1, 0, 0]])
-    >>> b = np.array([1, 2, 2, 3, 3, 3])
+    >>> b = mx.array([1, 2, 2, 3, 3, 3])
     >>> x = solveh_banded(ab, b, lower=True)
     >>> x
     array([ 0.03431373,  0.45938375,  0.05602241,  0.47759104,  0.17577031,
@@ -961,9 +960,9 @@ def solveh_banded(ab, b, overwrite_ab=False, overwrite_b=False, lower=False,
 
     In this example, we put the upper diagonals in the array ``hb``:
 
-    >>> hb = np.array([[0, 2-1j, 1j, -2-1j],
+    >>> hb = mx.array([[0, 2-1j, 1j, -2-1j],
     ...                [8,  5,    9,   6  ]])
-    >>> b = np.array([1, 1+1j, 1-2j, 0])
+    >>> b = mx.array([1, 1+1j, 1-2j, 0])
     >>> x = solveh_banded(hb, b)
     >>> x
     array([ 0.07318536-0.02939412j,  0.11877624+0.17696461j,
@@ -979,8 +978,8 @@ def solveh_banded(ab, b, overwrite_ab=False, overwrite_b=False, lower=False,
 
     # accommodate empty arrays
     if b1.size == 0:
-        dt = solve(np.eye(1, dtype=a1.dtype), np.ones(1, dtype=b1.dtype)).dtype
-        return np.empty_like(b1, dtype=dt)
+        dt = solve(mx.eye(1, dtype=a1.dtype), mx.ones(1, dtype=b1.dtype)).dtype
+        return mx.empty_like(b1, dtype=dt)
 
     overwrite_b = overwrite_b or _datacopied(b1, b)
     overwrite_ab = overwrite_ab or _datacopied(a1, ab)
@@ -1035,7 +1034,7 @@ def solve_toeplitz(c_or_cr, b, check_finite=True):
 
     Returns
     -------
-    x : (M,) or (M, K) ndarray
+    x : (M,) or (M, K) array
         The solution to the system ``T @ x = b``. Shape of return matches shape
         of `b`.
 
@@ -1060,10 +1059,10 @@ def solve_toeplitz(c_or_cr, b, check_finite=True):
     To specify the Toeplitz matrix, only the first column and the first
     row are needed.
 
-    >>> import numpy as np
-    >>> c = np.array([1, 3, 6, 10])    # First column of T
-    >>> r = np.array([1, -1, -2, -3])  # First row of T
-    >>> b = np.array([1, 2, 2, 5])
+    >>> import mlx.core as mx
+    >>> c = mx.array([1, 3, 6, 10])    # First column of T
+    >>> r = mx.array([1, -1, -2, -3])  # First row of T
+    >>> b = mx.array([1, 2, 2, 5])
 
     >>> from scipy.linalg import solve_toeplitz, toeplitz
     >>> x = solve_toeplitz((c, r), b)
@@ -1081,7 +1080,7 @@ def solve_toeplitz(c_or_cr, b, check_finite=True):
     # If numerical stability of this algorithm is a problem, a future
     # developer might consider implementing other O(N^2) Toeplitz solvers,
     # such as GKO (https://www.jstor.org/stable/2153371) or Bareiss.
-    c, r = c_or_cr if isinstance(c_or_cr, tuple) else (c_or_cr, np.conjugate(c_or_cr))
+    c, r = c_or_cr if isinstance(c_or_cr, tuple) else (c_or_cr, mx.conjugate(c_or_cr))
     return _solve_toeplitz(c, r, b, check_finite)
 
 
@@ -1092,18 +1091,18 @@ def _solve_toeplitz(c, r, b, check_finite):
 
     # accommodate empty arrays
     if b.size == 0:
-        return np.empty_like(b)
+        return mx.empty_like(b)
 
     # Form a 1-D array of values to be used in the matrix, containing a
     # reversed copy of r[1:], followed by c.
-    vals = np.concatenate((r[-1:0:-1], c))
+    vals = mx.concatenate((r[-1:0:-1], c))
     if b is None:
         raise ValueError('illegal value, `b` is a required argument')
 
     if b.ndim == 1:
-        x, _ = levinson(vals, np.ascontiguousarray(b))
+        x, _ = levinson(vals, mx.ascontiguousarray(b))
     else:
-        x = np.column_stack([levinson(vals, np.ascontiguousarray(b[:, i]))[0]
+        x = mx.column_stack([levinson(vals, mx.ascontiguousarray(b[:, i]))[0]
                              for i in range(b.shape[1])])
         x = x.reshape(*b_shape)
 
@@ -1151,7 +1150,7 @@ def solve_circulant(c, b, singular='raise', tol=None,
         that is less than or equal to `tol`, the matrix is considered to be
         near singular. If not given, `tol` is set to::
 
-            tol = abs_eigs.max() * abs_eigs.size * np.finfo(np.float64).eps
+            tol = abs_eigs.max() * abs_eigs.size * mx.finfo(mx.float64).eps
 
         where `abs_eigs` is the array of absolute values of the eigenvalues
         of the circulant matrix.
@@ -1170,7 +1169,7 @@ def solve_circulant(c, b, singular='raise', tol=None,
 
     Returns
     -------
-    x : ndarray
+    x : array
         Solution to the system ``C x = b``.
 
     Raises
@@ -1199,11 +1198,11 @@ def solve_circulant(c, b, singular='raise', tol=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import solve_circulant, solve, circulant, lstsq
 
-    >>> c = np.array([2, 2, 4])
-    >>> b = np.array([1, 2, 3])
+    >>> c = mx.array([2, 2, 4])
+    >>> b = mx.array([1, 2, 3])
     >>> solve_circulant(c, b)
     array([ 0.75, -0.25,  0.25])
 
@@ -1214,8 +1213,8 @@ def solve_circulant(c, b, singular='raise', tol=None,
 
     A singular example:
 
-    >>> c = np.array([1, 1, 0, 0])
-    >>> b = np.array([1, 2, 3, 4])
+    >>> c = mx.array([1, 1, 0, 0])
+    >>> b = mx.array([1, 2, 3, 4])
 
     Calling ``solve_circulant(c, b)`` will raise a `LinAlgError`.  For the
     least square solution, use the option ``singular='lstsq'``:
@@ -1235,15 +1234,15 @@ def solve_circulant(c, b, singular='raise', tol=None,
     with shape (2, 5), and three `b` vectors stored in an array with shape
     (3, 5).  For example,
 
-    >>> c = np.array([[1.5, 2, 3, 0, 0], [1, 1, 4, 3, 2]])
-    >>> b = np.arange(15).reshape(-1, 5)
+    >>> c = mx.array([[1.5, 2, 3, 0, 0], [1, 1, 4, 3, 2]])
+    >>> b = mx.arange(15).reshape(-1, 5)
 
     We want to solve all combinations of circulant matrices and `b` vectors,
     with the result stored in an array with shape (2, 3, 5). When we
     disregard the axes of `c` and `b` that hold the vectors of coefficients,
     the shapes of the collections are (2,) and (3,), respectively, which are
     not compatible for broadcasting. To have a broadcast result with shape
-    (2, 3), we add a trivial dimension to `c`: ``c[:, np.newaxis, :]`` has
+    (2, 3), we add a trivial dimension to `c`: ``c[:, mx.newaxis, :]`` has
     shape (2, 1, 5). The last dimension holds the coefficients of the
     circulant matrices, so when we call `solve_circulant`, we can use the
     default ``caxis=-1``. The coefficients of the `b` vectors are in the last
@@ -1251,10 +1250,10 @@ def solve_circulant(c, b, singular='raise', tol=None,
     default `outaxis`, the result will have shape (5, 2, 3), so we'll use
     ``outaxis=-1`` to put the solution vectors in the last dimension.
 
-    >>> x = solve_circulant(c[:, np.newaxis, :], b, baxis=-1, outaxis=-1)
+    >>> x = solve_circulant(c[:, mx.newaxis, :], b, baxis=-1, outaxis=-1)
     >>> x.shape
     (2, 3, 5)
-    >>> np.set_printoptions(precision=3)  # For compact output of numbers.
+    >>> mx.set_printoptions(precision=3)  # For compact output of numbers.
     >>> x
     array([[[-0.118,  0.22 ,  1.277, -0.142,  0.302],
             [ 0.651,  0.989,  2.046,  0.627,  1.072],
@@ -1269,31 +1268,31 @@ def solve_circulant(c, b, singular='raise', tol=None,
     array([ 0.856,  0.758,  1.149, -0.412,  0.831])
 
     """
-    c = np.atleast_1d(c)
+    c = mx.atleast_1d(c)
     nc = _get_axis_len("c", c, caxis)
-    b = np.atleast_1d(b)
+    b = mx.atleast_1d(b)
     nb = _get_axis_len("b", b, baxis)
     if nc != nb:
         raise ValueError(f'Shapes of c {c.shape} and b {b.shape} are incompatible')
 
     # accommodate empty arrays
     if b.size == 0:
-        dt = solve_circulant(np.arange(3, dtype=c.dtype),
-                             np.ones(3, dtype=b.dtype)).dtype
-        return np.empty_like(b, dtype=dt)
+        dt = solve_circulant(mx.arange(3, dtype=c.dtype),
+                             mx.ones(3, dtype=b.dtype)).dtype
+        return mx.empty_like(b, dtype=dt)
 
-    fc = np.fft.fft(np.moveaxis(c, caxis, -1), axis=-1)
-    abs_fc = np.abs(fc)
+    fc = mx.fft.fft(mx.moveaxis(c, caxis, -1), axis=-1)
+    abs_fc = mx.abs(fc)
     if tol is None:
-        # This is the same tolerance as used in np.linalg.matrix_rank.
-        tol = abs_fc.max(axis=-1) * nc * np.finfo(np.float64).eps
+        # This is the same tolerance as used in mx.linalg.matrix_rank.
+        tol = abs_fc.max(axis=-1) * nc * mx.finfo(mx.float64).eps
         if tol.shape != ():
             tol = tol.reshape(tol.shape + (1,))
         else:
-            tol = np.atleast_1d(tol)
+            tol = mx.atleast_1d(tol)
 
     near_zeros = abs_fc <= tol
-    is_near_singular = np.any(near_zeros)
+    is_near_singular = mx.any(near_zeros)
     if is_near_singular:
         if singular == 'raise':
             raise LinAlgError("near singular circulant matrix.")
@@ -1302,7 +1301,7 @@ def solve_circulant(c, b, singular='raise', tol=None,
             # division fb/fc below.
             fc[near_zeros] = 1
 
-    fb = np.fft.fft(np.moveaxis(b, baxis, -1), axis=-1)
+    fb = mx.fft.fft(mx.moveaxis(b, baxis, -1), axis=-1)
 
     q = fb / fc
 
@@ -1312,14 +1311,14 @@ def solve_circulant(c, b, singular='raise', tol=None,
         # of fb / fc, so to set the values of `q` to 0 where `fc` is near
         # zero, we use a mask that is the broadcast result of an array
         # of True values shaped like `b` with `near_zeros`.
-        mask = np.ones_like(b, dtype=bool) & near_zeros
+        mask = mx.ones_like(b, dtype=bool) & near_zeros
         q[mask] = 0
 
-    x = np.fft.ifft(q, axis=-1)
-    if not (np.iscomplexobj(c) or np.iscomplexobj(b)):
+    x = mx.fft.ifft(q, axis=-1)
+    if not (mx.iscomplexobj(c) or mx.iscomplexobj(b)):
         x = x.real
     if outaxis != -1:
-        x = np.moveaxis(x, -1, outaxis)
+        x = mx.moveaxis(x, -1, outaxis)
     return x
 
 
@@ -1363,7 +1362,7 @@ def inv(a, overwrite_a=False, check_finite=True, assume_a=None):
 
     Returns
     -------
-    ainv : ndarray
+    ainv : array
         Inverse of the matrix `a`.
 
     Raises
@@ -1375,13 +1374,13 @@ def inv(a, overwrite_a=False, check_finite=True, assume_a=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> a = np.array([[1., 2.], [3., 4.]])
+    >>> a = mx.array([[1., 2.], [3., 4.]])
     >>> linalg.inv(a)
     array([[-2. ,  1. ],
            [ 1.5, -0.5]])
-    >>> np.dot(a, linalg.inv(a))
+    >>> mx.dot(a, linalg.inv(a))
     array([[ 1.,  0.],
            [ 0.,  1.]])
 
@@ -1405,8 +1404,8 @@ def inv(a, overwrite_a=False, check_finite=True, assume_a=None):
 
     # accommodate empty matrices
     if a1.size == 0:
-        dt = inv(np.eye(2, dtype=a1.dtype)).dtype
-        return np.empty_like(a1, dtype=dt)
+        dt = inv(mx.eye(2, dtype=a1.dtype)).dtype
+        return mx.empty_like(a1, dtype=dt)
 
     # Also check if dtype is LAPACK compatible
     a1, overwrite_a = _normalize_lapack_dtype(a1, overwrite_a)
@@ -1485,16 +1484,16 @@ def det(a, overwrite_a=False, check_finite=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> a = np.array([[1,2,3], [4,5,6], [7,8,9]])  # A singular matrix
+    >>> a = mx.array([[1,2,3], [4,5,6], [7,8,9]])  # A singular matrix
     >>> linalg.det(a)
     0.0
-    >>> b = np.array([[0,2,3], [4,5,6], [7,8,9]])
+    >>> b = mx.array([[0,2,3], [4,5,6], [7,8,9]])
     >>> linalg.det(b)
     3.0
     >>> # An array with the shape (3, 2, 2, 2)
-    >>> c = np.array([[[[1., 2.], [3., 4.]],
+    >>> c = mx.array([[[[1., 2.], [3., 4.]],
     ...                [[5., 6.], [7., 8.]]],
     ...               [[[9., 10.], [11., 12.]],
     ...                [[13., 14.], [15., 16.]]],
@@ -1510,7 +1509,7 @@ def det(a, overwrite_a=False, check_finite=True):
     # The goal is to end up with a writable contiguous array to pass to Cython
 
     # First we check and make arrays.
-    a1 = np.asarray_chkfinite(a) if check_finite else np.asarray(a)
+    a1 = mx.asarray_chkfinite(a) if check_finite else mx.asarray(a)
     if a1.ndim < 2:
         raise ValueError('The input array must be at least two-dimensional.')
     if a1.shape[-1] != a1.shape[-2]:
@@ -1522,11 +1521,11 @@ def det(a, overwrite_a=False, check_finite=True):
 
     # Empty array has determinant 1 because math.
     if min(*a1.shape) == 0:
-        dtyp = np.float64 if a1.dtype.char not in 'FD' else np.complex128
+        dtyp = mx.float64 if a1.dtype.char not in 'FD' else mx.complex128
         if a1.ndim == 2:
             return dtyp(1.0)
         else:
-            return np.ones(shape=a1.shape[:-2], dtype=dtyp)
+            return mx.ones(shape=a1.shape[:-2], dtype=dtyp)
 
     # Scalar case
     if a1.shape[-2:] == (1, 1):
@@ -1554,15 +1553,15 @@ def det(a, overwrite_a=False, check_finite=True):
     if a1.ndim == 2:
         det = find_det_from_lu(a1)
         # Convert float, complex to NumPy scalars
-        return (np.float64(det) if np.isrealobj(det) else np.complex128(det))
+        return (mx.float64(det) if mx.isrealobj(det) else mx.complex128(det))
 
     # loop over the stacked array, and avoid overflows for single precision
-    # Cf. np.linalg.det(np.diag([1e+38, 1e+38]).astype(np.float32))
+    # Cf. mx.linalg.det(mx.diag([1e+38, 1e+38]).astype(mx.float32))
     dtype_char = a1.dtype.char
     if dtype_char in 'fF':
         dtype_char = 'd' if dtype_char.islower() else 'D'
 
-    det = np.empty(a1.shape[:-2], dtype=dtype_char)
+    det = mx.empty(a1.shape[:-2], dtype=dtype_char)
     for ind in product(*[range(x) for x in a1.shape[:-2]]):
         det[ind] = find_det_from_lu(a1[ind])
     return det
@@ -1606,15 +1605,15 @@ def lstsq(a, b, cond=None, overwrite_a=False, overwrite_b=False,
 
     Returns
     -------
-    x : (N,) or (N, K) ndarray
+    x : (N,) or (N, K) array
         Least-squares solution.
-    residues : (K,) ndarray or float
+    residues : (K,) array or float
         Square of the 2-norm for each column in ``b - a x``, if ``M > N`` and
         ``rank(A) == n`` (returns a scalar if ``b`` is 1-D). Otherwise a
         (0,)-shaped array is returned.
     rank : int
         Effective rank of `a`.
-    s : (min(M, N),) ndarray or None
+    s : (min(M, N),) array or None
         Singular values of `a`. The condition number of ``a`` is
         ``s[0] / s[-1]``.
 
@@ -1637,20 +1636,20 @@ def lstsq(a, b, cond=None, overwrite_a=False, overwrite_b=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import lstsq
     >>> import matplotlib.pyplot as plt
 
     Suppose we have the following data:
 
-    >>> x = np.array([1, 2.5, 3.5, 4, 5, 7, 8.5])
-    >>> y = np.array([0.3, 1.1, 1.5, 2.0, 3.2, 6.6, 8.6])
+    >>> x = mx.array([1, 2.5, 3.5, 4, 5, 7, 8.5])
+    >>> y = mx.array([0.3, 1.1, 1.5, 2.0, 3.2, 6.6, 8.6])
 
     We want to fit a quadratic polynomial of the form ``y = a + b*x**2``
     to this data.  We first form the "design matrix" M, with a constant
     column of 1s and a column containing ``x**2``:
 
-    >>> M = x[:, np.newaxis]**[0, 2]
+    >>> M = x[:, mx.newaxis]**[0, 2]
     >>> M
     array([[  1.  ,   1.  ],
            [  1.  ,   6.25],
@@ -1671,7 +1670,7 @@ def lstsq(a, b, cond=None, overwrite_a=False, overwrite_b=False,
     Plot the data and the fitted curve.
 
     >>> plt.plot(x, y, 'o', label='data')
-    >>> xx = np.linspace(0, 9, 101)
+    >>> xx = mx.linspace(0, 9, 101)
     >>> yy = p[0] + p[1]*xx**2
     >>> plt.plot(xx, yy, label='least squares fit, $y = a + bx^2$')
     >>> plt.xlabel('x')
@@ -1694,12 +1693,12 @@ def lstsq(a, b, cond=None, overwrite_a=False, overwrite_b=False,
         raise ValueError('Shape mismatch: a and b should have the same number'
                          f' of rows ({m} != {b1.shape[0]}).')
     if m == 0 or n == 0:  # Zero-sized problem, confuses LAPACK
-        x = np.zeros((n,) + b1.shape[1:], dtype=np.common_type(a1, b1))
+        x = mx.zeros((n,) + b1.shape[1:], dtype=mx.common_type(a1, b1))
         if n == 0:
-            residues = np.linalg.norm(b1, axis=0)**2
+            residues = mx.linalg.norm(b1, axis=0)**2
         else:
-            residues = np.empty((0,))
-        return x, residues, 0, np.empty((0,))
+            residues = mx.empty((0,))
+        return x, residues, 0, mx.empty((0,))
 
     driver = lapack_driver
     if driver is None:
@@ -1716,10 +1715,10 @@ def lstsq(a, b, cond=None, overwrite_a=False, overwrite_b=False,
         # need to extend b matrix as it will be filled with
         # a larger solution matrix
         if len(b1.shape) == 2:
-            b2 = np.zeros((n, nrhs), dtype=lapack_func.dtype)
+            b2 = mx.zeros((n, nrhs), dtype=lapack_func.dtype)
             b2[:m, :] = b1
         else:
-            b2 = np.zeros(n, dtype=lapack_func.dtype)
+            b2 = mx.zeros(n, dtype=lapack_func.dtype)
             b2[:m] = b1
         b1 = b2
 
@@ -1727,7 +1726,7 @@ def lstsq(a, b, cond=None, overwrite_a=False, overwrite_b=False,
     overwrite_b = overwrite_b or _datacopied(b1, b)
 
     if cond is None:
-        cond = np.finfo(lapack_func.dtype).eps
+        cond = mx.finfo(lapack_func.dtype).eps
 
     if driver in ('gelss', 'gelsd'):
         if driver == 'gelss':
@@ -1752,17 +1751,17 @@ def lstsq(a, b, cond=None, overwrite_a=False, overwrite_b=False,
             raise ValueError(
                 f'illegal value in {-info}-th argument of internal {lapack_driver}'
             )
-        resids = np.asarray([], dtype=x.dtype)
+        resids = mx.asarray([], dtype=x.dtype)
         if m > n:
             x1 = x[:n]
             if rank == n:
-                resids = np.sum(np.abs(x[n:])**2, axis=0)
+                resids = mx.sum(mx.abs(x[n:])**2, axis=0)
             x = x1
         return x, resids, rank, s
 
     elif driver == 'gelsy':
         lwork = _compute_lwork(lapack_lwork, m, n, nrhs, cond)
-        jptv = np.zeros((a1.shape[1], 1), dtype=np.int32)
+        jptv = mx.zeros((a1.shape[1], 1), dtype=mx.int32)
         v, x, j, rank, info = lapack_func(a1, b1, jptv, cond,
                                           lwork, False, False)
         if info < 0:
@@ -1770,7 +1769,7 @@ def lstsq(a, b, cond=None, overwrite_a=False, overwrite_b=False,
         if m > n:
             x1 = x[:n]
             x = x1
-        return x, np.array([], x.dtype), rank, None
+        return x, mx.array([], x.dtype), rank, None
 
 
 lstsq.default_lapack_driver = 'gelsd'
@@ -1814,7 +1813,7 @@ def pinv(a, *, atol=None, rtol=None, return_rank=False, check_finite=True):
 
     Returns
     -------
-    B : (N, M) ndarray
+    B : (N, M) array
         The pseudo-inverse of matrix `a`.
     rank : int
         The effective rank of the matrix. Returned if `return_rank` is True.
@@ -1861,34 +1860,34 @@ def pinv(a, *, atol=None, rtol=None, return_rank=False, check_finite=True):
     As an example, we can calculate the Moore-Penrose pseudoinverse of a
     random non-square matrix and verify it satisfies the four conditions.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> A = rng.standard_normal((9, 6))
     >>> B = linalg.pinv(A)
-    >>> np.allclose(A @ B @ A, A)  # Condition 1
+    >>> mx.allclose(A @ B @ A, A)  # Condition 1
     True
-    >>> np.allclose(B @ A @ B, B)  # Condition 2
+    >>> mx.allclose(B @ A @ B, B)  # Condition 2
     True
-    >>> np.allclose((A @ B).conj().T, A @ B)  # Condition 3
+    >>> mx.allclose((A @ B).conj().T, A @ B)  # Condition 3
     True
-    >>> np.allclose((B @ A).conj().T, B @ A)  # Condition 4
+    >>> mx.allclose((B @ A).conj().T, B @ A)  # Condition 4
     True
 
     """
     a = _asarray_validated(a, check_finite=check_finite)
     u, s, vh = _decomp_svd.svd(a, full_matrices=False, check_finite=False)
     t = u.dtype.char.lower()
-    maxS = np.max(s, initial=0.)
+    maxS = mx.max(s, initial=0.)
 
     atol = 0. if atol is None else atol
-    rtol = max(a.shape) * np.finfo(t).eps if (rtol is None) else rtol
+    rtol = max(a.shape) * mx.finfo(t).eps if (rtol is None) else rtol
 
     if (atol < 0.) or (rtol < 0.):
         raise ValueError("atol and rtol values must be positive.")
 
     val = atol + maxS * rtol
-    rank = np.sum(s > val)
+    rank = mx.sum(s > val)
 
     u = u[:, :rank]
     u /= s[:rank]
@@ -1938,7 +1937,7 @@ def pinvh(a, atol=None, rtol=None, lower=True, return_rank=False,
 
     Returns
     -------
-    B : (N, N) ndarray
+    B : (N, N) array
         The pseudo-inverse of matrix `a`.
     rank : int
         The effective rank of the matrix.  Returned if `return_rank` is True.
@@ -1957,25 +1956,25 @@ def pinvh(a, atol=None, rtol=None, lower=True, return_rank=False,
 
     For a more detailed example see `pinv`.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import pinvh
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> a = rng.standard_normal((9, 6))
-    >>> a = np.dot(a, a.T)
+    >>> a = mx.dot(a, a.T)
     >>> B = pinvh(a)
-    >>> np.allclose(a, a @ B @ a)
+    >>> mx.allclose(a, a @ B @ a)
     True
-    >>> np.allclose(B, B @ a @ B)
+    >>> mx.allclose(B, B @ a @ B)
     True
 
     """
     a = _asarray_validated(a, check_finite=check_finite)
     s, u = _decomp.eigh(a, lower=lower, check_finite=False, driver='ev')
     t = u.dtype.char.lower()
-    maxS = np.max(np.abs(s), initial=0.)
+    maxS = mx.max(mx.abs(s), initial=0.)
 
     atol = 0. if atol is None else atol
-    rtol = max(a.shape) * np.finfo(t).eps if (rtol is None) else rtol
+    rtol = max(a.shape) * mx.finfo(t).eps if (rtol is None) else rtol
 
     if (atol < 0.) or (rtol < 0.):
         raise ValueError("atol and rtol values must be positive.")
@@ -2028,12 +2027,12 @@ def matrix_balance(A, permute=True, scale=True, separate=False,
 
     Returns
     -------
-    B : (n, n) ndarray
+    B : (n, n) array
         Balanced matrix
-    T : (n, n) ndarray
+    T : (n, n) array
         A possibly permuted diagonal matrix whose nonzero entries are
         integer powers of 2 to avoid numerical truncation errors.
-    scale, perm : (n,) ndarray
+    scale, perm : (n,) array
         If ``separate`` keyword is set to True then instead of the array
         ``T`` above, the scaling and the permutation vectors are given
         separately as a tuple without allocating the full array ``T``.
@@ -2075,15 +2074,15 @@ def matrix_balance(A, permute=True, scale=True, separate=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> x = np.array([[1,2,0], [9,1,0.01], [1,2,10*np.pi]])
+    >>> x = mx.array([[1,2,0], [9,1,0.01], [1,2,10*mx.pi]])
 
     >>> y, permscale = linalg.matrix_balance(x)
-    >>> np.abs(x).sum(axis=0) / np.abs(x).sum(axis=1)
+    >>> mx.abs(x).sum(axis=0) / mx.abs(x).sum(axis=1)
     array([ 3.66666667,  0.4995005 ,  0.91312162])
 
-    >>> np.abs(y).sum(axis=0) / np.abs(y).sum(axis=1)
+    >>> mx.abs(y).sum(axis=0) / mx.abs(y).sum(axis=1)
     array([ 1.2       ,  1.27041742,  0.92658316])  # may vary
 
     >>> permscale  # only powers of 2 (0.5 == 2^(-1))
@@ -2093,20 +2092,20 @@ def matrix_balance(A, permute=True, scale=True, separate=False,
 
     """
 
-    A = np.atleast_2d(_asarray_validated(A, check_finite=True))
+    A = mx.atleast_2d(_asarray_validated(A, check_finite=True))
 
-    if not np.equal(*A.shape):
+    if not mx.equal(*A.shape):
         raise ValueError('The data matrix for balancing should be square.')
 
     # accommodate empty arrays
     if A.size == 0:
-        b_n, t_n = matrix_balance(np.eye(2, dtype=A.dtype))
-        B = np.empty_like(A, dtype=b_n.dtype)
+        b_n, t_n = matrix_balance(mx.eye(2, dtype=A.dtype))
+        B = mx.empty_like(A, dtype=b_n.dtype)
         if separate:
-            scaling = np.ones_like(A, shape=len(A))
-            perm = np.arange(len(A))
+            scaling = mx.ones_like(A, shape=len(A))
+            perm = mx.arange(len(A))
             return B, (scaling, perm)
-        return B, np.empty_like(A, dtype=t_n.dtype)
+        return B, mx.empty_like(A, dtype=t_n.dtype)
 
     gebal = get_lapack_funcs(('gebal'), (A,))
     B, lo, hi, ps, info = gebal(A, scale=scale, permute=permute,
@@ -2118,13 +2117,13 @@ def matrix_balance(A, permute=True, scale=True, separate=False,
                          'LAPACK documentation for the xGEBAL error codes.')
 
     # Separate the permutations from the scalings and then convert to int
-    scaling = np.ones_like(ps, dtype=float)
+    scaling = mx.ones_like(ps, dtype=float)
     scaling[lo:hi+1] = ps[lo:hi+1]
 
     # gebal uses 1-indexing
     ps = ps.astype(int, copy=False) - 1
     n = A.shape[0]
-    perm = np.arange(n)
+    perm = mx.arange(n)
 
     # LAPACK permutes with the ordering n --> hi, then 0--> lo
     if hi < n:
@@ -2143,10 +2142,10 @@ def matrix_balance(A, permute=True, scale=True, separate=False,
         return B, (scaling, perm)
 
     # get the inverse permutation
-    iperm = np.empty_like(perm)
-    iperm[perm] = np.arange(n)
+    iperm = mx.empty_like(perm)
+    iperm[perm] = mx.arange(n)
 
-    return B, np.diag(scaling)[iperm, :]
+    return B, mx.diag(scaling)[iperm, :]
 
 
 def _validate_args_for_toeplitz_ops(c_or_cr, b, check_finite, keep_b_shape,
@@ -2185,8 +2184,8 @@ def _validate_args_for_toeplitz_ops(c_or_cr, b, check_finite, keep_b_shape,
         corresponding to ``b``.
     dtype: numpy datatype
         ``dtype`` stores the datatype of ``r``, ``c`` and ``b``. If any of
-        ``r``, ``c`` or ``b`` are complex, ``dtype`` is ``np.complex128``,
-        otherwise, it is ``np.float``.
+        ``r``, ``c`` or ``b`` are complex, ``dtype`` is ``mx.complex128``,
+        otherwise, it is ``mx.float``.
     b_shape: tuple
         Shape of ``b`` after passing it through ``_asarray_validated``.
 
@@ -2210,9 +2209,9 @@ def _validate_args_for_toeplitz_ops(c_or_cr, b, check_finite, keep_b_shape,
     if (enforce_square and is_not_square) or b.shape[0] != r.shape[0]:
         raise ValueError('Incompatible dimensions.')
 
-    is_cmplx = np.iscomplexobj(r) or np.iscomplexobj(c) or np.iscomplexobj(b)
-    dtype = np.complex128 if is_cmplx else np.float64
-    r, c, b = (np.asarray(i, dtype=dtype) for i in (r, c, b))
+    is_cmplx = mx.iscomplexobj(r) or mx.iscomplexobj(c) or mx.iscomplexobj(b)
+    dtype = mx.complex128 if is_cmplx else mx.float64
+    r, c, b = (mx.asarray(i, dtype=dtype) for i in (r, c, b))
 
     if b.ndim == 1 and not keep_b_shape:
         b = b.reshape(-1, 1)
@@ -2257,7 +2256,7 @@ def matmul_toeplitz(c_or_cr, x, check_finite=False, workers=None):
 
     Returns
     -------
-    T @ x : (M,) or (M, K) ndarray
+    T @ x : (M,) or (M, K) array
         The result of the matrix multiplication ``T @ x``. Shape of return
         matches shape of `x`.
 
@@ -2319,10 +2318,10 @@ def matmul_toeplitz(c_or_cr, x, check_finite=False, workers=None):
     To specify the Toeplitz matrix, only the first column and the first
     row are needed.
 
-    >>> import numpy as np
-    >>> c = np.array([1, 3, 6, 10])    # First column of T
-    >>> r = np.array([1, -1, -2, -3])  # First row of T
-    >>> x = np.array([[1, 10], [2, 11], [2, 11], [5, 19]])
+    >>> import mlx.core as mx
+    >>> c = mx.array([1, 3, 6, 10])    # First column of T
+    >>> r = mx.array([1, -1, -2, -3])  # First row of T
+    >>> x = mx.array([[1, 10], [2, 11], [2, 11], [5, 19]])
 
     >>> from scipy.linalg import toeplitz, matmul_toeplitz
     >>> matmul_toeplitz((c, r), x)
@@ -2344,13 +2343,13 @@ def matmul_toeplitz(c_or_cr, x, check_finite=False, workers=None):
     is suitable for very large Toeplitz matrices.
 
     >>> n = 1000000
-    >>> matmul_toeplitz([1] + [0]*(n-1), np.ones(n))
+    >>> matmul_toeplitz([1] + [0]*(n-1), mx.ones(n))
     array([1., 1., 1., ..., 1., 1., 1.], shape=(1000000,))
 
     """
 
     from ..fft import fft, ifft, rfft, irfft
-    c, r = c_or_cr if isinstance(c_or_cr, tuple) else (c_or_cr, np.conjugate(c_or_cr))
+    c, r = c_or_cr if isinstance(c_or_cr, tuple) else (c_or_cr, mx.conjugate(c_or_cr))
 
     return _matmul_toepltiz(r, c, x, workers, check_finite, fft, ifft, rfft, irfft)
 
@@ -2369,11 +2368,11 @@ def _matmul_toepltiz(r, c, x, workers, check_finite, fft, ifft, rfft, irfft):
 
     # accommodate empty arrays
     if x.size == 0:
-        return np.empty_like(x, shape=return_shape)
+        return mx.empty_like(x, shape=return_shape)
 
-    embedded_col = np.concatenate((c, r[-1:0:-1]))
+    embedded_col = mx.concatenate((c, r[-1:0:-1]))
 
-    if np.iscomplexobj(embedded_col) or np.iscomplexobj(x):
+    if mx.iscomplexobj(embedded_col) or mx.iscomplexobj(x):
         fft_mat = fft(embedded_col, axis=0, workers=workers).reshape(-1, 1)
         fft_x = fft(x, n=p, axis=0, workers=workers)
 

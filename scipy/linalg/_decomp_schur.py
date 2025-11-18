@@ -1,11 +1,9 @@
 """Schur decomposition functions."""
-import numpy as np
-from numpy import asarray_chkfinite, single, asarray, array
-from numpy.linalg import norm
+import mlx.core as mx
 
 from scipy._lib._util import _apply_over_batch
 # Local imports.
-from ._misc import LinAlgError, _datacopied
+from ._misc import LinAlgError, _datacopied, norm
 from .lapack import get_lapack_funcs
 from ._decomp import eigvals
 
@@ -67,9 +65,9 @@ def schur(a, output='real', lwork=None, overwrite_a=False, sort=None,
 
     Returns
     -------
-    T : (M, M) ndarray
+    T : (M, M) array
         Schur form of A. It is real-valued for the real Schur decomposition.
-    Z : (M, M) ndarray
+    Z : (M, M) array
         An unitary Schur transformation matrix for A.
         It is real-valued for the real Schur decomposition.
     sdim : int
@@ -97,9 +95,9 @@ def schur(a, output='real', lwork=None, overwrite_a=False, sort=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import schur, eigvals
-    >>> A = np.array([[0, 2, 2], [0, 1, 2], [1, 0, 1]])
+    >>> A = mx.array([[0, 2, 2], [0, 1, 2], [1, 0, 1]])
     >>> T, Z = schur(A)
     >>> T
     array([[ 2.65896708,  1.42440458, -1.92933439],
@@ -140,11 +138,11 @@ def schur(a, output='real', lwork=None, overwrite_a=False, sort=None,
     if output not in ['real', 'complex', 'r', 'c']:
         raise ValueError("argument must be 'real', or 'complex'")
     if check_finite:
-        a1 = asarray_chkfinite(a)
+        a1 = mx.asarray_chkfinite(a)
     else:
-        a1 = asarray(a)
-    if np.issubdtype(a1.dtype, np.integer):
-        a1 = asarray(a, dtype=np.dtype("long"))
+        a1 = mx.asarray(a)
+    if mx.issubdtype(a1.dtype, mx.integer):
+        a1 = mx.asarray(a, dtype=mx.dtype("long"))
     if len(a1.shape) != 2 or (a1.shape[0] != a1.shape[1]):
         raise ValueError('expected square matrix')
 
@@ -157,20 +155,20 @@ def schur(a, output='real', lwork=None, overwrite_a=False, sort=None,
 
     # accommodate empty matrix
     if a1.size == 0:
-        t0, z0 = schur(np.eye(2, dtype=a1.dtype))
+        t0, z0 = schur(mx.eye(2, dtype=a1.dtype))
         if sort is None:
-            return (np.empty_like(a1, dtype=t0.dtype),
-                    np.empty_like(a1, dtype=z0.dtype))
+            return (mx.empty_like(a1, dtype=t0.dtype),
+                    mx.empty_like(a1, dtype=z0.dtype))
         else:
-            return (np.empty_like(a1, dtype=t0.dtype),
-                    np.empty_like(a1, dtype=z0.dtype), 0)
+            return (mx.empty_like(a1, dtype=t0.dtype),
+                    mx.empty_like(a1, dtype=z0.dtype), 0)
 
     overwrite_a = overwrite_a or (_datacopied(a1, a))
     gees, = get_lapack_funcs(('gees',), (a1,))
     if lwork is None or lwork == -1:
         # get optimal work array
         result = gees(lambda x: None, a1, lwork=-1)
-        lwork = result[-2][0].real.astype(np.int_)
+        lwork = result[-2][0].real.astype(mx.int_)
 
     if sort is None:
         sort_t = 0
@@ -217,8 +215,8 @@ def schur(a, output='real', lwork=None, overwrite_a=False, sort=None,
         return result[0], result[-3], result[1]
 
 
-eps = np.finfo(float).eps
-feps = np.finfo(single).eps
+eps = mx.finfo(float).eps
+feps = mx.finfo(mx.float32).eps
 
 _array_kind = {'b': 0, 'h': 0, 'B': 0, 'i': 0, 'l': 0,
                'f': 0, 'd': 0, 'F': 1, 'D': 1}
@@ -270,9 +268,9 @@ def rsf2csf(T, Z, check_finite=True):
 
     Returns
     -------
-    T : (M, M) ndarray
+    T : (M, M) array
         Complex Schur form of the original array
-    Z : (M, M) ndarray
+    Z : (M, M) array
         Schur transformation matrix corresponding to the complex form
 
     See Also
@@ -281,9 +279,9 @@ def rsf2csf(T, Z, check_finite=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import schur, rsf2csf
-    >>> A = np.array([[0, 2, 2], [0, 1, 2], [1, 0, 1]])
+    >>> A = mx.array([[0, 2, 2], [0, 1, 2], [1, 0, 1]])
     >>> T, Z = schur(A)
     >>> T
     array([[ 2.65896708,  1.42440458, -1.92933439],
@@ -305,9 +303,9 @@ def rsf2csf(T, Z, check_finite=True):
 
     """
     if check_finite:
-        Z, T = map(asarray_chkfinite, (Z, T))
+        Z, T = map(mx.asarray_chkfinite, (Z, T))
     else:
-        Z, T = map(asarray, (Z, T))
+        Z, T = map(mx.asarray, (Z, T))
 
     for ind, X in enumerate([Z, T]):
         if X.ndim != 2 or X.shape[0] != X.shape[1]:
@@ -317,7 +315,7 @@ def rsf2csf(T, Z, check_finite=True):
         message = f"Input array shapes must match: Z: {Z.shape} vs. T: {T.shape}"
         raise ValueError(message)
     N = T.shape[0]
-    t = _commonType(Z, T, array([3.0], 'F'))
+    t = _commonType(Z, T, mx.array([3.0], dtype='F'))
     Z, T = _castCopy(t, Z, T)
 
     for m in range(N-1, 0, -1):
@@ -326,7 +324,7 @@ def rsf2csf(T, Z, check_finite=True):
             r = norm([mu[0], T[m, m-1]])
             c = mu[0] / r
             s = T[m, m-1] / r
-            G = array([[c.conj(), s], [-s, c]], dtype=t)
+            G = mx.array([[c.conj(), s], [-s, c]], dtype=t)
 
             T[m-1:m+1, m-1:] = G.dot(T[m-1:m+1, m-1:])
             T[:m+1, m-1:m+1] = T[:m+1, m-1:m+1].dot(G.conj().T)

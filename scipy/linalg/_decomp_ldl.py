@@ -1,8 +1,6 @@
 from warnings import warn
 
-import numpy as np
-from numpy import (atleast_2d, arange, zeros_like, imag, diag,
-                   iscomplexobj, tril, triu, argsort, empty_like)
+import mlx.core as mx
 from numpy.exceptions import ComplexWarning
 
 from scipy._lib._util import _apply_over_batch
@@ -55,12 +53,12 @@ def ldl(A, lower=True, hermitian=True, overwrite_a=False, check_finite=True):
 
     Returns
     -------
-    lu : ndarray
+    lu : array
         The (possibly) permuted upper/lower triangular outer factor of the
         factorization.
-    d : ndarray
+    d : array
         The block diagonal multiplier of the factorization.
-    perm : ndarray
+    perm : array
         The row-permutation index array that brings lu into triangular form.
 
     Raises
@@ -98,9 +96,9 @@ def ldl(A, lower=True, hermitian=True, overwrite_a=False, check_finite=True):
     Given an upper triangular array ``a`` that represents the full symmetric
     array with its entries, obtain ``l``, 'd' and the permutation vector `perm`:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import ldl
-    >>> a = np.array([[2, -1, 3], [0, 2, 0], [0, 0, 1]])
+    >>> a = mx.array([[2, -1, 3], [0, 2, 0], [0, 0, 1]])
     >>> lu, d, perm = ldl(a, lower=0) # Use the upper part
     >>> lu
     array([[ 0. ,  0. ,  1. ],
@@ -122,20 +120,20 @@ def ldl(A, lower=True, hermitian=True, overwrite_a=False, check_finite=True):
            [ 3.,  0.,  1.]])
 
     """
-    a = atleast_2d(_asarray_validated(A, check_finite=check_finite))
+    a = mx.atleast_2d(_asarray_validated(A, check_finite=check_finite))
     if a.shape[0] != a.shape[1]:
         raise ValueError('The input array "a" should be square.')
     # Return empty arrays for empty square input
     if a.size == 0:
-        return empty_like(a), empty_like(a), np.array([], dtype=int)
+        return mx.empty_like(a), mx.empty_like(a), mx.array([], dtype=int)
 
     n = a.shape[0]
-    r_or_c = complex if iscomplexobj(a) else float
+    r_or_c = complex if mx.iscomplexobj(a) else float
 
     # Get the LAPACK routine
     if r_or_c is complex and hermitian:
         s, sl = 'hetrf', 'hetrf_lwork'
-        if np.any(imag(diag(a))):
+        if mx.any(mx.imag(mx.diag(a))):
             warn('scipy.linalg.ldl():\nThe imaginary parts of the diagonal'
                  'are ignored. Use "hermitian=False" for factorization of'
                  'complex symmetric arrays.', ComplexWarning, stacklevel=2)
@@ -191,7 +189,7 @@ def _ldl_sanitize_ipiv(a, lower=True):
 
     Parameters
     ----------
-    a : ndarray
+    a : array
         The permutation array ipiv returned by LAPACK
     lower : bool, optional
         The switch to select whether upper or lower triangle is chosen in
@@ -199,16 +197,16 @@ def _ldl_sanitize_ipiv(a, lower=True):
 
     Returns
     -------
-    swap_ : ndarray
+    swap_ : array
         The array that defines the row/column swap operations. For example,
         if row two is swapped with row four, the result is [0, 3, 2, 3].
-    pivots : ndarray
+    pivots : array
         The array that defines the block diagonal structure as given above.
 
     """
     n = a.size
-    swap_ = arange(n)
-    pivots = zeros_like(swap_, dtype=int)
+    swap_ = mx.arange(n)
+    pivots = mx.zeros_like(swap_, dtype=int)
     skip_2x2 = False
 
     # Some upper/lower dependent offset values
@@ -250,9 +248,9 @@ def _ldl_get_d_and_l(ldu, pivs, lower=True, hermitian=True):
 
     Parameters
     ----------
-    ldu : ndarray
+    ldu : array
         The compact output returned by the LAPACK routing
-    pivs : ndarray
+    pivs : array
         The sanitized array of {0, 1, 2} denoting the sizes of the pivots. For
         every 2 there is a succeeding 0.
     lower : bool, optional
@@ -262,21 +260,21 @@ def _ldl_get_d_and_l(ldu, pivs, lower=True, hermitian=True):
 
     Returns
     -------
-    d : ndarray
+    d : array
         The block diagonal matrix.
-    lu : ndarray
+    lu : array
         The upper/lower triangular matrix
     """
-    is_c = iscomplexobj(ldu)
-    d = diag(diag(ldu))
+    is_c = mx.iscomplexobj(ldu)
+    d = mx.diag(mx.diag(ldu))
     n = d.shape[0]
     blk_i = 0  # block index
 
     # row/column offsets for selecting sub-, super-diagonal
     x, y = (1, 0) if lower else (0, 1)
 
-    lu = tril(ldu, -1) if lower else triu(ldu, 1)
-    diag_inds = arange(n)
+    lu = mx.tril(ldu, k=-1) if lower else mx.triu(ldu, k=1)
+    diag_inds = mx.arange(n)
     lu[diag_inds, diag_inds] = 1
 
     for blk in pivs[pivs != 0]:
@@ -309,14 +307,14 @@ def _ldl_construct_tri_factor(lu, swap_vec, pivs, lower=True):
 
     Parameters
     ----------
-    lu : ndarray
+    lu : array
         The triangular array that is extracted from LAPACK routine call with
         ones on the diagonals.
-    swap_vec : ndarray
+    swap_vec : array
         The array that defines the row swapping indices. If the kth entry is m
         then rows k,m are swapped. Notice that the mth entry is not necessarily
         k to avoid undoing the swapping.
-    pivs : ndarray
+    pivs : array
         The array that defines the block diagonal structure returned by
         _ldl_sanitize_ipiv().
     lower : bool, optional
@@ -324,9 +322,9 @@ def _ldl_construct_tri_factor(lu, swap_vec, pivs, lower=True):
 
     Returns
     -------
-    lu : ndarray
+    lu : array
         The square outer factor which satisfies the L * D * L.T = A
-    perm : ndarray
+    perm : array
         The permutation vector that brings the lu to the triangular form
 
     Notes
@@ -335,7 +333,7 @@ def _ldl_construct_tri_factor(lu, swap_vec, pivs, lower=True):
 
     """
     n = lu.shape[0]
-    perm = arange(n)
+    perm = mx.arange(n)
     # Setup the reading order of the permutation matrix for upper/lower
     rs, re, ri = (n-1, -1, -1) if lower else (0, n, 1)
 
@@ -353,4 +351,4 @@ def _ldl_construct_tri_factor(lu, swap_vec, pivs, lower=True):
             lu[[s_ind, ind], col_s:col_e] = lu[[ind, s_ind], col_s:col_e]
             perm[[s_ind, ind]] = perm[[ind, s_ind]]
 
-    return lu, argsort(perm)
+    return lu, mx.argsort(perm)

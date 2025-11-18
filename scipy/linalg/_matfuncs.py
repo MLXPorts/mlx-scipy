@@ -4,9 +4,7 @@
 import warnings
 from itertools import product
 
-import numpy as np
-from numpy import (dot, diag, prod, logical_not, ravel, transpose,
-                   conjugate, absolute, amax, sign, isfinite, triu)
+import mlx.core as mx
 
 from scipy._lib._util import _apply_over_batch
 from scipy._lib.deprecation import _NoValue
@@ -26,8 +24,8 @@ __all__ = ['expm', 'cosm', 'sinm', 'tanm', 'coshm', 'sinhm', 'tanhm', 'logm',
            'funm', 'signm', 'sqrtm', 'fractional_matrix_power', 'expm_frechet',
            'expm_cond', 'khatri_rao']
 
-eps = np.finfo('d').eps
-feps = np.finfo('f').eps
+eps = mx.finfo('d').eps
+feps = mx.finfo('f').eps
 
 _array_precision = {'i': 1, 'l': 1, 'f': 0, 'd': 1, 'F': 0, 'D': 1}
 
@@ -50,11 +48,11 @@ def _asarray_square(A):
 
     Returns
     -------
-    out : ndarray
-        An ndarray copy or view or other representation of A.
+    out : array
+        An array copy or view or other representation of A.
 
     """
-    A = np.asarray(A)
+    A = mx.asarray(A)
     if len(A.shape) != 2 or A.shape[0] != A.shape[1]:
         raise ValueError('expected square array_like input')
     return A
@@ -72,9 +70,9 @@ def _maybe_real(A, B, tol=None):
 
     Parameters
     ----------
-    A : ndarray
+    A : array
         Input array whose type is to be checked as real vs. complex.
-    B : ndarray
+    B : array
         Array to be returned, possibly without its imaginary part.
     tol : float
         Absolute tolerance.
@@ -86,10 +84,10 @@ def _maybe_real(A, B, tol=None):
 
     """
     # Note that booleans and integers compare as real.
-    if np.isrealobj(A) and np.iscomplexobj(B):
+    if mx.isrealobj(A) and mx.iscomplexobj(B):
         if tol is None:
             tol = {0: feps*1e3, 1: eps*1e6}[_array_precision[B.dtype.char]]
-        if np.allclose(B.imag, 0.0, atol=tol):
+        if mx.allclose(B.imag, 0.0, atol=tol):
             B = B.real
     return B
 
@@ -126,14 +124,14 @@ def fractional_matrix_power(A, t):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import fractional_matrix_power
-    >>> a = np.array([[1.0, 3.0], [1.0, 4.0]])
+    >>> a = mx.array([[1.0, 3.0], [1.0, 4.0]])
     >>> b = fractional_matrix_power(a, 0.5)
     >>> b
     array([[ 0.75592895,  1.13389342],
            [ 0.37796447,  1.88982237]])
-    >>> np.dot(b, b)      # Verify square root
+    >>> mx.dot(b, b)      # Verify square root
     array([[ 1.,  3.],
            [ 1.,  4.]])
 
@@ -168,7 +166,7 @@ def logm(A, disp=_NoValue):
 
     Returns
     -------
-    logm : (N, N) ndarray
+    logm : (N, N) array
         Matrix logarithm of `A`
     errest : float
         (if disp == False)
@@ -194,9 +192,9 @@ def logm(A, disp=_NoValue):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import logm, expm
-    >>> a = np.array([[1.0, 3.0], [1.0, 4.0]])
+    >>> a = mx.array([[1.0, 3.0], [1.0, 4.0]])
     >>> b = logm(a)
     >>> b
     array([[-1.02571087,  2.05142174],
@@ -212,17 +210,17 @@ def logm(A, disp=_NoValue):
         warnings.warn("The `disp` argument is deprecated "
                       "and will be removed in SciPy 1.18.0.",
                       DeprecationWarning, stacklevel=2)
-    A = np.asarray(A)  # squareness checked in `_logm`
+    A = mx.asarray(A)  # squareness checked in `_logm`
     # Avoid circular import ... this is OK, right?
     import scipy.linalg._matfuncs_inv_ssq
     F = scipy.linalg._matfuncs_inv_ssq._logm(A)
     F = _maybe_real(A, F)
     errtol = 1000*eps
     # TODO use a better error approximation
-    with np.errstate(divide='ignore', invalid='ignore'):
-        errest = norm(expm(F)-A, 1) / np.asarray(norm(A, 1), dtype=A.dtype).real[()]
+    with mx.errstate(divide='ignore', invalid='ignore'):
+        errest = norm(expm(F)-A, 1) / mx.asarray(norm(A, 1), dtype=A.dtype).real[()]
     if disp:
-        if not isfinite(errest) or errest >= errtol:
+        if not mx.isfinite(errest) or errest >= errtol:
             message = f"logm result may be inaccurate, approximate err = {errest}"
             warnings.warn(message, RuntimeWarning, stacklevel=2)
         return F
@@ -239,12 +237,12 @@ def expm(A):
 
     Parameters
     ----------
-    A : ndarray
+    A : array
         Input with last two dimensions are square ``(..., n, n)``.
 
     Returns
     -------
-    eA : ndarray
+    eA : array
         The resulting matrix exponential with the same shape of ``A``
 
     Notes
@@ -274,12 +272,12 @@ def expm(A):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import expm, sinm, cosm
 
     Matrix version of the formula exp(0) = 1:
 
-    >>> expm(np.zeros((3, 2, 2)))
+    >>> expm(mx.zeros((3, 2, 2)))
     array([[[1., 0.],
             [0., 1.]],
     <BLANKLINE>
@@ -292,7 +290,7 @@ def expm(A):
     Euler's identity (exp(i*theta) = cos(theta) + i*sin(theta))
     applied to a matrix:
 
-    >>> a = np.array([[1.0, 2.0], [-1.0, 3.0]])
+    >>> a = mx.array([[1.0, 2.0], [-1.0, 3.0]])
     >>> expm(1j*a)
     array([[ 0.42645930+1.89217551j, -2.13721484-0.97811252j],
            [ 1.06860742+0.48905626j, -1.71075555+0.91406299j]])
@@ -301,9 +299,9 @@ def expm(A):
            [ 1.06860742+0.48905626j, -1.71075555+0.91406299j]])
 
     """
-    a = np.asarray(A)
+    a = mx.asarray(A)
     if a.size == 1 and a.ndim < 2:
-        return np.array([[np.exp(a.item())]])
+        return mx.reshape(mx.exp(a), (1, 1))
 
     if a.ndim < 2:
         raise LinAlgError('The input array must be at least two-dimensional')
@@ -312,34 +310,34 @@ def expm(A):
 
     # Empty array
     if min(*a.shape) == 0:
-        dtype = expm(np.eye(2, dtype=a.dtype)).dtype
-        return np.empty_like(a, dtype=dtype)
+        dtype = expm(mx.eye(2, dtype=a.dtype)).dtype
+        return mx.empty_like(a, dtype=dtype)
 
     # Scalar case
     if a.shape[-2:] == (1, 1):
-        return np.exp(a)
+        return mx.exp(a)
 
-    if not np.issubdtype(a.dtype, np.inexact):
-        a = a.astype(np.float64)
-    elif a.dtype == np.float16:
-        a = a.astype(np.float32)
+    if not mx.issubdtype(a.dtype, mx.inexact):
+        a = a.astype(mx.float64)
+    elif a.dtype == mx.float16:
+        a = a.astype(mx.float32)
 
     # An explicit formula for 2x2 case exists (formula (2.2) in [1]_). However, without
     # Kahan's method, numerical instabilities can occur (See gh-19584). Hence removed
     # here until we have a more stable implementation.
 
     n = a.shape[-1]
-    eA = np.empty(a.shape, dtype=a.dtype)
+    eA = mx.empty(a.shape, dtype=a.dtype)
     # working memory to hold intermediate arrays
-    Am = np.empty((5, n, n), dtype=a.dtype)
+    Am = mx.empty((5, n, n), dtype=a.dtype)
 
-    # Main loop to go through the slices of an ndarray and passing to expm
+    # Main loop to go through the slices of an array and passing to expm
     for ind in product(*[range(x) for x in a.shape[:-2]]):
         aw = a[ind]
 
         lu = bandwidth(aw)
         if not any(lu):  # a is diagonal?
-            eA[ind] = np.diag(np.exp(np.diag(aw)))
+            eA[ind] = mx.diag(mx.exp(mx.diag(aw)))
             continue
 
         # Generic/triangular case; copy the slice into scratch and send.
@@ -371,30 +369,32 @@ def expm(A):
             if (lu[1] == 0) or (lu[0] == 0):  # lower/upper triangular
                 # This branch implements Code Fragment 2.1 of [1]_
 
-                diag_aw = np.diag(aw)
+                diag_aw = mx.diag(aw)
                 # einsum returns a writable view
-                np.einsum('ii->i', eAw)[:] = np.exp(diag_aw * 2**(-s))
+                scale_s = mx.power(mx.array(2.0, dtype=diag_aw.dtype), mx.array(-s, dtype=diag_aw.dtype))
+                mx.einsum('ii->i', eAw)[:] = mx.exp(mx.multiply(diag_aw, scale_s))
                 # super/sub diagonal
-                sd = np.diag(aw, k=-1 if lu[1] == 0 else 1)
+                sd = mx.diag(aw, k=-1 if lu[1] == 0 else 1)
 
                 for i in range(s-1, -1, -1):
                     eAw = eAw @ eAw
 
                     # diagonal
-                    np.einsum('ii->i', eAw)[:] = np.exp(diag_aw * 2.**(-i))
-                    exp_sd = _exp_sinch(diag_aw * (2.**(-i))) * (sd * 2**(-i))
+                    scale_i = mx.power(mx.array(2.0, dtype=diag_aw.dtype), mx.array(-i, dtype=diag_aw.dtype))
+                    mx.einsum('ii->i', eAw)[:] = mx.exp(mx.multiply(diag_aw, scale_i))
+                    exp_sd = mx.multiply(_exp_sinch(mx.multiply(diag_aw, scale_i)), mx.multiply(sd, scale_i))
                     if lu[1] == 0:  # lower
-                        np.einsum('ii->i', eAw[1:, :-1])[:] = exp_sd
+                        mx.einsum('ii->i', eAw[1:, :-1])[:] = exp_sd
                     else:  # upper
-                        np.einsum('ii->i', eAw[:-1, 1:])[:] = exp_sd
+                        mx.einsum('ii->i', eAw[:-1, 1:])[:] = exp_sd
 
             else:  # generic
                 for _ in range(s):
                     eAw = eAw @ eAw
 
-        # Zero out the entries from np.empty in case of triangular input
+        # Zero out the entries from mx.empty in case of triangular input
         if (lu[0] == 0) or (lu[1] == 0):
-            eA[ind] = np.triu(eAw) if lu[0] == 0 else np.tril(eAw)
+            eA[ind] = mx.triu(eAw) if lu[0] == 0 else mx.tril(eAw)
         else:
             eA[ind] = eAw
 
@@ -403,11 +403,11 @@ def expm(A):
 
 def _exp_sinch(x):
     # Higham's formula (10.42), might overflow, see GH-11839
-    lexp_diff = np.diff(np.exp(x))
-    l_diff = np.diff(x)
+    lexp_diff = mx.diff(mx.exp(x))
+    l_diff = mx.diff(x)
     mask_z = l_diff == 0.
     lexp_diff[~mask_z] /= l_diff[~mask_z]
-    lexp_diff[mask_z] = np.exp(x[:-1][mask_z])
+    lexp_diff[mask_z] = mx.exp(x[:-1][mask_z])
     return lexp_diff
 
 
@@ -429,7 +429,7 @@ def sqrtm(A, disp=_NoValue, blocksize=_NoValue):
 
     Parameters
     ----------
-    A : ndarray
+    A : array
         Input with last two dimensions are square ``(..., n, n)``.
     disp : bool, optional
         Print warning if error in the result is estimated large
@@ -448,7 +448,7 @@ def sqrtm(A, disp=_NoValue, blocksize=_NoValue):
 
     Returns
     -------
-    sqrtm : ndarray
+    sqrtm : array
         Computed matrix squareroot of `A` with same size ``(..., n, n)``.
 
     errest : float
@@ -483,9 +483,9 @@ def sqrtm(A, disp=_NoValue, blocksize=_NoValue):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import sqrtm
-    >>> a = np.array([[1.0, 3.0], [1.0, 4.0]])
+    >>> a = mx.array([[1.0, 3.0], [1.0, 4.0]])
     >>> r = sqrtm(a)
     >>> r
     array([[ 0.75592895,  1.13389342],
@@ -506,9 +506,9 @@ def sqrtm(A, disp=_NoValue, blocksize=_NoValue):
                       "SciPy 1.18.0.",
                       DeprecationWarning, stacklevel=2)
 
-    a = np.asarray(A)
+    a = mx.asarray(A)
     if a.size == 1 and a.ndim < 2:
-        return np.array([[np.exp(a.item())]])
+        return mx.reshape(mx.exp(a), (1, 1))
 
     if a.ndim < 2:
         raise LinAlgError('The input array must be at least two-dimensional')
@@ -517,21 +517,21 @@ def sqrtm(A, disp=_NoValue, blocksize=_NoValue):
 
     # Empty array
     if min(*a.shape) == 0:
-        dtype = sqrtm(np.eye(2, dtype=a.dtype)).dtype
-        return np.empty_like(a, dtype=dtype)
+        dtype = sqrtm(mx.eye(2, dtype=a.dtype)).dtype
+        return mx.empty_like(a, dtype=dtype)
 
     # Scalar case
     if a.shape[-2:] == (1, 1):
-        return np.emath.sqrt(a)
+        return mx.emath.sqrt(a)
 
-    if not np.issubdtype(a.dtype, np.inexact):
-        a = a.astype(np.float64)
-    elif a.dtype == np.float16:
-        a = a.astype(np.float32)
+    if not mx.issubdtype(a.dtype, mx.inexact):
+        a = a.astype(mx.float64)
+    elif a.dtype == mx.float16:
+        a = a.astype(mx.float32)
     elif a.dtype.char in 'G':
-        a = a.astype(np.complex128)
+        a = a.astype(mx.complex128)
     elif a.dtype.char in 'g':
-        a = a.astype(np.float64)
+        a = a.astype(mx.float64)
 
     if a.dtype.char not in 'fdFD':
         raise TypeError("scipy.linalg.sqrtm is not supported for the data type"
@@ -555,7 +555,7 @@ def sqrtm(A, disp=_NoValue, blocksize=_NoValue):
             arg2 = norm(res @ res - A, 'fro')**2 / norm(A, 'fro')
         except ValueError:
             # NaNs in matrix
-            arg2 = np.inf
+            arg2 = mx.inf
         return res, arg2
     else:
         return res
@@ -575,18 +575,18 @@ def cosm(A):
 
     Returns
     -------
-    cosm : (N, N) ndarray
+    cosm : (N, N) array
         Matrix cosine of A
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import expm, sinm, cosm
 
     Euler's identity (exp(i*theta) = cos(theta) + i*sin(theta))
     applied to a matrix:
 
-    >>> a = np.array([[1.0, 2.0], [-1.0, 3.0]])
+    >>> a = mx.array([[1.0, 2.0], [-1.0, 3.0]])
     >>> expm(1j*a)
     array([[ 0.42645930+1.89217551j, -2.13721484-0.97811252j],
            [ 1.06860742+0.48905626j, -1.71075555+0.91406299j]])
@@ -596,7 +596,7 @@ def cosm(A):
 
     """
     A = _asarray_square(A)
-    if np.iscomplexobj(A):
+    if mx.iscomplexobj(A):
         return 0.5*(expm(1j*A) + expm(-1j*A))
     else:
         return expm(1j*A).real
@@ -616,18 +616,18 @@ def sinm(A):
 
     Returns
     -------
-    sinm : (N, N) ndarray
+    sinm : (N, N) array
         Matrix sine of `A`
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import expm, sinm, cosm
 
     Euler's identity (exp(i*theta) = cos(theta) + i*sin(theta))
     applied to a matrix:
 
-    >>> a = np.array([[1.0, 2.0], [-1.0, 3.0]])
+    >>> a = mx.array([[1.0, 2.0], [-1.0, 3.0]])
     >>> expm(1j*a)
     array([[ 0.42645930+1.89217551j, -2.13721484-0.97811252j],
            [ 1.06860742+0.48905626j, -1.71075555+0.91406299j]])
@@ -637,10 +637,13 @@ def sinm(A):
 
     """
     A = _asarray_square(A)
-    if np.iscomplexobj(A):
-        return -0.5j*(expm(1j*A) - expm(-1j*A))
+    if mx.iscomplexobj(A):
+        imag_unit = mx.array(1j, dtype=A.dtype)
+        neg_half_j = mx.array(-0.5j, dtype=A.dtype)
+        return mx.multiply(neg_half_j, mx.subtract(expm(mx.multiply(imag_unit, A)), expm(mx.multiply(mx.negative(imag_unit), A))))
     else:
-        return expm(1j*A).imag
+        imag_unit = mx.array(1j, dtype=mx.complex64 if A.dtype == mx.float32 else mx.complex128)
+        return expm(mx.multiply(imag_unit, A)).imag
 
 
 @_apply_over_batch(('A', 2))
@@ -657,14 +660,14 @@ def tanm(A):
 
     Returns
     -------
-    tanm : (N, N) ndarray
+    tanm : (N, N) array
         Matrix tangent of `A`
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import tanm, sinm, cosm
-    >>> a = np.array([[1.0, 3.0], [1.0, 4.0]])
+    >>> a = mx.array([[1.0, 3.0], [1.0, 4.0]])
     >>> t = tanm(a)
     >>> t
     array([[ -2.00876993,  -8.41880636],
@@ -674,7 +677,7 @@ def tanm(A):
 
     >>> s = sinm(a)
     >>> c = cosm(a)
-    >>> s.dot(np.linalg.inv(c))
+    >>> s.dot(mx.linalg.inv(c))
     array([[ -2.00876993,  -8.41880636],
            [ -2.80626879, -10.42757629]])
 
@@ -697,14 +700,14 @@ def coshm(A):
 
     Returns
     -------
-    coshm : (N, N) ndarray
+    coshm : (N, N) array
         Hyperbolic matrix cosine of `A`
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import tanhm, sinhm, coshm
-    >>> a = np.array([[1.0, 3.0], [1.0, 4.0]])
+    >>> a = mx.array([[1.0, 3.0], [1.0, 4.0]])
     >>> c = coshm(a)
     >>> c
     array([[ 11.24592233,  38.76236492],
@@ -714,7 +717,7 @@ def coshm(A):
 
     >>> t = tanhm(a)
     >>> s = sinhm(a)
-    >>> t - s.dot(np.linalg.inv(c))
+    >>> t - s.dot(mx.linalg.inv(c))
     array([[  2.72004641e-15,   4.55191440e-15],
            [  0.00000000e+00,  -5.55111512e-16]])
 
@@ -737,14 +740,14 @@ def sinhm(A):
 
     Returns
     -------
-    sinhm : (N, N) ndarray
+    sinhm : (N, N) array
         Hyperbolic matrix sine of `A`
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import tanhm, sinhm, coshm
-    >>> a = np.array([[1.0, 3.0], [1.0, 4.0]])
+    >>> a = mx.array([[1.0, 3.0], [1.0, 4.0]])
     >>> s = sinhm(a)
     >>> s
     array([[ 10.57300653,  39.28826594],
@@ -754,7 +757,7 @@ def sinhm(A):
 
     >>> t = tanhm(a)
     >>> c = coshm(a)
-    >>> t - s.dot(np.linalg.inv(c))
+    >>> t - s.dot(mx.linalg.inv(c))
     array([[  2.72004641e-15,   4.55191440e-15],
            [  0.00000000e+00,  -5.55111512e-16]])
 
@@ -777,14 +780,14 @@ def tanhm(A):
 
     Returns
     -------
-    tanhm : (N, N) ndarray
+    tanhm : (N, N) array
         Hyperbolic matrix tangent of `A`
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import tanhm, sinhm, coshm
-    >>> a = np.array([[1.0, 3.0], [1.0, 4.0]])
+    >>> a = mx.array([[1.0, 3.0], [1.0, 4.0]])
     >>> t = tanhm(a)
     >>> t
     array([[ 0.3428582 ,  0.51987926],
@@ -794,7 +797,7 @@ def tanhm(A):
 
     >>> s = sinhm(a)
     >>> c = coshm(a)
-    >>> t - s.dot(np.linalg.inv(c))
+    >>> t - s.dot(mx.linalg.inv(c))
     array([[  2.72004641e-15,   4.55191440e-15],
            [  0.00000000e+00,  -5.55111512e-16]])
 
@@ -825,7 +828,7 @@ def funm(A, func, disp=True):
 
     Returns
     -------
-    funm : (N, N) ndarray
+    funm : (N, N) array
         Value of the matrix function specified by func evaluated at `A`
     errest : float
         (if disp == False)
@@ -846,7 +849,7 @@ def funm(A, func, disp=True):
     ...     w, v = eigh(a, check_finite=check_finite)
     ...     ## if you further know that your matrix is positive semidefinite,
     ...     ## you can optionally guard against precision errors by doing
-    ...     # w = np.maximum(w, 0)
+    ...     # w = mx.maximum(w, 0)
     ...     w = func(w)
     ...     return (v * w).dot(v.conj().T)
 
@@ -856,9 +859,9 @@ def funm(A, func, disp=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import funm
-    >>> a = np.array([[1.0, 3.0], [1.0, 4.0]])
+    >>> a = mx.array([[1.0, 3.0], [1.0, 4.0]])
     >>> funm(a, lambda x: x*x)
     array([[  4.,  15.],
            [  5.,  19.]])
@@ -872,7 +875,7 @@ def funm(A, func, disp=True):
     T, Z = schur(A)
     T, Z = rsf2csf(T, Z)
     n, n = T.shape
-    F = diag(func(diag(T)))  # apply function to diagonal elements
+    F = mx.diag(func(mx.diag(T)))  # apply function to diagonal elements
     F = F.astype(T.dtype.char)  # e.g., when F is real but T is complex
 
     minden = abs(T[0, 0])
@@ -881,15 +884,15 @@ def funm(A, func, disp=True):
     #                 "matrix Computations."
     F, minden = _funm_loops(F, T, n, minden)
 
-    F = dot(dot(Z, F), transpose(conjugate(Z)))
+    F = mx.linalg.matmul(mx.linalg.matmul(Z, F), mx.transpose(mx.conj(Z)))
     F = _maybe_real(A, F)
 
     tol = {0: feps, 1: eps}[_array_precision[F.dtype.char]]
     if minden == 0.0:
         minden = tol
-    err = min(1, max(tol, (tol/minden)*norm(triu(T, 1), 1)))
-    if prod(ravel(logical_not(isfinite(F))), axis=0):
-        err = np.inf
+    err = min(1, max(tol, (tol/minden)*norm(mx.triu(T, k=1), 1)))
+    if mx.prod(mx.reshape(mx.logical_not(mx.isfinite(F)), -1), axis=0):
+        err = mx.inf
     if disp:
         if err > 1000*tol:
             print("funm result may be inaccurate, approximate err =", err)
@@ -920,7 +923,7 @@ def signm(A, disp=_NoValue):
 
     Returns
     -------
-    signm : (N, N) ndarray
+    signm : (N, N) array
         Value of the sign function at `A`
     errest : float
         (if disp == False)
@@ -947,7 +950,7 @@ def signm(A, disp=_NoValue):
     A = _asarray_square(A)
 
     def rounded_sign(x):
-        rx = np.real(x)
+        rx = mx.real(x)
         if rx.dtype.char == 'f':
             c = 1e3*feps*amax(x)
         else:
@@ -969,11 +972,11 @@ def signm(A, disp=_NoValue):
     # Shifting to avoid zero eigenvalues. How to ensure that shifting does
     # not change the spectrum too much?
     vals = svd(A, compute_uv=False)
-    max_sv = np.amax(vals)
+    max_sv = mx.amax(vals)
     # min_nonzero_sv = vals[(vals>max_sv*errtol).tolist().count(1)-1]
     # c = 0.5/min_nonzero_sv
     c = 0.5/max_sv
-    S0 = A + c*np.identity(A.shape[0])
+    S0 = A + c*mx.identity(A.shape[0])
     prev_errest = errest
     for i in range(100):
         iS0 = inv(S0)
@@ -1007,7 +1010,7 @@ def khatri_rao(a, b):
 
     Returns
     -------
-    c:  (n*m, k) ndarray
+    c:  (n*m, k) array
         Khatri-rao product of `a` and `b`.
 
     Notes
@@ -1020,14 +1023,14 @@ def khatri_rao(a, b):
 
     which is the Kronecker product of every column of A and B, e.g.::
 
-        c = np.vstack([np.kron(a[:, k], b[:, k]) for k in range(b.shape[1])]).T
+        c = mx.vstack([mx.kron(a[:, k], b[:, k]) for k in range(b.shape[1])]).T
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> a = np.array([[1, 2, 3], [4, 5, 6]])
-    >>> b = np.array([[3, 4, 5], [6, 7, 8], [2, 3, 9]])
+    >>> a = mx.array([[1, 2, 3], [4, 5, 6]])
+    >>> b = mx.array([[3, 4, 5], [6, 7, 8], [2, 3, 9]])
     >>> linalg.khatri_rao(a, b)
     array([[ 3,  8, 15],
            [ 6, 14, 24],
@@ -1037,8 +1040,8 @@ def khatri_rao(a, b):
            [ 8, 15, 54]])
 
     """
-    a = np.asarray(a)
-    b = np.asarray(b)
+    a = mx.asarray(a)
+    b = mx.asarray(b)
 
     if not (a.ndim == 2 and b.ndim == 2):
         raise ValueError("The both arrays should be 2-dimensional.")
@@ -1051,8 +1054,8 @@ def khatri_rao(a, b):
     if a.size == 0 or b.size == 0:
         m = a.shape[0] * b.shape[0]
         n = a.shape[1]
-        return np.empty_like(a, shape=(m, n))
+        return mx.empty_like(a, shape=(m, n))
 
-    # c = np.vstack([np.kron(a[:, k], b[:, k]) for k in range(b.shape[1])]).T
-    c = a[..., :, np.newaxis, :] * b[..., np.newaxis, :, :]
+    # c = mx.vstack([mx.kron(a[:, k], b[:, k]) for k in range(b.shape[1])]).T
+    c = a[..., :, mx.newaxis, :] * b[..., mx.newaxis, :, :]
     return c.reshape((-1,) + c.shape[2:])

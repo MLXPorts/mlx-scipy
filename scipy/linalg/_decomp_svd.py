@@ -1,6 +1,5 @@
 """SVD decomposition functions."""
-import numpy as np
-from numpy import zeros, r_, diag, dot, arccos, arcsin, where, clip
+import mlx.core as mx
 
 from scipy._lib._util import _apply_over_batch
 
@@ -50,13 +49,13 @@ def svd(a, full_matrices=True, compute_uv=True, overwrite_a=False,
 
     Returns
     -------
-    U : ndarray
+    U : array
         Unitary matrix having left singular vectors as columns.
         Of shape ``(M, M)`` or ``(M, K)``, depending on `full_matrices`.
-    s : ndarray
+    s : array
         The singular values, sorted in non-increasing order.
         Of shape (K,), with ``K = min(M, N)``.
-    Vh : ndarray
+    Vh : array
         Unitary matrix having right singular vectors as rows.
         Of shape ``(N, N)`` or ``(K, N)`` depending on `full_matrices`.
 
@@ -74,9 +73,9 @@ def svd(a, full_matrices=True, compute_uv=True, overwrite_a=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> m, n = 9, 6
     >>> a = rng.standard_normal((m, n)) + 1.j*rng.standard_normal((m, n))
     >>> U, s, Vh = linalg.svd(a)
@@ -85,11 +84,11 @@ def svd(a, full_matrices=True, compute_uv=True, overwrite_a=False,
 
     Reconstruct the original matrix from the decomposition:
 
-    >>> sigma = np.zeros((m, n))
+    >>> sigma = mx.zeros((m, n))
     >>> for i in range(min(m, n)):
     ...     sigma[i, i] = s[i]
-    >>> a1 = np.dot(U, np.dot(sigma, Vh))
-    >>> np.allclose(a, a1)
+    >>> a1 = mx.dot(U, mx.dot(sigma, Vh))
+    >>> mx.allclose(a, a1)
     True
 
     Alternatively, use ``full_matrices=False`` (notice that the shape of
@@ -98,12 +97,12 @@ def svd(a, full_matrices=True, compute_uv=True, overwrite_a=False,
     >>> U, s, Vh = linalg.svd(a, full_matrices=False)
     >>> U.shape, s.shape, Vh.shape
     ((9, 6), (6,), (6, 6))
-    >>> S = np.diag(s)
-    >>> np.allclose(a, np.dot(U, np.dot(S, Vh)))
+    >>> S = mx.diag(s)
+    >>> mx.allclose(a, mx.dot(U, mx.dot(S, Vh)))
     True
 
     >>> s2 = linalg.svd(a, compute_uv=False)
-    >>> np.allclose(s, s2)
+    >>> mx.allclose(s, s2)
     True
 
     """
@@ -114,17 +113,17 @@ def svd(a, full_matrices=True, compute_uv=True, overwrite_a=False,
 
     # accommodate empty matrix
     if a1.size == 0:
-        u0, s0, v0 = svd(np.eye(2, dtype=a1.dtype))
+        u0, s0, v0 = svd(mx.eye(2, dtype=a1.dtype))
 
-        s = np.empty_like(a1, shape=(0,), dtype=s0.dtype)
+        s = mx.empty_like(a1, shape=(0,), dtype=s0.dtype)
         if full_matrices:
-            u = np.empty_like(a1, shape=(m, m), dtype=u0.dtype)
-            u[...] = np.identity(m)
-            v = np.empty_like(a1, shape=(n, n), dtype=v0.dtype)
-            v[...] = np.identity(n)
+            u = mx.empty_like(a1, shape=(m, m), dtype=u0.dtype)
+            u[...] = mx.identity(m)
+            v = mx.empty_like(a1, shape=(n, n), dtype=v0.dtype)
+            v[...] = mx.identity(n)
         else:
-            u = np.empty_like(a1, shape=(m, 0), dtype=u0.dtype)
-            v = np.empty_like(a1, shape=(0, n), dtype=v0.dtype)
+            u = mx.empty_like(a1, shape=(m, 0), dtype=u0.dtype)
+            v = mx.empty_like(a1, shape=(0, n), dtype=v0.dtype)
         if compute_uv:
             return u, s, v
         else:
@@ -142,13 +141,13 @@ def svd(a, full_matrices=True, compute_uv=True, overwrite_a=False,
         # XXX: revisit int32 when ILP64 lapack becomes a thing
         max_mn, min_mn = (m, n) if m > n else (n, m)
         if full_matrices:
-            if max_mn*max_mn > np.iinfo(np.int32).max:
+            if max_mn*max_mn > mx.iinfo(mx.int32).max:
                 raise ValueError(f"Indexing a matrix size {max_mn} x {max_mn} "
                                   "would incur integer overflow in LAPACK. "
                                   "Try using numpy.linalg.svd instead.")
         else:
             sz = max(m * min_mn, n * min_mn)
-            if max(m * min_mn, n * min_mn) > np.iinfo(np.int32).max:
+            if max(m * min_mn, n * min_mn) > mx.iinfo(mx.int32).max:
                 raise ValueError(f"Indexing a matrix of {sz} elements would "
                                   "incur an in integer overflow in LAPACK. "
                                   "Try using numpy.linalg.svd instead.")
@@ -198,7 +197,7 @@ def svdvals(a, overwrite_a=False, check_finite=True):
 
     Returns
     -------
-    s : (min(M, N),) ndarray
+    s : (min(M, N),) array
         The singular values, sorted in decreasing order.
 
     Raises
@@ -213,9 +212,9 @@ def svdvals(a, overwrite_a=False, check_finite=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import svdvals
-    >>> m = np.array([[1.0, 0.0],
+    >>> m = mx.array([[1.0, 0.0],
     ...               [2.0, 3.0],
     ...               [1.0, 1.0],
     ...               [0.0, 2.0],
@@ -228,16 +227,16 @@ def svdvals(a, overwrite_a=False, check_finite=True):
     We approximate "all" the unit vectors with a large sample. Because
     of linearity, we only need the unit vectors with angles in [0, pi].
 
-    >>> t = np.linspace(0, np.pi, 2000)
-    >>> u = np.array([np.cos(t), np.sin(t)])
-    >>> np.linalg.norm(m.dot(u), axis=0).max()
+    >>> t = mx.linspace(0, mx.pi, 2000)
+    >>> u = mx.array([mx.cos(t), mx.sin(t)])
+    >>> mx.linalg.norm(m.dot(u), axis=0).max()
     4.2809152422538475
 
     `p` is a projection matrix with rank 1. With exact arithmetic,
     its singular values would be [1, 0, 0, 0].
 
-    >>> v = np.array([0.1, 0.3, 0.9, 0.3])
-    >>> p = np.outer(v, v)
+    >>> v = mx.array([0.1, 0.3, 0.9, 0.3])
+    >>> p = mx.outer(v, v)
     >>> svdvals(p)
     array([  1.00000000e+00,   2.02021698e-17,   1.56692500e-17,
              8.15115104e-34])
@@ -272,7 +271,7 @@ def diagsvd(s, M, N):
 
     Returns
     -------
-    S : (M, N) ndarray
+    S : (M, N) array
         The S-matrix in the singular value decomposition
 
     See Also
@@ -282,9 +281,9 @@ def diagsvd(s, M, N):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import diagsvd
-    >>> vals = np.array([1, 2, 3])  # The array representing the computed svd
+    >>> vals = mx.array([1, 2, 3])  # The array representing the computed svd
     >>> diagsvd(vals, 3, 4)
     array([[1, 0, 0, 0],
            [0, 2, 0, 0],
@@ -296,13 +295,13 @@ def diagsvd(s, M, N):
            [0, 0, 0]])
 
     """
-    part = diag(s)
+    part = mx.diag(s)
     typ = part.dtype.char
     MorN = len(s)
     if MorN == M:
-        return np.hstack((part, zeros((M, N - M), dtype=typ)))
+        return mx.hstack((part, mx.zeros((M, N - M), dtype=typ)))
     elif MorN == N:
-        return r_[part, zeros((M - N, N), dtype=typ)]
+        return mx.concatenate([part, mx.zeros((M - N, N), dtype=typ)], axis=0)
     else:
         raise ValueError("Length of s must be M or N.")
 
@@ -325,7 +324,7 @@ def orth(A, rcond=None):
 
     Returns
     -------
-    Q : (M, K) ndarray
+    Q : (M, K) array
         Orthonormal basis for the range of A.
         K = effective rank of A, as determined by rcond
 
@@ -336,9 +335,9 @@ def orth(A, rcond=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import orth
-    >>> A = np.array([[2, 0, 0], [0, 5, 0]])  # rank 2 array
+    >>> A = mx.array([[2, 0, 0], [0, 5, 0]])  # rank 2 array
     >>> orth(A)
     array([[0., 1.],
            [1., 0.]])
@@ -351,9 +350,9 @@ def orth(A, rcond=None):
     u, s, vh = svd(A, full_matrices=False)
     M, N = u.shape[0], vh.shape[1]
     if rcond is None:
-        rcond = np.finfo(s.dtype).eps * max(M, N)
-    tol = np.amax(s, initial=0.) * rcond
-    num = np.sum(s > tol, dtype=int)
+        rcond = mx.finfo(s.dtype).eps * max(M, N)
+    tol = mx.amax(s, initial=0.) * rcond
+    num = mx.sum(s > tol, dtype=int)
     Q = u[:, :num]
     return Q
 
@@ -387,7 +386,7 @@ def null_space(A, rcond=None, *, overwrite_a=False, check_finite=True,
 
     Returns
     -------
-    Z : (N, K) ndarray
+    Z : (N, K) array
         Orthonormal basis for the null space of A.
         K = dimension of effective null space, as determined by rcond
 
@@ -400,11 +399,11 @@ def null_space(A, rcond=None, *, overwrite_a=False, check_finite=True,
     --------
     1-D null space:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import null_space
-    >>> A = np.array([[1, 1], [1, 1]])
+    >>> A = mx.array([[1, 1], [1, 1]])
     >>> ns = null_space(A)
-    >>> ns * np.copysign(1, ns[0,0])  # Remove the sign ambiguity of the vector
+    >>> ns * mx.copysign(1, ns[0,0])  # Remove the sign ambiguity of the vector
     array([[ 0.70710678],
            [-0.70710678]])
 
@@ -416,7 +415,7 @@ def null_space(A, rcond=None, *, overwrite_a=False, check_finite=True,
     >>> Z = null_space(B)
     >>> Z.shape
     (5, 2)
-    >>> np.allclose(B.dot(Z), 0)
+    >>> mx.allclose(B.dot(Z), 0)
     True
 
     The basis vectors are orthonormal (up to rounding error):
@@ -430,9 +429,9 @@ def null_space(A, rcond=None, *, overwrite_a=False, check_finite=True,
                    check_finite=check_finite, lapack_driver=lapack_driver)
     M, N = u.shape[0], vh.shape[1]
     if rcond is None:
-        rcond = np.finfo(s.dtype).eps * max(M, N)
-    tol = np.amax(s, initial=0.) * rcond
-    num = np.sum(s > tol, dtype=int)
+        rcond = mx.finfo(s.dtype).eps * max(M, N)
+    tol = mx.amax(s, initial=0.) * rcond
+    num = mx.sum(s > tol, dtype=int)
     Q = vh[num:,:].T.conj()
     return Q
 
@@ -451,7 +450,7 @@ def subspace_angles(A, B):
 
     Returns
     -------
-    angles : ndarray, shape (min(N, K),)
+    angles : array, shape (min(N, K),)
         The subspace angles between the column spaces of `A` and `B` in
         descending order.
 
@@ -479,27 +478,27 @@ def subspace_angles(A, B):
     An Hadamard matrix, which has orthogonal columns, so we expect that
     the suspace angle to be :math:`\frac{\pi}{2}`:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import hadamard, subspace_angles
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> H = hadamard(4)
     >>> print(H)
     [[ 1  1  1  1]
      [ 1 -1  1 -1]
      [ 1  1 -1 -1]
      [ 1 -1 -1  1]]
-    >>> np.rad2deg(subspace_angles(H[:, :2], H[:, 2:]))
+    >>> mx.rad2deg(subspace_angles(H[:, :2], H[:, 2:]))
     array([ 90.,  90.])
 
     And the subspace angle of a matrix to itself should be zero:
 
-    >>> subspace_angles(H[:, :2], H[:, :2]) <= 2 * np.finfo(float).eps
+    >>> subspace_angles(H[:, :2], H[:, :2]) <= 2 * mx.finfo(float).eps
     array([ True,  True], dtype=bool)
 
     The angles between non-orthogonal subspaces are in between these extremes:
 
     >>> x = rng.standard_normal((4, 3))
-    >>> np.rad2deg(subspace_angles(x[:, :2], x[:, [2]]))
+    >>> mx.rad2deg(subspace_angles(x[:, :2], x[:, [2]]))
     array([ 55.832])  # random
     """
     # Steps here omit the U and V calculation steps from the paper
@@ -521,25 +520,25 @@ def subspace_angles(A, B):
     del B
 
     # 2. Compute SVD for cosine
-    QA_H_QB = dot(QA.T.conj(), QB)
+    QA_H_QB = mx.matmul(QA.T.conj(), QB)
     sigma = svdvals(QA_H_QB)
 
     # 3. Compute matrix B
     if QA.shape[1] >= QB.shape[1]:
-        B = QB - dot(QA, QA_H_QB)
+        B = QB - mx.matmul(QA, QA_H_QB)
     else:
-        B = QA - dot(QB, QA_H_QB.T.conj())
+        B = QA - mx.matmul(QB, QA_H_QB.T.conj())
     del QA, QB, QA_H_QB
 
     # 4. Compute SVD for sine
     mask = sigma ** 2 >= 0.5
     if mask.any():
-        mu_arcsin = arcsin(clip(svdvals(B, overwrite_a=True), -1., 1.))
+        mu_arcsin = mx.arcsin(mx.clip(svdvals(B, overwrite_a=True), mx.array(-1., dtype=mx.float32), mx.array(1., dtype=mx.float32)))
     else:
-        mu_arcsin = 0.
+        mu_arcsin = mx.array(0., dtype=mx.float32)
 
     # 5. Compute the principal angles
     # with reverse ordering of sigma because smallest sigma belongs to largest
     # angle theta
-    theta = where(mask, mu_arcsin, arccos(clip(sigma[::-1], -1., 1.)))
+    theta = mx.where(mask, mu_arcsin, mx.arccos(mx.clip(sigma[::-1], mx.array(-1., dtype=mx.float32), mx.array(1., dtype=mx.float32))))
     return theta

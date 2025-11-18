@@ -1,5 +1,5 @@
 """Frechet derivative of the matrix exponential."""
-import numpy as np
+import mlx.core as mx
 import scipy.linalg
 from scipy._lib._util import _apply_over_batch
 
@@ -34,9 +34,9 @@ def expm_frechet(A, E, method=None, compute_expm=True, check_finite=True):
 
     Returns
     -------
-    expm_A : ndarray
+    expm_A : array
         Matrix exponential of A.
-    expm_frechet_AE : ndarray
+    expm_frechet_AE : array
         Frechet derivative of the matrix exponential of A in the direction E.
     For ``compute_expm = False``, only `expm_frechet_AE` is returned.
 
@@ -68,9 +68,9 @@ def expm_frechet(A, E, method=None, compute_expm=True, check_finite=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
 
     >>> A = rng.standard_normal((3, 3))
     >>> E = rng.standard_normal((3, 3))
@@ -80,24 +80,24 @@ def expm_frechet(A, E, method=None, compute_expm=True, check_finite=True):
 
     Create a 6x6 matrix containing [[A, E], [0, A]]:
 
-    >>> M = np.zeros((6, 6))
+    >>> M = mx.zeros((6, 6))
     >>> M[:3, :3] = A
     >>> M[:3, 3:] = E
     >>> M[3:, 3:] = A
 
     >>> expm_M = linalg.expm(M)
-    >>> np.allclose(expm_A, expm_M[:3, :3])
+    >>> mx.allclose(expm_A, expm_M[:3, :3])
     True
-    >>> np.allclose(expm_frechet_AE, expm_M[:3, 3:])
+    >>> mx.allclose(expm_frechet_AE, expm_M[:3, 3:])
     True
 
     """
     if check_finite:
-        A = np.asarray_chkfinite(A)
-        E = np.asarray_chkfinite(E)
+        A = mx.asarray_chkfinite(A)
+        E = mx.asarray_chkfinite(E)
     else:
-        A = np.asarray(A)
-        E = np.asarray(E)
+        A = mx.asarray(A)
+        E = mx.asarray(E)
     if A.ndim != 2 or A.shape[0] != A.shape[1]:
         raise ValueError('expected A to be a square matrix')
     if E.ndim != 2 or E.shape[0] != E.shape[1]:
@@ -124,9 +124,9 @@ def expm_frechet_block_enlarge(A, E):
     Return expm(A), frechet(A, E)
     """
     n = A.shape[0]
-    M = np.vstack([
-        np.hstack([A, E]),
-        np.hstack([np.zeros_like(A), A])])
+    M = mx.vstack([
+        mx.hstack([A, E]),
+        mx.hstack([mx.zeros_like(A), A])])
     expm_M = scipy.linalg.expm(M)
     return expm_M[:n, :n], expm_M[:n, n:]
 
@@ -169,7 +169,7 @@ ell_table_61 = (
 def _diff_pade3(A, E, ident):
     b = (120., 60., 12., 1.)
     A2 = A.dot(A)
-    M2 = np.dot(A, E) + np.dot(E, A)
+    M2 = mx.dot(A, E) + mx.dot(E, A)
     U = A.dot(b[3]*A2 + b[1]*ident)
     V = b[2]*A2 + b[0]*ident
     Lu = A.dot(b[3]*M2) + E.dot(b[3]*A2 + b[1]*ident)
@@ -180,9 +180,9 @@ def _diff_pade3(A, E, ident):
 def _diff_pade5(A, E, ident):
     b = (30240., 15120., 3360., 420., 30., 1.)
     A2 = A.dot(A)
-    M2 = np.dot(A, E) + np.dot(E, A)
-    A4 = np.dot(A2, A2)
-    M4 = np.dot(A2, M2) + np.dot(M2, A2)
+    M2 = mx.dot(A, E) + mx.dot(E, A)
+    A4 = mx.dot(A2, A2)
+    M4 = mx.dot(A2, M2) + mx.dot(M2, A2)
     U = A.dot(b[5]*A4 + b[3]*A2 + b[1]*ident)
     V = b[4]*A4 + b[2]*A2 + b[0]*ident
     Lu = (A.dot(b[5]*M4 + b[3]*M2) +
@@ -194,11 +194,11 @@ def _diff_pade5(A, E, ident):
 def _diff_pade7(A, E, ident):
     b = (17297280., 8648640., 1995840., 277200., 25200., 1512., 56., 1.)
     A2 = A.dot(A)
-    M2 = np.dot(A, E) + np.dot(E, A)
-    A4 = np.dot(A2, A2)
-    M4 = np.dot(A2, M2) + np.dot(M2, A2)
-    A6 = np.dot(A2, A4)
-    M6 = np.dot(A4, M2) + np.dot(M4, A2)
+    M2 = mx.dot(A, E) + mx.dot(E, A)
+    A4 = mx.dot(A2, A2)
+    M4 = mx.dot(A2, M2) + mx.dot(M2, A2)
+    A6 = mx.dot(A2, A4)
+    M6 = mx.dot(A4, M2) + mx.dot(M4, A2)
     U = A.dot(b[7]*A6 + b[5]*A4 + b[3]*A2 + b[1]*ident)
     V = b[6]*A6 + b[4]*A4 + b[2]*A2 + b[0]*ident
     Lu = (A.dot(b[7]*M6 + b[5]*M4 + b[3]*M2) +
@@ -211,13 +211,13 @@ def _diff_pade9(A, E, ident):
     b = (17643225600., 8821612800., 2075673600., 302702400., 30270240.,
             2162160., 110880., 3960., 90., 1.)
     A2 = A.dot(A)
-    M2 = np.dot(A, E) + np.dot(E, A)
-    A4 = np.dot(A2, A2)
-    M4 = np.dot(A2, M2) + np.dot(M2, A2)
-    A6 = np.dot(A2, A4)
-    M6 = np.dot(A4, M2) + np.dot(M4, A2)
-    A8 = np.dot(A4, A4)
-    M8 = np.dot(A4, M4) + np.dot(M4, A4)
+    M2 = mx.dot(A, E) + mx.dot(E, A)
+    A4 = mx.dot(A2, A2)
+    M4 = mx.dot(A2, M2) + mx.dot(M2, A2)
+    A6 = mx.dot(A2, A4)
+    M6 = mx.dot(A4, M2) + mx.dot(M4, A2)
+    A8 = mx.dot(A4, A4)
+    M8 = mx.dot(A4, M4) + mx.dot(M4, A4)
     U = A.dot(b[9]*A8 + b[7]*A6 + b[5]*A4 + b[3]*A2 + b[1]*ident)
     V = b[8]*A8 + b[6]*A6 + b[4]*A4 + b[2]*A2 + b[0]*ident
     Lu = (A.dot(b[9]*M8 + b[7]*M6 + b[5]*M4 + b[3]*M2) +
@@ -229,7 +229,7 @@ def _diff_pade9(A, E, ident):
 def expm_frechet_algo_64(A, E):
     n = A.shape[0]
     s = None
-    ident = np.identity(n)
+    ident = mx.identity(n)
     A_norm_1 = scipy.linalg.norm(A, 1)
     m_pade_pairs = (
             (3, _diff_pade3),
@@ -243,16 +243,17 @@ def expm_frechet_algo_64(A, E):
             break
     if s is None:
         # scaling
-        s = max(0, int(np.ceil(np.log2(A_norm_1 / ell_table_61[13]))))
-        A = A * 2.0**-s
-        E = E * 2.0**-s
+        s = max(0, int(mx.ceil(mx.log2(A_norm_1 / ell_table_61[13]))))
+        scale_factor = mx.power(mx.array(2.0, dtype=A.dtype), mx.array(-s, dtype=A.dtype))
+        A = mx.multiply(A, scale_factor)
+        E = mx.multiply(E, scale_factor)
         # pade order 13
-        A2 = np.dot(A, A)
-        M2 = np.dot(A, E) + np.dot(E, A)
-        A4 = np.dot(A2, A2)
-        M4 = np.dot(A2, M2) + np.dot(M2, A2)
-        A6 = np.dot(A2, A4)
-        M6 = np.dot(A4, M2) + np.dot(M4, A2)
+        A2 = mx.dot(A, A)
+        M2 = mx.dot(A, E) + mx.dot(E, A)
+        A4 = mx.dot(A2, A2)
+        M4 = mx.dot(A2, M2) + mx.dot(M2, A2)
+        A6 = mx.dot(A2, A4)
+        M6 = mx.dot(A4, M2) + mx.dot(M4, A2)
         b = (64764752532480000., 32382376266240000., 7771770303897600.,
                 1187353796428800., 129060195264000., 10559470521600.,
                 670442572800., 33522128640., 1323241920., 40840800., 960960.,
@@ -261,24 +262,24 @@ def expm_frechet_algo_64(A, E):
         W2 = b[7]*A6 + b[5]*A4 + b[3]*A2 + b[1]*ident
         Z1 = b[12]*A6 + b[10]*A4 + b[8]*A2
         Z2 = b[6]*A6 + b[4]*A4 + b[2]*A2 + b[0]*ident
-        W = np.dot(A6, W1) + W2
-        U = np.dot(A, W)
-        V = np.dot(A6, Z1) + Z2
+        W = mx.dot(A6, W1) + W2
+        U = mx.dot(A, W)
+        V = mx.dot(A6, Z1) + Z2
         Lw1 = b[13]*M6 + b[11]*M4 + b[9]*M2
         Lw2 = b[7]*M6 + b[5]*M4 + b[3]*M2
         Lz1 = b[12]*M6 + b[10]*M4 + b[8]*M2
         Lz2 = b[6]*M6 + b[4]*M4 + b[2]*M2
-        Lw = np.dot(A6, Lw1) + np.dot(M6, W1) + Lw2
-        Lu = np.dot(A, Lw) + np.dot(E, W)
-        Lv = np.dot(A6, Lz1) + np.dot(M6, Z1) + Lz2
+        Lw = mx.dot(A6, Lw1) + mx.dot(M6, W1) + Lw2
+        Lu = mx.dot(A, Lw) + mx.dot(E, W)
+        Lv = mx.dot(A6, Lz1) + mx.dot(M6, Z1) + Lz2
     # factor once and solve twice
     lu_piv = scipy.linalg.lu_factor(-U + V)
     R = scipy.linalg.lu_solve(lu_piv, U + V)
-    L = scipy.linalg.lu_solve(lu_piv, Lu + Lv + np.dot((Lu - Lv), R))
+    L = scipy.linalg.lu_solve(lu_piv, Lu + Lv + mx.dot((Lu - Lv), R))
     # squaring
     for k in range(s):
-        L = np.dot(R, L) + np.dot(L, R)
-        R = np.dot(R, R)
+        L = mx.dot(R, L) + mx.dot(L, R)
+        R = mx.dot(R, R)
     return R, L
 
 
@@ -295,7 +296,7 @@ def vec(M):
 
     Returns
     -------
-    v : 1-D ndarray
+    v : 1-D array
         Output vector
 
     """
@@ -319,7 +320,7 @@ def expm_frechet_kronform(A, method=None, check_finite=True):
 
     Returns
     -------
-    K : 2-D ndarray with shape (N*N, N*N)
+    K : 2-D array with shape (N*N, N*N)
         Kronecker form of the Frechet derivative of the matrix exponential.
 
     Notes
@@ -336,22 +337,22 @@ def expm_frechet_kronform(A, method=None, check_finite=True):
 
     """
     if check_finite:
-        A = np.asarray_chkfinite(A)
+        A = mx.asarray_chkfinite(A)
     else:
-        A = np.asarray(A)
+        A = mx.asarray(A)
     if len(A.shape) != 2 or A.shape[0] != A.shape[1]:
         raise ValueError('expected a square matrix')
 
     n = A.shape[0]
-    ident = np.identity(n)
+    ident = mx.identity(n)
     cols = []
     for i in range(n):
         for j in range(n):
-            E = np.outer(ident[i], ident[j])
+            E = mx.outer(ident[i], ident[j])
             F = expm_frechet(A, E,
                     method=method, compute_expm=False, check_finite=False)
             cols.append(vec(F))
-    return np.vstack(cols).T
+    return mx.vstack(cols).T
 
 
 @_apply_over_batch(('A', 2))
@@ -388,18 +389,18 @@ def expm_cond(A, check_finite=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import expm_cond
-    >>> A = np.array([[-0.3, 0.2, 0.6], [0.6, 0.3, -0.1], [-0.7, 1.2, 0.9]])
+    >>> A = mx.array([[-0.3, 0.2, 0.6], [0.6, 0.3, -0.1], [-0.7, 1.2, 0.9]])
     >>> k = expm_cond(A)
     >>> k
     1.7787805864469866
 
     """
     if check_finite:
-        A = np.asarray_chkfinite(A)
+        A = mx.asarray_chkfinite(A)
     else:
-        A = np.asarray(A)
+        A = mx.asarray(A)
     if len(A.shape) != 2 or A.shape[0] != A.shape[1]:
         raise ValueError('expected a square matrix')
 

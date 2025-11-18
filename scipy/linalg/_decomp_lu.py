@@ -2,8 +2,7 @@
 
 from warnings import warn
 
-from numpy import asarray, asarray_chkfinite
-import numpy as np
+import mlx.core as mx
 from itertools import product
 
 from scipy._lib._util import _apply_over_batch
@@ -42,10 +41,10 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
 
     Returns
     -------
-    lu : (M, N) ndarray
+    lu : (M, N) array
         Matrix containing U in its upper triangle, and L in its lower triangle.
         The unit diagonal elements of L are not stored.
-    piv : (K,) ndarray
+    piv : (K,) array
         Pivot indices representing the permutation matrix P:
         row i of matrix was interchanged with row piv[i].
         Of shape ``(K,)``, with ``K = min(M, N)``.
@@ -66,9 +65,9 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import lu_factor
-    >>> A = np.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]])
+    >>> A = mx.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]])
     >>> lu, piv = lu_factor(A)
     >>> piv
     array([2, 2, 3, 3], dtype=int32)
@@ -76,7 +75,7 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
     Convert LAPACK's ``piv`` array to NumPy index and test the permutation
 
     >>> def pivot_to_permutation(piv):
-    ...     perm = np.arange(len(piv))
+    ...     perm = mx.arange(len(piv))
     ...     for i in range(len(piv)):
     ...         perm[i], perm[piv[i]] = perm[piv[i]], perm[i]
     ...     return perm
@@ -84,34 +83,34 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
     >>> p_inv = pivot_to_permutation(piv)
     >>> p_inv
     array([2, 0, 3, 1])
-    >>> L, U = np.tril(lu, k=-1) + np.eye(4), np.triu(lu)
-    >>> np.allclose(A[p_inv] - L @ U, np.zeros((4, 4)))
+    >>> L, U = mx.tril(lu, k=-1) + mx.eye(4), mx.triu(lu)
+    >>> mx.allclose(A[p_inv] - L @ U, mx.zeros((4, 4)))
     True
 
     The P matrix in P L U is defined by the inverse permutation and
     can be recovered using argsort:
 
-    >>> p = np.argsort(p_inv)
+    >>> p = mx.argsort(p_inv)
     >>> p
     array([1, 3, 0, 2])
-    >>> np.allclose(A - L[p] @ U, np.zeros((4, 4)))
+    >>> mx.allclose(A - L[p] @ U, mx.zeros((4, 4)))
     True
 
     or alternatively:
 
-    >>> P = np.eye(4)[p]
-    >>> np.allclose(A - P @ L @ U, np.zeros((4, 4)))
+    >>> P = mx.eye(4)[p]
+    >>> mx.allclose(A - P @ L @ U, mx.zeros((4, 4)))
     True
     """
     if check_finite:
-        a1 = asarray_chkfinite(a)
+        a1 = mx.asarray_chkfinite(a)
     else:
-        a1 = asarray(a)
+        a1 = mx.asarray(a)
 
     # accommodate empty arrays
     if a1.size == 0:
-        lu = np.empty_like(a1)
-        piv = np.arange(0, dtype=np.int32)
+        lu = mx.empty_like(a1)
+        piv = mx.arange(0, dtype=mx.int32)
         return lu, piv
 
     overwrite_a = overwrite_a or (_datacopied(a1, a))
@@ -174,13 +173,13 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import lu_factor, lu_solve
-    >>> A = np.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]])
-    >>> b = np.array([1, 1, 1, 1])
+    >>> A = mx.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]])
+    >>> b = mx.array([1, 1, 1, 1])
     >>> lu, piv = lu_factor(A)
     >>> x = lu_solve((lu, piv), b)
-    >>> np.allclose(A @ x - b, np.zeros((4,)))
+    >>> mx.allclose(A @ x - b, mx.zeros((4,)))
     True
 
     """
@@ -192,9 +191,9 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
 @_apply_over_batch(('lu', 2), ('piv', 1), ('b', '1|2'))
 def _lu_solve(lu, piv, b, trans, overwrite_b, check_finite):
     if check_finite:
-        b1 = asarray_chkfinite(b)
+        b1 = mx.asarray_chkfinite(b)
     else:
-        b1 = asarray(b)
+        b1 = mx.asarray(b)
 
     overwrite_b = overwrite_b or _datacopied(b1, b)
 
@@ -203,8 +202,8 @@ def _lu_solve(lu, piv, b, trans, overwrite_b, check_finite):
 
     # accommodate empty arrays
     if b1.size == 0:
-        m = lu_solve((np.eye(2, dtype=lu.dtype), [0, 1]), np.ones(2, dtype=b.dtype))
-        return np.empty_like(b1, dtype=m.dtype)
+        m = lu_solve((mx.eye(2, dtype=lu.dtype), [0, 1]), mx.ones(2, dtype=b.dtype))
+        return mx.empty_like(b1, dtype=m.dtype)
 
     getrs, = get_lapack_funcs(('getrs',), (lu, b1))
     x, info = getrs(lu, piv, b1, trans=trans, overwrite_b=overwrite_b)
@@ -253,14 +252,14 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True,
         The tuple `(p, l, u)` is returned if `permute_l` is ``False`` (default) else
         the tuple `(pl, u)` is returned, where:
 
-        p : (..., M, M) ndarray
+        p : (..., M, M) array
             Permutation arrays or vectors depending on `p_indices`.
-        l : (..., M, K) ndarray
+        l : (..., M, K) array
             Lower triangular or trapezoidal array with unit diagonal, where the last
             dimension is ``K = min(M, N)``.
-        pl : (..., M, K) ndarray
+        pl : (..., M, K) array
             Permuted L matrix with last dimension being ``K = min(M, N)``.
-        u : (..., K, N) ndarray
+        u : (..., K, N) array
             Upper triangular or trapezoidal array.
 
     Notes
@@ -273,16 +272,16 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True,
 
     In 2D case, if one has the indices however, for some reason, the
     permutation matrix is still needed then it can be constructed by
-    ``np.eye(M)[P, :]``.
+    ``mx.eye(M)[P, :]``.
 
     Examples
     --------
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import lu
-    >>> A = np.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]])
+    >>> A = mx.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]])
     >>> p, l, u = lu(A)
-    >>> np.allclose(A, p @ l @ u)
+    >>> mx.allclose(A, p @ l @ u)
     True
     >>> p  # Permutation matrix
     array([[0., 1., 0., 0.],  # Row index 1
@@ -292,24 +291,24 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True,
     >>> p, _, _ = lu(A, p_indices=True)
     >>> p
     array([1, 3, 0, 2], dtype=int32)  # as given by row indices above
-    >>> np.allclose(A, l[p, :] @ u)
+    >>> mx.allclose(A, l[p, :] @ u)
     True
 
     We can also use nd-arrays, for example, a demonstration with 4D array:
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> A = rng.uniform(low=-4, high=4, size=[3, 2, 4, 8])
     >>> p, l, u = lu(A)
     >>> p.shape, l.shape, u.shape
     ((3, 2, 4, 4), (3, 2, 4, 4), (3, 2, 4, 8))
-    >>> np.allclose(A, p @ l @ u)
+    >>> mx.allclose(A, p @ l @ u)
     True
     >>> PL, U = lu(A, permute_l=True)
-    >>> np.allclose(A, PL @ U)
+    >>> mx.allclose(A, PL @ U)
     True
 
     """
-    a1 = np.asarray_chkfinite(a) if check_finite else np.asarray(a)
+    a1 = mx.asarray_chkfinite(a) if check_finite else mx.asarray(a)
     if a1.ndim < 2:
         raise ValueError('The input array must be at least two-dimensional.')
 
@@ -323,24 +322,24 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True,
     # Empty input
     if min(*a1.shape) == 0:
         if permute_l:
-            PL = np.empty(shape=[*nd, m, k], dtype=a1.dtype)
-            U = np.empty(shape=[*nd, k, n], dtype=a1.dtype)
+            PL = mx.empty(shape=[*nd, m, k], dtype=a1.dtype)
+            U = mx.empty(shape=[*nd, k, n], dtype=a1.dtype)
             return PL, U
         else:
-            P = (np.empty([*nd, 0], dtype=np.int32) if p_indices else
-                 np.empty([*nd, 0, 0], dtype=real_dchar))
-            L = np.empty(shape=[*nd, m, k], dtype=a1.dtype)
-            U = np.empty(shape=[*nd, k, n], dtype=a1.dtype)
+            P = (mx.empty([*nd, 0], dtype=mx.int32) if p_indices else
+                 mx.empty([*nd, 0, 0], dtype=real_dchar))
+            L = mx.empty(shape=[*nd, m, k], dtype=a1.dtype)
+            U = mx.empty(shape=[*nd, k, n], dtype=a1.dtype)
             return P, L, U
 
     # Scalar case
     if a1.shape[-2:] == (1, 1):
         if permute_l:
-            return np.ones_like(a1), (a1 if overwrite_a else a1.copy())
+            return mx.ones_like(a1), (a1 if overwrite_a else a1.copy())
         else:
-            P = (np.zeros(shape=[*nd, m], dtype=int) if p_indices
-                 else np.ones_like(a1))
-            return P, np.ones_like(a1), (a1 if overwrite_a else a1.copy())
+            P = (mx.zeros(shape=[*nd, m], dtype=int) if p_indices
+                 else mx.ones_like(a1))
+            return P, mx.ones_like(a1), (a1 if overwrite_a else a1.copy())
 
     # Then check overwrite permission
     if not _datacopied(a1, a):  # "a"  still alive through "a1"
@@ -358,24 +357,24 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True,
 
     if not nd:  # 2D array
 
-        p = np.empty(m, dtype=np.int32)
-        u = np.zeros([k, k], dtype=a1.dtype)
+        p = mx.empty(m, dtype=mx.int32)
+        u = mx.zeros([k, k], dtype=a1.dtype)
         lu_dispatcher(a1, u, p, permute_l)
         P, L, U = (p, a1, u) if m > n else (p, u, a1)
 
     else:  # Stacked array
 
         # Prepare the contiguous data holders
-        P = np.empty([*nd, m], dtype=np.int32)  # perm vecs
+        P = mx.empty([*nd, m], dtype=mx.int32)  # perm vecs
 
         if m > n:  # Tall arrays, U will be created
-            U = np.zeros([*nd, k, k], dtype=a1.dtype)
+            U = mx.zeros([*nd, k, k], dtype=a1.dtype)
             for ind in product(*[range(x) for x in a1.shape[:-2]]):
                 lu_dispatcher(a1[ind], U[ind], P[ind], permute_l)
             L = a1
 
         else:  # Fat arrays, L will be created
-            L = np.zeros([*nd, k, k], dtype=a1.dtype)
+            L = mx.zeros([*nd, k, k], dtype=a1.dtype)
             for ind in product(*[range(x) for x in a1.shape[:-2]]):
                 lu_dispatcher(a1[ind], L[ind], P[ind], permute_l)
             U = a1
@@ -384,14 +383,14 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True,
     # permute_l=False needed to enter here to avoid wasted efforts
     if (not p_indices) and (not permute_l):
         if nd:
-            Pa = np.zeros([*nd, m, m], dtype=real_dchar)
+            Pa = mx.zeros([*nd, m, m], dtype=real_dchar)
             # An unreadable index hack - One-hot encoding for perm matrices
-            nd_ix = np.ix_(*([np.arange(x) for x in nd]+[np.arange(m)]))
+            nd_ix = mx.ix_(*([mx.arange(x) for x in nd]+[mx.arange(m)]))
             Pa[(*nd_ix, P)] = 1
             P = Pa
         else:  # 2D case
-            Pa = np.zeros([m, m], dtype=real_dchar)
-            Pa[np.arange(m), P] = 1
+            Pa = mx.zeros([m, m], dtype=real_dchar)
+            Pa[mx.arange(m), P] = 1
             P = Pa
 
     return (L, U) if permute_l else (P, L, U)
