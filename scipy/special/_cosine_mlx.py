@@ -40,12 +40,15 @@ def _polevl(x, coeffs):
     result : array
         Polynomial evaluated at x
     """
-    # Convert coefficients to MLX array
-    c = mx.array(coeffs[::-1], dtype=mx.float32)  # Reverse for Horner's method
+    # Convert coefficients to MLX array with explicit dtype
+    # Reverse for Horner's method: evaluate from highest to lowest degree
+    c = mx.array(coeffs[::-1], dtype=x.dtype)
 
     # Horner's method: p(x) = c[0] + x*(c[1] + x*(c[2] + ...))
-    result = c[0]
-    for coeff in c[1:]:
+    # Use Python loop with explicit MLX array indexing to preserve dtype
+    result = c[0:1].squeeze()  # Extract first element as MLX array
+    for i in range(1, len(c)):
+        coeff = c[i:i+1].squeeze()  # Extract as MLX array, not Python scalar
         result = mx.add(mx.multiply(result, x), coeff)
 
     return result
@@ -69,22 +72,22 @@ def _cosine_cdf_pade_approx_at_neg_pi(x):
         CDF values
     """
     # Numerator coefficients (only non-zero terms in h^3 * P(h^2))
-    numer_coeffs = mx.array([
-        mx.array(-3.8360369451359084e-08, dtype=mx.float32),
-        mx.array(1.0235408442872927e-05, dtype=mx.float32),
-        mx.array(-0.0007883197097740538, dtype=mx.float32),
-        mx.array(0.026525823848649224, dtype=mx.float32)
-    ], dtype=mx.float32)
+    numer_coeffs = [
+        -3.8360369451359084e-08,
+        1.0235408442872927e-05,
+        -0.0007883197097740538,
+        0.026525823848649224
+    ]
 
     # Denominator coefficients
-    denom_coeffs = mx.array([
-        mx.array(1.6955280904096042e-11, dtype=mx.float32),
-        mx.array(6.498171564823105e-09, dtype=mx.float32),
-        mx.array(1.4162345851873058e-06, dtype=mx.float32),
-        mx.array(0.00020944197182753272, dtype=mx.float32),
-        mx.array(0.020281047093125535, dtype=mx.float32),
-        mx.array(1.0, dtype=mx.float32)
-    ], dtype=mx.float32)
+    denom_coeffs = [
+        1.6955280904096042e-11,
+        6.498171564823105e-09,
+        1.4162345851873058e-06,
+        0.00020944197182753272,
+        0.020281047093125535,
+        1.0
+    ]
 
     # Compute h = x + π with high precision
     h = mx.add(mx.add(x, M_PI64), PI_CORRECTION)
@@ -92,8 +95,8 @@ def _cosine_cdf_pade_approx_at_neg_pi(x):
     h3 = mx.multiply(h2, h)
 
     # Evaluate polynomials
-    numer = mx.multiply(h3, _polevl(h2, numer_coeffs.tolist()))
-    denom = _polevl(h2, denom_coeffs.tolist())
+    numer = mx.multiply(h3, _polevl(h2, numer_coeffs))
+    denom = _polevl(h2, denom_coeffs)
 
     return mx.divide(numer, denom)
 
@@ -211,10 +214,10 @@ def _poly_approx(s):
     coeffs = [
         1.1911667949082915e-08,
         1.683039183039183e-07,
-        43.0/17248000,
-        1.0/25200,
-        1.0/1400,
-        1.0/60,
+        2.4930426716141005e-06,  # 43.0/17248000
+        3.968253968253968e-05,   # 1.0/25200
+        0.0007142857142857143,   # 1.0/1400
+        0.016666666666666666,    # 1.0/60
         1.0
     ]
 

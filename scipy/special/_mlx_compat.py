@@ -61,7 +61,14 @@ def extract(condition, arr):
     """
     arr = mx.array(arr)
     condition = mx.array(condition, dtype=mx.bool_)
-    return arr[condition]
+    # MLX doesn't support boolean indexing directly
+    # Get indices where condition is True using Python list comprehension
+    cond_list = condition.tolist() if hasattr(condition, 'tolist') else list(condition)
+    indices = [i for i, c in enumerate(cond_list) if c]
+    if not indices:
+        return mx.array([], dtype=arr.dtype)
+    indices_mx = mx.array(indices, dtype=mx.int32)
+    return arr[indices_mx]
 
 
 def sinc(x):
@@ -155,9 +162,5 @@ def hstack(tup):
     return mx.concatenate(arrs, axis=1)
 
 
-# Add these functions to mx namespace for convenience
-mx.place = place
-mx.extract = extract
-mx.sinc = sinc
-mx.isscalar = isscalar
-mx.hstack = hstack
+# Note: Do not add these functions to mx namespace as it causes recursion issues
+# Functions should be imported directly from this module instead
