@@ -254,8 +254,11 @@ def cosine_invcdf(p):
     # Initialize result
     result = mx.where(invalid, mx.array(mx.nan, dtype=mx.float32), mx.array(0.0, dtype=mx.float32))
 
-    # Handle boundary cases
-    very_small = mx.less_equal(p, mx.array(1e-48, dtype=mx.float32))
+    # Handle boundary cases (only for valid inputs)
+    very_small = mx.logical_and(
+        mx.logical_not(invalid),
+        mx.less_equal(p, mx.array(1e-48, dtype=mx.float32))
+    )
     result = mx.where(very_small, mx.negative(M_PI64), result)
 
     is_one = mx.equal(p, mx.array(1.0, dtype=mx.float32))
