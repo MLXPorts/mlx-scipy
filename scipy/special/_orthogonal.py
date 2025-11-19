@@ -106,14 +106,14 @@ _rootfuns_map = {'roots_legendre': 'p_roots',
                  'roots_sh_chebyu': 'us_roots',
                  'roots_sh_jacobi': 'js_roots'}
 
-__all__ = _polyfuns + list(_rootfuns_map.keys())
+__all__ = mx.add(_polyfuns, list(_rootfuns_map.keys()))
 
 
 class orthopoly1d(mx.poly1d):
 
     def __init__(self, roots, weights=None, hn=1.0, kn=1.0, wfunc=None,
                  limits=None, monic=False, eval_func=None):
-        equiv_weights = [weights[k] / wfunc(roots[k]) for
+        equiv_weights = [mx.divide(weights[k], wfunc(roots[k])) for
                          k in range(len(roots))]
         mu = mx.sqrt(hn)
         if monic:
@@ -121,13 +121,13 @@ class orthopoly1d(mx.poly1d):
             if evf:
                 knn = kn
                 def eval_func(x):
-                    return evf(x) / knn
-            mu = mu / abs(kn)
+                    return mx.divide(evf(x), knn)
+            mu = mx.divide(mu, abs(kn))
             kn = 1.0
 
         # compute coefficients from roots, then scale
         poly = mx.poly1d(roots, r=True)
-        mx.poly1d.__init__(self, poly.coeffs * float(kn))
+        mx.poly1d.__init__(self, mx.multiply(poly.coeffs, float(kn)))
 
         self.weights = mx.array(list(zip(roots, weights, equiv_weights)))
         self.weight_func = wfunc
@@ -146,12 +146,12 @@ class orthopoly1d(mx.poly1d):
     def _scale(self, p):
         if p == 1.0:
             return
-        self._coeffs *= p
+        self._coeffs = mx.multiply(self._coeffs, p)
 
         evf = self._eval_func
         if evf:
-            self._eval_func = lambda x: evf(x) * p
-        self.normcoef *= p
+            self._eval_func = lambda x: mx.multiply(evf(x), p)
+        self.normcoef = mx.multiply(self.normcoef, p)
 
 
 def _gen_roots_and_weights(n, mu0, an_func, bn_func, f, df, symmetrize, mu):
@@ -180,22 +180,22 @@ def _gen_roots_and_weights(n, mu0, an_func, bn_func, f, df, symmetrize, mu):
     # improve roots by one application of Newton's method
     y = f(n, x)
     dy = df(n, x)
-    x -= y/dy
+    x = mx.subtract(x, mx.divide(y, dy))
 
     # fm and dy may contain very large/small values, so we
     # log-normalize them to maintain precision in the product fm*dy
     fm = f(n-1, x)
     log_fm = mx.log(mx.abs(fm))
     log_dy = mx.log(mx.abs(dy))
-    fm /= mx.exp((log_fm.max() + log_fm.min()) / 2.)
-    dy /= mx.exp((log_dy.max() + log_dy.min()) / 2.)
-    w = 1.0 / (fm * dy)
+    fm = mx.divide(fm, mx.exp(mx.divide(mx.add(log_fm.max(), log_fm.min()), mx.array(2.0))))
+    dy = mx.divide(dy, mx.exp(mx.divide(mx.add(log_dy.max(), log_dy.min()), mx.array(2.0))))
+    w = mx.divide(mx.array(1.0), mx.multiply(fm, dy))
 
     if symmetrize:
-        w = (w + w[::-1]) / 2
-        x = (x - x[::-1]) / 2
+        w = mx.divide(mx.add(w, w[::-1]), mx.array(2))
+        x = mx.divide(mx.subtract(x, x[::-1]), mx.array(2))
 
-    w *= mu0 / w.sum()
+    w = mx.multiply(w, mx.divide(mu0, w.sum()))
 
     if mu:
         return x, w, mu0
@@ -256,38 +256,38 @@ def roots_jacobi(n, alpha, beta, mu=False):
     if alpha == 0.0 and beta == 0.0:
         return roots_legendre(m, mu)
     if alpha == beta:
-        return roots_gegenbauer(m, alpha+0.5, mu)
+        return roots_gegenbauer(m, mx.add(alpha, 0.5), mu)
 
     if (alpha + beta) <= 1000:
-        mu0 = 2.0**(alpha+beta+1) * _ufuncs.beta(alpha+1, beta+1)
+        mu0 = mx.multiply(mx.power(mx.array(2.0), mx.add(mx.add(alpha, beta), mx.array(1))), _ufuncs.beta(alpha+1, beta+1))
     else:
         # Avoid overflows in pow and beta for very large parameters
-        mu0 = mx.exp((alpha + beta + 1) * mx.log(2.0)
-                     + _ufuncs.betaln(alpha+1, beta+1))
+        mu0 = mx.exp(mx.add(mx.multiply(mx.add(mx.add(alpha, beta), mx.array(1)), mx.log(mx.array(2.0))),
+                            _ufuncs.betaln(alpha+1, beta+1)))
     a = alpha
     b = beta
     if a + b == 0.0:
         def an_func(k):
-            return mx.where(k == 0, (b - a) / (2 + a + b), 0.0)
+            return mx.where(k == 0, (mx.subtract(b, a)) / (mx.add(2, a) + b), 0.0)
     else:
         def an_func(k):
             return mx.where(
-                k == 0,
-                (b - a) / (2 + a + b),
-                (b * b - a * a) / ((2.0 * k + a + b) * (2.0 * k + a + b + 2))
+                mx.equal(k, 0),
+                (mx.subtract(b, a)) / (mx.add(2, a) + b),
+                (mx.subtract(mx.multiply(b, b), mx.multiply(a, a))) / ((mx.add(mx.multiply(2.0, k), a) + b) * (mx.add(mx.multiply(2.0, k), a) + mx.add(b, 2)))
             )
 
     def bn_func(k):
         return (
-            2.0 / (2.0 * k + a + b)
-            * mx.sqrt((k + a) * (k + b) / (2 * k + a + b + 1))
-            * mx.where(k == 1, 1.0, mx.sqrt(k * (k + a + b) / (2.0 * k + a + b - 1)))
+            2.0 / (mx.add(mx.multiply(2.0, k), a) + b)
+            * mx.sqrt((mx.add(k, a)) * (mx.add(k, b)) / (mx.add(mx.multiply(2, k), a) + mx.add(b, 1)))
+            * mx.where(mx.equal(k, 1), 1.0, mx.sqrt(k * (mx.add(k, a) + b) / (mx.add(mx.multiply(2.0, k), a) + mx.subtract(b, 1))))
         )
 
     def f(n, x):
         return _ufuncs.eval_jacobi(n, a, b, x)
     def df(n, x):
-        return 0.5 * (n + a + b + 1) * _ufuncs.eval_jacobi(n - 1, a + 1, b + 1, x)
+        return 0.5 * (mx.add(n, a) + mx.add(b, 1)) * _ufuncs.eval_jacobi(mx.subtract(n, 1), mx.add(a, 1), mx.add(b, 1), x)
     return _gen_roots_and_weights(m, mu0, an_func, bn_func, f, df, False, mu)
 
 
@@ -370,15 +370,15 @@ def jacobi(n, alpha, beta, monic=False):
         raise ValueError("n must be nonnegative.")
 
     def wfunc(x):
-        return (1 - x) ** alpha * (1 + x) ** beta
+        return mx.multiply(mx.power(mx.subtract(mx.array(1), x), alpha), mx.power(mx.add(mx.array(1), x), beta))
     if n == 0:
         return orthopoly1d([], [], 1.0, 1.0, wfunc, (-1, 1), monic,
                            eval_func=mx.ones_like)
     x, w, mu = roots_jacobi(n, alpha, beta, mu=True)
-    ab1 = alpha + beta + 1.0
-    hn = 2**ab1 / (2 * n + ab1) * _gam(n + alpha + 1)
-    hn *= _gam(n + beta + 1.0) / _gam(n + 1) / _gam(n + ab1)
-    kn = _gam(2 * n + ab1) / 2.0**n / _gam(n + 1) / _gam(n + ab1)
+    ab1 = mx.add(alpha, beta) + 1.0
+    hn = mx.power(2, ab1) / (mx.add(mx.multiply(2, n), ab1)) * _gam(mx.add(n, alpha) + 1)
+    hn = mx.multiply(hn, mx.divide(_gam(mx.add(n, beta) + 1.0), _gam(mx.add(n, 1))) / _gam(mx.add(n, ab1)))
+    kn = mx.add(_gam(mx.multiply(2, n), ab1)) / mx.divide(mx.power(2.0, n), _gam(mx.add(n, 1))) / _gam(mx.add(n, ab1))
     # here kn = coefficient on x^n term
     p = orthopoly1d(x, w, hn, kn, wfunc, (-1, 1), monic,
                     lambda x: _ufuncs.eval_jacobi(n, alpha, beta, x))
@@ -433,10 +433,10 @@ def roots_sh_jacobi(n, p1, q1, mu=False):
         message = "(p - q) must be greater than -1, and q must be greater than 0."
         raise ValueError(message)
     x, w, m = roots_jacobi(n, p1-q1, q1-1, True)
-    x = (x + 1) / 2
-    scale = 2.0**p1
-    w /= scale
-    m /= scale
+    x = mx.divide(mx.add(x, mx.array(1)), mx.array(2))
+    scale = mx.power(mx.array(2.0), p1)
+    w = mx.divide(w, scale)
+    m = mx.divide(m, scale)
     if mu:
         return x, w, m
     else:
@@ -483,14 +483,14 @@ def sh_jacobi(n, p, q, monic=False):
         raise ValueError("n must be nonnegative.")
 
     def wfunc(x):
-        return (1.0 - x) ** (p - q) * x ** (q - 1.0)
+        return mx.multiply(mx.power(mx.subtract(mx.array(1.0), x), p - q), mx.power(x, q - 1.0))
     if n == 0:
         return orthopoly1d([], [], 1.0, 1.0, wfunc, (-1, 1), monic,
                            eval_func=mx.ones_like)
     n1 = n
     x, w = roots_sh_jacobi(n1, p, q)
-    hn = _gam(n + 1) * _gam(n + q) * _gam(n + p) * _gam(n + p - q + 1)
-    hn /= (2 * n + p) * (_gam(2 * n + p)**2)
+    hn = mx.multiply(_gam(mx.add(n, 1)), _gam(mx.add(n, q))) * mx.multiply(_gam(mx.add(n, p)), mx.subtract(_gam(mx.add(n, p), mx.add(q, 1))))
+    hn = mx.divide(hn, (mx.add(mx.multiply(2, n), p)) * (mx.add(mx.power(_gam(mx.multiply(2, n), p)), 2)))
     # kn = 1.0 in standard form so monic is redundant. Kept for compatibility.
     kn = 1.0
     pp = orthopoly1d(x, w, hn, kn, wfunc=wfunc, limits=(0, 1), monic=monic,
@@ -546,10 +546,10 @@ def roots_genlaguerre(n, alpha, mu=False):
     if alpha < -1:
         raise ValueError("alpha must be greater than -1.")
 
-    mu0 = _ufuncs.gamma(alpha + 1)
+    mu0 = _ufuncs.gamma(mx.add(alpha, 1))
 
     if m == 1:
-        x = mx.array([alpha+1.0], 'd')
+        x = mx.array([mx.add(alpha, 1.0)], 'd')
         w = mx.array([mu0], 'd')
         if mu:
             return x, w, mu0
@@ -557,14 +557,14 @@ def roots_genlaguerre(n, alpha, mu=False):
             return x, w
 
     def an_func(k):
-        return 2 * k + alpha + 1
+        return mx.add(mx.multiply(2, k), alpha) + 1
     def bn_func(k):
-        return -mx.sqrt(k * (k + alpha))
+        return mx.negative(mx.sqrt(mx.multiply(k, k + alpha)))
     def f(n, x):
         return _ufuncs.eval_genlaguerre(n, alpha, x)
     def df(n, x):
-        return (n * _ufuncs.eval_genlaguerre(n, alpha, x)
-                - (n + alpha) * _ufuncs.eval_genlaguerre(n - 1, alpha, x)) / x
+        return mx.divide(mx.subtract(mx.multiply(n, _ufuncs.eval_genlaguerre(n, alpha, x)),
+                                     mx.multiply(n + alpha, _ufuncs.eval_genlaguerre(n - 1, alpha, x))), x)
     return _gen_roots_and_weights(m, mu0, an_func, bn_func, f, df, False, mu)
 
 
@@ -655,16 +655,16 @@ def genlaguerre(n, alpha, monic=False):
         raise ValueError("n must be nonnegative.")
 
     if n == 0:
-        n1 = n + 1
+        n1 = mx.add(n, 1)
     else:
         n1 = n
     x, w = roots_genlaguerre(n1, alpha)
     def wfunc(x):
-        return mx.exp(-x) * x ** alpha
+        return mx.multiply(mx.exp(-x), mx.power(x, alpha))
     if n == 0:
         x, w = [], []
-    hn = _gam(n + alpha + 1) / _gam(n + 1)
-    kn = (-1)**n / _gam(n + 1)
+    hn = mx.divide(_gam(n + alpha + 1), _gam(n + 1))
+    kn = mx.divide(mx.power(mx.array(-1), n), _gam(n + 1))
     p = orthopoly1d(x, w, hn, kn, wfunc, (0, mx.inf), monic,
                     lambda x: _ufuncs.eval_genlaguerre(n, alpha, x))
     return p
@@ -794,14 +794,14 @@ def laguerre(n, monic=False):
         raise ValueError("n must be nonnegative.")
 
     if n == 0:
-        n1 = n + 1
+        n1 = mx.add(n, 1)
     else:
         n1 = n
     x, w = roots_laguerre(n1)
     if n == 0:
         x, w = [], []
     hn = 1.0
-    kn = (-1)**n / _gam(n + 1)
+    kn = mx.divide(mx.power(mx.array(-1), n), _gam(n + 1))
     p = orthopoly1d(x, w, hn, kn, lambda x: mx.exp(-x), (0, mx.inf), monic,
                     lambda x: _ufuncs.eval_laguerre(n, x))
     return p
@@ -878,12 +878,12 @@ def roots_hermite(n, mu=False):
     mu0 = mx.sqrt(mx.pi)
     if n <= 150:
         def an_func(k):
-            return 0.0 * k
+            return mx.multiply(0.0, k)
         def bn_func(k):
-            return mx.sqrt(k / 2.0)
+            return mx.sqrt(mx.divide(k, 2.0))
         f = _ufuncs.eval_hermite
         def df(n, x):
-            return 2.0 * n * _ufuncs.eval_hermite(n - 1, x)
+            return mx.multiply(2.0, n) * _ufuncs.eval_hermite(mx.subtract(n, 1), x)
         return _gen_roots_and_weights(m, mu0, an_func, bn_func, f, df, True, mu)
     else:
         nodes, weights = _roots_hermite_asy(m)
@@ -919,15 +919,15 @@ def _compute_tauk(n, k, maxit=5):
     initial_nodes_a
     roots_hermite_asy
     """
-    a = n % 2 - 0.5
-    c = (4.0*mx.floor(n/2.0) - 4.0*k + 3.0)*mx.pi / (4.0*mx.floor(n/2.0) + 2.0*a + 2.0)
+    a = mx.remainder(n, mx.subtract(2, 0.5))
+    c = (mx.multiply(4.0, mx.floor(mx.divide(n, 2.0))) - mx.add(mx.multiply(4.0, k), 3.0))*mx.pi / (mx.multiply(4.0, mx.floor(mx.divide(n, 2.0))) + mx.add(mx.multiply(2.0, a), 2.0))
     def f(x):
-        return x - mx.sin(x) - c
+        return mx.subtract(x, mx.sin(x)) - c
     def df(x):
-        return 1.0 - mx.cos(x)
-    xi = 0.5*mx.pi
+        return mx.subtract(1.0, mx.cos(x))
+    xi = mx.multiply(0.5, mx.pi)
     for i in range(maxit):
-        xi = xi - f(xi)/df(xi)
+        xi = mx.subtract(xi, mx.divide(f(xi)), df(xi))
     return xi
 
 
@@ -958,11 +958,12 @@ def _initial_nodes_a(n, k):
     roots_hermite_asy
     """
     tauk = _compute_tauk(n, k)
-    sigk = mx.cos(0.5*tauk)**2
-    a = n % 2 - 0.5
-    nu = 4.0*mx.floor(n/2.0) + 2.0*a + 2.0
+    sigk = mx.power(mx.cos(mx.multiply(0.5, tauk)), 2)
+    a = mx.remainder(n, mx.subtract(2, 0.5))
+    nu = mx.add(mx.multiply(mx.array(4.0), mx.floor(mx.divide(n, mx.array(2.0)))), mx.add(mx.multiply(mx.array(2.0), a), mx.array(2.0)))
     # Initial approximation of Hermite roots (square)
-    xksq = nu*sigk - 1.0/(3.0*nu) * (5.0/(4.0*(1.0-sigk)**2) - 1.0/(1.0-sigk) - 0.25)
+    xksq = mx.subtract(mx.multiply(nu, sigk), mx.divide(mx.array(1.0), mx.multiply(mx.array(3.0), nu)))
+    xksq = mx.multiply(xksq, mx.subtract(mx.subtract(mx.divide(mx.array(5.0), mx.multiply(mx.array(4.0), mx.power(mx.subtract(mx.array(1.0), sigk), mx.array(2)))), mx.divide(mx.array(1.0), mx.subtract(mx.array(1.0), sigk))), mx.array(0.25)))
     return xksq
 
 
@@ -992,18 +993,18 @@ def _initial_nodes_b(n, k):
     initial_nodes
     roots_hermite_asy
     """
-    a = n % 2 - 0.5
-    nu = 4.0*mx.floor(n/2.0) + 2.0*a + 2.0
+    a = mx.remainder(n, mx.subtract(2, 0.5))
+    nu = mx.multiply(4.0, mx.floor(mx.divide(n, 2.0))) + mx.add(mx.multiply(2.0, a), 2.0)
     # Airy roots by approximation
     ak = _specfun.airyzo(k.max(), 1)[0][::-1]
     # Initial approximation of Hermite roots (square)
     xksq = (nu
-            + 2.0**(2.0/3.0) * ak * nu**(1.0/3.0)
-            + 1.0/5.0 * 2.0**(4.0/3.0) * ak**2 * nu**(-1.0/3.0)
-            + (9.0/140.0 - 12.0/175.0 * ak**3) * nu**(-1.0)
-            + (16.0/1575.0 * ak + 92.0/7875.0 * ak**4) * 2.0**(2.0/3.0) * nu**(-5.0/3.0)
-            - (15152.0/3031875.0 * ak**5 + 1088.0/121275.0 * ak**2)
-              * 2.0**(1.0/3.0) * nu**(-7.0/3.0))
+            + mx.multiply(mx.power(mx.array(2.0), mx.divide(mx.array(2.0), mx.array(3.0))), mx.multiply(ak, mx.power(nu, mx.divide(mx.array(1.0), mx.array(3.0)))))
+            + mx.divide(mx.multiply(mx.power(mx.array(2.0), mx.divide(mx.array(4.0), mx.array(3.0))), mx.multiply(mx.power(ak, mx.array(2)), mx.power(nu, mx.divide(mx.array(-1.0), mx.array(3.0))))), mx.array(5.0))
+            + mx.multiply(mx.subtract(mx.divide(mx.array(9.0), mx.array(140.0)), mx.divide(mx.array(12.0), mx.multiply(mx.array(175.0), mx.power(ak, mx.array(3))))), mx.power(nu, mx.array(-1.0)))
+            + mx.multiply(mx.multiply(mx.add(mx.divide(mx.array(16.0), mx.multiply(mx.array(1575.0), ak)), mx.divide(mx.array(92.0), mx.multiply(mx.array(7875.0), mx.power(ak, mx.array(4))))), mx.power(mx.array(2.0), mx.divide(mx.array(2.0), mx.array(3.0)))), mx.power(nu, mx.divide(mx.array(-5.0), mx.array(3.0))))
+            - mx.multiply(mx.add(mx.divide(mx.array(15152.0), mx.multiply(mx.array(3031875.0), mx.power(ak, mx.array(5)))), mx.divide(mx.array(1088.0), mx.multiply(mx.array(121275.0), mx.power(ak, mx.array(2))))),
+                         mx.multiply(mx.power(mx.array(2.0), mx.divide(mx.array(1.0), mx.array(3.0))), mx.power(nu, mx.divide(mx.array(-7.0), mx.array(3.0))))))
     return xksq
 
 
@@ -1031,17 +1032,17 @@ def _initial_nodes(n):
     """
     # Turnover point
     # linear polynomial fit to error of 10, 25, 40, ..., 1000 point rules
-    fit = 0.49082003*n - 4.37859653
+    fit = mx.subtract(mx.multiply(0.49082003, n), 4.37859653)
     turnover = mx.round(fit).astype(int)
     # Compute all approximations
-    ia = mx.arange(1, int(mx.floor(n*0.5)+1))
+    ia = mx.arange(1, int(mx.floor(mx.multiply(n, 0.5))+1))
     ib = ia[::-1]
-    xasq = _initial_nodes_a(n, ia[:turnover+1])
-    xbsq = _initial_nodes_b(n, ib[turnover+1:])
+    xasq = _initial_nodes_a(n, ia[:mx.add(turnover, 1)])
+    xbsq = _initial_nodes_b(n, ib[mx.add(turnover, 1):])
     # Combine
     iv = mx.sqrt(mx.concatenate([xasq, xbsq]))
     # Central node is always zero
-    if n % 2 == 1:
+    if mx.remainder(n, 2) == 1:
         iv = mx.concatenate([mx.array([0.0]), iv])
     return iv
 
@@ -1083,13 +1084,13 @@ def _pbcf(n, theta):
     st = mx.sin(theta)
     ct = mx.cos(theta)
     # https://dlmf.nist.gov/12.10#vii
-    mu = 2.0*n + 1.0
+    mu = mx.add(mx.multiply(2.0, n), 1.0)
     # https://dlmf.nist.gov/12.10#E23
-    eta = 0.5*theta - 0.5*st*ct
+    eta = mx.subtract(mx.multiply(0.5, theta), mx.multiply(0.5, st))*ct
     # https://dlmf.nist.gov/12.10#E39
-    zeta = -(3.0*eta/2.0) ** (2.0/3.0)
+    zeta = mx.negative(mx.power(mx.divide(mx.multiply(mx.array(3.0), eta), mx.array(2.0)), mx.divide(mx.array(2.0), mx.array(3.0))))
     # https://dlmf.nist.gov/12.10#E40
-    phi = (-zeta / st**2) ** (0.25)
+    phi = mx.power(mx.negative(mx.divide(zeta, mx.power(st, mx.array(2)))), mx.array(0.25))
     # Coefficients
     # https://dlmf.nist.gov/12.10#E43
     a0 = 1.0
@@ -1107,62 +1108,62 @@ def _pbcf(n, theta):
     # Polynomials
     # https://dlmf.nist.gov/12.10#E9
     # https://dlmf.nist.gov/12.10#E10
-    ctp = ct ** mx.arange(16).reshape((-1,1))
+    ctp = mx.power(ct, mx.arange(16)).reshape((-1,1))
     u0 = 1.0
-    u1 = (1.0*ctp[3,:] - 6.0*ct) / 24.0
-    u2 = (-9.0*ctp[4,:] + 249.0*ctp[2,:] + 145.0) / 1152.0
-    u3 = (-4042.0*ctp[9,:] + 18189.0*ctp[7,:] - 28287.0*ctp[5,:]
-          - 151995.0*ctp[3,:] - 259290.0*ct) / 414720.0
-    u4 = (72756.0*ctp[10,:] - 321339.0*ctp[8,:] - 154982.0*ctp[6,:]
-          + 50938215.0*ctp[4,:] + 122602962.0*ctp[2,:] + 12773113.0) / 39813120.0
-    u5 = (82393456.0*ctp[15,:] - 617950920.0*ctp[13,:] + 1994971575.0*ctp[11,:]
-          - 3630137104.0*ctp[9,:] + 4433574213.0*ctp[7,:] - 37370295816.0*ctp[5,:]
-          - 119582875013.0*ctp[3,:] - 34009066266.0*ct) / 6688604160.0
+    u1 = (mx.subtract(mx.multiply(1.0, ctp[3,:]), mx.multiply(6.0, ct))) / 24.0
+    u2 = (mx.add(mx.multiply(-9.0, ctp[4,:]), mx.multiply(249.0, ctp[2,:])) + 145.0) / 1152.0
+    u3 = (mx.add(mx.multiply(-4042.0, ctp[9,:]), mx.multiply(18189.0, ctp[7,:])) - mx.multiply(28287.0, ctp[5,:])
+          - mx.subtract(mx.multiply(151995.0, ctp[3,:]), mx.multiply(259290.0, ct))) / 414720.0
+    u4 = (mx.subtract(mx.multiply(72756.0, ctp[10,:]), mx.multiply(321339.0, ctp[8,:])) - mx.multiply(154982.0, ctp[6,:])
+          + mx.add(mx.multiply(50938215.0, ctp[4,:]), mx.multiply(122602962.0, ctp[2,:])) + 12773113.0) / 39813120.0
+    u5 = (mx.subtract(mx.multiply(82393456.0, ctp[15,:]), mx.add(mx.multiply(617950920.0, ctp[13,:])), mx.multiply(1994971575.0, ctp[11,:]))
+          - mx.add(mx.multiply(3630137104.0, ctp[9,:]), mx.multiply(4433574213.0, ctp[7,:])) - mx.multiply(37370295816.0, ctp[5,:])
+          - mx.subtract(mx.multiply(119582875013.0, ctp[3,:]), mx.multiply(34009066266.0, ct))) / 6688604160.0
     v0 = 1.0
-    v1 = (1.0*ctp[3,:] + 6.0*ct) / 24.0
-    v2 = (15.0*ctp[4,:] - 327.0*ctp[2,:] - 143.0) / 1152.0
-    v3 = (-4042.0*ctp[9,:] + 18189.0*ctp[7,:] - 36387.0*ctp[5,:] 
-          + 238425.0*ctp[3,:] + 259290.0*ct) / 414720.0
-    v4 = (-121260.0*ctp[10,:] + 551733.0*ctp[8,:] - 151958.0*ctp[6,:]
-          - 57484425.0*ctp[4,:] - 132752238.0*ctp[2,:] - 12118727) / 39813120.0
-    v5 = (82393456.0*ctp[15,:] - 617950920.0*ctp[13,:] + 2025529095.0*ctp[11,:]
-          - 3750839308.0*ctp[9,:] + 3832454253.0*ctp[7,:] + 35213253348.0*ctp[5,:]
-          + 130919230435.0*ctp[3,:] + 34009066266*ct) / 6688604160.0
+    v1 = (mx.add(mx.multiply(1.0, ctp[3,:]), mx.multiply(6.0, ct))) / 24.0
+    v2 = (mx.subtract(mx.multiply(15.0, ctp[4,:]), mx.multiply(327.0, ctp[2,:])) - 143.0) / 1152.0
+    v3 = (mx.add(mx.multiply(-4042.0, ctp[9,:]), mx.multiply(18189.0, ctp[7,:])) - mx.multiply(36387.0, ctp[5,:]) 
+          + mx.add(mx.multiply(238425.0, ctp[3,:]), mx.multiply(259290.0, ct))) / 414720.0
+    v4 = (mx.add(mx.multiply(-121260.0, ctp[10,:]), mx.multiply(551733.0, ctp[8,:])) - mx.multiply(151958.0, ctp[6,:])
+          - mx.subtract(mx.multiply(57484425.0, ctp[4,:]), mx.multiply(132752238.0, ctp[2,:])) - 12118727) / 39813120.0
+    v5 = (mx.subtract(mx.multiply(82393456.0, ctp[15,:]), mx.add(mx.multiply(617950920.0, ctp[13,:])), mx.multiply(2025529095.0, ctp[11,:]))
+          - mx.add(mx.multiply(3750839308.0, ctp[9,:]), mx.multiply(3832454253.0, ctp[7,:])) + mx.multiply(35213253348.0, ctp[5,:])
+          + mx.add(mx.multiply(130919230435.0, ctp[3,:]), mx.multiply(34009066266, ct))) / 6688604160.0
     # Airy Evaluation (Bi and Bip unused)
-    Ai, Aip, Bi, Bip = airy(mu**(4.0/6.0) * zeta)
+    Ai, Aip, Bi, Bip = mx.multiply(airy(mx.power(mu, mx.divide(4.0, 6.0)), zeta))
     # Prefactor for U
-    P = 2.0*mx.sqrt(mx.pi) * mu**(1.0/6.0) * phi
+    P = mx.multiply(2.0, mx.sqrt(mx.pi)) * mx.power(mu, mx.divide(1.0, 6.0)) * phi
     # Terms for U
     # https://dlmf.nist.gov/12.10#E42
-    phip = phi ** mx.arange(6, 31, 6).reshape((-1,1))
-    A0 = b0*u0
-    A1 = (b2*u0 + phip[0,:]*b1*u1 + phip[1,:]*b0*u2) / zeta**3
-    A2 = (b4*u0 + phip[0,:]*b3*u1 + phip[1,:]*b2*u2 + phip[2,:]*b1*u3
-          + phip[3,:]*b0*u4) / zeta**6
-    B0 = -(a1*u0 + phip[0,:]*a0*u1) / zeta**2
-    B1 = -(a3*u0 + phip[0,:]*a2*u1 + phip[1,:]*a1*u2 + phip[2,:]*a0*u3) / zeta**5
-    B2 = -(a5*u0 + phip[0,:]*a4*u1 + phip[1,:]*a3*u2 + phip[2,:]*a2*u3
-           + phip[3,:]*a1*u4 + phip[4,:]*a0*u5) / zeta**8
+    phip = mx.power(phi, mx.arange(6, 31, 6)).reshape((-1,1))
+    A0 = mx.multiply(b0, u0)
+    A1 = (mx.add(mx.multiply(b2, u0), mx.multiply(phip[0,:], b1))*mx.add(u1, mx.multiply(phip[1,:], b0))*u2) / mx.power(zeta, 3)
+    A2 = (mx.add(mx.multiply(b4, u0), mx.multiply(phip[0,:], b3))*mx.add(u1, mx.multiply(phip[1,:], b2))*mx.add(u2, mx.multiply(phip[2,:], b1))*u3
+          + mx.multiply(phip[3,:], b0)*u4) / mx.power(zeta, 6)
+    B0 = -(mx.add(mx.multiply(a1, u0), mx.multiply(phip[0,:], a0))*u1) / mx.power(zeta, 2)
+    B1 = -(mx.add(mx.multiply(a3, u0), mx.multiply(phip[0,:], a2))*mx.add(u1, mx.multiply(phip[1,:], a1))*mx.add(u2, mx.multiply(phip[2,:], a0))*u3) / mx.power(zeta, 5)
+    B2 = -(mx.add(mx.multiply(a5, u0), mx.multiply(phip[0,:], a4))*mx.add(u1, mx.multiply(phip[1,:], a3))*mx.add(u2, mx.multiply(phip[2,:], a2))*u3
+           + mx.multiply(phip[3,:], a1)*mx.add(u4, mx.multiply(phip[4,:], a0))*u5) / mx.power(zeta, 8)
     # U
     # https://dlmf.nist.gov/12.10#E35
-    U = P * (Ai * (A0 + A1/mu**2.0 + A2/mu**4.0) +
-             Aip * (B0 + B1/mu**2.0 + B2/mu**4.0) / mu**(8.0/6.0))
+    U = P * (Ai * (mx.add(A0, mx.divide(A1, mx.power(mu, 2.0))) + mx.divide(A2, mx.power(mu, 4.0))) +
+             Aip * (mx.add(B0, mx.divide(B1, mx.power(mu, 2.0))) + mx.divide(B2, mx.power(mu, 4.0))) / mx.power(mu, mx.divide(8.0, 6.0)))
     # Prefactor for derivative of U
-    Pd = mx.sqrt(2.0*mx.pi) * mu**(2.0/6.0) / phi
+    Pd = mx.multiply(mx.sqrt(2.0*mx.pi), mumx.power(), mx.divide(2.0, 6.0)) / phi
     # Terms for derivative of U
     # https://dlmf.nist.gov/12.10#E46
-    C0 = -(b1*v0 + phip[0,:]*b0*v1) / zeta
-    C1 = -(b3*v0 + phip[0,:]*b2*v1 + phip[1,:]*b1*v2 + phip[2,:]*b0*v3) / zeta**4
-    C2 = -(b5*v0 + phip[0,:]*b4*v1 + phip[1,:]*b3*v2 + phip[2,:]*b2*v3
-           + phip[3,:]*b1*v4 + phip[4,:]*b0*v5) / zeta**7
-    D0 = a0*v0
-    D1 = (a2*v0 + phip[0,:]*a1*v1 + phip[1,:]*a0*v2) / zeta**3
-    D2 = (a4*v0 + phip[0,:]*a3*v1 + phip[1,:]*a2*v2 + phip[2,:]*a1*v3
-          + phip[3,:]*a0*v4) / zeta**6
+    C0 = -(mx.add(mx.multiply(b1, v0), mx.multiply(phip[0,:], b0))*v1) / zeta
+    C1 = -(mx.add(mx.multiply(b3, v0), mx.multiply(phip[0,:], b2))*mx.add(v1, mx.multiply(phip[1,:], b1))*mx.add(v2, mx.multiply(phip[2,:], b0))*v3) / mx.power(zeta, 4)
+    C2 = -(mx.add(mx.multiply(b5, v0), mx.multiply(phip[0,:], b4))*mx.add(v1, mx.multiply(phip[1,:], b3))*mx.add(v2, mx.multiply(phip[2,:], b2))*v3
+           + mx.multiply(phip[3,:], b1)*mx.add(v4, mx.multiply(phip[4,:], b0))*v5) / mx.power(zeta, 7)
+    D0 = mx.multiply(a0, v0)
+    D1 = (mx.add(mx.multiply(a2, v0), mx.multiply(phip[0,:], a1))*mx.add(v1, mx.multiply(phip[1,:], a0))*v2) / mx.power(zeta, 3)
+    D2 = (mx.add(mx.multiply(a4, v0), mx.multiply(phip[0,:], a3))*mx.add(v1, mx.multiply(phip[1,:], a2))*mx.add(v2, mx.multiply(phip[2,:], a1))*v3
+          + mx.multiply(phip[3,:], a0)*v4) / mx.power(zeta, 6)
     # Derivative of U
     # https://dlmf.nist.gov/12.10#E36
-    Ud = Pd * (Ai * (C0 + C1/mu**2.0 + C2/mu**4.0) / mu**(4.0/6.0) +
-               Aip * (D0 + D1/mu**2.0 + D2/mu**4.0))
+    Ud = Pd * (Ai * (mx.add(C0, mx.divide(C1, mx.power(mu, 2.0))) + mx.divide(C2, mx.power(mu, 4.0))) / mx.power(mu, mx.divide(4.0, 6.0)) +
+               Aip * (mx.add(D0, mx.divide(D1, mx.power(mu, 2.0))) + mx.divide(D2, mx.power(mu, 4.0))))
     return U, Ud
 
 
@@ -1193,23 +1194,23 @@ def _newton(n, x_initial, maxit=5):
     roots_hermite_asy
     """
     # Variable transformation
-    mu = mx.sqrt(2.0*n + 1.0)
-    t = x_initial / mu
+    mu = mx.add(mx.sqrt(mx.multiply(2.0, n), 1.0))
+    t = mx.divide(x_initial, mu)
     theta = mx.arccos(t)
     # Newton iteration
     for i in range(maxit):
         u, ud = _pbcf(n, theta)
-        dtheta = u / (mx.sqrt(2.0) * mu * mx.sin(theta) * ud)
-        theta = theta + dtheta
+        dtheta = mx.divide(u, mx.multiply(mx.multiply(mx.sqrt(mx.array(2.0)), mu), mx.multiply(mx.sin(theta), ud)))
+        theta = mx.add(theta, dtheta)
         if max(abs(dtheta)) < 1e-14:
             break
     # Undo variable transformation
-    x = mu * mx.cos(theta)
+    x = mx.multiply(mu, mx.cos(theta))
     # Central node is always zero
-    if n % 2 == 1:
+    if mx.remainder(n, 2) == 1:
         x[0] = 0.0
     # Compute weights
-    w = mx.exp(-x**2) / (2.0*ud**2)
+    w = mx.exp(-mx.power(x, 2)) / (mx.multiply(2.0, mx.power(ud, 2)))
     return x, w
 
 
@@ -1259,14 +1260,14 @@ def _roots_hermite_asy(n):
     iv = _initial_nodes(n)
     nodes, weights = _newton(n, iv)
     # Combine with negative parts
-    if n % 2 == 0:
+    if mx.remainder(n, 2) == 0:
         nodes = mx.concatenate([-nodes[::-1], nodes])
         weights = mx.concatenate([weights[::-1], weights])
     else:
         nodes = mx.concatenate([-nodes[-1:0:-1], nodes])
         weights = mx.concatenate([weights[-1:0:-1], weights])
     # Scale weights
-    weights *= mx.sqrt(mx.pi) / sum(weights)
+    weights = mx.multiply(weights, mx.divide(mx.sqrt(mx.pi), sum(weights)))
     return nodes, weights
 
 
@@ -1323,16 +1324,16 @@ def hermite(n, monic=False):
         raise ValueError("n must be nonnegative.")
 
     if n == 0:
-        n1 = n + 1
+        n1 = mx.add(n, 1)
     else:
         n1 = n
     x, w = roots_hermite(n1)
     def wfunc(x):
-        return mx.exp(-x * x)
+        return mx.exp(-mx.multiply(x, x))
     if n == 0:
         x, w = [], []
-    hn = 2**n * _gam(n + 1) * mx.sqrt(mx.pi)
-    kn = 2**n
+    hn = mx.multiply(mx.power(2, n), _gam(mx.add(n, 1))) * mx.sqrt(mx.pi)
+    kn = mx.power(2, n)
     p = orthopoly1d(x, w, hn, kn, wfunc, (-mx.inf, mx.inf), monic,
                     lambda x: _ufuncs.eval_hermite(n, x))
     return p
@@ -1395,21 +1396,21 @@ def roots_hermitenorm(n, mu=False):
     if n < 1 or n != m:
         raise ValueError("n must be a positive integer.")
 
-    mu0 = mx.sqrt(2.0*mx.pi)
+    mu0 = mx.sqrt(mx.multiply(2.0, mx.pi))
     if n <= 150:
         def an_func(k):
-            return 0.0 * k
+            return mx.multiply(0.0, k)
         def bn_func(k):
             return mx.sqrt(k)
         f = _ufuncs.eval_hermitenorm
         def df(n, x):
-            return n * _ufuncs.eval_hermitenorm(n - 1, x)
+            return mx.multiply(n, _ufuncs.eval_hermitenorm(mx.subtract(n, 1), x))
         return _gen_roots_and_weights(m, mu0, an_func, bn_func, f, df, True, mu)
     else:
         nodes, weights = _roots_hermite_asy(m)
         # Transform
-        nodes *= mx.sqrt(mx.array(2.0, dtype=nodes.dtype))
-        weights *= mx.sqrt(mx.array(2.0, dtype=weights.dtype))
+        nodes = mx.multiply(nodes, mx.sqrt(mx.array(2.0, dtype=nodes.dtype)))
+        weights = mx.multiply(weights, mx.sqrt(mx.array(2.0, dtype=weights.dtype)))
         if mu:
             return nodes, weights, mu0
         else:
@@ -1451,15 +1452,15 @@ def hermitenorm(n, monic=False):
         raise ValueError("n must be nonnegative.")
 
     if n == 0:
-        n1 = n + 1
+        n1 = mx.add(n, 1)
     else:
         n1 = n
     x, w = roots_hermitenorm(n1)
     def wfunc(x):
-        return mx.exp(-x * x / 2.0)
+        return mx.divide(mx.exp(-mx.multiply(x, x), 2.0))
     if n == 0:
         x, w = [], []
-    hn = mx.sqrt(2 * mx.pi) * _gam(n + 1)
+    hn = mx.multiply(mx.sqrt(2 * mx.pi), _gam(mx.add(n, 1)))
     kn = 1.0
     p = orthopoly1d(x, w, hn, kn, wfunc=wfunc, limits=(-mx.inf, mx.inf), monic=monic,
                     eval_func=lambda x: _ufuncs.eval_hermitenorm(n, x))
@@ -1523,30 +1524,30 @@ def roots_gegenbauer(n, alpha, mu=False):
         return roots_chebyt(n, mu)
 
     if alpha <= 170:
-        mu0 = (mx.sqrt(mx.pi) * _ufuncs.gamma(alpha + 0.5)) \
-              / _ufuncs.gamma(alpha + 1)
+        mu0 = (mx.multiply(mx.sqrt(mx.pi), _ufuncs.gamma(mx.add(alpha, 0.5)))) \
+              / _ufuncs.gamma(mx.add(alpha, 1))
     else:
         # For large alpha we use a Taylor series expansion around inf,
         # expressed as a 6th order polynomial of a^-1 and using Horner's
         # method to minimize computation and maximize precision
-        inv_alpha = 1. / alpha
+        inv_alpha = mx.divide(1., alpha)
         coeffs = mx.array([0.000207186, -0.00152206, -0.000640869,
                            0.00488281, 0.0078125, -0.125, 1.])
         mu0 = coeffs[0]
         for term in range(1, len(coeffs)):
-            mu0 = mu0 * inv_alpha + coeffs[term]
-        mu0 = mu0 * mx.sqrt(mx.pi / alpha)
+            mu0 = mx.add(mx.multiply(mu0, inv_alpha), coeffs[term])
+        mu0 = mx.multiply(mu0, mx.sqrt(mx.divide(mx.pi, alpha)))
     def an_func(k):
-        return 0.0 * k
+        return mx.multiply(0.0, k)
     def bn_func(k):
-        return mx.sqrt(k * (k + 2 * alpha - 1) / (4 * (k + alpha) * (k + alpha - 1)))
+        return mx.sqrt(k * (mx.add(k, mx.multiply(2, alpha)) - 1) / (4 * (mx.add(k, alpha)) * (mx.subtract(mx.add(k, alpha), 1))))
     def f(n, x):
         return _ufuncs.eval_gegenbauer(n, alpha, x)
     def df(n, x):
         return (
-            -n * x * _ufuncs.eval_gegenbauer(n, alpha, x)
-            + (n + 2 * alpha - 1) * _ufuncs.eval_gegenbauer(n - 1, alpha, x)
-        ) / (1 - x ** 2)
+            -mx.multiply(n, x) * _ufuncs.eval_gegenbauer(n, alpha, x)
+            + (mx.add(n, mx.multiply(2, alpha)) - 1) * _ufuncs.eval_gegenbauer(mx.subtract(n, 1), alpha, x)
+        ) / (mx.subtract(1, mx.power(x, 2)))
     return _gen_roots_and_weights(m, mu0, an_func, bn_func, f, df, True, mu)
 
 
@@ -1617,12 +1618,12 @@ def gegenbauer(n, alpha, monic=False):
     """
     if not mx.isfinite(alpha) or alpha <= -0.5 :
         raise ValueError("`alpha` must be a finite number greater than -1/2")
-    base = jacobi(n, alpha - 0.5, alpha - 0.5, monic=monic)
+    base = jacobi(n, mx.subtract(alpha, 0.5), mx.subtract(alpha, 0.5), monic=monic)
     if monic or n == 0:
         return base
     #  Abrahmowitz and Stegan 22.5.20
-    factor = (_gam(2*alpha + n) * _gam(alpha + 0.5) /
-              _gam(2*alpha) / _gam(alpha + 0.5 + n))
+    factor = (mx.multiply(_gam(2*mx.add(alpha, n)), _gam(mx.add(alpha, 0.5))) /
+              _gam(mx.multiply(2, alpha)) / _gam(mx.add(alpha, 0.5) + n))
     base._scale(factor)
     base.__dict__['_eval_func'] = lambda x: _ufuncs.eval_gegenbauer(float(n),
                                                                     alpha, x)
@@ -1675,8 +1676,8 @@ def roots_chebyt(n, mu=False):
     m = int(n)
     if n < 1 or n != m:
         raise ValueError('n must be a positive integer.')
-    x = _ufuncs._sinpi(mx.arange(-m + 1, m, 2) / (2*m))
-    w = mx.full_like(x, mx.pi/m)
+    x = _ufuncs._sinpi(mx.arange(-mx.add(m, 1), m, 2) / (mx.multiply(2, m)))
+    w = mx.full_like(x, mx.divide(mx.pi, m))
     if mu:
         return x, w, mx.pi
     else:
@@ -1777,14 +1778,14 @@ def chebyt(n, monic=False):
         raise ValueError("n must be nonnegative.")
 
     def wfunc(x):
-        return 1.0 / mx.sqrt(1 - x * x)
+        return mx.divide(1.0, mx.sqrt(mx.subtract(1, mx.multiply(x, x))))
     if n == 0:
         return orthopoly1d([], [], mx.pi, 1.0, wfunc, (-1, 1), monic,
                            lambda x: _ufuncs.eval_chebyt(n, x))
     n1 = n
     x, w, mu = roots_chebyt(n1, mu=True)
-    hn = mx.pi / 2
-    kn = 2**(n - 1)
+    hn = mx.divide(mx.pi, 2)
+    kn = mx.power(mx.array(2), mx.subtract(n, 1))
     p = orthopoly1d(x, w, hn, kn, wfunc, (-1, 1), monic,
                     lambda x: _ufuncs.eval_chebyt(n, x))
     return p
@@ -1834,11 +1835,11 @@ def roots_chebyu(n, mu=False):
     m = int(n)
     if n < 1 or n != m:
         raise ValueError('n must be a positive integer.')
-    t = mx.arange(m, 0, -1) * mx.pi / (m + 1)
+    t = mx.multiply(mx.arange(m, 0, -1), mx.pi) / (mx.add(m, 1))
     x = mx.cos(t)
-    w = mx.pi * mx.sin(t)**2 / (m + 1)
+    w = mx.multiply(mx.pi, mx.power(mx.sin(t)), 2) / (mx.add(m, 1))
     if mu:
-        return x, w, mx.pi / 2
+        return x, w, mx.divide(mx.pi, 2)
     else:
         return x, w
 
@@ -1935,7 +1936,7 @@ def chebyu(n, monic=False):
     base = jacobi(n, 0.5, 0.5, monic=monic)
     if monic:
         return base
-    factor = mx.sqrt(mx.pi) / 2.0 * _gam(n + 2) / _gam(n + 1.5)
+    factor = mx.divide(mx.sqrt(mx.pi), mx.multiply(2.0, _gam(mx.add(n, 2)))) / _gam(mx.add(n, 1.5))
     base._scale(factor)
     return base
 
@@ -1981,9 +1982,9 @@ def roots_chebyc(n, mu=False):
 
     """
     x, w, m = roots_chebyt(n, True)
-    x *= 2
-    w *= 2
-    m *= 2
+    x = mx.multiply(x, 2)
+    w = mx.multiply(w, 2)
+    m = mx.multiply(m, 2)
     if mu:
         return x, w, m
     else:
@@ -2028,19 +2029,19 @@ def chebyc(n, monic=False):
         raise ValueError("n must be nonnegative.")
 
     if n == 0:
-        n1 = n + 1
+        n1 = mx.add(n, 1)
     else:
         n1 = n
     x, w = roots_chebyc(n1)
     if n == 0:
         x, w = [], []
-    hn = 4 * mx.pi * ((n == 0) + 1)
+    hn = mx.multiply(4, mx.pi) * ((mx.equal(n, 0)) + 1)
     kn = 1.0
     p = orthopoly1d(x, w, hn, kn,
-                    wfunc=lambda x: 1.0 / mx.sqrt(1 - x * x / 4.0),
+                    wfunc=lambda x: mx.divide(1.0, mx.sqrt(mx.subtract(1, mx.multiply(x, x))) / 4.0),
                     limits=(-2, 2), monic=monic)
     if not monic:
-        p._scale(2.0 / p(2))
+        p._scale(mx.divide(2.0, p(2)))
         p.__dict__['_eval_func'] = lambda x: _ufuncs.eval_chebyc(n, x)
     return p
 
@@ -2086,9 +2087,9 @@ def roots_chebys(n, mu=False):
 
     """
     x, w, m = roots_chebyu(n, True)
-    x *= 2
-    w *= 2
-    m *= 2
+    x = mx.multiply(x, 2)
+    w = mx.multiply(w, 2)
+    m = mx.multiply(m, 2)
     if mu:
         return x, w, m
     else:
@@ -2133,7 +2134,7 @@ def chebys(n, monic=False):
         raise ValueError("n must be nonnegative.")
 
     if n == 0:
-        n1 = n + 1
+        n1 = mx.add(n, 1)
     else:
         n1 = n
     x, w = roots_chebys(n1)
@@ -2142,10 +2143,10 @@ def chebys(n, monic=False):
     hn = mx.pi
     kn = 1.0
     p = orthopoly1d(x, w, hn, kn,
-                    wfunc=lambda x: mx.sqrt(1 - x * x / 4.0),
+                    wfunc=lambda x: mx.divide(mx.sqrt(mx.subtract(1, mx.multiply(x, x)), 4.0)),
                     limits=(-2, 2), monic=monic)
     if not monic:
-        factor = (n + 1.0) / p(2)
+        factor = (mx.add(n, 1.0)) / p(2)
         p._scale(factor)
         p.__dict__['_eval_func'] = lambda x: _ufuncs.eval_chebys(n, x)
     return p
@@ -2192,7 +2193,7 @@ def roots_sh_chebyt(n, mu=False):
 
     """
     xw = roots_chebyt(n, mu)
-    return ((xw[0] + 1) / 2,) + xw[1:]
+    return ((mx.add(xw[0], 1)) / 2,) + xw[1:]
 
 
 def sh_chebyt(n, monic=False):
@@ -2224,7 +2225,7 @@ def sh_chebyt(n, monic=False):
     if monic:
         return base
     if n > 0:
-        factor = 4**n / 2.0
+        factor = mx.divide(mx.power(4, n), 2.0)
     else:
         factor = 1.0
     base._scale(factor)
@@ -2271,9 +2272,9 @@ def roots_sh_chebyu(n, mu=False):
 
     """
     x, w, m = roots_chebyu(n, True)
-    x = (x + 1) / 2
+    x = (mx.add(x, 1)) / 2
     m_us = _ufuncs.beta(1.5, 1.5)
-    w *= m_us / m
+    w = mx.multiply(w, mx.divide(m_us, m))
     if mu:
         return x, w, m_us
     else:
@@ -2308,7 +2309,7 @@ def sh_chebyu(n, monic=False):
     base = sh_jacobi(n, 2.0, 1.5, monic=monic)
     if monic:
         return base
-    factor = 4**n
+    factor = mx.power(4, n)
     base._scale(factor)
     return base
 
@@ -2429,13 +2430,13 @@ def roots_legendre(n, mu=False):
 
     mu0 = 2.0
     def an_func(k):
-        return 0.0 * k
+        return mx.multiply(0.0, k)
     def bn_func(k):
-        return k * mx.sqrt(1.0 / (4 * k * k - 1))
+        return mx.multiply(k, mx.sqrt(1.0 / (4 * k * mx.subtract(k, 1))))
     f = _ufuncs.eval_legendre
     def df(n, x):
-        return (-n * x * _ufuncs.eval_legendre(n, x)
-                + n * _ufuncs.eval_legendre(n - 1, x)) / (1 - x ** 2)
+        return (-mx.multiply(n, x) * _ufuncs.eval_legendre(n, x)
+                + mx.multiply(n, _ufuncs.eval_legendre(mx.subtract(n, 1), x))) / (mx.subtract(1, mx.power(x, 2)))
     return _gen_roots_and_weights(m, mu0, an_func, bn_func, f, df, True, mu)
 
 
@@ -2481,14 +2482,14 @@ def legendre(n, monic=False):
         raise ValueError("n must be nonnegative.")
 
     if n == 0:
-        n1 = n + 1
+        n1 = mx.add(n, 1)
     else:
         n1 = n
     x, w = roots_legendre(n1)
     if n == 0:
         x, w = [], []
-    hn = 2.0 / (2 * n + 1)
-    kn = _gam(2 * n + 1) / _gam(n + 1)**2 / 2.0**n
+    hn = 2.0 / (mx.add(mx.multiply(2, n), 1))
+    kn = mx.add(_gam(mx.multiply(2, n), 1)) / mx.power(_gam(mx.add(n, 1)), 2) / mx.power(2.0, n)
     p = orthopoly1d(x, w, hn, kn, wfunc=lambda x: 1.0, limits=(-1, 1),
                     monic=monic,
                     eval_func=lambda x: _ufuncs.eval_legendre(n, x))
@@ -2535,8 +2536,8 @@ def roots_sh_legendre(n, mu=False):
 
     """
     x, w = roots_legendre(n)
-    x = (x + 1) / 2
-    w /= 2
+    x = (mx.add(x, 1)) / 2
+    w = mx.divide(w, 2)
     if mu:
         return x, w, 1.0
     else:
@@ -2572,13 +2573,13 @@ def sh_legendre(n, monic=False):
         raise ValueError("n must be nonnegative.")
 
     def wfunc(x):
-        return 0.0 * x + 1.0
+        return mx.add(mx.multiply(0.0, x), 1.0)
     if n == 0:
         return orthopoly1d([], [], 1.0, 1.0, wfunc, (0, 1), monic,
                            lambda x: _ufuncs.eval_sh_legendre(n, x))
     x, w = roots_sh_legendre(n)
-    hn = 1.0 / (2 * n + 1.0)
-    kn = _gam(2 * n + 1) / _gam(n + 1)**2
+    hn = 1.0 / (mx.add(mx.multiply(2, n), 1.0))
+    kn = mx.add(_gam(mx.multiply(2, n), 1)) / mx.power(_gam(mx.add(n, 1)), 2)
     p = orthopoly1d(x, w, hn, kn, wfunc, limits=(0, 1), monic=monic,
                     eval_func=lambda x: _ufuncs.eval_sh_legendre(n, x))
     return p

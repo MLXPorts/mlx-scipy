@@ -91,12 +91,12 @@ def sinc(x):
         return mx.sinc(x)
 
     # Fallback implementation
-    y = mx.pi * x
+    y = mx.multiply(mx.array(mx.pi, dtype=x.dtype), x)
     # Use where to handle the x=0 case
     return mx.where(
         mx.equal(x, mx.array(0.0, dtype=x.dtype)),
         mx.array(1.0, dtype=x.dtype),
-        mx.sin(y) / y
+        mx.divide(mx.sin(y), y)
     )
 
 

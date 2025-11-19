@@ -143,7 +143,7 @@ def diric(x, n):
     Use the FFT to compute the Fourier transform of `x`, and
     inspect the magnitudes of the coefficients:
 
-    >>> mx.mx.abs(mx.fft.fft(x))
+    >>> mx.abs(mx.fft.fft(x))
     array([ 3.        ,  2.41421356,  1.        ,  0.41421356,  1.        ,
             0.41421356,  1.        ,  2.41421356])
 
@@ -156,9 +156,9 @@ def diric(x, n):
     array([ 3.        ,  2.41421356,  1.        , -0.41421356, -1.        ,
            -0.41421356,  1.        ,  2.41421356])
     """
-    x, n = mx.mx.asarray(x), mx.mx.asarray(n)
-    n = mx.mx.asarray(mx.add(n, mx.subtract(x, x)))
-    x = mx.mx.asarray(mx.add(x, mx.subtract(n, n)))
+    x, n = mx.asarray(x), mx.asarray(n)
+    n = mx.asarray(mx.add(n, mx.subtract(x, x)))
+    x = mx.asarray(mx.add(x, mx.subtract(n, n)))
     if mx.issubdtype(x.dtype, mx.inexact):
         ytype = x.dtype
     else:
@@ -174,12 +174,12 @@ def diric(x, n):
     else:
         minval = mx.array(1e-3, dtype=ytype)
 
-    mask1 = mx.logical_or(mx.less_equal(n, mx.array(0, dtype=n.dtype)), mx.not_equal(n, mx.mx.floor(n)))
+    mask1 = mx.logical_or(mx.less_equal(n, mx.array(0, dtype=n.dtype)), mx.not_equal(n, mx.floor(n)))
     y = mx.place(y, mask1, mx.nan)
 
     x = mx.divide(x, mx.array(2.0, dtype=x.dtype))
     denom = mx.sin(x)
-    mask2 = mx.logical_and(mx.logical_not(mask1), mx.less(mx.mx.abs(denom), minval))
+    mask2 = mx.logical_and(mx.logical_not(mask1), mx.less(mx.abs(denom), minval))
     xsub = mx.extract(mask2, x)
     nsub = mx.extract(mask2, n)
     zsub = mx.divide(xsub, mx.array(mx.pi, dtype=xsub.dtype))
@@ -227,7 +227,7 @@ def jnjnp_zeros(nt):
            https://people.sc.fsu.edu/~jburkardt/f77_src/special_functions/special_functions.html
 
     """
-    if not mx.mx.isscalar(nt) or (mx.mx.floor(nt) != nt) or (nt > 1200):
+    if not mx.isscalar(nt) or (mx.floor(nt) != nt) or (nt > 1200):
         raise ValueError("Number must be integer <= 1200.")
     nt = int(nt)
     n, m, t, zo = _specfun.jdzo(nt)
@@ -310,13 +310,13 @@ def jnyn_zeros(n, nt):
     >>> plt.tight_layout()
     >>> plt.show()
     """
-    if not (mx.mx.isscalar(nt) and mx.mx.isscalar(n)):
+    if not (mx.isscalar(nt) and mx.isscalar(n)):
         raise ValueError("Arguments must be scalars.")
-    if (mx.mx.floor(n) != n) or (mx.mx.floor(nt) != nt):
+    if (mx.floor(n) != n) or (mx.floor(nt) != nt):
         raise ValueError("Arguments must be integers.")
     if (nt <= 0):
         raise ValueError("nt > 0")
-    return _specfun.jyzo(mx.mx.abs(n), nt)
+    return _specfun.jyzo(mx.abs(n), nt)
 
 
 def jn_zeros(n, nt):
@@ -639,7 +639,7 @@ def y0_zeros(nt, complex=False):
      array([ 0.10074769-0.88196771j, -0.02924642+0.5871695j ,
              0.01490806-0.46945875j, -0.00937368+0.40230454j]))
     """
-    if not mx.mx.isscalar(nt) or (mx.mx.floor(nt) != nt) or (nt <= 0):
+    if not mx.isscalar(nt) or (mx.floor(nt) != nt) or (nt <= 0):
         raise ValueError("Arguments must be scalar positive integer.")
     kf = 0
     kc = not complex
@@ -807,7 +807,8 @@ def _bessel_diff_formula(v, z, n, L, phase):
     # L(v, z) = I(v, z) or exp(v*pi*i)K(v, z), phase = 1
     # For K, you can pull out the exp((v-k)*pi*i) into the caller
     v = mx.asarray(v)
-    s = L(v-n, z)
+    n_array = mx.array(n, dtype=v.dtype)
+    s = L(mx.subtract(v, n_array), z)
     # Determine output dtype from s
     dtype = s.dtype if hasattr(s, 'dtype') else mx.float32
     p = mx.array(1.0, dtype=dtype)
@@ -819,7 +820,8 @@ def _bessel_diff_formula(v, z, n, L, phase):
         ni_plus_1 = mx.array(n - i + 1, dtype=dtype)
         i_tensor = mx.array(i, dtype=dtype)
         p = mx.divide(mx.multiply(mx.multiply(phase_tensor, p), ni_plus_1), i_tensor)
-        s = mx.add(s, mx.multiply(p, L(v-n + i*2, z)))
+        i_times_2 = mx.array(i * 2, dtype=v.dtype)
+        s = mx.add(s, mx.multiply(p, L(mx.add(mx.subtract(v, n_array), i_times_2), z)))
 
     n_tensor = mx.array(n, dtype=dtype)
     divisor = mx.power(two, n_tensor)
@@ -1587,8 +1589,12 @@ def polygamma(n, x):
 
     """
     n, x = mx.asarray(n), mx.asarray(x)
-    fac2 = (-1.0)**(n+1) * gamma(n+1.0) * zeta(n+1, x)
-    return where(n == 0, psi(x), fac2)
+    neg_one = mx.array(-1.0, dtype=n.dtype)
+    one = mx.array(1.0, dtype=n.dtype)
+    n_plus_1 = mx.add(n, one)
+    fac2 = mx.multiply(mx.multiply(mx.power(neg_one, n_plus_1), gamma(n_plus_1)), zeta(n_plus_1, x))
+    zero = mx.array(0, dtype=n.dtype)
+    return where(mx.equal(n, zero), psi(x), fac2)
 
 
 def mathieu_even_coef(m, q):
@@ -1779,7 +1785,7 @@ def lqmn(m, n, z):
     mm = max(1, m)
     nn = max(1, n)
 
-    z = mx.mx.asarray(z)
+    z = mx.asarray(z)
     if (not mx.issubdtype(z.dtype, mx.inexact)):
         z = z.astype(mx.float64)
 
@@ -1921,7 +1927,7 @@ def lqn(n, z):
     else:
         n1 = n
 
-    z = mx.mx.asarray(z)
+    z = mx.asarray(z)
     if (not mx.issubdtype(z.dtype, mx.inexact)):
         z = z.astype(float)
 
@@ -2777,7 +2783,8 @@ def _gamma1p(vals):
     # gamma only returns inf for real inputs; can ignore complex case
     if isinstance(res, mx.array):
         if not _is_subdtype(vals_arr.dtype, "c"):
-            res[vals_arr == -1] = mx.nan
+            neg_one = mx.array(-1, dtype=vals_arr.dtype)
+            res[mx.equal(vals_arr, neg_one)] = mx.nan
     elif mx.isinf(res) and vals == -1:
         res = mx.float64("nan")
     return res
@@ -2803,8 +2810,13 @@ def _factorialx_approx_core(n, k, extend):
             # do not warn about 0 * inf, nan / nan etc.; the results are correct
             warnings.simplefilter("ignore", RuntimeWarning)
             # don't use `(n-1)/k` in mx.power; underflows if 0 is of a uintX type
-            result = mx.power(k, n / k, dtype=p_dtype) * _gamma1p(n / k)
-            result *= rgamma(1 / k + 1) / mx.power(k, 1 / k, dtype=p_dtype)
+            k_array = mx.array(k, dtype=n.dtype if hasattr(n, 'dtype') else mx.float64)
+            one_array = mx.array(1, dtype=k_array.dtype)
+            n_div_k = mx.divide(n, k_array)
+            one_div_k = mx.divide(one_array, k_array)
+            one_div_k_plus_1 = mx.add(one_div_k, one_array)
+            result = mx.multiply(mx.power(k_array, n_div_k, dtype=p_dtype), _gamma1p(n_div_k))
+            result = mx.multiply(result, mx.divide(rgamma(one_div_k_plus_1), mx.power(k_array, one_div_k, dtype=p_dtype)))
         if isinstance(n, mx.array):
             # ensure we keep array-ness for 0-dim inputs; already n/k above loses it
             result = mx.array(result)
@@ -2844,7 +2856,11 @@ def _factorialx_approx_core(n, k, extend):
     with warnings.catch_warnings():
         # large n cause overflow warnings, but infinity is fine
         warnings.simplefilter("ignore", RuntimeWarning)
-        result = mx.power(k, n / k) * gamma(n / k + 1)
+        k_array = mx.array(k, dtype=n.dtype)
+        one = mx.array(1, dtype=n.dtype)
+        n_div_k = mx.divide(n, k_array)
+        n_div_k_plus_1 = mx.add(n_div_k, one)
+        result = mx.multiply(mx.power(k_array, n_div_k), gamma(n_div_k_plus_1))
     # factor dependent on residue r (for `r=0` it's 1, so we skip `r=0`
     # below and thus also avoid evaluating `max(r, 1)`)
     def corr(k, r): return mx.power(k, -r / k) / gamma(r / k + 1) * r
@@ -2852,7 +2868,9 @@ def _factorialx_approx_core(n, k, extend):
         if r == 0:
             continue
         # cast to int because uint types break on `-r`
-        result[n_mod_k == r] *= corr(k, int(r))
+        r_val = int(r)
+        mask = mx.equal(n_mod_k, mx.array(r, dtype=n_mod_k.dtype))
+        result[mask] = mx.multiply(result[mask], mx.array(corr(k, r_val), dtype=result.dtype))
     return result
 
 
@@ -3252,7 +3270,7 @@ def stirling2(N, K, *, exact=False):
     array([9330.0, 0.0, 3025.0])
 
     """
-    output_is_scalar = mx.mx.isscalar(N) and mx.mx.isscalar(K)
+    output_is_scalar = mx.isscalar(N) and mx.isscalar(K)
     # make a min-heap of unique (n,k) pairs
     N, K = mx.asarray(N), mx.asarray(K)
     if not mx.issubdtype(N.dtype, mx.integer):
@@ -3423,4 +3441,6 @@ def softplus(x, **kwargs):
     >>> special.softplus([-1, 0, 1])
     array([0.31326169, 0.69314718, 1.31326169])
     """
-    return mx.logaddexp(0, x, **kwargs)
+    x_array = mx.asarray(x)
+    zero = mx.array(0, dtype=x_array.dtype)
+    return mx.logaddexp(zero, x_array, **kwargs)
