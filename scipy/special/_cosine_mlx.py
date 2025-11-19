@@ -25,15 +25,18 @@ def _polevl(x, coeffs):
     """
     Evaluate polynomial using Horner's method.
 
-    Evaluates sum(coeffs[i] * x**i for i in range(len(coeffs)))
-    where coeffs are in increasing order of degree.
+    Matches cephes_polevl_wrap behavior: coefficients are in DECREASING
+    degree order (highest degree first).
+
+    For coeffs = [c_n, c_{n-1}, ..., c_1, c_0], evaluates:
+    c_n*x^n + c_{n-1}*x^{n-1} + ... + c_1*x + c_0
 
     Parameters
     ----------
     x : array
         Input value(s)
     coeffs : list of float
-        Polynomial coefficients in increasing degree order
+        Polynomial coefficients in DECREASING degree order (highest first)
 
     Returns
     -------
@@ -41,8 +44,8 @@ def _polevl(x, coeffs):
         Polynomial evaluated at x
     """
     # Convert coefficients to MLX array with explicit dtype
-    # Reverse for Horner's method: evaluate from highest to lowest degree
-    c = mx.array(coeffs[::-1], dtype=x.dtype)
+    # Coefficients are already in correct order for Horner's method
+    c = mx.array(coeffs, dtype=x.dtype)
 
     # Horner's method: p(x) = c[0] + x*(c[1] + x*(c[2] + ...))
     # Use Python loop with explicit MLX array indexing to preserve dtype
