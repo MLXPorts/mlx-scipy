@@ -1,11 +1,11 @@
 """Calculate the discrepancy of 2 designs and compare them."""
-import numpy as np
+import mlx.core as mx
 from scipy.stats import qmc
 
 import matplotlib.pyplot as plt
 
-space_1 = np.array([[1, 3], [2, 6], [3, 2], [4, 5], [5, 1], [6, 4]])
-space_2 = np.array([[1, 5], [2, 4], [3, 3], [4, 2], [5, 1], [6, 6]])
+space_1 = mx.array([[1, 3], [2, 6], [3, 2], [4, 5], [5, 1], [6, 4]])
+space_2 = mx.array([[1, 5], [2, 4], [3, 3], [4, 2], [5, 1], [6, 6]])
 
 l_bounds = [0.5, 0.5]
 u_bounds = [6.5, 6.5]

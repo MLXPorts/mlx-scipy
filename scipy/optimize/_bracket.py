@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import scipy._lib._elementwise_iterative_method as eim
 from scipy._lib._util import _RichResult
 from scipy._lib._array_api import array_namespace, xp_ravel, xp_promote
@@ -11,7 +11,7 @@ def _bracket_root_iv(func, xl0, xr0, xmin, xmax, factor, args, maxiter):
     if not callable(func):
         raise ValueError('`func` must be callable.')
 
-    if not np.iterable(args):
+    if not mx.iterable(args):
         args = (args,)
 
     xp = array_namespace(xl0, xr0, xmin, xmax, factor, *args)
@@ -82,7 +82,7 @@ def _bracket_root(func, xl0, xr0=None, *, xmin=None, xmax=None, factor=None,
         The function for which the root is to be bracketed.
         The signature must be::
 
-            func(x: ndarray, *args) -> ndarray
+            func(x: array, *args) -> array
 
         where each element of ``x`` is a finite real and ``args`` is a tuple,
         which may contain an arbitrary number of arrays that are broadcastable
@@ -419,7 +419,7 @@ def _bracket_minimum_iv(func, xm0, xl0, xr0, xmin, xmax, factor, args, maxiter):
     if not callable(func):
         raise ValueError('`func` must be callable.')
 
-    if not np.iterable(args):
+    if not mx.iterable(args):
         args = (args,)
 
     xp = array_namespace(xm0, xl0, xr0, xmin, xmax, factor, *args)
@@ -505,7 +505,7 @@ def _bracket_minimum(func, xm0, *, xl0=None, xr0=None, xmin=None, xmax=None,
         The function for which the minimum is to be bracketed.
         The signature must be::
 
-            func(x: ndarray, *args) -> ndarray
+            func(x: array, *args) -> array
 
         where each element of ``x`` is a finite real and ``args`` is a tuple,
         which may contain an arbitrary number of arrays that are broadcastable
@@ -610,7 +610,7 @@ def _bracket_minimum(func, xm0, *, xl0=None, xr0=None, xmin=None, xmax=None,
     xmax = xp.astype(xp.broadcast_to(xmax, shape), dtype, copy=False)
     xmax = xp_ravel(xmax, xp=xp)
     invalid_bracket = ~((xmin <= xl0) & (xl0 < xm0) & (xm0 < xr0) & (xr0 <= xmax))
-    # We will modify factor later on so make a copy. np.broadcast_to returns
+    # We will modify factor later on so make a copy. mx.broadcast_to returns
     # a read-only view.
     factor = xp.astype(xp.broadcast_to(factor, shape), dtype, copy=True)
     factor = xp_ravel(factor)

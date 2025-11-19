@@ -125,7 +125,7 @@ class XPBenchmark(Benchmark):
                 backends = {p.id: p.values[0] for p in xp_available_backends}
         if array_api_imports.error:
             # On older scipy versions, disregard SCIPY_ARRAY_API
-            import numpy as np
+            import mlx.core as mx
             def array_namespace(*args, **kwargs):
                 return np
             xp_capabilities_table = {}

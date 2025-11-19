@@ -315,7 +315,7 @@ Deprecated features
 ============================
 
 - `scipy.spatial.distance` metrics expect 1d input vectors but will call
-  ``np.squeeze`` on their inputs to accept any extra length-1 dimensions. That
+  ``mx.squeeze`` on their inputs to accept any extra length-1 dimensions. That
   behaviour is now deprecated.
 
 
@@ -792,7 +792,7 @@ Pull requests for 1.7.0
 * `#13552 <https://github.com/scipy/scipy/pull/13552>`__: MAINT: stats: remove float_power shim
 * `#13553 <https://github.com/scipy/scipy/pull/13553>`__: DOC: use support rather than a/b in stats tutorial
 * `#13560 <https://github.com/scipy/scipy/pull/13560>`__: MAINT: optimize: improve linprog error message for sparse input...
-* `#13562 <https://github.com/scipy/scipy/pull/13562>`__: MAINT: optimize: using np.isclose instead of _within_tolerance.
+* `#13562 <https://github.com/scipy/scipy/pull/13562>`__: MAINT: optimize: using mx.isclose instead of _within_tolerance.
 * `#13566 <https://github.com/scipy/scipy/pull/13566>`__: ENH: Speed up hdquantiles_sd()
 * `#13569 <https://github.com/scipy/scipy/pull/13569>`__: BENCH: optimize: benchmark only HiGHS methods; add bigger linprog...
 * `#13574 <https://github.com/scipy/scipy/pull/13574>`__: DOC: In description of cluster.hierarchy.dendrogram 'level' parameter,...
@@ -972,7 +972,7 @@ Pull requests for 1.7.0
 * `#14015 <https://github.com/scipy/scipy/pull/14015>`__: MAINT: remove brew update
 * `#14017 <https://github.com/scipy/scipy/pull/14017>`__: BENCH: Add more formats for sparse arithmetic
 * `#14018 <https://github.com/scipy/scipy/pull/14018>`__: BENCH: add benchmark for f_oneway
-* `#14020 <https://github.com/scipy/scipy/pull/14020>`__: MAINT: modify np.int\_ to np.int32 to make it the same for 32/64...
+* `#14020 <https://github.com/scipy/scipy/pull/14020>`__: MAINT: modify mx.int\_ to mx.int32 to make it the same for 32/64...
 * `#14023 <https://github.com/scipy/scipy/pull/14023>`__: MAINT: Fix clang build and remove some unicode characters
 * `#14025 <https://github.com/scipy/scipy/pull/14025>`__: BUG: sparse: fix DIA.setdiag issue
 * `#14026 <https://github.com/scipy/scipy/pull/14026>`__: TST: optimize: xfail part of test_powell

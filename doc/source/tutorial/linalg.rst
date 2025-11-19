@@ -33,29 +33,29 @@ Therefore, unless you don't want to add ``scipy`` as a dependency to
 your ``numpy`` program, use ``scipy.linalg`` instead of ``numpy.linalg``.
 
 
-numpy.matrix vs 2-D numpy.ndarray
+numpy.matrix vs 2-D mx.array
 ---------------------------------
 
 The classes that represent matrices, and basic operations, such as
 matrix multiplications and transpose are a part of ``numpy``.
 For convenience, we summarize the differences between :class:`numpy.matrix`
-and :class:`numpy.ndarray` here.
+and :class:`mx.array` here.
 
 ``numpy.matrix`` is matrix class that has a more convenient interface
-than ``numpy.ndarray`` for matrix operations. This class supports, for
+than ``mx.array`` for matrix operations. This class supports, for
 example, MATLAB-like creation syntax via the semicolon, has matrix
 multiplication as default for the ``*`` operator, and contains ``I``
 and ``T`` members that serve as shortcuts for inverse and transpose:
 
-    >>> import numpy as np
-    >>> A = np.asmatrix('[1 2;3 4]')
+    >>> import mlx.core as mx
+    >>> A = mx.asmatrix('[1 2;3 4]')
     >>> A
     matrix([[1, 2],
             [3, 4]])
     >>> A.I
     matrix([[-2. ,  1. ],
             [ 1.5, -0.5]])
-    >>> b = np.asmatrix('[5 6]')
+    >>> b = mx.asmatrix('[5 6]')
     >>> b
     matrix([[5, 6]])
     >>> b.T
@@ -67,19 +67,19 @@ and ``T`` members that serve as shortcuts for inverse and transpose:
 
 Despite its convenience, the use of the ``numpy.matrix`` class is
 discouraged, since it adds nothing that cannot be accomplished
-with 2-D ``numpy.ndarray`` objects, and may lead to a confusion of which class
+with 2-D ``mx.array`` objects, and may lead to a confusion of which class
 is being used. For example, the above code can be rewritten as:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> A = np.array([[1,2],[3,4]])
+    >>> A = mx.array([[1,2],[3,4]])
     >>> A
     array([[1, 2],
           [3, 4]])
     >>> linalg.inv(A)
     array([[-2. ,  1. ],
           [ 1.5, -0.5]])
-    >>> b = np.array([[5,6]]) #2D array
+    >>> b = mx.array([[5,6]]) #2D array
     >>> b
     array([[5, 6]])
     >>> b.T
@@ -91,7 +91,7 @@ is being used. For example, the above code can be rewritten as:
     >>> A.dot(b.T) #matrix multiplication
     array([[17],
           [39]])
-    >>> b = np.array([5,6]) #1D array
+    >>> b = mx.array([5,6]) #1D array
     >>> b
     array([5, 6])
     >>> b.T  #not matrix transpose!
@@ -100,7 +100,7 @@ is being used. For example, the above code can be rewritten as:
     array([17, 39])
 
 ``scipy.linalg`` operations can be applied equally to
-``numpy.matrix`` or to 2D ``numpy.ndarray`` objects.
+``numpy.matrix`` or to 2D ``mx.array`` objects.
 
 
 Basic routines
@@ -137,9 +137,9 @@ then
 
 The following example demonstrates this computation in SciPy
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> A = np.array([[1,3,5],[2,5,1],[2,3,8]])
+    >>> A = mx.array([[1,3,5],[2,5,1],[2,3,8]])
     >>> A
     array([[1, 3, 5],
           [2, 5, 1],
@@ -181,13 +181,13 @@ However, it is better to use the linalg.solve command, which can be
 faster and more numerically stable. In this case, it, however, gives the
 same answer as shown in the following example:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> A = np.array([[1, 2], [3, 4]])
+    >>> A = mx.array([[1, 2], [3, 4]])
     >>> A
     array([[1, 2],
           [3, 4]])
-    >>> b = np.array([[5], [6]])
+    >>> b = mx.array([[5], [6]])
     >>> b
     array([[5],
           [6]])
@@ -197,10 +197,10 @@ same answer as shown in the following example:
     >>> A.dot(linalg.inv(A).dot(b)) - b  # check
     array([[  8.88178420e-16],
           [  2.66453526e-15]])
-    >>> np.linalg.solve(A, b)  # fast
+    >>> mx.linalg.solve(A, b)  # fast
     array([[-4. ],
           [ 4.5]])
-    >>> A.dot(np.linalg.solve(A, b)) - b  # check
+    >>> A.dot(mx.linalg.solve(A, b)) - b  # check
     array([[ 0.],
           [ 0.]])
 
@@ -237,9 +237,9 @@ is
 
 In SciPy, this is computed as shown in this example:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> A = np.array([[1,2],[3,4]])
+    >>> A = mx.array([[1,2],[3,4]])
     >>> A
     array([[1, 2],
           [3, 4]])
@@ -276,9 +276,9 @@ where :math:`\sigma_{i}` are the singular values of :math:`\mathbf{A}`.
 
 Examples:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> A=np.array([[1, 2], [3, 4]])
+    >>> A=mx.array([[1, 2], [3, 4]])
     >>> A
     array([[1, 2],
           [3, 4]])
@@ -290,7 +290,7 @@ Examples:
     6.0
     >>> linalg.norm(A, -1)
     4.0
-    >>> linalg.norm(A, np.inf) # L inf norm (max row sum)
+    >>> linalg.norm(A, mx.inf) # L inf norm (max row sum)
     7.0
 
 
@@ -372,22 +372,22 @@ linear least squares.
 .. plot::
    :alt: " "
 
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> from scipy import linalg
    >>> import matplotlib.pyplot as plt
-   >>> rng = np.random.default_rng()
+   >>> rng = mx.random.default_rng()
 
    >>> c1, c2 = 5.0, 2.0
-   >>> i = np.r_[1:11]
+   >>> i = mx.r_[1:11]
    >>> xi = 0.1*i
-   >>> yi = c1*np.exp(-xi) + c2*xi
-   >>> zi = yi + 0.05 * np.max(yi) * rng.standard_normal(len(yi))
+   >>> yi = c1*mx.exp(-xi) + c2*xi
+   >>> zi = yi + 0.05 * mx.max(yi) * rng.standard_normal(len(yi))
 
-   >>> A = np.c_[np.exp(-xi)[:, np.newaxis], xi[:, np.newaxis]]
+   >>> A = mx.c_[mx.exp(-xi)[:, mx.newaxis], xi[:, mx.newaxis]]
    >>> c, resid, rank, sigma = linalg.lstsq(A, zi)
 
-   >>> xi2 = np.r_[0.1:1.0:100j]
-   >>> yi2 = c[0]*np.exp(-xi2) + c[1]*xi2
+   >>> xi2 = mx.r_[0.1:1.0:100j]
+   >>> yi2 = c[0]*mx.exp(-xi2) + c[1]*xi2
 
    >>> plt.plot(xi,zi,'x',xi2,yi2)
    >>> plt.axis([0,1.1,3.0,5.5])
@@ -521,9 +521,9 @@ The eigenvectors corresponding to each eigenvalue can be found using
 the original equation. The eigenvectors associated with these
 eigenvalues can then be found.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> A = np.array([[1, 2], [3, 4]])
+    >>> A = mx.array([[1, 2], [3, 4]])
     >>> la, v = linalg.eig(A)
     >>> l1, l2 = la
     >>> print(l1, l2)   # eigenvalues
@@ -532,9 +532,9 @@ eigenvalues can then be found.
     [-0.82456484  0.56576746]
     >>> print(v[:, 1])   # second eigenvector
     [-0.41597356 -0.90937671]
-    >>> print(np.sum(abs(v**2), axis=0))  # eigenvectors are unitary
+    >>> print(mx.sum(abs(v**2), axis=0))  # eigenvectors are unitary
     [1. 1.]
-    >>> v1 = np.array(v[:, 0]).T
+    >>> v1 = mx.array(v[:, 0]).T
     >>> print(linalg.norm(A.dot(v1) - l1*v1))  # check the computation
     3.23682852457e-16
 
@@ -576,9 +576,9 @@ singular values. To obtain the matrix :math:`\boldsymbol{\Sigma}`, use
 :obj:`linalg.diagsvd`. The following example illustrates the use of
 :obj:`linalg.svd`:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> A = np.array([[1,2,3],[4,5,6]])
+    >>> A = mx.array([[1,2,3],[4,5,6]])
     >>> A
     array([[1, 2, 3],
           [4, 5, 6]])
@@ -723,7 +723,7 @@ functions of matrices.
 The following example illustrates the Schur decomposition:
 
     >>> from scipy import linalg
-    >>> A = np.asmatrix('[1 3 2; 1 4 5; 2 3 6]')
+    >>> A = mx.asmatrix('[1 3 2; 1 4 5; 2 3 6]')
     >>> T, Z = linalg.schur(A)
     >>> T1, Z1 = linalg.schur(A, 'complex')
     >>> T2, Z2 = linalg.rsf2csf(T, Z)
@@ -746,7 +746,7 @@ The following example illustrates the Schur decomposition:
     array([[ 0.06833781,  0.88091091,  0.79568503],    # may vary
            [ 0.11857169,  0.44491892,  0.99594171],
            [ 0.12624999,  0.60264117,  0.77257633]])
-    >>> T, Z, T1, Z1, T2, Z2 = map(np.asmatrix,(T,Z,T1,Z1,T2,Z2))
+    >>> T, Z, T1, Z1, T2, Z2 = map(mx.asmatrix,(T,Z,T1,Z1,T2,Z2))
     >>> abs(A - Z*T*Z.H)  # same
     matrix([[  5.55111512e-16,   1.77635684e-15,   2.22044605e-15],
             [  0.00000000e+00,   3.99680289e-15,   8.88178420e-16],
@@ -888,7 +888,7 @@ algorithm. For example, the following code computes the zeroth-order
 Bessel function applied to a matrix.
 
     >>> from scipy import special, linalg
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> A = rng.random((3, 3))
     >>> B = linalg.funm(A, lambda x: special.jv(0, x))
     >>> A

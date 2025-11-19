@@ -85,19 +85,19 @@ Examples
 --------
 Imagine you'd like to find the smallest and largest eigenvalues and the
 corresponding eigenvectors for a large matrix. ARPACK can handle many
-forms of input: dense matrices ,such as `numpy.ndarray` instances, sparse
+forms of input: dense matrices ,such as `mx.array` instances, sparse
 matrices, such as :func:`scipy.sparse.csr_matrix`, or a general linear operator
 derived from :func:`scipy.sparse.linalg.LinearOperator`. For this example, for
 simplicity, we'll construct a symmetric, positive-definite matrix.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import eig, eigh
     >>> from scipy.sparse.linalg import eigs, eigsh
-    >>> np.set_printoptions(suppress=True)
-    >>> rng = np.random.default_rng()
+    >>> mx.set_printoptions(suppress=True)
+    >>> rng = mx.random.default_rng()
     >>>
     >>> X = rng.random((100, 100)) - 0.5
-    >>> X = np.dot(X, X.T)  # create a symmetric matrix
+    >>> X = mx.dot(X, X.T)  # create a symmetric matrix
 
 We now have a symmetric matrix ``X``, with which to test the routines. First,
 compute a standard eigenvalue decomposition using ``eigh``:
@@ -114,7 +114,7 @@ of ``X`` and compare them to the known results:
     [29.22435321 30.05590784 30.58591252]
     >>> print(evals_large)
     [29.22435321 30.05590784 30.58591252]
-    >>> print(np.dot(evecs_large.T, evecs_all[:,-3:]))
+    >>> print(mx.dot(evecs_large.T, evecs_all[:,-3:]))
     array([[-1.  0.  0.],       # may vary (signs)
            [ 0.  1.  0.],
            [-0.  0. -1.]])
@@ -140,7 +140,7 @@ convergence:
     array([0.00053181, 0.00298319, 0.01387821])
     >>> evals_small
     array([0.00053181, 0.00298319, 0.01387821])
-    >>> np.dot(evecs_small.T, evecs_all[:,:3])
+    >>> mx.dot(evecs_small.T, evecs_all[:,:3])
     array([[ 0.99999999  0.00000024 -0.00000049],    # may vary (signs)
            [-0.00000023  0.99999999  0.00000056],
            [ 0.00000031 -0.00000037  0.99999852]])
@@ -153,7 +153,7 @@ to increase the maximum number of iterations (``maxiter``) from 1000 to 5000:
     array([0.00053181, 0.00298319, 0.01387821])
     >>> evals_small
     array([0.00053181, 0.00298319, 0.01387821])
-    >>> np.dot(evecs_small.T, evecs_all[:,:3])
+    >>> mx.dot(evecs_small.T, evecs_all[:,:3])
     array([[ 1.  0.  0.],           # may vary (signs)
            [-0.  1.  0.],
            [ 0.  0. -1.]])
@@ -172,7 +172,7 @@ small eigenvalues :math:`\lambda` become large eigenvalues :math:`\nu`.
     array([0.00053181, 0.00298319, 0.01387821])
     >>> evals_small
     array([0.00053181, 0.00298319, 0.01387821])
-    >>> np.dot(evecs_small.T, evecs_all[:,:3])
+    >>> mx.dot(evecs_small.T, evecs_all[:,:3])
     array([[ 1.  0.  0.],    # may vary (signs)
            [ 0. -1. -0.],
            [-0. -0.  1.]])
@@ -188,12 +188,12 @@ desire to find internal eigenvalues and eigenvectors, e.g., those nearest to
 the rest:
 
     >>> evals_mid, evecs_mid = eigsh(X, 3, sigma=1, which='LM')
-    >>> i_sort = np.argsort(abs(1. / (1 - evals_all)))[-3:]
+    >>> i_sort = mx.argsort(abs(1. / (1 - evals_all)))[-3:]
     >>> evals_all[i_sort]
     array([0.94164107, 1.05464515, 0.99090277])
     >>> evals_mid
     array([0.94164107, 0.99090277, 1.05464515])
-    >>> print(np.dot(evecs_mid.T, evecs_all[:,i_sort]))
+    >>> print(mx.dot(evecs_mid.T, evecs_all[:,i_sort]))
     array([[-0.  1.  0.],     # may vary (signs)
            [-0. -0.  1.],
            [ 1.  0.  0.]]
@@ -226,17 +226,17 @@ the dense matrix:
    ...     def __init__(self, diag, dtype='float32'):
    ...         self.diag = diag
    ...         self.shape = (len(self.diag), len(self.diag))
-   ...         self.dtype = np.dtype(dtype)
+   ...         self.dtype = mx.dtype(dtype)
    ...     def _matvec(self, x):
    ...         return self.diag*x
    ...     def _rmatvec(self, x):
    ...         return self.diag*x
 
    >>> N = 100
-   >>> rng = np.random.default_rng()
-   >>> d = rng.normal(0, 1, N).astype(np.float64)
-   >>> D = np.diag(d)
-   >>> Dop = Diagonal(d, dtype=np.float64)
+   >>> rng = mx.random.default_rng()
+   >>> d = rng.normal(0, 1, N).astype(mx.float64)
+   >>> D = mx.diag(d)
+   >>> Dop = Diagonal(d, dtype=mx.float64)
 
    >>> evals_all, evecs_all = eigh(D)
    >>> evals_large, evecs_large = eigsh(Dop, 3, which='LA', maxiter=1e3)
@@ -244,7 +244,7 @@ the dense matrix:
    array([1.53092498, 1.77243671, 2.00582508])
    >>> evals_large
    array([1.53092498, 1.77243671, 2.00582508])
-   >>> print(np.dot(evecs_large.T, evecs_all[:,-3:]))
+   >>> print(mx.dot(evecs_large.T, evecs_all[:,-3:]))
    array([[-1.  0.  0.],     # may vary (signs)
           [-0. -1.  0.],
           [ 0.  0. -1.]]
@@ -265,29 +265,29 @@ same first derivative to an input signal:
     ...     def __init__(self, N, dtype='float32'):
     ...         self.N = N
     ...         self.shape = (self.N, self.N)
-    ...         self.dtype = np.dtype(dtype)
+    ...         self.dtype = mx.dtype(dtype)
     ...     def _matvec(self, x):
-    ...         y = np.zeros(self.N, self.dtype)
+    ...         y = mx.zeros(self.N, self.dtype)
     ...         y[1:-1] = (0.5*x[2:]-0.5*x[0:-2])
     ...         return y
     ...     def _rmatvec(self, x):
-    ...         y = np.zeros(self.N, self.dtype)
+    ...         y = mx.zeros(self.N, self.dtype)
     ...         y[0:-2] = y[0:-2] - (0.5*x[1:-1])
     ...         y[2:] = y[2:] + (0.5*x[1:-1])
     ...         return y
 
     >>> N = 21
-    >>> D = np.diag(0.5*np.ones(N-1), k=1) - np.diag(0.5*np.ones(N-1), k=-1)
+    >>> D = mx.diag(0.5*mx.ones(N-1), k=1) - mx.diag(0.5*mx.ones(N-1), k=-1)
     >>> D[0] = D[-1] = 0 # take away edge effects
-    >>> Dop = FirstDerivative(N, dtype=np.float64)
+    >>> Dop = FirstDerivative(N, dtype=mx.float64)
 
     >>> evals_all, evecs_all = eig(D)
     >>> evals_large, evecs_large = eigs(Dop, 4, which='LI')
     >>> evals_all_imag = evals_all.imag
-    >>> isort_imag = np.argsort(np.abs(evals_all_imag))
+    >>> isort_imag = mx.argsort(mx.abs(evals_all_imag))
     >>> evals_all_imag = evals_all_imag[isort_imag]
     >>> evals_large_imag = evals_large.imag
-    >>> isort_imag = np.argsort(np.abs(evals_large_imag))
+    >>> isort_imag = mx.argsort(mx.abs(evals_large_imag))
     >>> evals_large_imag = evals_large_imag[isort_imag]
     >>> evals_all_imag[-4:]
     array([-0.95105652, 0.95105652, -0.98768834, 0.98768834])

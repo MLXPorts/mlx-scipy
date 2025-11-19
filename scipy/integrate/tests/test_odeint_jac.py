@@ -1,25 +1,25 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_allclose
 from scipy.integrate import odeint
 import scipy.integrate._test_odeint_banded as banded5x5
 
 
 def rhs(y, t):
-    dydt = np.zeros_like(y)
+    dydt = mx.zeros_like(y)
     banded5x5.banded5x5(t, y, dydt)
     return dydt
 
 
 def jac(y, t):
     n = len(y)
-    jac = np.zeros((n, n), order='F')
+    jac = mx.zeros((n, n), order='F')
     banded5x5.banded5x5_jac(t, y, 1, 1, jac)
     return jac
 
 
 def bjac(y, t):
     n = len(y)
-    bjac = np.zeros((4, n), order='F')
+    bjac = mx.zeros((4, n), order='F')
     banded5x5.banded5x5_bjac(t, y, 1, 1, bjac)
     return bjac
 
@@ -40,13 +40,13 @@ def check_odeint(jactype):
     else:
         raise ValueError(f"invalid jactype: {jactype!r}")
 
-    y0 = np.arange(1.0, 6.0)
+    y0 = mx.arange(1.0, 6.0)
     # These tolerances must match the tolerances used in banded5x5.f.
     rtol = 1e-11
     atol = 1e-13
     dt = 0.125
     nsteps = 64
-    t = dt * np.arange(nsteps+1)
+    t = dt * mx.arange(nsteps+1)
 
     sol, info = odeint(rhs, y0, t,
                        Dfun=jacobian, ml=ml, mu=mu,

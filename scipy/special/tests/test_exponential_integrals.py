@@ -1,6 +1,6 @@
 import pytest
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 import scipy.special as sc
 
@@ -8,7 +8,7 @@ import scipy.special as sc
 class TestExp1:
 
     def test_branch_cut(self):
-        assert np.isnan(sc.exp1(-1))
+        assert mx.isnan(sc.exp1(-1))
         assert sc.exp1(complex(-1, 0)).imag == (
             -sc.exp1(complex(-1, -0.0)).imag
         )
@@ -35,7 +35,7 @@ class TestExp1:
 
 class TestScaledExp1:
 
-    @pytest.mark.parametrize('x, expected', [(0, 0), (np.inf, 1)])
+    @pytest.mark.parametrize('x, expected', [(0, 0), (mx.inf, 1)])
     def test_limits(self, x, expected):
         y = sc._ufuncs._scaled_exp1(x)
         assert y == expected
@@ -45,7 +45,7 @@ class TestScaledExp1:
     #   from mpmath import mp
     #   mp.dps = 80
     #   x = 1e-25
-    #   print(float(x*mp.exp(x)*np.expint(1, x)))
+    #   print(float(x*mp.exp(x)*mx.expint(1, x)))
     #
     # prints 5.698741165994961e-24
     #
@@ -111,7 +111,7 @@ class TestExpi:
             rtol=1e-15
         )
     
-    @pytest.mark.parametrize('x, expected', [(0, -np.inf), (np.inf, np.inf)]) 
+    @pytest.mark.parametrize('x, expected', [(0, -mx.inf), (mx.inf, mx.inf)])
     def test_limits(self, x, expected):
         y = sc.expi(x)
         assert y == expected
@@ -120,4 +120,4 @@ class TestExpi:
 class TestExpn:
 
     def test_out_of_domain(self):
-        assert all(np.isnan([sc.expn(-1, 1.0), sc.expn(1, -1.0)]))
+        assert all(mx.isnan([sc.expn(-1, 1.0), sc.expn(1, -1.0)]))

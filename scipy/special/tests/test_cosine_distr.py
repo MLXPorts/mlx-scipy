@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 import pytest
 from scipy.special._ufuncs import _cosine_cdf, _cosine_invcdf
@@ -9,7 +9,7 @@ from scipy.special._ufuncs import _cosine_cdf, _cosine_invcdf
 _coscdf_exact = [
     (-4.0, 0.0),
     (0, 0.5),
-    (np.pi, 1.0),
+    (mx.pi, 1.0),
     (4.0, 1.0),
 ]
 
@@ -22,7 +22,7 @@ def test_cosine_cdf_exact(x, expected):
 # _cosine_cdf(x). The expected values were computed with mpmath using
 # 50 digits of precision.  These values will be tested for agreement
 # with the computed values using a very small relative tolerance.
-# The value at -np.pi is not 0, because -np.pi does not equal -π.
+# The value at -mx.pi is not 0, because -mx.pi does not equal -π.
 _coscdf_close = [
     (3.1409, 0.999999999991185),
     (2.25, 0.9819328173287907),
@@ -33,7 +33,7 @@ _coscdf_close = [
     (-3.0, 7.522387241801384e-05),
     (-3.1415, 2.109869685443648e-14),
     (-3.14159, 4.956444476505336e-19),
-    (-np.pi, 4.871934450264861e-50),
+    (-mx.pi, 4.871934450264861e-50),
 ]
 
 @pytest.mark.parametrize("x, expected", _coscdf_close)
@@ -44,9 +44,9 @@ def test_cosine_cdf(x, expected):
 # These values are (p, x) where x is the expected exact value of
 # _cosine_invcdf(p).  These values will be tested for exact agreement.
 _cosinvcdf_exact = [
-    (0.0, -np.pi),
+    (0.0, -mx.pi),
     (0.5, 0.0),
-    (1.0, np.pi),
+    (1.0, mx.pi),
 ]
 
 @pytest.mark.parametrize("p, expected", _cosinvcdf_exact)
@@ -56,13 +56,13 @@ def test_cosine_invcdf_exact(p, expected):
 
 def test_cosine_invcdf_invalid_p():
     # Check that p values outside of [0, 1] return nan.
-    assert np.isnan(_cosine_invcdf([-0.1, 1.1])).all()
+    assert mx.isnan(_cosine_invcdf([-0.1, 1.1])).all()
 
 
 # These values are (p, x), where x is the expected value of _cosine_invcdf(p).
 # The expected values were computed with mpmath using 50 digits of precision.
 _cosinvcdf_close = [
-    (1e-50, -np.pi),
+    (1e-50, -mx.pi),
     (1e-14, -3.1415204137058454),
     (1e-08, -3.1343686589124524),
     (0.0018001, -2.732563923138336),

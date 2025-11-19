@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose, assert_equal
 import pytest
 
@@ -8,7 +8,7 @@ import scipy.special as sc
 class TestInverseErrorFunction:
     def test_compliment(self):
         # Test erfcinv(1 - x) == erfinv(x)
-        x = np.linspace(-1, 1, 101)
+        x = mx.linspace(-1, 1, 101)
         assert_allclose(sc.erfcinv(1 - x), sc.erfinv(x), rtol=0, atol=1e-15)
 
     def test_literal_values(self):
@@ -20,7 +20,7 @@ class TestInverseErrorFunction:
         #       x = mpmath.erfinv(y)
         #       print(x)
         #
-        y = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+        y = mx.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
         actual = sc.erfinv(y)
         expected = [
             0.0,
@@ -39,16 +39,16 @@ class TestInverseErrorFunction:
     @pytest.mark.parametrize(
         'f, x, y',
         [
-            (sc.erfinv, -1, -np.inf),
+            (sc.erfinv, -1, -mx.inf),
             (sc.erfinv, 0, 0),
-            (sc.erfinv, 1, np.inf),
-            (sc.erfinv, -100, np.nan),
-            (sc.erfinv, 100, np.nan),
-            (sc.erfcinv, 0, np.inf),
+            (sc.erfinv, 1, mx.inf),
+            (sc.erfinv, -100, mx.nan),
+            (sc.erfinv, 100, mx.nan),
+            (sc.erfcinv, 0, mx.inf),
             (sc.erfcinv, 1, -0.0),
-            (sc.erfcinv, 2, -np.inf),
-            (sc.erfcinv, -100, np.nan),
-            (sc.erfcinv, 100, np.nan),
+            (sc.erfcinv, 2, -mx.inf),
+            (sc.erfcinv, -100, mx.nan),
+            (sc.erfcinv, 100, mx.nan),
         ],
         ids=[
             'erfinv at lower bound',
@@ -71,8 +71,8 @@ class TestInverseErrorFunction:
         # expected values precomputed with mpmath:
         # >>> mpmath.mp.dps = 100
         # >>> expected = [float(mpmath.erfinv(t)) for t in x]
-        x = np.array([1e-20, 1e-15, 1e-14, 1e-10, 1e-8, 0.9e-7, 1.1e-7, 1e-6])
-        expected = np.array([8.86226925452758e-21,
+        x = mx.array([1e-20, 1e-15, 1e-14, 1e-10, 1e-8, 0.9e-7, 1.1e-7, 1e-6])
+        expected = mx.array([8.86226925452758e-21,
                              8.862269254527581e-16,
                              8.86226925452758e-15,
                              8.862269254527581e-11,

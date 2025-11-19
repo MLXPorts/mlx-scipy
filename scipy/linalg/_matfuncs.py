@@ -52,7 +52,7 @@ def _asarray_square(A):
         An array copy or view or other representation of A.
 
     """
-    A = mx.asarray(A)
+    A = mx.array(A)
     if len(A.shape) != 2 or A.shape[0] != A.shape[1]:
         raise ValueError('expected square array_like input')
     return A
@@ -210,7 +210,7 @@ def logm(A, disp=_NoValue):
         warnings.warn("The `disp` argument is deprecated "
                       "and will be removed in SciPy 1.18.0.",
                       DeprecationWarning, stacklevel=2)
-    A = mx.asarray(A)  # squareness checked in `_logm`
+    A = mx.array(A)  # squareness checked in `_logm`
     # Avoid circular import ... this is OK, right?
     import scipy.linalg._matfuncs_inv_ssq
     F = scipy.linalg._matfuncs_inv_ssq._logm(A)
@@ -218,7 +218,7 @@ def logm(A, disp=_NoValue):
     errtol = 1000*eps
     # TODO use a better error approximation
     with mx.errstate(divide='ignore', invalid='ignore'):
-        errest = norm(expm(F)-A, 1) / mx.asarray(norm(A, 1), dtype=A.dtype).real[()]
+        errest = norm(expm(F)-A, 1) / mx.array(norm(A, 1), dtype=A.dtype).real[()]
     if disp:
         if not mx.isfinite(errest) or errest >= errtol:
             message = f"logm result may be inaccurate, approximate err = {errest}"
@@ -299,7 +299,7 @@ def expm(A):
            [ 1.06860742+0.48905626j, -1.71075555+0.91406299j]])
 
     """
-    a = mx.asarray(A)
+    a = mx.array(A)
     if a.size == 1 and a.ndim < 2:
         return mx.reshape(mx.exp(a), (1, 1))
 
@@ -506,7 +506,7 @@ def sqrtm(A, disp=_NoValue, blocksize=_NoValue):
                       "SciPy 1.18.0.",
                       DeprecationWarning, stacklevel=2)
 
-    a = mx.asarray(A)
+    a = mx.array(A)
     if a.size == 1 and a.ndim < 2:
         return mx.reshape(mx.exp(a), (1, 1))
 
@@ -1040,8 +1040,8 @@ def khatri_rao(a, b):
            [ 8, 15, 54]])
 
     """
-    a = mx.asarray(a)
-    b = mx.asarray(b)
+    a = mx.array(a)
+    b = mx.array(b)
 
     if not (a.ndim == 2 and b.ndim == 2):
         raise ValueError("The both arrays should be 2-dimensional.")

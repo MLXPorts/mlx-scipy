@@ -10,7 +10,7 @@ from scipy.optimize import _nonlin as nonlin, root
 from scipy.sparse import csr_array
 from numpy import diag, dot
 from numpy.linalg import inv
-import numpy as np
+import mlx.core as mx
 import scipy
 from scipy.sparse.linalg import minres
 
@@ -32,7 +32,7 @@ MUST_WORK = {'anderson': nonlin.anderson, 'broyden1': nonlin.broyden1,
 
 
 def F(x):
-    x = np.asarray(x).T
+    x = mx.array(x).T
     d = diag([3, 2, 1.5, 1, 0.5])
     c = 0.01
     f = -d @ x - c * float(x.T @ x) * x
@@ -67,8 +67,8 @@ F2_lucky.ROOT_JAC_KSP_BAD = {}
 
 
 def F3(x):
-    A = np.array([[-2, 1, 0.], [1, -2, 1], [0, 1, -2]])
-    b = np.array([1, 2, 3.])
+    A = mx.array([[-2, 1, 0.], [1, -2, 1], [0, 1, -2]])
+    b = mx.array([1, 2, 3.])
     return A @ x - b
 
 
@@ -80,7 +80,7 @@ F3.ROOT_JAC_KSP_BAD = {}
 
 def F4_powell(x):
     A = 1e4
-    return [A*x[0]*x[1] - 1, np.exp(-x[0]) + np.exp(-x[1]) - (1 + 1/A)]
+    return [A*x[0]*x[1] - 1, mx.exp(-x[0]) + mx.exp(-x[1]) - (1 + 1/A)]
 
 
 F4_powell.xin = [-1, -2]
@@ -95,7 +95,7 @@ F4_powell.ROOT_JAC_KSP_BAD = {'gmres', 'bicgstab', 'cgs', 'minres', 'tfqmr'}
 
 
 def F5(x):
-    return pressure_network(x, 4, np.array([.5, .5, .5, .5]))
+    return pressure_network(x, 4, mx.array([.5, .5, .5, .5]))
 
 
 F5.xin = [2., 0, 2, 0]
@@ -111,11 +111,11 @@ F5.ROOT_JAC_KSP_BAD = {'minres'}
 
 def F6(x):
     x1, x2 = x
-    J0 = np.array([[-4.256, 14.7],
+    J0 = mx.array([[-4.256, 14.7],
                    [0.8394989, 0.59964207]])
-    v = np.array([(x1 + 3) * (x2**5 - 7) + 3*6,
-                  np.sin(x2 * np.exp(x1) - 1)])
-    return -np.linalg.solve(J0, v)
+    v = mx.array([(x1 + 3) * (x2**5 - 7) + 3*6,
+                  mx.sin(x2 * mx.exp(x1) - 1)])
+    return -mx.linalg.solve(J0, v)
 
 
 F6.xin = [-0.5, 1.4]
@@ -149,10 +149,10 @@ class TestNonlin:
 
                 x = func(f, f.xin, method=method, line_search=None,
                          f_tol=f_tol, maxiter=200, verbose=0)
-                assert_(np.absolute(f(x)).max() < f_tol)
+                assert_(mx.absolute(f(x)).max() < f_tol)
 
         x = func(f, f.xin, f_tol=f_tol, maxiter=200, verbose=0)
-        assert_(np.absolute(f(x)).max() < f_tol)
+        assert_(mx.absolute(f(x)).max() < f_tol)
 
     def _check_root(self, f, method, f_tol=1e-2):
         # Test Krylov methods
@@ -165,11 +165,11 @@ class TestNonlin:
                            options={'ftol': f_tol, 'maxiter': 200,
                                     'disp': 0,
                                     'jac_options': {'method': jac_method}})
-                assert_(np.absolute(res.fun).max() < f_tol)
+                assert_(mx.absolute(res.fun).max() < f_tol)
 
         res = root(f, f.xin, method=method,
                    options={'ftol': f_tol, 'maxiter': 200, 'disp': 0})
-        assert_(np.absolute(res.fun).max() < f_tol)
+        assert_(mx.absolute(res.fun).max() < f_tol)
 
     @pytest.mark.xfail
     def _check_func_fail(self, *a, **kw):
@@ -194,7 +194,7 @@ class TestNonlin:
 
         def local_norm_func(x):
             self._tol_norm_used = True
-            return np.absolute(x).max()
+            return mx.absolute(x).max()
 
         nonlin.newton_krylov(F, F.xin, method=method, f_tol=1e-2,
                              maxiter=200, verbose=0,
@@ -257,14 +257,14 @@ class TestNonlin:
 class TestSecant:
     """Check that some Jacobian approximations satisfy the secant condition"""
 
-    xs = [np.array([1., 2., 3., 4., 5.]),
-          np.array([2., 3., 4., 5., 1.]),
-          np.array([3., 4., 5., 1., 2.]),
-          np.array([4., 5., 1., 2., 3.]),
-          np.array([9., 1., 9., 1., 3.]),
-          np.array([0., 1., 9., 1., 3.]),
-          np.array([5., 5., 7., 1., 1.]),
-          np.array([1., 2., 7., 5., 1.]),]
+    xs = [mx.array([1., 2., 3., 4., 5.]),
+          mx.array([2., 3., 4., 5., 1.]),
+          mx.array([3., 4., 5., 1., 2.]),
+          mx.array([4., 5., 1., 2., 3.]),
+          mx.array([9., 1., 9., 1., 3.]),
+          mx.array([0., 1., 9., 1., 3.]),
+          mx.array([5., 5., 7., 1., 1.]),
+          mx.array([1., 2., 7., 5., 1.]),]
     fs = [x**2 - 1 for x in xs]
 
     def _check_secant(self, jac_cls, npoints=1, **kw):
@@ -280,13 +280,13 @@ class TestSecant:
             for k in range(min(npoints, j+1)):
                 dx = self.xs[j-k+1] - self.xs[j-k]
                 df = self.fs[j-k+1] - self.fs[j-k]
-                assert_(np.allclose(dx, jac.solve(df)))
+                assert_(mx.allclose(dx, jac.solve(df)))
 
             # Check that the `npoints` secant bound is strict
             if j >= npoints:
                 dx = self.xs[j-npoints+1] - self.xs[j-npoints]
                 df = self.fs[j-npoints+1] - self.fs[j-npoints]
-                assert_(not np.allclose(dx, jac.solve(df)))
+                assert_(not mx.allclose(dx, jac.solve(df)))
 
     def test_broyden1(self):
         self._check_secant(nonlin.BroydenFirst)
@@ -299,28 +299,28 @@ class TestSecant:
         jac = nonlin.BroydenFirst(alpha=0.1)
         jac.setup(self.xs[0], self.fs[0], None)
 
-        B = np.identity(5) * (-1/0.1)
+        B = mx.identity(5) * (-1/0.1)
 
         for last_j, (x, f) in enumerate(zip(self.xs[1:], self.fs[1:])):
             df = f - self.fs[last_j]
             dx = x - self.xs[last_j]
             B += (df - dot(B, dx))[:, None] * dx[None, :] / dot(dx, dx)
             jac.update(x, f)
-            assert_(np.allclose(jac.todense(), B, rtol=1e-10, atol=1e-13))
+            assert_(mx.allclose(jac.todense(), B, rtol=1e-10, atol=1e-13))
 
     def test_broyden2_update(self):
         # Check that BroydenSecond update works as for a dense matrix
         jac = nonlin.BroydenSecond(alpha=0.1)
         jac.setup(self.xs[0], self.fs[0], None)
 
-        H = np.identity(5) * (-0.1)
+        H = mx.identity(5) * (-0.1)
 
         for last_j, (x, f) in enumerate(zip(self.xs[1:], self.fs[1:])):
             df = f - self.fs[last_j]
             dx = x - self.xs[last_j]
             H += (dx - dot(H, df))[:, None] * df[None, :] / dot(df, df)
             jac.update(x, f)
-            assert_(np.allclose(jac.todense(), inv(H), rtol=1e-10, atol=1e-13))
+            assert_(mx.allclose(jac.todense(), inv(H), rtol=1e-10, atol=1e-13))
 
     def test_anderson(self):
         # Anderson mixing (with w0=0) satisfies secant conditions
@@ -335,7 +335,7 @@ class TestLinear:
     some methods find the exact solution in a finite number of steps"""
 
     def _check(self, jac, N, maxiter, complex=False, **kw):
-        rng = np.random.default_rng(123)
+        rng = mx.random.default_rng(123)
 
         A = rng.standard_normal((N, N))
         if complex:
@@ -347,9 +347,9 @@ class TestLinear:
         def func(x):
             return dot(A, x) - b
 
-        sol = nonlin.nonlin_solve(func, np.zeros(N), jac, maxiter=maxiter,
+        sol = nonlin.nonlin_solve(func, mx.zeros(N), jac, maxiter=maxiter,
                                   f_tol=1e-6, line_search=None, verbose=0)
-        assert_(np.allclose(dot(A, sol), b, atol=1e-6))
+        assert_(mx.allclose(dot(A, sol), b, atol=1e-6))
 
     def test_broyden1(self):
         # Broyden methods solve linear systems exactly in 2*N steps
@@ -378,23 +378,23 @@ class TestLinear:
         def jac(v):
             return A
 
-        sol = nonlin.nonlin_solve(func, np.zeros(b.shape[0]), jac, maxiter=2,
+        sol = nonlin.nonlin_solve(func, mx.zeros(b.shape[0]), jac, maxiter=2,
                                   f_tol=1e-6, line_search=None, verbose=0)
-        np.testing.assert_allclose(A @ sol, b, atol=1e-6)
+        mx.testing.assert_allclose(A @ sol, b, atol=1e-6)
         # test jac input as array -- not a function
-        sol = nonlin.nonlin_solve(func, np.zeros(b.shape[0]), A, maxiter=2,
+        sol = nonlin.nonlin_solve(func, mx.zeros(b.shape[0]), A, maxiter=2,
                                   f_tol=1e-6, line_search=None, verbose=0)
-        np.testing.assert_allclose(A @ sol, b, atol=1e-6)
+        mx.testing.assert_allclose(A @ sol, b, atol=1e-6)
 
     def test_jac_sparse(self):
         A = csr_array([[1, 2], [2, 1]])
-        b = np.array([1, -1])
+        b = mx.array([1, -1])
         self._check_autojac(A, b)
         self._check_autojac((1 + 2j) * A, (2 + 2j) * b)
 
-    def test_jac_ndarray(self):
-        A = np.array([[1, 2], [2, 1]])
-        b = np.array([1, -1])
+    def test_jac_array(self):
+        A = mx.array([[1, 2], [2, 1]])
+        b = mx.array([1, -1])
         self._check_autojac(A, b)
         self._check_autojac((1 + 2j) * A, (2 + 2j) * b)
 
@@ -405,10 +405,10 @@ class TestJacobianDotSolve:
     """
 
     def _func(self, x, A=None):
-        return x**2 - 1 + np.dot(A, x)
+        return x**2 - 1 + mx.dot(A, x)
 
     def _check_dot(self, jac_cls, complex=False, tol=1e-6, **kw):
-        rng = np.random.default_rng(123)
+        rng = mx.random.default_rng(123)
 
         N = 7
 
@@ -436,22 +436,22 @@ class TestJacobianDotSolve:
             v = rand(N)
 
             if hasattr(jac, '__array__'):
-                Jd = np.array(jac)
+                Jd = mx.array(jac)
                 if hasattr(jac, 'solve'):
                     Gv = jac.solve(v)
-                    Gv2 = np.linalg.solve(Jd, v)
+                    Gv2 = mx.linalg.solve(Jd, v)
                     assert_close(Gv, Gv2, 'solve vs array')
                 if hasattr(jac, 'rsolve'):
                     Gv = jac.rsolve(v)
-                    Gv2 = np.linalg.solve(Jd.T.conj(), v)
+                    Gv2 = mx.linalg.solve(Jd.T.conj(), v)
                     assert_close(Gv, Gv2, 'rsolve vs array')
                 if hasattr(jac, 'matvec'):
                     Jv = jac.matvec(v)
-                    Jv2 = np.dot(Jd, v)
+                    Jv2 = mx.dot(Jd, v)
                     assert_close(Jv, Jv2, 'dot vs array')
                 if hasattr(jac, 'rmatvec'):
                     Jv = jac.rmatvec(v)
-                    Jv2 = np.dot(Jd.T.conj(), v)
+                    Jv2 = mx.dot(Jd.T.conj(), v)
                     assert_close(Jv, Jv2, 'rmatvec vs array')
 
             if hasattr(jac, 'matvec') and hasattr(jac, 'solve'):

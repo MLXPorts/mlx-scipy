@@ -1,7 +1,7 @@
 """Compute the action of the matrix exponential."""
 from warnings import warn
 
-import numpy as np
+import mlx.core as mx
 
 import scipy.linalg
 import scipy.sparse.linalg
@@ -21,7 +21,7 @@ def _exact_inf_norm(A):
     elif is_pydata_spmatrix(A):
         return max(abs(A).sum(axis=1))
     else:
-        return np.linalg.norm(A, np.inf)
+        return mx.linalg.norm(A, mx.inf)
 
 
 def _exact_1_norm(A):
@@ -31,7 +31,7 @@ def _exact_1_norm(A):
     elif is_pydata_spmatrix(A):
         return max(abs(A).sum(axis=0))
     else:
-        return np.linalg.norm(A, 1)
+        return mx.linalg.norm(A, 1)
 
 
 def _trace(A):
@@ -43,7 +43,7 @@ def _trace(A):
 
 
 def traceest(A, m3, seed=None):
-    """Estimate `np.trace(A)` using `3*m3` matrix-vector products.
+    """Estimate `mx.trace(A)` using `3*m3` matrix-vector products.
 
     The result is not deterministic.
 
@@ -76,16 +76,16 @@ def traceest(A, m3, seed=None):
        https://doi.org/10.1137/1.9781611976496.16
 
     """
-    rng = np.random.default_rng(seed)
+    rng = mx.random.default_rng(seed)
     if len(A.shape) != 2 or A.shape[-1] != A.shape[-2]:
         raise ValueError("Expected A to be like a square matrix.")
     n = A.shape[-1]
     S = rng.choice([-1.0, +1.0], [n, m3])
     Q, _ = qr(A.matmat(S), overwrite_a=True, mode='economic')
-    trQAQ = np.trace(Q.conj().T @ A.matmat(Q))
+    trQAQ = mx.trace(Q.conj().T @ A.matmat(Q))
     G = rng.choice([-1, +1], [n, m3])
     right = G - Q@(Q.conj().T @ G)
-    trGAG = np.trace(right.conj().T @ A.matmat(right))
+    trGAG = mx.trace(right.conj().T @ A.matmat(right))
     return trQAQ + trGAG/m3
 
 
@@ -103,7 +103,7 @@ def _ident_like(A):
     elif isinstance(A, scipy.sparse.linalg.LinearOperator):
         return IdentityOperator(A.shape, dtype=A.dtype)
     else:
-        return np.eye(A.shape[0], A.shape[1], dtype=A.dtype)
+        return mx.eye(A.shape[0], A.shape[1], dtype=A.dtype)
 
 
 def expm_multiply(A, B, start=None, stop=None, num=None,
@@ -115,7 +115,7 @@ def expm_multiply(A, B, start=None, stop=None, num=None,
     ----------
     A : transposable linear operator
         The operator whose exponential is of interest.
-    B : ndarray, sparse array
+    B : array, sparse array
         The matrix or vector to be multiplied by the matrix exponential of A.
     start : scalar, optional
         The starting time point of the sequence.
@@ -139,7 +139,7 @@ def expm_multiply(A, B, start=None, stop=None, num=None,
 
     Returns
     -------
-    expm_A_B : ndarray
+    expm_A_B : array
          The result of the action :math:`e^{t_k A} B`.
 
     Warns
@@ -152,7 +152,7 @@ def expm_multiply(A, B, start=None, stop=None, num=None,
     The optional arguments defining the sequence of evenly spaced time points
     are compatible with the arguments of `numpy.linspace`.
 
-    The output ndarray shape is somewhat complicated so I explain it here.
+    The output array shape is somewhat complicated so I explain it here.
     The ndim of the output could be either 1, 2, or 3.
     It would be 1 if you are computing the expm action on a single vector
     at a single time point.
@@ -182,14 +182,14 @@ def expm_multiply(A, B, start=None, stop=None, num=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import expm, expm_multiply
     >>> A = csc_array([[1, 0], [0, 1]])
     >>> A.toarray()
     array([[1, 0],
            [0, 1]], dtype=int64)
-    >>> B = np.array([np.exp(-1.), np.exp(-2.)])
+    >>> B = mx.array([mx.exp(-1.), mx.exp(-2.)])
     >>> B
     array([ 0.36787944,  0.13533528])
     >>> expm_multiply(A, B, start=1, stop=2, num=3, endpoint=True)
@@ -219,7 +219,7 @@ def _expm_multiply_simple(A, B, t=1.0, traceA=None, balance=False):
     ----------
     A : transposable linear operator
         The operator whose exponential is of interest.
-    B : ndarray
+    B : array
         The matrix to be multiplied by the matrix exponential of A.
     t : float
         A time point.
@@ -232,7 +232,7 @@ def _expm_multiply_simple(A, B, t=1.0, traceA=None, balance=False):
 
     Returns
     -------
-    F : ndarray
+    F : array
         :math:`e^{t A} B`
 
     Notes
@@ -287,7 +287,7 @@ def _expm_multiply_simple_core(A, B, t, mu, m_star, s, tol=None, balance=False):
         u_d = 2 ** -53
         tol = u_d
     F = B
-    eta = np.exp(t*mu / float(s))
+    eta = mx.exp(t*mu / float(s))
     for i in range(s):
         c1 = _exact_inf_norm(B)
         for j in range(m_star):
@@ -357,7 +357,7 @@ def _onenormest_matrix_power(A, p,
 
     Parameters
     ----------
-    A : ndarray
+    A : array
         Matrix whose 1-norm of a power is to be computed.
     p : int
         Non-negative integer power.
@@ -377,11 +377,11 @@ def _onenormest_matrix_power(A, p,
     -------
     est : float
         An underestimate of the 1-norm of the sparse matrix.
-    v : ndarray, optional
+    v : array, optional
         The vector such that ||Av||_1 == est*||v||_1.
         It can be thought of as an input to the linear operator
         that gives an output with particularly large norm.
-    w : ndarray, optional
+    w : array, optional
         The vector Av which has relatively large 1-norm.
         It can be thought of as an output of the linear operator
         that is relatively large in norm compared to the input.
@@ -479,7 +479,7 @@ def _compute_cost_div_m(m, p, norm_info):
         Required number of matrix products divided by m.
 
     """
-    return int(np.ceil(norm_info.alpha(p) / _theta[m]))
+    return int(mx.ceil(norm_info.alpha(p) / _theta[m]))
 
 
 def _compute_p_max(m_max):
@@ -494,9 +494,9 @@ def _compute_p_max(m_max):
         A count related to bounds.
 
     """
-    sqrt_m_max = np.sqrt(m_max)
-    p_low = int(np.floor(sqrt_m_max))
-    p_high = int(np.ceil(sqrt_m_max + 1))
+    sqrt_m_max = mx.sqrt(m_max)
+    p_low = int(mx.floor(sqrt_m_max))
+    p_high = int(mx.ceil(sqrt_m_max + 1))
     return max(p for p in range(p_low, p_high+1) if p*(p-1) <= m_max + 1)
 
 
@@ -541,7 +541,7 @@ def _fragment_3_1(norm_info, n0, tol, m_max=55, ell=2):
     best_s = None
     if _condition_3_13(norm_info.onenorm(), n0, m_max, ell):
         for m, theta in _theta.items():
-            s = int(np.ceil(norm_info.onenorm() / theta))
+            s = int(mx.ceil(norm_info.onenorm() / theta))
             if best_m is None or m * s < best_m * best_s:
                 best_m = m
                 best_s = s
@@ -604,7 +604,7 @@ def _expm_multiply_interval(A, B, start=None, stop=None, num=None,
     ----------
     A : transposable linear operator
         The operator whose exponential is of interest.
-    B : ndarray
+    B : array
         The matrix to be multiplied by the matrix exponential of A.
     start : scalar, optional
         The starting time point of the sequence.
@@ -628,7 +628,7 @@ def _expm_multiply_interval(A, B, start=None, stop=None, num=None,
 
     Returns
     -------
-    F : ndarray
+    F : array
         :math:`e^{t_k A} B`
     status : int
         An integer status for testing and debugging.
@@ -675,7 +675,7 @@ def _expm_multiply_interval(A, B, start=None, stop=None, num=None,
         linspace_kwargs['num'] = num
     if endpoint is not None:
         linspace_kwargs['endpoint'] = endpoint
-    samples, step = np.linspace(start, stop, **linspace_kwargs)
+    samples, step = mx.linspace(start, stop, **linspace_kwargs)
 
     # Convert the linspace output to the notation used by the publication.
     nsamples = len(samples)
@@ -686,11 +686,11 @@ def _expm_multiply_interval(A, B, start=None, stop=None, num=None,
     t_0 = samples[0]
     t_q = samples[q]
 
-    # Define the output ndarray.
+    # Define the output array.
     # Use an ndim=3 shape, such that the last two indices
     # are the ones that may be involved in level 3 BLAS operations.
     X_shape = (nsamples,) + B.shape
-    X = np.empty(X_shape, dtype=np.result_type(A.dtype, B.dtype, float))
+    X = mx.empty(X_shape, dtype=mx.result_type(A.dtype, B.dtype, float))
     t = t_q - t_0
     A = A - mu * ident
     A_1_norm = onenormest(A) if is_linear_operator else _exact_1_norm(A)
@@ -758,7 +758,7 @@ def _expm_multiply_interval_core_1(A, X, h, mu, m_star, s, q, tol):
     d = q // s
     input_shape = X.shape[1:]
     K_shape = (m_star + 1, ) + input_shape
-    K = np.empty(K_shape, dtype=X.dtype)
+    K = mx.empty(K_shape, dtype=X.dtype)
     for i in range(s):
         Z = X[i*d]
         K[0] = Z
@@ -776,7 +776,7 @@ def _expm_multiply_interval_core_1(A, X, h, mu, m_star, s, q, tol):
                 if c1 + c2 <= tol * _exact_inf_norm(F):
                     break
                 c1 = c2
-            X[k + i*d] = np.exp(k*h*mu) * F
+            X[k + i*d] = mx.exp(k*h*mu) * F
     return X, 1
 
 
@@ -789,7 +789,7 @@ def _expm_multiply_interval_core_2(A, X, h, mu, m_star, s, q, tol):
     r = q - d * j
     input_shape = X.shape[1:]
     K_shape = (m_star + 1, ) + input_shape
-    K = np.empty(K_shape, dtype=X.dtype)
+    K = mx.empty(K_shape, dtype=X.dtype)
     for i in range(j + 1):
         Z = X[i*d]
         K[0] = Z
@@ -812,5 +812,5 @@ def _expm_multiply_interval_core_2(A, X, h, mu, m_star, s, q, tol):
                 if c1 + c2 <= tol * _exact_inf_norm(F):
                     break
                 c1 = c2
-            X[k + i*d] = np.exp(k*h*mu) * F
+            X[k + i*d] = mx.exp(k*h*mu) * F
     return X, 2

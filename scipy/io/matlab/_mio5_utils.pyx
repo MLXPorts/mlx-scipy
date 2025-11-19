@@ -29,26 +29,26 @@ cdef extern from "Python.h":
 
 from cpython cimport PyBytes_Size
 
-import numpy as np
+import mlx.core as mx
 cimport numpy as cnp
 
 cdef extern from "numpy/arrayobject.h":
     PyTypeObject PyArray_Type
-    cnp.ndarray PyArray_NewFromDescr(PyTypeObject *subtype,
-                                     cnp.dtype newdtype,
+    cmx.array PyArray_NewFromDescr(PyTypeObject *subtype,
+                                     cmx.dtype newdtype,
                                      int nd,
-                                     cnp.npy_intp* dims,
-                                     cnp.npy_intp* strides,
+                                     cmx.npy_intp* dims,
+                                     cmx.npy_intp* strides,
                                      void* data,
                                      int flags,
                                      object parent)
 
 cdef extern from "numpy_rephrasing.h":
-    void PyArray_Set_BASE(cnp.ndarray arr, object obj)
+    void PyArray_Set_BASE(cmx.array arr, object obj)
 
 # Numpy must be initialized before any code using the numpy C-API
 # directly
-cnp.import_array()
+cmx.import_array()
 
 # Constant from numpy - max number of array dimensions
 DEF _MAT_MAXDIMS = 32
@@ -103,11 +103,11 @@ cdef enum: # see comments in mio5_params
 cdef bint sys_is_le = sys.byteorder == 'little'
 swapped_code = '>' if sys_is_le else '<'
 
-cdef cnp.dtype OPAQUE_DTYPE = mio5p.OPAQUE_DTYPE
-cdef cnp.dtype BOOL_DTYPE = np.dtype(np.bool_)
+cdef cmx.dtype OPAQUE_DTYPE = mio5p.OPAQUE_DTYPE
+cdef cmx.dtype BOOL_DTYPE = mx.dtype(mx.bool_)
 
 
-cpdef cnp.uint32_t byteswap_u4(cnp.uint32_t u4) noexcept:
+cpdef cmx.uint32_t byteswap_u4(cmx.uint32_t u4) noexcept:
     return ((u4 << 24) |
            ((u4 << 8) & 0xff0000U) |
            ((u4 >> 8 & 0xff00u)) |
@@ -118,7 +118,7 @@ cdef class VarHeader5:
     cdef readonly object name
     cdef readonly int mclass
     cdef readonly object dims
-    cdef cnp.int32_t dims_ptr[_MAT_MAXDIMS]
+    cdef cmx.int32_t dims_ptr[_MAT_MAXDIMS]
     cdef int n_dims
     cdef int check_stream_limit
     cdef int is_complex
@@ -134,7 +134,7 @@ cdef class VarHeader5:
         self.dims = dims
         self.n_dims = len(dims)
         for i, dim in enumerate(dims):
-            self.dims_ptr[i] = <cnp.int32_t>int(dim)
+            self.dims_ptr[i] = <cmx.int32_t>int(dim)
 
 
 cdef class VarReader5:
@@ -226,7 +226,7 @@ cdef class VarReader5:
            and string length `byte_count` if this is a small data
            element.
         '''
-        cdef cnp.uint32_t mdtype, byte_count
+        cdef cmx.uint32_t mdtype, byte_count
         cdef char tag_ptr[4]
         cdef int tag_res
         cdef object tag_data = None
@@ -236,8 +236,8 @@ cdef class VarReader5:
         return (mdtype, byte_count, tag_data)
 
     cdef int cread_tag(self,
-                     cnp.uint32_t *mdtype_ptr,
-                     cnp.uint32_t *byte_count_ptr,
+                     cmx.uint32_t *mdtype_ptr,
+                     cmx.uint32_t *byte_count_ptr,
                      char *data_ptr) except -1:
         ''' Read tag mdtype and byte_count
 
@@ -249,10 +249,10 @@ cdef class VarReader5:
         Returns 1 for success, full format; 2 for success, SDE format; -1
         if error arises
         '''
-        cdef cnp.uint16_t mdtype_sde, byte_count_sde
-        cdef cnp.uint32_t mdtype
-        cdef cnp.uint32_t* u4_ptr = <cnp.uint32_t*>data_ptr
-        cdef cnp.uint32_t u4s[2]
+        cdef cmx.uint16_t mdtype_sde, byte_count_sde
+        cdef cmx.uint32_t mdtype
+        cdef cmx.uint32_t* u4_ptr = <cmx.uint32_t*>data_ptr
+        cdef cmx.uint32_t u4s[2]
         # First read 8 bytes.  The 8 bytes can be in one of two formats.
         # For the first - standard format - the 8 bytes are two uint32
         # values, of which the first is the integer code for the matlab
@@ -305,8 +305,8 @@ cdef class VarReader5:
         return 1
 
     cdef object read_element(self,
-                             cnp.uint32_t *mdtype_ptr,
-                             cnp.uint32_t *byte_count_ptr,
+                             cmx.uint32_t *mdtype_ptr,
+                             cmx.uint32_t *byte_count_ptr,
                              void **pp,
                              int copy=True):
         ''' Read data element into string buffer, return buffer
@@ -338,7 +338,7 @@ cdef class VarReader5:
         See ``read_element_into`` for routine to read element into a
         pre-allocated block of memory.
         '''
-        cdef cnp.uint32_t byte_count
+        cdef cmx.uint32_t byte_count
         cdef char tag_data[4]
         cdef object data
         cdef int mod8
@@ -361,10 +361,10 @@ cdef class VarReader5:
         return data
 
     cdef int read_element_into(self,
-                               cnp.uint32_t *mdtype_ptr,
-                               cnp.uint32_t *byte_count_ptr,
+                               cmx.uint32_t *mdtype_ptr,
+                               cmx.uint32_t *byte_count_ptr,
                                void *ptr,
-                               cnp.uint32_t max_byte_count) except -1:
+                               cmx.uint32_t max_byte_count) except -1:
         ''' Read element into pre-allocated memory in `ptr`
 
         Parameters
@@ -394,7 +394,7 @@ cdef class VarReader5:
             mdtype_ptr,
             byte_count_ptr,
             <char *>ptr)
-        cdef cnp.uint32_t byte_count = byte_count_ptr[0]
+        cdef cmx.uint32_t byte_count = byte_count_ptr[0]
         if res == 1: # full format
             if byte_count > max_byte_count:
                 raise ValueError('Unexpected amount of data to read (malformed input file?)')
@@ -405,14 +405,14 @@ cdef class VarReader5:
                 self.cstream.seek(8 - mod8, 1)
         return 0
 
-    cpdef cnp.ndarray read_numeric(self, int copy=True, size_t nnz=-1):
-        ''' Read numeric data element into ndarray
+    cpdef cmx.array read_numeric(self, int copy=True, size_t nnz=-1):
+        ''' Read numeric data element into array
 
-        Reads element, then casts to ndarray.
+        Reads element, then casts to array.
 
         The type of the array is usually given by the ``mdtype`` returned via
         ``read_element``.  Sparse logical arrays are an exception, where the
-        type of the array may be ``np.bool_`` even if the ``mdtype`` claims the
+        type of the array may be ``mx.bool_`` even if the ``mdtype`` claims the
         data is of float64 type.
 
         Parameters
@@ -438,21 +438,21 @@ cdef class VarReader5:
         looking for the length of the data compared to the expected number of
         elements, using the `nnz` input parameter.
         '''
-        cdef cnp.uint32_t mdtype, byte_count
+        cdef cmx.uint32_t mdtype, byte_count
         cdef void *data_ptr
-        cdef cnp.npy_intp el_count
-        cdef cnp.ndarray el
+        cdef cmx.npy_intp el_count
+        cdef cmx.array el
         cdef object data = self.read_element(
             &mdtype, &byte_count, <void **>&data_ptr, copy)
-        cdef cnp.dtype dt = <cnp.dtype>self.dtypes[mdtype]
+        cdef cmx.dtype dt = <cmx.dtype>self.dtypes[mdtype]
         if dt.itemsize != 1 and nnz != -1 and byte_count == nnz:
-            el_count = <cnp.npy_intp> nnz
+            el_count = <cmx.npy_intp> nnz
             dt = BOOL_DTYPE
         else:
             el_count = byte_count // dt.itemsize
         cdef int flags = 0
         if copy:
-            flags = cnp.NPY_ARRAY_WRITEABLE
+            flags = cmx.NPY_ARRAY_WRITEABLE
         Py_INCREF(<object> dt)
         el = PyArray_NewFromDescr(&PyArray_Type,
                                    dt,
@@ -475,7 +475,7 @@ cdef class VarReader5:
         Specializes ``read_element``
         '''
         cdef:
-            cnp.uint32_t mdtype, byte_count, i
+            cmx.uint32_t mdtype, byte_count, i
             void* ptr
             unsigned char* byte_ptr
             object data
@@ -489,7 +489,7 @@ cdef class VarReader5:
             raise TypeError('Expecting miINT8 as data type')
         return data
 
-    cdef int read_into_int32s(self, cnp.int32_t *int32p, cnp.uint32_t max_byte_count) except -1:
+    cdef int read_into_int32s(self, cmx.int32_t *int32p, cmx.uint32_t max_byte_count) except -1:
         ''' Read int32 values into pre-allocated memory
 
         Byteswap as necessary.  Specializes ``read_element_into``
@@ -505,7 +505,7 @@ cdef class VarReader5:
            Number of integers read
         '''
         cdef:
-            cnp.uint32_t mdtype, byte_count, n_ints
+            cmx.uint32_t mdtype, byte_count, n_ints
             int i, check_ints=0
         self.read_element_into(&mdtype, &byte_count, <void *>int32p, max_byte_count)
         if mdtype == miUINT32:
@@ -539,15 +539,15 @@ cdef class VarReader5:
         element.  This means it can skip some checks and makes it
         slightly faster than ``read_tag``
         '''
-        cdef cnp.uint32_t mdtype, byte_count
+        cdef cmx.uint32_t mdtype, byte_count
         self.cread_full_tag(&mdtype, &byte_count)
         return mdtype, byte_count
 
     cdef int cread_full_tag(self,
-                            cnp.uint32_t* mdtype,
-                            cnp.uint32_t* byte_count) except -1:
+                            cmx.uint32_t* mdtype,
+                            cmx.uint32_t* byte_count) except -1:
         ''' C method for reading full u4, u4 tag from stream'''
-        cdef cnp.uint32_t u4s[2]
+        cdef cmx.uint32_t u4s[2]
         self.cstream.read_into(<void *>u4s, 8)
         if self.is_swapped:
             mdtype[0] = byteswap_u4(u4s[0])
@@ -570,9 +570,9 @@ cdef class VarReader5:
         can indicate .mat file corruption)
         '''
         cdef:
-            cdef cnp.uint32_t u4s[2]
-            cnp.uint32_t flags_class, nzmax
-            cnp.uint16_t mc
+            cdef cmx.uint32_t u4s[2]
+            cmx.uint32_t flags_class, nzmax
+            cmx.uint16_t mc
             int i
             VarHeader5 header
         # Read and discard mdtype and byte_count
@@ -645,20 +645,20 @@ cdef class VarReader5:
 
         Returns
         -------
-        arr : ndarray or sparse csc_array
+        arr : array or sparse csc_array
         '''
         cdef:
             VarHeader5 header
-            cnp.uint32_t mdtype, byte_count
+            cmx.uint32_t mdtype, byte_count
         # read full tag
         self.cread_full_tag(&mdtype, &byte_count)
         if mdtype != miMATRIX:
             raise TypeError('Expecting matrix here')
         if byte_count == 0: # empty matrix
             if process and self.squeeze_me:
-                return np.array([])
+                return mx.array([])
             else:
-                return np.array([[]])
+                return mx.array([[]])
         header = self.read_header(False)
         return self.array_from_header(header, process)
 
@@ -679,7 +679,7 @@ cdef class VarReader5:
         '''
         cdef:
             object arr
-            cnp.dtype mat_dtype
+            cmx.dtype mat_dtype
         cdef int mc = header.mclass
         if (mc == mxDOUBLE_CLASS
             or mc == mxSINGLE_CLASS
@@ -749,10 +749,10 @@ cdef class VarReader5:
             shape = tuple([x for x in shape if x != 1])
         return shape
 
-    cpdef cnp.ndarray read_real_complex(self, VarHeader5 header):
+    cpdef cmx.array read_real_complex(self, VarHeader5 header):
         ''' Read real / complex matrices from stream '''
         cdef:
-            cnp.ndarray res, res_j
+            cmx.array res, res_j
         if header.is_complex:
             # avoid array copy to save memory
             res = self.read_numeric(False)
@@ -770,7 +770,7 @@ cdef class VarReader5:
 
     cdef object read_sparse(self, VarHeader5 header):
         ''' Read sparse matrices from stream '''
-        cdef cnp.ndarray rowind, indptr, data, data_j
+        cdef cmx.array rowind, indptr, data, data_j
         cdef size_t M, N, nnz
         rowind = self.read_numeric()
         indptr = self.read_numeric()
@@ -801,7 +801,7 @@ cdef class VarReader5:
 
         return csc_array((data[:nnz], rowind[:nnz], indptr), shape=(M, N))
 
-    cpdef cnp.ndarray read_char(self, VarHeader5 header):
+    cpdef cmx.array read_char(self, VarHeader5 header):
         ''' Read char matrices from stream as arrays
 
         Matrices of char are likely to be converted to matrices of
@@ -823,34 +823,34 @@ cdef class VarReader5:
         # http://matthew-brett.github.com/pydagogue/python_unicode.html
 
         cdef:
-            cnp.uint32_t mdtype, byte_count
+            cmx.uint32_t mdtype, byte_count
             char *data_ptr
             object data, codec
-            cnp.ndarray arr
-            cnp.dtype dt
+            cmx.array arr
+            cmx.dtype dt
         cdef size_t length = self.size_from_header(header)
         data = self.read_element(
             &mdtype, &byte_count, <void **>&data_ptr, True)
         # There are mat files in the wild that have 0 byte count strings, but
         # maybe with non-zero length.
         if byte_count == 0:
-            arr = np.array(' ' * length, dtype='U')
-            return np.ndarray(shape=header.dims,
+            arr = mx.array(' ' * length, dtype='U')
+            return mx.array(shape=header.dims,
                               dtype='U1',
                               buffer=arr,
                               order='F')
         # Character data can be of apparently numerical types,
-        # specifically np.uint8, np.int8, np.uint16.  np.unit16 can have
+        # specifically mx.uint8, mx.int8, mx.uint16.  mx.unit16 can have
         # a length 1 type encoding, like ascii, or length 2 type
         # encoding
-        dt = <cnp.dtype>self.dtypes[mdtype]
+        dt = <cmx.dtype>self.dtypes[mdtype]
         if mdtype == miUINT16:
             codec = self.uint16_codec
             if self.codecs['uint16_len'] == 1: # need LSBs only
-                arr = np.ndarray(shape=(length,),
+                arr = mx.array(shape=(length,),
                                   dtype=dt,
                                   buffer=data)
-                data = arr.astype(np.uint8).tobytes()
+                data = arr.astype(mx.uint8).tobytes()
         elif mdtype == miINT8 or mdtype == miUINT8:
             codec = 'ascii'
         elif mdtype in self.codecs: # encoded char data
@@ -862,23 +862,23 @@ cdef class VarReader5:
                              % mdtype)
         uc_str = data.decode(codec, 'replace')
         # cast to array to deal with 2, 4 byte width characters
-        arr = np.array(uc_str, dtype='U')
+        arr = mx.array(uc_str, dtype='U')
         # could take this to numpy C-API level, but probably not worth
         # it
-        return np.ndarray(shape=header.dims,
+        return mx.array(shape=header.dims,
                           dtype='U1',
                           buffer=arr,
                           order='F')
 
-    cpdef cnp.ndarray read_cells(self, VarHeader5 header):
+    cpdef cmx.array read_cells(self, VarHeader5 header):
         ''' Read cell array from stream '''
         cdef:
             size_t i
-            cnp.ndarray[object, ndim=1] result
+            cmx.array[object, ndim=1] result
         # Account for fortran indexing of cells
         tupdims = tuple(header.dims[::-1])
         cdef size_t length = self.size_from_header(header)
-        result = np.empty(length, dtype=object)
+        result = mx.empty(length, dtype=object)
         for i in range(length):
             result[i] = self.read_mi_matrix()
         return result.reshape(tupdims).T
@@ -890,7 +890,7 @@ cdef class VarReader5:
 
     cdef inline object cread_fieldnames(self, int *n_names_ptr):
         cdef:
-            cnp.int32_t namelength
+            cmx.int32_t namelength
             int i, n_names
             list field_names
             object name
@@ -926,7 +926,7 @@ cdef class VarReader5:
         n_names_ptr[0] = n_names
         return field_names
 
-    cpdef cnp.ndarray read_struct(self, VarHeader5 header):
+    cpdef cmx.array read_struct(self, VarHeader5 header):
         ''' Read struct or object array from stream
 
         Objects are just structs with an extra field *classname*,
@@ -934,7 +934,7 @@ cdef class VarReader5:
         '''
         cdef:
             int i, n_names
-            cnp.ndarray[object, ndim=1] result
+            cmx.array[object, ndim=1] result
             object dt, tupdims
         # Read field names into list
         cdef object field_names = self.cread_fieldnames(&n_names)
@@ -946,9 +946,9 @@ cdef class VarReader5:
                 # If there are no field names, there is no dtype
                 # representation we can use, falling back to empty
                 # object
-                return np.empty(tupdims, dtype=object).T
+                return mx.empty(tupdims, dtype=object).T
             dt = [(field_name, object) for field_name in field_names]
-            rec_res = np.empty(length, dtype=dt)
+            rec_res = mx.empty(length, dtype=dt)
             for i in range(length):
                 for field_name in field_names:
                     rec_res[i][field_name] = self.read_mi_matrix()
@@ -956,7 +956,7 @@ cdef class VarReader5:
         # Backward compatibility with previous format
         obj_template = mio5p.mat_struct()
         obj_template._fieldnames = field_names
-        result = np.empty(length, dtype=object)
+        result = mx.empty(length, dtype=object)
         for i in range(length):
             item = pycopy(obj_template)
             for name in field_names:
@@ -982,9 +982,9 @@ cdef class VarReader5:
         See the comments at the beginning of ``mio5.py``
         '''
         # Neither res nor the return value of this function are cdef'd as
-        # cnp.ndarray, because that only adds useless checks with current
+        # cmx.array, because that only adds useless checks with current
         # Cython (0.23.4).
-        res = np.empty((1,), dtype=OPAQUE_DTYPE)
+        res = mx.empty((1,), dtype=OPAQUE_DTYPE)
         res0 = res[0]
         res0['s0'] = self.read_int8_string()
         res0['s1'] = self.read_int8_string()

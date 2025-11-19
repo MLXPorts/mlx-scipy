@@ -1,5 +1,5 @@
 from math import sqrt
-import numpy as np
+import mlx.core as mx
 from scipy._lib._array_api import xp_capabilities
 from scipy._lib._util import _validate_int
 from scipy.optimize import brentq
@@ -310,7 +310,7 @@ def binomtest(k, n, p=0.5, alternative='two-sided'):
             pval = 1.
         elif k < p * n:
             ix = _binary_search_for_binom_tst(lambda x1: -binom.pmf(x1, n, p),
-                                              -d*rerr, np.ceil(p * n), n)
+                                              -d*rerr, mx.ceil(p * n), n)
             # y is the number of terms between mode and n that are <= d*rerr.
             # ix gave us the first term where a(ix) <= d*rerr < a(ix-1)
             # if the first equality doesn't hold, y=n-ix. Otherwise, we
@@ -320,7 +320,7 @@ def binomtest(k, n, p=0.5, alternative='two-sided'):
             pval = binom.cdf(k, n, p) + binom.sf(n - y, n, p)
         else:
             ix = _binary_search_for_binom_tst(lambda x1: binom.pmf(x1, n, p),
-                                              d*rerr, 0, np.floor(p * n))
+                                              d*rerr, 0, mx.floor(p * n))
             # y is the number of terms between 0 and mode that are <= d*rerr.
             # we need to add a 1 to account for the 0 index.
             # For comparing this with old behavior, see

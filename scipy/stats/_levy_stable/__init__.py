@@ -3,7 +3,7 @@
 import warnings
 from functools import partial
 
-import numpy as np
+import mlx.core as mx
 
 from scipy import optimize
 from scipy import integrate
@@ -45,24 +45,24 @@ _QUAD_EPS = 1.2e-14
 
 def _Phi_Z0(alpha, t):
     return (
-        -np.tan(np.pi * alpha / 2) * (np.abs(t) ** (1 - alpha) - 1)
+        -mx.tan(mx.pi * alpha / 2) * (mx.abs(t) ** (1 - alpha) - 1)
         if alpha != 1
-        else -2.0 * np.log(np.abs(t)) / np.pi
+        else -2.0 * mx.log(mx.abs(t)) / mx.pi
     )
 
 
 def _Phi_Z1(alpha, t):
     return (
-        np.tan(np.pi * alpha / 2)
+        mx.tan(mx.pi * alpha / 2)
         if alpha != 1
-        else -2.0 * np.log(np.abs(t)) / np.pi
+        else -2.0 * mx.log(mx.abs(t)) / mx.pi
     )
 
 
 def _cf(Phi, t, alpha, beta):
     """Characteristic function."""
-    return np.exp(
-        -(np.abs(t) ** alpha) * (1 - 1j * beta * np.sign(t) * Phi(alpha, t))
+    return mx.exp(
+        -(mx.abs(t) ** alpha) * (1 - 1j * beta * mx.sign(t) * Phi(alpha, t))
     )
 
 
@@ -81,22 +81,22 @@ def _pdf_single_value_cf_integrate(Phi, x, alpha, beta, **kwds):
     def integrand1(t):
         if t == 0:
             return 0
-        return np.exp(-(t ** alpha)) * (
-            np.cos(beta * (t ** alpha) * Phi(alpha, t))
+        return mx.exp(-(t ** alpha)) * (
+            mx.cos(beta * (t ** alpha) * Phi(alpha, t))
         )
 
     def integrand2(t):
         if t == 0:
             return 0
-        return np.exp(-(t ** alpha)) * (
-            np.sin(beta * (t ** alpha) * Phi(alpha, t))
+        return mx.exp(-(t ** alpha)) * (
+            mx.sin(beta * (t ** alpha) * Phi(alpha, t))
         )
 
-    with np.errstate(invalid="ignore"):
+    with mx.errstate(invalid="ignore"):
         int1, *ret1 = integrate.quad(
             integrand1,
             0,
-            np.inf,
+            mx.inf,
             weight="cos",
             wvar=x,
             limit=1000,
@@ -108,7 +108,7 @@ def _pdf_single_value_cf_integrate(Phi, x, alpha, beta, **kwds):
         int2, *ret2 = integrate.quad(
             integrand2,
             0,
-            np.inf,
+            mx.inf,
             weight="sin",
             wvar=x,
             limit=1000,
@@ -117,7 +117,7 @@ def _pdf_single_value_cf_integrate(Phi, x, alpha, beta, **kwds):
             full_output=1,
         )
 
-    return (int1 + int2) / np.pi
+    return (int1 + int2) / mx.pi
 
 
 _pdf_single_value_cf_integrate_Z0 = partial(
@@ -142,7 +142,7 @@ def _nolan_round_x_near_zeta(x0, alpha, zeta, x_tol_near_zeta):
     # We seem to have partially addressed this through re-expression of
     # g(theta) here, but it still needs to be used in some extreme cases.
     # Perhaps tol(5) = 0.5e-2 could be reduced for our implementation.
-    if np.abs(x0 - zeta) < x_tol_near_zeta * alpha ** (1 / alpha):
+    if mx.abs(x0 - zeta) < x_tol_near_zeta * alpha ** (1 / alpha):
         x0 = zeta
     return x0
 
@@ -157,7 +157,7 @@ def _nolan_round_difficult_input(
     #   evaluating the pdf and cdf.  The current version of the program sets
     #   alpha=1 in these cases. This approximation is not bad in the S0
     #   parameterization."
-    if np.abs(alpha - 1) < alpha_tol_near_one:
+    if mx.abs(alpha - 1) < alpha_tol_near_one:
         alpha = 1.0
 
     #   "2. When alpha=1 and |beta| < 0.005, the program has numerical
@@ -172,7 +172,7 @@ def _pdf_single_value_piecewise_Z1(x, alpha, beta, **kwds):
     # convert from Nolan's S_1 (aka S) to S_0 (aka Zolaterev M)
     # parameterization
 
-    zeta = -beta * np.tan(np.pi * alpha / 2.0)
+    zeta = -beta * mx.tan(mx.pi * alpha / 2.0)
     x0 = x + zeta if alpha != 1 else x
 
     return _pdf_single_value_piecewise_Z0(x0, alpha, beta, **kwds)
@@ -184,7 +184,7 @@ def _pdf_single_value_piecewise_Z0(x0, alpha, beta, **kwds):
     x_tol_near_zeta = kwds.get("piecewise_x_tol_near_zeta", 0.005)
     alpha_tol_near_one = kwds.get("piecewise_alpha_tol_near_one", 0.005)
 
-    zeta = -beta * np.tan(np.pi * alpha / 2.0)
+    zeta = -beta * mx.tan(mx.pi * alpha / 2.0)
     x0, alpha, beta = _nolan_round_difficult_input(
         x0, alpha, beta, zeta, x_tol_near_zeta, alpha_tol_near_one
     )
@@ -194,7 +194,7 @@ def _pdf_single_value_piecewise_Z0(x0, alpha, beta, **kwds):
     # eg https://en.wikipedia.org/wiki/Stable_distribution#Other_analytic_cases
     if alpha == 2.0:
         # normal
-        return _norm_pdf(x0 / np.sqrt(2)) / np.sqrt(2)
+        return _norm_pdf(x0 / mx.sqrt(2)) / mx.sqrt(2)
     elif alpha == 0.5 and beta == 1.0:
         # levy
         # since S(1/2, 1, gamma, delta; <x>) ==
@@ -203,17 +203,17 @@ def _pdf_single_value_piecewise_Z0(x0, alpha, beta, **kwds):
         if _x <= 0:
             return 0
 
-        return 1 / np.sqrt(2 * np.pi * _x) / _x * np.exp(-1 / (2 * _x))
+        return 1 / mx.sqrt(2 * mx.pi * _x) / _x * mx.exp(-1 / (2 * _x))
     elif alpha == 0.5 and beta == 0.0 and x0 != 0:
         # analytical solution [HO]
-        S, C = sc.fresnel([1 / np.sqrt(2 * np.pi * np.abs(x0))])
-        arg = 1 / (4 * np.abs(x0))
+        S, C = sc.fresnel([1 / mx.sqrt(2 * mx.pi * mx.abs(x0))])
+        arg = 1 / (4 * mx.abs(x0))
         return (
-            np.sin(arg) * (0.5 - S[0]) + np.cos(arg) * (0.5 - C[0])
-        ) / np.sqrt(2 * np.pi * np.abs(x0) ** 3)
+            mx.sin(arg) * (0.5 - S[0]) + mx.cos(arg) * (0.5 - C[0])
+        ) / mx.sqrt(2 * mx.pi * mx.abs(x0) ** 3)
     elif alpha == 1.0 and beta == 0.0:
         # cauchy
-        return 1 / (1 + x0 ** 2) / np.pi
+        return 1 / (1 + x0 ** 2) / mx.pi
 
     return _pdf_single_value_piecewise_post_rounding_Z0(
         x0, alpha, beta, quad_eps, x_tol_near_zeta
@@ -238,8 +238,8 @@ def _pdf_single_value_piecewise_post_rounding_Z0(x0, alpha, beta, quad_eps,
     if x0 == zeta:
         return (
             sc.gamma(1 + 1 / alpha)
-            * np.cos(xi)
-            / np.pi
+            * mx.cos(xi)
+            / mx.pi
             / ((1 + zeta ** 2) ** (1 / alpha / 2))
         )
     elif x0 < zeta:
@@ -253,19 +253,19 @@ def _pdf_single_value_piecewise_post_rounding_Z0(x0, alpha, beta, quad_eps,
 
     # spare calculating integral on null set
     # use isclose as macos has fp differences
-    if np.isclose(-xi, np.pi / 2, rtol=1e-014, atol=1e-014):
+    if mx.isclose(-xi, mx.pi / 2, rtol=1e-014, atol=1e-014):
         return 0.0
 
     def integrand(theta):
         # limit any numerical issues leading to g_1 < 0 near theta limits
         g_1 = g(theta)
-        if not np.isfinite(g_1) or g_1 < 0:
+        if not mx.isfinite(g_1) or g_1 < 0:
             g_1 = 0
-        return g_1 * np.exp(-g_1)
+        return g_1 * mx.exp(-g_1)
 
-    with np.errstate(all="ignore"):
+    with mx.errstate(all="ignore"):
         peak = optimize.bisect(
-            lambda t: g(t) - 1, -xi, np.pi / 2, xtol=quad_eps
+            lambda t: g(t) - 1, -xi, mx.pi / 2, xtol=quad_eps
         )
 
         # this integrand can be very peaked, so we need to force
@@ -277,7 +277,7 @@ def _pdf_single_value_piecewise_post_rounding_Z0(x0, alpha, beta, quad_eps,
         # to improve QUADPACK's detection of rapidly descending tail behavior
         # (this choice is fairly ad hoc)
         tail_points = [
-            optimize.bisect(lambda t: g(t) - exp_height, -xi, np.pi / 2)
+            optimize.bisect(lambda t: g(t) - exp_height, -xi, mx.pi / 2)
             for exp_height in [100, 10, 5]
             # exp_height = 1 is handled by peak
         ]
@@ -285,7 +285,7 @@ def _pdf_single_value_piecewise_post_rounding_Z0(x0, alpha, beta, quad_eps,
         intg, *ret = integrate.quad(
             integrand,
             -xi,
-            np.pi / 2,
+            mx.pi / 2,
             points=intg_points,
             limit=100,
             epsrel=quad_eps,
@@ -300,7 +300,7 @@ def _cdf_single_value_piecewise_Z1(x, alpha, beta, **kwds):
     # convert from Nolan's S_1 (aka S) to S_0 (aka Zolaterev M)
     # parameterization
 
-    zeta = -beta * np.tan(np.pi * alpha / 2.0)
+    zeta = -beta * mx.tan(mx.pi * alpha / 2.0)
     x0 = x + zeta if alpha != 1 else x
 
     return _cdf_single_value_piecewise_Z0(x0, alpha, beta, **kwds)
@@ -312,7 +312,7 @@ def _cdf_single_value_piecewise_Z0(x0, alpha, beta, **kwds):
     x_tol_near_zeta = kwds.get("piecewise_x_tol_near_zeta", 0.005)
     alpha_tol_near_one = kwds.get("piecewise_alpha_tol_near_one", 0.005)
 
-    zeta = -beta * np.tan(np.pi * alpha / 2.0)
+    zeta = -beta * mx.tan(mx.pi * alpha / 2.0)
     x0, alpha, beta = _nolan_round_difficult_input(
         x0, alpha, beta, zeta, x_tol_near_zeta, alpha_tol_near_one
     )
@@ -322,7 +322,7 @@ def _cdf_single_value_piecewise_Z0(x0, alpha, beta, **kwds):
     # eg https://en.wikipedia.org/wiki/Stable_distribution#Other_analytic_cases
     if alpha == 2.0:
         # normal
-        return _norm_cdf(x0 / np.sqrt(2))
+        return _norm_cdf(x0 / mx.sqrt(2))
     elif alpha == 0.5 and beta == 1.0:
         # levy
         # since S(1/2, 1, gamma, delta; <x>) ==
@@ -331,10 +331,10 @@ def _cdf_single_value_piecewise_Z0(x0, alpha, beta, **kwds):
         if _x <= 0:
             return 0
 
-        return sc.erfc(np.sqrt(0.5 / _x))
+        return sc.erfc(mx.sqrt(0.5 / _x))
     elif alpha == 1.0 and beta == 0.0:
         # cauchy
-        return 0.5 + np.arctan(x0) / np.pi
+        return 0.5 + mx.arctan(x0) / mx.pi
 
     return _cdf_single_value_piecewise_post_rounding_Z0(
         x0, alpha, beta, quad_eps, x_tol_near_zeta
@@ -365,7 +365,7 @@ def _cdf_single_value_piecewise_post_rounding_Z0(x0, alpha, beta, quad_eps,
             -x0, alpha, -beta, quad_eps, x_tol_near_zeta
         )
     elif x0 == zeta:
-        return 0.5 - xi / np.pi
+        return 0.5 - xi / mx.pi
 
     # following Nolan, we may now assume
     #   x0 > zeta when alpha != 1
@@ -373,17 +373,17 @@ def _cdf_single_value_piecewise_post_rounding_Z0(x0, alpha, beta, quad_eps,
 
     # spare calculating integral on null set
     # use isclose as macos has fp differences
-    if np.isclose(-xi, np.pi / 2, rtol=1e-014, atol=1e-014):
+    if mx.isclose(-xi, mx.pi / 2, rtol=1e-014, atol=1e-014):
         return c1
 
     def integrand(theta):
         g_1 = g(theta)
-        return np.exp(-g_1)
+        return mx.exp(-g_1)
 
-    with np.errstate(all="ignore"):
+    with mx.errstate(all="ignore"):
         # shrink supports where required
         left_support = -xi
-        right_support = np.pi / 2
+        right_support = mx.pi / 2
         if alpha > 1:
             # integrand(t) monotonic 0 to 1
             if integrand(-xi) != 0.0:
@@ -391,17 +391,17 @@ def _cdf_single_value_piecewise_post_rounding_Z0(x0, alpha, beta, quad_eps,
                     integrand,
                     (-xi,),
                     method="L-BFGS-B",
-                    bounds=[(-xi, np.pi / 2)],
+                    bounds=[(-xi, mx.pi / 2)],
                 )
                 left_support = res.x[0]
         else:
             # integrand(t) monotonic 1 to 0
-            if integrand(np.pi / 2) != 0.0:
+            if integrand(mx.pi / 2) != 0.0:
                 res = optimize.minimize(
                     integrand,
-                    (np.pi / 2,),
+                    (mx.pi / 2,),
                     method="L-BFGS-B",
-                    bounds=[(-xi, np.pi / 2)],
+                    bounds=[(-xi, mx.pi / 2)],
                 )
                 right_support = res.x[0]
 
@@ -426,30 +426,30 @@ def _rvs_Z1(alpha, beta, size=None, random_state=None):
     def alpha1func(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W):
         return (
             2
-            / np.pi
+            / mx.pi
             * (
-                (np.pi / 2 + bTH) * tanTH
-                - beta * np.log((np.pi / 2 * W * cosTH) / (np.pi / 2 + bTH))
+                (mx.pi / 2 + bTH) * tanTH
+                - beta * mx.log((mx.pi / 2 * W * cosTH) / (mx.pi / 2 + bTH))
             )
         )
 
     def beta0func(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W):
         return (
             W
-            / (cosTH / np.tan(aTH) + np.sin(TH))
-            * ((np.cos(aTH) + np.sin(aTH) * tanTH) / W) ** (1.0 / alpha)
+            / (cosTH / mx.tan(aTH) + mx.sin(TH))
+            * ((mx.cos(aTH) + mx.sin(aTH) * tanTH) / W) ** (1.0 / alpha)
         )
 
     def otherwise(alpha, beta, TH, aTH, bTH, cosTH, tanTH, W):
         # alpha is not 1 and beta is not 0
-        val0 = beta * np.tan(np.pi * alpha / 2)
-        th0 = np.arctan(val0) / alpha
-        val3 = W / (cosTH / np.tan(alpha * (th0 + TH)) + np.sin(TH))
+        val0 = beta * mx.tan(mx.pi * alpha / 2)
+        th0 = mx.arctan(val0) / alpha
+        val3 = W / (cosTH / mx.tan(alpha * (th0 + TH)) + mx.sin(TH))
         res3 = val3 * (
             (
-                np.cos(aTH)
-                + np.sin(aTH) * tanTH
-                - val0 * (np.sin(aTH) - np.cos(aTH) * tanTH)
+                mx.cos(aTH)
+                + mx.sin(aTH) * tanTH
+                - val0 * (mx.sin(aTH) - mx.cos(aTH) * tanTH)
             )
             / W
         ) ** (1.0 / alpha)
@@ -460,16 +460,16 @@ def _rvs_Z1(alpha, beta, size=None, random_state=None):
             beta == 0, (alpha, beta, TH, aTH, bTH, cosTH, tanTH, W),
             beta0func, otherwise)
 
-    alpha = np.broadcast_to(alpha, size)
-    beta = np.broadcast_to(beta, size)
+    alpha = mx.broadcast_to(alpha, size)
+    beta = mx.broadcast_to(beta, size)
     TH = uniform.rvs(
-        loc=-np.pi / 2.0, scale=np.pi, size=size, random_state=random_state
+        loc=-mx.pi / 2.0, scale=mx.pi, size=size, random_state=random_state
     )
     W = expon.rvs(size=size, random_state=random_state)
     aTH = alpha * TH
     bTH = beta * TH
-    cosTH = np.cos(TH)
-    tanTH = np.tan(TH)
+    cosTH = mx.cos(TH)
+    tanTH = mx.tan(TH)
     return xpx.apply_where(
         alpha == 1, (alpha, beta, TH, aTH, bTH, cosTH, tanTH, W),
         alpha1func, alphanot1func)
@@ -482,9 +482,9 @@ def _fitstart_S0(data):
     # those in S0 parameterization can be found in [NO]. Note that
     # only delta changes.
     if alpha != 1:
-        delta0 = delta1 + beta * gamma * np.tan(np.pi * alpha / 2.0)
+        delta0 = delta1 + beta * gamma * mx.tan(mx.pi * alpha / 2.0)
     else:
-        delta0 = delta1 + 2 * beta * gamma * np.log(gamma) / np.pi
+        delta0 = delta1 + 2 * beta * gamma * mx.log(gamma) / mx.pi
 
     return alpha, beta, delta0, gamma
 
@@ -500,7 +500,7 @@ def _fitstart_S1(data):
     nu_beta_range = [0, 0.1, 0.2, 0.3, 0.5, 0.7, 1]
 
     # table III - alpha = psi_1(nu_alpha, nu_beta)
-    alpha_table = np.array([
+    alpha_table = mx.array([
         [2.000, 2.000, 2.000, 2.000, 2.000, 2.000, 2.000],
         [1.916, 1.924, 1.924, 1.924, 1.924, 1.924, 1.924],
         [1.808, 1.813, 1.829, 1.829, 1.829, 1.829, 1.829],
@@ -520,7 +520,7 @@ def _fitstart_S1(data):
     # `nu_beta` as `x` and `nu_alpha` as `y`
 
     # table IV - beta = psi_2(nu_alpha, nu_beta)
-    beta_table = np.array([
+    beta_table = mx.array([
         [0, 2.160, 1.000, 1.000, 1.000, 1.000, 1.000],
         [0, 1.592, 3.390, 1.000, 1.000, 1.000, 1.000],
         [0, 0.759, 1.800, 1.000, 1.000, 1.000, 1.000],
@@ -545,7 +545,7 @@ def _fitstart_S1(data):
     beta_range = [0, 0.25, 0.5, 0.75, 1]
 
     # Table V - nu_c = psi_3(alpha, beta)
-    nu_c_table = np.array([
+    nu_c_table = mx.array([
         [1.908, 1.908, 1.908, 1.908, 1.908],
         [1.914, 1.915, 1.916, 1.918, 1.921],
         [1.921, 1.922, 1.927, 1.936, 1.947],
@@ -566,7 +566,7 @@ def _fitstart_S1(data):
     # `beta` as `x` and `alpha` as `y`
 
     # Table VII - nu_zeta = psi_5(alpha, beta)
-    nu_zeta_table = np.array([
+    nu_zeta_table = mx.array([
         [0, 0.000, 0.000, 0.000, 0.000],
         [0, -0.017, -0.032, -0.049, -0.064],
         [0, -0.030, -0.061, -0.092, -0.123],
@@ -612,25 +612,25 @@ def _fitstart_S1(data):
         return phi_5(beta, alpha) if beta > 0 else -phi_5(-beta, alpha)
 
     # quantiles
-    p05 = np.percentile(data, 5)
-    p50 = np.percentile(data, 50)
-    p95 = np.percentile(data, 95)
-    p25 = np.percentile(data, 25)
-    p75 = np.percentile(data, 75)
+    p05 = mx.percentile(data, 5)
+    p50 = mx.percentile(data, 50)
+    p95 = mx.percentile(data, 95)
+    p25 = mx.percentile(data, 25)
+    p75 = mx.percentile(data, 75)
 
     nu_alpha = (p95 - p05) / (p75 - p25)
     nu_beta = (p95 + p05 - 2 * p50) / (p95 - p05)
 
     if nu_alpha >= 2.439:
-        eps = np.finfo(float).eps
-        alpha = np.clip(psi_1_1(nu_beta, nu_alpha)[0, 0], eps, 2.)
-        beta = np.clip(psi_2_1(nu_beta, nu_alpha)[0, 0], -1.0, 1.0)
+        eps = mx.finfo(float).eps
+        alpha = mx.clip(psi_1_1(nu_beta, nu_alpha)[0, 0], eps, 2.)
+        beta = mx.clip(psi_2_1(nu_beta, nu_alpha)[0, 0], -1.0, 1.0)
     else:
         alpha = 2.0
-        beta = np.sign(nu_beta)
+        beta = mx.sign(nu_beta)
     c = (p75 - p25) / phi_3_1(beta, alpha)[0, 0]
     zeta = p50 + c * phi_5_1(beta, alpha)[0, 0]
-    delta = zeta-beta*c*np.tan(np.pi*alpha/2.) if alpha != 1. else zeta
+    delta = zeta-beta*c*mx.tan(mx.pi*alpha/2.) if alpha != 1. else zeta
 
     return (alpha, beta, delta, c)
 
@@ -781,7 +781,7 @@ class levy_stable_gen(rv_continuous):
     ``y = (x - loc) / scale``, except in the ``S1`` parameterization if
     ``alpha == 1``.  In that case ``%(name)s.pdf(x, %(shapes)s, loc, scale)``
     is identically equivalent to ``%(name)s.pdf(y, %(shapes)s) / scale`` with
-    ``y = (x - loc - 2 * beta * scale * np.log(scale) / np.pi) / scale``.
+    ``y = (x - loc - 2 * beta * scale * mx.log(scale) / mx.pi) / scale``.
     See [NO2]_ Definition 1.8 for more information.
     Note that shifting the location of a distribution
     does not make it a "noncentral" distribution.
@@ -848,15 +848,15 @@ class levy_stable_gen(rv_continuous):
         (alpha, beta), delta, gamma, size = self._parse_args_rvs(*args, **kwds)
 
         # shift location for this parameterisation (S1)
-        X1 = np.where(
-            alpha == 1.0, X1 + 2 * beta * gamma * np.log(gamma) / np.pi, X1
+        X1 = mx.where(
+            alpha == 1.0, X1 + 2 * beta * gamma * mx.log(gamma) / mx.pi, X1
         )
 
         if self._parameterization() == "S0":
-            return np.where(
+            return mx.where(
                 alpha == 1.0,
-                X1 - (beta * 2 * gamma * np.log(gamma) / np.pi),
-                X1 - gamma * beta * np.tan(np.pi * alpha / 2.0),
+                X1 - (beta * 2 * gamma * mx.log(gamma) / mx.pi),
+                X1 - gamma * beta * mx.tan(mx.pi * alpha / 2.0),
             )
         elif self._parameterization() == "S1":
             return X1
@@ -872,25 +872,25 @@ class levy_stable_gen(rv_continuous):
             return super().pdf(x, *args, **kwds)
         elif self._parameterization() == "S1":
             (alpha, beta), delta, gamma = self._parse_args(*args, **kwds)
-            if np.all(np.reshape(alpha, (1, -1))[0, :] != 1):
+            if mx.all(mx.reshape(alpha, (1, -1))[0, :] != 1):
                 return super().pdf(x, *args, **kwds)
             else:
                 # correct location for this parameterisation
-                x = np.reshape(x, (1, -1))[0, :]
-                x, alpha, beta = np.broadcast_arrays(x, alpha, beta)
+                x = mx.reshape(x, (1, -1))[0, :]
+                x, alpha, beta = mx.broadcast_arrays(x, alpha, beta)
 
-                data_in = np.dstack((x, alpha, beta))[0]
-                data_out = np.empty(shape=(len(data_in), 1))
+                data_in = mx.dstack((x, alpha, beta))[0]
+                data_out = mx.empty(shape=(len(data_in), 1))
                 # group data in unique arrays of alpha, beta pairs
-                uniq_param_pairs = np.unique(data_in[:, 1:], axis=0)
+                uniq_param_pairs = mx.unique(data_in[:, 1:], axis=0)
                 for pair in uniq_param_pairs:
                     _alpha, _beta = pair
                     _delta = (
-                        delta + 2 * _beta * gamma * np.log(gamma) / np.pi
+                        delta + 2 * _beta * gamma * mx.log(gamma) / mx.pi
                         if _alpha == 1.0
                         else delta
                     )
-                    data_mask = np.all(data_in[:, 1:] == pair, axis=-1)
+                    data_mask = mx.all(data_in[:, 1:] == pair, axis=-1)
                     _x = data_in[data_mask, 0]
                     data_out[data_mask] = (
                         super()
@@ -912,12 +912,12 @@ class levy_stable_gen(rv_continuous):
             _pdf_single_value_cf_integrate = _pdf_single_value_cf_integrate_Z1
             _cf = _cf_Z1
 
-        x = np.asarray(x).reshape(1, -1)[0, :]
+        x = mx.array(x).reshape(1, -1)[0, :]
 
-        x, alpha, beta = np.broadcast_arrays(x, alpha, beta)
+        x, alpha, beta = mx.broadcast_arrays(x, alpha, beta)
 
-        data_in = np.dstack((x, alpha, beta))[0]
-        data_out = np.empty(shape=(len(data_in), 1))
+        data_in = mx.dstack((x, alpha, beta))[0]
+        data_out = mx.empty(shape=(len(data_in), 1))
 
         pdf_default_method_name = self.pdf_default_method
         if pdf_default_method_name in ("piecewise", "best", "zolotarev"):
@@ -942,12 +942,12 @@ class levy_stable_gen(rv_continuous):
         fft_interpolation_degree = self.pdf_fft_interpolation_degree
 
         # group data in unique arrays of alpha, beta pairs
-        uniq_param_pairs = np.unique(data_in[:, 1:], axis=0)
+        uniq_param_pairs = mx.unique(data_in[:, 1:], axis=0)
         for pair in uniq_param_pairs:
-            data_mask = np.all(data_in[:, 1:] == pair, axis=-1)
+            data_mask = mx.all(data_in[:, 1:] == pair, axis=-1)
             data_subset = data_in[data_mask]
             if pdf_single_value_method is not None:
-                data_out[data_mask] = np.array(
+                data_out[data_mask] = mx.array(
                     [
                         pdf_single_value_method(
                             _x, _alpha, _beta, **pdf_single_value_kwds
@@ -975,14 +975,14 @@ class levy_stable_gen(rv_continuous):
                         "One of fft_grid_spacing or fft_n_points_two_power "
                         + "needs to be set."
                     )
-                max_abs_x = np.max(np.abs(_x))
+                max_abs_x = mx.max(mx.abs(_x))
                 h = (
                     2 ** (3 - fft_n_points_two_power) * max_abs_x
                     if fft_grid_spacing is None
                     else fft_grid_spacing
                 )
                 q = (
-                    np.ceil(np.log(2 * max_abs_x / h) / np.log(2)) + 2
+                    mx.ceil(mx.log(2 * max_abs_x / h) / mx.log(2)) + 2
                     if fft_n_points_two_power is None
                     else int(fft_n_points_two_power)
                 )
@@ -1004,7 +1004,7 @@ class levy_stable_gen(rv_continuous):
                     level=fft_interpolation_level,
                 )
                 f = interpolate.InterpolatedUnivariateSpline(
-                    density_x, np.real(density), k=fft_interpolation_degree
+                    density_x, mx.real(density), k=fft_interpolation_degree
                 )  # patch FFT to use cubic
                 data_out[data_mask] = f(_x)
 
@@ -1019,25 +1019,25 @@ class levy_stable_gen(rv_continuous):
             return super().cdf(x, *args, **kwds)
         elif self._parameterization() == "S1":
             (alpha, beta), delta, gamma = self._parse_args(*args, **kwds)
-            if np.all(np.reshape(alpha, (1, -1))[0, :] != 1):
+            if mx.all(mx.reshape(alpha, (1, -1))[0, :] != 1):
                 return super().cdf(x, *args, **kwds)
             else:
                 # correct location for this parameterisation
-                x = np.reshape(x, (1, -1))[0, :]
-                x, alpha, beta = np.broadcast_arrays(x, alpha, beta)
+                x = mx.reshape(x, (1, -1))[0, :]
+                x, alpha, beta = mx.broadcast_arrays(x, alpha, beta)
 
-                data_in = np.dstack((x, alpha, beta))[0]
-                data_out = np.empty(shape=(len(data_in), 1))
+                data_in = mx.dstack((x, alpha, beta))[0]
+                data_out = mx.empty(shape=(len(data_in), 1))
                 # group data in unique arrays of alpha, beta pairs
-                uniq_param_pairs = np.unique(data_in[:, 1:], axis=0)
+                uniq_param_pairs = mx.unique(data_in[:, 1:], axis=0)
                 for pair in uniq_param_pairs:
                     _alpha, _beta = pair
                     _delta = (
-                        delta + 2 * _beta * gamma * np.log(gamma) / np.pi
+                        delta + 2 * _beta * gamma * mx.log(gamma) / mx.pi
                         if _alpha == 1.0
                         else delta
                     )
-                    data_mask = np.all(data_in[:, 1:] == pair, axis=-1)
+                    data_mask = mx.all(data_in[:, 1:] == pair, axis=-1)
                     _x = data_in[data_mask, 0]
                     data_out[data_mask] = (
                         super()
@@ -1057,12 +1057,12 @@ class levy_stable_gen(rv_continuous):
             _cdf_single_value_piecewise = _cdf_single_value_piecewise_Z1
             _cf = _cf_Z1
 
-        x = np.asarray(x).reshape(1, -1)[0, :]
+        x = mx.array(x).reshape(1, -1)[0, :]
 
-        x, alpha, beta = np.broadcast_arrays(x, alpha, beta)
+        x, alpha, beta = mx.broadcast_arrays(x, alpha, beta)
 
-        data_in = np.dstack((x, alpha, beta))[0]
-        data_out = np.empty(shape=(len(data_in), 1))
+        data_in = mx.dstack((x, alpha, beta))[0]
+        data_out = mx.empty(shape=(len(data_in), 1))
 
         cdf_default_method_name = self.cdf_default_method
         if cdf_default_method_name == "piecewise":
@@ -1082,12 +1082,12 @@ class levy_stable_gen(rv_continuous):
         fft_interpolation_degree = self.pdf_fft_interpolation_degree
 
         # group data in unique arrays of alpha, beta pairs
-        uniq_param_pairs = np.unique(data_in[:, 1:], axis=0)
+        uniq_param_pairs = mx.unique(data_in[:, 1:], axis=0)
         for pair in uniq_param_pairs:
-            data_mask = np.all(data_in[:, 1:] == pair, axis=-1)
+            data_mask = mx.all(data_in[:, 1:] == pair, axis=-1)
             data_subset = data_in[data_mask]
             if cdf_single_value_method is not None:
-                data_out[data_mask] = np.array(
+                data_out[data_mask] = mx.array(
                     [
                         cdf_single_value_method(
                             _x, _alpha, _beta, **cdf_single_value_kwds
@@ -1110,14 +1110,14 @@ class levy_stable_gen(rv_continuous):
                         "One of fft_grid_spacing or fft_n_points_two_power "
                         + "needs to be set."
                     )
-                max_abs_x = np.max(np.abs(_x))
+                max_abs_x = mx.max(mx.abs(_x))
                 h = (
                     2 ** (3 - fft_n_points_two_power) * max_abs_x
                     if fft_grid_spacing is None
                     else fft_grid_spacing
                 )
                 q = (
-                    np.ceil(np.log(2 * max_abs_x / h) / np.log(2)) + 2
+                    mx.ceil(mx.log(2 * max_abs_x / h) / mx.log(2)) + 2
                     if fft_n_points_two_power is None
                     else int(fft_n_points_two_power)
                 )
@@ -1129,9 +1129,9 @@ class levy_stable_gen(rv_continuous):
                     level=fft_interpolation_level,
                 )
                 f = interpolate.InterpolatedUnivariateSpline(
-                    density_x, np.real(density), k=fft_interpolation_degree
+                    density_x, mx.real(density), k=fft_interpolation_degree
                 )
-                data_out[data_mask] = np.array(
+                data_out[data_mask] = mx.array(
                     [f.integral(self.a, float(x_1.squeeze())) for x_1 in _x]
                 ).reshape(data_out[data_mask].shape)
 
@@ -1145,20 +1145,20 @@ class levy_stable_gen(rv_continuous):
         return _fitstart(data)
 
     def _stats(self, alpha, beta):
-        mu = 0 if alpha > 1 else np.nan
-        mu2 = 2 if alpha == 2 else np.inf
-        g1 = 0.0 if alpha == 2.0 else np.nan
-        g2 = 0.0 if alpha == 2.0 else np.nan
+        mu = 0 if alpha > 1 else mx.nan
+        mu2 = 2 if alpha == 2 else mx.inf
+        g1 = 0.0 if alpha == 2.0 else mx.nan
+        g2 = 0.0 if alpha == 2.0 else mx.nan
         return mu, mu2, g1, g2
 
 
 # cotes numbers - see sequence from http://oeis.org/A100642
-Cotes_table = np.array(
+Cotes_table = mx.array(
     [[], [1]] + [v[2] for v in _builtincoeffs.values()], dtype=object
 )
-Cotes = np.array(
+Cotes = mx.array(
     [
-        np.pad(r, (0, len(Cotes_table) - 1 - len(r)), mode='constant')
+        mx.pad(r, (0, len(Cotes_table) - 1 - len(r)), mode='constant')
         for r in Cotes_table
     ]
 )
@@ -1191,10 +1191,10 @@ def pdf_from_cf_with_fft(cf, h=0.01, q=9, level=3):
 
     Returns
     -------
-    x_l : ndarray
+    x_l : array
         Array of points x at which pdf is estimated. 2**q equally spaced
         points from -pi/h up to but not including pi/h.
-    density : ndarray
+    density : array
         Estimated values of pdf corresponding to cf at points in x_l.
 
     References
@@ -1204,26 +1204,26 @@ def pdf_from_cf_with_fft(cf, h=0.01, q=9, level=3):
     """
     n = level
     N = 2**q
-    steps = np.arange(0, N)
+    steps = mx.arange(0, N)
     L = N * h / 2
-    x_l = np.pi * (steps - N / 2) / L
+    x_l = mx.pi * (steps - N / 2) / L
     if level > 1:
-        indices = np.arange(n).reshape(n, 1)
-        s1 = np.sum(
-            (-1) ** steps * Cotes[n, indices] * np.fft.fft(
+        indices = mx.arange(n).reshape(n, 1)
+        s1 = mx.sum(
+            (-1) ** steps * Cotes[n, indices] * mx.fft.fft(
                 (-1)**steps * cf(-L + h * steps + h * indices / (n - 1))
-            ) * np.exp(
-                1j * np.pi * indices / (n - 1)
-                - 2 * 1j * np.pi * indices * steps /
+            ) * mx.exp(
+                1j * mx.pi * indices / (n - 1)
+                - 2 * 1j * mx.pi * indices * steps /
                 (N * (n - 1))
             ),
             axis=0
         )
     else:
-        s1 = (-1) ** steps * Cotes[n, 0] * np.fft.fft(
+        s1 = (-1) ** steps * Cotes[n, 0] * mx.fft.fft(
             (-1) ** steps * cf(-L + h * steps)
         )
-    density = h * s1 / (2 * np.pi * np.sum(Cotes[n]))
+    density = h * s1 / (2 * mx.pi * mx.sum(Cotes[n]))
     return (x_l, density)
 
 

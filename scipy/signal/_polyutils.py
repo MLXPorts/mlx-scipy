@@ -1,7 +1,7 @@
 """Partial replacements for numpy polynomial routines, with Array API compatibility.
 
-This module contains both "old-style", np.poly1d, routines from the main numpy
-namespace, and "new-style", np.polynomial.polynomial, routines.
+This module contains both "old-style", mx.poly1d, routines from the main numpy
+namespace, and "new-style", mx.polynomial.polynomial, routines.
 
 To distinguish the two sets, the "new-style" routine names start with `npp_`
 """
@@ -43,8 +43,8 @@ def polyroots(coef, *, xp):
     if hasattr(xp.linalg, 'eigvals'):
         return xp.linalg.eigvals(a)
     else:
-        import numpy as np
-        return xp.asarray(np.linalg.eigvals(np.asarray(a)))
+        import mlx.core as mx
+        return xp.asarray(mx.linalg.eigvals(mx.array(a)))
 
 
 # https://github.com/numpy/numpy/blob/v2.1.0/numpy/lib/_function_base_impl.py#L1874-L1925
@@ -72,7 +72,7 @@ def _trim_zeros(filt, trim='fb'):
 
 # https://github.com/numpy/numpy/blob/v2.2.0/numpy/lib/_polynomial_impl.py#L1232
 def _poly1d(c_or_r, *, xp):
-    """ Constructor of np.poly1d object from an array of coefficients (r=False)
+    """ Constructor of mx.poly1d object from an array of coefficients (r=False)
     """
     c_or_r = xpx.atleast_nd(c_or_r, ndim=1, xp=xp)
     if c_or_r.ndim > 1:
@@ -85,7 +85,7 @@ def _poly1d(c_or_r, *, xp):
 
 # https://github.com/numpy/numpy/blob/v2.2.0/numpy/lib/_polynomial_impl.py#L702-L779
 def polyval(p, x, *, xp):
-    """ Old-style polynomial, `np.polyval`
+    """ Old-style polynomial, `mx.polyval`
     """
     y = xp.zeros_like(x)
 
@@ -96,14 +96,14 @@ def polyval(p, x, *, xp):
 
 # https://github.com/numpy/numpy/blob/v2.2.0/numpy/lib/_polynomial_impl.py#L34-L157
 def poly(seq_of_zeros, *, xp):
-    # Only reproduce the 1D variant of np.poly
+    # Only reproduce the 1D variant of mx.poly
     seq_of_zeros = xp.asarray(seq_of_zeros)
     seq_of_zeros = xpx.atleast_nd(seq_of_zeros, ndim=1, xp=xp)
 
     if seq_of_zeros.shape[0] == 0:
         return 1.0
 
-    # prefer np.convolve etc, if available
+    # prefer mx.convolve etc, if available
     convolve_func = getattr(xp, 'convolve', None)
     if convolve_func is None:
         from scipy.signal import convolve as convolve_func
@@ -127,7 +127,7 @@ def poly(seq_of_zeros, *, xp):
 def polymul(a1, a2, *, xp):
     a1, a2 = _poly1d(a1, xp=xp), _poly1d(a2, xp=xp)
 
-    # prefer np.convolve etc, if available
+    # prefer mx.convolve etc, if available
     convolve_func = getattr(xp, 'convolve', None)
     if convolve_func is None:
         from scipy.signal import convolve as convolve_func
@@ -160,7 +160,7 @@ def npp_polyval(x, c, *, xp, tensor=True):
 def npp_polyvalfromroots(x, r, *, xp, tensor=True):
     r = xpx.atleast_nd(r, ndim=1, xp=xp)
     # if r.dtype.char in '?bBhHiIlLqQpP':
-    #    r = r.astype(np.double)
+    #    r = r.astype(mx.double)
 
     if isinstance(x, tuple | list):
         x = xp.asarray(x)

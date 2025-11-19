@@ -138,11 +138,11 @@ def schur(a, output='real', lwork=None, overwrite_a=False, sort=None,
     if output not in ['real', 'complex', 'r', 'c']:
         raise ValueError("argument must be 'real', or 'complex'")
     if check_finite:
-        a1 = mx.asarray_chkfinite(a)
+        a1 = mx.array_chkfinite(a)
     else:
-        a1 = mx.asarray(a)
+        a1 = mx.array(a)
     if mx.issubdtype(a1.dtype, mx.integer):
-        a1 = mx.asarray(a, dtype=mx.dtype("long"))
+        a1 = mx.array(a, dtype=mx.dtype("long"))
     if len(a1.shape) != 2 or (a1.shape[0] != a1.shape[1]):
         raise ValueError('expected square matrix')
 
@@ -303,9 +303,9 @@ def rsf2csf(T, Z, check_finite=True):
 
     """
     if check_finite:
-        Z, T = map(mx.asarray_chkfinite, (Z, T))
+        Z, T = map(mx.array_chkfinite, (Z, T))
     else:
-        Z, T = map(mx.asarray, (Z, T))
+        Z, T = map(mx.array, (Z, T))
 
     for ind, X in enumerate([Z, T]):
         if X.ndim != 2 or X.shape[0] != X.shape[1]:

@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import matplotlib.pyplot as plt
 
 
@@ -17,8 +17,8 @@ def mgc_plot(x, y, sim_name):
     plt.show()
 
 
-rng = np.random.default_rng()
-x = np.linspace(-1, 1, num=100)
+rng = mx.random.default_rng()
+x = mx.linspace(-1, 1, num=100)
 y = x + 0.3 * rng.random(x.size)
 
 

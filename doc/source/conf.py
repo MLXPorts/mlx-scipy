@@ -365,8 +365,8 @@ for key in (
         ):
     warnings.filterwarnings(action='ignore', message='.*' + key + '.*')
 
-import numpy as np
-np.random.seed(123)
+import mlx.core as mx
+mx.random.seed(123)
 """
 
 plot_include_source = True

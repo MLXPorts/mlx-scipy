@@ -4,7 +4,7 @@ Convenience interface to N-D interpolation
 .. versionadded:: 0.9
 
 """
-import numpy as np
+import mlx.core as mx
 from ._interpnd import (LinearNDInterpolator, NDInterpolatorBase,
      CloughTocher2DInterpolator, _ndim_coords_from_arrays)
 from scipy.spatial import cKDTree
@@ -26,9 +26,9 @@ class NearestNDInterpolator(NDInterpolatorBase):
 
     Parameters
     ----------
-    x : (npoints, ndims) 2-D ndarray of floats
+    x : (npoints, ndims) 2-D array of floats
         Data point coordinates.
-    y : (npoints, ...) N-D ndarray of float or complex
+    y : (npoints, ...) N-D array of float or complex
         Data values. The length of `y` along the first axis must be equal to
         the length of `x`.
     rescale : boolean, optional
@@ -66,15 +66,15 @@ class NearestNDInterpolator(NDInterpolatorBase):
     We can interpolate values on a 2D plane:
 
     >>> from scipy.interpolate import NearestNDInterpolator
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> x = rng.random(10) - 0.5
     >>> y = rng.random(10) - 0.5
-    >>> z = np.hypot(x, y)
-    >>> X = np.linspace(min(x), max(x))
-    >>> Y = np.linspace(min(y), max(y))
-    >>> X, Y = np.meshgrid(X, Y)  # 2D grid for interpolation
+    >>> z = mx.hypot(x, y)
+    >>> X = mx.linspace(min(x), max(x))
+    >>> Y = mx.linspace(min(y), max(y))
+    >>> X, Y = mx.meshgrid(X, Y)  # 2D grid for interpolation
     >>> interp = NearestNDInterpolator(list(zip(x, y)), z)
     >>> Z = interp(X, Y)
     >>> plt.pcolormesh(X, Y, Z, shading='auto')
@@ -93,7 +93,7 @@ class NearestNDInterpolator(NDInterpolatorBase):
         if tree_options is None:
             tree_options = dict()
         self.tree = cKDTree(self.points, **tree_options)
-        self.values = np.asarray(y)
+        self.values = mx.array(y)
 
     def __call__(self, *args, **query_options):
         """
@@ -139,7 +139,7 @@ class NearestNDInterpolator(NDInterpolatorBase):
         # below to mask the array and return only the points that were deemed
         # to have a close enough neighbor to return something useful.
         dist, i = self.tree.query(xi_flat, **query_options)
-        valid_mask = np.isfinite(dist)
+        valid_mask = mx.isfinite(dist)
 
         # create a holder interp_values array and fill with nans.
         if self.values.ndim > 1:
@@ -147,10 +147,10 @@ class NearestNDInterpolator(NDInterpolatorBase):
         else:
             interp_shape = flattened_shape[:-1]
 
-        if np.issubdtype(self.values.dtype, np.complexfloating):
-            interp_values = np.full(interp_shape, np.nan, dtype=self.values.dtype)
+        if mx.issubdtype(self.values.dtype, mx.complexfloating):
+            interp_values = mx.full(interp_shape, mx.nan, dtype=self.values.dtype)
         else:
-            interp_values = np.full(interp_shape, np.nan)
+            interp_values = mx.full(interp_shape, mx.nan)
 
         interp_values[valid_mask] = self.values[i[valid_mask], ...]
 
@@ -168,18 +168,18 @@ class NearestNDInterpolator(NDInterpolatorBase):
 #------------------------------------------------------------------------------
 
 
-def griddata(points, values, xi, method='linear', fill_value=np.nan,
+def griddata(points, values, xi, method='linear', fill_value=mx.nan,
              rescale=False):
     """
     Convenience function for interpolating unstructured data in multiple dimensions.
 
     Parameters
     ----------
-    points : 2-D ndarray of floats with shape (n, D), or length D tuple of 1-D ndarrays with shape (n,).
+    points : 2-D array of floats with shape (n, D), or length D tuple of 1-D arrays with shape (n,).
         Data point coordinates.
-    values : ndarray of float or complex, shape (n,)
+    values : array of float or complex, shape (n,)
         Data values.
-    xi : 2-D ndarray of floats with shape (m, D), or length D tuple of ndarrays broadcastable to the same shape.
+    xi : 2-D array of floats with shape (m, D), or length D tuple of arrays broadcastable to the same shape.
         Points at which to interpolate data.
     method : {'linear', 'nearest', 'cubic'}, optional
         Method of interpolation. One of
@@ -217,7 +217,7 @@ def griddata(points, values, xi, method='linear', fill_value=np.nan,
 
     Returns
     -------
-    ndarray
+    array
         Array of interpolated values.
 
     See Also
@@ -245,17 +245,17 @@ def griddata(points, values, xi, method='linear', fill_value=np.nan,
 
     Suppose we want to interpolate the 2-D function
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> def func(x, y):
-    ...     return x*(1-x)*np.cos(4*np.pi*x) * np.sin(4*np.pi*y**2)**2
+    ...     return x*(1-x)*mx.cos(4*mx.pi*x) * mx.sin(4*mx.pi*y**2)**2
 
     on a grid in [0, 1]x[0, 1]
 
-    >>> grid_x, grid_y = np.mgrid[0:1:100j, 0:1:200j]
+    >>> grid_x, grid_y = mx.mgrid[0:1:100j, 0:1:200j]
 
     but we only know its values at 1000 data points:
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> points = rng.random((1000, 2))
     >>> values = func(points[:,0], points[:,1])
 
@@ -305,7 +305,7 @@ def griddata(points, values, xi, method='linear', fill_value=np.nan,
                 raise ValueError("invalid number of dimensions in xi")
             xi, = xi
         # Sort points/values together, necessary as input for interp1d
-        idx = np.argsort(points)
+        idx = mx.argsort(points)
         points = points[idx]
         values = values[idx]
         if method == 'nearest':

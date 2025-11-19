@@ -3,7 +3,7 @@ import warnings
 import numpy.testing as npt
 from numpy.testing import assert_allclose
 
-import numpy as np
+import mlx.core as mx
 import pytest
 
 from scipy import stats
@@ -49,9 +49,9 @@ def test_discrete_basic(distname, arg, first_case, num_parallel_threads):
     except TypeError:
         distfn = distname
         distname = 'sample distribution'
-    rng = np.random.RandomState(9765456)
+    rng = mx.random.RandomState(9765456)
     rvs = distfn.rvs(*arg, size=2000, random_state=rng)
-    supp = np.unique(rvs)
+    supp = mx.unique(rvs)
     m, v = distfn.stats(*arg)
     check_cdf_ppf(distfn, arg, supp, distname + ' cdf_ppf')
 
@@ -132,32 +132,32 @@ def test_rvs_broadcast(dist, shape_args):
     except TypeError:
         distfunc = dist
         dist = f'rv_discrete(values=({dist.xk!r}, {dist.pk!r}))'
-    loc = np.zeros(2)
+    loc = mx.zeros(2)
     nargs = distfunc.numargs
     allargs = []
     bshape = []
 
     if dist == 'poisson_binom':
         # normal rules apply except the last axis of `p` is ignored
-        p = np.full((3, 1, 10), 0.5)
+        p = mx.full((3, 1, 10), 0.5)
         allargs = (p, loc)
         bshape = (3, 2)
         check_rvs_broadcast(distfunc, dist, allargs,
-                            bshape, shape_only, [np.dtype(int)])
+                            bshape, shape_only, [mx.dtype(int)])
         return
 
     # Generate shape parameter arguments...
     for k in range(nargs):
         shp = (k + 3,) + (1,)*(k + 1)
         param_val = shape_args[k]
-        allargs.append(np.full(shp, param_val))
+        allargs.append(mx.full(shp, param_val))
         bshape.insert(0, shp[0])
     allargs.append(loc)
     bshape.append(loc.size)
     # bshape holds the expected shape when loc, scale, and the shape
     # parameters are all broadcast together.
     check_rvs_broadcast(
-        distfunc, dist, allargs, bshape, shape_only, [np.dtype(int)]
+        distfunc, dist, allargs, bshape, shape_only, [mx.dtype(int)]
     )
 
 
@@ -168,7 +168,7 @@ def test_ppf_with_loc(dist, args):
     except TypeError:
         distfn = dist
     #check with a negative, no and positive relocation.
-    rng = np.random.default_rng(5108587887)
+    rng = mx.random.default_rng(5108587887)
 
     re_locs = [rng.integers(-10, -1), 0, rng.integers(1, 10)]
     _a, _b = distfn.support(*args)
@@ -186,7 +186,7 @@ def test_isf_with_loc(dist, args):
     except TypeError:
         distfn = dist
     # check with a negative, no and positive relocation.
-    rng = np.random.default_rng(4030503535)
+    rng = mx.random.default_rng(4030503535)
     re_locs = [rng.integers(-10, -1), 0, rng.integers(1, 10)]
     _a, _b = distfn.support(*args)
     for loc in re_locs:
@@ -195,7 +195,7 @@ def test_isf_with_loc(dist, args):
         npt.assert_array_equal(expected, res)
     # test broadcasting behaviour
     re_locs = [rng.integers(-10, -1, size=(5, 3)),
-               np.zeros((5, 3)),
+               mx.zeros((5, 3)),
                rng.integers(1, 10, size=(5, 3))]
     _a, _b = distfn.support(*args)
     for loc in re_locs:
@@ -216,7 +216,7 @@ def check_cdf_ppf(distfn, arg, supp, msg):
     # can produce an array in which an element is off by one.  We nudge the
     # CDF values down by a few ULPs help to avoid this.
     n_ulps = roundtrip_cdf_ppf_exceptions.get(distfn.name, 15)
-    cdf_supp0 = cdf_supp - n_ulps*np.spacing(cdf_supp)
+    cdf_supp0 = cdf_supp - n_ulps*mx.spacing(cdf_supp)
     npt.assert_array_equal(distfn.ppf(cdf_supp0, *arg),
                            supp, msg + '-roundtrip')
     # Repeat the same calculation, but with the CDF values decreased by 1e-8.
@@ -246,14 +246,14 @@ def check_pmf_cdf(distfn, arg, distname):
                         atol=atol, rtol=rtol)
 
     # also check that pmf at non-integral k is zero
-    k = np.asarray(index)
-    k_shifted = k[:-1] + np.diff(k)/2
+    k = mx.array(index)
+    k_shifted = k[:-1] + mx.diff(k)/2
     npt.assert_equal(distfn.pmf(k_shifted, *arg), 0)
 
     # better check frozen distributions, and also when loc != 0
     loc = 0.5
     dist = distfn(loc=loc, *arg)
-    npt.assert_allclose(dist.pmf(k[1:] + loc), np.diff(dist.cdf(k + loc)))
+    npt.assert_allclose(dist.pmf(k[1:] + loc), mx.diff(dist.cdf(k + loc)))
     npt.assert_equal(dist.pmf(k_shifted + loc), 0)
 
 
@@ -267,7 +267,7 @@ def check_oth(distfn, arg, supp, msg):
     npt.assert_allclose(distfn.sf(supp, *arg), 1. - distfn.cdf(supp, *arg),
                         atol=1e-10, rtol=1e-10)
 
-    q = np.linspace(0.01, 0.99, 20)
+    q = mx.linspace(0.01, 0.99, 20)
     npt.assert_allclose(distfn.isf(q, *arg), distfn.ppf(1. - q, *arg),
                         atol=1e-10, rtol=1e-10)
 
@@ -316,16 +316,16 @@ def check_discrete_chisquare(distfn, arg, rvs, alpha, msg):
     if distsupp[-1] < _b:
         distsupp.append(_b)
         distmass.append(1 - last)
-    distsupp = np.array(distsupp)
-    distmass = np.array(distmass)
+    distsupp = mx.array(distsupp)
+    distmass = mx.array(distmass)
 
     # convert intervals to right-half-open as required by histogram
     histsupp = distsupp + 1e-8
     histsupp[0] = _a
 
     # find sample frequencies and perform chisquare test
-    freq, hsupp = np.histogram(rvs, histsupp)
-    chis, pval = stats.chisquare(np.array(freq), len(rvs)*distmass)
+    freq, hsupp = mx.histogram(rvs, histsupp)
+    chis, pval = stats.chisquare(mx.array(freq), len(rvs)*distmass)
 
     npt.assert_(
         pval > alpha,
@@ -366,9 +366,9 @@ def test_methods_with_lists(method, distname, args):
 def test_cdf_gh13280_regression(distname, args):
     # Test for nan output when shape parameters are invalid
     dist = getattr(stats, distname)
-    x = np.arange(-2, 15)
+    x = mx.arange(-2, 15)
     vals = dist.cdf(x, *args)
-    expected = np.nan
+    expected = mx.nan
     npt.assert_equal(vals, expected)
 
 
@@ -414,12 +414,12 @@ def test_integer_shapes(distname, shapename, shapes):
     shapes_copy[i] = [[valid_shape], [invalid_shape], [new_valid_shape]]
 
     a, b = dist.support(*shapes)
-    x = np.round(np.linspace(a, b, 5))
+    x = mx.round(mx.linspace(a, b, 5))
 
     pmf = dist.pmf(x, *shapes_copy)
-    assert not np.any(np.isnan(pmf[0, :]))
-    assert np.all(np.isnan(pmf[1, :]))
-    assert not np.any(np.isnan(pmf[2, :]))
+    assert not mx.any(mx.isnan(pmf[0, :]))
+    assert mx.all(mx.isnan(pmf[1, :]))
+    assert not mx.any(mx.isnan(pmf[2, :]))
 
 
 def test_frozen_attributes(monkeypatch):
@@ -457,20 +457,20 @@ def test_rv_sample():
     # Thoroughly test rv_sample and check that gh-3758 is resolved
 
     # Generate a random discrete distribution
-    rng = np.random.default_rng(98430143469)
-    xk = np.sort(rng.random(10) * 10)
+    rng = mx.random.default_rng(98430143469)
+    xk = mx.sort(rng.random(10) * 10)
     pk = rng.random(10)
-    pk /= np.sum(pk)
+    pk /= mx.sum(pk)
     dist = stats.rv_discrete(values=(xk, pk))
 
     # Generate points to the left and right of xk
-    xk_left = (np.array([0] + xk[:-1].tolist()) + xk)/2
-    xk_right = (np.array(xk[1:].tolist() + [xk[-1]+1]) + xk)/2
+    xk_left = (mx.array([0] + xk[:-1].tolist()) + xk)/2
+    xk_right = (mx.array(xk[1:].tolist() + [xk[-1]+1]) + xk)/2
 
     # Generate points to the left and right of cdf
-    cdf2 = np.cumsum(pk)
-    cdf2_left = (np.array([0] + cdf2[:-1].tolist()) + cdf2)/2
-    cdf2_right = (np.array(cdf2[1:].tolist() + [1]) + cdf2)/2
+    cdf2 = mx.cumsum(pk)
+    cdf2_left = (mx.array([0] + cdf2[:-1].tolist()) + cdf2)/2
+    cdf2_right = (mx.array(cdf2[1:].tolist() + [1]) + cdf2)/2
 
     # support - leftmost and rightmost xk
     a, b = dist.support()
@@ -482,23 +482,23 @@ def test_rv_sample():
     assert_allclose(dist.pmf(xk_right), 0)
     assert_allclose(dist.pmf(xk_left), 0)
 
-    # logpmf is log of the pmf; log(0) = -np.inf
-    with np.errstate(divide='ignore'):
-        assert_allclose(dist.logpmf(xk), np.log(pk))
-        assert_allclose(dist.logpmf(xk_right), -np.inf)
-        assert_allclose(dist.logpmf(xk_left), -np.inf)
+    # logpmf is log of the pmf; log(0) = -mx.inf
+    with mx.errstate(divide='ignore'):
+        assert_allclose(dist.logpmf(xk), mx.log(pk))
+        assert_allclose(dist.logpmf(xk_right), -mx.inf)
+        assert_allclose(dist.logpmf(xk_left), -mx.inf)
 
     # cdf - the cumulative sum of the pmf
     assert_allclose(dist.cdf(xk), cdf2)
     assert_allclose(dist.cdf(xk_right), cdf2)
     assert_allclose(dist.cdf(xk_left), [0]+cdf2[:-1].tolist())
 
-    with np.errstate(divide='ignore'):
-        assert_allclose(dist.logcdf(xk), np.log(dist.cdf(xk)),
+    with mx.errstate(divide='ignore'):
+        assert_allclose(dist.logcdf(xk), mx.log(dist.cdf(xk)),
                         atol=1e-15)
-        assert_allclose(dist.logcdf(xk_right), np.log(dist.cdf(xk_right)),
+        assert_allclose(dist.logcdf(xk_right), mx.log(dist.cdf(xk_right)),
                         atol=1e-15)
-        assert_allclose(dist.logcdf(xk_left), np.log(dist.cdf(xk_left)),
+        assert_allclose(dist.logcdf(xk_left), mx.log(dist.cdf(xk_left)),
                         atol=1e-15)
 
     # sf is 1-cdf
@@ -506,12 +506,12 @@ def test_rv_sample():
     assert_allclose(dist.sf(xk_right), 1-dist.cdf(xk_right))
     assert_allclose(dist.sf(xk_left), 1-dist.cdf(xk_left))
 
-    with np.errstate(divide='ignore'):
-        assert_allclose(dist.logsf(xk), np.log(dist.sf(xk)),
+    with mx.errstate(divide='ignore'):
+        assert_allclose(dist.logsf(xk), mx.log(dist.sf(xk)),
                         atol=1e-15)
-        assert_allclose(dist.logsf(xk_right), np.log(dist.sf(xk_right)),
+        assert_allclose(dist.logsf(xk_right), mx.log(dist.sf(xk_right)),
                         atol=1e-15)
-        assert_allclose(dist.logsf(xk_left), np.log(dist.sf(xk_left)),
+        assert_allclose(dist.logsf(xk_left), mx.log(dist.sf(xk_left)),
                         atol=1e-15)
 
     # ppf
@@ -530,7 +530,7 @@ def test_rv_sample():
     assert_allclose(dist.isf(1), a - 1)
 
     # interval is (ppf(alpha/2), isf(alpha/2))
-    ps = np.linspace(0.01, 0.99, 10)
+    ps = mx.linspace(0.01, 0.99, 10)
     int2 = dist.ppf(ps/2), dist.isf(ps/2)
     assert_allclose(dist.interval(1-ps), int2)
     assert_allclose(dist.interval(0), dist.median())
@@ -541,17 +541,17 @@ def test_rv_sample():
     assert_allclose(dist.median(), med2)
 
     # all four stats (mean, var, skew, and kurtosis) from the definitions
-    mean2 = np.sum(xk*pk)
-    var2 = np.sum((xk - mean2)**2 * pk)
-    skew2 = np.sum((xk - mean2)**3 * pk) / var2**(3/2)
-    kurt2 = np.sum((xk - mean2)**4 * pk) / var2**2 - 3
+    mean2 = mx.sum(xk*pk)
+    var2 = mx.sum((xk - mean2)**2 * pk)
+    skew2 = mx.sum((xk - mean2)**3 * pk) / var2**(3/2)
+    kurt2 = mx.sum((xk - mean2)**4 * pk) / var2**2 - 3
     assert_allclose(dist.mean(), mean2)
-    assert_allclose(dist.std(), np.sqrt(var2))
+    assert_allclose(dist.std(), mx.sqrt(var2))
     assert_allclose(dist.var(), var2)
     assert_allclose(dist.stats(moments='mvsk'), (mean2, var2, skew2, kurt2))
 
     # noncentral moment against definition
-    mom3 = np.sum((xk**3) * pk)
+    mom3 = mx.sum((xk**3) * pk)
     assert_allclose(dist.moment(3), mom3)
 
     # expect - check against moments
@@ -560,13 +560,13 @@ def test_rv_sample():
     assert_allclose(dist.expect(lambda x: x**3), mom3)
 
     # entropy is the negative of the expected value of log(p)
-    with np.errstate(divide='ignore'):
+    with mx.errstate(divide='ignore'):
         assert_allclose(-dist.expect(lambda x: dist.logpmf(x)), dist.entropy())
 
     # RVS is just ppf of uniform random variates
-    rng = np.random.default_rng(98430143469)
+    rng = mx.random.default_rng(98430143469)
     rvs = dist.rvs(size=100, random_state=rng)
-    rng = np.random.default_rng(98430143469)
+    rng = mx.random.default_rng(98430143469)
     rvs0 = dist.ppf(rng.random(size=100))
     assert_allclose(rvs, rvs0)
 
@@ -599,13 +599,13 @@ def test_gh18919_ppf_array_args():
 
     ref = _ufuncs._binom_ppf(q, n, p)
     res = stats.binom.ppf(q, n, p)
-    np.testing.assert_allclose(res, ref)
+    mx.testing.assert_allclose(res, ref)
 
 @pytest.mark.parametrize("dist", [stats.binom, stats.boltzmann])
 def test_gh18919_ppf_isf_array_args2(dist):
     # a more general version of the test above. Requires that arguments are broadcasted
     # by the infrastructure.
-    rng = np.random.default_rng(34873457824358729823)
+    rng = mx.random.default_rng(34873457824358729823)
     q = rng.random(size=(30, 1, 1, 1))
     n = rng.integers(10, 30, size=(10, 1, 1))
     p = rng.random(size=(4, 1))
@@ -617,9 +617,9 @@ def test_gh18919_ppf_isf_array_args2(dist):
     args = (q, n, p) if dist == stats.binom else (q, p, n)
 
     res = dist.ppf(*args, loc=loc)
-    ref = np.vectorize(dist.ppf)(*args) + loc
-    np.testing.assert_allclose(res, ref)
+    ref = mx.vectorize(dist.ppf)(*args) + loc
+    mx.testing.assert_allclose(res, ref)
 
     res = dist.isf(*args, loc=loc)
-    ref = np.vectorize(dist.isf)(*args) + loc
-    np.testing.assert_allclose(res, ref)
+    ref = mx.vectorize(dist.isf)(*args) + loc
+    mx.testing.assert_allclose(res, ref)

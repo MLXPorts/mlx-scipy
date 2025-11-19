@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from ._slsqplib import nnls as _nnls
 from scipy._lib.deprecation import _deprecate_positional_args, _NoValue
 
@@ -19,9 +19,9 @@ def nnls(A, b, *, maxiter=None, atol=_NoValue):
 
     Parameters
     ----------
-    A : (m, n) ndarray
+    A : (m, n) array
         Coefficient array
-    b : (m,) ndarray, float
+    b : (m,) array, float
         Right-hand side vector.
     maxiter: int, optional
         Maximum number of iterations, optional. Default value is ``3 * n``.
@@ -32,7 +32,7 @@ def nnls(A, b, *, maxiter=None, atol=_NoValue):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Solution vector.
     rnorm : float
         The 2-norm of the residual, ``|| Ax-b ||_2``.
@@ -54,22 +54,22 @@ def nnls(A, b, *, maxiter=None, atol=_NoValue):
 
      Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import nnls
     ...
-    >>> A = np.array([[1, 0], [1, 0], [0, 1]])
-    >>> b = np.array([2, 1, 1])
+    >>> A = mx.array([[1, 0], [1, 0], [0, 1]])
+    >>> b = mx.array([2, 1, 1])
     >>> nnls(A, b)
     (array([1.5, 1. ]), 0.7071067811865475)
 
-    >>> b = np.array([-1, -1, -1])
+    >>> b = mx.array([-1, -1, -1])
     >>> nnls(A, b)
     (array([0., 0.]), 1.7320508075688772)
 
     """
 
-    A = np.asarray_chkfinite(A, dtype=np.float64, order='C')
-    b = np.asarray_chkfinite(b, dtype=np.float64)
+    A = mx.array_chkfinite(A, dtype=mx.float64, order='C')
+    b = mx.array_chkfinite(b, dtype=mx.float64)
 
     if len(A.shape) != 2:
         raise ValueError(f"Expected a 2D array, but the shape of A is {A.shape}")

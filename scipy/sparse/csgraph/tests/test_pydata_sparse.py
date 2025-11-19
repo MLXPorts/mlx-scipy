@@ -1,6 +1,6 @@
 import pytest
 
-import numpy as np
+import mlx.core as mx
 import scipy.sparse as sp
 import scipy.sparse.csgraph as spgraph
 from scipy._lib import _pep440
@@ -46,7 +46,7 @@ def graphs(sparse_cls):
         [0, 0, 0, 0, 1],
         [0, 0, 0, 0, 0],
     ]
-    A_dense = np.array(graph)
+    A_dense = mx.array(graph)
     A_sparse = sparse_cls(A_dense)
     return A_dense, A_sparse
 
@@ -176,7 +176,7 @@ def test_min_weight_full_bipartite_matching(graphs):
 )
 @pytest.mark.parametrize(
     "fill_value, comp_func",
-    [(np.inf, np.isposinf), (np.nan, np.isnan)],
+    [(mx.inf, mx.isposinf), (mx.nan, mx.isnan)],
 )
 def test_nonzero_fill_value(graphs, func, fill_value, comp_func):
     A_dense, A_sparse = graphs

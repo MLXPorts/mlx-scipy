@@ -20,7 +20,7 @@ def _central_diff_weights(Np, ndiv=1):
 
     Returns
     -------
-    w : ndarray
+    w : array
         Weights for an Np-point central derivative. Its size is `Np`.
 
     Notes

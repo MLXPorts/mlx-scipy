@@ -1,5 +1,5 @@
-import numpy as np
+import mlx.core as mx
 import random
 
-np.random.seed(1234)
+mx.random.seed(1234)
 random.seed(1234)

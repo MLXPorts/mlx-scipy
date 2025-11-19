@@ -1,13 +1,13 @@
 # This is a python implementation of dfoxs.m,
 # provided at https://github.com/POptUS/BenDFO
-import numpy as np
+import mlx.core as mx
 
 
 def dfoxs(n, nprob, factor):
-    x = np.zeros(n)
+    x = mx.zeros(n)
 
     if nprob == 1 or nprob == 2 or nprob == 3:  # Linear functions.
-        x = np.ones(n)
+        x = mx.ones(n)
     elif nprob == 4:  # Rosenbrock function.
         x[0] = -1.2
         x[1] = 1
@@ -35,7 +35,7 @@ def dfoxs(n, nprob, factor):
         x[1] = 4000
         x[2] = 250
     elif nprob == 11:  # Watson function.
-        x = 0.5 * np.ones(n)
+        x = 0.5 * mx.ones(n)
     elif nprob == 12:  # Box 3-dimensional function.
         x[0] = 0
         x[1] = 10
@@ -52,7 +52,7 @@ def dfoxs(n, nprob, factor):
         for k in range(n):
             x[k] = (k + 1) / (n + 1)
     elif nprob == 16:  # Brown almost-linear function.
-        x = 0.5 * np.ones(n)
+        x = 0.5 * mx.ones(n)
     elif nprob == 17:  # Osborne 1 function.
         x[0] = 0.5
         x[1] = 1.5
@@ -72,21 +72,21 @@ def dfoxs(n, nprob, factor):
         x[9] = 4.5
         x[10] = 5.5
     elif nprob == 19:  # Bdqrtic.
-        x = np.ones(n)
+        x = mx.ones(n)
     elif nprob == 20:  # Cube.
-        x = 0.5 * np.ones(n)
+        x = 0.5 * mx.ones(n)
     elif nprob == 21:  # Mancino.
         for i in range(n):
             ss = 0
             for j in range(n):
                 frac = (i + 1) / (j + 1)
-                ss = ss + np.sqrt(frac) * (
-                    (np.sin(np.log(np.sqrt(frac)))) ** 5
-                    + (np.cos(np.log(np.sqrt(frac)))) ** 5
+                ss = ss + mx.sqrt(frac) * (
+                    (mx.sin(mx.log(mx.sqrt(frac)))) ** 5
+                    + (mx.cos(mx.log(mx.sqrt(frac)))) ** 5
                 )
             x[i] = -8.710996e-4 * ((i - 49) ** 3 + ss)
     elif nprob == 22:  # Heart8ls.
-        x = np.asarray([-0.3, -0.39, 0.3, -0.344, -1.2, 2.69, 1.59, -1.5])
+        x = mx.array([-0.3, -0.39, 0.3, -0.344, -1.2, 2.69, 1.59, -1.5])
     else:
         print(f"unrecognized function number {nprob}")
         return None

@@ -185,10 +185,10 @@ def _ellipsoid_norm(double h2, double k2, int n, int p):
 
 # Needed for the _sf_error calls in _ellip_harm.pxd
 
-cimport numpy as np
+cimport mlx.core as mx
 
-np.import_array()
-np.import_ufunc()
+mx.import_array()
+mx.import_ufunc()
 
 cdef extern from "numpy/ufuncobject.h":
     int PyUFunc_getfperr() nogil

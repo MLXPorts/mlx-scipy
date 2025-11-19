@@ -51,13 +51,13 @@ the percentile points::
 so the mesh of quantiles is refined as needed to reduce the maximum
 "u-error"::
 
-    u_error = np.max(np.abs(dist.cdf(H(p_mid)) - p_mid))
+    u_error = mx.max(mx.abs(dist.cdf(H(p_mid)) - p_mid))
 
 below the specified tolerance `u_resolution`. Refinement stops when the required
 tolerance is achieved or when the number of mesh intervals after the next
 refinement could exceed the maximum allowed number of intervals (100000).
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats.sampling import NumericalInverseHermite
     >>> from scipy.stats import norm, genexpon
     >>> from scipy.special import ndtr
@@ -66,20 +66,20 @@ To create a generator to sample from the standard normal distribution, do:
 
     >>> class StandardNormal:
     ...     def pdf(self, x):
-    ...        return 1/np.sqrt(2*np.pi) * np.exp(-x**2 / 2)
+    ...        return 1/mx.sqrt(2*mx.pi) * mx.exp(-x**2 / 2)
     ...     def cdf(self, x):
     ...        return ndtr(x)
     ... 
     >>> dist = StandardNormal()
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = NumericalInverseHermite(dist, random_state=urng)
 
 The `NumericalInverseHermite` has a method that approximates the PPF of the
 distribution.
 
     >>> rng = NumericalInverseHermite(dist)
-    >>> p = np.linspace(0.01, 0.99, 99) # percentiles from 1% to 99%
-    >>> np.allclose(rng.ppf(p), norm.ppf(p))
+    >>> p = mx.linspace(0.01, 0.99, 99) # percentiles from 1% to 99%
+    >>> mx.allclose(rng.ppf(p), norm.ppf(p))
     True
 
 Depending on the implementation of the distribution's random sampling
@@ -90,9 +90,9 @@ the same random state.
     >>> rng = NumericalInverseHermite(dist)
     >>> # `seed` ensures identical random streams are used by each `rvs` method
     >>> seed = 500072020
-    >>> rvs1 = dist.rvs(size=100, random_state=np.random.default_rng(seed))
-    >>> rvs2 = rng.rvs(size=100, random_state=np.random.default_rng(seed))
-    >>> np.allclose(rvs1, rvs2)
+    >>> rvs1 = dist.rvs(size=100, random_state=mx.random.default_rng(seed))
+    >>> rvs2 = rng.rvs(size=100, random_state=mx.random.default_rng(seed))
+    >>> mx.allclose(rvs1, rvs2)
     True
 
 To check that the random variates closely follow the given distribution, we can
@@ -100,10 +100,10 @@ look at its histogram:
 
     >>> import matplotlib.pyplot as plt
     >>> dist = StandardNormal()
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = NumericalInverseHermite(dist, random_state=urng)
     >>> rvs = rng.rvs(10000)
-    >>> x = np.linspace(rvs.min()-0.1, rvs.max()+0.1, 1000)
+    >>> x = mx.linspace(rvs.min()-0.1, rvs.max()+0.1, 1000)
     >>> fx = norm.pdf(x)
     >>> plt.plot(x, fx, 'r-', lw=2, label='true distribution')
     >>> plt.hist(rvs, bins=20, density=True, alpha=0.8, label='random variates')
@@ -124,14 +124,14 @@ parameter:
 
     >>> class StandardNormal:
     ...     def pdf(self, x):
-    ...        return 1/np.sqrt(2*np.pi) * np.exp(-x**2 / 2)
+    ...        return 1/mx.sqrt(2*mx.pi) * mx.exp(-x**2 / 2)
     ...     def dpdf(self, x):
-    ...        return -1/np.sqrt(2*np.pi) * x * np.exp(-x**2 / 2)
+    ...        return -1/mx.sqrt(2*mx.pi) * x * mx.exp(-x**2 / 2)
     ...     def cdf(self, x):
     ...        return ndtr(x)
     ... 
     >>> dist = StandardNormal()
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = NumericalInverseHermite(dist, order=5, random_state=urng)
 
 Higher orders result in a fewer number of intervals:

@@ -12,7 +12,7 @@ for information about the Matrix Market format.
 import io
 import os
 
-import numpy as np
+import mlx.core as mx
 from scipy.sparse import coo_array, issparse, coo_matrix
 from scipy.io import _mmio
 
@@ -126,7 +126,7 @@ def _read_body_array(cursor):
     """
     from . import _fmm_core
 
-    vals = np.zeros(cursor.header.shape, dtype=_field_to_dtype.get(cursor.header.field))
+    vals = mx.zeros(cursor.header.shape, dtype=_field_to_dtype.get(cursor.header.field))
     _fmm_core.read_body_array(cursor, vals)
     return vals
 
@@ -142,9 +142,9 @@ def _read_body_coo(cursor, generalize_symmetry=True):
         # Dimensions are too large to fit in int32
         index_dtype = "int64"
 
-    i = np.zeros(cursor.header.nnz, dtype=index_dtype)
-    j = np.zeros(cursor.header.nnz, dtype=index_dtype)
-    data = np.zeros(cursor.header.nnz, dtype=_field_to_dtype.get(cursor.header.field))
+    i = mx.zeros(cursor.header.nnz, dtype=index_dtype)
+    j = mx.zeros(cursor.header.nnz, dtype=index_dtype)
+    data = mx.zeros(cursor.header.nnz, dtype=_field_to_dtype.get(cursor.header.field))
 
     _fmm_core.read_body_coo(cursor, i, j, data)
 
@@ -159,9 +159,9 @@ def _read_body_coo(cursor, generalize_symmetry=True):
         elif cursor.header.symmetry == "hermitian":
             off_diagonal_data = off_diagonal_data.conjugate()
 
-        i = np.concatenate((i, off_diagonal_cols))
-        j = np.concatenate((j, off_diagonal_rows))
-        data = np.concatenate((data, off_diagonal_data))
+        i = mx.concatenate((i, off_diagonal_cols))
+        j = mx.concatenate((j, off_diagonal_rows))
+        data = mx.concatenate((data, off_diagonal_data))
 
     return (data, (i, j)), cursor.header.shape
 
@@ -250,7 +250,7 @@ def _apply_field(data, field, no_pattern=False):
 
     Parameters
     ----------
-    data : ndarray
+    data : array
         Input array.
 
     field : str
@@ -261,7 +261,7 @@ def _apply_field(data, field, no_pattern=False):
 
     Returns
     -------
-    data : ndarray
+    data : array
         Input data if no conversion necessary, or a converted version
     """
 
@@ -271,13 +271,13 @@ def _apply_field(data, field, no_pattern=False):
         if no_pattern:
             return data
         else:
-            return np.zeros(0)
+            return mx.zeros(0)
 
     dtype = _field_to_dtype.get(field, None)
     if dtype is None:
         raise ValueError("Invalid field.")
 
-    return np.asarray(data, dtype=dtype)
+    return mx.array(data, dtype=dtype)
 
 
 def _validate_symmetry(symmetry):
@@ -309,7 +309,7 @@ def mmread(source, *, spmatrix=True):
 
     Returns
     -------
-    a : ndarray or coo_array
+    a : array or coo_array
         Dense or sparse array depending on the matrix format in the
         Matrix Market file.
 
@@ -407,14 +407,14 @@ def mmwrite(target, a, comment=None, field=None, precision=None, symmetry="AUTO"
     Examples
     --------
     >>> from io import BytesIO
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import coo_array
     >>> from scipy.io import mmwrite
 
     Write a small NumPy array to a matrix market file.  The file will be
     written in the ``'array'`` format.
 
-    >>> a = np.array([[1.0, 0, 0, 0], [0, 2.5, 0, 6.25]])
+    >>> a = mx.array([[1.0, 0, 0, 0], [0, 2.5, 0, 6.25]])
     >>> target = BytesIO()
     >>> mmwrite(target, a)
     >>> print(target.getvalue().decode('latin1'))
@@ -467,7 +467,7 @@ def mmwrite(target, a, comment=None, field=None, precision=None, symmetry="AUTO"
     only six values are actually written to the file; the other values
     are implied by the symmetry.
 
-    >>> z = np.array([[3, 1+2j, 4-3j], [1-2j, 1, -5j], [4+3j, 5j, 2.5]])
+    >>> z = mx.array([[3, 1+2j, 4-3j], [1-2j, 1, -5j], [4+3j, 5j, 2.5]])
     >>> z
     array([[ 3. +0.j,  1. +2.j,  4. -3.j],
            [ 1. -2.j,  1. +0.j, -0. -5.j],
@@ -500,7 +500,7 @@ def mmwrite(target, a, comment=None, field=None, precision=None, symmetry="AUTO"
     from . import _fmm_core
 
     if isinstance(a, list) or isinstance(a, tuple) or hasattr(a, "__array__"):
-        a = np.asarray(a)
+        a = mx.array(a)
 
     if symmetry == "AUTO":
         if ALWAYS_FIND_SYMMETRY or (hasattr(a, "shape") and max(a.shape) < 100):
@@ -515,7 +515,7 @@ def mmwrite(target, a, comment=None, field=None, precision=None, symmetry="AUTO"
     cursor = _get_write_cursor(target, comment=comment,
                                precision=precision, symmetry=symmetry)
 
-    if isinstance(a, np.ndarray):
+    if isinstance(a, mx.array):
         # Write dense numpy arrays
         a = _apply_field(a, field, no_pattern=True)
         _fmm_core.write_body_array(cursor, a)

@@ -10,7 +10,7 @@ Python translation by Nickolai Belakovski.
 
 from ..common.consts import DEBUGGING
 from ..common.linalg import isinv, matprod, inprod, norm, primasum, primapow2
-import numpy as np
+import mlx.core as mx
 
 
 def setdrop_tr(ximproved, d, delta, rho, sim, simi):
@@ -29,18 +29,18 @@ def setdrop_tr(ximproved, d, delta, rho, sim, simi):
     itol = 0.1
 
     # Sizes
-    num_vars = np.size(sim, 0)
+    num_vars = mx.size(sim, 0)
 
     # Preconditions
     if DEBUGGING:
         assert num_vars >= 1
-        assert np.size(d) == num_vars and all(np.isfinite(d))
+        assert mx.size(d) == num_vars and all(mx.isfinite(d))
         assert delta >= rho and rho > 0
-        assert np.size(sim, 0) == num_vars and np.size(sim, 1) == num_vars + 1
-        assert np.isfinite(sim).all()
-        assert all(np.max(abs(sim[:, :num_vars]), axis=0) > 0)
-        assert np.size(simi, 0) == num_vars and np.size(simi, 1) == num_vars
-        assert np.isfinite(simi).all()
+        assert mx.size(sim, 0) == num_vars and mx.size(sim, 1) == num_vars + 1
+        assert mx.isfinite(sim).all()
+        assert all(mx.max(abs(sim[:, :num_vars]), axis=0) > 0)
+        assert mx.size(simi, 0) == num_vars and mx.size(simi, 1) == num_vars
+        assert mx.isfinite(simi).all()
         assert isinv(sim[:, :num_vars], simi, itol)
 
     #====================#
@@ -104,15 +104,15 @@ def setdrop_tr(ximproved, d, delta, rho, sim, simi):
 
     # DISTSQ[j] is the square of the distance from the jth vertex of the simplex to get "best" point so
     # far, taking the trial point SIM[:, NUM_VARS] + D into account.
-    distsq = np.zeros(np.size(sim, 1))
+    distsq = mx.zeros(mx.size(sim, 1))
     if ximproved:
-        distsq[:num_vars] = primasum(primapow2(sim[:, :num_vars] - np.tile(d, (num_vars, 1)).T), axis=0)
+        distsq[:num_vars] = primasum(primapow2(sim[:, :num_vars] - mx.tile(d, (num_vars, 1)).T), axis=0)
         distsq[num_vars] = primasum(d*d)
     else:
         distsq[:num_vars] = primasum(primapow2(sim[:, :num_vars]), axis=0)
         distsq[num_vars] = 0
 
-    weight = np.maximum(1, distsq / primapow2(np.maximum(rho, delta/10)))  # Similar to Powell's NEWUOA code.
+    weight = mx.maximum(1, distsq / primapow2(mx.maximum(rho, delta/10)))  # Similar to Powell's NEWUOA code.
 
     # Other possible definitions of weight. They work almost the same as the one above.
     # weight = distsq  # Similar to Powell's LINCOA code, but WRONG. See comments in LINCOA/geometry.f90.
@@ -125,7 +125,7 @@ def setdrop_tr(ximproved, d, delta, rho, sim, simi):
     # (NUM_VARS+1)th Lagrange function is 1 - sum(SIMID). [SIMID, 1 - sum(SIMID)] is the counterpart of
     # VLAG in UOBYQA and DEN in NEWUOA/BOBYQA/LINCOA.
     simid = matprod(simi, d)
-    score = weight * abs(np.array([*simid, 1 - primasum(simid)]))
+    score = weight * abs(mx.array([*simid, 1 - primasum(simid)]))
 
     # If XIMPROVED = False (D does not render a better X), set SCORE[NUM_VARS] = -1 to avoid JDROP = NUM_VARS.
     if not ximproved:
@@ -133,17 +133,17 @@ def setdrop_tr(ximproved, d, delta, rho, sim, simi):
 
     # score[j] is NaN implies SIMID[j] is NaN, but we want abs(SIMID) to be big. So we
     # exclude such j.
-    score[np.isnan(score)] = -1
+    score[mx.isnan(score)] = -1
 
     jdrop = None
     # The following if statement works a bit better than
     # `if any(score > 1) or (any(score > 0) and ximproved)` from Powell's UOBYQA and
     # NEWUOA code.
     if any(score > 0):  # Powell's BOBYQA and LINCOA code.
-        jdrop = np.argmax(score)
+        jdrop = mx.argmax(score)
 
     if (ximproved and jdrop is None):
-        jdrop = np.argmax(distsq)
+        jdrop = mx.argmax(distsq)
 
     #==================#
     # Calculation ends #
@@ -169,9 +169,9 @@ def geostep(jdrop, amat, bvec, conmat, cpen, cval, delbar, fval, simi):
     '''
 
     # Sizes
-    m_lcon = np.size(bvec, 0) if bvec is not None else 0
-    num_constraints = np.size(conmat, 0)
-    num_vars = np.size(simi, 0)
+    m_lcon = mx.size(bvec, 0) if bvec is not None else 0
+    num_constraints = mx.size(conmat, 0)
+    num_vars = mx.size(simi, 0)
 
     # Preconditions
     if DEBUGGING:
@@ -179,12 +179,12 @@ def geostep(jdrop, amat, bvec, conmat, cpen, cval, delbar, fval, simi):
         assert num_vars >= 1
         assert delbar > 0
         assert cpen > 0
-        assert np.size(simi, 0) == num_vars and np.size(simi, 1) == num_vars
-        assert np.isfinite(simi).all()
-        assert np.size(fval) == num_vars + 1 and not any(np.isnan(fval) | np.isposinf(fval))
-        assert np.size(conmat, 0) == num_constraints and np.size(conmat, 1) == num_vars + 1
-        assert not np.any(np.isnan(conmat) | np.isposinf(conmat))
-        assert np.size(cval) == num_vars + 1 and not any(cval < 0 | np.isnan(cval) | np.isposinf(cval))
+        assert mx.size(simi, 0) == num_vars and mx.size(simi, 1) == num_vars
+        assert mx.isfinite(simi).all()
+        assert mx.size(fval) == num_vars + 1 and not any(mx.isnan(fval) | mx.isposinf(fval))
+        assert mx.size(conmat, 0) == num_constraints and mx.size(conmat, 1) == num_vars + 1
+        assert not mx.any(mx.isnan(conmat) | mx.isposinf(conmat))
+        assert mx.size(cval) == num_vars + 1 and not any(cval < 0 | mx.isnan(cval) | mx.isposinf(cval))
         assert 0 <= jdrop < num_vars
 
     #====================#
@@ -203,13 +203,13 @@ def geostep(jdrop, amat, bvec, conmat, cpen, cval, delbar, fval, simi):
     # N.B.: CONMAT and SIMI have been updated after the last trust-region step, but G and A have not.
     # So we cannot pass G and A from outside.
     g = matprod(fval[:num_vars] - fval[num_vars], simi)
-    A = np.zeros((num_vars, num_constraints))
+    A = mx.zeros((num_vars, num_constraints))
     A[:, :m_lcon] = amat.T if amat is not None else amat
     A[:, m_lcon:] = matprod((conmat[m_lcon:, :num_vars] -
-                          np.tile(conmat[m_lcon:, num_vars], (num_vars, 1)).T), simi).T
+                          mx.tile(conmat[m_lcon:, num_vars], (num_vars, 1)).T), simi).T
     # CVPD and CVND are the predicted constraint violation of D and -D by the linear models.
-    cvpd = np.max(np.append(0, conmat[:, num_vars] + matprod(d, A)))
-    cvnd = np.max(np.append(0, conmat[:, num_vars] - matprod(d, A)))
+    cvpd = mx.max(mx.append(0, conmat[:, num_vars] + matprod(d, A)))
+    cvnd = mx.max(mx.append(0, conmat[:, num_vars] - matprod(d, A)))
     if -inprod(d, g) + cpen * cvnd < inprod(d, g) + cpen * cvpd:
         d *= -1
 
@@ -219,8 +219,8 @@ def geostep(jdrop, amat, bvec, conmat, cpen, cval, delbar, fval, simi):
 
     # Postconditions
     if DEBUGGING:
-        assert np.size(d) == num_vars and all(np.isfinite(d))
+        assert mx.size(d) == num_vars and all(mx.isfinite(d))
         # In theory, ||S|| == DELBAR, which may be false due to rounding, but not too far.
         # It is crucial to ensure that the geometry step is nonzero, which holds in theory.
-        assert 0.9 * delbar < np.linalg.norm(d) <= 1.1 * delbar
+        assert 0.9 * delbar < mx.linalg.norm(d) <= 1.1 * delbar
     return d

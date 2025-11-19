@@ -8,7 +8,7 @@ Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 Python translation by Nickolai Belakovski.
 '''
 
-import numpy as np
+import mlx.core as mx
 import numpy.typing as npt
 from ..common.consts import DEBUGGING, REALMIN, REALMAX, EPS
 from ..common.powalg import qradd_Rdiag, qrexc_Rdiag
@@ -66,16 +66,16 @@ def trstlp(A, b, delta, g):
     if DEBUGGING:
         assert num_vars >= 1
         assert num_constraints >= 0
-        assert np.size(g) == num_vars
-        assert np.size(b) == num_constraints
+        assert mx.size(g) == num_vars
+        assert mx.size(b) == num_constraints
         assert delta > 0
 
 
-    vmultc = np.zeros(num_constraints + 1)
-    iact = np.zeros(num_constraints + 1, dtype=int)
+    vmultc = mx.zeros(num_constraints + 1)
+    iact = mx.zeros(num_constraints + 1, dtype=int)
     nact = 0
-    d = np.zeros(num_vars)
-    z = np.zeros((num_vars, num_vars))
+    d = mx.zeros(num_vars)
+    z = mx.zeros((num_vars, num_vars))
 
     # ==================
     # Calculation starts
@@ -83,8 +83,8 @@ def trstlp(A, b, delta, g):
 
     # Form A_aug and B_aug. This allows the gradient of the objective function to be regarded as the
     # gradient of a constraint in the second stage.
-    A_aug = np.hstack([A, g.reshape((num_vars, 1))])
-    b_aug = np.hstack([b, 0])
+    A_aug = mx.hstack([A, g.reshape((num_vars, 1))])
+    b_aug = mx.hstack([b, 0])
 
 
     # Scale the problem if A contains large values. Otherwise floating point exceptions may occur.
@@ -107,9 +107,9 @@ def trstlp(A, b, delta, g):
 
     # Postconditions
     if DEBUGGING:
-        assert all(np.isfinite(d))
+        assert all(mx.isfinite(d))
         # Due to rounding, it may happen that ||D|| > DELTA, but ||D|| > 2*DELTA is highly improbable.
-        assert np.linalg.norm(d) <= 2 * delta
+        assert mx.linalg.norm(d) <= 2 * delta
 
     return d
 
@@ -124,50 +124,50 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
     4. optnew. The two stages have different objectives, so optnew is updated differently.
     5. step. step <= cviol in stage 1.
     '''
-    zdasav = np.zeros(z.shape[1])
-    vmultd = np.zeros(np.size(vmultc))
-    zdota = np.zeros(np.size(z, 1))
+    zdasav = mx.zeros(z.shape[1])
+    vmultd = mx.zeros(mx.size(vmultc))
+    zdota = mx.zeros(mx.size(z, 1))
 
     # Sizes
-    mcon = np.size(A, 1)
-    num_vars = np.size(A, 0)
+    mcon = mx.size(A, 1)
+    num_vars = mx.size(A, 0)
 
     # Preconditions
     if DEBUGGING:
         assert num_vars >= 1
         assert stage == 1 or stage == 2
         assert (mcon >= 0 and stage == 1) or (mcon >= 1 and stage == 2)
-        assert np.size(b) == mcon
-        assert np.size(iact) == mcon
-        assert np.size(vmultc) == mcon
-        assert np.size(d) == num_vars
-        assert np.size(z, 0) == num_vars and np.size(z, 1) == num_vars
+        assert mx.size(b) == mcon
+        assert mx.size(iact) == mcon
+        assert mx.size(vmultc) == mcon
+        assert mx.size(d) == num_vars
+        assert mx.size(z, 0) == num_vars and mx.size(z, 1) == num_vars
         assert delta > 0
         if stage == 2:
-            assert all(np.isfinite(d)) and np.linalg.norm(d) <= 2 * delta
-            assert nact >= 0 and nact <= np.minimum(mcon, num_vars)
+            assert all(mx.isfinite(d)) and mx.linalg.norm(d) <= 2 * delta
+            assert nact >= 0 and nact <= mx.minimum(mcon, num_vars)
             assert all(vmultc[:mcon]) >= 0
             # N.B.: Stage 1 defines only VMULTC(1:M); VMULTC(M+1) is undefined!
 
 
     # Initialize according to stage
     if stage == 1:
-        iact = np.linspace(0, mcon-1, mcon, dtype=int)
+        iact = mx.linspace(0, mcon-1, mcon, dtype=int)
         nact = 0
-        d = np.zeros(num_vars)
-        cviol = np.max(np.append(0, -b))
+        d = mx.zeros(num_vars)
+        cviol = mx.max(mx.append(0, -b))
         vmultc = cviol + b
-        z = np.eye(num_vars)
+        z = mx.eye(num_vars)
         if mcon == 0 or cviol <= 0:
             # Check whether a quick return is possible. Make sure the in-outputs have been initialized.
             return iact, nact, d, vmultc, z
 
-        if all(np.isnan(b)):
+        if all(mx.isnan(b)):
             return iact, nact, d, vmultc, z
         else:
-            icon = np.nanargmax(-b)
+            icon = mx.nanargmax(-b)
         num_constraints = mcon
-        sdirn = np.zeros(len(d))
+        sdirn = mx.zeros(len(d))
     else:
         if inprod(d, d) >= delta*delta:
             # Check whether a quick return is possible.
@@ -180,7 +180,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
 
         # In Powell's code, stage 2 uses the zdota and cviol calculated by stage1. Here we recalculate
         # them so that they need not be passed from stage 1 to 2, and hence the coupling is reduced.
-        cviol = np.max(np.append(0, matprod(d, A[:, :num_constraints]) - b[:num_constraints]))
+        cviol = mx.max(mx.append(0, matprod(d, A[:, :num_constraints]) - b[:num_constraints]))
     zdota[:nact] = [inprod(z[:, k], A[:, iact[k]]) for k in range(nact)]
 
     # More initialization
@@ -194,7 +194,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
     # problems: DANWOODLS, GAUSS1LS, GAUSS2LS, GAUSS3LS, KOEBHELB, TAX13322, TAXR13322. Indeed, in all
     # these cases, Inf/NaN appear in d due to extremely large values in A (up to 10^219). To resolve
     # this, we set the maximal number of iterations to maxiter, and terminate if Inf/NaN occurs in d.
-    maxiter = np.minimum(10000, 100*max(num_constraints, num_vars))
+    maxiter = mx.minimum(10000, 100*max(num_constraints, num_vars))
     for iter in range(maxiter):
         if DEBUGGING:
             assert all(vmultc >= 0)
@@ -212,7 +212,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
             nfail = 0
         else:
             nfail += 1
-        optold = np.minimum(optold, optnew)
+        optold = mx.minimum(optold, optnew)
         if nfail == 3:
             break
 
@@ -241,7 +241,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
                 # Powell did, we should use the UNUPDATED version, namely ZDASAV.
                 # vmultd[:nact] = lsqr(A[:, iact[:nact]], A[:, iact[icon]], z[:, :nact], zdasav[:nact])
                 vmultd[:nact] = lsqr(A[:, iact[:nact]], A[:, iact[icon]], z[:, :nact], zdasav[:nact])
-                if not any(np.logical_and(vmultd[:nact] > 0, iact[:nact] <= num_constraints)):
+                if not any(mx.logical_and(vmultd[:nact] > 0, iact[:nact] <= num_constraints)):
                     # N.B.: This can be triggered by NACT == 0 (among other possibilities)! This is
                     # important, because NACT will be used as an index in the sequel.
                     break
@@ -253,14 +253,14 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
                 fracmult = [vmultc[i]/vmultd[i] if vmultd[i] > 0 and iact[i] <= num_constraints else REALMAX for i in range(nact)]
                 # Only the places with vmultd > 0 and iact <= m is relevant below, if any.
                 frac = min(fracmult[:nact])  # fracmult[nact:mcon] may contain garbage
-                vmultc[:nact] = np.maximum(np.zeros(len(vmultc[:nact])), vmultc[:nact] - frac*vmultd[:nact])
+                vmultc[:nact] = mx.maximum(mx.zeros(len(vmultc[:nact])), vmultc[:nact] - frac*vmultd[:nact])
 
                 # Reorder the active constraints so that the one to be replaced is at the end of the list.
                 # Exit if the new value of zdota[nact] is not acceptable. Powell's condition for the
                 # following If: not abs(zdota[nact]) > 0. Note that it is different from
                 # 'abs(zdota[nact]) <=0)' as zdota[nact] can be NaN.
                 # N.B.: We cannot arrive here with nact == 0, which should have triggered a break above
-                if np.isnan(zdota[nact - 1]) or abs(zdota[nact - 1]) <= EPS**2:
+                if mx.isnan(zdota[nact - 1]) or abs(zdota[nact - 1]) <= EPS**2:
                     break
                 vmultc[[icon, nact - 1]] = 0, frac  # vmultc[[icon, nact]] is valid as icon > nact
                 iact[[icon, nact - 1]] = iact[[nact - 1, icon]]
@@ -284,7 +284,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
             # assert iact[nact] == mcon or stage == 1, 'iact[nact] must == mcon in stage 2'
 
             # Powell's code does not have the following. It avoids subsequent floating points exceptions.
-            if np.isnan(zdota[nact-1]) or abs(zdota[nact-1]) <= EPS**2:
+            if mx.isnan(zdota[nact-1]) or abs(zdota[nact-1]) <= EPS**2:
                 break
 
             # Set sdirn to the direction of the next change to the current vector of variables
@@ -316,7 +316,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
             if stage == 2 and nact < 0:
                 break  # If this case ever occurs, we have to break, as nact is used as an index below.
             if nact > 0:
-                if np.isnan(zdota[nact-1]) or abs(zdota[nact-1]) <= EPS**2:
+                if mx.isnan(zdota[nact-1]) or abs(zdota[nact-1]) <= EPS**2:
                     break
 
             # Set sdirn to the direction of the next change to the current vector of variables.
@@ -335,16 +335,16 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
         dd = delta*delta - inprod(d, d)
         ss = inprod(sdirn, sdirn)
         sd = inprod(sdirn, d)
-        if dd <= 0 or ss <= EPS * delta*delta or np.isnan(sd):
+        if dd <= 0 or ss <= EPS * delta*delta or mx.isnan(sd):
             break
         # sqrtd: square root of a discriminant. The max avoids sqrtd < abs(sd) due to underflow
-        sqrtd = max(np.sqrt(ss*dd + sd*sd), abs(sd), np.sqrt(ss * dd))
+        sqrtd = max(mx.sqrt(ss*dd + sd*sd), abs(sd), mx.sqrt(ss * dd))
         if sd > 0:
             step = dd / (sqrtd + sd)
         else:
             step = (sqrtd - sd) / ss
         # step < 0 should not happen. Step can be 0 or NaN when, e.g., sd or ss becomes inf
-        if step <= 0 or not np.isfinite(step):
+        if step <= 0 or not mx.isfinite(step):
             break
 
         # Powell's approach and comments are as follows.
@@ -378,7 +378,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
         # maximum residual if stage 1 is being done
         dnew = d + step * sdirn
         if stage == 1:
-            cviol = np.max(np.append(0, matprod(dnew, A[:, iact[:nact]]) - b[iact[:nact]]))
+            cviol = mx.max(mx.append(0, matprod(dnew, A[:, iact[:nact]]) - b[iact[:nact]]))
             # N.B.: cviol will be used when calculating vmultd[nact+1:mcon].
 
         # Zaikun 20211011:
@@ -400,23 +400,23 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
         # Calculate the fraction of the step from d to dnew that will be taken
         fracmult = [vmultc[i]/(vmultc[i] - vmultd[i]) if vmultd[i] < 0 else REALMAX for i in range(len(vmultd))]
         # Only the places with vmultd < 0 are relevant below, if any.
-        icon = np.argmin(np.append(1, fracmult)) - 1
-        frac = min(np.append(1, fracmult))
+        icon = mx.argmin(mx.append(1, fracmult)) - 1
+        frac = min(mx.append(1, fracmult))
 
         # Update d, vmultc, and cviol
         dold = d
         d = (1 - frac)*d + frac * dnew
-        vmultc = np.maximum(0, (1 - frac)*vmultc + frac*vmultd)
+        vmultc = mx.maximum(0, (1 - frac)*vmultc + frac*vmultd)
         # Break in the case of inf/nan in d or vmultc.
-        if not (np.isfinite(primasum(abs(d))) and np.isfinite(primasum(abs(vmultc)))):
+        if not (mx.isfinite(primasum(abs(d))) and mx.isfinite(primasum(abs(vmultc)))):
             d = dold  # Should we restore also iact, nact, vmultc, and z?
             break
 
         if stage == 1:
             # cviol = (1 - frac) * cvold + frac * cviol  # Powell's version
-            # In theory, cviol = np.max(np.append(d@A - b, 0)), yet the
+            # In theory, cviol = mx.max(mx.append(d@A - b, 0)), yet the
             # cviol updated as above can be quite different from this value if A has huge entries (e.g., > 1e20)
-            cviol = np.max(np.append(0, matprod(d, A) - b))
+            cviol = mx.max(mx.append(0, matprod(d, A) - b))
 
         if icon < 0 or icon >= mcon:
             # In Powell's code, the condition is icon == 0. Indeed, icon < 0 cannot hold unless
@@ -429,14 +429,14 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
 
     # Postconditions
     if DEBUGGING:
-        assert np.size(iact) == mcon
-        assert np.size(vmultc) == mcon
+        assert mx.size(iact) == mcon
+        assert mx.size(vmultc) == mcon
         assert all(vmultc >= 0)
-        assert np.size(d) == num_vars
-        assert all(np.isfinite(d))
-        assert np.linalg.norm(d) <= 2 * delta
-        assert np.size(z, 0) == num_vars and np.size(z, 1) == num_vars
-        assert nact >= 0 and nact <= np.minimum(mcon, num_vars)
+        assert mx.size(d) == num_vars
+        assert all(mx.isfinite(d))
+        assert mx.linalg.norm(d) <= 2 * delta
+        assert mx.size(z, 0) == num_vars and mx.size(z, 1) == num_vars
+        assert nact >= 0 and nact <= mx.minimum(mcon, num_vars)
 
     return iact, nact, d, vmultc, z
 
@@ -454,7 +454,7 @@ def trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio):
         # By the definition of RATIO in ratio.f90, RATIO cannot be NaN unless the
         # actual reduction is NaN, which should NOT happen due to the moderated extreme
         # barrier.
-        assert not np.isnan(ratio)
+        assert not mx.isnan(ratio)
 
     #====================#
     # Calculation starts #
@@ -472,7 +472,7 @@ def trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio):
         # For noise-free CUTEst problems of <= 100 variables, Powell's version works slightly better
         # than the modified one.
         # delta = max(delta_in, 1.25*dnorm, dnorm + rho)  # Powell's UOBYQA
-        # delta = min(max(gamma1 * delta_in, gamma2 * dnorm), gamma3 * delta_in)  # Powell's LINCOA, gamma3 = np.sqrt(2)
+        # delta = min(max(gamma1 * delta_in, gamma2 * dnorm), gamma3 * delta_in)  # Powell's LINCOA, gamma3 = mx.sqrt(2)
 
     # For noisy problems, the following may work better.
     # if ratio <= eta1:

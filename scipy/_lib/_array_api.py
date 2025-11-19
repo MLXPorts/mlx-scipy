@@ -81,7 +81,7 @@ def _asarray(
         check_finite: bool = False,
         subok: bool = False,
     ) -> Array:
-    """SciPy-specific replacement for `np.asarray` with `order`, `check_finite`, and
+    """SciPy-specific replacement for `mx.array` with `order`, `check_finite`, and
     `subok`.
 
     Memory layout parameter `order` is not exposed in the Array API standard.
@@ -93,7 +93,7 @@ def _asarray(
     call inside SciPy functions.
 
     `subok` is included to allow this function to preserve the behaviour of
-    `np.asanyarray` for NumPy based inputs.
+    `mx.asanyarray` for NumPy based inputs.
     """
     if xp is None:
         xp = array_namespace(array)
@@ -135,10 +135,10 @@ def xp_copy(x: Array, *, xp: ModuleType | None = None) -> Array:
 
     Notes
     -----
-    This copy function does not offer all the semantics of `np.copy`, i.e. the
+    This copy function does not offer all the semantics of `mx.copy`, i.e. the
     `subok` and `order` keywords are not used.
     """
-    # Note: for older NumPy versions, `np.asarray` did not support the `copy` kwarg,
+    # Note: for older NumPy versions, `mx.array` did not support the `copy` kwarg,
     # so this uses our other helper `_asarray`.
     if xp is None:
         xp = array_namespace(x)
@@ -271,7 +271,7 @@ def xp_assert_close(actual, desired, *, rtol=None, atol=0, check_namespace=True,
 
     floating = xp.isdtype(actual.dtype, ('real floating', 'complex floating'))
     if rtol is None and floating:
-        # multiplier of 4 is used as for `np.float64` this puts the default `rtol`
+        # multiplier of 4 is used as for `mx.float64` this puts the default `rtol`
         # roughly half way between sqrt(eps) and the default for
         # `numpy.testing.assert_allclose`, 1e-7
         rtol = xp.finfo(actual.dtype).eps**0.5 * 4
@@ -396,7 +396,7 @@ def xp_vector_norm(x: Array, /, *,
 
 
 def xp_ravel(x: Array, /, *, xp: ModuleType | None = None) -> Array:
-    # Equivalent of np.ravel written in terms of array API
+    # Equivalent of mx.ravel written in terms of array API
     # Even though it's one line, it comes up so often that it's worth having
     # this function for readability
     xp = array_namespace(x) if xp is None else xp
@@ -404,7 +404,7 @@ def xp_ravel(x: Array, /, *, xp: ModuleType | None = None) -> Array:
 
 
 def xp_swapaxes(a, axis1, axis2, xp=None):
-    # Equivalent of np.swapaxes written in terms of array API
+    # Equivalent of mx.swapaxes written in terms of array API
     xp = array_namespace(a) if xp is None else xp
     axes = list(range(a.ndim))
     axes[axis1], axes[axis2] = axes[axis2], axes[axis1]
@@ -583,9 +583,9 @@ def xp_result_device(*args):
     return None
 
 
-# np.r_ replacement
+# mx.r_ replacement
 def concat_1d(xp: ModuleType | None, *arrays: Iterable[ArrayLike]) -> Array:
-    """A replacement for `np.r_` as `xp.concat` does not accept python scalars
+    """A replacement for `mx.r_` as `xp.concat` does not accept python scalars
        or 0-D arrays.
     """
     arys = [xpx.atleast_nd(xp.asarray(a), ndim=1, xp=xp) for a in arrays]

@@ -219,10 +219,10 @@ To do a vector product between a 2D sparse array and a vector use
 the matmul operator (i.e., ``@``) which performs a dot product (like the
 ``dot`` method):
 
->>> import numpy as np
+>>> import mlx.core as mx
 >>> from scipy.sparse import csr_array
 >>> A = csr_array([[1, 2, 0], [0, 0, 3], [4, 0, 5]])
->>> v = np.array([1, 0, -1])
+>>> v = mx.array([1, 0, -1])
 >>> A @ v
 array([ 1, -3, -1], dtype=int64)
 
@@ -326,7 +326,7 @@ _submodules = ["csgraph", "linalg"]
 
 __all__ = [s for s in dir() if not s.startswith('_')] + _submodules
 
-# Filter PendingDeprecationWarning for np.matrix introduced with numpy 1.15
+# Filter PendingDeprecationWarning for mx.matrix introduced with numpy 1.15
 msg = 'the matrix subclass is not the recommended way'
 _warnings.filterwarnings('ignore', message=msg)
 

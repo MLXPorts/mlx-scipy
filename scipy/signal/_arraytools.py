@@ -1,7 +1,7 @@
 """
 Functions for acting on a axis of an array.
 """
-import numpy as np
+import mlx.core as mx
 
 
 def axis_slice(a, start=None, stop=None, step=None, axis=-1):
@@ -9,7 +9,7 @@ def axis_slice(a, start=None, stop=None, step=None, axis=-1):
 
     Parameters
     ----------
-    a : numpy.ndarray
+    a : mx.array
         The array to be sliced.
     start, stop, step : int or None
         The slice parameters.
@@ -18,9 +18,9 @@ def axis_slice(a, start=None, stop=None, step=None, axis=-1):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal._arraytools import axis_slice
-    >>> a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    >>> a = mx.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     >>> axis_slice(a, start=0, stop=1, axis=1)
     array([[1],
            [4],
@@ -58,11 +58,11 @@ def odd_ext(x, n, axis=-1):
     """
     Odd extension at the boundaries of an array
 
-    Generate a new ndarray by making an odd extension of `x` along an axis.
+    Generate a new array by making an odd extension of `x` along an axis.
 
     Parameters
     ----------
-    x : ndarray
+    x : array
         The array to be extended.
     n : int
         The number of elements by which to extend `x` at each end of the axis.
@@ -71,9 +71,9 @@ def odd_ext(x, n, axis=-1):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal._arraytools import odd_ext
-    >>> a = np.array([[1, 2, 3, 4, 5], [0, 1, 4, 9, 16]])
+    >>> a = mx.array([[1, 2, 3, 4, 5], [0, 1, 4, 9, 16]])
     >>> odd_ext(a, 2)
     array([[-1,  0,  1,  2,  3,  4,  5,  6,  7],
            [-4, -1,  0,  1,  4,  9, 16, 23, 28]])
@@ -81,12 +81,12 @@ def odd_ext(x, n, axis=-1):
     Odd extension is a "180 degree rotation" at the endpoints of the original
     array:
 
-    >>> t = np.linspace(0, 1.5, 100)
-    >>> a = 0.9 * np.sin(2 * np.pi * t**2)
+    >>> t = mx.linspace(0, 1.5, 100)
+    >>> a = 0.9 * mx.sin(2 * mx.pi * t**2)
     >>> b = odd_ext(a, 40)
     >>> import matplotlib.pyplot as plt
-    >>> plt.plot(np.arange(-40, 140), b, 'b', lw=1, label='odd extension')
-    >>> plt.plot(np.arange(100), a, 'r', lw=2, label='original')
+    >>> plt.plot(mx.arange(-40, 140), b, 'b', lw=1, label='odd extension')
+    >>> plt.plot(mx.arange(100), a, 'r', lw=2, label='original')
     >>> plt.legend(loc='best')
     >>> plt.show()
     """
@@ -100,7 +100,7 @@ def odd_ext(x, n, axis=-1):
     left_ext = axis_slice(x, start=n, stop=0, step=-1, axis=axis)
     right_end = axis_slice(x, start=-1, axis=axis)
     right_ext = axis_slice(x, start=-2, stop=-(n + 2), step=-1, axis=axis)
-    ext = np.concatenate((2 * left_end - left_ext,
+    ext = mx.concatenate((2 * left_end - left_ext,
                           x,
                           2 * right_end - right_ext),
                          axis=axis)
@@ -111,11 +111,11 @@ def even_ext(x, n, axis=-1):
     """
     Even extension at the boundaries of an array
 
-    Generate a new ndarray by making an even extension of `x` along an axis.
+    Generate a new array by making an even extension of `x` along an axis.
 
     Parameters
     ----------
-    x : ndarray
+    x : array
         The array to be extended.
     n : int
         The number of elements by which to extend `x` at each end of the axis.
@@ -124,21 +124,21 @@ def even_ext(x, n, axis=-1):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal._arraytools import even_ext
-    >>> a = np.array([[1, 2, 3, 4, 5], [0, 1, 4, 9, 16]])
+    >>> a = mx.array([[1, 2, 3, 4, 5], [0, 1, 4, 9, 16]])
     >>> even_ext(a, 2)
     array([[ 3,  2,  1,  2,  3,  4,  5,  4,  3],
            [ 4,  1,  0,  1,  4,  9, 16,  9,  4]])
 
     Even extension is a "mirror image" at the boundaries of the original array:
 
-    >>> t = np.linspace(0, 1.5, 100)
-    >>> a = 0.9 * np.sin(2 * np.pi * t**2)
+    >>> t = mx.linspace(0, 1.5, 100)
+    >>> a = 0.9 * mx.sin(2 * mx.pi * t**2)
     >>> b = even_ext(a, 40)
     >>> import matplotlib.pyplot as plt
-    >>> plt.plot(np.arange(-40, 140), b, 'b', lw=1, label='even extension')
-    >>> plt.plot(np.arange(100), a, 'r', lw=2, label='original')
+    >>> plt.plot(mx.arange(-40, 140), b, 'b', lw=1, label='even extension')
+    >>> plt.plot(mx.arange(100), a, 'r', lw=2, label='original')
     >>> plt.legend(loc='best')
     >>> plt.show()
     """
@@ -150,7 +150,7 @@ def even_ext(x, n, axis=-1):
                          % (n, x.shape[axis] - 1))
     left_ext = axis_slice(x, start=n, stop=0, step=-1, axis=axis)
     right_ext = axis_slice(x, start=-2, stop=-(n + 2), step=-1, axis=axis)
-    ext = np.concatenate((left_ext,
+    ext = mx.concatenate((left_ext,
                           x,
                           right_ext),
                          axis=axis)
@@ -161,14 +161,14 @@ def const_ext(x, n, axis=-1):
     """
     Constant extension at the boundaries of an array
 
-    Generate a new ndarray that is a constant extension of `x` along an axis.
+    Generate a new array that is a constant extension of `x` along an axis.
 
     The extension repeats the values at the first and last element of
     the axis.
 
     Parameters
     ----------
-    x : ndarray
+    x : array
         The array to be extended.
     n : int
         The number of elements by which to extend `x` at each end of the axis.
@@ -177,9 +177,9 @@ def const_ext(x, n, axis=-1):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal._arraytools import const_ext
-    >>> a = np.array([[1, 2, 3, 4, 5], [0, 1, 4, 9, 16]])
+    >>> a = mx.array([[1, 2, 3, 4, 5], [0, 1, 4, 9, 16]])
     >>> const_ext(a, 2)
     array([[ 1,  1,  1,  2,  3,  4,  5,  5,  5],
            [ 0,  0,  0,  1,  4,  9, 16, 16, 16]])
@@ -187,12 +187,12 @@ def const_ext(x, n, axis=-1):
     Constant extension continues with the same values as the endpoints of the
     array:
 
-    >>> t = np.linspace(0, 1.5, 100)
-    >>> a = 0.9 * np.sin(2 * np.pi * t**2)
+    >>> t = mx.linspace(0, 1.5, 100)
+    >>> a = 0.9 * mx.sin(2 * mx.pi * t**2)
     >>> b = const_ext(a, 40)
     >>> import matplotlib.pyplot as plt
-    >>> plt.plot(np.arange(-40, 140), b, 'b', lw=1, label='constant extension')
-    >>> plt.plot(np.arange(100), a, 'r', lw=2, label='original')
+    >>> plt.plot(mx.arange(-40, 140), b, 'b', lw=1, label='constant extension')
+    >>> plt.plot(mx.arange(100), a, 'r', lw=2, label='original')
     >>> plt.legend(loc='best')
     >>> plt.show()
     """
@@ -201,11 +201,11 @@ def const_ext(x, n, axis=-1):
     left_end = axis_slice(x, start=0, stop=1, axis=axis)
     ones_shape = [1] * x.ndim
     ones_shape[axis] = n
-    ones = np.ones(ones_shape, dtype=x.dtype)
+    ones = mx.ones(ones_shape, dtype=x.dtype)
     left_ext = ones * left_end
     right_end = axis_slice(x, start=-1, axis=axis)
     right_ext = ones * right_end
-    ext = np.concatenate((left_ext,
+    ext = mx.concatenate((left_ext,
                           x,
                           right_ext),
                          axis=axis)
@@ -216,12 +216,12 @@ def zero_ext(x, n, axis=-1):
     """
     Zero padding at the boundaries of an array
 
-    Generate a new ndarray that is a zero-padded extension of `x` along
+    Generate a new array that is a zero-padded extension of `x` along
     an axis.
 
     Parameters
     ----------
-    x : ndarray
+    x : array
         The array to be extended.
     n : int
         The number of elements by which to extend `x` at each end of the
@@ -231,9 +231,9 @@ def zero_ext(x, n, axis=-1):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal._arraytools import zero_ext
-    >>> a = np.array([[1, 2, 3, 4, 5], [0, 1, 4, 9, 16]])
+    >>> a = mx.array([[1, 2, 3, 4, 5], [0, 1, 4, 9, 16]])
     >>> zero_ext(a, 2)
     array([[ 0,  0,  1,  2,  3,  4,  5,  0,  0],
            [ 0,  0,  0,  1,  4,  9, 16,  0,  0]])
@@ -242,8 +242,8 @@ def zero_ext(x, n, axis=-1):
         return x
     zeros_shape = list(x.shape)
     zeros_shape[axis] = n
-    zeros = np.zeros(zeros_shape, dtype=x.dtype)
-    ext = np.concatenate((zeros, x, zeros), axis=axis)
+    zeros = mx.zeros(zeros_shape, dtype=x.dtype)
+    ext = mx.concatenate((zeros, x, zeros), axis=axis)
     return ext
 
 
@@ -258,7 +258,7 @@ def _validate_fs(fs, allow_none=True):
         if not allow_none:
             raise ValueError("Sampling frequency can not be none.")
     else:  # should be float
-        if not np.isscalar(fs):
+        if not mx.isscalar(fs):
             raise ValueError("Sampling frequency fs must be a single scalar.")
         fs = float(fs)
     return fs

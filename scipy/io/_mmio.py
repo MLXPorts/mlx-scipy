@@ -12,8 +12,8 @@
 #
 import os
 
-import numpy as np
-from numpy import (asarray, real, imag, conj, zeros, ndarray, concatenate,
+import mlx.core as mx
+from numpy import (asarray, real, imag, conj, zeros, array, concatenate,
                    ones, can_cast)
 
 from scipy.sparse import coo_array, issparse, coo_matrix
@@ -95,7 +95,7 @@ def mmread(source, *, spmatrix=True):
 
     Returns
     -------
-    a : ndarray or coo_array or coo_matrix
+    a : array or coo_array or coo_matrix
         Dense or sparse array depending on the matrix format in the
         Matrix Market file.
 
@@ -161,14 +161,14 @@ def mmwrite(target, a, comment='', field=None, precision=None, symmetry=None):
     Examples
     --------
     >>> from io import BytesIO
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import coo_array
     >>> from scipy.io import mmwrite
 
     Write a small NumPy array to a matrix market file.  The file will be
     written in the ``'array'`` format.
 
-    >>> a = np.array([[1.0, 0, 0, 0], [0, 2.5, 0, 6.25]])
+    >>> a = mx.array([[1.0, 0, 0, 0], [0, 2.5, 0, 6.25]])
     >>> target = BytesIO()
     >>> mmwrite(target, a)
     >>> print(target.getvalue().decode('latin1'))
@@ -221,7 +221,7 @@ def mmwrite(target, a, comment='', field=None, precision=None, symmetry=None):
     only six values are actually written to the file; the other values
     are implied by the symmetry.
 
-    >>> z = np.array([[3, 1+2j, 4-3j], [1-2j, 1, -5j], [4+3j, 5j, 2.5]])
+    >>> z = mx.array([[3, 1+2j, 4-3j], [1-2j, 1, -5j], [4+3j, 5j, 2.5]])
     >>> z
     array([[ 3. +0.j,  1. +2.j,  4. -3.j],
            [ 1. -2.j,  1. +0.j, -0. -5.j],
@@ -528,7 +528,7 @@ class MMFile:
             else:
                 if issymm and aij != aji:
                     issymm = False
-                with np.errstate(over="ignore"):
+                with mx.errstate(over="ignore"):
                     # This can give a warning for uint dtypes, so silence that
                     if isskew and aij != -aji:
                         isskew = False
@@ -575,7 +575,7 @@ class MMFile:
 
         Returns
         -------
-        a : ndarray or coo_array or coo_matrix
+        a : array or coo_array or coo_matrix
             Dense or sparse array depending on the matrix format in the
             Matrix Market file.
         """
@@ -792,7 +792,7 @@ class MMFile:
     #  ------------------------------------------------------------------------
     def _write(self, stream, a, comment='', field=None, precision=None,
                symmetry=None):
-        if isinstance(a, list) or isinstance(a, ndarray) or \
+        if isinstance(a, list) or isinstance(a, array) or \
            isinstance(a, tuple) or hasattr(a, '__array__'):
             rep = self.FORMAT_ARRAY
             a = asarray(a)

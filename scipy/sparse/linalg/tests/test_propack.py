@@ -1,7 +1,7 @@
 import os
 import pytest
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 from pytest import raises as assert_raises
 from scipy.sparse.linalg._svdp import _svdp
@@ -10,15 +10,15 @@ from scipy.sparse import csr_array, csc_array
 
 # dtype_flavour to tolerance
 TOLS = {
-    np.float32: 1e-4,
-    np.float64: 1e-8,
-    np.complex64: 1e-4,
-    np.complex128: 1e-8,
+    mx.float32: 1e-4,
+    mx.float64: 1e-8,
+    mx.complex64: 1e-4,
+    mx.complex128: 1e-8,
 }
 
 
 def is_complex_type(dtype):
-    return np.dtype(dtype).kind == "c"
+    return mx.dtype(dtype).kind == "c"
 
 
 _dtypes = []
@@ -38,10 +38,10 @@ def check_svdp(n, m, constructor, dtype, k, irl_mode, which, f=0.8, rng=None):
     tol = TOLS[dtype]
 
     if rng is None:
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
 
     # Legacy clamp for the generator
-    rng2 = np.random.default_rng(0)
+    rng2 = mx.random.default_rng(0)
     if is_complex_type(dtype):
         M = (- 5 + 10 * rng2.uniform(size=[n, m])
              - 5j + 10j * rng2.uniform(size=[n, m])).astype(dtype)
@@ -50,31 +50,31 @@ def check_svdp(n, m, constructor, dtype, k, irl_mode, which, f=0.8, rng=None):
     M[M.real > 10 * f - 5] = 0
     Msp = constructor(M)
 
-    u1, sigma1, vt1 = np.linalg.svd(M, full_matrices=False)
+    u1, sigma1, vt1 = mx.linalg.svd(M, full_matrices=False)
     u2, sigma2, vt2, _ = _svdp(Msp, k=k,which=which, irl_mode=irl_mode,
                                tol=tol, rng=rng)
 
     # check the which
     if which.upper() == 'SM':
-        u1 = np.roll(u1, k, 1)
-        vt1 = np.roll(vt1, k, 0)
-        sigma1 = np.roll(sigma1, k)
+        u1 = mx.roll(u1, k, 1)
+        vt1 = mx.roll(vt1, k, 0)
+        sigma1 = mx.roll(sigma1, k)
 
     # check that singular values agree
     assert_allclose(sigma1[:k], sigma2, rtol=tol, atol=tol)
 
     # check that singular vectors are orthogonal
-    assert_allclose(np.abs(u1.conj().T @ u2), np.eye(n, k), rtol=tol, atol=tol)
-    assert_allclose(np.abs(vt1.conj() @ vt2.T), np.eye(n, k), rtol=tol, atol=tol)
+    assert_allclose(mx.abs(u1.conj().T @ u2), mx.eye(n, k), rtol=tol, atol=tol)
+    assert_allclose(mx.abs(vt1.conj() @ vt2.T), mx.eye(n, k), rtol=tol, atol=tol)
 
 
-@pytest.mark.parametrize('ctor', (np.array, csr_array, csc_array))
-@pytest.mark.parametrize('dtype', [np.float32, np.float64,
-                                   np.complex64, np.complex128])
+@pytest.mark.parametrize('ctor', (mx.array, csr_array, csc_array))
+@pytest.mark.parametrize('dtype', [mx.float32, mx.float64,
+                                   mx.complex64, mx.complex128])
 @pytest.mark.parametrize('irl', (True, False))
 @pytest.mark.parametrize('which', ('LM', 'SM'))
 def test_svdp(ctor, dtype, irl, which):
-    rng = np.random.default_rng(1757937293955503)
+    rng = mx.random.default_rng(1757937293955503)
     n, m, k = 10, 20, 3
     if which == 'SM' and not irl:
         message = "`which`='SM' requires irl_mode=True"
@@ -92,10 +92,10 @@ def test_examples(dtype, irl):
     # with BLIS, Netlib, and MKL+AVX512 - see
     # https://github.com/conda-forge/scipy-feedstock/pull/198#issuecomment-999180432
     atol = {
-        np.float32: 1.3e-4,
-        np.float64: 1e-9,
-        np.complex64: 1e-3,
-        np.complex128: 1e-9,
+        mx.float32: 1.3e-4,
+        mx.float64: 1e-9,
+        mx.complex64: 1e-3,
+        mx.complex128: 1e-9,
     }[dtype]
 
     path_prefix = os.path.dirname(__file__)
@@ -103,14 +103,14 @@ def test_examples(dtype, irl):
     # PROPACK 2.1: http://sun.stanford.edu/~rmunk/PROPACK/
     relative_path = "propack_test_data.npz"
     filename = os.path.join(path_prefix, relative_path)
-    with np.load(filename, allow_pickle=True) as data:
+    with mx.load(filename, allow_pickle=True) as data:
         if is_complex_type(dtype):
             A = data['A_complex'].item().astype(dtype)
         else:
             A = data['A_real'].item().astype(dtype)
 
     k = 200
-    u, s, vh, _ = _svdp(A, k, irl_mode=irl, rng=np.random.default_rng(0))
+    u, s, vh, _ = _svdp(A, k, irl_mode=irl, rng=mx.random.default_rng(0))
 
     # complex example matrix has many repeated singular values, so check only
     # beginning non-repeated singular vectors to avoid permutations
@@ -120,24 +120,24 @@ def test_examples(dtype, irl):
     s = s[:sv_check]
 
     # Check orthogonality of singular vectors
-    assert_allclose(np.eye(u.shape[1]), u.conj().T @ u, atol=atol)
-    assert_allclose(np.eye(vh.shape[0]), vh @ vh.conj().T, atol=atol)
+    assert_allclose(mx.eye(u.shape[1]), u.conj().T @ u, atol=atol)
+    assert_allclose(mx.eye(vh.shape[0]), vh @ vh.conj().T, atol=atol)
 
-    # Ensure the norm of the difference between the np.linalg.svd and
+    # Ensure the norm of the difference between the mx.linalg.svd and
     # PROPACK reconstructed matrices is small
-    u3, s3, vh3 = np.linalg.svd(A.todense())
+    u3, s3, vh3 = mx.linalg.svd(A.todense())
     u3 = u3[:, :sv_check]
     s3 = s3[:sv_check]
     vh3 = vh3[:sv_check, :]
-    A3 = u3 @ np.diag(s3) @ vh3
-    recon = u @ np.diag(s) @ vh
-    assert_allclose(np.linalg.norm(A3 - recon), 0, atol=atol)
+    A3 = u3 @ mx.diag(s3) @ vh3
+    recon = u @ mx.diag(s) @ vh
+    assert_allclose(mx.linalg.norm(A3 - recon), 0, atol=atol)
 
 
 @pytest.mark.parametrize('shifts', (None, -10, 0, 1, 10, 70))
 @pytest.mark.parametrize('dtype', _dtypes[:2])
 def test_shifts(shifts, dtype):
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
     n, k = 70, 10
     A = rng.random((n, n))
     if shifts is not None and ((shifts < 0) or (k > min(n-1-shifts, n))):
@@ -150,9 +150,9 @@ def test_shifts(shifts, dtype):
 @pytest.mark.slow
 @pytest.mark.xfail()
 def test_shifts_accuracy():
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
     n, k = 70, 10
-    A = rng.random((n, n)).astype(np.float64)
+    A = rng.random((n, n)).astype(mx.float64)
     u1, s1, vt1, _ = _svdp(A, k, shifts=None, which='SM', irl_mode=True, rng=rng)
     u2, s2, vt2, _ = _svdp(A, k, shifts=32, which='SM', irl_mode=True, rng=rng)
     # shifts <= 32 doesn't agree with shifts > 32
@@ -161,43 +161,43 @@ def test_shifts_accuracy():
 
 
 @pytest.mark.parametrize('irl_mode', [False, True])
-@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+@pytest.mark.parametrize('dtype', (mx.float32, mx.float64))
 def test_thin_hilbert(irl_mode, dtype):
-    rng = np.random.default_rng(1757951587606893)
+    rng = mx.random.default_rng(1757951587606893)
     m, n = 200, 4
 
     # Generate a Hilbert matrix of size m x n
-    A = np.array([[1 / (i + j + 1) for j in range(n)] for i in range(m)], dtype=dtype)
-    uu, ss, vv = np.linalg.svd(A, full_matrices=False)
+    A = mx.array([[1 / (i + j + 1) for j in range(n)] for i in range(m)], dtype=dtype)
+    uu, ss, vv = mx.linalg.svd(A, full_matrices=False)
     u, s, vt, _ = _svdp(A, k=4, which='LM', irl_mode=irl_mode, rng=rng)
     assert_allclose(s, ss, atol=TOLS[dtype])
 
     # Check orthogonality of singular vectors
-    assert_allclose(np.eye(u.shape[1]), u.T @ u, atol=TOLS[dtype])
-    assert_allclose(np.eye(vt.shape[0]), vt @ vt.T, atol=TOLS[dtype])
+    assert_allclose(mx.eye(u.shape[1]), u.T @ u, atol=TOLS[dtype])
+    assert_allclose(mx.eye(vt.shape[0]), vt @ vt.T, atol=TOLS[dtype])
 
     # Check orthogonality against numpy svd results
-    assert_allclose(np.abs(uu.T @ u), np.eye(n), atol=TOLS[dtype])
-    assert_allclose(np.abs(vv @ vt.T), np.eye(n), atol=TOLS[dtype])
+    assert_allclose(mx.abs(uu.T @ u), mx.eye(n), atol=TOLS[dtype])
+    assert_allclose(mx.abs(vv @ vt.T), mx.eye(n), atol=TOLS[dtype])
 
 
-@pytest.mark.parametrize('dtype', (np.float32, np.float64, np.complex64, np.complex128))
+@pytest.mark.parametrize('dtype', (mx.float32, mx.float64, mx.complex64, mx.complex128))
 def test_fat_random(dtype):
-    rng = np.random.default_rng(1758046113948869)
+    rng = mx.random.default_rng(1758046113948869)
     m, n = 3, 100
 
     A = rng.uniform(size=(m, n)).astype(dtype)
-    if dtype in (np.complex64, np.complex128):
+    if dtype in (mx.complex64, mx.complex128):
         A += dtype(1j) * rng.uniform(size=(m, n)).astype(dtype)
 
-    uu, ss, vv = np.linalg.svd(A, full_matrices=False)
+    uu, ss, vv = mx.linalg.svd(A, full_matrices=False)
     u, s, vt, _ = _svdp(A, k=3, which='LM', irl_mode=True, rng=rng)
     assert_allclose(s, ss, atol=TOLS[dtype])
 
     # Check orthogonality of singular vectors
-    assert_allclose(np.eye(u.shape[1]), u.conj().T @ u, atol=TOLS[dtype])
-    assert_allclose(np.eye(vt.shape[0]), vt @ vt.conj().T, atol=TOLS[dtype])
+    assert_allclose(mx.eye(u.shape[1]), u.conj().T @ u, atol=TOLS[dtype])
+    assert_allclose(mx.eye(vt.shape[0]), vt @ vt.conj().T, atol=TOLS[dtype])
 
     # Check orthogonality against numpy svd results
-    assert_allclose(np.abs(uu.conj().T @ u), np.eye(m), atol=TOLS[dtype])
-    assert_allclose(np.abs(vv @ vt.conj().T), np.eye(m), atol=TOLS[dtype])
+    assert_allclose(mx.abs(uu.conj().T @ u), mx.eye(m), atol=TOLS[dtype])
+    assert_allclose(mx.abs(vv @ vt.conj().T), mx.eye(m), atol=TOLS[dtype])

@@ -8,7 +8,7 @@ from scipy.fft._helper import next_fast_len, prev_fast_len, _init_nd_shape_and_a
 from numpy.testing import assert_equal
 from pytest import raises as assert_raises
 import pytest
-import numpy as np
+import mlx.core as mx
 import sys
 from scipy._lib._array_api import xp_assert_close, xp_device
 from scipy import fft
@@ -54,7 +54,7 @@ def _assert_n_smooth(x, n):
 class TestNextFastLen:
 
     def test_next_fast_len(self, xp):
-        np.random.seed(1234)
+        mx.random.seed(1234)
 
         def nums():
             yield from range(1, 1000)
@@ -69,7 +69,7 @@ class TestNextFastLen:
             _assert_n_smooth(m, 5)
 
     def test_np_integers(self, xp):
-        ITYPES = [np.int16, np.int32, np.int64, np.uint16, np.uint32, np.uint64]
+        ITYPES = [mx.int16, mx.int32, mx.int64, mx.uint16, mx.uint32, mx.uint64]
         for ityp in ITYPES:
             x = ityp(12345)
             testN = next_fast_len(x)
@@ -128,7 +128,7 @@ class TestNextFastLen:
 class TestPrevFastLen:
 
     def test_prev_fast_len(self, xp):
-        np.random.seed(1234)
+        mx.random.seed(1234)
 
         def nums():
             yield from range(1, 1000)
@@ -143,8 +143,8 @@ class TestPrevFastLen:
             _assert_n_smooth(m, 5)
 
     def test_np_integers(self, xp):
-        ITYPES = [np.int16, np.int32, np.int64, np.uint16, np.uint32, 
-                    np.uint64]
+        ITYPES = [mx.int16, mx.int32, mx.int64, mx.uint16, mx.uint32,
+                    mx.uint64]
         for ityp in ITYPES:
             x = ityp(12345)
             testN = prev_fast_len(x)
@@ -443,7 +443,7 @@ class TestFFTShift:
 
     def test_inverse(self, xp):
         for n in [1, 4, 9, 100, 211]:
-            x = xp.asarray(np.random.random((n,)))
+            x = xp.asarray(mx.random.random((n,)))
             xp_assert_close(fft.ifftshift(fft.fftshift(x)), x)
 
     @skip_xp_backends('cupy', reason='cupy/cupy#8393')

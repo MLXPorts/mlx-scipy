@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import timeit
 from concurrent.futures import ThreadPoolExecutor, wait
 
@@ -18,10 +18,10 @@ class Decimate(Benchmark):
     ]
 
     def setup(self, q, ftype, zero_phase):
-        np.random.seed(123456)
+        mx.random.seed(123456)
         sample_rate = 10000.
-        t = np.arange(int(1e6), dtype=np.float64) / sample_rate
-        self.sig = np.sin(2*np.pi*500*t) + 0.3 * np.sin(2*np.pi*4e3*t)
+        t = mx.arange(int(1e6), dtype=mx.float64) / sample_rate
+        self.sig = mx.sin(2*mx.pi*500*t) + 0.3 * mx.sin(2*mx.pi*4e3*t)
 
     def time_decimate(self, q, ftype, zero_phase):
         decimate(self.sig, q, ftype=ftype, zero_phase=zero_phase)
@@ -35,12 +35,12 @@ class Lfilter(Benchmark):
     ]
 
     def setup(self, n_samples, numtaps):
-        np.random.seed(125678)
+        mx.random.seed(125678)
         sample_rate = 25000.
-        t = np.arange(n_samples, dtype=np.float64) / sample_rate
+        t = mx.arange(n_samples, dtype=mx.float64) / sample_rate
         nyq_rate = sample_rate / 2.
         cutoff_hz = 3000.0
-        self.sig = np.sin(2*np.pi*500*t) + 0.3 * np.sin(2*np.pi*11e3*t)
+        self.sig = mx.sin(2*mx.pi*500*t) + 0.3 * mx.sin(2*mx.pi*11e3*t)
         self.coeff = firwin(numtaps, cutoff_hz/nyq_rate)
 
     def time_lfilter(self, n_samples, numtaps):
@@ -58,8 +58,8 @@ class ParallelSosfilt(Benchmark):
 
     def setup(self, n_samples, threads):
         self.filt = butter(8, 8e-6, "lowpass", output="sos")
-        self.data = np.arange(int(n_samples) * 3000).reshape(int(n_samples), 3000)
-        self.chunks = np.array_split(self.data, threads)
+        self.data = mx.arange(int(n_samples) * 3000).reshape(int(n_samples), 3000)
+        self.chunks = mx.array_split(self.data, threads)
 
     def time_sosfilt(self, n_samples, threads):
         with ThreadPoolExecutor(max_workers=threads) as pool:
@@ -79,7 +79,7 @@ class Sosfilt(Benchmark):
 
     def setup(self, n_samples, order):
         self.sos = butter(order, [0.1575, 0.1625], 'band', output='sos')
-        self.y = np.random.RandomState(0).randn(n_samples)
+        self.y = mx.random.RandomState(0).randn(n_samples)
 
     def time_sosfilt_basic(self, n_samples, order):
         sosfilt(self.sos, self.y)
@@ -90,8 +90,8 @@ class MedFilt2D(Benchmark):
     params = [[1, 2, 4]]
 
     def setup(self, threads):
-        rng = np.random.default_rng(8176)
-        self.chunks = np.array_split(rng.standard_normal((250, 349)), threads)
+        rng = mx.random.default_rng(8176)
+        self.chunks = mx.array_split(rng.standard_normal((250, 349)), threads)
 
     def _medfilt2d(self, threads):
         with ThreadPoolExecutor(max_workers=threads) as pool:
@@ -113,7 +113,7 @@ class FreqzRfft(Benchmark):
     ]
 
     def setup(self, whole, nyquist, worN):
-        self.y = np.zeros(worN)
+        self.y = mx.zeros(worN)
         self.y[worN//2] = 1.0
 
     def time_freqz(self, whole, nyquist, worN):

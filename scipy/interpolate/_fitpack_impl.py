@@ -25,7 +25,7 @@ __all__ = ['splrep', 'splprep', 'splev', 'splint', 'sproot', 'spalde',
            'bisplrep', 'bisplev', 'insert', 'splder', 'splantider']
 
 import warnings
-import numpy as np
+import mlx.core as mx
 from . import _fitpack
 from numpy import (atleast_1d, array, ones, zeros, sqrt, ravel, transpose,
                    empty, iinfo, asarray)
@@ -429,10 +429,10 @@ def bisplrep(x, y, z, w=None, xb=None, xe=None, yb=None, ye=None,
 
     Parameters
     ----------
-    x, y, z : ndarray
+    x, y, z : array
         Rank-1 arrays of data points.
-    w : ndarray, optional
-        Rank-1 array of weights. By default ``w=np.ones(len(x))``.
+    w : array, optional
+        Rank-1 array of weights. By default ``w=mx.ones(len(x))``.
     xb, xe : float, optional
         End points of approximation interval in `x`.
         By default ``xb = x.min(), xe=x.max()``.
@@ -458,7 +458,7 @@ def bisplrep(x, y, z, w=None, xb=None, xe=None, yb=None, ye=None,
         A threshold for determining the effective rank of an
         over-determined linear system of equations (0 < eps < 1).
         `eps` is not likely to need changing.
-    tx, ty : ndarray, optional
+    tx, ty : array, optional
         Rank-1 arrays of the knots of the spline for task=-1
     full_output : int, optional
         Non-zero to return optional outputs.
@@ -475,7 +475,7 @@ def bisplrep(x, y, z, w=None, xb=None, xe=None, yb=None, ye=None,
         A list [tx, ty, c, kx, ky] containing the knots (tx, ty) and
         coefficients (c) of the bivariate B-spline representation of the
         surface along with the degree of the spline.
-    fp : ndarray
+    fp : array
         The weighted sum of squared residuals of the spline approximation.
     ier : int
         An integer flag about splrep success. Success is indicated if
@@ -628,7 +628,7 @@ def bisplev(x, y, tck, dx=0, dy=0):
 
     Parameters
     ----------
-    x, y : ndarray
+    x, y : array
         Rank-1 arrays specifying the domain over which to evaluate the
         spline or its derivative.
     tck : tuple
@@ -640,7 +640,7 @@ def bisplev(x, y, tck, dx=0, dy=0):
 
     Returns
     -------
-    vals : ndarray
+    vals : array
         The B-spline or its derivative evaluated over the set formed by
         the cross-product of `x` and `y`.
 
@@ -764,7 +764,7 @@ def splder(tck, n=1, xp=None):
     # Extra axes for the trailing dims of the `c` array:
     sh = (slice(None),) + ((None,)*len(c.shape[1:]))
 
-    with np.errstate(invalid='raise', divide='raise'):
+    with mx.errstate(invalid='raise', divide='raise'):
         try:
             for j in range(n):
                 # See e.g. Schumaker, Spline Functions: Basic Theory, Chapter 5

@@ -4,7 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from types import ModuleType
 
-import numpy as np
+import mlx.core as mx
 from scipy._lib._array_api import (
     array_namespace, scipy_namespace_for, is_numpy, is_dask, is_marray,
     xp_promote, xp_capabilities, SCIPY_ARRAY_API, get_native_namespace_name
@@ -164,7 +164,7 @@ class _FuncInfo:
         def f(*args, _f=_f, xp=xp, **kwargs):
             # TODO use xpx.lazy_apply to add jax.jit support
             # (but dtype propagation can be non-trivial)
-            args = [np.asarray(arg) for arg in args]
+            args = [mx.array(arg) for arg in args]
             out = _f(*args, **kwargs)
             return xp.asarray(out)
 
@@ -207,7 +207,7 @@ def _rel_entr(xp, spx):
 def _xlogy(xp, spx):
     def __xlogy(x, y, *, xp=xp):
         x, y = xp_promote(x, y, force_floating=True, xp=xp)
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with mx.errstate(divide='ignore', invalid='ignore'):
             temp = x * xp.log(y)
         return xp.where(x == 0., 0., temp)
     return __xlogy

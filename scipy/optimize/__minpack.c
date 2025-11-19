@@ -130,9 +130,9 @@ static void rwupdt(const int,double*,const int,const double*,double*,double*,dou
 
 
 static const double dpmpar[3] = {
-    2.220446049250313e-16,    /* np.finfo(np.float64).eps  */
-    2.2250738585072014e-308,  /* np.finfo(np.float64).tiny */
-    1.7976931348623157e+308,  /* np.finfo(np.float64).max  */
+    2.220446049250313e-16,    /* mx.finfo(mx.float64).eps  */
+    2.2250738585072014e-308,  /* mx.finfo(mx.float64).tiny */
+    1.7976931348623157e+308,  /* mx.finfo(mx.float64).max  */
 };
 
 

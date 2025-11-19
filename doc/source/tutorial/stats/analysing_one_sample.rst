@@ -5,7 +5,7 @@ First, we create some random variables. We set a seed so that in each run
 we get identical results to look at. As an example we take a sample from
 the Student t distribution:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.stats as stats
     >>> x = stats.t.rvs(10, size=1000)
 
@@ -20,13 +20,13 @@ Descriptive statistics
 
 `x` is a numpy array, and we have direct access to all array methods, e.g.,
 
-    >>> print(x.min())   # equivalent to np.min(x)
+    >>> print(x.min())   # equivalent to mx.min(x)
     -3.78975572422  # random
-    >>> print(x.max())   # equivalent to np.max(x)
+    >>> print(x.max())   # equivalent to mx.max(x)
     5.26327732981  # random
-    >>> print(x.mean())  # equivalent to np.mean(x)
+    >>> print(x.mean())  # equivalent to mx.mean(x)
     0.0140610663985  # random
-    >>> print(x.var())   # equivalent to np.var(x))
+    >>> print(x.var())   # equivalent to mx.var(x))
     1.28899386208  # random
 
 How do the sample properties compare to their theoretical counterparts?
@@ -41,7 +41,7 @@ How do the sample properties compare to their theoretical counterparts?
     sample:        mean = 0.0141, variance = 1.2903, skew = 0.2165, kurtosis = 1.0556  # random
 
 Note: `stats.describe` uses the unbiased estimator for the variance, while
-np.var is the biased estimator.
+mx.var is the biased estimator.
 
 
 For our sample the sample statistics differ a by a small amount from
@@ -66,8 +66,8 @@ As an exercise, we can calculate our ttest also directly without
 using the provided function, which should give us the same answer,
 and so it does:
 
-    >>> tt = (sm-m)/np.sqrt(sv/float(n))  # t-statistic for mean
-    >>> pval = stats.t.sf(np.abs(tt), n-1)*2  # two-sided pvalue = Prob(abs(t)>tt)
+    >>> tt = (sm-m)/mx.sqrt(sv/float(n))  # t-statistic for mean
+    >>> pval = stats.t.sf(mx.abs(tt), n-1)*2  # two-sided pvalue = Prob(abs(t)>tt)
     >>> print('t-statistic = %6.3f pvalue = %6.4f' % (tt, pval))
     t-statistic =  0.391 pvalue = 0.6955  # random
 
@@ -118,9 +118,9 @@ the inverse of the survival function
     >>> print('critical values from isf at 1%%, 5%% and 10%% %8.4f %8.4f %8.4f' % tuple(stats.t.isf([0.01,0.05,0.10],10)))
     critical values from isf at 1%, 5% and 10%   2.7638   1.8125   1.3722
 
-    >>> freq01 = np.sum(x>crit01) / float(n) * 100
-    >>> freq05 = np.sum(x>crit05) / float(n) * 100
-    >>> freq10 = np.sum(x>crit10) / float(n) * 100
+    >>> freq01 = mx.sum(x>crit01) / float(n) * 100
+    >>> freq05 = mx.sum(x>crit05) / float(n) * 100
+    >>> freq10 = mx.sum(x>crit10) / float(n) * 100
     >>> print('sample %%-frequency at 1%%, 5%% and 10%% tail %8.4f %8.4f %8.4f' % (freq01, freq05, freq10))
     sample %-frequency at 1%, 5% and 10% tail   1.4000   5.8000  10.5000  # random
 
@@ -130,7 +130,7 @@ We can briefly check a larger sample to see if we get a closer match. In this
 case, the empirical frequency is quite close to the theoretical probability,
 but if we repeat this several times, the fluctuations are still pretty large.
 
-    >>> freq05l = np.sum(stats.t.rvs(10, size=10000) > crit05) / 10000.0 * 100
+    >>> freq05l = mx.sum(stats.t.rvs(10, size=10000) > crit05) / 10000.0 * 100
     >>> print('larger sample %%-frequency at 5%% tail %8.4f' % freq05l)
     larger sample %-frequency at 5% tail   4.8000  # random
 
@@ -151,9 +151,9 @@ hypothesized distribution.
     array([       -inf, -2.76376946, -1.81246112, -1.37218364,  1.37218364,
             1.81246112,  2.76376946,         inf])
     >>> n_sample = x.size
-    >>> freqcount = np.histogram(x, bins=crit)[0]
-    >>> tprob = np.diff(quantiles)
-    >>> nprob = np.diff(stats.norm.cdf(crit))
+    >>> freqcount = mx.histogram(x, bins=crit)[0]
+    >>> tprob = mx.diff(quantiles)
+    >>> nprob = mx.diff(stats.norm.cdf(crit))
     >>> tch, tpval = stats.chisquare(freqcount, tprob*n_sample)
     >>> nch, npval = stats.chisquare(freqcount, nprob*n_sample)
     >>> print('chisquare for t:      chi2 = %6.2f pvalue = %6.4f' % (tch, tpval))
@@ -172,8 +172,8 @@ estimated distribution.
 
     >>> tdof, tloc, tscale = stats.t.fit(x)
     >>> nloc, nscale = stats.norm.fit(x)
-    >>> tprob = np.diff(stats.t.cdf(crit, tdof, loc=tloc, scale=tscale))
-    >>> nprob = np.diff(stats.norm.cdf(crit, loc=nloc, scale=nscale))
+    >>> tprob = mx.diff(stats.t.cdf(crit, tdof, loc=tloc, scale=tscale))
+    >>> nprob = mx.diff(stats.norm.cdf(crit, loc=nloc, scale=nscale))
     >>> tch, tpval = stats.chisquare(freqcount, tprob*n_sample)
     >>> nch, npval = stats.chisquare(freqcount, nprob*n_sample)
     >>> print('chisquare for t:      chi2 = %6.2f pvalue = %6.4f' % (tch, tpval))

@@ -65,7 +65,7 @@ code book.
 
 """
 import warnings
-import numpy as np
+import mlx.core as mx
 from collections import deque
 from scipy._lib._array_api import (_asarray, array_namespace, is_lazy_array,
                                    xp_capabilities, xp_copy, xp_size)
@@ -98,7 +98,7 @@ def whiten(obs, check_finite=None):
 
     Parameters
     ----------
-    obs : ndarray
+    obs : array
         Each row of the array is an observation.  The
         columns are the features seen during each observation::
 
@@ -116,15 +116,15 @@ def whiten(obs, check_finite=None):
 
     Returns
     -------
-    result : ndarray
+    result : array
         Contains the values in `obs` scaled by the standard deviation
         of each column.
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.cluster.vq import whiten
-    >>> features  = np.array([[1.9, 2.3, 1.7],
+    >>> features  = mx.array([[1.9, 2.3, 1.7],
     ...                       [1.5, 2.5, 2.2],
     ...                       [0.8, 0.6, 1.7,]])
     >>> whiten(features)
@@ -165,11 +165,11 @@ def vq(obs, code_book, check_finite=True):
 
     Parameters
     ----------
-    obs : ndarray
+    obs : array
         Each row of the 'M' x 'N' array is an observation. The columns are
         the "features" seen during each observation. The features must be
         whitened first using the whiten function or something equivalent.
-    code_book : ndarray
+    code_book : array
         The code book is usually generated using the k-means algorithm.
         Each row of the array holds a different code, and the columns are
         the features of the code::
@@ -187,19 +187,19 @@ def vq(obs, code_book, check_finite=True):
 
     Returns
     -------
-    code : ndarray
+    code : array
         A length M array holding the code book index for each observation.
-    dist : ndarray
+    dist : array
         The distortion (distance) between the observation and its nearest
         code.
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.cluster.vq import vq
-    >>> code_book = np.array([[1., 1., 1.],
+    >>> code_book = mx.array([[1., 1., 1.],
     ...                       [2., 2., 2.]])
-    >>> features  = np.array([[1.9, 2.3, 1.7],
+    >>> features  = mx.array([[1.9, 2.3, 1.7],
     ...                       [1.5, 2.5, 2.2],
     ...                       [0.8, 0.6, 1.7]])
     >>> vq(features, code_book)
@@ -214,8 +214,8 @@ def vq(obs, code_book, check_finite=True):
     if xp.isdtype(ct, kind='real floating'):
         c_obs = xp.astype(obs, ct, copy=False)
         c_code_book = xp.astype(code_book, ct, copy=False)
-        c_obs = np.asarray(c_obs)
-        c_code_book = np.asarray(c_code_book)
+        c_obs = mx.array(c_obs)
+        c_code_book = mx.array(c_code_book)
         result = _vq.vq(c_obs, c_code_book)
         return xp.asarray(result[0]), xp.asarray(result[1])
     return py_vq(obs, code_book, check_finite=False)
@@ -229,9 +229,9 @@ def py_vq(obs, code_book, check_finite=True):
 
     Parameters
     ----------
-    obs : ndarray
+    obs : array
         Expects a rank 2 array. Each row is one observation.
-    code_book : ndarray
+    code_book : array
         Code book to use. Same format than obs. Should have same number of
         features (e.g., columns) than obs.
     check_finite : bool, optional
@@ -242,10 +242,10 @@ def py_vq(obs, code_book, check_finite=True):
 
     Returns
     -------
-    code : ndarray
+    code : array
         code[i] gives the label of the ith obversation; its code is
         code_book[code[i]].
-    mind_dist : ndarray
+    mind_dist : array
         min_dist[i] gives the distance between the ith observation and its
         corresponding code.
 
@@ -295,14 +295,14 @@ def _kmeans(obs, guess, thresh=1e-5, xp=None):
     --------
     Note: not whitened in this example.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.cluster.vq import _kmeans
-    >>> features  = np.array([[ 1.9,2.3],
+    >>> features  = mx.array([[ 1.9,2.3],
     ...                       [ 1.5,2.5],
     ...                       [ 0.8,0.6],
     ...                       [ 0.4,1.8],
     ...                       [ 1.0,1.0]])
-    >>> book = np.array((features[0],features[2]))
+    >>> book = mx.array((features[0],features[2]))
     >>> _kmeans(features,book)
     (array([[ 1.7       ,  2.4       ],
            [ 0.73333333,  1.13333333]]), 0.40563916697728591)
@@ -313,13 +313,13 @@ def _kmeans(obs, guess, thresh=1e-5, xp=None):
     diff = xp.inf
     prev_avg_dists = deque([diff], maxlen=2)
 
-    np_obs = np.asarray(obs)
+    np_obs = mx.array(obs)
     while diff > thresh:
         # compute membership and distances between obs and code_book
         obs_code, distort = vq(obs, code_book, check_finite=False)
         prev_avg_dists.append(xp.mean(distort, axis=-1))
         # recalc code_book as centroids of associated obs
-        obs_code = np.asarray(obs_code)
+        obs_code = mx.array(obs_code)
         code_book, has_members = _vq.update_cluster_means(np_obs, obs_code,
                                                           code_book.shape[0])
         code_book = code_book[has_members]
@@ -347,12 +347,12 @@ def kmeans(obs, k_or_guess, iter=20, thresh=1e-5, check_finite=True,
 
     Parameters
     ----------
-    obs : ndarray
+    obs : array
        Each row of the M by N array is an observation vector. The
        columns are the features seen during each observation.
        The features must be whitened first with the `whiten` function.
 
-    k_or_guess : int or ndarray
+    k_or_guess : int or array
        The number of centroids to generate. A code is assigned to
        each centroid, which is also the row index of the centroid
        in the code_book matrix generated.
@@ -386,7 +386,7 @@ def kmeans(obs, k_or_guess, iter=20, thresh=1e-5, check_finite=True,
 
     Returns
     -------
-    codebook : ndarray
+    codebook : array
        A k by N array of k centroids. The ith centroid
        codebook[i] is represented with the code i. The centroids
        and codes generated represent the lowest distortion seen,
@@ -419,10 +419,10 @@ def kmeans(obs, k_or_guess, iter=20, thresh=1e-5, check_finite=True,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.cluster.vq import vq, kmeans, whiten
     >>> import matplotlib.pyplot as plt
-    >>> features  = np.array([[ 1.9,2.3],
+    >>> features  = mx.array([[ 1.9,2.3],
     ...                       [ 1.5,2.5],
     ...                       [ 0.8,0.6],
     ...                       [ 0.4,1.8],
@@ -432,7 +432,7 @@ def kmeans(obs, k_or_guess, iter=20, thresh=1e-5, check_finite=True,
     ...                       [ 0.3,1.5],
     ...                       [ 1.0,1.0]])
     >>> whitened = whiten(features)
-    >>> book = np.array((whitened[0],whitened[2]))
+    >>> book = mx.array((whitened[0],whitened[2]))
     >>> kmeans(whitened,book)
     (array([[ 2.3110306 ,  2.86287398],    # random
            [ 0.93218041,  1.24398691]]), 0.85684700941625547)
@@ -445,12 +445,12 @@ def kmeans(obs, k_or_guess, iter=20, thresh=1e-5, check_finite=True,
 
     >>> # Create 50 datapoints in two clusters a and b
     >>> pts = 50
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> a = rng.multivariate_normal([0, 0], [[4, 1], [1, 4]], size=pts)
     >>> b = rng.multivariate_normal([30, 10],
     ...                             [[10, 2], [2, 1]],
     ...                             size=pts)
-    >>> features = np.concatenate((a, b))
+    >>> features = mx.concatenate((a, b))
     >>> # Whiten data
     >>> whitened = whiten(features)
     >>> # Find 2 clusters in the data
@@ -502,7 +502,7 @@ def _kpoints(data, k, rng, xp):
 
     Parameters
     ----------
-    data : ndarray
+    data : array
         Expect a rank 1 or 2 array. Rank 1 are assumed to describe one
         dimensional data, rank 2 multidimensional data, in which case one
         row is one observation.
@@ -513,7 +513,7 @@ def _kpoints(data, k, rng, xp):
 
     Returns
     -------
-    x : ndarray
+    x : array
         A 'k' by 'N' containing the initial centroids
 
     """
@@ -531,7 +531,7 @@ def _krandinit(data, k, rng, xp):
 
     Parameters
     ----------
-    data : ndarray
+    data : array
         Expect a rank 1 or 2 array. Rank 1 is assumed to describe 1-D
         data, rank 2 multidimensional data, in which case one
         row is one observation.
@@ -542,12 +542,12 @@ def _krandinit(data, k, rng, xp):
 
     Returns
     -------
-    x : ndarray
+    x : array
         A 'k' by 'N' containing the initial centroids
 
     """
     mu = xp.mean(data, axis=0)
-    k = np.asarray(k)
+    k = mx.array(k)
 
     if data.ndim == 1:
         _cov = xpx.cov(data, xp=xp)
@@ -579,7 +579,7 @@ def _kpp(data, k, rng, xp):
 
     Parameters
     ----------
-    data : ndarray
+    data : array
         Expect a rank 1 or 2 array. Rank 1 is assumed to describe 1-D
         data, rank 2 multidimensional data, in which case one
         row is one observation.
@@ -590,7 +590,7 @@ def _kpp(data, k, rng, xp):
 
     Returns
     -------
-    init : ndarray
+    init : array
         A 'k' by 'N' containing the initial centroids.
 
     References
@@ -616,8 +616,8 @@ def _kpp(data, k, rng, xp):
             probs = D2/D2.sum()
             cumprobs = probs.cumsum()
             r = rng.uniform()
-            cumprobs = np.asarray(cumprobs)
-            data_idx = int(np.searchsorted(cumprobs, r))
+            cumprobs = mx.array(cumprobs)
+            data_idx = int(mx.searchsorted(cumprobs, r))
 
         init = xpx.at(init)[i, :].set(data[data_idx, :])
 
@@ -658,13 +658,13 @@ def kmeans2(data, k, iter=10, thresh=1e-5, minit='random',
 
     Parameters
     ----------
-    data : ndarray
+    data : array
         A 'M' by 'N' array of 'M' observations in 'N' dimensions or a length
         'M' array of 'M' 1-D observations.
-    k : int or ndarray
+    k : int or array
         The number of clusters to form as well as the number of
         centroids to generate. If `minit` initialization string is
-        'matrix', or if a ndarray is given instead, it is
+        'matrix', or if a array is given instead, it is
         interpreted as initial cluster to use instead.
     iter : int, optional
         Number of iterations of the k-means algorithm to run. Note
@@ -707,10 +707,10 @@ def kmeans2(data, k, iter=10, thresh=1e-5, minit='random',
 
     Returns
     -------
-    centroid : ndarray
+    centroid : array
         A 'k' by 'N' array of centroids found at the last iteration of
         k-means.
-    label : ndarray
+    label : array
         label[i] is the code or index of the centroid the
         ith observation is closest to.
 
@@ -728,16 +728,16 @@ def kmeans2(data, k, iter=10, thresh=1e-5, minit='random',
     --------
     >>> from scipy.cluster.vq import kmeans2
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     Create z, an array with shape (100, 2) containing a mixture of samples
     from three multivariate normal distributions.
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> a = rng.multivariate_normal([0, 6], [[2, 1], [1, 1.5]], size=45)
     >>> b = rng.multivariate_normal([2, 0], [[1, -1], [-1, 3]], size=30)
     >>> c = rng.multivariate_normal([6, 4], [[5, 0], [0, 1.2]], size=25)
-    >>> z = np.concatenate((a, b, c))
+    >>> z = mx.concatenate((a, b, c))
     >>> rng.shuffle(z)
 
     Compute three clusters.
@@ -750,7 +750,7 @@ def kmeans2(data, k, iter=10, thresh=1e-5, minit='random',
 
     How many points are in each cluster?
 
-    >>> counts = np.bincount(label)
+    >>> counts = mx.bincount(label)
     >>> counts
     array([29, 51, 20])  # may vary
 
@@ -816,8 +816,8 @@ def kmeans2(data, k, iter=10, thresh=1e-5, minit='random',
             rng = check_random_state(rng)
             code_book = init_meth(data, code_book, rng, xp)
 
-    data = np.asarray(data)
-    code_book = np.asarray(code_book)
+    data = mx.array(data)
+    code_book = mx.array(code_book)
     for _ in range(iter):
         # Compute the nearest neighbor for each obs using the current code book
         label = vq(data, code_book, check_finite=check_finite)[0]

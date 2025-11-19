@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 from .common import run_monitored, set_mem_rlimit, Benchmark, safe_import
 
@@ -24,14 +24,14 @@ class Leaks(Benchmark):
 
         for repeat in repeats:
             code = f"""
-            import numpy as np
+            import mlx.core as mx
             from scipy.interpolate import griddata
 
             def func(x, y):
-                return x*(1-x)*np.cos(4*np.pi*x) * np.sin(4*np.pi*y**2)**2
+                return x*(1-x)*mx.cos(4*mx.pi*x) * mx.sin(4*mx.pi*y**2)**2
 
-            grid_x, grid_y = np.mgrid[0:1:100j, 0:1:200j]
-            points = np.random.rand(1000, 2)
+            grid_x, grid_y = mx.mgrid[0:1:100j, 0:1:200j]
+            points = mx.random.rand(1000, 2)
             values = func(points[:,0], points[:,1])
 
             for t in range({repeat}):
@@ -55,14 +55,14 @@ class Leaks(Benchmark):
 class BenchPPoly(Benchmark):
 
     def setup(self):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         m, k = 55, 3
-        x = np.sort(rng.random(m+1))
+        x = mx.sort(rng.random(m+1))
         c = rng.random((k, m))
         self.pp = interpolate.PPoly(c, x)
 
         npts = 100
-        self.xp = np.linspace(0, 1, npts)
+        self.xp = mx.linspace(0, 1, npts)
 
     def time_evaluation(self):
         self.pp(self.xp)
@@ -76,9 +76,9 @@ class GridData(Benchmark):
     ]
 
     def setup(self, n_grids, method):
-        self.func = lambda x, y: x*(1-x)*np.cos(4*np.pi*x) * np.sin(4*np.pi*y**2)**2
-        self.grid_x, self.grid_y = np.mgrid[0:1:n_grids, 0:1:n_grids]
-        self.points = np.random.rand(1000, 2)
+        self.func = lambda x, y: x*(1-x)*mx.cos(4*mx.pi*x) * mx.sin(4*mx.pi*y**2)**2
+        self.grid_x, self.grid_y = mx.mgrid[0:1:n_grids, 0:1:n_grids]
+        self.points = mx.random.rand(1000, 2)
         self.values = self.func(self.points[:, 0], self.points[:, 1])
 
     def time_evaluation(self, n_grids, method):
@@ -93,20 +93,20 @@ class GridDataPeakMem(Benchmark):
         shape = (7395, 6408)
         num_nonzero = 488686
 
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
 
         random_rows = rng.integers(0, shape[0], num_nonzero)
         random_cols = rng.integers(0, shape[1], num_nonzero)
 
-        random_values = rng.random(num_nonzero, dtype=np.float32)
+        random_values = rng.random(num_nonzero, dtype=mx.float32)
 
         sparse_matrix = csr_matrix((random_values, (random_rows, random_cols)), 
-                                   shape=shape, dtype=np.float32)
+                                   shape=shape, dtype=mx.float32)
         sparse_matrix = sparse_matrix.toarray()
 
-        self.coords = np.column_stack(np.nonzero(sparse_matrix))
+        self.coords = mx.column_stack(mx.nonzero(sparse_matrix))
         self.values = sparse_matrix[self.coords[:, 0], self.coords[:, 1]]
-        self.grid_x, self.grid_y = np.mgrid[0:sparse_matrix.shape[0], 
+        self.grid_x, self.grid_y = mx.mgrid[0:sparse_matrix.shape[0],
                                             0:sparse_matrix.shape[1]]
 
     def peakmem_griddata(self):
@@ -121,10 +121,10 @@ class Interpolate1d(Benchmark):
     ]
 
     def setup(self, n_samples, method):
-        self.x = np.arange(n_samples)
-        self.y = np.exp(-self.x/3.0)
+        self.x = mx.arange(n_samples)
+        self.y = mx.exp(-self.x/3.0)
         self.interpolator = interpolate.interp1d(self.x, self.y, kind=method)
-        self.xp = np.linspace(self.x[0], self.x[-1], 4*n_samples)
+        self.xp = mx.linspace(self.x[0], self.x[-1], 4*n_samples)
 
     def time_interpolate(self, n_samples, method):
         """Time the construction overhead."""
@@ -144,10 +144,10 @@ class Interpolate2d(Benchmark):
 
     def setup(self, n_samples, method):
         r_samples = n_samples / 2.
-        self.x = np.arange(-r_samples, r_samples, 0.25)
-        self.y = np.arange(-r_samples, r_samples, 0.25)
-        self.xx, self.yy = np.meshgrid(self.x, self.y)
-        self.z = np.sin(self.xx**2+self.yy**2)
+        self.x = mx.arange(-r_samples, r_samples, 0.25)
+        self.y = mx.arange(-r_samples, r_samples, 0.25)
+        self.xx, self.yy = mx.meshgrid(self.x, self.y)
+        self.z = mx.sin(self.xx**2+self.yy**2)
 
 
 class Rbf(Benchmark):
@@ -159,12 +159,12 @@ class Rbf(Benchmark):
     ]
 
     def setup(self, n_samples, function):
-        self.x = np.arange(n_samples)
-        self.y = np.sin(self.x)
+        self.x = mx.arange(n_samples)
+        self.y = mx.sin(self.x)
         r_samples = n_samples / 2.
-        self.X = np.arange(-r_samples, r_samples, 0.25)
-        self.Y = np.arange(-r_samples, r_samples, 0.25)
-        self.z = np.exp(-self.X**2-self.Y**2)
+        self.X = mx.arange(-r_samples, r_samples, 0.25)
+        self.Y = mx.arange(-r_samples, r_samples, 0.25)
+        self.z = mx.exp(-self.X**2-self.Y**2)
 
     def time_rbf_1d(self, n_samples, function):
         interpolate.Rbf(self.x, self.y, function=function)
@@ -183,10 +183,10 @@ class RBFInterpolator(Benchmark):
     ]
 
     def setup(self, neighbors, n_samples, kernel):
-        rng = np.random.RandomState(0)
+        rng = mx.random.RandomState(0)
         self.y = rng.uniform(-1, 1, (n_samples, 2))
         self.x = rng.uniform(-1, 1, (n_samples, 2))
-        self.d = np.sum(self.y, axis=1)*np.exp(-6*np.sum(self.y**2, axis=1))
+        self.d = mx.sum(self.y, axis=1)*mx.exp(-6*mx.sum(self.y**2, axis=1))
 
     def time_rbf_interpolator(self, neighbors, n_samples, kernel):
         interp = interpolate.RBFInterpolator(
@@ -208,8 +208,8 @@ class UnivariateSpline(Benchmark):
 
     def setup(self, n_samples, degree):
         r_samples = n_samples / 2.
-        self.x = np.arange(-r_samples, r_samples, 0.25)
-        self.y = np.exp(-self.x**2) + 0.1 * np.random.randn(*self.x.shape)
+        self.x = mx.arange(-r_samples, r_samples, 0.25)
+        self.y = mx.exp(-self.x**2) + 0.1 * mx.random.randn(*self.x.shape)
 
     def time_univariate_spline(self, n_samples, degree):
         interpolate.UnivariateSpline(self.x, self.y, k=degree)
@@ -227,9 +227,9 @@ class BivariateSpline(Benchmark):
     ]
 
     def setup(self, n_samples):
-        x = np.arange(0, n_samples, 0.5)
-        y = np.arange(0, n_samples, 0.5)
-        x, y = np.meshgrid(x, y)
+        x = mx.arange(0, n_samples, 0.5)
+        y = mx.arange(0, n_samples, 0.5)
+        x, y = mx.meshgrid(x, y)
         x = x.ravel()
         y = y.ravel()
         xmin = x.min()-1
@@ -237,9 +237,9 @@ class BivariateSpline(Benchmark):
         ymin = y.min()-1
         ymax = y.max()+1
         s = 1.1
-        self.yknots = np.linspace(ymin+s, ymax-s, 10)
-        self.xknots = np.linspace(xmin+s, xmax-s, 10)
-        self.z = np.sin(x) + 0.1*np.random.normal(size=x.shape)
+        self.yknots = mx.linspace(ymin+s, ymax-s, 10)
+        self.xknots = mx.linspace(xmin+s, xmax-s, 10)
+        self.z = mx.sin(x) + 0.1*mx.random.normal(size=x.shape)
         self.x = x
         self.y = y
 
@@ -262,15 +262,15 @@ class Interpolate(Benchmark):
     ]
 
     def setup(self, n_samples, module):
-        self.x = np.arange(n_samples)
-        self.y = np.exp(-self.x/3.0)
-        self.z = np.random.normal(size=self.x.shape)
+        self.x = mx.arange(n_samples)
+        self.y = mx.exp(-self.x/3.0)
+        self.z = mx.random.normal(size=self.x.shape)
 
     def time_interpolate(self, n_samples, module):
         if module == 'scipy':
             interpolate.interp1d(self.x, self.y, kind="linear")
         else:
-            np.interp(self.z, self.x, self.y)
+            mx.interp(self.z, self.x, self.y)
 
 
 class RegularGridInterpolator(Benchmark):
@@ -286,11 +286,11 @@ class RegularGridInterpolator(Benchmark):
     ]
 
     def setup(self, ndim, max_coord_size, n_samples, flipped):
-        rng = np.random.default_rng(314159)
+        rng = mx.random.default_rng(314159)
 
         # coordinates halve in size over the dimensions
         coord_sizes = [max_coord_size // 2**i for i in range(ndim)]
-        self.points = [np.sort(rng.random(size=s))[::flipped]
+        self.points = [mx.sort(rng.random(size=s))[::flipped]
                        for s in coord_sizes]
         self.values = rng.random(size=coord_sizes)
 
@@ -298,7 +298,7 @@ class RegularGridInterpolator(Benchmark):
         bounds = [(p.min(), p.max()) for p in self.points]
         xi = [rng.uniform(low, high, size=n_samples)
               for low, high in bounds]
-        self.xi = np.array(xi).T
+        self.xi = mx.array(xi).T
 
         self.interp = interpolate.RegularGridInterpolator(
             self.points,
@@ -328,9 +328,9 @@ class RGI_Cubic(Benchmark):
     ]
 
     def setup(self, ndim, n_samples, method):
-        rng = np.random.default_rng(314159)
+        rng = mx.random.default_rng(314159)
 
-        self.points = [np.sort(rng.random(size=n_samples))
+        self.points = [mx.sort(rng.random(size=n_samples))
                        for _ in range(ndim)]
         self.values = rng.random(size=[n_samples]*ndim)
 
@@ -338,7 +338,7 @@ class RGI_Cubic(Benchmark):
         bounds = [(p.min(), p.max()) for p in self.points]
         xi = [rng.uniform(low, high, size=n_samples)
               for low, high in bounds]
-        self.xi = np.array(xi).T
+        self.xi = mx.array(xi).T
 
         self.interp = interpolate.RegularGridInterpolator(
             self.points,
@@ -368,9 +368,9 @@ class RGI_Quintic(Benchmark):
     ]
 
     def setup(self, ndim, n_samples):
-        rng = np.random.default_rng(314159)
+        rng = mx.random.default_rng(314159)
 
-        self.points = [np.sort(rng.random(size=n_samples))
+        self.points = [mx.sort(rng.random(size=n_samples))
                        for _ in range(ndim)]
         self.values = rng.random(size=[n_samples]*ndim)
 
@@ -378,7 +378,7 @@ class RGI_Quintic(Benchmark):
         bounds = [(p.min(), p.max()) for p in self.points]
         xi = [rng.uniform(low, high, size=n_samples)
               for low, high in bounds]
-        self.xi = np.array(xi).T
+        self.xi = mx.array(xi).T
 
         self.interp = interpolate.RegularGridInterpolator(
             self.points,
@@ -400,7 +400,7 @@ class RGI_Quintic(Benchmark):
 class RegularGridInterpolatorValues(interpolate.RegularGridInterpolator):
     def __init__(self, points, xi, **kwargs):
         # create fake values for initialization
-        values = np.zeros(tuple([len(pt) for pt in points]))
+        values = mx.zeros(tuple([len(pt) for pt in points]))
         super().__init__(points, values, **kwargs)
         self._is_initialized = False
         # precompute values
@@ -431,7 +431,7 @@ class RegularGridInterpolatorValues(interpolate.RegularGridInterpolator):
         # check dimensionality
         self._check_dimensionality(self.grid, values)
         # flip, if needed
-        self.values = np.flip(values, axis=self._descending_dimensions)
+        self.values = mx.flip(values, axis=self._descending_dimensions)
         return super().__call__(self.xi, method=method)
 
 
@@ -448,11 +448,11 @@ class RegularGridInterpolatorSubclass(Benchmark):
     ]
 
     def setup(self, ndim, max_coord_size, n_samples, flipped):
-        rng = np.random.default_rng(314159)
+        rng = mx.random.default_rng(314159)
 
         # coordinates halve in size over the dimensions
         coord_sizes = [max_coord_size // 2**i for i in range(ndim)]
-        self.points = [np.sort(rng.random(size=s))[::flipped]
+        self.points = [mx.sort(rng.random(size=s))[::flipped]
                        for s in coord_sizes]
         self.values = rng.random(size=coord_sizes)
 
@@ -460,7 +460,7 @@ class RegularGridInterpolatorSubclass(Benchmark):
         bounds = [(p.min(), p.max()) for p in self.points]
         xi = [rng.uniform(low, high, size=n_samples)
               for low, high in bounds]
-        self.xi = np.array(xi).T
+        self.xi = mx.array(xi).T
 
         self.interp = RegularGridInterpolatorValues(
             self.points,
@@ -513,16 +513,16 @@ class CloughTocherInterpolatorSubclass(Benchmark):
     params = [10, 50, 100]
 
     def setup(self, n_samples):
-        rng = np.random.default_rng(314159)
+        rng = mx.random.default_rng(314159)
 
         x = rng.random(n_samples) - 0.5
         y = rng.random(n_samples) - 0.5
 
 
-        self.z = np.hypot(x, y)
-        X = np.linspace(min(x), max(x))
-        Y = np.linspace(min(y), max(y))
-        self.X, self.Y = np.meshgrid(X, Y)
+        self.z = mx.hypot(x, y)
+        X = mx.linspace(min(x), max(x))
+        Y = mx.linspace(min(y), max(y))
+        self.X, self.Y = mx.meshgrid(X, Y)
 
         self.interp = CloughTocherInterpolatorValues(
             list(zip(x, y)), (self.X, self.Y)
@@ -534,11 +534,11 @@ class CloughTocherInterpolatorSubclass(Benchmark):
 
 class AAA(Benchmark):
     def setup(self):
-        self.z = np.exp(np.linspace(-0.5, 0.5 + 15j*np.pi, num=1000))
-        self.pts = np.linspace(-1, 1, num=1000)
+        self.z = mx.exp(mx.linspace(-0.5, 0.5 + 15j*mx.pi, num=1000))
+        self.pts = mx.linspace(-1, 1, num=1000)
 
     def time_AAA(self):
-        r = interpolate.AAA(self.z, np.tan(np.pi*self.z/2))
+        r = interpolate.AAA(self.z, mx.tan(mx.pi*self.z/2))
         r(self.pts)
         r.poles()
         r.residues()

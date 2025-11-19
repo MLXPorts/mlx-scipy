@@ -7,7 +7,7 @@ __all__ = ['lil_array', 'lil_matrix', 'isspmatrix_lil']
 
 from bisect import bisect_left
 
-import numpy as np
+import mlx.core as mx
 
 from ._matrix import spmatrix
 from ._base import _spbase, sparray, issparse
@@ -45,8 +45,8 @@ class _lil_base(_spbase, IndexMixin):
                     raise ValueError('invalid use of shape parameter')
                 M, N = arg1
                 self._shape = check_shape((M, N))
-                self.rows = np.empty((M,), dtype=object)
-                self.data = np.empty((M,), dtype=object)
+                self.rows = mx.empty((M,), dtype=object)
+                self.data = mx.empty((M,), dtype=object)
                 for i in range(M):
                     self.rows[i] = []
                     self.data[i] = []
@@ -98,12 +98,12 @@ class _lil_base(_spbase, IndexMixin):
         if axis < 0:
             axis += 2
         if axis == 0:
-            out = np.zeros(self.shape[1], dtype=np.intp)
+            out = mx.zeros(self.shape[1], dtype=mx.intp)
             for row in self.rows:
                 out[row] += 1
             return out
         elif axis == 1:
-            return np.array([len(rowvals) for rowvals in self.data], dtype=np.intp)
+            return mx.array([len(rowvals) for rowvals in self.data], dtype=mx.intp)
         else:
             raise ValueError('axis out of bounds')
 
@@ -111,19 +111,19 @@ class _lil_base(_spbase, IndexMixin):
 
     def count_nonzero(self, axis=None):
         if axis is None:
-            return sum(np.count_nonzero(rowvals) for rowvals in self.data)
+            return sum(mx.count_nonzero(rowvals) for rowvals in self.data)
 
         if axis < 0:
             axis += 2
         if axis == 0:
-            out = np.zeros(self.shape[1], dtype=np.intp)
+            out = mx.zeros(self.shape[1], dtype=mx.intp)
             for row, data in zip(self.rows, self.data):
                 mask = [c for c, d in zip(row, data) if d != 0]
                 out[mask] += 1
             return out
         elif axis == 1:
-            return np.array(
-                [np.count_nonzero(rowvals) for rowvals in self.data], dtype=np.intp,
+            return mx.array(
+                [mx.count_nonzero(rowvals) for rowvals in self.data], dtype=mx.intp,
             )
         else:
             raise ValueError('axis out of bounds')
@@ -187,11 +187,11 @@ class _lil_base(_spbase, IndexMixin):
         return self._get_row_ranges(row, col)
 
     def _get_intXarray(self, row, col):
-        row = np.array(row, dtype=col.dtype, ndmin=1)
+        row = mx.array(row, dtype=col.dtype, ndmin=1)
         return self._get_columnXarray(row, col)
 
     def _get_sliceXarray(self, row, col):
-        row = np.arange(*row.indices(self.shape[0]))
+        row = mx.arange(*row.indices(self.shape[0]))
         return self._get_columnXarray(row, col)
 
     def _get_columnXarray(self, row, col):
@@ -201,7 +201,7 @@ class _lil_base(_spbase, IndexMixin):
 
     def _get_arrayXarray(self, row, col):
         # inner indexing
-        i, j = map(np.atleast_2d, _prepare_index_for_memoryview(row, col))
+        i, j = map(mx.atleast_2d, _prepare_index_for_memoryview(row, col))
         new = self._lil_container(i.shape, dtype=self.dtype)
         _csparsetools.lil_fancy_get(self.shape[0], self.shape[1],
                                     self.rows, self.data,
@@ -243,14 +243,14 @@ class _lil_base(_spbase, IndexMixin):
                                  self.data, row, col, x)
 
     def _set_arrayXarray(self, row, col, x):
-        i, j, x = map(np.atleast_2d, _prepare_index_for_memoryview(row, col, x))
+        i, j, x = map(mx.atleast_2d, _prepare_index_for_memoryview(row, col, x))
         _csparsetools.lil_fancy_set(self.shape[0], self.shape[1],
                                     self.rows, self.data,
                                     i, j, x)
 
     def _set_arrayXarray_sparse(self, row, col, x):
         # Fall back to densifying x
-        x = np.asarray(x.toarray(), dtype=self.dtype)
+        x = mx.array(x.toarray(), dtype=self.dtype)
         x, _ = _broadcast_arrays(x, row)
         self._set_arrayXarray(row, col, x)
 
@@ -261,7 +261,7 @@ class _lil_base(_spbase, IndexMixin):
             if isinstance(row, INT_TYPES) and isinstance(col, INT_TYPES):
                 if issparse(x):
                     x = x.toarray()
-                if isinstance(x, np.ndarray):
+                if isinstance(x, mx.array):
                     x = x.item()
                 x = self.dtype.type(x)
                 if x.size > 1:
@@ -295,7 +295,7 @@ class _lil_base(_spbase, IndexMixin):
     def __truediv__(self, other):           # self / other
         if isscalarlike(other):
             new = self.copy()
-            new.dtype = np.result_type(self, other)
+            new.dtype = mx.result_type(self, other)
             # Divide every element by this scalar
             for j, rowvals in enumerate(new.data):
                 new.data[j] = [val/other for val in rowvals]
@@ -331,13 +331,13 @@ class _lil_base(_spbase, IndexMixin):
             ncols = self.shape[1]
             for i, row in enumerate(self.rows):
                 for col, j in enumerate(row):
-                    new_r, new_c = np.unravel_index(i * ncols + j, shape)
+                    new_r, new_c = mx.unravel_index(i * ncols + j, shape)
                     new[new_r, new_c] = self[i, j]
         elif order == 'F':
             nrows = self.shape[0]
             for i, row in enumerate(self.rows):
                 for col, j in enumerate(row):
-                    new_r, new_c = np.unravel_index(i + j * nrows, shape, order)
+                    new_r, new_c = mx.unravel_index(i + j * nrows, shape, order)
                     new[new_r, new_c] = self[i, j]
         else:
             raise ValueError("'order' must be 'C' or 'F'")
@@ -355,8 +355,8 @@ class _lil_base(_spbase, IndexMixin):
             self.rows = self.rows[:new_M]
             self.data = self.data[:new_M]
         elif new_M > M:
-            self.rows = np.resize(self.rows, new_M)
-            self.data = np.resize(self.data, new_M)
+            self.rows = mx.resize(self.rows, new_M)
+            self.data = mx.resize(self.data, new_M)
             for i in range(M, new_M):
                 self.rows[i] = []
                 self.data[i] = []
@@ -399,26 +399,26 @@ class _lil_base(_spbase, IndexMixin):
             return self._csr_container((M, N), dtype=self.dtype)
 
         # construct indptr array
-        if M*N <= np.iinfo(np.int32).max:
+        if M*N <= mx.iinfo(mx.int32).max:
             # fast path: it is known that 64-bit indexing will not be needed.
-            idx_dtype = np.int32
-            indptr = np.empty(M + 1, dtype=idx_dtype)
+            idx_dtype = mx.int32
+            indptr = mx.empty(M + 1, dtype=idx_dtype)
             indptr[0] = 0
             _csparsetools.lil_get_lengths(self.rows, indptr[1:])
-            np.cumsum(indptr, out=indptr)
+            mx.cumsum(indptr, out=indptr)
             nnz = indptr[-1]
         else:
             idx_dtype = self._get_index_dtype(maxval=N)
-            lengths = np.empty(M, dtype=idx_dtype)
+            lengths = mx.empty(M, dtype=idx_dtype)
             _csparsetools.lil_get_lengths(self.rows, lengths)
-            nnz = lengths.sum(dtype=np.int64)
+            nnz = lengths.sum(dtype=mx.int64)
             idx_dtype = self._get_index_dtype(maxval=max(N, nnz))
-            indptr = np.empty(M + 1, dtype=idx_dtype)
+            indptr = mx.empty(M + 1, dtype=idx_dtype)
             indptr[0] = 0
-            np.cumsum(lengths, dtype=idx_dtype, out=indptr[1:])
+            mx.cumsum(lengths, dtype=idx_dtype, out=indptr[1:])
 
-        indices = np.empty(nnz, dtype=idx_dtype)
-        data = np.empty(nnz, dtype=self.dtype)
+        indices = mx.empty(nnz, dtype=idx_dtype)
+        data = mx.empty(nnz, dtype=self.dtype)
         _csparsetools.lil_flatten_to_array(self.rows, indices)
         _csparsetools.lil_flatten_to_array(self.data, data)
 
@@ -456,10 +456,10 @@ def _prepare_index_for_memoryview(i, j, x=None):
     elif i.dtype < j.dtype:
         i = i.astype(j.dtype)
 
-    if not i.flags.writeable or i.dtype not in (np.int32, np.int64):
-        i = i.astype(np.intp)
-    if not j.flags.writeable or j.dtype not in (np.int32, np.int64):
-        j = j.astype(np.intp)
+    if not i.flags.writeable or i.dtype not in (mx.int32, mx.int64):
+        i = i.astype(mx.intp)
+    if not j.flags.writeable or j.dtype not in (mx.int32, mx.int64):
+        j = j.astype(mx.intp)
 
     if x is not None:
         if not x.flags.writeable:
@@ -507,7 +507,7 @@ class lil_array(_lil_base, sparray):
 
     This can be instantiated in several ways:
         lil_array(D)
-            where D is a 2-D ndarray
+            where D is a 2-D array
 
         lil_array(S)
             with another sparse array or matrix S (equivalent to S.tolil())
@@ -572,7 +572,7 @@ class lil_matrix(spmatrix, _lil_base):
 
     This can be instantiated in several ways:
         lil_matrix(D)
-            where D is a 2-D ndarray
+            where D is a 2-D array
 
         lil_matrix(S)
             with another sparse array or matrix S (equivalent to S.tolil())

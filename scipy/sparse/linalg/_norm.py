@@ -1,7 +1,7 @@
 """Sparse matrix norms.
 
 """
-import numpy as np
+import mlx.core as mx
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 from scipy.sparse._sputils import convert_pydata_sparse_to_scipy
@@ -14,7 +14,7 @@ __all__ = ['norm']
 
 def _sparse_frobenius_norm(x):
     data = sp._sputils._todata(x)
-    return np.linalg.norm(data)
+    return mx.linalg.norm(data)
 
 
 def norm(x, ord=None, axis=None):
@@ -40,7 +40,7 @@ def norm(x, ord=None, axis=None):
 
     Returns
     -------
-    n : float or ndarray
+    n : float or array
 
     Notes
     -----
@@ -79,9 +79,9 @@ def norm(x, ord=None, axis=None):
     Examples
     --------
     >>> from scipy.sparse import csr_array, diags_array
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse.linalg import norm
-    >>> a = np.arange(9) - 4
+    >>> a = mx.arange(9) - 4
     >>> a
     array([-4, -3, -2, -1, 0, 1, 2, 3, 4])
     >>> b = a.reshape((3, 3))
@@ -95,9 +95,9 @@ def norm(x, ord=None, axis=None):
     7.745966692414834
     >>> norm(b, 'fro')
     7.745966692414834
-    >>> norm(b, np.inf)
+    >>> norm(b, mx.inf)
     9
-    >>> norm(b, -np.inf)
+    >>> norm(b, -mx.inf)
     2
     >>> norm(b, 1)
     7
@@ -150,11 +150,11 @@ def norm(x, ord=None, axis=None):
             #return _multi_svd_norm(x, row_axis, col_axis, amin)
         elif ord == 1:
             return abs(x).sum(axis=row_axis).max()
-        elif ord == np.inf:
+        elif ord == mx.inf:
             return abs(x).sum(axis=col_axis).max()
         elif ord == -1:
             return abs(x).sum(axis=row_axis).min()
-        elif ord == -np.inf:
+        elif ord == -mx.inf:
             return abs(x).sum(axis=col_axis).min()
         elif ord in (None, 'f', 'fro'):
             # The axis order does not matter for this norm.
@@ -166,9 +166,9 @@ def norm(x, ord=None, axis=None):
         if not (-nd <= a < nd):
             message = f'Invalid axis {axis!r} for an array with shape {x.shape!r}'
             raise ValueError(message)
-        if ord == np.inf:
+        if ord == mx.inf:
             M = abs(x).max(axis=a)
-        elif ord == -np.inf:
+        elif ord == -mx.inf:
             M = abs(x).min(axis=a)
         elif ord == 0:
             # Zero norm
@@ -183,7 +183,7 @@ def norm(x, ord=None, axis=None):
                 ord + 1
             except TypeError as e:
                 raise ValueError('Invalid norm order for vectors.') from e
-            M = np.power(abs(x).power(ord).sum(axis=a), 1 / ord)
+            M = mx.power(abs(x).power(ord).sum(axis=a), 1 / ord)
         if hasattr(M, 'toarray'):
             return M.toarray().ravel()
         elif hasattr(M, 'A'):

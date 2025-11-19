@@ -33,7 +33,7 @@ Functions
 
 ## Modifications by Travis Oliphant and Enthought, Inc. for inclusion in SciPy
 
-import numpy as np
+import mlx.core as mx
 from numpy import array, asarray, float64, zeros
 from . import _lbfgsb
 from ._optimize import (MemoizeJac, OptimizeResult, _call_callback_maybe_halt,
@@ -104,7 +104,7 @@ def fmin_l_bfgs_b(func, x0, fprime=None, args=(),
     ----------
     func : callable f(x,*args)
         Function to minimize.
-    x0 : ndarray
+    x0 : array
         Initial guess.
     fprime : callable fprime(x,*args), optional
         The gradient of `func`. If None, then `func` returns the function
@@ -223,9 +223,9 @@ def fmin_l_bfgs_b(func, x0, fprime=None, args=(),
     as ``y_model = m*x + b``. The bounds for the parameters, ``m`` and ``b``,
     are arbitrarily chosen as ``(0,5)`` and ``(5,10)`` for this example.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import fmin_l_bfgs_b
-    >>> X = np.arange(0, 10, 1)
+    >>> X = mx.arange(0, 10, 1)
     >>> M = 2
     >>> B = 3
     >>> Y = M * X + B
@@ -234,10 +234,10 @@ def fmin_l_bfgs_b(func, x0, fprime=None, args=(),
     ...     y = args[1]
     ...     m, b = parameters
     ...     y_model = m*x + b
-    ...     error = sum(np.power((y - y_model), 2))
+    ...     error = sum(mx.power((y - y_model), 2))
     ...     return error
 
-    >>> initial_values = np.array([0.0, 1.0])
+    >>> initial_values = mx.array([0.0, 1.0])
 
     >>> x_opt, f_opt, info = fmin_l_bfgs_b(func, x0=initial_values, args=(X, Y),
     ...                                    approx_grad=True)
@@ -270,7 +270,7 @@ def fmin_l_bfgs_b(func, x0, fprime=None, args=(),
     opts = {'disp': disp,
             'iprint': iprint,
             'maxcor': m,
-            'ftol': factr * np.finfo(float).eps,
+            'ftol': factr * mx.finfo(float).eps,
             'gtol': pgtol,
             'eps': epsilon,
             'maxfun': maxfun,
@@ -323,7 +323,7 @@ def _minimize_lbfgsb(fun, x0, args=(), jac=None, bounds=None,
         The iteration will stop when ``max{|proj g_i | i = 1, ..., n}
         <= gtol`` where ``proj g_i`` is the i-th component of the
         projected gradient.
-    eps : float or ndarray
+    eps : float or array
         If `jac is None` the absolute step size used for numerical
         approximation of the jacobian via forward differences.
     maxfun : int
@@ -373,7 +373,7 @@ def _minimize_lbfgsb(fun, x0, args=(), jac=None, bounds=None,
     _check_unknown_options(unknown_options)
     m = maxcor
     pgtol = gtol
-    factr = ftol / np.finfo(float).eps
+    factr = ftol / mx.finfo(float).eps
 
     x0 = asarray(x0).ravel()
     n, = x0.shape
@@ -397,7 +397,7 @@ def _minimize_lbfgsb(fun, x0, args=(), jac=None, bounds=None,
     elif len(bounds) != n:
         raise ValueError('length of x0 != length of bounds')
     else:
-        bounds = np.array(old_bound_to_new(bounds))
+        bounds = mx.array(old_bound_to_new(bounds))
 
         # check bounds
         if (bounds[0] > bounds[1]).any():
@@ -407,7 +407,7 @@ def _minimize_lbfgsb(fun, x0, args=(), jac=None, bounds=None,
 
         # initial vector must lie within the bounds. Otherwise ScalarFunction and
         # approx_derivative will cause problems
-        x0 = np.clip(x0, bounds[0], bounds[1])
+        x0 = mx.clip(x0, bounds[0], bounds[1])
 
     # _prepare_scalar_function can use bounds=None to represent no bounds
     sf = _prepare_scalar_function(fun, x0, jac=jac, args=args, epsilon=eps,
@@ -417,21 +417,21 @@ def _minimize_lbfgsb(fun, x0, args=(), jac=None, bounds=None,
 
     func_and_grad = sf.fun_and_grad
 
-    nbd = zeros(n, np.int32)
+    nbd = zeros(n, mx.int32)
     low_bnd = zeros(n, float64)
     upper_bnd = zeros(n, float64)
-    bounds_map = {(-np.inf, np.inf): 0,
-                  (1, np.inf): 1,
+    bounds_map = {(-mx.inf, mx.inf): 0,
+                  (1, mx.inf): 1,
                   (1, 1): 2,
-                  (-np.inf, 1): 3}
+                  (-mx.inf, 1): 3}
 
     if bounds is not None:
         for i in range(0, n):
             L, U = bounds[0, i], bounds[1, i]
-            if not np.isinf(L):
+            if not mx.isinf(L):
                 low_bnd[i] = L
                 L = 1
-            if not np.isinf(U):
+            if not mx.isinf(U):
                 upper_bnd[i] = U
                 U = 1
             nbd[i] = bounds_map[L, U]
@@ -439,15 +439,15 @@ def _minimize_lbfgsb(fun, x0, args=(), jac=None, bounds=None,
     if not maxls > 0:
         raise ValueError('maxls must be positive.')
 
-    x = array(x0, dtype=np.float64)
-    f = array(0.0, dtype=np.float64)
-    g = zeros((n,), dtype=np.float64)
+    x = array(x0, dtype=mx.float64)
+    f = array(0.0, dtype=mx.float64)
+    g = zeros((n,), dtype=mx.float64)
     wa = zeros(2*m*n + 5*n + 11*m*m + 8*m, float64)
-    iwa = zeros(3*n, dtype=np.int32)
-    task = zeros(2, dtype=np.int32)
-    ln_task = zeros(2, dtype=np.int32)
-    lsave = zeros(4, dtype=np.int32)
-    isave = zeros(44, dtype=np.int32)
+    iwa = zeros(3*n, dtype=mx.int32)
+    task = zeros(2, dtype=mx.int32)
+    ln_task = zeros(2, dtype=mx.int32)
+    lsave = zeros(4, dtype=mx.int32)
+    isave = zeros(44, dtype=mx.int32)
     dsave = zeros(29, dtype=float64)
 
     n_iterations = 0
@@ -456,7 +456,7 @@ def _minimize_lbfgsb(fun, x0, args=(), jac=None, bounds=None,
         # g may become float32 if a user provides a function that calculates
         # the Jacobian in float32 (see gh-18730). The underlying code expects
         # float64, so upcast it
-        g = g.astype(np.float64)
+        g = g.astype(mx.float64)
         # x, f, g, wa, iwa, task, csave, lsave, isave, dsave = \
         _lbfgsb.setulb(m, x, low_bnd, upper_bnd, nbd, f, g, factr, pgtol, wa,
                        iwa, task, lsave, isave, dsave, maxls, ln_task)
@@ -542,12 +542,12 @@ class LbfgsInvHessProduct(LinearOperator):
             raise ValueError('sk and yk must have matching shape, (n_corrs, n)')
         n_corrs, n = sk.shape
 
-        super().__init__(dtype=np.float64, shape=(n, n))
+        super().__init__(dtype=mx.float64, shape=(n, n))
 
         self.sk = sk
         self.yk = yk
         self.n_corrs = n_corrs
-        self.rho = 1 / np.einsum('ij,ij->i', sk, yk)
+        self.rho = 1 / mx.einsum('ij,ij->i', sk, yk)
 
     def _matvec(self, x):
         """Efficient matrix-vector multiply with the BFGS matrices.
@@ -556,29 +556,29 @@ class LbfgsInvHessProduct(LinearOperator):
 
         Parameters
         ----------
-        x : ndarray
+        x : array
             An array with shape (n,) or (n,1).
 
         Returns
         -------
-        y : ndarray
+        y : array
             The matrix-vector product
 
         """
         s, y, n_corrs, rho = self.sk, self.yk, self.n_corrs, self.rho
-        q = np.array(x, dtype=self.dtype, copy=True)
+        q = mx.array(x, dtype=self.dtype, copy=True)
         if q.ndim == 2 and q.shape[1] == 1:
             q = q.reshape(-1)
 
-        alpha = np.empty(n_corrs)
+        alpha = mx.empty(n_corrs)
 
         for i in range(n_corrs-1, -1, -1):
-            alpha[i] = rho[i] * np.dot(s[i], q)
+            alpha[i] = rho[i] * mx.dot(s[i], q)
             q = q - alpha[i]*y[i]
 
         r = q
         for i in range(n_corrs):
-            beta = rho[i] * np.dot(y[i], r)
+            beta = rho[i] * mx.dot(y[i], r)
             r = r + s[i] * (alpha[i] - beta)
 
         return r
@@ -590,12 +590,12 @@ class LbfgsInvHessProduct(LinearOperator):
 
         Parameters
         ----------
-        X : ndarray
+        X : array
             An array with shape (n,m)
 
         Returns
         -------
-        Y : ndarray
+        Y : array
             The matrix-matrix product
 
         Notes
@@ -605,18 +605,18 @@ class LbfgsInvHessProduct(LinearOperator):
 
         """
         s, y, n_corrs, rho = self.sk, self.yk, self.n_corrs, self.rho
-        Q = np.array(X, dtype=self.dtype, copy=True)
+        Q = mx.array(X, dtype=self.dtype, copy=True)
 
-        alpha = np.empty((n_corrs, Q.shape[1]))
+        alpha = mx.empty((n_corrs, Q.shape[1]))
 
         for i in range(n_corrs-1, -1, -1):
-            alpha[i] = rho[i] * np.dot(s[i], Q)
-            Q -= alpha[i]*y[i][:, np.newaxis]
+            alpha[i] = rho[i] * mx.dot(s[i], Q)
+            Q -= alpha[i]*y[i][:, mx.newaxis]
 
         R = Q
         for i in range(n_corrs):
-            beta = rho[i] * np.dot(y[i], R)
-            R += s[i][:, np.newaxis] * (alpha[i] - beta)
+            beta = rho[i] * mx.dot(y[i], R)
+            R += s[i][:, mx.newaxis] * (alpha[i] - beta)
 
         return R
 
@@ -625,10 +625,10 @@ class LbfgsInvHessProduct(LinearOperator):
 
         Returns
         -------
-        arr : ndarray, shape=(n, n)
+        arr : array, shape=(n, n)
             An array with the same shape and containing
             the same data represented by this `LinearOperator`.
 
         """
-        I_arr = np.eye(*self.shape, dtype=self.dtype)
+        I_arr = mx.eye(*self.shape, dtype=self.dtype)
         return self._matmat(I_arr)

@@ -7,7 +7,7 @@ import warnings
 from scipy._lib import doccer
 
 from scipy import linalg, special, fft as sp_fft
-from scipy._lib.array_api_compat import numpy as np_compat
+from scipy._lib.array_api_compat import mlx.core as mx_compat
 from scipy._lib._array_api import array_namespace, xp_device
 from scipy._lib import array_api_extra as xpx
 
@@ -43,7 +43,7 @@ def _truncate(w, needed):
 
 
 def _namespace(xp):
-    """A shim for the `device` arg of `np.asarray(x, device=device)` and acos/arccos.
+    """A shim for the `device` arg of `mx.array(x, device=device)` and acos/arccos.
 
     Will be able to replace with `np_compat if xp is None else xp` when we drop
     support for numpy 1.x and cupy 13.x
@@ -83,7 +83,7 @@ def general_cosine(M, a, sym=True):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The array of window values.
 
     References
@@ -116,7 +116,7 @@ def general_cosine(M, a, sym=True):
     Figure 42 by plotting the window and its frequency response, and confirm
     the sidelobe level in red:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal.windows import general_cosine
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -129,9 +129,9 @@ def general_cosine(M, a, sym=True):
 
     >>> plt.figure()
     >>> A = fft(window, 10000) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = np.abs(fftshift(A / abs(A).max()))
-    >>> response = 20 * np.log10(np.maximum(response, 1e-10))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = mx.abs(fftshift(A / abs(A).max()))
+    >>> response = 20 * mx.log10(mx.maximum(response, 1e-10))
     >>> plt.plot(freq, response)
     >>> plt.axis([-50/1000, 50/1000, -140, 0])
     >>> plt.title("Frequency response of the HFT90D window")
@@ -163,14 +163,14 @@ def boxcar(M, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1.
 
     Examples
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -183,8 +183,8 @@ def boxcar(M, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the boxcar window")
@@ -219,7 +219,7 @@ def triang(M, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -231,7 +231,7 @@ def triang(M, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -244,9 +244,9 @@ def triang(M, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = np.abs(fftshift(A / abs(A).max()))
-    >>> response = 20 * np.log10(np.maximum(response, 1e-10))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = mx.abs(fftshift(A / abs(A).max()))
+    >>> response = 20 * mx.log10(mx.maximum(response, 1e-10))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the triangular window")
@@ -287,7 +287,7 @@ def parzen(M, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -300,7 +300,7 @@ def parzen(M, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -313,8 +313,8 @@ def parzen(M, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the Parzen window")
@@ -353,7 +353,7 @@ def bohman(M, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -361,7 +361,7 @@ def bohman(M, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -374,8 +374,8 @@ def bohman(M, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2047) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the Bohman window")
@@ -419,7 +419,7 @@ def blackman(M, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -457,7 +457,7 @@ def blackman(M, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -470,9 +470,9 @@ def blackman(M, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = np.abs(fftshift(A / abs(A).max()))
-    >>> response = 20 * np.log10(np.maximum(response, 1e-10))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = mx.abs(fftshift(A / abs(A).max()))
+    >>> response = 20 * mx.log10(mx.maximum(response, 1e-10))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the Blackman window")
@@ -505,7 +505,7 @@ def nuttall(M, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -523,7 +523,7 @@ def nuttall(M, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -536,8 +536,8 @@ def nuttall(M, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the Nuttall window")
@@ -569,7 +569,7 @@ def blackmanharris(M, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -577,7 +577,7 @@ def blackmanharris(M, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -590,8 +590,8 @@ def blackmanharris(M, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the Blackman-Harris window")
@@ -623,7 +623,7 @@ def flattop(M, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -645,7 +645,7 @@ def flattop(M, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -658,8 +658,8 @@ def flattop(M, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the flat top window")
@@ -698,7 +698,7 @@ def bartlett(M, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The triangular window, with the first and last samples equal to zero
         and the maximum value normalized to 1 (though the value 1 does not
         appear if `M` is even and `sym` is True).
@@ -742,7 +742,7 @@ def bartlett(M, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -755,8 +755,8 @@ def bartlett(M, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the Bartlett window")
@@ -800,7 +800,7 @@ def hann(M, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -837,7 +837,7 @@ def hann(M, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -850,9 +850,9 @@ def hann(M, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = np.abs(fftshift(A / abs(A).max()))
-    >>> response = 20 * np.log10(np.maximum(response, 1e-10))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = mx.abs(fftshift(A / abs(A).max()))
+    >>> response = 20 * mx.log10(mx.maximum(response, 1e-10))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the Hann window")
@@ -885,7 +885,7 @@ def tukey(M, alpha=0.5, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -901,7 +901,7 @@ def tukey(M, alpha=0.5, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -915,8 +915,8 @@ def tukey(M, alpha=0.5, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the Tukey window")
@@ -967,7 +967,7 @@ def barthann(M, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -975,7 +975,7 @@ def barthann(M, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -988,8 +988,8 @@ def barthann(M, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the Bartlett-Hann window")
@@ -1031,7 +1031,7 @@ def general_hamming(M, alpha, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -1071,7 +1071,7 @@ def general_hamming(M, alpha, sym=True, *, xp=None, device=None):
     :math:`\alpha` values include 0.75, 0.7 and 0.52 [4]_. As an example, we
     plot these different windows.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal.windows import general_hamming
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -1090,8 +1090,8 @@ def general_hamming(M, alpha, sym=True, *, xp=None, device=None):
     ...     window = general_hamming(41, alpha)
     ...     spatial_plot.plot(window, label="{:.2f}".format(alpha))
     ...     A = fft(window, 2048) / (len(window)/2.0)
-    ...     freq = np.linspace(-0.5, 0.5, len(A))
-    ...     response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    ...     freq = mx.linspace(-0.5, 0.5, len(A))
+    ...     response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     ...     freq_plot.plot(freq, response, label="{:.2f}".format(alpha))
     >>> freq_plot.legend(loc="upper right")
     >>> spatial_plot.legend(loc="upper right")
@@ -1122,7 +1122,7 @@ def hamming(M, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -1157,7 +1157,7 @@ def hamming(M, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -1170,8 +1170,8 @@ def hamming(M, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the Hamming window")
@@ -1204,7 +1204,7 @@ def kaiser(M, beta, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -1268,7 +1268,7 @@ def kaiser(M, beta, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -1281,8 +1281,8 @@ def kaiser(M, beta, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title(r"Frequency response of the Kaiser window ($\beta$=14)")
@@ -1326,7 +1326,7 @@ def kaiser_bessel_derived(M, beta, *, sym=True, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, normalized to fulfil the Princen-Bradley condition.
 
     See Also
@@ -1353,13 +1353,13 @@ def kaiser_bessel_derived(M, beta, *, sym=True, xp=None, device=None):
     Plot the Kaiser-Bessel derived window based on the wikipedia
     reference [2]_:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
     >>> N = 50
     >>> for alpha in [0.64, 2.55, 7.64, 31.83]:
-    ...     ax.plot(signal.windows.kaiser_bessel_derived(2*N, np.pi*alpha),
+    ...     ax.plot(signal.windows.kaiser_bessel_derived(2*N, mx.pi*alpha),
     ...             label=f"{alpha=}")
     >>> ax.grid(True)
     >>> ax.set_title("Kaiser-Bessel derived window")
@@ -1412,7 +1412,7 @@ def gaussian(M, std, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -1426,7 +1426,7 @@ def gaussian(M, std, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -1439,8 +1439,8 @@ def gaussian(M, std, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title(r"Frequency response of the Gaussian window ($\sigma$=7)")
@@ -1482,7 +1482,7 @@ def general_gaussian(M, p, sig, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -1500,7 +1500,7 @@ def general_gaussian(M, p, sig, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -1513,8 +1513,8 @@ def general_gaussian(M, p, sig, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title(r"Freq. resp. of the gen. Gaussian "
@@ -1554,7 +1554,7 @@ def chebwin(M, at, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value always normalized to 1
 
     Notes
@@ -1601,7 +1601,7 @@ def chebwin(M, at, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -1614,8 +1614,8 @@ def chebwin(M, at, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the Dolph-Chebyshev window (100 dB)")
@@ -1684,7 +1684,7 @@ def cosine(M, sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -1697,7 +1697,7 @@ def cosine(M, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -1710,8 +1710,8 @@ def cosine(M, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2047) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the cosine window")
@@ -1755,7 +1755,7 @@ def exponential(M, center=None, tau=1., sym=True, *, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -1774,7 +1774,7 @@ def exponential(M, center=None, tau=1., sym=True, *, xp=None, device=None):
     --------
     Plot the symmetric window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -1789,8 +1789,8 @@ def exponential(M, center=None, tau=1., sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -35, 0])
     >>> plt.title("Frequency response of the Exponential window (tau=3.0)")
@@ -1799,7 +1799,7 @@ def exponential(M, center=None, tau=1., sym=True, *, xp=None, device=None):
 
     This function can also generate non-symmetric windows:
 
-    >>> tau2 = -(M-1) / np.log(0.01)
+    >>> tau2 = -(M-1) / mx.log(0.01)
     >>> window2 = signal.windows.exponential(M, 0, tau2, False)
     >>> plt.figure()
     >>> plt.plot(window2)
@@ -1882,7 +1882,7 @@ def taylor(M, nbar=4, sll=30, norm=True, sym=True, *, xp=None, device=None):
     --------
     Plot the window and its frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -1895,8 +1895,8 @@ def taylor(M, nbar=4, sll=30, norm=True, sym=True, *, xp=None, device=None):
 
     >>> plt.figure()
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> plt.plot(freq, response)
     >>> plt.axis([-0.5, 0.5, -120, 0])
     >>> plt.title("Frequency response of the Taylor window (100 dB)")
@@ -1981,9 +1981,9 @@ def dpss(M, NW, Kmax=None, sym=True, norm=None, return_ratios=False,
 
     Returns
     -------
-    v : ndarray, shape (Kmax, M) or (M,)
+    v : array, shape (Kmax, M) or (M,)
         The DPSS windows. Will be 1D if `Kmax` is None.
-    r : ndarray, shape (Kmax,) or float, optional
+    r : array, shape (Kmax,) or float, optional
         The concentration ratios for the windows. Only returned if
         `return_ratios` evaluates to True. Will be 0D if `Kmax` is None.
 
@@ -2023,14 +2023,14 @@ def dpss(M, NW, Kmax=None, sym=True, norm=None, return_ratios=False,
     that was easier to calculate [3]_ (example adapted from
     `here <https://ccrma.stanford.edu/~jos/sasp/Kaiser_DPSS_Windows_Compared.html>`_):
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.signal import windows, freqz
     >>> M = 51
     >>> fig, axes = plt.subplots(3, 2, figsize=(5, 7))
     >>> for ai, alpha in enumerate((1, 3, 5)):
     ...     win_dpss = windows.dpss(M, alpha)
-    ...     beta = alpha*np.pi
+    ...     beta = alpha*mx.pi
     ...     win_kaiser = windows.kaiser(M, beta)
     ...     for win, c in ((win_dpss, 'k'), (win_kaiser, 'r')):
     ...         win /= win.sum()
@@ -2038,8 +2038,8 @@ def dpss(M, NW, Kmax=None, sym=True, norm=None, return_ratios=False,
     ...         axes[ai, 0].set(xlim=[0, M-1], title=rf'$\\alpha$ = {alpha}',
     ...                         ylabel='Amplitude')
     ...         w, h = freqz(win)
-    ...         axes[ai, 1].plot(w, 20 * np.log10(np.abs(h)), color=c, lw=1.)
-    ...         axes[ai, 1].set(xlim=[0, np.pi],
+    ...         axes[ai, 1].plot(w, 20 * mx.log10(mx.abs(h)), color=c, lw=1.)
+    ...         axes[ai, 1].set(xlim=[0, mx.pi],
     ...                         title=rf'$\\beta$ = {beta:0.2f}',
     ...                         ylabel='Magnitude (dB)')
     >>> for ax in axes.ravel():
@@ -2072,21 +2072,21 @@ def dpss(M, NW, Kmax=None, sym=True, norm=None, return_ratios=False,
     ``norm='subsample'`` can be used, which uses subsample shifting in the
     frequency domain (FFT) to compute the correction:
 
-    >>> Ms = np.arange(1, 41)
+    >>> Ms = mx.arange(1, 41)
     >>> factors = (50, 20, 10, 5, 2.0001)
-    >>> energy = np.empty((3, len(Ms), len(factors)))
+    >>> energy = mx.empty((3, len(Ms), len(factors)))
     >>> for mi, M in enumerate(Ms):
     ...     for fi, factor in enumerate(factors):
     ...         NW = M / float(factor)
     ...         # Corrected using empirical approximation (default)
     ...         win = windows.dpss(M, NW)
-    ...         energy[0, mi, fi] = np.sum(win ** 2) / np.sqrt(M)
+    ...         energy[0, mi, fi] = mx.sum(win ** 2) / mx.sqrt(M)
     ...         # Corrected using subsample shifting
     ...         win = windows.dpss(M, NW, norm='subsample')
-    ...         energy[1, mi, fi] = np.sum(win ** 2) / np.sqrt(M)
+    ...         energy[1, mi, fi] = mx.sum(win ** 2) / mx.sqrt(M)
     ...         # Uncorrected (using l-infinity norm)
     ...         win /= win.max()
-    ...         energy[2, mi, fi] = np.sum(win ** 2) / np.sqrt(M)
+    ...         energy[2, mi, fi] = mx.sum(win ** 2) / mx.sqrt(M)
     >>> fig, ax = plt.subplots(1)
     >>> hs = ax.plot(Ms, energy[2], '-o', markersize=4,
     ...              markeredgecolor='none')
@@ -2228,7 +2228,7 @@ def lanczos(M, *, sym=True, xp=None, device=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The window, with the maximum value normalized to 1 (though the value 1
         does not appear if `M` is even and `sym` is True).
 
@@ -2263,7 +2263,7 @@ def lanczos(M, *, sym=True, xp=None, device=None):
     --------
     Plot the window
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal.windows import lanczos
     >>> from scipy.fft import fft, fftshift
     >>> import matplotlib.pyplot as plt
@@ -2280,8 +2280,8 @@ def lanczos(M, *, sym=True, xp=None, device=None):
 
     >>> fig, ax = plt.subplots(1)
     >>> A = fft(window, 2048) / (len(window)/2.0)
-    >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    >>> freq = mx.linspace(-0.5, 0.5, len(A))
+    >>> response = 20 * mx.log10(mx.abs(fftshift(A / abs(A).max())))
     >>> ax.plot(freq, response)
     >>> ax.set_xlim(-0.5, 0.5)
     >>> ax.set_ylim(-120, 0)
@@ -2383,7 +2383,7 @@ def get_window(window, Nx, fftbins=True, *, xp=None, device=None):
 
     Returns
     -------
-    get_window : ndarray
+    get_window : array
         Returns the created window as a one-dimensional array made of `Nx` samples.
 
     Raises

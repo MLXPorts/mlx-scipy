@@ -1,16 +1,16 @@
 from pyprima.cobyla.cobyla import get_lincon
 from pyprima.common.consts import BOUNDMAX
-import numpy as np
+import mlx.core as mx
 
 def test_get_lincon():
-    Aeq = np.array([[1, 2], [3, 4]])
-    Aineq = np.array([[5, 6], [7, 8]])
-    beq = np.array([9, 10])
-    bineq = np.array([11, 12])
-    xl = np.array([0, -1])
-    xu = np.array([13, 14])
+    Aeq = mx.array([[1, 2], [3, 4]])
+    Aineq = mx.array([[5, 6], [7, 8]])
+    beq = mx.array([9, 10])
+    bineq = mx.array([11, 12])
+    xl = mx.array([0, -1])
+    xu = mx.array([13, 14])
     amat, bvec = get_lincon(Aeq, Aineq, beq, bineq, xl, xu)
-    assert np.allclose(amat, np.array([
+    assert mx.allclose(amat, mx.array([
         [-1, 0],
         [0, -1],
         [1, 0],
@@ -22,20 +22,20 @@ def test_get_lincon():
         [5, 6],
         [7, 8],
     ]))
-    assert np.allclose(bvec, np.array([0, 1, 13, 14, -9, -10, 9, 10, 11, 12]))
+    assert mx.allclose(bvec, mx.array([0, 1, 13, 14, -9, -10, 9, 10, 11, 12]))
 
 
 def test_get_lincon_boundmax():
-    Aeq = np.array([[1, 2], [3, 4]])
-    Aineq = np.array([[5, 6], [7, 8]])
-    beq = np.array([9, 10])
-    bineq = np.array([11, 12])
+    Aeq = mx.array([[1, 2], [3, 4]])
+    Aineq = mx.array([[5, 6], [7, 8]])
+    beq = mx.array([9, 10])
+    bineq = mx.array([11, 12])
     # Since the first element is below BOUNDMAX, we should ultimately
     # see only 3 bounds in the resultant matrix/vector.
-    xl = np.array([-BOUNDMAX - 1, -1])
-    xu = np.array([13, 14])
+    xl = mx.array([-BOUNDMAX - 1, -1])
+    xu = mx.array([13, 14])
     amat, bvec = get_lincon(Aeq, Aineq, beq, bineq, xl, xu)
-    assert np.allclose(amat, np.array([
+    assert mx.allclose(amat, mx.array([
         # Note that the first row is missing because the first element of xl is below BOUNDMAX.
         [0, -1],
         [1, 0],
@@ -47,7 +47,7 @@ def test_get_lincon_boundmax():
         [5, 6],
         [7, 8],
     ]))
-    assert np.allclose(bvec, np.array([1, 13, 14, -9, -10, 9, 10, 11, 12]))
+    assert mx.allclose(bvec, mx.array([1, 13, 14, -9, -10, 9, 10, 11, 12]))
 
 
 def test_none():

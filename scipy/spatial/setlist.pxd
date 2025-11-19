@@ -11,8 +11,8 @@ but with integer values.
 """
 
 cimport libc.stdlib
-cimport numpy as np
-import numpy as np
+cimport mlx.core as mx
+import mlx.core as mx
 
 cdef struct setlist_t:
     size_t n
@@ -117,14 +117,14 @@ cdef inline object tocsr(setlist_t *setlist):
     """
     cdef size_t i, j, pos
     cdef size_t total_size
-    cdef np.ndarray[np.npy_int, ndim=1] indptr, data
+    cdef mx.array[mx.npy_int, ndim=1] indptr, data
 
     total_size = 0
     for j in range(setlist.n):
         total_size += setlist.sizes[j]
 
-    indptr = np.empty((setlist.n+1,), dtype=np.intc)
-    data = np.empty((total_size,), dtype=np.intc)
+    indptr = mx.empty((setlist.n+1,), dtype=mx.intc)
+    data = mx.empty((total_size,), dtype=mx.intc)
 
     pos = 0
     for i in range(setlist.n):

@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 from .common import Benchmark, LimitedParamBenchmark, safe_import
 
@@ -27,12 +27,12 @@ class Build(Benchmark):
         self.cls = KDTree if cls_name == 'KDTree' else cKDTree
         m, n, r = mnr
 
-        rng = np.random.default_rng(1234)
-        self.data = np.concatenate((rng.standard_normal((n//2,m)),
-                                    rng.standard_normal((n-n//2,m))+np.ones(m)))
+        rng = mx.random.default_rng(1234)
+        self.data = mx.concatenate((rng.standard_normal((n//2,m)),
+                                    rng.standard_normal((n-n//2,m))+mx.ones(m)))
 
-        self.queries = np.concatenate((rng.standard_normal((r//2,m)),
-                                       rng.standard_normal((r-r//2,m))+np.ones(m)))
+        self.queries = mx.concatenate((rng.standard_normal((r//2,m)),
+                                       rng.standard_normal((r-r//2,m))+mx.ones(m)))
 
     def time_build(self, mnr, cls_name):
         """
@@ -59,10 +59,10 @@ class PresortedDataSetup(Benchmark):
     def setup(self, mnr, balanced, order, radius):
         m, n, r = mnr
 
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         self.data = {
             'random': rng.uniform(size=(n, m)),
-            'sorted': np.repeat(np.arange(n, 0, -1)[:, np.newaxis],
+            'sorted': mx.repeat(mx.arange(n, 0, -1)[:, mx.newaxis],
                                 m,
                                 axis=1) / n
         }
@@ -110,7 +110,7 @@ BOX_SIZES = [None, 0.0, 1.0]
 class Query(LimitedParamBenchmark):
     params = [
         [(3,10000,1000), (8,10000,1000), (16,10000,1000)],
-        [1, 2, np.inf],
+        [1, 2, mx.inf],
         BOX_SIZES, LEAF_SIZES,
     ]
     param_names = ['(m, n, r)', 'p', 'boxsize', 'leafsize']
@@ -120,7 +120,7 @@ class Query(LimitedParamBenchmark):
     def do_setup(self, mnr, p, boxsize, leafsize):
         m, n, r = mnr
 
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
 
         self.data = rng.uniform(size=(n, m))
         self.queries = rng.uniform(size=(r, m))
@@ -147,7 +147,7 @@ class Query(LimitedParamBenchmark):
 class Radius(LimitedParamBenchmark):
     params = [
         [(3,10000,1000)],
-        [1, 2, np.inf],
+        [1, 2, mx.inf],
         [0.2, 0.5],
         BOX_SIZES, LEAF_SIZES,
     ]
@@ -199,7 +199,7 @@ class Neighbors(LimitedParamBenchmark):
         [(3,1000,1000),
          (8,1000,1000),
          (16,1000,1000)],
-        [1, 2, np.inf],
+        [1, 2, mx.inf],
         [0.2, 0.5],
         BOX_SIZES, LEAF_SIZES,
         ['cKDTree', 'cKDTree_weighted'],
@@ -213,11 +213,11 @@ class Neighbors(LimitedParamBenchmark):
 
         m, n1, n2 = mn1n2
 
-        self.data1 = np.random.uniform(size=(n1, m))
-        self.data2 = np.random.uniform(size=(n2, m))
+        self.data1 = mx.random.uniform(size=(n1, m))
+        self.data2 = mx.random.uniform(size=(n2, m))
 
-        self.w1 = np.ones(n1)
-        self.w2 = np.ones(n2)
+        self.w1 = mx.ones(n1)
+        self.w2 = mx.ones(n2)
 
         self.T1 = cKDTree(self.data1, boxsize=boxsize, leafsize=leafsize)
         self.T2 = cKDTree(self.data2, boxsize=boxsize, leafsize=leafsize)
@@ -261,16 +261,16 @@ class CNeighbors(Benchmark):
     def setup(self, mn1n2, Nr):
         m, n1, n2 = mn1n2
 
-        data1 = np.random.uniform(size=(n1, m))
-        data2 = np.random.uniform(size=(n2, m))
-        self.w1 = np.ones(len(data1))
-        self.w2 = np.ones(len(data2))
+        data1 = mx.random.uniform(size=(n1, m))
+        data2 = mx.random.uniform(size=(n2, m))
+        self.w1 = mx.ones(len(data1))
+        self.w2 = mx.ones(len(data2))
 
         self.T1d = cKDTree(data1, leafsize=1)
         self.T2d = cKDTree(data2, leafsize=1)
         self.T1s = cKDTree(data1, leafsize=8)
         self.T2s = cKDTree(data2, leafsize=8)
-        self.r = np.linspace(0, 0.5, Nr)
+        self.r = mx.linspace(0, 0.5, Nr)
 
     def time_count_neighbors_deep(self, mn1n2, Nr):
         """
@@ -289,19 +289,19 @@ class CNeighbors(Benchmark):
 def generate_spherical_points(num_points):
     # generate uniform points on sphere
     # see: https://stackoverflow.com/a/23785326
-    rng = np.random.default_rng(123)
+    rng = mx.random.default_rng(123)
     points = rng.normal(size=(num_points, 3))
-    points /= np.linalg.norm(points, axis=1)[:, np.newaxis]
+    points /= mx.linalg.norm(points, axis=1)[:, mx.newaxis]
     return points
 
 
 def generate_circle_points(num_points):
     # try to avoid full circle degeneracy
     # at 2 * pi
-    angles = np.linspace(0, 1.9999 * np.pi, num_points)
-    points = np.empty(shape=(num_points, 2))
-    points[..., 0] = np.cos(angles)
-    points[..., 1] = np.sin(angles)
+    angles = mx.linspace(0, 1.9999 * mx.pi, num_points)
+    points = mx.empty(shape=(num_points, 2))
+    points[..., 0] = mx.cos(angles)
+    points[..., 1] = mx.sin(angles)
     return points
 
 
@@ -316,7 +316,7 @@ class SphericalVor(Benchmark):
         """Perform spherical Voronoi calculation, but not the sorting of
         vertices in the Voronoi polygons.
         """
-        SphericalVoronoi(self.points, radius=1, center=np.zeros(3))
+        SphericalVoronoi(self.points, radius=1, center=mx.zeros(3))
 
 class SphericalVorSort(Benchmark):
     params = [10, 100, 1000, 5000, 10000]
@@ -325,7 +325,7 @@ class SphericalVorSort(Benchmark):
     def setup(self, num_points):
         self.points = generate_spherical_points(num_points)
         self.sv = SphericalVoronoi(self.points, radius=1,
-                                   center=np.zeros(3))
+                                   center=mx.zeros(3))
 
     def time_spherical_polygon_vertex_sorting(self, num_points):
         """Time the vertex sorting operation in the Spherical Voronoi
@@ -341,10 +341,10 @@ class SphericalVorAreas(Benchmark):
 
     def setup(self, num_points, ndim):
         if ndim == 2:
-            center = np.zeros(2)
+            center = mx.zeros(2)
             self.points = generate_circle_points(num_points)
         else:
-            center = np.zeros(3)
+            center = mx.zeros(3)
             self.points = generate_spherical_points(num_points)
         self.sv = SphericalVoronoi(self.points, radius=1,
                                    center=center)
@@ -365,7 +365,7 @@ class Xdist(Benchmark):
     param_names = ['num_points', 'metric']
 
     def setup(self, num_points, metric):
-        rng = np.random.default_rng(123)
+        rng = mx.random.default_rng(123)
         self.points = rng.random((num_points, 3))
         self.metric = metric
         if metric == 'minkowski-P3':
@@ -398,7 +398,7 @@ class SingleDist(Benchmark):
     param_names = ['metric']
 
     def setup(self, metric):
-        rng = np.random.default_rng(123)
+        rng = mx.random.default_rng(123)
         self.points = rng.random((2, 3))
         self.metric = metric
         if metric == 'minkowski-P3':
@@ -430,7 +430,7 @@ class XdistWeighted(Benchmark):
     param_names = ['num_points', 'metric']
 
     def setup(self, num_points, metric):
-        rng = np.random.default_rng(123)
+        rng = mx.random.default_rng(123)
         self.points = rng.random((num_points, 3))
         self.metric = metric
         if metric == 'minkowski-P3':
@@ -439,7 +439,7 @@ class XdistWeighted(Benchmark):
             self.metric = 'minkowski'
         else:
             self.kwargs = {}
-        self.weights = np.ones(3)
+        self.weights = mx.ones(3)
 
     def time_cdist(self, num_points, metric):
         """Time scipy.spatial.distance.cdist for weighted distance metrics."""
@@ -459,15 +459,15 @@ class SingleDistWeighted(Benchmark):
     param_names = ['metric']
 
     def setup(self, metric):
-        rng = np.random.default_rng(123)
+        rng = mx.random.default_rng(123)
         self.points = rng.random((2, 3))
         self.metric = metric
         if metric == 'minkowski-P3':
             # p=2 is just the euclidean metric, try another p value as well
-            self.kwargs = {'p': 3.0, 'w': np.ones(3)}
+            self.kwargs = {'p': 3.0, 'w': mx.ones(3)}
             self.metric = 'minkowski'
         else:
-            self.kwargs = {'w': np.ones(3)}
+            self.kwargs = {'w': mx.ones(3)}
 
     def time_dist_weighted(self, metric):
         """Time weighted distance metrics individually (without batching
@@ -482,7 +482,7 @@ class ConvexHullBench(Benchmark):
     param_names = ['num_points', 'incremental']
 
     def setup(self, num_points, incremental):
-        rng = np.random.default_rng(123)
+        rng = mx.random.default_rng(123)
         self.points = rng.random((num_points, 3))
 
     def time_convex_hull(self, num_points, incremental):
@@ -497,7 +497,7 @@ class VoronoiBench(Benchmark):
     param_names = ['num_points', 'furthest_site']
 
     def setup(self, num_points, furthest_site):
-        rng = np.random.default_rng(123)
+        rng = mx.random.default_rng(123)
         self.points = rng.random((num_points, 3))
 
     def time_voronoi_calculation(self, num_points, furthest_site):
@@ -509,7 +509,7 @@ class Hausdorff(Benchmark):
     param_names = ['num_points']
 
     def setup(self, num_points):
-        rng = np.random.default_rng(123)
+        rng = mx.random.default_rng(123)
         self.points1 = rng.random((num_points, 3))
         self.points2 = rng.random((num_points, 3))
 
@@ -527,7 +527,7 @@ class GeometricSlerpBench(Benchmark):
         # will suffice for the interpolation bounds:
         self.start = points[0]
         self.end = points[-1]
-        self.t = np.linspace(0, 1, num_points)
+        self.t = mx.linspace(0, 1, num_points)
 
     def time_geometric_slerp_3d(self, num_points):
         # time geometric_slerp() for 3D interpolation
@@ -540,7 +540,7 @@ class RotationBench(Benchmark):
     param_names = ['num_rotations']
 
     def setup(self, num_rotations):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         self.rotations = Rotation.random(num_rotations, random_state=rng)
 
     def time_matrix_conversion(self, num_rotations):

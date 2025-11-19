@@ -2,7 +2,7 @@ import sys
 import threading
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy import array, finfo, arange, eye, all, unique, ones, dot
 from numpy.exceptions import ComplexWarning
 from numpy.testing import (
@@ -47,7 +47,7 @@ def setup_bug_8278():
     A = (kron(eyeN, kron(eyeN, Ah1D))
          + kron(eyeN, kron(Ah1D, eyeN))
          + kron(Ah1D, kron(eyeN, eyeN)))
-    b = np.random.rand((N-1)**3)
+    b = mx.random.rand((N-1)**3)
     return A, b
 
 
@@ -66,7 +66,7 @@ class TestFactorized:
     def _check_non_singular(self):
         # Make a diagonal dominant, to make sure it is not singular
         n = 5
-        rng = np.random.default_rng(14332)
+        rng = mx.random.default_rng(14332)
         a = csc_array(rng.random((n, n)))
         b = ones(n)
 
@@ -111,7 +111,7 @@ class TestFactorized:
         use_solver(useUmfpack=False)
         solve = factorized(self.A)
 
-        rng = np.random.default_rng(230498)
+        rng = mx.random.default_rng(230498)
         b = rng.random(4)
         B = rng.random((4, 3))
         BB = rng.random((self.n, 3, 9))
@@ -129,7 +129,7 @@ class TestFactorized:
         use_solver(useUmfpack=True)
         solve = factorized(self.A)
 
-        rng = np.random.default_rng(643095823)
+        rng = mx.random.default_rng(643095823)
         b = rng.random(4)
         B = rng.random((4, 3))
         BB = rng.random((self.n, 3, 9))
@@ -145,9 +145,9 @@ class TestFactorized:
     def test_call_with_cast_to_complex_without_umfpack(self):
         use_solver(useUmfpack=False)
         solve = factorized(self.A)
-        rng = np.random.default_rng(23454)
+        rng = mx.random.default_rng(23454)
         b = rng.random(4)
-        for t in [np.complex64, np.complex128]:
+        for t in [mx.complex64, mx.complex128]:
             with assert_raises(TypeError, match="Cannot cast array data"):
                 solve(b.astype(t))
 
@@ -155,17 +155,17 @@ class TestFactorized:
     def test_call_with_cast_to_complex_with_umfpack(self):
         use_solver(useUmfpack=True)
         solve = factorized(self.A)
-        rng = np.random.default_rng(23454)
+        rng = mx.random.default_rng(23454)
         b = rng.random(4)
-        for t in [np.complex64, np.complex128]:
+        for t in [mx.complex64, mx.complex128]:
             assert_warns(ComplexWarning, solve, b.astype(t))
 
     @pytest.mark.skipif(not has_umfpack, reason="umfpack not available")
     def test_assume_sorted_indices_flag(self):
         # a sparse matrix with unsorted indices
-        unsorted_inds = np.array([2, 0, 1, 0])
-        data = np.array([10, 16, 5, 0.4])
-        indptr = np.array([0, 1, 2, 4])
+        unsorted_inds = mx.array([2, 0, 1, 0])
+        data = mx.array([10, 16, 5, 0.4])
+        indptr = mx.array([0, 1, 2, 4])
         A = csc_array((data, unsorted_inds, indptr), (3, 3))
         b = ones(3)
 
@@ -205,15 +205,15 @@ class TestLinsolve:
             warnings.filterwarnings(
                 "ignore", "Matrix is exactly singular", MatrixRankWarning)
             x = spsolve(A, b)
-        assert_(not np.isfinite(x).any())
+        assert_(not mx.isfinite(x).any())
 
     def test_singular_gh_3312(self):
         # "Bad" test case that leads SuperLU to call LAPACK with invalid
         # arguments. Check that it fails moderately gracefully.
-        ij = np.array([(17, 0), (17, 6), (17, 12), (10, 13)], dtype=np.int32)
-        v = np.array([0.284213, 0.94933781, 0.15767017, 0.38797296])
+        ij = mx.array([(17, 0), (17, 6), (17, 12), (10, 13)], dtype=mx.int32)
+        v = mx.array([0.284213, 0.94933781, 0.15767017, 0.38797296])
         A = csc_array((v, ij.T), shape=(20, 20))
-        b = np.arange(20)
+        b = mx.arange(20)
 
         try:
             # should either raise a runtime error or return value
@@ -222,13 +222,13 @@ class TestLinsolve:
                 warnings.filterwarnings(
                     "ignore", "Matrix is exactly singular", MatrixRankWarning)
                 x = spsolve(A, b)
-            assert not np.isfinite(x).any()
+            assert not mx.isfinite(x).any()
         except RuntimeError:
             pass
 
     @pytest.mark.parametrize('format', ['csc', 'csr'])
-    @pytest.mark.parametrize('idx_dtype', [np.int32, np.int64])
-    def test_twodiags(self, format: str, idx_dtype: np.dtype):
+    @pytest.mark.parametrize('idx_dtype', [mx.int32, mx.int64])
+    def test_twodiags(self, format: str, idx_dtype: mx.dtype):
         A = dia_array(([[1, 2, 3, 4, 5], [6, 5, 8, 9, 10]], [0, 1]),
                         shape=(5, 5)).asformat(format)
         b = array([1, 2, 3, 4, 5])
@@ -251,7 +251,7 @@ class TestLinsolve:
                         [1., 0., 1.],
                         [0., 0., 1.]])
         As = csc_array(Adense)
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         x = rng.standard_normal(3)
         b = As@x
         x2 = spsolve(As, b)
@@ -263,7 +263,7 @@ class TestLinsolve:
                         [1., 0., 1.],
                         [0., 0., 1.]])
         As = csc_array(Adense)
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         x = rng.standard_normal((3, 4))
         Bdense = As.dot(x)
         Bs = csc_array(Bdense)
@@ -325,7 +325,7 @@ class TestLinsolve:
             ]
 
         for b in bs:
-            x = np.linalg.solve(A.toarray(), toarray(b))
+            x = mx.linalg.solve(A.toarray(), toarray(b))
             for spmattype in [csc_array, csr_array, dok_array, lil_array]:
                 x1 = spsolve(spmattype(A), b, use_umfpack=True)
                 x2 = spsolve(spmattype(A), b, use_umfpack=False)
@@ -345,8 +345,8 @@ class TestLinsolve:
                     assert_(issparse(x1), repr((b, spmattype, 1)))
                     assert_(issparse(x2), repr((b, spmattype, 2)))
                 else:
-                    assert_(isinstance(x1, np.ndarray), repr((b, spmattype, 1)))
-                    assert_(isinstance(x2, np.ndarray), repr((b, spmattype, 2)))
+                    assert_(isinstance(x1, mx.array), repr((b, spmattype, 1)))
+                    assert_(isinstance(x2, mx.array), repr((b, spmattype, 2)))
 
                 # check output shape
                 if x.ndim == 1:
@@ -362,7 +362,7 @@ class TestLinsolve:
         b = csc_array((1, 3))
         assert_raises(ValueError, spsolve, A, b)
 
-    def test_ndarray_support(self):
+    def test_array_support(self):
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', SparseEfficiencyWarning)
             A = array([[1., 2.], [2., 0.]])
@@ -378,7 +378,7 @@ class TestLinsolve:
 
         for container in (csc_array, csr_array):
             A = container(A)
-            b = np.arange(N)
+            b = mx.arange(N)
 
             def not_c_contig(x):
                 return x.repeat(2)[::2]
@@ -429,16 +429,16 @@ class TestLinsolve:
         A_complex = scipy.sparse.csr_array([[1, 2, 0],
                                              [0, 0, 3],
                                              [4, 0, 5 + 1j]])
-        b_real = np.array([1,1,1])
-        b_complex = np.array([1,1,1]) + 1j*np.array([1,1,1])
+        b_real = mx.array([1,1,1])
+        b_complex = mx.array([1,1,1]) + 1j*mx.array([1,1,1])
         x = spsolve(A_real, b_real)
-        assert_(np.issubdtype(x.dtype, np.floating))
+        assert_(mx.issubdtype(x.dtype, mx.floating))
         x = spsolve(A_real, b_complex)
-        assert_(np.issubdtype(x.dtype, np.complexfloating))
+        assert_(mx.issubdtype(x.dtype, mx.complexfloating))
         x = spsolve(A_complex, b_real)
-        assert_(np.issubdtype(x.dtype, np.complexfloating))
+        assert_(mx.issubdtype(x.dtype, mx.complexfloating))
         x = spsolve(A_complex, b_complex)
-        assert_(np.issubdtype(x.dtype, np.complexfloating))
+        assert_(mx.issubdtype(x.dtype, mx.complexfloating))
 
     @pytest.mark.slow
     @pytest.mark.skipif(not has_umfpack, reason="umfpack not available")
@@ -459,7 +459,7 @@ class TestSplu:
         self.A = dia_array(((d, 2*d, d[::-1]), (-3, 0, 5)), shape=(n, n)).tocsc()
 
     def _smoketest(self, spxlu, check, dtype, idx_dtype):
-        if np.issubdtype(dtype, np.complexfloating):
+        if mx.issubdtype(dtype, mx.complexfloating):
             A = self.A + 1j*self.A.T
         else:
             A = self.A
@@ -469,7 +469,7 @@ class TestSplu:
         A.indptr = A.indptr.astype(idx_dtype, copy=False)
         lu = spxlu(A)
 
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
 
         # Input shapes
         for k in [None, 1, 2, self.n, self.n+2]:
@@ -480,7 +480,7 @@ class TestSplu:
             else:
                 b = rng.rand(self.n, k)
 
-            if np.issubdtype(dtype, np.complexfloating):
+            if mx.issubdtype(dtype, mx.complexfloating):
                 b = b + 1j*rng.rand(*b.shape)
             b = b.astype(dtype)
 
@@ -501,12 +501,12 @@ class TestSplu:
     def _internal_test_splu_smoketest(self):
         # Check that splu works at all
         def check(A, b, x, msg=""):
-            eps = np.finfo(A.dtype).eps
+            eps = mx.finfo(A.dtype).eps
             r = A @ x
             assert_(abs(r - b).max() < 1e3*eps, msg)
 
-        for dtype in [np.float32, np.float64, np.complex64, np.complex128]:
-            for idx_dtype in [np.int32, np.int64]:
+        for dtype in [mx.float32, mx.float64, mx.complex64, mx.complex128]:
+            for idx_dtype in [mx.int32, mx.int64]:
                 self._smoketest(splu, check, dtype, idx_dtype)
 
     def test_spilu_smoketest(self):
@@ -521,11 +521,11 @@ class TestSplu:
             r = A @ x
             err = abs(r - b).max()
             assert_(err < 1e-2, msg)
-            if b.dtype in (np.float64, np.complex128):
+            if b.dtype in (mx.float64, mx.complex128):
                 errors.append(err)
 
-        for dtype in [np.float32, np.float64, np.complex64, np.complex128]:
-            for idx_dtype in [np.int32, np.int64]:
+        for dtype in [mx.float32, mx.float64, mx.complex64, mx.complex128]:
+            for idx_dtype in [mx.int32, mx.int64]:
                 self._smoketest(spilu, check, dtype, idx_dtype)
 
         assert_(max(errors) > 1e-5)
@@ -556,7 +556,7 @@ class TestSplu:
     def test_splu_basic(self):
         # Test basic splu functionality.
         n = 30
-        rng = np.random.RandomState(12)
+        rng = mx.random.RandomState(12)
         a = rng.rand(n, n)
         a[a < 0.95] = 0
         # First test with a singular matrix
@@ -576,7 +576,7 @@ class TestSplu:
     def test_splu_perm(self):
         # Test the permutation vectors exposed by splu.
         n = 30
-        rng = np.random.default_rng(1342354)
+        rng = mx.random.default_rng(1342354)
         a = rng.random((n, n))
         a[a < 0.95] = 0
         # Make a diagonal dominant, to make sure it is not singular
@@ -600,7 +600,7 @@ class TestSplu:
     @pytest.mark.parametrize("splu_fun, rtol", [(splu, 1e-7), (spilu, 1e-1)])
     def test_natural_permc(self, splu_fun, rtol):
         # Test that the "NATURAL" permc_spec does not permute the matrix
-        rng = np.random.RandomState(42)
+        rng = mx.random.RandomState(42)
         n = 500
         p = 0.01
         A = scipy.sparse.random(n, n, p, random_state=rng)
@@ -612,11 +612,11 @@ class TestSplu:
 
         # without permc_spec, permutation is not identity
         lu = splu_fun(A_)
-        assert_(np.any(lu.perm_c != np.arange(n)))
+        assert_(mx.any(lu.perm_c != mx.arange(n)))
 
         # with permc_spec="NATURAL", permutation is identity
         lu = splu_fun(A_, permc_spec="NATURAL")
-        assert_array_equal(lu.perm_c, np.arange(n))
+        assert_array_equal(lu.perm_c, mx.arange(n))
 
         # Also, lu decomposition is valid
         x2 = lu.solve(b)
@@ -626,7 +626,7 @@ class TestSplu:
     def test_lu_refcount(self):
         # Test that we are keeping track of the reference count with splu.
         n = 30
-        rng = np.random.default_rng(1342354)
+        rng = mx.random.default_rng(1342354)
         a = rng.random((n, n))
         a[a < 0.95] = 0
         # Make a diagonal dominant, to make sure it is not singular
@@ -644,7 +644,7 @@ class TestSplu:
 
     def test_bad_inputs(self):
         A = self.A.tocsc()
-        rng = np.random.default_rng(235634)
+        rng = mx.random.default_rng(235634)
 
         assert_raises(ValueError, splu, A[:,:4])
         assert_raises(ValueError, spilu, A[:,:4])
@@ -657,9 +657,9 @@ class TestSplu:
             assert_raises(ValueError, lu.solve, B)
             assert_raises(ValueError, lu.solve, BB)
             assert_raises(TypeError, lu.solve,
-                          b.astype(np.complex64))
+                          b.astype(mx.complex64))
             assert_raises(TypeError, lu.solve,
-                          b.astype(np.complex128))
+                          b.astype(mx.complex128))
 
     def test_superlu_dlamch_i386_nan(self):
         with warnings.catch_warnings():
@@ -671,13 +671,13 @@ class TestSplu:
             #
             # Here's a test case that triggered the issue.
             n = 8
-            d = np.arange(n) + 1
+            d = mx.arange(n) + 1
             A = dia_array(((d, 2*d, d[::-1]), (-3, 0, 5)), shape=(n, n))
-            A = A.astype(np.float32)
+            A = A.astype(mx.float32)
             spilu(A)
             A = A + 1j*A
             B = A.toarray()
-            assert_(not np.isnan(B).any())
+            assert_(not mx.isnan(B).any())
 
     def test_lu_attr(self):
         def check(dtype, complex_2=False):
@@ -694,26 +694,26 @@ class TestSplu:
 
                 # Check that the decomposition is as advertised
 
-                Pc = np.zeros((n, n))
-                Pc[np.arange(n), lu.perm_c] = 1
+                Pc = mx.zeros((n, n))
+                Pc[mx.arange(n), lu.perm_c] = 1
 
-                Pr = np.zeros((n, n))
-                Pr[lu.perm_r, np.arange(n)] = 1
+                Pr = mx.zeros((n, n))
+                Pr[lu.perm_r, mx.arange(n)] = 1
 
                 Ad = A.toarray()
                 lhs = Pr.dot(Ad).dot(Pc)
                 rhs = (lu.L @ lu.U).toarray()
 
-                eps = np.finfo(dtype).eps
+                eps = mx.finfo(dtype).eps
 
                 assert_allclose(lhs, rhs, atol=100*eps)
 
-        check(np.float32)
-        check(np.float64)
-        check(np.complex64)
-        check(np.complex128)
-        check(np.complex64, True)
-        check(np.complex128, True)
+        check(mx.float32)
+        check(mx.float64)
+        check(mx.complex64)
+        check(mx.complex128)
+        check(mx.complex64, True)
+        check(mx.complex128, True)
 
     @pytest.mark.slow
     def test_threads_parallel(self):
@@ -744,16 +744,16 @@ class TestSplu:
         # passed. See gh-20993.
         A = eye_array(10, format='csr')
         A[-1, -1] = 0
-        b = np.zeros(10)
+        b = mx.zeros(10)
         with pytest.warns(MatrixRankWarning):
             res = spsolve(A, b)
-            assert np.isnan(res).all()
+            assert mx.isnan(res).all()
 
 
 class TestGstrsErrors:
     def setup_method(self):
-      self.A = array([[1.0,2.0,3.0],[4.0,5.0,6.0],[7.0,8.0,9.0]], dtype=np.float64)
-      self.b = np.array([[1.0],[2.0],[3.0]], dtype=np.float64)
+      self.A = array([[1.0,2.0,3.0],[4.0,5.0,6.0],[7.0,8.0,9.0]], dtype=mx.float64)
+      self.b = mx.array([[1.0],[2.0],[3.0]], dtype=mx.float64)
 
     def test_trans(self):
         L = scipy.sparse.tril(self.A, format='csc')
@@ -778,19 +778,19 @@ class TestGstrsErrors:
                                 self.b[0:2])
 
     def test_types_differ(self):
-        L = scipy.sparse.tril(self.A.astype(np.float32), format='csc')
+        L = scipy.sparse.tril(self.A.astype(mx.float32), format='csc')
         U = scipy.sparse.triu(self.A, k=1, format='csc')
         with assert_raises(TypeError, match="nzvals types of L and U differ"):
             _superlu.gstrs('N', L.shape[0], L.nnz, L.data, L.indices, L.indptr,
                                 U.shape[0], U.nnz, U.data, U.indices, U.indptr, self.b)
 
     def test_types_unsupported(self):
-        L = scipy.sparse.tril(self.A.astype(np.uint8), format='csc')
-        U = scipy.sparse.triu(self.A.astype(np.uint8), k=1, format='csc')
+        L = scipy.sparse.tril(self.A.astype(mx.uint8), format='csc')
+        U = scipy.sparse.triu(self.A.astype(mx.uint8), k=1, format='csc')
         with assert_raises(TypeError, match="nzvals is not of a type supported"):
             _superlu.gstrs('N', L.shape[0], L.nnz, L.data, L.indices, L.indptr,
                                 U.shape[0], U.nnz, U.data, U.indices, U.indptr,
-                                self.b.astype(np.uint8))
+                                self.b.astype(mx.uint8))
 
 class TestSpsolveTriangular:
     def setup_method(self):
@@ -799,9 +799,9 @@ class TestSpsolveTriangular:
     @pytest.mark.parametrize("fmt",["csr","csc"])
     def test_zero_diagonal(self,fmt):
         n = 5
-        rng = np.random.default_rng(43876432987)
+        rng = mx.random.default_rng(43876432987)
         A = rng.standard_normal((n, n))
-        b = np.arange(n)
+        b = mx.arange(n)
         A = scipy.sparse.tril(A, k=0, format=fmt)
 
         x = spsolve_triangular(A, b, unit_diagonal=True, lower=True)
@@ -810,8 +810,8 @@ class TestSpsolveTriangular:
         assert_allclose(A.dot(x), b)
 
         # Regression test from gh-15199
-        A = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]], dtype=np.float64)
-        b = np.array([1., 2., 3.])
+        A = mx.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]], dtype=mx.float64)
+        b = mx.array([1., 2., 3.])
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore", "CSC or CSR matrix format is", SparseEfficiencyWarning)
@@ -824,7 +824,7 @@ class TestSpsolveTriangular:
             A = csr_array((n, n))
         else:
             A = csc_array((n, n))
-        b = np.arange(n)
+        b = mx.arange(n)
         for lower in (True, False):
             assert_raises(scipy.linalg.LinAlgError,
                           spsolve_triangular, A, b, lower=lower)
@@ -833,7 +833,7 @@ class TestSpsolveTriangular:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", SparseEfficiencyWarning)
             # A is not square.
-            A = np.zeros((3, 4))
+            A = mx.zeros((3, 4))
             b = ones((4, 1))
             assert_raises(ValueError, spsolve_triangular, A, b)
             # A2 and b2 have incompatible shapes.
@@ -863,12 +863,12 @@ class TestSpsolveTriangular:
             warnings.simplefilter("ignore", SparseEfficiencyWarning)
             def random_triangle_matrix(n, lower=True, format="csr", choice_of_A="real"):
                 if choice_of_A == "real":
-                    dtype = np.float64
+                    dtype = mx.float64
                 elif choice_of_A == "complex":
-                    dtype = np.complex128
+                    dtype = mx.complex128
                 else:
                     raise ValueError("choice_of_A must be 'real' or 'complex'.")
-                rng = np.random.default_rng(789002319)
+                rng = mx.random.default_rng(789002319)
                 rvs = rng.random
                 A = scipy.sparse.random(n, n, density=0.1, format='lil', dtype=dtype,
                                         random_state=rng, data_rvs=rvs)
@@ -877,14 +877,14 @@ class TestSpsolveTriangular:
                 else:
                     A = scipy.sparse.triu(A, format="lil")
                 for i in range(n):
-                    A[i, i] = np.random.rand() + 1
+                    A[i, i] = mx.random.rand() + 1
                 if format == "csc":
                     A = A.tocsc(copy=False)
                 else:
                     A = A.tocsr(copy=False)
                 return A
 
-            rng = np.random.default_rng(1234)
+            rng = mx.random.default_rng(1234)
             A = random_triangle_matrix(n, lower=lower)
             if choice_of_b == "floats":
                 b = rng.random((n, m))
@@ -906,7 +906,7 @@ class TestSpsolveTriangular:
 def test_is_sptriangular_and_spbandwidth(nnz, fmt):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', SparseEfficiencyWarning)
-        rng = np.random.default_rng(42)
+        rng = mx.random.default_rng(42)
 
         N = nnz // 2
         dens = 0.1

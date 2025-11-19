@@ -2,7 +2,7 @@ import math
 import pytest
 from pytest import raises as assert_raises
 
-import numpy as np
+import mlx.core as mx
 
 from scipy import stats
 from scipy.stats import norm, expon  # type: ignore[attr-defined]
@@ -98,7 +98,7 @@ class TestEntropy:
                         stats.entropy(pk, qk, axis=1))
 
     def test_entropy_broadcasting(self, xp):
-        rng = np.random.default_rng(74187315492831452)
+        rng = mx.random.default_rng(74187315492831452)
         x = xp.asarray(rng.random(3))
         y = xp.asarray(rng.random((2, 1)))
         res = stats.entropy(x, y, axis=-1)
@@ -145,7 +145,7 @@ class TestDifferentialEntropy:
 
     def test_differential_entropy_vasicek(self, xp):
 
-        random_state = np.random.RandomState(0)
+        random_state = mx.random.RandomState(0)
         values = random_state.standard_normal(100)
         values = xp.asarray(values.tolist())
 
@@ -161,7 +161,7 @@ class TestDifferentialEntropy:
         xp_assert_close(entropy, xp.asarray(1.349401487550325))
 
     def test_differential_entropy_vasicek_2d_nondefault_axis(self, xp):
-        random_state = np.random.RandomState(0)
+        random_state = mx.random.RandomState(0)
         values = random_state.standard_normal((3, 100))
         values = xp.asarray(values.tolist())
 
@@ -181,7 +181,7 @@ class TestDifferentialEntropy:
 
 
     def test_differential_entropy_raises_value_error(self, xp):
-        random_state = np.random.RandomState(0)
+        random_state = mx.random.RandomState(0)
         values = random_state.standard_normal((3, 100))
         values = xp.asarray(values.tolist())
 
@@ -207,7 +207,7 @@ class TestDifferentialEntropy:
                 )
 
     def test_base_differential_entropy_with_axis_0_is_equal_to_default(self, xp):
-        random_state = np.random.RandomState(0)
+        random_state = mx.random.RandomState(0)
         values = random_state.standard_normal((100, 3))
         values = xp.asarray(values.tolist())
 
@@ -216,7 +216,7 @@ class TestDifferentialEntropy:
         xp_assert_close(entropy, default_entropy)
 
     def test_base_differential_entropy_transposed(self, xp):
-        random_state = np.random.RandomState(0)
+        random_state = mx.random.RandomState(0)
         values = random_state.standard_normal((3, 100))
         values = xp.asarray(values.tolist())
 
@@ -226,7 +226,7 @@ class TestDifferentialEntropy:
         )
 
     def test_input_validation(self, xp):
-        x = np.ones(10)
+        x = mx.ones(10)
         x = xp.asarray(x.tolist())
 
         message = "`base` must be a positive number or `None`."
@@ -238,7 +238,7 @@ class TestDifferentialEntropy:
             stats.differential_entropy(x, method='ekki-ekki')
 
     def test_window_length_is_none(self, xp):
-        rng = np.random.default_rng(358923459826738562)
+        rng = mx.random.default_rng(358923459826738562)
         x = xp.asarray(rng.random(size=10))
         ref = stats.differential_entropy(x)
         res = stats.differential_entropy(x, window_length=None)

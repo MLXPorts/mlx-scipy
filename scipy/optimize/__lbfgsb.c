@@ -246,7 +246,7 @@ static void dcstep (
     double stpmin, double stpmax
 );
 
-static double epsmach = 2.220446049250313e-016;  /* np.finfo(np.float64).eps  */
+static double epsmach = 2.220446049250313e-016;  /* mx.finfo(mx.float64).eps  */
 
 
 void

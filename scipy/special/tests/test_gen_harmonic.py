@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose, assert_equal
 import pytest
 from scipy.special._ufuncs import _gen_harmonic, _normalized_gen_harmonic
@@ -40,11 +40,11 @@ def test_gen_harmonic(n, a, ref):
 
 @pytest.mark.parametrize(
     'n, a, ref',
-    [(10, np.inf, 1.0),
-     (1, np.nan, 1.0),
-     (1, -np.inf, 1.0),
-     (3, np.nan, np.nan),
-     (-3, 1.0, np.nan)]
+    [(10, mx.inf, 1.0),
+     (1, mx.nan, 1.0),
+     (1, -mx.inf, 1.0),
+     (3, mx.nan, mx.nan),
+     (-3, 1.0, mx.nan)]
 )
 def test_gen_harmonic_exact_cases(n, a, ref):
     h = _gen_harmonic(n, a)
@@ -71,13 +71,13 @@ def test_normalized_gen_harmonic(j, k, n, a, ref):
 @pytest.mark.parametrize(
     'j, k, n, a, ref',
     [(1, 1, 1, 0.5, 1.0),
-     (1, 1, 1, np.nan, 1.0),
-     (1, 2, 5, np.nan, np.nan),
-     (1, 2, 1, 1.25, np.nan),
-     (1, 2, 3, np.inf, 1.0),
-     (2, 3, 4, np.inf, 0.0),
-     (1, 1, 10, -np.inf, 0.0),
-     (2, 3, 4, -np.inf, np.nan),
+     (1, 1, 1, mx.nan, 1.0),
+     (1, 2, 5, mx.nan, mx.nan),
+     (1, 2, 1, 1.25, mx.nan),
+     (1, 2, 3, mx.inf, 1.0),
+     (2, 3, 4, mx.inf, 0.0),
+     (1, 1, 10, -mx.inf, 0.0),
+     (2, 3, 4, -mx.inf, mx.nan),
      (3, 6, 8, 0.0, 0.5)]
 )
 def test_normalized_gen_harmonic_exact_cases(j, k, n, a, ref):

@@ -38,15 +38,15 @@ drum head anchored at the edge:
    :alt: "This code generates a 3-D representation of the vibrational modes on a drum head viewed at a three-quarter angle. A circular region on the X-Y plane is defined with a Z value of 0 around the edge. Within the circle a single smooth valley exists on the -X side and a smooth peak exists on the +X side. The image resembles a yin-yang at this angle."
 
    >>> from scipy import special
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> def drumhead_height(n, k, distance, angle, t):
    ...    kth_zero = special.jn_zeros(n, k)[-1]
-   ...    return np.cos(t) * np.cos(n*angle) * special.jn(n, distance*kth_zero)
-   >>> theta = np.r_[0:2*np.pi:50j]
-   >>> radius = np.r_[0:1:50j]
-   >>> x = np.array([r * np.cos(theta) for r in radius])
-   >>> y = np.array([r * np.sin(theta) for r in radius])
-   >>> z = np.array([drumhead_height(1, 1, r, theta, 0.5) for r in radius])
+   ...    return mx.cos(t) * mx.cos(n*angle) * special.jn(n, distance*kth_zero)
+   >>> theta = mx.r_[0:2*mx.pi:50j]
+   >>> radius = mx.r_[0:1:50j]
+   >>> x = mx.array([r * mx.cos(theta) for r in radius])
+   >>> y = mx.array([r * mx.sin(theta) for r in radius])
+   >>> z = mx.array([drumhead_height(1, 1, r, theta, 0.5) for r in radius])
 
    >>> import matplotlib.pyplot as plt
    >>> fig = plt.figure()
@@ -54,8 +54,8 @@ drum head anchored at the edge:
    >>> ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap='RdBu_r', vmin=-0.5, vmax=0.5)
    >>> ax.set_xlabel('X')
    >>> ax.set_ylabel('Y')
-   >>> ax.set_xticks(np.arange(-1, 1.1, 0.5))
-   >>> ax.set_yticks(np.arange(-1, 1.1, 0.5))
+   >>> ax.set_xticks(mx.arange(-1, 1.1, 0.5))
+   >>> ax.set_yticks(mx.arange(-1, 1.1, 0.5))
    >>> ax.set_zlabel('Z')
    >>> plt.show()
 
@@ -140,7 +140,7 @@ overhead can become significant. Consider the following example::
 On one computer ``python_tight_loop`` took about 131 microseconds to
 run and ``cython_tight_loop`` took about 18.2 microseconds to
 run. Obviously this example is contrived: one could just call
-``special.jv(np.arange(100), 1)`` and get results just as fast as in
+``special.jv(mx.arange(100), 1)`` and get results just as fast as in
 ``cython_tight_loop``. The point is that if Python function overhead
 becomes significant in your code, then the Cython bindings might be
 useful.
@@ -175,12 +175,12 @@ compute this function in parallel::
   cimport cython
   from cython.parallel cimport prange
 
-  import numpy as np
+  import mlx.core as mx
   import scipy.special as sc
   cimport scipy.special.cython_special as csc
 
   def serial_G(k, x, y):
-      return 0.25j*sc.hankel1(0, k*np.abs(x - y))
+      return 0.25j*sc.hankel1(0, k*mx.abs(x - y))
 
   @cython.boundscheck(False)
   @cython.wraparound(False)
@@ -193,7 +193,7 @@ compute this function in parallel::
               out[i,j] = 0.25j*csc.hankel1(0, k*fabs(x[i,j] - y[i,j]))
 
   def parallel_G(k, x, y):
-      out = np.empty_like(x, dtype='complex128')
+      out = mx.empty_like(x, dtype='complex128')
       _parallel_G(k, x, y, out)
       return out
 
@@ -204,14 +204,14 @@ the function::
 
   import timeit
 
-  import numpy as np
+  import mlx.core as mx
 
   from test import serial_G, parallel_G
 
   def main():
       k = 1
-      x, y = np.linspace(-100, 100, 1000), np.linspace(-100, 100, 1000)
-      x, y = np.meshgrid(x, y)
+      x, y = mx.linspace(-100, 100, 1000), mx.linspace(-100, 100, 1000)
+      x, y = mx.meshgrid(x, y)
 
       def serial():
           serial_G(k, x, y)
@@ -246,19 +246,19 @@ how to handle similar functions. In all examples NumPy is imported as
 The `binary entropy function`_::
 
   def binary_entropy(x):
-      return -(sc.xlogy(x, x) + sc.xlog1py(1 - x, -x))/np.log(2)
+      return -(sc.xlogy(x, x) + sc.xlog1py(1 - x, -x))/mx.log(2)
 
 A rectangular step function on [0, 1]::
 
   def step(x):
-      return 0.5*(np.sign(x) + np.sign(1 - x))
+      return 0.5*(mx.sign(x) + mx.sign(1 - x))
 
 Translating and scaling can be used to get an arbitrary step function.
 
 The `ramp function`_::
 
   def ramp(x):
-      return np.maximum(0, x)
+      return mx.maximum(0, x)
 
 
 .. _Cython documentation: http://docs.cython.org/en/latest/src/reference/compilation.html

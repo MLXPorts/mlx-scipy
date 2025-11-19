@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy.linalg import lstsq
 from scipy._lib._util import float_factorial
 from scipy.ndimage import convolve1d  # type: ignore[attr-defined]
@@ -35,7 +35,7 @@ def savgol_coeffs(window_length, polyorder, deriv=0, delta=1.0, pos=None,
 
     Returns
     -------
-    coeffs : 1-D ndarray
+    coeffs : 1-D array
         The filter coefficients.
 
     See Also
@@ -57,7 +57,7 @@ def savgol_coeffs(window_length, polyorder, deriv=0, delta=1.0, pos=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import savgol_coeffs
     >>> savgol_coeffs(5, 2)
     array([-0.08571429,  0.34285714,  0.48571429,  0.34285714, -0.08571429])
@@ -79,16 +79,16 @@ def savgol_coeffs(window_length, polyorder, deriv=0, delta=1.0, pos=None,
     derivative at the last position.  When dotted with `x` the result should
     be 6.
 
-    >>> x = np.array([1, 0, 1, 4, 9])
+    >>> x = mx.array([1, 0, 1, 4, 9])
     >>> c = savgol_coeffs(5, 2, pos=4, deriv=1, use='dot')
     >>> c.dot(x)
     6.0
     """
 
     # An alternative method for finding the coefficients when deriv=0 is
-    #    t = np.arange(window_length)
+    #    t = mx.arange(window_length)
     #    unit = (t == pos).astype(int)
-    #    coeffs = np.polyval(np.polyfit(t, unit, polyorder), t)
+    #    coeffs = mx.polyval(mx.polyfit(t, unit, polyorder), t)
     # The method implemented here is faster.
 
     # To recreate the table of sample coefficients shown in the chapter on
@@ -116,24 +116,24 @@ def savgol_coeffs(window_length, polyorder, deriv=0, delta=1.0, pos=None,
         raise ValueError("`use` must be 'conv' or 'dot'")
 
     if deriv > polyorder:
-        coeffs = np.zeros(window_length)
+        coeffs = mx.zeros(window_length)
         return coeffs
 
     # Form the design matrix A. The columns of A are powers of the integers
     # from -pos to window_length - pos - 1. The powers (i.e., rows) range
     # from 0 to polyorder. (That is, A is a vandermonde matrix, but not
     # necessarily square.)
-    x = np.arange(-pos, window_length - pos, dtype=float)
+    x = mx.arange(-pos, window_length - pos, dtype=float)
 
     if use == "conv":
         # Reverse so that result can be used in a convolution.
         x = x[::-1]
 
-    order = np.arange(polyorder + 1).reshape(-1, 1)
+    order = mx.arange(polyorder + 1).reshape(-1, 1)
     A = x ** order
 
     # y determines which order derivative is returned.
-    y = np.zeros(polyorder + 1)
+    y = mx.zeros(polyorder + 1)
     # The coefficient assigned to y[deriv] scales the result to take into
     # account the order of the derivative and the sample spacing.
     y[deriv] = float_factorial(deriv) / (delta ** deriv)
@@ -158,11 +158,11 @@ def _polyder(p, m):
     else:
         n = len(p)
         if n <= m:
-            result = np.zeros_like(p[:1, ...])
+            result = mx.zeros_like(p[:1, ...])
         else:
             dp = p[:-m].copy()
             for k in range(m):
-                rng = np.arange(n - k - 1, m - k - 1, -1)
+                rng = mx.arange(n - k - 1, m - k - 1, -1)
                 dp *= rng.reshape((n - m,) + (1,) * (p.ndim - 1))
             result = dp
     return result
@@ -190,15 +190,15 @@ def _fit_edge(x, window_start, window_stop, interp_start, interp_stop,
 
     # Fit the edges.  poly_coeffs has shape (polyorder + 1, -1),
     # where '-1' is the same as in xx_edge.
-    poly_coeffs = np.polyfit(np.arange(0, window_stop - window_start),
+    poly_coeffs = mx.polyfit(mx.arange(0, window_stop - window_start),
                              xx_edge, polyorder)
 
     if deriv > 0:
         poly_coeffs = _polyder(poly_coeffs, deriv)
 
     # Compute the interpolated values for the edge.
-    i = np.arange(interp_start - window_start, interp_stop - window_start)
-    values = np.polyval(poly_coeffs, i.reshape(-1, 1)) / (delta ** deriv)
+    i = mx.arange(interp_start - window_start, interp_stop - window_start)
+    values = mx.polyval(poly_coeffs, i.reshape(-1, 1)) / (delta ** deriv)
 
     # Now put the values into the appropriate slice of y.
     # First reshape values to match y.
@@ -273,7 +273,7 @@ def savgol_filter(x, window_length, polyorder, deriv=0, delta=1.0,
 
     Returns
     -------
-    y : ndarray, same shape as `x`
+    y : array, same shape as `x`
         The filtered data.
 
     See Also
@@ -309,10 +309,10 @@ def savgol_filter(x, window_length, polyorder, deriv=0, delta=1.0,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import savgol_filter
-    >>> np.set_printoptions(precision=2)  # For compact display.
-    >>> x = np.array([2, 2, 5, 2, 1, 0, 1, 4, 9])
+    >>> mx.set_printoptions(precision=2)  # For compact display.
+    >>> x = mx.array([2, 2, 5, 2, 1, 0, 1, 4, 9])
 
     Filter with a window length of 5 and a degree 2 polynomial.  Use
     the defaults for all other parameters.
@@ -333,10 +333,10 @@ def savgol_filter(x, window_length, polyorder, deriv=0, delta=1.0,
         raise ValueError("mode must be 'mirror', 'constant', 'nearest' "
                          "'wrap' or 'interp'.")
 
-    x = np.asarray(x)
+    x = mx.array(x)
     # Ensure that x is either single or double precision floating point.
-    if x.dtype != np.float64 and x.dtype != np.float32:
-        x = x.astype(np.float64)
+    if x.dtype != mx.float64 and x.dtype != mx.float32:
+        x = x.astype(mx.float64)
 
     coeffs = savgol_coeffs(window_length, polyorder, deriv=deriv, delta=delta)
 

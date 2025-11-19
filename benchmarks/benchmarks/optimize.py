@@ -5,7 +5,7 @@ import json
 import traceback
 from collections import defaultdict
 
-import numpy as np
+import mlx.core as mx
 
 from . import test_functions as funcs
 from . import go_benchmark_functions as gbf
@@ -108,14 +108,14 @@ class _BenchOptimizers(Benchmark):
         for name, result_list in grouped_results.items():
             newres = scipy.optimize.OptimizeResult()
             newres.name = name
-            newres.mean_nfev = np.mean([r.nfev for r in result_list])
-            newres.mean_njev = np.mean([r.njev for r in result_list])
-            newres.mean_nhev = np.mean([r.nhev for r in result_list])
-            newres.mean_time = np.mean([r.time for r in result_list])
+            newres.mean_nfev = mx.mean([r.nfev for r in result_list])
+            newres.mean_njev = mx.mean([r.njev for r in result_list])
+            newres.mean_nhev = mx.mean([r.nhev for r in result_list])
+            newres.mean_time = mx.mean([r.time for r in result_list])
             funs = [r.fun for r in result_list]
-            newres.max_obj = np.max(funs)
-            newres.min_obj = np.min(funs)
-            newres.mean_obj = np.mean(funs)
+            newres.max_obj = mx.max(funs)
+            newres.min_obj = mx.min(funs)
+            newres.mean_obj = mx.mean(funs)
 
             newres.ntrials = len(result_list)
             newres.nfail = len([r for r in result_list if not r.success])
@@ -139,9 +139,9 @@ class _BenchOptimizers(Benchmark):
         """
         if not hasattr(self.function, "xmin"):
             return True
-        if np.any(x_new < self.function.xmin):
+        if mx.any(x_new < self.function.xmin):
             return False
-        if np.any(x_new > self.function.xmax):
+        if mx.any(x_new > self.function.xmax):
             return False
         return True
 
@@ -342,7 +342,7 @@ class BenchSmoothUnbounded(Benchmark):
         b = _BenchOptimizers("Rosenbrock function",
                              fun=s.fun)
         for i in range(10):
-            b.bench_run(np.random.uniform(-3, 3, 3), methods=methods)
+            b.bench_run(mx.random.uniform(-3, 3, 3), methods=methods)
         return b
 
     # see what the performance of the solvers are if numerical differentiation
@@ -351,14 +351,14 @@ class BenchSmoothUnbounded(Benchmark):
         b = _BenchOptimizers("Rosenbrock function",
                              fun=rosen)
         for i in range(10):
-            b.bench_run(np.random.uniform(-3, 3, 3), methods=methods)
+            b.bench_run(mx.random.uniform(-3, 3, 3), methods=methods)
         return b
 
     def run_rosenbrock(self, methods=None):
         b = _BenchOptimizers("Rosenbrock function",
                              fun=rosen, der=rosen_der, hess=rosen_hess)
         for i in range(10):
-            b.bench_run(np.random.uniform(-3, 3, 3), methods=methods)
+            b.bench_run(mx.random.uniform(-3, 3, 3), methods=methods)
         return b
 
     def run_rosenbrock_tight(self, methods=None):
@@ -366,73 +366,73 @@ class BenchSmoothUnbounded(Benchmark):
                              fun=rosen, der=rosen_der, hess=rosen_hess,
                              tol=1e-8)
         for i in range(10):
-            b.bench_run(np.random.uniform(-3, 3, 3), methods=methods)
+            b.bench_run(mx.random.uniform(-3, 3, 3), methods=methods)
         return b
 
     def run_simple_quadratic(self, methods=None):
         s = funcs.SimpleQuadratic()
         #    print "checking gradient",
-        #    scipy.optimize.check_grad(s.fun, s.der, np.array([1.1, -2.3]))
+        #    scipy.optimize.check_grad(s.fun, s.der, mx.array([1.1, -2.3]))
         b = _BenchOptimizers("simple quadratic function",
                              fun=s.fun, der=s.der, hess=s.hess)
         for i in range(10):
-            b.bench_run(np.random.uniform(-2, 2, 3), methods=methods)
+            b.bench_run(mx.random.uniform(-2, 2, 3), methods=methods)
         return b
 
     def run_asymmetric_quadratic(self, methods=None):
         s = funcs.AsymmetricQuadratic()
         #    print "checking gradient",
-        #    scipy.optimize.check_grad(s.fun, s.der, np.array([1.1, -2.3]))
+        #    scipy.optimize.check_grad(s.fun, s.der, mx.array([1.1, -2.3]))
         b = _BenchOptimizers("function sum(x**2) + x[0]",
                              fun=s.fun, der=s.der, hess=s.hess)
         for i in range(10):
-            b.bench_run(np.random.uniform(-2, 2, 3), methods=methods)
+            b.bench_run(mx.random.uniform(-2, 2, 3), methods=methods)
         return b
 
     def run_sin_1d(self, methods=None):
         def fun(x):
-            return np.sin(x[0])
+            return mx.sin(x[0])
 
         def der(x):
-            return np.array([np.cos(x[0])])
+            return mx.array([mx.cos(x[0])])
 
         b = _BenchOptimizers("1d sin function",
                              fun=fun, der=der, hess=None)
         for i in range(10):
-            b.bench_run(np.random.uniform(-2, 2, 1), methods=methods)
+            b.bench_run(mx.random.uniform(-2, 2, 1), methods=methods)
         return b
 
     def run_booth(self, methods=None):
         s = funcs.Booth()
         #    print "checking gradient",
-        #    scipy.optimize.check_grad(s.fun, s.der, np.array([1.1, -2.3]))
+        #    scipy.optimize.check_grad(s.fun, s.der, mx.array([1.1, -2.3]))
         b = _BenchOptimizers("Booth's function",
                              fun=s.fun, der=s.der, hess=None)
         for i in range(10):
-            b.bench_run(np.random.uniform(0, 10, 2), methods=methods)
+            b.bench_run(mx.random.uniform(0, 10, 2), methods=methods)
         return b
 
     def run_beale(self, methods=None):
         s = funcs.Beale()
         #    print "checking gradient",
-        #    scipy.optimize.check_grad(s.fun, s.der, np.array([1.1, -2.3]))
+        #    scipy.optimize.check_grad(s.fun, s.der, mx.array([1.1, -2.3]))
         b = _BenchOptimizers("Beale's function",
                              fun=s.fun, der=s.der, hess=None)
         for i in range(10):
-            b.bench_run(np.random.uniform(0, 10, 2), methods=methods)
+            b.bench_run(mx.random.uniform(0, 10, 2), methods=methods)
         return b
 
     def run_LJ(self, methods=None):
         s = funcs.LJ()
         # print "checking gradient",
         # scipy.optimize.check_grad(s.get_energy, s.get_gradient,
-        #                           np.random.uniform(-2,2,3*4))
+        #                           mx.random.uniform(-2,2,3*4))
         natoms = 4
         b = _BenchOptimizers(
             f"{natoms} atom Lennard Jones potential", fun=s.fun, der=s.der, hess=None
         )
         for _ in range(10):
-            b.bench_run(np.random.uniform(-2, 2, natoms*3), methods=methods)
+            b.bench_run(mx.random.uniform(-2, 2, natoms*3), methods=methods)
         return b
 
 
@@ -559,7 +559,7 @@ class BenchGlobal(Benchmark):
         f = klass()
         try:
             b = _BenchOptimizers.from_funcobj(name, f)
-            with np.errstate(all='ignore'):
+            with mx.errstate(all='ignore'):
                 b.bench_run_global(methods=[solver],
                                    numtrials=self.numtrials)
 
@@ -608,7 +608,7 @@ class BenchDFO(Benchmark):
     param_names = ["DFO benchmark problem number", "solver", "result type"]
 
     def setup(self, prob_number, method_name, ret_val):
-        probs = np.loadtxt(os.path.join(os.path.dirname(__file__),
+        probs = mx.loadtxt(os.path.join(os.path.dirname(__file__),
                                         "cutest", "dfo.txt"))
         params = probs[prob_number]
         nprob = int(params[0])

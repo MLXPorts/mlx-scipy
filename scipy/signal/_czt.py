@@ -27,7 +27,7 @@ zoom_fft : array
 
 import cmath
 import numbers
-import numpy as np
+import mlx.core as mx
 from numpy import pi, arange
 from scipy.fft import fft, ifft, next_fast_len
 
@@ -66,7 +66,7 @@ def czt_points(m, w=None, a=1+0j):
 
     Returns
     -------
-    out : ndarray
+    out : array
         The points in the Z plane at which `CZT` samples the z-transform,
         when called with arguments `m`, `w`, and `a`, as complex numbers.
 
@@ -79,7 +79,7 @@ def czt_points(m, w=None, a=1+0j):
     --------
     Plot the points of a 16-point FFT:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import czt_points
     >>> points = czt_points(16)
     >>> import matplotlib.pyplot as plt
@@ -90,7 +90,7 @@ def czt_points(m, w=None, a=1+0j):
 
     and a 91-point logarithmic spiral that crosses the unit circle:
 
-    >>> m, w, a = 91, 0.995*np.exp(-1j*np.pi*.05), 0.8*np.exp(1j*np.pi/6)
+    >>> m, w, a = 91, 0.995*mx.exp(-1j*mx.pi*.05), 0.8*mx.exp(1j*mx.pi/6)
     >>> points = czt_points(m, w, a)
     >>> plt.plot(points.real, points.imag, 'o')
     >>> plt.gca().add_patch(plt.Circle((0,0), radius=1, fill=False, alpha=.3))
@@ -105,7 +105,7 @@ def czt_points(m, w=None, a=1+0j):
 
     if w is None:
         # Nothing specified, default to FFT
-        return a * np.exp(2j * pi * k / m)
+        return a * mx.exp(2j * pi * k / m)
     else:
         # w specified
         w = 1.0 * w  # at least float
@@ -187,10 +187,10 @@ class CZT:
     Compute multiple prime-length FFTs:
 
     >>> from scipy.signal import CZT
-    >>> import numpy as np
-    >>> a = np.random.rand(7)
-    >>> b = np.random.rand(7)
-    >>> c = np.random.rand(7)
+    >>> import mlx.core as mx
+    >>> a = mx.random.rand(7)
+    >>> b = mx.random.rand(7)
+    >>> c = mx.random.rand(7)
     >>> czt_7 = CZT(n=7)
     >>> A = czt_7(a)
     >>> B = czt_7(b)
@@ -213,12 +213,12 @@ class CZT:
     def __init__(self, n, m=None, w=None, a=1+0j):
         m = _validate_sizes(n, m)
 
-        k = arange(max(m, n), dtype=np.min_scalar_type(-max(m, n)**2))
+        k = arange(max(m, n), dtype=mx.min_scalar_type(-max(m, n)**2))
 
         if w is None:
             # Nothing specified, default to FFT-like
             w = cmath.exp(-2j*pi/m)
-            wk2 = np.exp(-(1j * pi * ((k**2) % (2*m))) / m)
+            wk2 = mx.exp(-(1j * pi * ((k**2) % (2*m))) / m)
         else:
             # w specified
             wk2 = w**(k**2/2.)
@@ -231,7 +231,7 @@ class CZT:
         nfft = next_fast_len(n + m - 1)
         self._Awk2 = a**-k[:n] * wk2[:n]
         self._nfft = nfft
-        self._Fwk2 = fft(1/np.hstack((wk2[n-1:0:-1], wk2[:m])), nfft)
+        self._Fwk2 = fft(1/mx.hstack((wk2[n-1:0:-1], wk2[:m])), nfft)
         self._wk2 = wk2[:m]
         self._yidx = slice(n-1, n+m-1)
 
@@ -249,16 +249,16 @@ class CZT:
 
         Returns
         -------
-        out : ndarray
+        out : array
             An array of the same dimensions as `x`, but with the length of the
             transformed axis set to `m`.
         """
-        x = np.asarray(x)
+        x = mx.array(x)
         if x.shape[axis] != self.n:
             raise ValueError(f"CZT defined for length {self.n}, not "
                              f"{x.shape[axis]}")
         # Calculate transpose coordinates, to allow operation on any given axis
-        trnsp = np.arange(x.ndim)
+        trnsp = mx.arange(x.ndim)
         trnsp[[axis, -1]] = [-1, axis]
         x = x.transpose(*trnsp)
         y = ifft(self._Fwk2 * fft(x*self._Awk2, self._nfft))
@@ -343,27 +343,27 @@ class ZoomFFT(CZT):
     --------
     To plot the transform results use something like the following:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import ZoomFFT
-    >>> t = np.linspace(0, 1, 1021)
-    >>> x = np.cos(2*np.pi*15*t) + np.sin(2*np.pi*17*t)
+    >>> t = mx.linspace(0, 1, 1021)
+    >>> x = mx.cos(2*mx.pi*15*t) + mx.sin(2*mx.pi*17*t)
     >>> f1, f2 = 5, 27
     >>> transform = ZoomFFT(len(x), [f1, f2], len(x), fs=1021)
     >>> X = transform(x)
-    >>> f = np.linspace(f1, f2, len(x))
+    >>> f = mx.linspace(f1, f2, len(x))
     >>> import matplotlib.pyplot as plt
-    >>> plt.plot(f, 20*np.log10(np.abs(X)))
+    >>> plt.plot(f, 20*mx.log10(mx.abs(X)))
     >>> plt.show()
     """
 
     def __init__(self, n, fn, m=None, *, fs=2, endpoint=False):
         m = _validate_sizes(n, m)
 
-        k = arange(max(m, n), dtype=np.min_scalar_type(-max(m, n)**2))
+        k = arange(max(m, n), dtype=mx.min_scalar_type(-max(m, n)**2))
 
-        if np.size(fn) == 2:
+        if mx.size(fn) == 2:
             f1, f2 = fn
-        elif np.size(fn) == 1:
+        elif mx.size(fn) == 1:
             f1, f2 = 0.0, fn
         else:
             raise ValueError('fn must be a scalar or 2-length sequence')
@@ -375,18 +375,18 @@ class ZoomFFT(CZT):
         else:
             scale = (f2 - f1) / fs
         a = cmath.exp(2j * pi * f1/fs)
-        wk2 = np.exp(-(1j * pi * scale * k**2) / m)
+        wk2 = mx.exp(-(1j * pi * scale * k**2) / m)
 
         self.w = cmath.exp(-2j*pi/m * scale)
         self.a = a
         self.m, self.n = m, n
 
-        ak = np.exp(-2j * pi * f1/fs * k[:n])
+        ak = mx.exp(-2j * pi * f1/fs * k[:n])
         self._Awk2 = ak * wk2[:n]
 
         nfft = next_fast_len(n + m - 1)
         self._nfft = nfft
-        self._Fwk2 = fft(1/np.hstack((wk2[n-1:0:-1], wk2[:m])), nfft)
+        self._Fwk2 = fft(1/mx.hstack((wk2[n-1:0:-1], wk2[:m])), nfft)
         self._wk2 = wk2[:m]
         self._yidx = slice(n-1, n+m-1)
 
@@ -414,7 +414,7 @@ def czt(x, m=None, w=None, a=1+0j, *, axis=-1):
 
     Returns
     -------
-    out : ndarray
+    out : array
         An array of the same dimensions as `x`, but with the length of the
         transformed axis set to `m`.
 
@@ -447,10 +447,10 @@ def czt(x, m=None, w=None, a=1+0j, *, axis=-1):
     --------
     Generate a sinusoid:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> f1, f2, fs = 8, 10, 200  # Hz
-    >>> t = np.linspace(0, 1, fs, endpoint=False)
-    >>> x = np.sin(2*np.pi*t*f2)
+    >>> t = mx.linspace(0, 1, fs, endpoint=False)
+    >>> x = mx.sin(2*mx.pi*t*f2)
     >>> import matplotlib.pyplot as plt
     >>> plt.plot(t, x)
     >>> plt.axis([0, 1, -1.1, 1.1])
@@ -467,7 +467,7 @@ def czt(x, m=None, w=None, a=1+0j, *, axis=-1):
 
     However, if the sinusoid is logarithmically-decaying:
 
-    >>> x = np.exp(-t*f1) * np.sin(2*np.pi*t*f2)
+    >>> x = mx.exp(-t*f1) * mx.sin(2*mx.pi*t*f2)
     >>> plt.plot(t, x)
     >>> plt.axis([0, 1, -1.1, 1.1])
     >>> plt.show()
@@ -483,8 +483,8 @@ def czt(x, m=None, w=None, a=1+0j, *, axis=-1):
     logarithmic spiral, such as a circle with radius smaller than unity:
 
     >>> M = fs // 2  # Just positive frequencies, like rfft
-    >>> a = np.exp(-f1/fs)  # Starting point of the circle, radius < 1
-    >>> w = np.exp(-1j*np.pi/M)  # "Step size" of circle
+    >>> a = mx.exp(-f1/fs)  # Starting point of the circle, radius < 1
+    >>> w = mx.exp(-1j*mx.pi/M)  # "Step size" of circle
     >>> points = czt_points(M + 1, w, a)  # M + 1 to include Nyquist
     >>> plt.plot(points.real, points.imag, '.')
     >>> plt.gca().add_patch(plt.Circle((0,0), radius=1, fill=False, alpha=.3))
@@ -495,12 +495,12 @@ def czt(x, m=None, w=None, a=1+0j, *, axis=-1):
     with the same decay rate) without spectral leakage:
 
     >>> z_vals = czt(x, M + 1, w, a)  # Include Nyquist for comparison to rfft
-    >>> freqs = np.angle(points)*fs/(2*np.pi)  # angle = omega, radius = sigma
+    >>> freqs = mx.angle(points)*fs/(2*mx.pi)  # angle = omega, radius = sigma
     >>> plt.plot(freqs, abs(z_vals))
     >>> plt.margins(0, 0.1)
     >>> plt.show()
     """
-    x = np.asarray(x)
+    x = mx.array(x)
     transform = CZT(x.shape[axis], m=m, w=w, a=a)
     return transform(x, axis=axis)
 
@@ -533,7 +533,7 @@ def zoom_fft(x, fn, m=None, *, fs=2, endpoint=False, axis=-1):
 
     Returns
     -------
-    out : ndarray
+    out : array
         The transformed signal.  The Fourier transform will be calculated
         at the points f1, f1+df, f1+2df, ..., f2, where df=(f2-f1)/m.
 
@@ -559,17 +559,17 @@ def zoom_fft(x, fn, m=None, *, fs=2, endpoint=False, axis=-1):
     --------
     To plot the transform results use something like the following:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import zoom_fft
-    >>> t = np.linspace(0, 1, 1021)
-    >>> x = np.cos(2*np.pi*15*t) + np.sin(2*np.pi*17*t)
+    >>> t = mx.linspace(0, 1, 1021)
+    >>> x = mx.cos(2*mx.pi*15*t) + mx.sin(2*mx.pi*17*t)
     >>> f1, f2 = 5, 27
     >>> X = zoom_fft(x, [f1, f2], len(x), fs=1021)
-    >>> f = np.linspace(f1, f2, len(x))
+    >>> f = mx.linspace(f1, f2, len(x))
     >>> import matplotlib.pyplot as plt
-    >>> plt.plot(f, 20*np.log10(np.abs(X)))
+    >>> plt.plot(f, 20*mx.log10(mx.abs(X)))
     >>> plt.show()
     """
-    x = np.asarray(x)
+    x = mx.array(x)
     transform = ZoomFFT(x.shape[axis], fn, m=m, fs=fs, endpoint=endpoint)
     return transform(x, axis=axis)

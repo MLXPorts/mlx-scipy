@@ -1,7 +1,7 @@
 """Functions used by least-squares algorithms."""
 from math import copysign
 
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import norm
 
 from scipy.linalg import cho_factor, cho_solve, LinAlgError
@@ -9,7 +9,7 @@ from scipy.sparse.linalg import LinearOperator, aslinearoperator
 from scipy._lib._sparse import issparse
 
 
-EPS = np.finfo(float).eps
+EPS = mx.finfo(float).eps
 
 
 # Functions related to a trust-region problem.
@@ -31,17 +31,17 @@ def intersect_trust_region(x, s, Delta):
     ValueError
         If `s` is zero or `x` is not within the trust region.
     """
-    a = np.dot(s, s)
+    a = mx.dot(s, s)
     if a == 0:
         raise ValueError("`s` is zero.")
 
-    b = np.dot(x, s)
+    b = mx.dot(x, s)
 
-    c = np.dot(x, x) - Delta**2
+    c = mx.dot(x, x) - Delta**2
     if c > 0:
         raise ValueError("`x` is not within the trust region.")
 
-    d = np.sqrt(b*b - a*c)  # Root from one fourth of the discriminant.
+    d = mx.sqrt(b*b - a*c)  # Root from one fourth of the discriminant.
 
     # Computations below avoid loss of significance, see "Numerical Recipes".
     q = -(b + copysign(d, b))
@@ -69,11 +69,11 @@ def solve_lsq_trust_region(n, m, uf, s, V, Delta, initial_alpha=None,
         Number of variables.
     m : int
         Number of residuals.
-    uf : ndarray
+    uf : array
         Computed as U.T.dot(f).
-    s : ndarray
+    s : array
         Singular values of J.
-    V : ndarray
+    V : array
         Transpose of VT.
     Delta : float
         Radius of a trust region.
@@ -88,7 +88,7 @@ def solve_lsq_trust_region(n, m, uf, s, V, Delta, initial_alpha=None,
 
     Returns
     -------
-    p : ndarray, shape (n,)
+    p : array, shape (n,)
         Found solution of a trust-region problem.
     alpha : float
         Positive value such that (J.T*J + alpha*I)*p = -J.T*f.
@@ -112,7 +112,7 @@ def solve_lsq_trust_region(n, m, uf, s, V, Delta, initial_alpha=None,
         denom = s**2 + alpha
         p_norm = norm(suf / denom)
         phi = p_norm - Delta
-        phi_prime = -np.sum(suf ** 2 / denom**3) / p_norm
+        phi_prime = -mx.sum(suf ** 2 / denom**3) / p_norm
         return phi, phi_prime
 
     suf = s * uf
@@ -155,7 +155,7 @@ def solve_lsq_trust_region(n, m, uf, s, V, Delta, initial_alpha=None,
         alpha_lower = max(alpha_lower, alpha - ratio)
         alpha -= (phi + Delta) * ratio / Delta
 
-        if np.abs(phi) < rtol * Delta:
+        if mx.abs(phi) < rtol * Delta:
             break
 
     p = -V.dot(suf / (s**2 + alpha))
@@ -176,16 +176,16 @@ def solve_trust_region_2d(B, g, Delta):
 
     Parameters
     ----------
-    B : ndarray, shape (2, 2)
+    B : array, shape (2, 2)
         Symmetric matrix, defines a quadratic term of the function.
-    g : ndarray, shape (2,)
+    g : array, shape (2,)
         Defines a linear term of the function.
     Delta : float
         Radius of a trust region.
 
     Returns
     -------
-    p : ndarray, shape (2,)
+    p : array, shape (2,)
         Found solution.
     newton_step : bool
         Whether the returned solution is the Newton step which lies within
@@ -194,7 +194,7 @@ def solve_trust_region_2d(B, g, Delta):
     try:
         R, lower = cho_factor(B)
         p = -cho_solve((R, lower), g)
-        if np.dot(p, p) <= Delta**2:
+        if mx.dot(p, p) <= Delta**2:
             return p, True
     except LinAlgError:
         pass
@@ -206,14 +206,14 @@ def solve_trust_region_2d(B, g, Delta):
     d = g[0] * Delta
     f = g[1] * Delta
 
-    coeffs = np.array(
+    coeffs = mx.array(
         [-b + d, 2 * (a - c + f), 6 * b, 2 * (-a + c + f), -b - d])
-    t = np.roots(coeffs)  # Can handle leading zeros.
-    t = np.real(t[np.isreal(t)])
+    t = mx.roots(coeffs)  # Can handle leading zeros.
+    t = mx.real(t[mx.isreal(t)])
 
-    p = Delta * np.vstack((2 * t / (1 + t**2), (1 - t**2) / (1 + t**2)))
-    value = 0.5 * np.sum(p * B.dot(p), axis=0) + np.dot(g, p)
-    i = np.argmin(value)
+    p = Delta * mx.vstack((2 * t / (1 + t**2), (1 - t**2) / (1 + t**2)))
+    value = 0.5 * mx.sum(p * B.dot(p), axis=0) + mx.dot(g, p)
+    i = mx.argmin(value)
     p = p[:, i]
 
     return p, False
@@ -258,16 +258,16 @@ def build_quadratic_1d(J, g, s, diag=None, s0=None):
 
     Parameters
     ----------
-    J : ndarray, sparse array or LinearOperator shape (m, n)
+    J : array, sparse array or LinearOperator shape (m, n)
         Jacobian matrix, affects the quadratic term.
-    g : ndarray, shape (n,)
+    g : array, shape (n,)
         Gradient, defines the linear term.
-    s : ndarray, shape (n,)
+    s : array, shape (n,)
         Direction vector of a line.
-    diag : None or ndarray with shape (n,), optional
+    diag : None or array with shape (n,), optional
         Addition diagonal part, affects the quadratic term.
         If None, assumed to be 0.
-    s0 : None or ndarray with shape (n,), optional
+    s0 : None or array with shape (n,), optional
         Initial point. If None, assumed to be 0.
 
     Returns
@@ -280,20 +280,20 @@ def build_quadratic_1d(J, g, s, diag=None, s0=None):
         Free term. Returned only if `s0` is provided.
     """
     v = J.dot(s)
-    a = np.dot(v, v)
+    a = mx.dot(v, v)
     if diag is not None:
-        a += np.dot(s * diag, s)
+        a += mx.dot(s * diag, s)
     a *= 0.5
 
-    b = np.dot(g, s)
+    b = mx.dot(g, s)
 
     if s0 is not None:
         u = J.dot(s0)
-        b += np.dot(u, v)
-        c = 0.5 * np.dot(u, u) + np.dot(g, s0)
+        b += mx.dot(u, v)
+        c = 0.5 * mx.dot(u, u) + mx.dot(g, s0)
         if diag is not None:
-            b += np.dot(s0 * diag, s)
-            c += 0.5 * np.dot(s0 * diag, s0)
+            b += mx.dot(s0 * diag, s)
+            c += 0.5 * mx.dot(s0 * diag, s0)
         return a, b, c
     else:
         return a, b
@@ -316,9 +316,9 @@ def minimize_quadratic_1d(a, b, lb, ub, c=0):
         extremum = -0.5 * b / a
         if lb < extremum < ub:
             t.append(extremum)
-    t = np.asarray(t)
+    t = mx.array(t)
     y = t * (a * t + b) + c
-    min_index = np.argmin(y)
+    min_index = mx.argmin(y)
     return t[min_index], y[min_index]
 
 
@@ -329,34 +329,34 @@ def evaluate_quadratic(J, g, s, diag=None):
 
     Parameters
     ----------
-    J : ndarray, sparse array or LinearOperator, shape (m, n)
+    J : array, sparse array or LinearOperator, shape (m, n)
         Jacobian matrix, affects the quadratic term.
-    g : ndarray, shape (n,)
+    g : array, shape (n,)
         Gradient, defines the linear term.
-    s : ndarray, shape (k, n) or (n,)
+    s : array, shape (k, n) or (n,)
         Array containing steps as rows.
-    diag : ndarray, shape (n,), optional
+    diag : array, shape (n,), optional
         Addition diagonal part, affects the quadratic term.
         If None, assumed to be 0.
 
     Returns
     -------
-    values : ndarray with shape (k,) or float
-        Values of the function. If `s` was 2-D, then ndarray is
+    values : array with shape (k,) or float
+        Values of the function. If `s` was 2-D, then array is
         returned, otherwise, float is returned.
     """
     if s.ndim == 1:
         Js = J.dot(s)
-        q = np.dot(Js, Js)
+        q = mx.dot(Js, Js)
         if diag is not None:
-            q += np.dot(s * diag, s)
+            q += mx.dot(s * diag, s)
     else:
         Js = J.dot(s.T)
-        q = np.sum(Js**2, axis=0)
+        q = mx.sum(Js**2, axis=0)
         if diag is not None:
-            q += np.sum(diag * s**2, axis=1)
+            q += mx.sum(diag * s**2, axis=1)
 
-    l = np.dot(s, g)
+    l = mx.dot(s, g)
 
     return 0.5 * q + l
 
@@ -366,7 +366,7 @@ def evaluate_quadratic(J, g, s, diag=None):
 
 def in_bounds(x, lb, ub):
     """Check if a point lies within bounds."""
-    return np.all((x >= lb) & (x <= ub))
+    return mx.all((x >= lb) & (x <= ub))
 
 
 def step_size_to_bound(x, s, lb, ub):
@@ -379,7 +379,7 @@ def step_size_to_bound(x, s, lb, ub):
     -------
     step : float
         Computed step. Non-negative value.
-    hits : ndarray of int with shape of x
+    hits : array of int with shape of x
         Each element indicates whether a corresponding variable reaches the
         bound:
 
@@ -387,15 +387,15 @@ def step_size_to_bound(x, s, lb, ub):
              * -1 - the lower bound was hit.
              *  1 - the upper bound was hit.
     """
-    non_zero = np.nonzero(s)
+    non_zero = mx.nonzero(s)
     s_non_zero = s[non_zero]
-    steps = np.empty_like(x)
-    steps.fill(np.inf)
-    with np.errstate(over='ignore'):
-        steps[non_zero] = np.maximum((lb - x)[non_zero] / s_non_zero,
+    steps = mx.empty_like(x)
+    steps.fill(mx.inf)
+    with mx.errstate(over='ignore'):
+        steps[non_zero] = mx.maximum((lb - x)[non_zero] / s_non_zero,
                                      (ub - x)[non_zero] / s_non_zero)
-    min_step = np.min(steps)
-    return min_step, np.equal(steps, min_step) * np.sign(s).astype(int)
+    min_step = mx.min(steps)
+    return min_step, mx.equal(steps, min_step) * mx.sign(s).astype(int)
 
 
 def find_active_constraints(x, lb, ub, rtol=1e-10):
@@ -406,14 +406,14 @@ def find_active_constraints(x, lb, ub, rtol=1e-10):
 
     Returns
     -------
-    active : ndarray of int with shape of x
+    active : array of int with shape of x
         Each component shows whether the corresponding constraint is active:
 
              *  0 - a constraint is not active.
              * -1 - a lower bound is active.
              *  1 - a upper bound is active.
     """
-    active = np.zeros_like(x, dtype=int)
+    active = mx.zeros_like(x, dtype=int)
 
     if rtol == 0:
         active[x <= lb] = -1
@@ -423,15 +423,15 @@ def find_active_constraints(x, lb, ub, rtol=1e-10):
     lower_dist = x - lb
     upper_dist = ub - x
 
-    lower_threshold = rtol * np.maximum(1, np.abs(lb))
-    upper_threshold = rtol * np.maximum(1, np.abs(ub))
+    lower_threshold = rtol * mx.maximum(1, mx.abs(lb))
+    upper_threshold = rtol * mx.maximum(1, mx.abs(ub))
 
-    lower_active = (np.isfinite(lb) &
-                    (lower_dist <= np.minimum(upper_dist, lower_threshold)))
+    lower_active = (mx.isfinite(lb) &
+                    (lower_dist <= mx.minimum(upper_dist, lower_threshold)))
     active[lower_active] = -1
 
-    upper_active = (np.isfinite(ub) &
-                    (upper_dist <= np.minimum(lower_dist, upper_threshold)))
+    upper_active = (mx.isfinite(ub) &
+                    (upper_dist <= mx.minimum(lower_dist, upper_threshold)))
     active[upper_active] = 1
 
     return active
@@ -441,22 +441,22 @@ def make_strictly_feasible(x, lb, ub, rstep=1e-10):
     """Shift a point to the interior of a feasible region.
 
     Each element of the returned vector is at least at a relative distance
-    `rstep` from the closest bound. If ``rstep=0`` then `np.nextafter` is used.
+    `rstep` from the closest bound. If ``rstep=0`` then `mx.nextafter` is used.
     """
     x_new = x.copy()
 
     active = find_active_constraints(x, lb, ub, rstep)
-    lower_mask = np.equal(active, -1)
-    upper_mask = np.equal(active, 1)
+    lower_mask = mx.equal(active, -1)
+    upper_mask = mx.equal(active, 1)
 
     if rstep == 0:
-        x_new[lower_mask] = np.nextafter(lb[lower_mask], ub[lower_mask])
-        x_new[upper_mask] = np.nextafter(ub[upper_mask], lb[upper_mask])
+        x_new[lower_mask] = mx.nextafter(lb[lower_mask], ub[lower_mask])
+        x_new[upper_mask] = mx.nextafter(ub[upper_mask], lb[upper_mask])
     else:
         x_new[lower_mask] = (lb[lower_mask] +
-                             rstep * np.maximum(1, np.abs(lb[lower_mask])))
+                             rstep * mx.maximum(1, mx.abs(lb[lower_mask])))
         x_new[upper_mask] = (ub[upper_mask] -
-                             rstep * np.maximum(1, np.abs(ub[upper_mask])))
+                             rstep * mx.maximum(1, mx.abs(ub[upper_mask])))
 
     tight_bounds = (x_new < lb) | (x_new > ub)
     x_new[tight_bounds] = 0.5 * (lb[tight_bounds] + ub[tight_bounds])
@@ -469,8 +469,8 @@ def CL_scaling_vector(x, g, lb, ub):
 
     Components of a vector v are defined as follows::
 
-               | ub[i] - x[i], if g[i] < 0 and ub[i] < np.inf
-        v[i] = | x[i] - lb[i], if g[i] > 0 and lb[i] > -np.inf
+               | ub[i] - x[i], if g[i] < 0 and ub[i] < mx.inf
+        v[i] = | x[i] - lb[i], if g[i] > 0 and lb[i] > -mx.inf
                | 1,           otherwise
 
     According to this definition v[i] >= 0 for all i. It differs from the
@@ -481,9 +481,9 @@ def CL_scaling_vector(x, g, lb, ub):
 
     Returns
     -------
-    v : ndarray with shape of x
+    v : array with shape of x
         Scaling vector.
-    dv : ndarray with shape of x
+    dv : array with shape of x
         Derivatives of v[i] with respect to x[i], diagonal elements of v's
         Jacobian.
 
@@ -494,14 +494,14 @@ def CL_scaling_vector(x, g, lb, ub):
            Minimization Problems," SIAM Journal on Scientific Computing,
            Vol. 21, Number 1, pp 1-23, 1999.
     """
-    v = np.ones_like(x)
-    dv = np.zeros_like(x)
+    v = mx.ones_like(x)
+    dv = mx.zeros_like(x)
 
-    mask = (g < 0) & np.isfinite(ub)
+    mask = (g < 0) & mx.isfinite(ub)
     v[mask] = ub[mask] - x[mask]
     dv[mask] = -1
 
-    mask = (g > 0) & np.isfinite(lb)
+    mask = (g > 0) & mx.isfinite(lb)
     v[mask] = x[mask] - lb[mask]
     dv[mask] = 1
 
@@ -511,29 +511,29 @@ def CL_scaling_vector(x, g, lb, ub):
 def reflective_transformation(y, lb, ub):
     """Compute reflective transformation and its gradient."""
     if in_bounds(y, lb, ub):
-        return y, np.ones_like(y)
+        return y, mx.ones_like(y)
 
-    lb_finite = np.isfinite(lb)
-    ub_finite = np.isfinite(ub)
+    lb_finite = mx.isfinite(lb)
+    ub_finite = mx.isfinite(ub)
 
     x = y.copy()
-    g_negative = np.zeros_like(y, dtype=bool)
+    g_negative = mx.zeros_like(y, dtype=bool)
 
     mask = lb_finite & ~ub_finite
-    x[mask] = np.maximum(y[mask], 2 * lb[mask] - y[mask])
+    x[mask] = mx.maximum(y[mask], 2 * lb[mask] - y[mask])
     g_negative[mask] = y[mask] < lb[mask]
 
     mask = ~lb_finite & ub_finite
-    x[mask] = np.minimum(y[mask], 2 * ub[mask] - y[mask])
+    x[mask] = mx.minimum(y[mask], 2 * ub[mask] - y[mask])
     g_negative[mask] = y[mask] > ub[mask]
 
     mask = lb_finite & ub_finite
     d = ub - lb
-    t = np.remainder(y[mask] - lb[mask], 2 * d[mask])
-    x[mask] = lb[mask] + np.minimum(t, 2 * d[mask] - t)
+    t = mx.remainder(y[mask] - lb[mask], 2 * d[mask])
+    x[mask] = lb[mask] + mx.minimum(t, 2 * d[mask] - t)
     g_negative[mask] = t > d[mask]
 
-    g = np.ones_like(y)
+    g = mx.ones_like(y)
     g[g_negative] = -1
 
     return x, g
@@ -598,14 +598,14 @@ def compute_grad(J, f):
 def compute_jac_scale(J, scale_inv_old=None):
     """Compute variables scale based on the Jacobian matrix."""
     if issparse(J):
-        scale_inv = np.asarray(J.power(2).sum(axis=0)).ravel()**0.5
+        scale_inv = mx.array(J.power(2).sum(axis=0)).ravel()**0.5
     else:
-        scale_inv = np.sum(J**2, axis=0)**0.5
+        scale_inv = mx.sum(J**2, axis=0)**0.5
 
     if scale_inv_old is None:
         scale_inv[scale_inv == 0] = 1
     else:
-        scale_inv = np.maximum(scale_inv, scale_inv_old)
+        scale_inv = mx.maximum(scale_inv, scale_inv_old)
 
     return 1 / scale_inv, scale_inv
 
@@ -618,7 +618,7 @@ def left_multiplied_operator(J, d):
         return d * J.matvec(x)
 
     def matmat(X):
-        return d[:, np.newaxis] * J.matmat(X)
+        return d[:, mx.newaxis] * J.matmat(X)
 
     def rmatvec(x):
         return J.rmatvec(x.ravel() * d)
@@ -632,10 +632,10 @@ def right_multiplied_operator(J, d):
     J = aslinearoperator(J)
 
     def matvec(x):
-        return J.matvec(np.ravel(x) * d)
+        return J.matvec(mx.ravel(x) * d)
 
     def matmat(X):
-        return J.matmat(X * d[:, np.newaxis])
+        return J.matmat(X * d[:, mx.newaxis])
 
     def rmatvec(x):
         return d * J.rmatvec(x)
@@ -656,7 +656,7 @@ def regularized_lsq_operator(J, diag):
     m, n = J.shape
 
     def matvec(x):
-        return np.hstack((J.matvec(x), diag * x))
+        return mx.hstack((J.matvec(x), diag * x))
 
     def rmatvec(x):
         x1 = x[:m]
@@ -693,11 +693,11 @@ def left_multiply(J, d, copy=True):
         J = J.copy()
 
     if issparse(J):
-        J.data *= np.repeat(d, np.diff(J.indptr))  # scikit-learn recipe.
+        J.data *= mx.repeat(d, mx.diff(J.indptr))  # scikit-learn recipe.
     elif isinstance(J, LinearOperator):
         J = left_multiplied_operator(J, d)
     else:
-        J *= d[:, np.newaxis]
+        J *= d[:, mx.newaxis]
 
     return J
 

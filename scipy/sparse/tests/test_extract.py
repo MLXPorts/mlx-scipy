@@ -3,7 +3,7 @@
 from numpy.testing import assert_equal
 from scipy.sparse import csr_matrix, csr_array, sparray
 
-import numpy as np
+import mlx.core as mx
 from scipy.sparse import _extract
 
 
@@ -34,13 +34,13 @@ class TestExtract:
         for A in self.cases:
             B = A.toarray()
             for k in [-3,-2,-1,0,1,2,3]:
-                assert_equal(_extract.tril(A,k=k).toarray(), np.tril(B,k=k))
+                assert_equal(_extract.tril(A,k=k).toarray(), mx.tril(B,k=k))
 
     def test_triu(self):
         for A in self.cases:
             B = A.toarray()
             for k in [-3,-2,-1,0,1,2,3]:
-                assert_equal(_extract.triu(A,k=k).toarray(), np.triu(B,k=k))
+                assert_equal(_extract.triu(A,k=k).toarray(), mx.triu(B,k=k))
 
     def test_array_vs_matrix(self):
         for A in self.cases:

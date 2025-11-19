@@ -9,7 +9,7 @@
 # September 13, 2016
 
 import warnings
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import inv, LinAlgError, norm, cond, svd
 
 from scipy._lib._util import _apply_over_batch
@@ -44,7 +44,7 @@ def solve_sylvester(a, b, q):
 
     Returns
     -------
-    x : (M, N) ndarray
+    x : (M, N) array
         The solution to the Sylvester equation.
 
     Raises
@@ -68,26 +68,26 @@ def solve_sylvester(a, b, q):
     --------
     Given `a`, `b`, and `q` solve for `x`:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> a = np.array([[-3, -2, 0], [-1, -1, 3], [3, -5, -1]])
-    >>> b = np.array([[1]])
-    >>> q = np.array([[1],[2],[3]])
+    >>> a = mx.array([[-3, -2, 0], [-1, -1, 3], [3, -5, -1]])
+    >>> b = mx.array([[1]])
+    >>> q = mx.array([[1],[2],[3]])
     >>> x = linalg.solve_sylvester(a, b, q)
     >>> x
     array([[ 0.0625],
            [-0.5625],
            [ 0.6875]])
-    >>> np.allclose(a.dot(x) + x.dot(b), q)
+    >>> mx.allclose(a.dot(x) + x.dot(b), q)
     True
 
     """
     # Accommodate empty a
     if a.size == 0 or b.size == 0:
-        tdict = {'s': np.float32, 'd': np.float64,
-                 'c': np.complex64, 'z': np.complex128}
+        tdict = {'s': mx.float32, 'd': mx.float64,
+                 'c': mx.complex64, 'z': mx.complex128}
         func, = get_lapack_funcs(('trsyl',), arrays=(a, b, q))
-        return np.empty(q.shape, dtype=tdict[func.typecode])
+        return mx.empty(q.shape, dtype=tdict[func.typecode])
 
     # Compute the Schur decomposition form of a
     r, u = schur(a, output='real')
@@ -96,7 +96,7 @@ def solve_sylvester(a, b, q):
     s, v = schur(b.conj().transpose(), output='real')
 
     # Construct f = u'*q*v
-    f = np.dot(np.dot(u.conj().transpose(), q), v)
+    f = mx.dot(mx.dot(u.conj().transpose(), q), v)
 
     # Call the Sylvester equation solver
     trsyl, = get_lapack_funcs(('trsyl',), (r, s, f))
@@ -110,7 +110,7 @@ def solve_sylvester(a, b, q):
     if info < 0:
         raise LinAlgError(f"Illegal value encountered in the {-info} term")
 
-    return np.dot(np.dot(u, y), v.conj().transpose())
+    return mx.dot(mx.dot(u, y), v.conj().transpose())
 
 
 @_apply_over_batch(('a', 2), ('q', 2))
@@ -130,7 +130,7 @@ def solve_continuous_lyapunov(a, q):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Solution to the continuous Lyapunov equation
 
     See Also
@@ -150,30 +150,30 @@ def solve_continuous_lyapunov(a, q):
     --------
     Given `a` and `q` solve for `x`:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> a = np.array([[-3, -2, 0], [-1, -1, 0], [0, -5, -1]])
-    >>> b = np.array([2, 4, -1])
-    >>> q = np.eye(3)
+    >>> a = mx.array([[-3, -2, 0], [-1, -1, 0], [0, -5, -1]])
+    >>> b = mx.array([2, 4, -1])
+    >>> q = mx.eye(3)
     >>> x = linalg.solve_continuous_lyapunov(a, q)
     >>> x
     array([[ -0.75  ,   0.875 ,  -3.75  ],
            [  0.875 ,  -1.375 ,   5.3125],
            [ -3.75  ,   5.3125, -27.0625]])
-    >>> np.allclose(a.dot(x) + x.dot(a.T), q)
+    >>> mx.allclose(a.dot(x) + x.dot(a.T), q)
     True
     """
 
-    a = np.atleast_2d(_asarray_validated(a, check_finite=True))
-    q = np.atleast_2d(_asarray_validated(q, check_finite=True))
+    a = mx.atleast_2d(_asarray_validated(a, check_finite=True))
+    q = mx.atleast_2d(_asarray_validated(q, check_finite=True))
 
     r_or_c = float
 
     for ind, _ in enumerate((a, q)):
-        if np.iscomplexobj(_):
+        if mx.iscomplexobj(_):
             r_or_c = complex
 
-        if not np.equal(*_.shape):
+        if not mx.equal(*_.shape):
             raise ValueError(f"Matrix {'aq'[ind]} should be square.")
 
     # Shape consistency check
@@ -182,10 +182,10 @@ def solve_continuous_lyapunov(a, q):
 
     # Accommodate empty array
     if a.size == 0:
-        tdict = {'s': np.float32, 'd': np.float64,
-                 'c': np.complex64, 'z': np.complex128}
+        tdict = {'s': mx.float32, 'd': mx.float64,
+                 'c': mx.complex64, 'z': mx.complex128}
         func, = get_lapack_funcs(('trsyl',), arrays=(a, q))
-        return np.empty(a.shape, dtype=tdict[func.typecode])
+        return mx.empty(a.shape, dtype=tdict[func.typecode])
 
     # Compute the Schur decomposition form of a
     r, u = schur(a, output='real')
@@ -225,11 +225,11 @@ def _solve_discrete_lyapunov_direct(a, q):
     `method=direct`. It is not supposed to be called directly.
     """
 
-    lhs = np.kron(a, a.conj())
-    lhs = np.eye(lhs.shape[0]) - lhs
+    lhs = mx.kron(a, a.conj())
+    lhs = mx.eye(lhs.shape[0]) - lhs
     x = solve(lhs, q.flatten())
 
-    return np.reshape(x, q.shape)
+    return mx.reshape(x, q.shape)
 
 
 def _solve_discrete_lyapunov_bilinear(a, q):
@@ -239,11 +239,11 @@ def _solve_discrete_lyapunov_bilinear(a, q):
     This function is called by the `solve_discrete_lyapunov` function with
     `method=bilinear`. It is not supposed to be called directly.
     """
-    eye = np.eye(a.shape[0])
+    eye = mx.eye(a.shape[0])
     aH = a.conj().transpose()
     aHI_inv = inv(aH + eye)
-    b = np.dot(aH - eye, aHI_inv)
-    c = 2*np.dot(np.dot(inv(a + eye), q), aHI_inv)
+    b = mx.dot(aH - eye, aHI_inv)
+    c = 2*mx.dot(mx.dot(inv(a + eye), q), aHI_inv)
     return solve_lyapunov(b.conj().transpose(), -c)
 
 
@@ -266,7 +266,7 @@ def solve_discrete_lyapunov(a, q, method=None):
 
     Returns
     -------
-    x : ndarray
+    x : array
         Solution to the discrete Lyapunov equation
 
     See Also
@@ -306,20 +306,20 @@ def solve_discrete_lyapunov(a, q, method=None):
     --------
     Given `a` and `q` solve for `x`:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> a = np.array([[0.2, 0.5],[0.7, -0.9]])
-    >>> q = np.eye(2)
+    >>> a = mx.array([[0.2, 0.5],[0.7, -0.9]])
+    >>> q = mx.eye(2)
     >>> x = linalg.solve_discrete_lyapunov(a, q)
     >>> x
     array([[ 0.70872893,  1.43518822],
            [ 1.43518822, -2.4266315 ]])
-    >>> np.allclose(a.dot(x).dot(a.T)-x, -q)
+    >>> mx.allclose(a.dot(x).dot(a.T)-x, -q)
     True
 
     """
-    a = np.asarray(a)
-    q = np.asarray(q)
+    a = mx.array(a)
+    q = mx.array(q)
     if method is None:
         # Select automatically based on size of matrices
         if a.shape[0] >= 10:
@@ -393,7 +393,7 @@ def solve_continuous_are(a, b, q, r, e=None, s=None, balanced=True):
 
     Returns
     -------
-    x : (M, M) ndarray
+    x : (M, M) array
         Solution to the continuous-time algebraic Riccati equation.
 
     Raises
@@ -448,17 +448,17 @@ def solve_continuous_are(a, b, q, r, e=None, s=None, balanced=True):
     --------
     Given `a`, `b`, `q`, and `r` solve for `x`:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> a = np.array([[4, 3], [-4.5, -3.5]])
-    >>> b = np.array([[1], [-1]])
-    >>> q = np.array([[9, 6], [6, 4.]])
+    >>> a = mx.array([[4, 3], [-4.5, -3.5]])
+    >>> b = mx.array([[1], [-1]])
+    >>> q = mx.array([[9, 6], [6, 4.]])
     >>> r = 1
     >>> x = linalg.solve_continuous_are(a, b, q, r)
     >>> x
     array([[ 21.72792206,  14.48528137],
            [ 14.48528137,   9.65685425]])
-    >>> np.allclose(a.T.dot(x) + x.dot(a)-x.dot(b).dot(b.T).dot(x), -q)
+    >>> mx.allclose(a.T.dot(x) + x.dot(a)-x.dot(b).dot(b.T).dot(x), -q)
     True
 
     """
@@ -472,7 +472,7 @@ def _solve_continuous_are(a, b, q, r, e, s, balanced):
     a, b, q, r, e, s, m, n, r_or_c, gen_are = _are_validate_args(
                                                      a, b, q, r, e, s, 'care')
 
-    H = np.empty((2*m+n, 2*m+n), dtype=r_or_c)
+    H = mx.empty((2*m+n, 2*m+n), dtype=r_or_c)
     H[:m, :m] = a
     H[:m, m:2*m] = 0.
     H[:m, 2*m:] = b
@@ -484,26 +484,26 @@ def _solve_continuous_are(a, b, q, r, e, s, balanced):
     H[2*m:, 2*m:] = r
 
     if gen_are and e is not None:
-        J = block_diag(e, e.conj().T, np.zeros_like(r, dtype=r_or_c))
+        J = block_diag(e, e.conj().T, mx.zeros_like(r, dtype=r_or_c))
     else:
-        J = block_diag(np.eye(2*m), np.zeros_like(r, dtype=r_or_c))
+        J = block_diag(mx.eye(2*m), mx.zeros_like(r, dtype=r_or_c))
 
     if balanced:
         # xGEBAL does not remove the diagonals before scaling. Also
         # to avoid destroying the Symplectic structure, we follow Ref.3
-        M = np.abs(H) + np.abs(J)
-        np.fill_diagonal(M, 0.)
+        M = mx.abs(H) + mx.abs(J)
+        mx.fill_diagonal(M, 0.)
         _, (sca, _) = matrix_balance(M, separate=1, permute=0)
         # do we need to bother?
-        if not np.allclose(sca, np.ones_like(sca)):
+        if not mx.allclose(sca, mx.ones_like(sca)):
             # Now impose diag(D,inv(D)) from Benner where D is
             # square root of s_i/s_(n+i) for i=0,....
-            sca = np.log2(sca)
+            sca = mx.log2(sca)
             # NOTE: Py3 uses "Bankers Rounding: round to the nearest even" !!
-            s = np.round((sca[m:2*m] - sca[:m])/2)
-            sca = 2 ** np.r_[s, -s, sca[2*m:]]
+            s = mx.round((sca[m:2*m] - sca[:m])/2)
+            sca = 2 ** mx.r_[s, -s, sca[2*m:]]
             # Elementwise multiplication via broadcasting.
-            elwisescale = sca[:, None] * np.reciprocal(sca)
+            elwisescale = sca[:, None] * mx.reciprocal(sca)
             H *= elwisescale
             J *= elwisescale
 
@@ -521,13 +521,13 @@ def _solve_continuous_are(a, b, q, r, e, s, balanced):
 
     # Get the relevant parts of the stable subspace basis
     if e is not None:
-        u, _ = qr(np.vstack((e.dot(u[:m, :m]), u[m:, :m])))
+        u, _ = qr(mx.vstack((e.dot(u[:m, :m]), u[m:, :m])))
     u00 = u[:m, :m]
     u10 = u[m:, :m]
 
     # Solve via back-substituion after checking the condition of u00
     up, ul, uu = lu(u00)
-    if 1/cond(uu) < np.spacing(1.):
+    if 1/cond(uu) < mx.spacing(1.):
         raise LinAlgError('Failed to find a finite solution.')
 
     # Exploit the triangular structure
@@ -545,7 +545,7 @@ def _solve_continuous_are(a, b, q, r, e, s, balanced):
     u_sym = u00.conj().T.dot(u10)
     n_u_sym = norm(u_sym, 1)
     u_sym = u_sym - u_sym.conj().T
-    sym_threshold = np.max([np.spacing(1000.), 0.1*n_u_sym])
+    sym_threshold = mx.max([mx.spacing(1000.), 0.1*n_u_sym])
 
     if norm(u_sym, 1) > sym_threshold:
         raise LinAlgError('The associated Hamiltonian pencil has eigenvalues '
@@ -607,7 +607,7 @@ def solve_discrete_are(a, b, q, r, e=None, s=None, balanced=True):
 
     Returns
     -------
-    x : (M, M) ndarray
+    x : (M, M) array
         Solution to the discrete algebraic Riccati equation.
 
     Raises
@@ -664,18 +664,18 @@ def solve_discrete_are(a, b, q, r, e=None, s=None, balanced=True):
     --------
     Given `a`, `b`, `q`, and `r` solve for `x`:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg as la
-    >>> a = np.array([[0, 1], [0, -1]])
-    >>> b = np.array([[1, 0], [2, 1]])
-    >>> q = np.array([[-4, -4], [-4, 7]])
-    >>> r = np.array([[9, 3], [3, 1]])
+    >>> a = mx.array([[0, 1], [0, -1]])
+    >>> b = mx.array([[1, 0], [2, 1]])
+    >>> q = mx.array([[-4, -4], [-4, 7]])
+    >>> r = mx.array([[9, 3], [3, 1]])
     >>> x = la.solve_discrete_are(a, b, q, r)
     >>> x
     array([[-4., -4.],
            [-4.,  7.]])
     >>> R = la.solve(r + b.T.dot(x).dot(b), b.T.dot(x).dot(a))
-    >>> np.allclose(a.T.dot(x).dot(a) - x - a.T.dot(x).dot(b).dot(R), -q)
+    >>> mx.allclose(a.T.dot(x).dot(a) - x - a.T.dot(x).dot(b).dot(R), -q)
     True
 
     """
@@ -690,36 +690,36 @@ def _solve_discrete_are(a, b, q, r, e, s, balanced):
                                                      a, b, q, r, e, s, 'dare')
 
     # Form the matrix pencil
-    H = np.zeros((2*m+n, 2*m+n), dtype=r_or_c)
+    H = mx.zeros((2*m+n, 2*m+n), dtype=r_or_c)
     H[:m, :m] = a
     H[:m, 2*m:] = b
     H[m:2*m, :m] = -q
-    H[m:2*m, m:2*m] = np.eye(m) if e is None else e.conj().T
+    H[m:2*m, m:2*m] = mx.eye(m) if e is None else e.conj().T
     H[m:2*m, 2*m:] = 0. if s is None else -s
     H[2*m:, :m] = 0. if s is None else s.conj().T
     H[2*m:, 2*m:] = r
 
-    J = np.zeros_like(H, dtype=r_or_c)
-    J[:m, :m] = np.eye(m) if e is None else e
+    J = mx.zeros_like(H, dtype=r_or_c)
+    J[:m, :m] = mx.eye(m) if e is None else e
     J[m:2*m, m:2*m] = a.conj().T
     J[2*m:, m:2*m] = -b.conj().T
 
     if balanced:
         # xGEBAL does not remove the diagonals before scaling. Also
         # to avoid destroying the Symplectic structure, we follow Ref.3
-        M = np.abs(H) + np.abs(J)
-        np.fill_diagonal(M, 0.)
+        M = mx.abs(H) + mx.abs(J)
+        mx.fill_diagonal(M, 0.)
         _, (sca, _) = matrix_balance(M, separate=1, permute=0)
         # do we need to bother?
-        if not np.allclose(sca, np.ones_like(sca)):
+        if not mx.allclose(sca, mx.ones_like(sca)):
             # Now impose diag(D,inv(D)) from Benner where D is
             # square root of s_i/s_(n+i) for i=0,....
-            sca = np.log2(sca)
+            sca = mx.log2(sca)
             # NOTE: Py3 uses "Bankers Rounding: round to the nearest even" !!
-            s = np.round((sca[m:2*m] - sca[:m])/2)
-            sca = 2 ** np.r_[s, -s, sca[2*m:]]
+            s = mx.round((sca[m:2*m] - sca[:m])/2)
+            sca = 2 ** mx.r_[s, -s, sca[2*m:]]
             # Elementwise multiplication via broadcasting.
-            elwisescale = sca[:, None] * np.reciprocal(sca)
+            elwisescale = sca[:, None] * mx.reciprocal(sca)
             H *= elwisescale
             J *= elwisescale
 
@@ -739,14 +739,14 @@ def _solve_discrete_are(a, b, q, r, e, s, balanced):
 
     # Get the relevant parts of the stable subspace basis
     if e is not None:
-        u, _ = qr(np.vstack((e.dot(u[:m, :m]), u[m:, :m])))
+        u, _ = qr(mx.vstack((e.dot(u[:m, :m]), u[m:, :m])))
     u00 = u[:m, :m]
     u10 = u[m:, :m]
 
     # Solve via back-substituion after checking the condition of u00
     up, ul, uu = lu(u00)
 
-    if 1/cond(uu) < np.spacing(1.):
+    if 1/cond(uu) < mx.spacing(1.):
         raise LinAlgError('Failed to find a finite solution.')
 
     # Exploit the triangular structure
@@ -764,7 +764,7 @@ def _solve_discrete_are(a, b, q, r, e, s, balanced):
     u_sym = u00.conj().T.dot(u10)
     n_u_sym = norm(u_sym, 1)
     u_sym = u_sym - u_sym.conj().T
-    sym_threshold = np.max([np.spacing(1000.), 0.1*n_u_sym])
+    sym_threshold = mx.max([mx.spacing(1000.), 0.1*n_u_sym])
 
     if norm(u_sym, 1) > sym_threshold:
         raise LinAlgError('The associated symplectic pencil has eigenvalues '
@@ -801,7 +801,7 @@ def _are_validate_args(a, b, q, r, e, s, eq_type='care'):
 
     Returns
     -------
-    a, b, q, r, e, s : ndarray
+    a, b, q, r, e, s : array
         Regularized input data
     m, n : int
         shape of the problem
@@ -816,20 +816,20 @@ def _are_validate_args(a, b, q, r, e, s, eq_type='care'):
         raise ValueError("Equation type unknown. "
                          "Only 'care' and 'dare' is understood")
 
-    a = np.atleast_2d(_asarray_validated(a, check_finite=True))
-    b = np.atleast_2d(_asarray_validated(b, check_finite=True))
-    q = np.atleast_2d(_asarray_validated(q, check_finite=True))
-    r = np.atleast_2d(_asarray_validated(r, check_finite=True))
+    a = mx.atleast_2d(_asarray_validated(a, check_finite=True))
+    b = mx.atleast_2d(_asarray_validated(b, check_finite=True))
+    q = mx.atleast_2d(_asarray_validated(q, check_finite=True))
+    r = mx.atleast_2d(_asarray_validated(r, check_finite=True))
 
     # Get the correct data types otherwise NumPy complains
     # about pushing complex numbers into real arrays.
-    r_or_c = complex if np.iscomplexobj(b) else float
+    r_or_c = complex if mx.iscomplexobj(b) else float
 
     for ind, mat in enumerate((a, q, r)):
-        if np.iscomplexobj(mat):
+        if mx.iscomplexobj(mat):
             r_or_c = complex
 
-        if not np.equal(*mat.shape):
+        if not mx.equal(*mat.shape):
             raise ValueError(f"Matrix {'aqr'[ind]} should be square.")
 
     # Shape consistency checks
@@ -843,13 +843,13 @@ def _are_validate_args(a, b, q, r, e, s, eq_type='care'):
 
     # Check if the data matrices q, r are (sufficiently) hermitian
     for ind, mat in enumerate((q, r)):
-        if norm(mat - mat.conj().T, 1) > np.spacing(norm(mat, 1))*100:
+        if norm(mat - mat.conj().T, 1) > mx.spacing(norm(mat, 1))*100:
             raise ValueError(f"Matrix {'qr'[ind]} should be symmetric/hermitian.")
 
     # Continuous time ARE should have a nonsingular r matrix.
     if eq_type == 'care':
         min_sv = svd(r, compute_uv=False)[-1]
-        if min_sv == 0. or min_sv < np.spacing(1.)*norm(r, 1):
+        if min_sv == 0. or min_sv < mx.spacing(1.)*norm(r, 1):
             raise ValueError('Matrix r is numerically singular.')
 
     # Check if the generalized case is required with omitted arguments
@@ -858,23 +858,23 @@ def _are_validate_args(a, b, q, r, e, s, eq_type='care'):
 
     if generalized_case:
         if e is not None:
-            e = np.atleast_2d(_asarray_validated(e, check_finite=True))
-            if not np.equal(*e.shape):
+            e = mx.atleast_2d(_asarray_validated(e, check_finite=True))
+            if not mx.equal(*e.shape):
                 raise ValueError("Matrix e should be square.")
             if m != e.shape[0]:
                 raise ValueError("Matrix a and e should have the same shape.")
             # numpy.linalg.cond doesn't check for exact zeros and
             # emits a runtime warning. Hence the following manual check.
             min_sv = svd(e, compute_uv=False)[-1]
-            if min_sv == 0. or min_sv < np.spacing(1.) * norm(e, 1):
+            if min_sv == 0. or min_sv < mx.spacing(1.) * norm(e, 1):
                 raise ValueError('Matrix e is numerically singular.')
-            if np.iscomplexobj(e):
+            if mx.iscomplexobj(e):
                 r_or_c = complex
         if s is not None:
-            s = np.atleast_2d(_asarray_validated(s, check_finite=True))
+            s = mx.atleast_2d(_asarray_validated(s, check_finite=True))
             if s.shape != b.shape:
                 raise ValueError("Matrix b and s should have the same shape.")
-            if np.iscomplexobj(s):
+            if mx.iscomplexobj(s):
                 r_or_c = complex
 
     return a, b, q, r, e, s, m, n, r_or_c, generalized_case

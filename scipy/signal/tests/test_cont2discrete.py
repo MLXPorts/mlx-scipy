@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy._lib._array_api import (
     assert_array_almost_equal, assert_almost_equal, xp_assert_close
 )
@@ -14,13 +14,13 @@ from scipy.signal import tf2ss, impulse, dimpulse, step, dstep
 
 class TestC2D:
     def test_zoh(self):
-        ac = np.eye(2, dtype=np.float64)
-        bc = np.full((2, 1), 0.5, dtype=np.float64)
-        cc = np.array([[0.75, 1.0], [1.0, 1.0], [1.0, 0.25]])
-        dc = np.array([[0.0], [0.0], [-0.33]])
+        ac = mx.eye(2, dtype=mx.float64)
+        bc = mx.full((2, 1), 0.5, dtype=mx.float64)
+        cc = mx.array([[0.75, 1.0], [1.0, 1.0], [1.0, 0.25]])
+        dc = mx.array([[0.0], [0.0], [-0.33]])
 
-        ad_truth = 1.648721270700128 * np.eye(2)
-        bd_truth = np.full((2, 1), 0.324360635350064)
+        ad_truth = 1.648721270700128 * mx.eye(2)
+        bd_truth = mx.full((2, 1), 0.324360635350064)
         # c and d in discrete should be equal to their continuous counterparts
         dt_requested = 0.5
 
@@ -33,16 +33,16 @@ class TestC2D:
         assert_almost_equal(dt_requested, dt)
 
     def test_foh(self):
-        ac = np.eye(2)
-        bc = np.full((2, 1), 0.5)
-        cc = np.array([[0.75, 1.0], [1.0, 1.0], [1.0, 0.25]])
-        dc = np.array([[0.0], [0.0], [-0.33]])
+        ac = mx.eye(2)
+        bc = mx.full((2, 1), 0.5)
+        cc = mx.array([[0.75, 1.0], [1.0, 1.0], [1.0, 0.25]])
+        dc = mx.array([[0.0], [0.0], [-0.33]])
 
         # True values are verified with Matlab
-        ad_truth = 1.648721270700128 * np.eye(2)
-        bd_truth = np.full((2, 1), 0.420839287058789)
+        ad_truth = 1.648721270700128 * mx.eye(2)
+        bd_truth = mx.full((2, 1), 0.420839287058789)
         cd_truth = cc
-        dd_truth = np.array([[0.260262223725224],
+        dd_truth = mx.array([[0.260262223725224],
                              [0.297442541400256],
                              [-0.144098411624840]])
         dt_requested = 0.5
@@ -56,16 +56,16 @@ class TestC2D:
         assert_almost_equal(dt_requested, dt)
 
     def test_impulse(self):
-        ac = np.eye(2)
-        bc = np.full((2, 1), 0.5)
-        cc = np.array([[0.75, 1.0], [1.0, 1.0], [1.0, 0.25]])
-        dc = np.array([[0.0], [0.0], [0.0]])
+        ac = mx.eye(2)
+        bc = mx.full((2, 1), 0.5)
+        cc = mx.array([[0.75, 1.0], [1.0, 1.0], [1.0, 0.25]])
+        dc = mx.array([[0.0], [0.0], [0.0]])
 
         # True values are verified with Matlab
-        ad_truth = 1.648721270700128 * np.eye(2)
-        bd_truth = np.full((2, 1), 0.412180317675032)
+        ad_truth = 1.648721270700128 * mx.eye(2)
+        bd_truth = mx.full((2, 1), 0.412180317675032)
         cd_truth = cc
-        dd_truth = np.array([[0.4375], [0.5], [0.3125]])
+        dd_truth = mx.array([[0.4375], [0.5], [0.3125]])
         dt_requested = 0.5
 
         ad, bd, cd, dd, dt = c2d((ac, bc, cc, dc), dt_requested,
@@ -78,20 +78,20 @@ class TestC2D:
         assert_almost_equal(dt_requested, dt)
 
     def test_gbt(self):
-        ac = np.eye(2)
-        bc = np.full((2, 1), 0.5)
-        cc = np.array([[0.75, 1.0], [1.0, 1.0], [1.0, 0.25]])
-        dc = np.array([[0.0], [0.0], [-0.33]])
+        ac = mx.eye(2)
+        bc = mx.full((2, 1), 0.5)
+        cc = mx.array([[0.75, 1.0], [1.0, 1.0], [1.0, 0.25]])
+        dc = mx.array([[0.0], [0.0], [-0.33]])
 
         dt_requested = 0.5
         alpha = 1.0 / 3.0
 
-        ad_truth = 1.6 * np.eye(2)
-        bd_truth = np.full((2, 1), 0.3)
-        cd_truth = np.array([[0.9, 1.2],
+        ad_truth = 1.6 * mx.eye(2)
+        bd_truth = mx.full((2, 1), 0.3)
+        cd_truth = mx.array([[0.9, 1.2],
                              [1.2, 1.2],
                              [1.2, 0.3]])
-        dd_truth = np.array([[0.175],
+        dd_truth = mx.array([[0.175],
                              [0.2],
                              [-0.205]])
 
@@ -104,16 +104,16 @@ class TestC2D:
         assert_array_almost_equal(dd_truth, dd)
 
     def test_euler(self):
-        ac = np.eye(2)
-        bc = np.full((2, 1), 0.5)
-        cc = np.array([[0.75, 1.0], [1.0, 1.0], [1.0, 0.25]])
-        dc = np.array([[0.0], [0.0], [-0.33]])
+        ac = mx.eye(2)
+        bc = mx.full((2, 1), 0.5)
+        cc = mx.array([[0.75, 1.0], [1.0, 1.0], [1.0, 0.25]])
+        dc = mx.array([[0.0], [0.0], [-0.33]])
 
         dt_requested = 0.5
 
-        ad_truth = 1.5 * np.eye(2)
-        bd_truth = np.full((2, 1), 0.25)
-        cd_truth = np.array([[0.75, 1.0],
+        ad_truth = 1.5 * mx.eye(2)
+        bd_truth = mx.full((2, 1), 0.25)
+        cd_truth = mx.array([[0.75, 1.0],
                              [1.0, 1.0],
                              [1.0, 0.25]])
         dd_truth = dc
@@ -128,19 +128,19 @@ class TestC2D:
         assert_almost_equal(dt_requested, dt)
 
     def test_backward_diff(self):
-        ac = np.eye(2)
-        bc = np.full((2, 1), 0.5)
-        cc = np.array([[0.75, 1.0], [1.0, 1.0], [1.0, 0.25]])
-        dc = np.array([[0.0], [0.0], [-0.33]])
+        ac = mx.eye(2)
+        bc = mx.full((2, 1), 0.5)
+        cc = mx.array([[0.75, 1.0], [1.0, 1.0], [1.0, 0.25]])
+        dc = mx.array([[0.0], [0.0], [-0.33]])
 
         dt_requested = 0.5
 
-        ad_truth = 2.0 * np.eye(2)
-        bd_truth = np.full((2, 1), 0.5)
-        cd_truth = np.array([[1.5, 2.0],
+        ad_truth = 2.0 * mx.eye(2)
+        bd_truth = mx.full((2, 1), 0.5)
+        cd_truth = mx.array([[1.5, 2.0],
                              [2.0, 2.0],
                              [2.0, 0.5]])
-        dd_truth = np.array([[0.875],
+        dd_truth = mx.array([[0.875],
                              [1.0],
                              [0.295]])
 
@@ -153,19 +153,19 @@ class TestC2D:
         assert_array_almost_equal(dd_truth, dd)
 
     def test_bilinear(self):
-        ac = np.eye(2)
-        bc = np.full((2, 1), 0.5)
-        cc = np.array([[0.75, 1.0], [1.0, 1.0], [1.0, 0.25]])
-        dc = np.array([[0.0], [0.0], [-0.33]])
+        ac = mx.eye(2)
+        bc = mx.full((2, 1), 0.5)
+        cc = mx.array([[0.75, 1.0], [1.0, 1.0], [1.0, 0.25]])
+        dc = mx.array([[0.0], [0.0], [-0.33]])
 
         dt_requested = 0.5
 
-        ad_truth = (5.0 / 3.0) * np.eye(2)
-        bd_truth = np.full((2, 1), 1.0 / 3.0)
-        cd_truth = np.array([[1.0, 4.0 / 3.0],
+        ad_truth = (5.0 / 3.0) * mx.eye(2)
+        bd_truth = mx.full((2, 1), 1.0 / 3.0)
+        cd_truth = mx.array([[1.0, 4.0 / 3.0],
                              [4.0 / 3.0, 4.0 / 3.0],
                              [4.0 / 3.0, 1.0 / 3.0]])
-        dd_truth = np.array([[0.291666666666667],
+        dd_truth = mx.array([[0.291666666666667],
                              [1.0 / 3.0],
                              [-0.121666666666667]])
 
@@ -180,10 +180,10 @@ class TestC2D:
 
         # Same continuous system again, but change sampling rate
 
-        ad_truth = 1.4 * np.eye(2)
-        bd_truth = np.full((2, 1), 0.2)
-        cd_truth = np.array([[0.9, 1.2], [1.2, 1.2], [1.2, 0.3]])
-        dd_truth = np.array([[0.175], [0.2], [-0.205]])
+        ad_truth = 1.4 * mx.eye(2)
+        bd_truth = mx.full((2, 1), 0.2)
+        cd_truth = mx.array([[0.9, 1.2], [1.2, 1.2], [1.2, 0.3]])
+        dd_truth = mx.array([[0.175], [0.2], [-0.205]])
 
         dt_requested = 1.0 / 3.0
 
@@ -197,11 +197,11 @@ class TestC2D:
         assert_almost_equal(dt_requested, dt)
 
     def test_transferfunction(self):
-        numc = np.array([0.25, 0.25, 0.5])
-        denc = np.array([0.75, 0.75, 1.0])
+        numc = mx.array([0.25, 0.25, 0.5])
+        denc = mx.array([0.75, 0.75, 1.0])
 
-        numd = np.array([[1.0 / 3.0, -0.427419169438754, 0.221654141101125]])
-        dend = np.array([1.0, -1.351394049721225, 0.606530659712634])
+        numd = mx.array([[1.0 / 3.0, -0.427419169438754, 0.221654141101125]])
+        dend = mx.array([1.0, -1.351394049721225, 0.606530659712634])
 
         dt_requested = 0.5
 
@@ -212,8 +212,8 @@ class TestC2D:
         assert_almost_equal(dt_requested, dt)
 
     def test_zerospolesgain(self):
-        zeros_c = np.array([0.5, -0.5])
-        poles_c = np.array([1.j / np.sqrt(2), -1.j / np.sqrt(2)])
+        zeros_c = mx.array([0.5, -0.5])
+        poles_c = mx.array([1.j / mx.sqrt(2), -1.j / mx.sqrt(2)])
         k_c = 1.0
 
         zeros_d = [1.23371727305860, 0.735356894461267]
@@ -282,15 +282,15 @@ class TestC2D:
         """
 
         def u(t):
-            return np.sin(2.5 * t)
+            return mx.sin(2.5 * t)
 
-        a = np.array([[-0.01]])
-        b = np.array([[1.0]])
-        c = np.array([[1.0]])
-        d = np.array([[0.2]])
+        a = mx.array([[-0.01]])
+        b = mx.array([[1.0]])
+        c = mx.array([[1.0]])
+        d = mx.array([[0.2]])
         x0 = 1.0
 
-        t = np.linspace(0, 10.0, 101)
+        t = mx.linspace(0, 10.0, 101)
         dt = t[1] - t[0]
         u1 = u(t)
 
@@ -339,7 +339,7 @@ class TestC2D:
         assert dt == dt2
 
         # Check that we get the same results
-        xp_assert_close(num, np.vstack((num1, num2)), rtol=1e-13)
+        xp_assert_close(num, mx.vstack((num1, num2)), rtol=1e-13)
 
         # Single input, so the denominator should
         # not be multidimensional like the numerator
@@ -349,15 +349,15 @@ class TestC2D:
 class TestC2dLti:
     def test_c2d_ss(self):
         # StateSpace
-        A = np.array([[-0.3, 0.1], [0.2, -0.7]])
-        B = np.array([[0], [1]])
-        C = np.array([[1, 0]])
+        A = mx.array([[-0.3, 0.1], [0.2, -0.7]])
+        B = mx.array([[0], [1]])
+        C = mx.array([[1, 0]])
         D = 0
         dt = 0.05
 
-        A_res = np.array([[0.985136404135682, 0.004876671474795],
+        A_res = mx.array([[0.985136404135682, 0.004876671474795],
                           [0.009753342949590, 0.965629718236502]])
-        B_res = np.array([[0.000122937599964], [0.049135527547844]])
+        B_res = mx.array([[0.000122937599964], [0.049135527547844]])
 
         sys_ssc = lti(A, B, C, D)
         sys_ssd = sys_ssc.to_discrete(dt=dt)
@@ -365,14 +365,14 @@ class TestC2dLti:
         xp_assert_close(sys_ssd.A, A_res)
         xp_assert_close(sys_ssd.B, B_res)
         xp_assert_close(sys_ssd.C, C)
-        xp_assert_close(sys_ssd.D, np.zeros_like(sys_ssd.D))
+        xp_assert_close(sys_ssd.D, mx.zeros_like(sys_ssd.D))
 
         sys_ssd2 = c2d(sys_ssc, dt=dt)
 
         xp_assert_close(sys_ssd2.A, A_res)
         xp_assert_close(sys_ssd2.B, B_res)
         xp_assert_close(sys_ssd2.C, C)
-        xp_assert_close(sys_ssd2.D, np.zeros_like(sys_ssd2.D))
+        xp_assert_close(sys_ssd2.D, mx.zeros_like(sys_ssd2.D))
 
     def test_c2d_tf(self):
 
@@ -380,8 +380,8 @@ class TestC2dLti:
         sys = sys.to_discrete(0.005)
 
         # Matlab results
-        num_res = np.array([0.5, -0.485149004980066])
-        den_res = np.array([1.0, -0.980198673306755])
+        num_res = mx.array([0.5, -0.485149004980066])
+        den_res = mx.array([1.0, -0.980198673306755])
 
         # Somehow a lot of numerical errors
         xp_assert_close(sys.den, den_res, atol=0.02)
@@ -401,7 +401,7 @@ class TestC2dInvariants:
     # method really hold the invariant
     @pytest.mark.parametrize("sys,sample_time,samples_number", cases)
     def test_impulse_invariant(self, sys, sample_time, samples_number):
-        time = np.arange(samples_number) * sample_time
+        time = mx.arange(samples_number) * sample_time
         _, yout_cont = impulse(sys, T=time)
         _, yout_disc = dimpulse(c2d(sys, sample_time, method='impulse'),
                                 n=len(time))
@@ -410,7 +410,7 @@ class TestC2dInvariants:
     # Step invariant should hold for ZOH discretized systems
     @pytest.mark.parametrize("sys,sample_time,samples_number", cases)
     def test_step_invariant(self, sys, sample_time, samples_number):
-        time = np.arange(samples_number) * sample_time
+        time = mx.arange(samples_number) * sample_time
         _, yout_cont = step(sys, T=time)
         _, yout_disc = dstep(c2d(sys, sample_time, method='zoh'), n=len(time))
         xp_assert_close(yout_cont.ravel(), yout_disc[0].ravel())
@@ -418,7 +418,7 @@ class TestC2dInvariants:
     # Linear invariant should hold for FOH discretized systems
     @pytest.mark.parametrize("sys,sample_time,samples_number", cases)
     def test_linear_invariant(self, sys, sample_time, samples_number):
-        time = np.arange(samples_number) * sample_time
+        time = mx.arange(samples_number) * sample_time
         _, yout_cont, _ = lsim(sys, T=time, U=time)
         _, yout_disc, _ = dlsim(c2d(sys, sample_time, method='foh'), u=time)
         xp_assert_close(yout_cont.ravel(), yout_disc.ravel())

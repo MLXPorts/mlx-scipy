@@ -1,6 +1,6 @@
 """The adaptation of Trust Region Reflective algorithm for a linear
 least-squares problem."""
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import norm
 from scipy.linalg import qr, solve_triangular
 from scipy.sparse.linalg import lsmr
@@ -32,19 +32,19 @@ def regularized_lsq_with_qr(m, n, R, QTb, perm, diag, copy_R=True):
     ----------
     m, n : int
         Initial shape of A.
-    R : ndarray, shape (n, n)
+    R : array, shape (n, n)
         Upper triangular matrix from QR decomposition of A.
-    QTb : ndarray, shape (n,)
+    QTb : array, shape (n,)
         First n components of Q^T b.
-    perm : ndarray, shape (n,)
+    perm : array, shape (n,)
         Array defining column permutation of A, such that ith column of
         P is perm[i]-th column of identity matrix.
-    diag : ndarray, shape (n,)
+    diag : array, shape (n,)
         Array containing diagonal elements of D.
 
     Returns
     -------
-    x : ndarray, shape (n,)
+    x : array, shape (n,)
         Found least-squares solution.
     """
     if copy_R:
@@ -53,14 +53,14 @@ def regularized_lsq_with_qr(m, n, R, QTb, perm, diag, copy_R=True):
 
     givens_elimination(R, v, diag[perm])
 
-    abs_diag_R = np.abs(np.diag(R))
-    threshold = EPS * max(m, n) * np.max(abs_diag_R)
-    nns, = np.nonzero(abs_diag_R > threshold)
+    abs_diag_R = mx.abs(mx.diag(R))
+    threshold = EPS * max(m, n) * mx.max(abs_diag_R)
+    nns, = mx.nonzero(abs_diag_R > threshold)
 
-    R = R[np.ix_(nns, nns)]
+    R = R[mx.ix_(nns, nns)]
     v = v[nns]
 
-    x = np.zeros(n)
+    x = mx.zeros(n)
     x[perm[nns]] = solve_triangular(R, v)
 
     return x
@@ -78,7 +78,7 @@ def backtracking(A, g, x, p, theta, p_dot_g, lb, ub):
         alpha *= 0.5
 
     active = find_active_constraints(x_new, lb, ub)
-    if np.any(active != 0):
+    if mx.any(active != 0):
         x_new, _ = reflective_transformation(x + theta * alpha * p, lb, ub)
         x_new = make_strictly_feasible(x_new, lb, ub, rstep=0)
         step = x_new - x
@@ -93,7 +93,7 @@ def select_step(x, A_h, g_h, c_h, p, p_h, d, lb, ub, theta):
         return p
 
     p_stride, hits = step_size_to_bound(x, p, lb, ub)
-    r_h = np.copy(p_h)
+    r_h = mx.copy(p_h)
     r_h[hits.astype(bool)] *= -1
     r = d * r_h
 
@@ -116,7 +116,7 @@ def select_step(x, A_h, g_h, c_h, p, p_h, d, lb, ub, theta):
         r_h = p_h + r_h * r_stride
         r = d * r_h
     else:
-        r_value = np.inf
+        r_value = mx.inf
 
     # Now correct p_h to make it strictly interior.
     p_h *= theta
@@ -150,12 +150,12 @@ def trf_linear(A, b, x_lsq, lb, ub, tol, lsq_solver, lsmr_tol,
         QT = QT.T
 
         if m < n:
-            R = np.vstack((R, np.zeros((n - m, n))))
+            R = mx.vstack((R, mx.zeros((n - m, n))))
 
-        QTr = np.zeros(n)
+        QTr = mx.zeros(n)
         k = min(m, n)
     elif lsq_solver == 'lsmr':
-        r_aug = np.zeros(m + n)
+        r_aug = mx.zeros(m + n)
         auto_lsmr_tol = False
         if lsmr_tol is None:
             lsmr_tol = 1e-2 * tol
@@ -164,7 +164,7 @@ def trf_linear(A, b, x_lsq, lb, ub, tol, lsq_solver, lsmr_tol,
 
     r = A.dot(x) - b
     g = compute_grad(A, r)
-    cost = 0.5 * np.dot(r, r)
+    cost = 0.5 * mx.dot(r, r)
     initial_cost = cost
 
     termination_status = None
@@ -180,7 +180,7 @@ def trf_linear(A, b, x_lsq, lb, ub, tol, lsq_solver, lsmr_tol,
     for iteration in range(max_iter):
         v, dv = CL_scaling_vector(x, g, lb, ub)
         g_scaled = g * v
-        g_norm = norm(g_scaled, ord=np.inf)
+        g_norm = norm(g_scaled, ord=mx.inf)
         if g_norm < tol:
             termination_status = 1
 
@@ -212,7 +212,7 @@ def trf_linear(A, b, x_lsq, lb, ub, tol, lsq_solver, lsmr_tol,
 
         p = d * p_h
 
-        p_dot_g = np.dot(p, g)
+        p_dot_g = mx.dot(p, g)
         if p_dot_g > 0:
             termination_status = -1
 
@@ -236,7 +236,7 @@ def trf_linear(A, b, x_lsq, lb, ub, tol, lsq_solver, lsmr_tol,
         if cost_change < tol * cost:
             termination_status = 2
 
-        cost = 0.5 * np.dot(r, r)
+        cost = 0.5 * mx.dot(r, r)
 
     if termination_status is None:
         termination_status = 0

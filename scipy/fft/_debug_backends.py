@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 class NumPyBackend:
     """Backend that uses numpy.fft"""
@@ -8,7 +8,7 @@ class NumPyBackend:
     def __ua_function__(method, args, kwargs):
         kwargs.pop("overwrite_x", None)
 
-        fn = getattr(np.fft, method.__name__, None)
+        fn = getattr(mx.fft, method.__name__, None)
         return (NotImplemented if fn is None
                 else fn(*args, **kwargs))
 

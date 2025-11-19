@@ -8,7 +8,7 @@ Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 Python translation by Nickolai Belakovski.
 '''
 
-import numpy as np
+import mlx.core as mx
 from ..common.checkbreak import checkbreak_con
 from ..common.consts import REALMAX, EPS, DEBUGGING, MIN_MAXFILT
 from ..common.infos import INFO_DEFAULT, MAXTR_REACHED, DAMAGING_ROUNDING, \
@@ -40,8 +40,8 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
 
     # Local variables
     solver = 'COBYLA'
-    A = np.zeros((np.size(x), np.size(constr))) # A contains the approximate gradient for the constraints
-    distsq = np.zeros(np.size(x) + 1)
+    A = mx.zeros((mx.size(x), mx.size(constr))) # A contains the approximate gradient for the constraints
+    distsq = mx.zeros(mx.size(x) + 1)
     # CPENMIN is the minimum of the penalty parameter CPEN for the L-infinity
     # constraint violation in the merit function. Note that CPENMIN = 0 in Powell's
     # implementation, which allows CPEN to be 0. Here, we take CPENMIN > 0 so that CPEN
@@ -58,10 +58,10 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
     cpenmin = EPS
 
     # Sizes
-    m_lcon = np.size(bvec) if bvec is not None else 0
-    num_constraints = np.size(constr)
+    m_lcon = mx.size(bvec) if bvec is not None else 0
+    num_constraints = mx.size(constr)
     m_nlcon = num_constraints - m_lcon
-    num_vars = np.size(x)
+    num_vars = mx.size(x)
 
     # Preconditions
     if DEBUGGING:
@@ -70,13 +70,13 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
         assert num_vars >= 1
         assert maxfun >= num_vars + 2
         assert rhobeg >= rhoend and rhoend > 0
-        assert all(np.isfinite(x))
+        assert all(mx.isfinite(x))
         assert 0 <= eta1 <= eta2 < 1
         assert 0 < gamma1 < 1 < gamma2
         assert 0 <= ctol
         assert 0 <= cweight
         assert 0 <= maxhist <= maxfun
-        assert amat is None or np.shape(amat) == (m_lcon, num_vars)
+        assert amat is None or mx.shape(amat) == (m_lcon, num_vars)
         assert min(MIN_MAXFILT, maxfun) <= maxfilt <= maxfun
 
     #====================#
@@ -99,10 +99,10 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
     # interfere with the iterations. COBYLA is NOT a filter method but a trust-region
     # method based on an L-infinity merit function. Powell's implementation does not
     # use a filter to select the iterate, possibly returning a suboptimal iterate.
-    cfilt = np.zeros(np.minimum(np.maximum(maxfilt, 1), maxfun))
-    confilt = np.zeros((np.size(constr), np.size(cfilt)))
-    ffilt = np.zeros(np.size(cfilt))
-    xfilt = np.zeros((np.size(x), np.size(cfilt)))
+    cfilt = mx.zeros(mx.minimum(mx.maximum(maxfilt, 1), maxfun))
+    confilt = mx.zeros((mx.size(constr), mx.size(cfilt)))
+    ffilt = mx.zeros(mx.size(cfilt))
+    xfilt = mx.zeros((mx.size(x), mx.size(cfilt)))
     nfilt = initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, cfilt, confilt,
                      ffilt, xfilt)
 
@@ -121,17 +121,17 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
         # Postconditions
         if DEBUGGING:
             assert nf <= maxfun
-            assert np.size(x) == num_vars and not any(np.isnan(x))
-            assert not (np.isnan(f) or np.isposinf(f))
-            # assert np.size(xhist, 0) == n and np.size(xhist, 1) == maxxhist
-            # assert not any(np.isnan(xhist(:, 1:min(nf, maxxhist))))
+            assert mx.size(x) == num_vars and not any(mx.isnan(x))
+            assert not (mx.isnan(f) or mx.isposinf(f))
+            # assert mx.size(xhist, 0) == n and mx.size(xhist, 1) == maxxhist
+            # assert not any(mx.isnan(xhist(:, 1:min(nf, maxxhist))))
             # The last calculated X can be Inf (finite + finite can be Inf numerically).
-            # assert np.size(fhist) == maxfhist
-            # assert not any(np.isnan(fhist(1:min(nf, maxfhist))) or np.isposinf(fhist(1:min(nf, maxfhist))))
-            # assert np.size(conhist, 0) == m and np.size(conhist, 1) == maxconhist
-            # assert not any(np.isnan(conhist(:, 1:min(nf, maxconhist))) or np.isneginf(conhist(:, 1:min(nf, maxconhist))))
-            # assert np.size(chist) == maxchist
-            # assert not any(chist(1:min(nf, maxchist)) < 0 or np.isnan(chist(1:min(nf, maxchist))) or np.isposinf(chist(1:min(nf, maxchist))))
+            # assert mx.size(fhist) == maxfhist
+            # assert not any(mx.isnan(fhist(1:min(nf, maxfhist))) or mx.isposinf(fhist(1:min(nf, maxfhist))))
+            # assert mx.size(conhist, 0) == m and mx.size(conhist, 1) == maxconhist
+            # assert not any(mx.isnan(conhist(:, 1:min(nf, maxconhist))) or mx.isneginf(conhist(:, 1:min(nf, maxconhist))))
+            # assert mx.size(chist) == maxchist
+            # assert not any(chist(1:min(nf, maxchist)) < 0 or mx.isnan(chist(1:min(nf, maxchist))) or mx.isposinf(chist(1:min(nf, maxchist))))
             # nhist = minval([nf, maxfhist, maxchist])
             # assert not any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv, ctol))
         return x, f, constr, cstrv, nf, xhist, fhist, chist, conhist, info
@@ -145,7 +145,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
     # impose CPEN >= CPENMIN > 0. Powell's code simply initializes CPEN to 0.
     rho = rhobeg
     delta = rhobeg
-    cpen = np.maximum(cpenmin, np.minimum(1.0E3, fcratio(conmat, fval)))  # Powell's code: CPEN = ZERO
+    cpen = mx.maximum(cpenmin, mx.minimum(1.0E3, fcratio(conmat, fval)))  # Powell's code: CPEN = ZERO
     shortd = False
     ratio = -1
     jdrop_tr = 0
@@ -158,7 +158,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
     # "Model-Based Derivative-Free Optimization Methods and Software." According to
     # test on 20230613, for COBYLA, this Powellful updating scheme of DELTA works
     # slightly better than setting directly DELTA = max(NEW_DELTA, RHO).
-    gamma3 = np.maximum(1, np.minimum(0.75 * gamma2, 1.5))
+    gamma3 = mx.maximum(1, mx.minimum(0.75 * gamma2, 1.5))
 
     # MAXTR is the maximal number of trust region iterations. Each trust-region
     # iteration takes 1 or 2 function evaluations unless the trust-region step is short
@@ -215,7 +215,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
         g = matprod((fval[:num_vars] - fval[num_vars]), simi)
         A[:, :m_lcon] = amat.T if amat is not None else amat
         A[:, m_lcon:] = matprod((conmat[m_lcon:, :num_vars] -
-                          np.tile(conmat[m_lcon:, num_vars], (num_vars, 1)).T), simi).T
+                          mx.tile(conmat[m_lcon:, num_vars], (num_vars, 1)).T), simi).T
 
         # Calculate the trust-region trial step d. Note that d does NOT depend on cpen.
         d = trstlp(A, -conmat[:, num_vars], delta, g)
@@ -233,9 +233,9 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
         # to D. We have the following in precise arithmetic. They may fail to hold due
         # to rounding errors.
         # 1. B[:NUM_CONSTRAINTS] = -CONMAT[:, NUM_VARS] and hence
-        # np.max(np.append(B[:NUM_CONSTRAINTS] - D@A[:, :NUM_CONSTRAINTS], 0)) is the
+        # mx.max(mx.append(B[:NUM_CONSTRAINTS] - D@A[:, :NUM_CONSTRAINTS], 0)) is the
         # L-infinity violation of the linearized constraints corresponding to D. When
-        # D=0, the violation is np.max(np.append(B[:NUM_CONSTRAINTS], 0)) =
+        # D=0, the violation is mx.max(mx.append(B[:NUM_CONSTRAINTS], 0)) =
         # CVAL[NUM_VARS]. PREREC is the reduction of this violation achieved by D,
         # which is nonnegative in theory; PREREC = 0 iff B[:NUM_CONSTRAINTS] <= 0, i.e.
         # the trust-region center satisfies the linearized constraints.
@@ -243,7 +243,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
         # is False
         # 3. Due to 2, in theory, max(PREREC, PREREF) > 0 if shortd is False.
         preref = -inprod(d, g)  # Can be negative
-        prerec = cval[num_vars] - np.max(np.append(0, conmat[:, num_vars] + matprod(d, A)))
+        prerec = cval[num_vars] - mx.max(mx.append(0, conmat[:, num_vars] + matprod(d, A)))
 
         # Evaluate PREREM, which is the predicted reduction in the merit function.
         # In theory, PREREM >= 0 and it is 0 iff CPEN = 0 = PREREF. This may not be true
@@ -269,7 +269,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
             distsq[num_vars] = primasum(primapow2(x - sim[:, num_vars]))
             distsq[:num_vars] = primasum(primapow2(x.reshape(num_vars, 1) -
                 (sim[:, num_vars].reshape(num_vars, 1) + sim[:, :num_vars])), axis=0)
-            j = np.argmin(distsq)
+            j = mx.argmin(distsq)
             if distsq[j] <= primapow2(1e-4 * rhoend):
                 f = fval[j]
                 constr = conmat[:, j]
@@ -278,7 +278,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
                 # Evaluate the objective and constraints at X, taking care of possible
                 # inf/nan values.
                 f, constr = evaluate(calcfc, x, m_nlcon, amat, bvec)
-                cstrv = np.max(np.append(0, constr))
+                cstrv = mx.max(mx.append(0, constr))
                 nf += 1
                 # Save X, F, CONSTR, CSTRV into the history.
                 savehist(maxhist, x, xhist, f, fhist, cstrv, chist, constr, conhist)
@@ -449,7 +449,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
             # reduced, leading to infinite cycling. (N.B.: Our implementation uses DELTA as the trust
             # region radius, with RHO being its lower bound. When the infinite cycling occurred in this
             # test, DELTA = RHO and it could not be reduced due to the requirement that DELTA >= RHO.)
-            jdrop_geo = np.argmax(primasum(primapow2(sim[:, :num_vars]), axis=0), axis=0)
+            jdrop_geo = mx.argmax(primasum(primapow2(sim[:, :num_vars]), axis=0), axis=0)
 
             # Calculate the geometry step D.
             delbar = delta/2
@@ -467,7 +467,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
             distsq[num_vars] = primasum(primapow2(x - sim[:, num_vars]))
             distsq[:num_vars] = primasum(primapow2(x.reshape(num_vars, 1) -
                 (sim[:, num_vars].reshape(num_vars, 1) + sim[:, :num_vars])), axis=0)
-            j = np.argmin(distsq)
+            j = mx.argmin(distsq)
             if distsq[j] <= primapow2(1e-4 * rhoend):
                 f = fval[j]
                 constr = conmat[:, j]
@@ -476,7 +476,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
                 # Evaluate the objective and constraints at X, taking care of possible
                 # inf/nan values.
                 f, constr = evaluate(calcfc, x, m_nlcon, amat, bvec)
-                cstrv = np.max(np.append(0, constr))
+                cstrv = mx.max(mx.append(0, constr))
                 nf += 1
                 # Save X, F, CONSTR, CSTRV into the history.
                 savehist(maxhist, x, xhist, f, fhist, cstrv, chist, constr, conhist)
@@ -511,7 +511,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
             rho = redrho(rho, rhoend)
             # THe second (out of two) updates of CPEN, where CPEN decreases or remains the same.
             # Powell's code: cpen = min(cpen, fcratio(fval, conmat)), which may set CPEN to 0.
-            cpen = np.maximum(cpenmin, np.minimum(cpen, fcratio(conmat, fval)))
+            cpen = mx.maximum(cpenmin, mx.minimum(cpen, fcratio(conmat, fval)))
             # Print a message about the reduction of rho according to iprint
             rhomsg(solver, iprint, nf, fval[num_vars], rho, sim[:, num_vars], cval[num_vars], conmat[:, num_vars], cpen)
             conmat, cval, fval, sim, simi, subinfo = updatepole(cpen, conmat, cval, fval, sim, simi)
@@ -538,7 +538,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
         # Zaikun 20230615: UPDATEXFC or UPDATEPOLE is not called since the last trust-region step. Hence
         # SIM[:, NUM_VARS] remains unchanged. Otherwise SIM[:, NUM_VARS] + D would not make sense.
         f, constr = evaluate(calcfc, x, m_nlcon, amat, bvec)
-        cstrv = np.max(np.append(0, constr))
+        cstrv = mx.max(mx.append(0, constr))
         nf += 1
         savehist(maxhist, x, xhist, f, fhist, cstrv, chist, constr, conhist)
         nfilt, cfilt, ffilt, xfilt, confilt = savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
@@ -577,29 +577,29 @@ def getcpen(amat, bvec, conmat, cpen, cval, delta, fval, rho, sim, simi):
     simi = simi.copy()
 
     # Intermediate variables
-    A = np.zeros((np.size(sim, 0), np.size(conmat, 0)))
+    A = mx.zeros((mx.size(sim, 0), mx.size(conmat, 0)))
     itol = 1
 
     # Sizes
-    m_lcon = np.size(bvec) if bvec is not None else 0
-    num_constraints = np.size(conmat, 0)
-    num_vars = np.size(sim, 0)
+    m_lcon = mx.size(bvec) if bvec is not None else 0
+    num_constraints = mx.size(conmat, 0)
+    num_vars = mx.size(sim, 0)
 
     # Preconditions
     if DEBUGGING:
         assert num_constraints >= 0
         assert num_vars >= 1
         assert cpen > 0
-        assert np.size(conmat, 0) == num_constraints and np.size(conmat, 1) == num_vars + 1
-        assert not (np.isnan(conmat) | np.isneginf(conmat)).any()
-        assert np.size(cval) == num_vars + 1 and \
-            not any(cval < 0 | np.isnan(cval) | np.isposinf(cval))
-        assert np.size(fval) == num_vars + 1 and not any(np.isnan(fval) | np.isposinf(fval))
-        assert np.size(sim, 0) == num_vars and np.size(sim, 1) == num_vars + 1
-        assert np.isfinite(sim).all()
-        assert all(np.max(abs(sim[:, :num_vars]), axis=0) > 0)
-        assert np.size(simi, 0) == num_vars and np.size(simi, 1) == num_vars
-        assert np.isfinite(simi).all()
+        assert mx.size(conmat, 0) == num_constraints and mx.size(conmat, 1) == num_vars + 1
+        assert not (mx.isnan(conmat) | mx.isneginf(conmat)).any()
+        assert mx.size(cval) == num_vars + 1 and \
+            not any(cval < 0 | mx.isnan(cval) | mx.isposinf(cval))
+        assert mx.size(fval) == num_vars + 1 and not any(mx.isnan(fval) | mx.isposinf(fval))
+        assert mx.size(sim, 0) == num_vars and mx.size(sim, 1) == num_vars + 1
+        assert mx.isfinite(sim).all()
+        assert all(mx.max(abs(sim[:, :num_vars]), axis=0) > 0)
+        assert mx.size(simi, 0) == num_vars and mx.size(simi, 1) == num_vars
+        assert mx.isfinite(simi).all()
         assert isinv(sim[:, :num_vars], simi, itol)
         assert delta >= rho and rho > 0
 
@@ -637,7 +637,7 @@ def getcpen(amat, bvec, conmat, cpen, cval, delta, fval, rho, sim, simi):
         g = matprod(fval[:num_vars] - fval[num_vars], simi)
         A[:, :m_lcon] = amat.T if amat is not None else amat
         A[:, m_lcon:] = matprod((conmat[m_lcon:, :num_vars] -
-                          np.tile(conmat[m_lcon:, num_vars], (num_vars, 1)).T), simi).T
+                          mx.tile(conmat[m_lcon:, num_vars], (num_vars, 1)).T), simi).T
 
         # Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
         d = trstlp(A, -conmat[:, num_vars], delta, g)
@@ -645,7 +645,7 @@ def getcpen(amat, bvec, conmat, cpen, cval, delta, fval, rho, sim, simi):
         # Predict the change to F (PREREF) and to the constraint violation (PREREC) due
         # to D.
         preref = -inprod(d, g)  # Can be negative
-        prerec = cval[num_vars] - np.max(np.append(0, conmat[:, num_vars] + matprod(d, A)))
+        prerec = cval[num_vars] - mx.max(mx.append(0, conmat[:, num_vars] + matprod(d, A)))
 
         # PREREC <= 0 or PREREF >=0 or either is NaN
         if not (prerec > 0 and preref < 0):
@@ -670,7 +670,7 @@ def getcpen(amat, bvec, conmat, cpen, cval, delta, fval, rho, sim, simi):
     if DEBUGGING:
         assert cpen >= cpen and cpen > 0
         assert preref + cpen * prerec > 0 or info == DAMAGING_ROUNDING or \
-            not (prerec >= 0 and np.maximum(prerec, preref) > 0) or not np.isfinite(preref)
+            not (prerec >= 0 and mx.maximum(prerec, preref) > 0) or not mx.isfinite(preref)
 
     return cpen
 
@@ -683,22 +683,22 @@ def fcratio(conmat, fval):
 
     # Preconditions
     if DEBUGGING:
-        assert np.size(fval) >= 1
-        assert np.size(conmat, 1) == np.size(fval)
+        assert mx.size(fval) >= 1
+        assert mx.size(conmat, 1) == mx.size(fval)
 
     #====================#
     # Calculation starts #
     #====================#
 
-    cmin = np.min(-conmat, axis=1)
-    cmax = np.max(-conmat, axis=1)
+    cmin = mx.min(-conmat, axis=1)
+    cmax = mx.max(-conmat, axis=1)
     fmin = min(fval)
     fmax = max(fval)
     if any(cmin < 0.5 * cmax) and fmin < fmax:
-        denom = np.min(np.maximum(cmax, 0) - cmin, where=cmin < 0.5 * cmax, initial=np.inf)
+        denom = mx.min(mx.maximum(cmax, 0) - cmin, where=cmin < 0.5 * cmax, initial=mx.inf)
         # Powell mentioned the following alternative in section 4 of his COBYLA paper. According to a test
         # on 20230610, it does not make much difference to the performance.
-        # denom = np.max(max(*cmax, 0) - cmin, mask=(cmin < 0.5 * cmax))
+        # denom = mx.max(max(*cmax, 0) - cmin, mask=(cmin < 0.5 * cmax))
         r = (fmax - fmin) / denom
     else:
         r = 0

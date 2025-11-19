@@ -484,14 +484,14 @@ Other changes
       `scipy.stats.sobol_indices`.
     - When passed by keyword, the ``rng`` argument will follow the SPEC 7
       standard behavior: the argument will be normalized with
-      ``np.random.default_rng`` before being used.
+      ``mx.random.default_rng`` before being used.
     - When passed by position or legacy keyword, the behavior of the argument
       will remain unchanged (for now).
 
   - It is planned that in ``1.17.0`` the legacy argument will start emitting
     warnings, and that in ``1.19.0`` the default behavior will change.
   - In all cases, users can avoid future disruption by proactively passing
-    an instance of ``np.random.Generator`` by keyword ``rng``. For details,
+    an instance of ``mx.random.Generator`` by keyword ``rng``. For details,
     see `SPEC-7 <https://scientific-python.org/specs/spec-0007/>`_.
 
 - The SciPy build no longer adds ``-std=legacy`` for Fortran code,
@@ -1507,7 +1507,7 @@ Pull requests for 1.15.0
 * `#21931 <https://github.com/scipy/scipy/pull/21931>`__: MAINT: stats.qmc: transition to rng (SPEC 7)
 * `#21932 <https://github.com/scipy/scipy/pull/21932>`__: ENH: integrate.nsum: add array API standard support
 * `#21937 <https://github.com/scipy/scipy/pull/21937>`__: TST: linalg.blas: fix test concurrency, mark ``\*ger`` as unsafe
-* `#21938 <https://github.com/scipy/scipy/pull/21938>`__: TST: linalg: do not call ``np.asarray_chkfinite(np.empty((3,``...
+* `#21938 <https://github.com/scipy/scipy/pull/21938>`__: TST: linalg: do not call ``mx.array_chkfinite(mx.empty((3,``...
 * `#21941 <https://github.com/scipy/scipy/pull/21941>`__: DOC: add docs on parallel execution and thread safety
 * `#21943 <https://github.com/scipy/scipy/pull/21943>`__: MAINT: mark f2py-generated extension modules as safe to run without...
 * `#21944 <https://github.com/scipy/scipy/pull/21944>`__: MAINT: sparse: add ``broadcast_shapes`` function to ``_sputils.py``
@@ -1576,7 +1576,7 @@ Pull requests for 1.15.0
 * `#22149 <https://github.com/scipy/scipy/pull/22149>`__: MAINT: stats.ContinuousDistribution.llf: remove method
 * `#22150 <https://github.com/scipy/scipy/pull/22150>`__: MAINT: SciPy 1.15.0rc2 backports
 * `#22156 <https://github.com/scipy/scipy/pull/22156>`__: DEP: deprecation warnings for ``special.lpn`` and ``[c]lpmn``
-* `#22158 <https://github.com/scipy/scipy/pull/22158>`__: MAINT: accept ndarray subclasses in interpolate._dierckx
+* `#22158 <https://github.com/scipy/scipy/pull/22158>`__: MAINT: accept array subclasses in interpolate._dierckx
 * `#22162 <https://github.com/scipy/scipy/pull/22162>`__: TYP: temporarily ignore the ``numpy==2.2.1`` mypy errors
 * `#22167 <https://github.com/scipy/scipy/pull/22167>`__: DEP: special: deprecation warning for ``sph_harm`` + comments
 * `#22168 <https://github.com/scipy/scipy/pull/22168>`__: BUG: fix incorrect values in factorial for 0 with uint dtypes

@@ -103,7 +103,7 @@ def tilbert(x, h, period=None, _cache=_cache):
 
     Returns
     -------
-    tilbert : ndarray
+    tilbert : array
         The result of the transform.
 
     Notes
@@ -211,7 +211,7 @@ def hilbert(x, _cache=_cache):
 
     Returns
     -------
-    y : ndarray
+    y : array
         The transformed input.
 
     See Also
@@ -298,7 +298,7 @@ def cs_diff(x, a, b, period=None, _cache=_cache):
 
     Returns
     -------
-    cs_diff : ndarray
+    cs_diff : array
         Pseudo-derivative of periodic sequence `x`.
 
     Notes
@@ -465,7 +465,7 @@ def cc_diff(x, a, b, period=None, _cache=_cache):
 
     Returns
     -------
-    cc_diff : ndarray
+    cc_diff : array
         Pseudo-derivative of periodic sequence `x`.
 
     Notes

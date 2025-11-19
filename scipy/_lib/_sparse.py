@@ -27,13 +27,13 @@ def issparse(x):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csr_array, csr_matrix, issparse
     >>> issparse(csr_matrix([[5]]))
     True
     >>> issparse(csr_array([[5]]))
     True
-    >>> issparse(np.array([[5]]))
+    >>> issparse(mx.array([[5]]))
     False
     >>> issparse(5)
     False

@@ -1,7 +1,7 @@
 """
 Sane parameters for stats.distributions.
 """
-import numpy as np
+import mlx.core as mx
 
 distcont = [
     ['alpha', (3.5704770516650459,)],
@@ -213,9 +213,9 @@ invdistcont = [
     ['foldnorm', (-1, )],
     ['genlogistic', (-1, )],
     ['gennorm', (-1, )],
-    ['genpareto', (np.inf, )],
+    ['genpareto', (mx.inf, )],
     ['genexpon', (1, 2, -3)],
-    ['genextreme', (np.inf, )],
+    ['genextreme', (mx.inf, )],
     ['genhyperbolic', (0.5, -0.5, -1.5,)],
     ['gausshyper', (1, 2, 3, -4)],
     ['gamma', (-1, )],
@@ -240,7 +240,7 @@ invdistcont = [
     ['jf_skew_t', (-1, 0)],
     ['johnsonsb', (1, -2)],
     ['johnsonsu', (1, -2)],
-    ['kappa4', (np.nan, 0)],
+    ['kappa4', (mx.nan, 0)],
     ['kappa3', (-1, )],
     ['ksone', (-1, )],
     ['kstwo', (-1, )],
@@ -267,7 +267,7 @@ invdistcont = [
     ['norm', ()],
     ['norminvgauss', (5, -10)],
     ['pareto', (-1, )],
-    ['pearson3', (np.nan, )],
+    ['pearson3', (mx.nan, )],
     ['powerlaw', (-1, )],
     ['powerlognorm', (1, -2)],
     ['powernorm', (-1, )],
@@ -276,7 +276,7 @@ invdistcont = [
     ['rice', (-1, )],
     ['recipinvgauss', (-1, )],
     ['semicircular', ()],
-    ['skewnorm', (np.inf, )],
+    ['skewnorm', (mx.inf, )],
     ['studentized_range', (-1, 1)],
     ['rel_breitwigner', (-2, )],
     ['t', (-1, )],
@@ -287,7 +287,7 @@ invdistcont = [
     ['truncpareto', (-1, -5)],
     ['truncpareto', (1.8, .5)],
     ['truncweibull_min', (-2.5, 0.25, 1.75)],
-    ['tukeylambda', (np.nan, )],
+    ['tukeylambda', (mx.nan, )],
     ['uniform', ()],
     ['vonmises', (-1, )],
     ['vonmises_line', (-1, )],

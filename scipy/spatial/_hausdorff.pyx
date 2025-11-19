@@ -12,12 +12,12 @@ Directed Hausdorff Code
 # Distributed under the same BSD license as Scipy.
 #
 
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 cimport cython
 from libc.math cimport sqrt
 
-np.import_array()
+mx.import_array()
 
 __all__ = ['directed_hausdorff']
 
@@ -30,26 +30,26 @@ def directed_hausdorff(const double[:,::1] ar1, const double[:,::1] ar2, seed=0)
     cdef int data_dims = ar1.shape[1]
     cdef Py_ssize_t i, j, k
     cdef Py_ssize_t j_store = 0, i_ret = 0, j_ret = 0
-    cdef np.ndarray[np.int64_t, ndim=1, mode='c'] resort1, resort2
+    cdef mx.array[mx.int64_t, ndim=1, mode='c'] resort1, resort2
 
     # shuffling the points in each array generally increases the likelihood of
     # an advantageous break in the inner search loop and never decreases the
     # performance of the algorithm
-    if isinstance(seed, np.random.Generator):
+    if isinstance(seed, mx.random.Generator):
         # Generator passthrough
         rng = seed
     else:
-        rng = np.random.RandomState(seed)
-    resort1 = np.arange(N1, dtype=np.int64)
-    resort2 = np.arange(N2, dtype=np.int64)
+        rng = mx.random.RandomState(seed)
+    resort1 = mx.arange(N1, dtype=mx.int64)
+    resort2 = mx.arange(N2, dtype=mx.int64)
     rng.shuffle(resort1)
     rng.shuffle(resort2)
-    ar1 = np.asarray(ar1)[resort1]
-    ar2 = np.asarray(ar2)[resort2]
+    ar1 = mx.array(ar1)[resort1]
+    ar2 = mx.array(ar2)[resort2]
 
     cmax = 0
     for i in range(N1):
-        cmin = np.inf
+        cmin = mx.inf
         for j in range(N2):
             d = 0
             # faster performance with square of distance
@@ -68,7 +68,7 @@ def directed_hausdorff(const double[:,::1] ar1, const double[:,::1] ar2, seed=0)
         #
         # if cmin > cmax:
         #
-        # That logic is incorrect, as cmin could still be np.inf if breaking early.
+        # That logic is incorrect, as cmin could still be mx.inf if breaking early.
         # The logic here accounts for that case.
         if cmin >= cmax and d >= cmax:
             cmax = cmin

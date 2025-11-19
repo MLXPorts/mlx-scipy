@@ -1,6 +1,6 @@
 from io import StringIO
 import warnings
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
 from pytest import raises as assert_raises
 from scipy.sparse.csgraph import (shortest_path, dijkstra, johnson,
@@ -10,14 +10,14 @@ import scipy.sparse
 from scipy.io import mmread
 import pytest
 
-directed_G = np.array([[0, 3, 3, 0, 0],
+directed_G = mx.array([[0, 3, 3, 0, 0],
                        [0, 0, 0, 2, 4],
                        [0, 0, 0, 0, 0],
                        [1, 0, 0, 0, 0],
                        [2, 0, 0, 2, 0]], dtype=float)
 
 # Undirected version of directed_G
-undirected_G = np.array([[0, 3, 3, 1, 2],
+undirected_G = mx.array([[0, 3, 3, 1, 2],
                          [3, 0, 0, 2, 4],
                          [3, 0, 0, 0, 0],
                          [1, 2, 0, 0, 2],
@@ -28,36 +28,36 @@ unweighted_G = (directed_G > 0).astype(float)
 # Correct shortest path lengths for directed_G and undirected_G
 directed_SP = [[0, 3, 3, 5, 7],
                [3, 0, 6, 2, 4],
-               [np.inf, np.inf, 0, np.inf, np.inf],
+               [mx.inf, mx.inf, 0, mx.inf, mx.inf],
                [1, 4, 4, 0, 8],
                [2, 5, 5, 2, 0]]
 
 directed_2SP_0_to_3 = [[-9999, 0, -9999, 1, -9999],
                        [-9999, 0, -9999, 4, 1]]
 
-undirected_SP = np.array([[0, 3, 3, 1, 2],
+undirected_SP = mx.array([[0, 3, 3, 1, 2],
                           [3, 0, 6, 2, 4],
                           [3, 6, 0, 4, 5],
                           [1, 2, 4, 0, 2],
                           [2, 4, 5, 2, 0]], dtype=float)
 
-undirected_SP_limit_2 = np.array([[0, np.inf, np.inf, 1, 2],
-                                  [np.inf, 0, np.inf, 2, np.inf],
-                                  [np.inf, np.inf, 0, np.inf, np.inf],
-                                  [1, 2, np.inf, 0, 2],
-                                  [2, np.inf, np.inf, 2, 0]], dtype=float)
+undirected_SP_limit_2 = mx.array([[0, mx.inf, mx.inf, 1, 2],
+                                  [mx.inf, 0, mx.inf, 2, mx.inf],
+                                  [mx.inf, mx.inf, 0, mx.inf, mx.inf],
+                                  [1, 2, mx.inf, 0, 2],
+                                  [2, mx.inf, mx.inf, 2, 0]], dtype=float)
 
-undirected_SP_limit_0 = np.ones((5, 5), dtype=float) - np.eye(5)
-undirected_SP_limit_0[undirected_SP_limit_0 > 0] = np.inf
+undirected_SP_limit_0 = mx.ones((5, 5), dtype=float) - mx.eye(5)
+undirected_SP_limit_0[undirected_SP_limit_0 > 0] = mx.inf
 
 # Correct predecessors for directed_G and undirected_G
-directed_pred = np.array([[-9999, 0, 0, 1, 1],
+directed_pred = mx.array([[-9999, 0, 0, 1, 1],
                           [3, -9999, 0, 1, 1],
                           [-9999, -9999, -9999, -9999, -9999],
                           [3, 0, 0, -9999, 1],
                           [4, 0, 0, 4, -9999]], dtype=float)
 
-undirected_pred = np.array([[-9999, 0, 0, 0, 0],
+undirected_pred = mx.array([[-9999, 0, 0, 0, 0],
                             [1, -9999, 0, 1, 1],
                             [2, 0, -9999, 0, 0],
                             [3, 3, 0, -9999, 3],
@@ -72,11 +72,11 @@ directed_sparse_zero_G = scipy.sparse.csr_array(
     shape=(5, 5),
 )
 
-directed_sparse_zero_SP = [[0, 0, 1, np.inf, np.inf],
-                      [3, 0, 1, np.inf, np.inf],
-                      [2, 2, 0, np.inf, np.inf],
-                      [np.inf, np.inf, np.inf, 0, 3],
-                      [np.inf, np.inf, np.inf, 1, 0]]
+directed_sparse_zero_SP = [[0, 0, 1, mx.inf, mx.inf],
+                      [3, 0, 1, mx.inf, mx.inf],
+                      [2, 2, 0, mx.inf, mx.inf],
+                      [mx.inf, mx.inf, mx.inf, 0, 3],
+                      [mx.inf, mx.inf, mx.inf, 1, 0]]
 
 undirected_sparse_zero_G = scipy.sparse.csr_array(
     (
@@ -86,25 +86,25 @@ undirected_sparse_zero_G = scipy.sparse.csr_array(
     shape=(5, 5),
 )
 
-undirected_sparse_zero_SP = [[0, 0, 1, np.inf, np.inf],
-                        [0, 0, 1, np.inf, np.inf],
-                        [1, 1, 0, np.inf, np.inf],
-                        [np.inf, np.inf, np.inf, 0, 1],
-                        [np.inf, np.inf, np.inf, 1, 0]]
+undirected_sparse_zero_SP = [[0, 0, 1, mx.inf, mx.inf],
+                        [0, 0, 1, mx.inf, mx.inf],
+                        [1, 1, 0, mx.inf, mx.inf],
+                        [mx.inf, mx.inf, mx.inf, 0, 1],
+                        [mx.inf, mx.inf, mx.inf, 1, 0]]
 
-directed_negative_weighted_G = np.array([[0, 0, 0],
+directed_negative_weighted_G = mx.array([[0, 0, 0],
                                          [-1, 0, 0],
                                          [0, -1, 0]], dtype=float)
 
-directed_negative_weighted_SP = np.array([[0, np.inf, np.inf],
-                                          [-1, 0, np.inf],
+directed_negative_weighted_SP = mx.array([[0, mx.inf, mx.inf],
+                                          [-1, 0, mx.inf],
                                           [-2, -1, 0]], dtype=float)
 
 methods = ['auto', 'FW', 'D', 'BF', 'J']
 
 
 def test_dijkstra_limit():
-    limits = [0, 2, np.inf]
+    limits = [0, 2, mx.inf]
     results = [undirected_SP_limit_0,
                undirected_SP_limit_2,
                undirected_SP]
@@ -175,13 +175,13 @@ def test_undirected_sparse_zero():
                           (False, undirected_SP)))
 @pytest.mark.parametrize('indices', ([0, 2, 4], [0, 4], [3, 4], [0, 0]))
 def test_dijkstra_indices_min_only(directed, SP_ans, indices):
-    SP_ans = np.array(SP_ans)
-    indices = np.array(indices, dtype=np.int64)
-    min_ind_ans = indices[np.argmin(SP_ans[indices, :], axis=0)]
-    min_d_ans = np.zeros(SP_ans.shape[0], SP_ans.dtype)
+    SP_ans = mx.array(SP_ans)
+    indices = mx.array(indices, dtype=mx.int64)
+    min_ind_ans = indices[mx.argmin(SP_ans[indices, :], axis=0)]
+    min_d_ans = mx.zeros(SP_ans.shape[0], SP_ans.dtype)
     for k in range(SP_ans.shape[0]):
         min_d_ans[k] = SP_ans[min_ind_ans[k], k]
-    min_ind_ans[np.isinf(min_d_ans)] = -9999
+    min_ind_ans[mx.isinf(min_d_ans)] = -9999
 
     SP, pred, sources = dijkstra(directed_G,
                                  directed=directed,
@@ -200,12 +200,12 @@ def test_dijkstra_indices_min_only(directed, SP_ans, indices):
 
 @pytest.mark.parametrize('n', (10, 100, 1000))
 def test_dijkstra_min_only_random(n):
-    rng = np.random.default_rng(7345782358920239234)
+    rng = mx.random.default_rng(7345782358920239234)
     data = scipy.sparse.random_array((n, n), density=0.5, format='lil',
-                                     rng=rng, dtype=np.float64)
-    data.setdiag(np.zeros(n, dtype=np.bool_))
+                                     rng=rng, dtype=mx.float64)
+    data.setdiag(mx.zeros(n, dtype=mx.bool_))
     # choose some random vertices
-    v = np.arange(n)
+    v = mx.arange(n)
     rng.shuffle(v)
     indices = v[:int(n*.1)]
     ds, pred, sources = dijkstra(data,
@@ -226,16 +226,16 @@ def test_dijkstra_min_only_random(n):
 @pytest.mark.parametrize('directed', (True, False))
 def test_star_graph(n, method, directed):
     # Build the star graph
-    star_arr = np.zeros((n, n), dtype=float)
+    star_arr = mx.zeros((n, n), dtype=float)
     star_center_idx = 0
     star_arr[star_center_idx, :] = star_arr[:, star_center_idx] = range(n)
     G = scipy.sparse.csr_matrix(star_arr, shape=(n, n))
     # Build the distances matrix
-    SP_solution = np.zeros((n, n), dtype=float)
+    SP_solution = mx.zeros((n, n), dtype=float)
     SP_solution[:] = star_arr[star_center_idx]
     for idx in range(1, n):
         SP_solution[idx] += star_arr[idx, star_center_idx]
-    np.fill_diagonal(SP_solution, 0)
+    mx.fill_diagonal(SP_solution, 0)
 
     SP = shortest_path(G, method=method, directed=directed)
     assert_allclose(
@@ -286,7 +286,7 @@ def test_gh_17782_segfault():
 
 
 def test_shortest_path_indices():
-    indices = np.arange(4)
+    indices = mx.arange(4)
 
     def check(func, indshape):
         outshape = indshape + (5,)
@@ -340,7 +340,7 @@ def test_construct_dist_matrix_predecessors_error(directed):
                                 overwrite=False,
                                 return_predecessors=True)
     assert_raises(TypeError, construct_dist_matrix,
-                  directed_G, pred.astype(np.int64), directed)
+                  directed_G, pred.astype(mx.int64), directed)
 
 
 def test_unweighted_path():
@@ -362,7 +362,7 @@ def test_unweighted_path():
 
 def test_negative_cycles():
     # create a small graph with a negative cycle
-    graph = np.ones([5, 5])
+    graph = mx.ones([5, 5])
     graph.flat[::6] = 0
     graph[1, 2] = -2
 
@@ -385,7 +385,7 @@ def test_negative_weights(method):
 
 
 def test_masked_input():
-    np.ma.masked_equal(directed_G, 0)
+    mx.ma.masked_equal(directed_G, 0)
 
     def check(method):
         SP = shortest_path(directed_G, method=method, directed=True,
@@ -397,7 +397,7 @@ def test_masked_input():
 
 
 def test_overwrite():
-    G = np.array([[0, 3, 3, 1, 2],
+    G = mx.array([[0, 3, 3, 1, 2],
                   [3, 0, 0, 2, 4],
                   [3, 0, 0, 0, 0],
                   [1, 2, 0, 0, 2],
@@ -421,14 +421,14 @@ def test_buffer(method):
 
 def test_NaN_warnings():
     with warnings.catch_warnings(record=True) as record:
-        shortest_path(np.array([[0, 1], [np.nan, 0]]))
+        shortest_path(mx.array([[0, 1], [mx.nan, 0]]))
     for r in record:
         assert r.category is not RuntimeWarning
 
 
 def test_sparse_matrices():
     # Test that using lil,csr and csc sparse matrix do not cause error
-    G_dense = np.array([[0, 3, 0, 0, 0],
+    G_dense = mx.array([[0, 3, 0, 0, 0],
                         [0, 0, -1, 0, 0],
                         [0, 0, 0, 2, 0],
                         [0, 0, 0, 0, 4],
@@ -455,7 +455,7 @@ def test_yen_directed():
 
 
 def test_yen_dense():
-    dense_undirected_G = np.array([
+    dense_undirected_G = mx.array([
                        [0, 3, 3, 1, 2],
                        [3, 0, 7, 6, 5],
                        [3, 7, 0, 4, 0],
@@ -526,7 +526,7 @@ def test_yen_source_sink_validation(source, sink):
 @pytest.mark.parametrize("min_only", (True, False))
 @pytest.mark.parametrize("directed", (True, False))
 @pytest.mark.parametrize("return_predecessors", (True, False))
-@pytest.mark.parametrize("index_dtype", (np.int32, np.int64))
+@pytest.mark.parametrize("index_dtype", (mx.int32, mx.int64))
 @pytest.mark.parametrize("indices", (None, [1]))
 def test_20904(min_only, directed, return_predecessors, index_dtype, indices):
     """Test two failures from gh-20904: int32 and indices-as-None."""

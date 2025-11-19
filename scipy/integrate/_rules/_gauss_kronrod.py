@@ -46,13 +46,13 @@ class GaussKronrodQuadrature(NestedFixedRule):
     Evaluate a 1D integral. Note in this example that ``f`` returns an array, so the
     estimates will also be arrays, despite the fact that this is a 1D problem.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.integrate import cubature
     >>> from scipy.integrate._rules import GaussKronrodQuadrature
     >>> def f(x):
-    ...     return np.cos(x)
+    ...     return mx.cos(x)
     >>> rule = GaussKronrodQuadrature(21) # Use 21-point GaussKronrod
-    >>> a, b = np.array([0]), np.array([1])
+    >>> a, b = mx.array([0]), mx.array([1])
     >>> rule.estimate(f, a, b) # True value sin(1), approximately 0.84147
      array([0.84147098])
     >>> rule.estimate_error(f, a, b)
@@ -61,22 +61,22 @@ class GaussKronrodQuadrature(NestedFixedRule):
     Evaluate a 2D integral. Note that in this example ``f`` returns a float, so the
     estimates will also be floats.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.integrate import cubature
     >>> from scipy.integrate._rules import (
     ...     ProductNestedFixed, GaussKronrodQuadrature
     ... )
     >>> def f(x):
     ...     # f(x) = cos(x_1) + cos(x_2)
-    ...     return np.sum(np.cos(x), axis=-1)
+    ...     return mx.sum(mx.cos(x), axis=-1)
     >>> rule = ProductNestedFixed(
     ...     [GaussKronrodQuadrature(15), GaussKronrodQuadrature(15)]
     ... ) # Use 15-point Gauss-Kronrod
-    >>> a, b = np.array([0, 0]), np.array([1, 1])
+    >>> a, b = mx.array([0, 0]), mx.array([1, 1])
     >>> rule.estimate(f, a, b) # True value 2*sin(1), approximately 1.6829
-     np.float64(1.682941969615793)
+     mx.float64(1.682941969615793)
     >>> rule.estimate_error(f, a, b)
-     np.float64(2.220446049250313e-16)
+     mx.float64(2.220446049250313e-16)
     """
 
     def __init__(self, npoints, xp=None):

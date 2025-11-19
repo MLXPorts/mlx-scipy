@@ -61,7 +61,7 @@ Pull requests for 1.7.2
 * `#14672 <https://github.com/scipy/scipy/pull/14672>`__: BLD: add \`zip_safe=False\` to the \`setup()\` call
 * `#14791 <https://github.com/scipy/scipy/pull/14791>`__: MAINT: SciPy 1.7.2 prep/backports
 * `#14803 <https://github.com/scipy/scipy/pull/14803>`__: MAINT: disable include/source coverage warning.
-* `#14813 <https://github.com/scipy/scipy/pull/14813>`__: Added missing np.import_array()
+* `#14813 <https://github.com/scipy/scipy/pull/14813>`__: Added missing mx.import_array()
 * `#14831 <https://github.com/scipy/scipy/pull/14831>`__: CI: Add stdlib to LD_LIBRARY_PATH
 * `#14893 <https://github.com/scipy/scipy/pull/14893>`__: BUG: Fix alignment errors due to relaxed stride checking
 * `#14897 <https://github.com/scipy/scipy/pull/14897>`__: BUG: avoid mutating inputs in multivariate distributions

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-import numpy as np
+import mlx.core as mx
 
 from ._optimize import OptimizeResult
 from ._pava_pybind import pava
@@ -92,14 +92,14 @@ def isotonic_regression(
     This example demonstrates that ``isotonic_regression`` really solves a
     constrained optimization problem.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import isotonic_regression, minimize
     >>> y = [1.5, 1.0, 4.0, 6.0, 5.7, 5.0, 7.8, 9.0, 7.5, 9.5, 9.0]
     >>> def objective(yhat, y):
-    ...     return np.sum((yhat - y)**2)
+    ...     return mx.sum((yhat - y)**2)
     >>> def constraint(yhat, y):
     ...     # This is for a monotonically increasing regression.
-    ...     return np.diff(yhat)
+    ...     return mx.diff(yhat)
     >>> result = minimize(objective, x0=y, args=(y,),
     ...                   constraints=[{'type': 'ineq',
     ...                                 'fun': lambda x: constraint(x, y)}])
@@ -120,24 +120,24 @@ def isotonic_regression(
     input y of length 1000, the minimizer takes about 4 seconds, while
     ``isotonic_regression`` takes about 200 microseconds.
     """
-    yarr = np.atleast_1d(y)  # Check yarr.ndim == 1 is implicit (pybind11) in pava.
+    yarr = mx.atleast_1d(y)  # Check yarr.ndim == 1 is implicit (pybind11) in pava.
     order = slice(None) if increasing else slice(None, None, -1)
-    x = np.array(yarr[order], order="C", dtype=np.float64, copy=True)
+    x = mx.array(yarr[order], order="C", dtype=mx.float64, copy=True)
     if weights is None:
-        wx = np.ones_like(yarr, dtype=np.float64)
+        wx = mx.ones_like(yarr, dtype=mx.float64)
     else:
-        warr = np.atleast_1d(weights)
+        warr = mx.atleast_1d(weights)
 
         if not (yarr.ndim == warr.ndim == 1 and yarr.shape[0] == warr.shape[0]):
             raise ValueError(
                 "Input arrays y and w must have one dimension of equal length."
             )
-        if np.any(warr <= 0):
+        if mx.any(warr <= 0):
             raise ValueError("Weights w must be strictly positive.")
 
-        wx = np.array(warr[order], order="C", dtype=np.float64, copy=True)
+        wx = mx.array(warr[order], order="C", dtype=mx.float64, copy=True)
     n = x.shape[0]
-    r = np.full(shape=n + 1, fill_value=-1, dtype=np.intp)
+    r = mx.full(shape=n + 1, fill_value=-1, dtype=mx.intp)
     x, wx, r, b = pava(x, wx, r)
     # Now that we know the number of blocks b, we only keep the relevant part
     # of r and wx.

@@ -1,6 +1,6 @@
 # pylint: disable=missing-docstring
 import math
-import numpy as np
+import mlx.core as mx
 import pytest
 from scipy._lib._array_api import is_cupy, xp_assert_close, xp_default_dtype, concat_1d
 
@@ -14,13 +14,13 @@ xfail_xp_backends = pytest.mark.xfail_xp_backends
 
 def _compute_symiirorder2_bwd_hs(k, cs, rsq, omega):
     cssq = cs * cs
-    k = np.abs(k)
-    rsupk = np.power(rsq, k / 2.0)
+    k = mx.abs(k)
+    rsupk = mx.power(rsq, k / 2.0)
 
     c0 = (cssq * (1.0 + rsq) / (1.0 - rsq) /
-          (1 - 2 * rsq * np.cos(2 * omega) + rsq * rsq))
-    gamma = (1.0 - rsq) / (1.0 + rsq) / np.tan(omega)
-    return c0 * rsupk * (np.cos(omega * k) + gamma * np.sin(omega * k))
+          (1 - 2 * rsq * mx.cos(2 * omega) + rsq * rsq))
+    gamma = (1.0 - rsq) / (1.0 + rsq) / mx.tan(omega)
+    return c0 * rsupk * (mx.cos(omega * k) + gamma * mx.sin(omega * k))
 
 
 class TestSymIIR:
@@ -67,7 +67,7 @@ class TestSymIIR:
         # Same conditions hold, as the product of 0.5^n * 0.85^n is
         # still a geometric series
         b_d = xp.asarray(b, dtype=dtype)
-        expected = np.asarray(
+        expected = mx.array(
             [[(1 - (0.5 * b_d) ** n_exp) / (1 - (0.5 * b_d))]], dtype=dtype)
         expected = 1 + b_d * expected
 
@@ -173,7 +173,7 @@ class TestSymIIR:
     )
     @pytest.mark.parametrize('dtype', ['float32', 'float64'])
     def test_symiir1_values(self, dtype, xp):
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         s = rng.uniform(size=16).astype(dtype)
         dtype = getattr(xp, dtype)
         s = xp.asarray(s)
@@ -213,7 +213,7 @@ class TestSymIIR:
         # Compute the initial conditions for a order-two symmetrical low-pass
         # filter with r = 0.5 and omega = pi / 3 for an unit step input.
         r = xp.asarray(0.5, dtype=dtype)
-        omega = xp.asarray(np.pi / 3.0, dtype=dtype)
+        omega = xp.asarray(mx.pi / 3.0, dtype=dtype)
         cs = 1 - 2 * r * xp.cos(omega) + r**2
 
         # The index n for the initial condition is bound from 0 to the
@@ -229,9 +229,9 @@ class TestSymIIR:
         # \frac{cs}{\sin(\omega)} \sum_{n = 0}^{N - 1} {
         #    r^(n + 1) \sin{\omega(n + 2)}} + cs
         # The closed expression for this sum is:
-        # s[n] = 2 * r * np.cos(omega) -
-        #        r**2 - r**(n + 2) * np.sin(omega * (n + 3)) / np.sin(omega) +
-        #        r**(n + 3) * np.sin(omega * (n + 2)) / np.sin(omega) + cs
+        # s[n] = 2 * r * mx.cos(omega) -
+        #        r**2 - r**(n + 2) * mx.sin(omega * (n + 3)) / mx.sin(omega) +
+        #        r**(n + 3) * mx.sin(omega * (n + 2)) / mx.sin(omega) + cs
         fwd_initial_1 = (
             cs +
             2 * r * xp.cos(omega) -
@@ -240,11 +240,11 @@ class TestSymIIR:
             r**(n_exp + 3) * xp.sin(omega * (n_exp + 2)) / xp.sin(omega))
 
         # The second initial condition is given by
-        # s[n] = 1 / np.sin(omega) * (
-        #        r**2 * np.sin(3 * omega) -
-        #        r**3 * np.sin(2 * omega) -
-        #        r**(n + 3) * np.sin(omega * (n + 4)) +
-        #        r**(n + 4) * np.sin(omega * (n + 3)))
+        # s[n] = 1 / mx.sin(omega) * (
+        #        r**2 * mx.sin(3 * omega) -
+        #        r**3 * mx.sin(2 * omega) -
+        #        r**(n + 3) * mx.sin(omega * (n + 4)) +
+        #        r**(n + 4) * mx.sin(omega * (n + 3)))
         ub = xp.ceil(xp.log(c_precision / xp.sin(omega)) / math.log(c_precision))
         lb = xp.ceil(xp.pi / omega) - 3
         n_exp = min(ub, lb)
@@ -260,7 +260,7 @@ class TestSymIIR:
         expected = xp.astype(expected, dtype)
 
         n = 100
-        signal = np.ones(n, dtype=dtype)
+        signal = mx.ones(n, dtype=dtype)
 
         out = symiirorder2_ic_fwd(signal, r, omega, precision)
         xp_assert_close(out, expected, atol=4e-6, rtol=6e-7)
@@ -304,7 +304,7 @@ class TestSymIIR:
 
         diff = (_compute_symiirorder2_bwd_hs(idx, cs, r * r, omega) +
                 _compute_symiirorder2_bwd_hs(idx + 1, cs, r * r, omega))
-        ic2_0_all = np.cumsum(diff * out[:1:-1])
+        ic2_0_all = mx.cumsum(diff * out[:1:-1])
         pos = xp.nonzero(diff ** 2 < c_precision)[0]
         ic2[0] = ic2_0_all[pos[0]]
 
@@ -336,7 +336,7 @@ class TestSymIIR:
         signal = xp.ones(n, dtype=dtype)
 
         # Compute initial forward conditions
-        signal_np = np.asarray(signal)
+        signal_np = mx.array(signal)
         ic = symiirorder2_ic_fwd(signal_np, r, omega, precision)
         ic = xp.asarray(ic)
         out1 = xp.zeros(n + 2, dtype=dtype)
@@ -347,7 +347,7 @@ class TestSymIIR:
             out1[i] = cs * signal[i - 2] + a2 * out1[i - 1] + a3 * out1[i - 2]
 
         # Find the backward initial conditions
-        ic2 = symiirorder2_ic_bwd(np.asarray(out1), r, omega, precision)[0]
+        ic2 = symiirorder2_ic_bwd(mx.array(out1), r, omega, precision)[0]
         ic2 = xp.asarray(ic2)
 
         # Apply the system cs / (1 - a2 * z - a3 * z^2)) in backwards
@@ -364,7 +364,7 @@ class TestSymIIR:
     @skip_xp_backends(cpu_only=True, exceptions=["cupy"], reason="C internals")
     @pytest.mark.parametrize('dtyp', ['float32', 'float64'])
     def test_symiir2_values(self, dtyp, xp):
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         s = rng.uniform(size=16).astype(dtyp)
         s = xp.asarray(s)
 

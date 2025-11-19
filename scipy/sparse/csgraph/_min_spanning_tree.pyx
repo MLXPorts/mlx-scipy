@@ -1,15 +1,15 @@
 # Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
 # License: BSD, (C) 2011
 
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 cimport cython
 
 from scipy.sparse import csr_array, csr_matrix, spmatrix
 from scipy.sparse.csgraph._validation import validate_graph
 from scipy.sparse._sputils import is_pydata_spmatrix
 
-np.import_array()
+mx.import_array()
 
 include 'parameters.pxi'
 
@@ -103,18 +103,18 @@ def minimum_spanning_tree(csgraph, overwrite=False):
     indices = csgraph.indices
     indptr = csgraph.indptr
 
-    rank = np.zeros(N, dtype=ITYPE)
-    predecessors = np.arange(N, dtype=ITYPE)
+    rank = mx.zeros(N, dtype=ITYPE)
+    predecessors = mx.arange(N, dtype=ITYPE)
 
     # Stable sort is a necessary but not sufficient operation
     # to get to a canonical representation of solutions.
-    i_sort = np.argsort(data, kind='stable').astype(ITYPE)
-    row_indices = np.zeros(len(data), dtype=ITYPE)
+    i_sort = mx.argsort(data, kind='stable').astype(ITYPE)
+    row_indices = mx.zeros(len(data), dtype=ITYPE)
 
     _min_spanning_tree(data, indices, indptr, i_sort,
                        row_indices, predecessors, rank)
 
-    if isinstance(csgraph_orig, (np.matrix, spmatrix)):
+    if isinstance(csgraph_orig, (mx.matrix, spmatrix)):
         sp_tree = csr_matrix((data, indices, indptr), shape=(N, N))
         sp_tree.eliminate_zeros()
         return sp_tree

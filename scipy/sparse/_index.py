@@ -1,22 +1,22 @@
 """Indexing mixin for sparse array/matrix classes.
 """
-import numpy as np
+import mlx.core as mx
 from ._sputils import isintlike
 from ._base import sparray, issparse
 
-INT_TYPES = (int, np.integer)
+INT_TYPES = (int, mx.integer)
 
 
 def _broadcast_arrays(*arrays):
     """
-    Same as np.broadcast_arrays(a, b) but old writeability rules.
+    Same as mx.broadcast_arrays(a, b) but old writeability rules.
 
     NumPy >= 1.17.0 transitions broadcast_arrays to return
     read-only arrays. Set writeability explicitly to avoid warnings.
     Retain the old writeability rules, as our Cython code assumes
     the old behavior.
     """
-    broadcast_arrays = np.broadcast_arrays(*arrays)
+    broadcast_arrays = mx.broadcast_arrays(*arrays)
     for x, a in zip(broadcast_arrays, arrays):
         x.flags.writeable = a.flags.writeable
     return broadcast_arrays
@@ -35,7 +35,7 @@ class IndexMixin:
         # 1D array
         if len(index) == 1:
             idx = index[0]
-            if isinstance(idx, np.ndarray):
+            if isinstance(idx, mx.array):
                 if idx.shape == ():
                     idx = idx.item()
             if isinstance(idx, INT_TYPES):
@@ -48,7 +48,7 @@ class IndexMixin:
             # package the result and return
             if not isinstance(self, sparray):
                 return res
-            # handle np.newaxis in idx when result would otherwise be a scalar
+            # handle mx.newaxis in idx when result would otherwise be a scalar
             if res.shape == () and new_shape != ():
                 if len(new_shape) == 1:
                     return self.__class__([res], shape=new_shape, dtype=self.dtype)
@@ -99,7 +99,7 @@ class IndexMixin:
                 if row.shape != col.shape:
                     raise IndexError('number of row and column indices differ')
                 if row.size == 0:
-                    res = self.__class__(np.atleast_2d(row).shape, dtype=self.dtype)
+                    res = self.__class__(mx.atleast_2d(row).shape, dtype=self.dtype)
                 else:
                     res = self._get_arrayXarray(row, col)
 
@@ -134,7 +134,7 @@ class IndexMixin:
             if issparse(x):
                 x = x.toarray()
             else:
-                x = np.asarray(x, dtype=self.dtype)
+                x = mx.array(x, dtype=self.dtype)
 
             if isinstance(idx, INT_TYPES):
                 if x.size != 1:
@@ -150,13 +150,13 @@ class IndexMixin:
                 if N == 1 and x.size == 1:
                     self._set_int(idx_range[0], x.flat[0])
                     return
-                idx = np.arange(*idx.indices(self.shape[0]))
+                idx = mx.arange(*idx.indices(self.shape[0]))
                 idx_shape = idx.shape
             else:
                 idx_shape = idx.squeeze().shape
             # broadcast scalar to full 1d
             if x.squeeze().shape != idx_shape:
-                x = np.broadcast_to(x, idx.shape)
+                x = mx.broadcast_to(x, idx.shape)
             if x.size != 0:
                 self._set_array(idx, x)
             return
@@ -168,23 +168,23 @@ class IndexMixin:
             if issparse(x):
                 x = x.toarray()
             else:
-                x = np.asarray(x, dtype=self.dtype)
+                x = mx.array(x, dtype=self.dtype)
             if x.size != 1:
                 raise ValueError('Trying to assign a sequence to an item')
             self._set_intXint(row, col, x.flat[0])
             return
 
         if isinstance(row, slice):
-            row = np.arange(*row.indices(self.shape[0]))[:, None]
+            row = mx.arange(*row.indices(self.shape[0]))[:, None]
         else:
-            row = np.atleast_1d(row)
+            row = mx.atleast_1d(row)
 
         if isinstance(col, slice):
-            col = np.arange(*col.indices(self.shape[1]))[None, :]
+            col = mx.arange(*col.indices(self.shape[1]))[None, :]
             if row.ndim == 1:
                 row = row[:, None]
         else:
-            col = np.atleast_1d(col)
+            col = mx.atleast_1d(col)
 
         i, j = _broadcast_arrays(row, col)
         if i.shape != j.shape:
@@ -207,9 +207,9 @@ class IndexMixin:
             self._set_arrayXarray_sparse(i, j, x)
         else:
             # Make x and i into the same shape
-            x = np.asarray(x, dtype=self.dtype)
+            x = mx.array(x, dtype=self.dtype)
             if x.squeeze().shape != i.squeeze().shape:
-                x = np.broadcast_to(x, i.shape)
+                x = mx.broadcast_to(x, i.shape)
             if x.size == 0:
                 return
             x = x.reshape(i.shape)
@@ -290,7 +290,7 @@ class IndexMixin:
 
     def _set_arrayXarray_sparse(self, row, col, x):
         # Fall back to densifying x
-        x = np.asarray(x.toarray(), dtype=self.dtype)
+        x = mx.array(x.toarray(), dtype=self.dtype)
         x, _ = _broadcast_arrays(x, row)
         self._set_arrayXarray(row, col, x)
 
@@ -341,7 +341,7 @@ def _validate_indices(key, self_shape, self_format):
                 'except boolean indexing where matrix and index '
                 'are equal shapes.')
         else:  # dense array
-            index_1st.append(np.asarray(idx))
+            index_1st.append(mx.array(idx))
             prelim_ndim += 1
     if prelim_ndim > self_ndim:
         raise IndexError(
@@ -440,7 +440,7 @@ def _asindices(idx, length, format):
     Subclasses that need special validation can override this method.
     """
     try:
-        ix = np.asarray(idx)
+        ix = mx.array(idx)
     except (ValueError, TypeError, MemoryError) as e:
         raise IndexError('invalid index') from e
 
@@ -486,7 +486,7 @@ def _compatible_boolean_index(idx, desired_ndim):
         except TypeError:
             return None
         # since first is boolean, construct array and check all elements
-        idx = np.asanyarray(idx)
+        idx = mx.asanyarray(idx)
 
     if idx.dtype.kind == 'b':
         return idx

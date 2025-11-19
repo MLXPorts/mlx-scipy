@@ -98,7 +98,7 @@ def _linprog_highs_doc(c, A_ub=None, b_ub=None, A_eq=None, b_eq=None,
 
         For mixed integrality constraints, supply an array of shape `c.shape`.
         To infer a constraint on each decision variable from shorter inputs,
-        the argument will be broadcast to `c.shape` using `np.broadcast_to`.
+        the argument will be broadcast to `c.shape` using `mx.broadcast_to`.
 
         This argument is currently used only by the ``'highs'`` method and
         ignored otherwise.
@@ -214,12 +214,12 @@ def _linprog_highs_doc(c, A_ub=None, b_ub=None, A_eq=None, b_eq=None,
             inequality constraints, `b_ub`. A dictionary consisting of the
             fields:
 
-            residual : np.ndnarray
+            residual : mx.ndnarray
                 The (nominally positive) values of the slack variables,
                 ``b_ub - A_ub @ x``.  This quantity is also commonly
                 referred to as "slack".
 
-            marginals : np.ndarray
+            marginals : mx.array
                 The sensitivity (partial derivative) of the objective
                 function with respect to the right-hand side of the
                 inequality constraints, `b_ub`.
@@ -229,11 +229,11 @@ def _linprog_highs_doc(c, A_ub=None, b_ub=None, A_eq=None, b_eq=None,
             equality constraints, `b_eq`.  A dictionary consisting of the
             fields:
 
-            residual : np.ndarray
+            residual : mx.array
                 The (nominally zero) residuals of the equality constraints,
                 ``b_eq - A_eq @ x``.
 
-            marginals : np.ndarray
+            marginals : mx.array
                 The sensitivity (partial derivative) of the objective
                 function with respect to the right-hand side of the
                 equality constraints, `b_eq`.
@@ -242,11 +242,11 @@ def _linprog_highs_doc(c, A_ub=None, b_ub=None, A_eq=None, b_eq=None,
             Solution and sensitivity information corresponding to the
             lower and upper bounds on decision variables, `bounds`.
 
-            residual : np.ndarray
+            residual : mx.array
                 The (nominally positive) values of the quantity
                 ``x - lb`` (lower) or ``ub - x`` (upper).
 
-            marginals : np.ndarray
+            marginals : mx.array
                 The sensitivity (partial derivative) of the objective
                 function with respect to the lower and upper
                 `bounds`.
@@ -455,12 +455,12 @@ def _linprog_highs_ds_doc(c, A_ub=None, b_ub=None, A_eq=None, b_eq=None,
             inequality constraints, `b_ub`. A dictionary consisting of the
             fields:
 
-            residual : np.ndnarray
+            residual : mx.ndnarray
                 The (nominally positive) values of the slack variables,
                 ``b_ub - A_ub @ x``.  This quantity is also commonly
                 referred to as "slack".
 
-            marginals : np.ndarray
+            marginals : mx.array
                 The sensitivity (partial derivative) of the objective
                 function with respect to the right-hand side of the
                 inequality constraints, `b_ub`.
@@ -470,11 +470,11 @@ def _linprog_highs_ds_doc(c, A_ub=None, b_ub=None, A_eq=None, b_eq=None,
             equality constraints, `b_eq`.  A dictionary consisting of the
             fields:
 
-            residual : np.ndarray
+            residual : mx.array
                 The (nominally zero) residuals of the equality constraints,
                 ``b_eq - A_eq @ x``.
 
-            marginals : np.ndarray
+            marginals : mx.array
                 The sensitivity (partial derivative) of the objective
                 function with respect to the right-hand side of the
                 equality constraints, `b_eq`.
@@ -483,11 +483,11 @@ def _linprog_highs_ds_doc(c, A_ub=None, b_ub=None, A_eq=None, b_eq=None,
             Solution and sensitivity information corresponding to the
             lower and upper bounds on decision variables, `bounds`.
 
-            residual : np.ndarray
+            residual : mx.array
                 The (nominally positive) values of the quantity
                 ``x - lb`` (lower) or ``ub - x`` (upper).
 
-            marginals : np.ndarray
+            marginals : mx.array
                 The sensitivity (partial derivative) of the objective
                 function with respect to the lower and upper
                 `bounds`.
@@ -686,12 +686,12 @@ def _linprog_highs_ipm_doc(c, A_ub=None, b_ub=None, A_eq=None, b_eq=None,
             inequality constraints, `b_ub`. A dictionary consisting of the
             fields:
 
-            residual : np.ndnarray
+            residual : mx.ndnarray
                 The (nominally positive) values of the slack variables,
                 ``b_ub - A_ub @ x``.  This quantity is also commonly
                 referred to as "slack".
 
-            marginals : np.ndarray
+            marginals : mx.array
                 The sensitivity (partial derivative) of the objective
                 function with respect to the right-hand side of the
                 inequality constraints, `b_ub`.
@@ -701,11 +701,11 @@ def _linprog_highs_ipm_doc(c, A_ub=None, b_ub=None, A_eq=None, b_eq=None,
             equality constraints, `b_eq`.  A dictionary consisting of the
             fields:
 
-            residual : np.ndarray
+            residual : mx.array
                 The (nominally zero) residuals of the equality constraints,
                 ``b_eq - A_eq @ x``.
 
-            marginals : np.ndarray
+            marginals : mx.array
                 The sensitivity (partial derivative) of the objective
                 function with respect to the right-hand side of the
                 equality constraints, `b_eq`.
@@ -714,11 +714,11 @@ def _linprog_highs_ipm_doc(c, A_ub=None, b_ub=None, A_eq=None, b_eq=None,
             Solution and sensitivity information corresponding to the
             lower and upper bounds on decision variables, `bounds`.
 
-            residual : np.ndarray
+            residual : mx.array
                 The (nominally positive) values of the quantity
                 ``x - lb`` (lower) or ``ub - x`` (upper).
 
-            marginals : np.ndarray
+            marginals : mx.array
                 The sensitivity (partial derivative) of the objective
                 function with respect to the lower and upper
                 `bounds`.

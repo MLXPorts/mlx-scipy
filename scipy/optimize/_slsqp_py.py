@@ -15,7 +15,7 @@ Functions
 
 __all__ = ['approx_jacobian', 'fmin_slsqp']
 
-import numpy as np
+import mlx.core as mx
 from ._slsqplib import slsqp
 from scipy.linalg import norm as lanorm
 from ._optimize import (OptimizeResult, _check_unknown_options,
@@ -30,7 +30,7 @@ from numpy.typing import NDArray
 
 __docformat__ = "restructuredtext en"
 
-_epsilon = np.sqrt(np.finfo(np.float64).eps)
+_epsilon = mx.sqrt(mx.finfo(mx.float64).eps)
 
 
 def approx_jacobian(x, func, epsilon, *args):
@@ -64,7 +64,7 @@ def approx_jacobian(x, func, epsilon, *args):
                             args=args)
     # if func returns a scalar jac.shape will be (lenx,). Make sure
     # it's at least a 2D array.
-    return np.atleast_2d(jac)
+    return mx.atleast_2d(jac)
 
 
 def fmin_slsqp(func, x0, eqcons=(), f_eqcons=None, ieqcons=(), f_ieqcons=None,
@@ -82,7 +82,7 @@ def fmin_slsqp(func, x0, eqcons=(), f_eqcons=None, ieqcons=(), f_ieqcons=None,
     ----------
     func : callable f(x,*args)
         Objective function.  Must return a scalar.
-    x0 : 1-D ndarray of float
+    x0 : 1-D array of float
         Initial guess for the independent variable(s).
     eqcons : list, optional
         A list of functions of length n such that
@@ -97,7 +97,7 @@ def fmin_slsqp(func, x0, eqcons=(), f_eqcons=None, ieqcons=(), f_ieqcons=None,
         ieqcons[j](x,*args) >= 0.0 in a successfully optimized
         problem.
     f_ieqcons : callable f(x,*args), optional
-        Returns a 1-D ndarray in which each element must be greater or
+        Returns a 1-D array in which each element must be greater or
         equal to 0.0 in a successfully optimized problem. If
         f_ieqcons is specified, ieqcons is ignored.
     bounds : list, optional
@@ -142,9 +142,9 @@ def fmin_slsqp(func, x0, eqcons=(), f_eqcons=None, ieqcons=(), f_ieqcons=None,
 
     Returns
     -------
-    out : ndarray of float
+    out : array of float
         The final minimizer of func.
-    fx : ndarray of float, if full_output is true
+    fx : array of float, if full_output is true
         The final value of the objective function.
     its : int, if full_output is true
         The number of iterations.
@@ -313,12 +313,12 @@ def _minimize_slsqp(func, x0, args=(), jac=None, bounds=None,
     # SLSQP is sent 'old-style' bounds, 'new-style' bounds are required by
     # ScalarFunction
     if bounds is None or len(bounds) == 0:
-        new_bounds = (-np.inf, np.inf)
+        new_bounds = (-mx.inf, mx.inf)
     else:
         new_bounds = old_bound_to_new(bounds)
 
     # clip the initial guess to bounds, otherwise ScalarFunction doesn't work
-    x = np.clip(x, new_bounds[0], new_bounds[1])
+    x = mx.clip(x, new_bounds[0], new_bounds[1])
 
     # Constraints are triaged per type into a dictionary of tuples
     if isinstance(constraints, dict):
@@ -384,9 +384,9 @@ def _minimize_slsqp(func, x0, args=(), jac=None, bounds=None,
 
     # Set the parameters that SLSQP will need
     # meq, mieq: number of equality and inequality constraints
-    meq = sum(map(len, [np.atleast_1d(c['fun'](x, *c['args']))
+    meq = sum(map(len, [mx.atleast_1d(c['fun'](x, *c['args']))
               for c in cons['eq']]))
-    mieq = sum(map(len, [np.atleast_1d(c['fun'](x, *c['args']))
+    mieq = sum(map(len, [mx.atleast_1d(c['fun'](x, *c['args']))
                for c in cons['ineq']]))
     # m = The total number of constraints
     m = meq + mieq
@@ -395,18 +395,18 @@ def _minimize_slsqp(func, x0, args=(), jac=None, bounds=None,
 
     # Decompose bounds into xl and xu
     if bounds is None or len(bounds) == 0:
-        xl = np.empty(n, dtype=float)
-        xu = np.empty(n, dtype=float)
-        xl.fill(np.nan)
-        xu.fill(np.nan)
+        xl = mx.empty(n, dtype=float)
+        xu = mx.empty(n, dtype=float)
+        xl.fill(mx.nan)
+        xu.fill(mx.nan)
     else:
-        bnds = np.array([(_arr_to_scalar(lo), _arr_to_scalar(up))
+        bnds = mx.array([(_arr_to_scalar(lo), _arr_to_scalar(up))
                       for (lo, up) in bounds], float)
         if bnds.shape[0] != n:
             raise IndexError('SLSQP Error: the length of bounds is not '
                              'compatible with that of x0.')
 
-        with np.errstate(invalid='ignore'):
+        with mx.errstate(invalid='ignore'):
             bnderr = bnds[:, 0] > bnds[:, 1]
 
         if bnderr.any():
@@ -415,9 +415,9 @@ def _minimize_slsqp(func, x0, args=(), jac=None, bounds=None,
         xl, xu = bnds[:, 0].copy(), bnds[:, 1].copy()
 
         # Mark infinite bounds with nans; the C code expects this
-        infbnd = ~np.isfinite(bnds)
-        xl[infbnd[:, 0]] = np.nan
-        xu[infbnd[:, 1]] = np.nan
+        infbnd = ~mx.isfinite(bnds)
+        xl[infbnd[:, 0]] = mx.nan
+        xu[infbnd[:, 1]] = mx.nan
 
     # ScalarFunction provides function and gradient evaluation
     sf = _prepare_scalar_function(func, x, jac=jac, args=args, epsilon=eps,
@@ -478,7 +478,7 @@ def _minimize_slsqp(func, x0, args=(), jac=None, bounds=None,
         print(f"{'NIT':>5} {'FC':>5} {'OBJFUN':>16} {'GNORM':>16}")
 
     # Internal buffer and int array
-    indices = np.zeros([max(m + 2*n + 2, 1)], dtype=np.int32)
+    indices = mx.zeros([max(m + 2*n + 2, 1)], dtype=mx.int32)
 
     # The worst case workspace requirements for the buffer are:
 
@@ -496,7 +496,7 @@ def _minimize_slsqp(func, x0, args=(), jac=None, bounds=None,
     # terms.
     if mieq == 0:
         buffer_size += 2*n*(n + 1)
-    buffer = np.zeros(max(buffer_size, 1), dtype=np.float64)
+    buffer = mx.zeros(max(buffer_size, 1), dtype=mx.float64)
 
     # mode is zero on entry, so call objective, constraints and gradients
     # there should be no func evaluations here because it's cached from
@@ -506,11 +506,11 @@ def _minimize_slsqp(func, x0, args=(), jac=None, bounds=None,
 
     # Allocate the multiplier array both for constraints and user specified
     # bounds (extra +2 is for a possible augmented problem).
-    mult = np.zeros([max(1, m + 2*n + 2)], dtype=np.float64)
+    mult = mx.zeros([max(1, m + 2*n + 2)], dtype=mx.float64)
 
     # Allocate the constraints and normals once and repopulate as needed
-    C = np.zeros([max(1, m), n], dtype=np.float64, order='F')
-    d = np.zeros([max(1, m)], dtype=np.float64)
+    C = mx.zeros([max(1, m), n], dtype=mx.float64, order='F')
+    d = mx.zeros([max(1, m)], dtype=mx.float64)
     _eval_con_normals(C, x, cons, m, meq)
     _eval_constraint(d, x, cons, m, meq)
 
@@ -532,7 +532,7 @@ def _minimize_slsqp(func, x0, args=(), jac=None, bounds=None,
             # call callback if major iteration has incremented
             if callback is not None:
                 intermediate_result = OptimizeResult(
-                    x=np.copy(x),
+                    x=mx.copy(x),
                     fun=fx
                 )
                 if _call_callback_maybe_halt(callback, intermediate_result):
@@ -577,14 +577,14 @@ def _eval_constraint(d: NDArray, x: NDArray, cons: dict, m: int, meq: int):
     if meq > 0:
         row = 0
         for con in cons['eq']:
-            temp = np.atleast_1d(con['fun'](x, *con['args'])).ravel()
+            temp = mx.atleast_1d(con['fun'](x, *con['args'])).ravel()
             d[row:row + len(temp)] = temp
             row += len(temp)
 
     if m > meq:
         row = meq
         for con in cons['ineq']:
-            temp = np.atleast_1d(con['fun'](x, *con['args'])).ravel()
+            temp = mx.atleast_1d(con['fun'](x, *con['args'])).ravel()
             d[row:row + len(temp)] = temp
             row += len(temp)
 
@@ -598,14 +598,14 @@ def _eval_con_normals(C: NDArray, x: NDArray, cons: dict, m: int, meq: int):
     if meq > 0:
         row = 0
         for con in cons['eq']:
-            temp = np.atleast_2d(con['jac'](x, *con['args']))
+            temp = mx.atleast_2d(con['jac'](x, *con['args']))
             C[row:row + temp.shape[0], :] = temp
             row += temp.shape[0]
 
     if m > meq:
         row = meq
         for con in cons['ineq']:
-            temp = np.atleast_2d(con['jac'](x, *con['args']))
+            temp = mx.atleast_2d(con['jac'](x, *con['args']))
             C[row:row + temp.shape[0], :] = temp
             row += temp.shape[0]
 

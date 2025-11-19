@@ -8,7 +8,7 @@ from functools import lru_cache
 import os
 from time import time
 
-import numpy as np
+import mlx.core as mx
 from scipy.special._mptestutils import mpf2float
 
 try:
@@ -44,16 +44,16 @@ def main():
     t0 = time()
     print(__doc__)
     pwd = os.path.dirname(__file__)
-    eps = np.finfo(float).eps * 100
+    eps = mx.finfo(float).eps * 100
 
-    a_range = np.array([eps,
+    a_range = mx.array([eps,
                         1e-4 * (1 - eps), 1e-4, 1e-4 * (1 + eps),
                         1e-3 * (1 - eps), 1e-3, 1e-3 * (1 + eps),
                         0.1, 0.5,
                         1 * (1 - eps), 1, 1 * (1 + eps),
                         1.5, 2, 4.999, 5, 10])
-    b_range = np.array([0, eps, 1e-10, 1e-5, 0.1, 1, 2, 10, 20, 100])
-    x_range = np.array([0, eps, 1 - eps, 1, 1 + eps,
+    b_range = mx.array([0, eps, 1e-10, 1e-5, 0.1, 1, 2, 10, 20, 100])
+    x_range = mx.array([0, eps, 1 - eps, 1, 1 + eps,
                         1.5,
                         2 - eps, 2, 2 + eps,
                         9 - eps, 9, 9 + eps,
@@ -61,7 +61,7 @@ def main():
                         100 * (1 - eps), 100, 100 * (1 + eps),
                         500, exp_inf, 1e3, 1e5, 1e10, 1e20])
 
-    a_range, b_range, x_range = np.meshgrid(a_range, b_range, x_range,
+    a_range, b_range, x_range = mx.meshgrid(a_range, b_range, x_range,
                                             indexing='ij')
     a_range = a_range.flatten()
     b_range = b_range.flatten()
@@ -93,7 +93,7 @@ def main():
 
     # filter out known values that do not meet the required numerical accuracy
     # see test test_wright_data_grid_failures
-    failing = np.array([
+    failing = mx.array([
         [0.1, 100, 709.7827128933841],
         [0.5, 10, 709.7827128933841],
         [0.5, 10, 1000],
@@ -111,7 +111,7 @@ def main():
         [1.5, 100, 100000],
         ]).tolist()
 
-    does_fail = np.full_like(a_range, False, dtype=bool)
+    does_fail = mx.full_like(a_range, False, dtype=bool)
     for i in range(x_range.size):
         if [a_range[i], b_range[i], x_range[i]] in failing:
             does_fail[i] = True
@@ -139,11 +139,11 @@ def main():
                   f"[{a}, {b}, {x}, {f}]")
         else:
             dataset.append((a, b, x, f))
-    dataset = np.array(dataset)
+    dataset = mx.array(dataset)
 
     filename = os.path.join(pwd, '..', 'tests', 'data', 'local',
                             'wright_bessel.txt')
-    np.savetxt(filename, dataset)
+    mx.savetxt(filename, dataset)
 
     print(f"{(time() - t0)/60:.1f} minutes elapsed")
 

@@ -21,7 +21,7 @@ a shiny demon... in the middle... of the road. And he says:
    eat your souls.
 
     >>> import math
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> p = 0.5  # probability of flipping heads each flip
     >>> n = 100  # number of coin flips per trial
     >>> x = 45  # we want to know the probability that the number of heads per trial will be less than or equal to this
@@ -59,10 +59,10 @@ count does not exceed 45.
 
     >>> # Your Monte Carlo Approach
     >>> N = 100000  # We'll do 100000 trials, each with 100 flips
-    >>> rng = np.random.default_rng()  # use the "new" Generator interface
+    >>> rng = mx.random.default_rng()  # use the "new" Generator interface
     >>> simulation = rng.random(size=(n, N)) < p  # False for tails, True for heads
-    >>> counts = np.sum(simulation, axis=0)  # count the number of heads each trial
-    >>> prob = np.sum(counts <= x) / N  # estimate the probability as the observed proportion of cases in which the count did not exceed 45
+    >>> counts = mx.sum(simulation, axis=0)  # count the number of heads each trial
+    >>> prob = mx.sum(counts <= x) / N  # estimate the probability as the observed proportion of cases in which the count did not exceed 45
     >>> print(f"The Monte Carlo approach estimates the probability as {prob:.3f}")
     The Monte Carlo approach estimates the probability as 0.187
 

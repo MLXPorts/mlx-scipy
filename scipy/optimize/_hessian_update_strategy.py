@@ -1,5 +1,5 @@
 """Hessian update strategies for quasi-Newton optimization methods."""
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import norm
 from scipy.linalg import get_blas_funcs, issymmetric
 from warnings import warn
@@ -60,10 +60,10 @@ class HessianUpdateStrategy:
 
         Parameters
         ----------
-        delta_x : ndarray
+        delta_x : array
             The difference between two points the gradient
             function have been evaluated at: ``delta_x = x2 - x1``.
-        delta_grad : ndarray
+        delta_grad : array
             The difference between the gradients:
             ``delta_grad = grad(x2) - grad(x1)``.
         """
@@ -92,7 +92,7 @@ class HessianUpdateStrategy:
 
         Returns
         -------
-        H : ndarray, shape (n, n)
+        H : array, shape (n, n)
             Dense matrix containing either the Hessian
             or its inverse (depending on how 'approx_type'
             is defined).
@@ -143,17 +143,17 @@ class FullHessianUpdateStrategy(HessianUpdateStrategy):
             raise ValueError("`approx_type` must be 'hess' or 'inv_hess'.")
         # Create matrix
         if self.approx_type == 'hess':
-            self.B = np.eye(n, dtype=float)
+            self.B = mx.eye(n, dtype=float)
         else:
-            self.H = np.eye(n, dtype=float)
+            self.H = mx.eye(n, dtype=float)
 
     def _auto_scale(self, delta_x, delta_grad):
         # Heuristic to scale matrix at first iteration.
         # Described in Nocedal and Wright "Numerical Optimization"
         # p.143 formula (6.20).
-        s_norm2 = np.dot(delta_x, delta_x)
-        y_norm2 = np.dot(delta_grad, delta_grad)
-        ys = np.abs(np.dot(delta_grad, delta_x))
+        s_norm2 = mx.dot(delta_x, delta_x)
+        y_norm2 = mx.dot(delta_grad, delta_grad)
+        ys = mx.abs(mx.dot(delta_grad, delta_x))
         if ys == 0.0 or y_norm2 == 0 or s_norm2 == 0:
             return 1
         if self.approx_type == 'hess':
@@ -173,16 +173,16 @@ class FullHessianUpdateStrategy(HessianUpdateStrategy):
 
         Parameters
         ----------
-        delta_x : ndarray
+        delta_x : array
             The difference between two points the gradient
             function have been evaluated at: ``delta_x = x2 - x1``.
-        delta_grad : ndarray
+        delta_grad : array
             The difference between the gradients:
             ``delta_grad = grad(x2) - grad(x1)``.
         """
-        if np.all(delta_x == 0.0):
+        if mx.all(delta_x == 0.0):
             return
-        if np.all(delta_grad == 0.0):
+        if mx.all(delta_grad == 0.0):
             warn('delta_grad == 0.0. Check if the approximated '
                  'function is linear. If the function is linear '
                  'better results can be obtained by defining the '
@@ -201,26 +201,26 @@ class FullHessianUpdateStrategy(HessianUpdateStrategy):
             # a real one but not so for scalar as it raises a TypeError.
             # Checking here brings a consistent behavior.
             replace = False
-            if np.size(scale) == 1:
+            if mx.size(scale) == 1:
                 # to account for the legacy behavior having the exact same cast
                 scale = float(scale)
-            elif np.iscomplexobj(scale):
+            elif mx.iscomplexobj(scale):
                 raise TypeError("init_scale contains complex elements, "
                                 "must be real.")
             else:  # test explicitly for allowed shapes and values
                 replace = True
                 if self.approx_type == 'hess':
-                    shape = np.shape(self.B)
+                    shape = mx.shape(self.B)
                     dtype = self.B.dtype
                 else:
-                    shape = np.shape(self.H)
+                    shape = mx.shape(self.H)
                     dtype = self.H.dtype
                 # copy, will replace the original
-                scale = np.array(scale, dtype=dtype, copy=True)
+                scale = mx.array(scale, dtype=dtype, copy=True)
 
                 # it has to match the shape of the matrix for the multiplication,
                 # no implicit broadcasting is allowed
-                if shape != (init_shape := np.shape(scale)):
+                if shape != (init_shape := mx.shape(scale)):
                     raise ValueError("If init_scale is an array, it must have the "
                                      f"dimensions of the hess/inv_hess: {shape}."
                                      f" Got {init_shape}.")
@@ -229,7 +229,7 @@ class FullHessianUpdateStrategy(HessianUpdateStrategy):
                                      " symmetric (passing scipy.linalg.issymmetric)"
                                      " to be an approximation of a hess/inv_hess.")
 
-            # Scale initial matrix with ``scale * np.eye(n)`` or replace
+            # Scale initial matrix with ``scale * mx.eye(n)`` or replace
             # This is not ideal, we could assign the scale directly in
             # initialize, but we would need to
             if self.approx_type == 'hess':
@@ -269,15 +269,15 @@ class FullHessianUpdateStrategy(HessianUpdateStrategy):
 
         Returns
         -------
-        M : ndarray, shape (n, n)
+        M : array, shape (n, n)
             Dense matrix containing either the Hessian or its inverse
             (depending on how `approx_type` was defined).
         """
         if self.approx_type == 'hess':
-            M = np.copy(self.B)
+            M = mx.copy(self.B)
         else:
-            M = np.copy(self.H)
-        li = np.tril_indices_from(M, k=-1)
+            M = mx.copy(self.H)
+        li = mx.tril_indices_from(M, k=-1)
         M[li] = M.T[li]
         return M
 
@@ -299,10 +299,10 @@ class BFGS(FullHessianUpdateStrategy):
         unaffected by the exception strategy. By default is equal to
         1e-8 when ``exception_strategy = 'skip_update'`` and equal
         to 0.2 when ``exception_strategy = 'damp_update'``.
-    init_scale : {float, np.array, 'auto'}
+    init_scale : {float, mx.array, 'auto'}
         This parameter can be used to initialize the Hessian or its
         inverse. When a float is given, the relevant array is initialized
-        to ``np.eye(n) * init_scale``, where ``n`` is the problem dimension.
+        to ``mx.eye(n) * init_scale``, where ``n`` is the problem dimension.
         Alternatively, if a precisely ``(n, n)`` shaped, symmetric array is given,
         this array will be used. Otherwise an error is generated.
         Set it to 'auto' in order to use an automatic heuristic for choosing
@@ -385,7 +385,7 @@ class BFGS(FullHessianUpdateStrategy):
             w = delta_grad
             z = delta_x
         # Do some common operations
-        wz = np.dot(w, z)
+        wz = mx.dot(w, z)
         Mw = self @ w
         wMw = Mw.dot(w)
         # Guarantee that wMw > 0 by reinitializing matrix.
@@ -395,9 +395,9 @@ class BFGS(FullHessianUpdateStrategy):
             scale = self._auto_scale(delta_x, delta_grad)
             # Reinitialize matrix
             if self.approx_type == 'hess':
-                self.B = scale * np.eye(self.n, dtype=float)
+                self.B = scale * mx.eye(self.n, dtype=float)
             else:
-                self.H = scale * np.eye(self.n, dtype=float)
+                self.H = scale * mx.eye(self.n, dtype=float)
             # Do common operations for new matrix
             Mw = self @ w
             wMw = Mw.dot(w)
@@ -414,7 +414,7 @@ class BFGS(FullHessianUpdateStrategy):
             elif self.exception_strategy == 'damp_update':
                 update_factor = (1-self.min_curvature) / (1 - wz/wMw)
                 z = update_factor*z + (1-update_factor)*Mw
-                wz = np.dot(w, z)
+                wz = mx.dot(w, z)
         # Update matrix
         if self.approx_type == 'hess':
             self._update_hessian(wz, Mw, wMw, z)
@@ -432,10 +432,10 @@ class SR1(FullHessianUpdateStrategy):
         defines the minimum denominator magnitude allowed
         in the update. When the condition is violated we skip
         the update. By default uses ``1e-8``.
-    init_scale : {float, np.array, 'auto'}, optional
+    init_scale : {float, mx.array, 'auto'}, optional
         This parameter can be used to initialize the Hessian or its
         inverse. When a float is given, the relevant array is initialized
-        to ``np.eye(n) * init_scale``, where ``n`` is the problem dimension.
+        to ``mx.eye(n) * init_scale``, where ``n`` is the problem dimension.
         Alternatively, if a precisely ``(n, n)`` shaped, symmetric array is given,
         this array will be used. Otherwise an error is generated.
         Set it to 'auto' in order to use an automatic heuristic for choosing
@@ -467,10 +467,10 @@ class SR1(FullHessianUpdateStrategy):
         # Do some common operations
         Mw = self @ w
         z_minus_Mw = z - Mw
-        denominator = np.dot(w, z_minus_Mw)
+        denominator = mx.dot(w, z_minus_Mw)
         # If the denominator is too small
         # we just skip the update.
-        if np.abs(denominator) <= self.min_denominator*norm(w)*norm(z_minus_Mw):
+        if mx.abs(denominator) <= self.min_denominator*norm(w)*norm(z_minus_Mw):
             return
         # Update matrix
         if self.approx_type == 'hess':

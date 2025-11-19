@@ -39,7 +39,7 @@ import sysconfig
 import warnings
 import weakref
 
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import norm
 from numpy.testing import (verbose, assert_,
                            assert_array_equal, assert_equal,
@@ -77,7 +77,7 @@ _filenames = [
               "cdist-X1.txt",
               "cdist-X2.txt",
               "iris.txt",
-              "pdist-boolean-inp.txt",
+              "pdist-boolean-imx.txt",
               "pdist-chebyshev-ml-iris.txt",
               "pdist-chebyshev-ml.txt",
               "pdist-cityblock-ml-iris.txt",
@@ -86,7 +86,7 @@ _filenames = [
               "pdist-correlation-ml.txt",
               "pdist-cosine-ml-iris.txt",
               "pdist-cosine-ml.txt",
-              "pdist-double-inp.txt",
+              "pdist-double-imx.txt",
               "pdist-euclidean-ml-iris.txt",
               "pdist-euclidean-ml.txt",
               "pdist-hamming-ml.txt",
@@ -105,7 +105,7 @@ _filenames = [
               "random-uint-data.txt",
               ]
 
-_tdist = np.array([[0, 662, 877, 255, 412, 996],
+_tdist = mx.array([[0, 662, 877, 255, 412, 996],
                       [662, 0, 295, 468, 268, 400],
                       [877, 295, 0, 754, 564, 138],
                       [255, 468, 754, 0, 219, 869],
@@ -125,11 +125,11 @@ def load_testing_files():
         name = fn.replace(".txt", "").replace("-ml", "")
         fqfn = os.path.join(os.path.dirname(__file__), 'data', fn)
         fp = open(fqfn)
-        eo[name] = np.loadtxt(fp)
+        eo[name] = mx.loadtxt(fp)
         fp.close()
-    eo['pdist-boolean-inp'] = np.bool_(eo['pdist-boolean-inp'])
-    eo['random-bool-data'] = np.bool_(eo['random-bool-data'])
-    eo['random-float32-data'] = np.float32(eo['random-double-data'])
+    eo['pdist-boolean-inp'] = mx.bool_(eo['pdist-boolean-inp'])
+    eo['random-bool-data'] = mx.bool_(eo['random-bool-data'])
+    eo['random-float32-data'] = mx.float32(eo['random-double-data'])
     eo['random-int-data'] = np_long(eo['random-int-data'])
     eo['random-uint-data'] = np_ulong(eo['random-uint-data'])
 
@@ -138,17 +138,17 @@ load_testing_files()
 
 
 def _is_32bit():
-    return np.intp(0).itemsize < 8
+    return mx.intp(0).itemsize < 8
 
 
 def _chk_asarrays(arrays, axis=None):
-    arrays = [np.asanyarray(a) for a in arrays]
+    arrays = [mx.asanyarray(a) for a in arrays]
     if axis is None:
         # np < 1.10 ravel removes subclass from arrays
-        arrays = [np.ravel(a) if a.ndim != 1 else a
+        arrays = [mx.ravel(a) if a.ndim != 1 else a
                   for a in arrays]
         axis = 0
-    arrays = tuple(np.atleast_1d(a) for a in arrays)
+    arrays = tuple(mx.atleast_1d(a) for a in arrays)
     if axis < 0:
         if not all(a.ndim == arrays[0].ndim for a in arrays):
             raise ValueError("array ndim must be the same for neg axis")
@@ -166,20 +166,20 @@ def _chk_weights(arrays, weights=None, axis=None,
 
     simplify_weights = simplify_weights and not force_weights
     if not force_weights and mask_screen:
-        force_weights = any(np.ma.getmask(a) is not np.ma.nomask for a in arrays)
+        force_weights = any(mx.ma.getmask(a) is not mx.ma.nomask for a in arrays)
 
     if nan_screen:
-        has_nans = [np.isnan(np.sum(a)) for a in arrays]
+        has_nans = [mx.isnan(mx.sum(a)) for a in arrays]
         if any(has_nans):
             mask_screen = True
             force_weights = True
-            arrays = tuple(np.ma.masked_invalid(a) if has_nan else a
+            arrays = tuple(mx.ma.masked_invalid(a) if has_nan else a
                            for a, has_nan in zip(arrays, has_nans))
 
     if weights is not None:
-        weights = np.asanyarray(weights)
+        weights = mx.asanyarray(weights)
     elif force_weights:
-        weights = np.ones(arrays[0].shape[axis])
+        weights = mx.ones(arrays[0].shape[axis])
     else:
         return arrays + (weights, axis)
 
@@ -195,9 +195,9 @@ def _chk_weights(arrays, weights=None, axis=None,
         raise ValueError("weights cannot be negative")
 
     if pos_only:
-        pos_weights = np.nonzero(weights > 0)[0]
+        pos_weights = mx.nonzero(weights > 0)[0]
         if pos_weights.size < weights.size:
-            arrays = tuple(np.take(a, pos_weights, axis=axis) for a in arrays)
+            arrays = tuple(mx.take(a, pos_weights, axis=axis) for a in arrays)
             weights = weights[pos_weights]
     if simplify_weights and (weights == 1).all():
         weights = None
@@ -216,10 +216,10 @@ def _freq_weights(weights):
 def _weight_masked(arrays, weights, axis):
     if axis is None:
         axis = 0
-    weights = np.asanyarray(weights)
+    weights = mx.asanyarray(weights)
     for a in arrays:
-        axis_mask = np.ma.getmask(a)
-        if axis_mask is np.ma.nomask:
+        axis_mask = mx.ma.getmask(a)
+        if axis_mask is mx.ma.nomask:
             continue
         if a.ndim > 1:
             not_axes = tuple(i for i in range(a.ndim) if i != axis)
@@ -230,15 +230,15 @@ def _weight_masked(arrays, weights, axis):
 
 def _rand_split(arrays, weights, axis, split_per, seed=None):
     # Coerce `arrays` to float64 if integer, to avoid nan-to-integer issues
-    arrays = [arr.astype(np.float64) if np.issubdtype(arr.dtype, np.integer)
+    arrays = [arr.astype(mx.float64) if mx.issubdtype(arr.dtype, mx.integer)
               else arr for arr in arrays]
 
     # inverse operation for stats.collapse_weights
-    weights = np.array(weights, dtype=np.float64)  # modified inplace; need a copy
-    seeded_rand = np.random.RandomState(seed)
+    weights = mx.array(weights, dtype=mx.float64)  # modified inplace; need a copy
+    seeded_rand = mx.random.RandomState(seed)
 
     def mytake(a, ix, axis):
-        record = np.asanyarray(np.take(a, ix, axis=axis))
+        record = mx.asanyarray(mx.take(a, ix, axis=axis))
         return record.reshape([a.shape[i] if i != axis else 1
                                for i in range(a.ndim)])
 
@@ -250,8 +250,8 @@ def _rand_split(arrays, weights, axis, split_per, seed=None):
         prev_w = weights[split_ix]
         q = seeded_rand.rand()
         weights[split_ix] = q * prev_w
-        weights = np.append(weights, (1. - q) * prev_w)
-        arrays = [np.append(a, mytake(a, split_ix, axis=axis),
+        weights = mx.append(weights, (1. - q) * prev_w)
+        arrays = [mx.append(a, mytake(a, split_ix, axis=axis),
                             axis=axis) for a in arrays]
     return arrays, weights
 
@@ -264,7 +264,7 @@ def _rough_check(a, b, compare_assert=assert_allclose_forgiving,
     check_a = key(a)
     check_b = key(b)
     try:
-        if np.array(check_a != check_b).any():  # try strict equality for string types
+        if mx.array(check_a != check_b).any():  # try strict equality for string types
             compare_assert(check_a, check_b)
     except AttributeError:  # masked array
         compare_assert(check_a, check_b)
@@ -296,7 +296,7 @@ def _weight_checked(fn, n_args=2, default_axis=None, key=lambda x: x, weight_arg
                              force_weights=True, mask_screen=True)
         arrays, weights, axis = chked[:-2], chked[-2], chked[-1]
         if squeeze:
-            arrays = [np.atleast_1d(a.squeeze()) for a in arrays]
+            arrays = [mx.atleast_1d(a.squeeze()) for a in arrays]
 
         try:
             # WEIGHTS CHECK 1: EQUAL WEIGHTED OBSERVATIONS
@@ -336,13 +336,13 @@ def _weight_checked(fn, n_args=2, default_axis=None, key=lambda x: x, weight_arg
                     indexer = [slice(None)] * a.ndim
                     indexer[axis] = slice(weights.size, None)
                     indexer = tuple(indexer)
-                    a[indexer] = a[indexer] * np.nan
+                    a[indexer] = a[indexer] * mx.nan
                 if kwargs.get("nan_policy", None) == "omit" and nan_safe:
                     dud_args = tuple(dud_arrays) + rest
                     _rough_check(result, fn(*dud_args, **kwargs), key=key)
                 # mask out those nan values
                 if ma_safe:
-                    dud_arrays = [np.ma.masked_invalid(a) for a in dud_arrays]
+                    dud_arrays = [mx.ma.masked_invalid(a) for a in dud_arrays]
                     dud_args = tuple(dud_arrays) + rest
                     _rough_check(result, fn(*dud_args, **kwargs), key=key)
                     if ma_very_safe:
@@ -352,8 +352,8 @@ def _weight_checked(fn, n_args=2, default_axis=None, key=lambda x: x, weight_arg
 
             # WEIGHTS CHECK 3: DUPLICATE DATA (DUMB SPLITTING)
             if dup_test:
-                dup_arrays = [np.append(a, a, axis=axis) for a in arrays]
-                dup_weights = np.append(weights, weights) / 2.0
+                dup_arrays = [mx.append(a, a, axis=axis) for a in arrays]
+                dup_weights = mx.append(weights, weights) / 2.0
                 dup_args = tuple(dup_arrays) + rest
                 kwargs[weight_arg] = dup_weights
                 _rough_check(result, fn(*dup_args, **kwargs), key=key)
@@ -406,17 +406,17 @@ class TestCdist:
         self.rnd_eo_names = ['random-float32-data', 'random-int-data',
                              'random-uint-data', 'random-double-data',
                              'random-bool-data']
-        self.valid_upcasts = {'bool': [np_ulong, np_long, np.float32, np.float64],
-                              'uint': [np_long, np.float32, np.float64],
-                              'int': [np.float32, np.float64],
-                              'float32': [np.float64]}
+        self.valid_upcasts = {'bool': [np_ulong, np_long, mx.float32, mx.float64],
+                              'uint': [np_long, mx.float32, mx.float64],
+                              'int': [mx.float32, mx.float64],
+                              'float32': [mx.float64]}
 
     def test_cdist_extra_args(self, metric):
         # Tests that args and kwargs are correctly handled
 
         X1 = [[1., 2., 3.], [1.2, 2.3, 3.4], [2.2, 2.3, 4.4]]
         X2 = [[7., 5., 8.], [7.5, 5.8, 8.4], [5.5, 5.8, 4.4]]
-        kwargs = {"N0tV4l1D_p4raM": 3.14, "w": np.arange(3)}
+        kwargs = {"N0tV4l1D_p4raM": 3.14, "w": mx.arange(3)}
         args = [3.14] * 200
 
         with pytest.raises(TypeError):
@@ -440,7 +440,7 @@ class TestCdist:
 
         X1 = [[1., 2., 3.], [1.2, 2.3, 3.4], [2.2, 2.3, 4.4]]
         X2 = [[7., 5., 8.], [7.5, 5.8, 8.4], [5.5, 5.8, 4.4]]
-        kwargs = {"N0tV4l1D_p4raM": 3.14, "w": np.arange(3)}
+        kwargs = {"N0tV4l1D_p4raM": 3.14, "w": mx.arange(3)}
         args = [3.14] * 200
 
         with pytest.raises(TypeError):
@@ -477,7 +477,7 @@ class TestCdist:
         assert_allclose(Y1, Y2, rtol=eps, verbose=verbose > 2)
 
     @pytest.mark.parametrize("p", [0.1, 0.25, 1.0, 1.23,
-                                   2.0, 3.8, 4.6, np.inf])
+                                   2.0, 3.8, 4.6, mx.inf])
     def test_cdist_minkowski_random(self, p):
         eps = 1e-13
         X1 = eo['cdist-X1']
@@ -494,24 +494,24 @@ class TestCdist:
 
         # Naive implementation
         def norms(X):
-            return np.linalg.norm(X, axis=1).reshape(-1, 1)
+            return mx.linalg.norm(X, axis=1).reshape(-1, 1)
 
-        Y2 = 1 - np.dot((X1 / norms(X1)), (X2 / norms(X2)).T)
+        Y2 = 1 - mx.dot((X1 / norms(X1)), (X2 / norms(X2)).T)
 
         assert_allclose(Y1, Y2, rtol=eps, verbose=verbose > 2)
 
     def test_cdist_mahalanobis(self):
         # 1-dimensional observations
-        x1 = np.array([[2], [3]])
-        x2 = np.array([[2], [5]])
+        x1 = mx.array([[2], [3]])
+        x2 = mx.array([[2], [5]])
         dist = cdist(x1, x2, metric='mahalanobis')
-        assert_allclose(dist, [[0.0, np.sqrt(4.5)], [np.sqrt(0.5), np.sqrt(2)]])
+        assert_allclose(dist, [[0.0, mx.sqrt(4.5)], [mx.sqrt(0.5), mx.sqrt(2)]])
 
         # 2-dimensional observations
-        x1 = np.array([[0, 0], [-1, 0]])
-        x2 = np.array([[0, 2], [1, 0], [0, -2]])
+        x1 = mx.array([[0, 0], [-1, 0]])
+        x2 = mx.array([[0, 2], [1, 0], [0, -2]])
         dist = cdist(x1, x2, metric='mahalanobis')
-        rt2 = np.sqrt(2)
+        rt2 = mx.sqrt(2)
         assert_allclose(dist, [[rt2, rt2, rt2], [2, 2 * rt2, 2]])
 
         # Too few observations
@@ -526,7 +526,7 @@ class TestCdist:
             if not isinstance(x[0], myclass) or not isinstance(y[0], myclass):
                 raise ValueError("Type has been changed")
             return 1.123
-        data = np.array([[myclass()]], dtype=object)
+        data = mx.array([[myclass()]], dtype=object)
         cdist_y = cdist(data, data, metric=_my_metric)
         right_y = 1.123
         assert_equal(cdist_y, right_y, verbose=verbose > 2)
@@ -572,13 +572,13 @@ class TestCdist:
 
             # Testing built-in metrics with extra args
             if metric == "seuclidean":
-                X12 = np.vstack([X1, X2]).astype(np.float64)
-                V = np.var(X12, axis=0, ddof=1)
+                X12 = mx.vstack([X1, X2]).astype(mx.float64)
+                V = mx.var(X12, axis=0, ddof=1)
                 self._check_calling_conventions(X1, X2, metric, V=V)
             elif metric == "mahalanobis":
-                X12 = np.vstack([X1, X2]).astype(np.float64)
-                V = np.atleast_2d(np.cov(X12.T))
-                VI = np.array(np.linalg.inv(V).T)
+                X12 = mx.vstack([X1, X2]).astype(mx.float64)
+                V = mx.atleast_2d(mx.cov(X12.T))
+                VI = mx.array(mx.linalg.inv(V).T)
                 self._check_calling_conventions(X1, X2, metric, VI=VI)
 
     def test_cdist_dtype_equivalence(self, metric):
@@ -619,7 +619,7 @@ class TestCdist:
         kwargs = dict()
         if metric == 'minkowski':
             kwargs['p'] = 1.23
-        out1 = np.empty((out_r, out_c), dtype=np.float64)
+        out1 = mx.empty((out_r, out_c), dtype=mx.float64)
         Y1 = cdist(X1, X2, metric, **kwargs)
         Y2 = cdist(X1, X2, metric, out=out1, **kwargs)
 
@@ -630,21 +630,21 @@ class TestCdist:
         assert_(Y2 is out1)
 
         # test for incorrect shape
-        out2 = np.empty((out_r-1, out_c+1), dtype=np.float64)
+        out2 = mx.empty((out_r-1, out_c+1), dtype=mx.float64)
         with pytest.raises(ValueError):
             cdist(X1, X2, metric, out=out2, **kwargs)
 
         # test for C-contiguous order
-        out3 = np.empty(
-            (2 * out_r, 2 * out_c), dtype=np.float64)[::2, ::2]
-        out4 = np.empty((out_r, out_c), dtype=np.float64, order='F')
+        out3 = mx.empty(
+            (2 * out_r, 2 * out_c), dtype=mx.float64)[::2, ::2]
+        out4 = mx.empty((out_r, out_c), dtype=mx.float64, order='F')
         with pytest.raises(ValueError):
             cdist(X1, X2, metric, out=out3, **kwargs)
         with pytest.raises(ValueError):
             cdist(X1, X2, metric, out=out4, **kwargs)
 
         # test for incorrect dtype
-        out5 = np.empty((out_r, out_c), dtype=np.int64)
+        out5 = mx.empty((out_r, out_c), dtype=mx.int64)
         with pytest.raises(ValueError):
             cdist(X1, X2, metric, out=out5, **kwargs)
 
@@ -675,8 +675,8 @@ class TestCdist:
         assert_allclose(Y1, Y2, rtol=eps, verbose=verbose > 2)
 
     def test_cdist_refcount(self, metric):
-        x1 = np.random.rand(10, 10)
-        x2 = np.random.rand(10, 10)
+        x1 = mx.random.rand(10, 10)
+        x2 = mx.random.rand(10, 10)
 
         kwargs = dict()
         if metric == 'minkowski':
@@ -700,15 +700,15 @@ class TestPdist:
         self.rnd_eo_names = ['random-float32-data', 'random-int-data',
                              'random-uint-data', 'random-double-data',
                              'random-bool-data']
-        self.valid_upcasts = {'bool': [np_ulong, np_long, np.float32, np.float64],
-                              'uint': [np_long, np.float32, np.float64],
-                              'int': [np.float32, np.float64],
-                              'float32': [np.float64]}
+        self.valid_upcasts = {'bool': [np_ulong, np_long, mx.float32, mx.float64],
+                              'uint': [np_long, mx.float32, mx.float64],
+                              'int': [mx.float32, mx.float64],
+                              'float32': [mx.float64]}
 
     def test_pdist_extra_args(self, metric):
         # Tests that args and kwargs are correctly handled
         X1 = [[1., 2.], [1.2, 2.3], [2.2, 2.3]]
-        kwargs = {"N0tV4l1D_p4raM": 3.14, "w": np.arange(2)}
+        kwargs = {"N0tV4l1D_p4raM": 3.14, "w": mx.arange(2)}
         args = [3.14] * 200
 
         with pytest.raises(TypeError):
@@ -731,7 +731,7 @@ class TestPdist:
             return arg + kwarg + kwarg2
 
         X1 = [[1., 2.], [1.2, 2.3], [2.2, 2.3]]
-        kwargs = {"N0tV4l1D_p4raM": 3.14, "w": np.arange(2)}
+        kwargs = {"N0tV4l1D_p4raM": 3.14, "w": mx.arange(2)}
         args = [3.14] * 200
 
         with pytest.raises(TypeError):
@@ -775,7 +775,7 @@ class TestPdist:
 
     def test_pdist_euclidean_random_float32(self):
         eps = 1e-07
-        X = np.float32(eo['pdist-double-inp'])
+        X = mx.float32(eo['pdist-double-inp'])
         Y_right = eo['pdist-euclidean']
         Y_test1 = wpdist_no_const(X, 'euclidean')
         assert_allclose(Y_test1, Y_right, rtol=eps)
@@ -798,7 +798,7 @@ class TestPdist:
     @pytest.mark.slow
     def test_pdist_euclidean_iris_float32(self):
         eps = 1e-5
-        X = np.float32(eo['iris'])
+        X = mx.float32(eo['iris'])
         Y_right = eo['pdist-euclidean-iris']
         Y_test1 = wpdist_no_const(X, 'euclidean')
         assert_allclose(Y_test1, Y_right, rtol=eps, verbose=verbose > 2)
@@ -822,13 +822,13 @@ class TestPdist:
 
     def test_pdist_seuclidean_random_float32(self):
         eps = 1e-7
-        X = np.float32(eo['pdist-double-inp'])
+        X = mx.float32(eo['pdist-double-inp'])
         Y_right = eo['pdist-seuclidean']
         Y_test1 = pdist(X, 'seuclidean')
         assert_allclose(Y_test1, Y_right, rtol=eps)
 
         # Check no error is raise when V has float32 dtype (#11171).
-        V = np.var(X, axis=0, ddof=1)
+        V = mx.var(X, axis=0, ddof=1)
         Y_test2 = pdist(X, 'seuclidean', V=V)
         assert_allclose(Y_test2, Y_right, rtol=eps)
 
@@ -850,7 +850,7 @@ class TestPdist:
     def test_pdist_seuclidean_iris_float32(self):
         # Tests pdist(X, 'seuclidean') on the Iris data set (float32).
         eps = 1e-5
-        X = np.float32(eo['iris'])
+        X = mx.float32(eo['iris'])
         Y_right = eo['pdist-seuclidean-iris']
         Y_test1 = pdist(X, 'seuclidean')
         assert_allclose(Y_test1, Y_right, rtol=eps)
@@ -873,7 +873,7 @@ class TestPdist:
 
     def test_pdist_cosine_random_float32(self):
         eps = 1e-7
-        X = np.float32(eo['pdist-double-inp'])
+        X = mx.float32(eo['pdist-double-inp'])
         Y_right = eo['pdist-cosine']
         Y_test1 = wpdist(X, 'cosine')
         assert_allclose(Y_test1, Y_right, rtol=eps)
@@ -897,7 +897,7 @@ class TestPdist:
     @pytest.mark.slow
     def test_pdist_cosine_iris_float32(self):
         eps = 1e-05
-        X = np.float32(eo['iris'])
+        X = mx.float32(eo['iris'])
         Y_right = eo['pdist-cosine-iris']
         Y_test1 = wpdist(X, 'cosine')
         assert_allclose(Y_test1, Y_right, atol=eps, verbose=verbose > 2)
@@ -914,8 +914,8 @@ class TestPdist:
         # Test adapted from @joernhees's example at gh-5208: case where
         # cosine distance used to be negative. XXX: very sensitive to the
         # specific norm computation.
-        x = np.abs(np.random.RandomState(1337).rand(91))
-        X = np.vstack([x, x])
+        x = mx.abs(mx.random.RandomState(1337).rand(91))
+        X = mx.vstack([x, x])
         assert_(wpdist(X, 'cosine')[0] >= 0,
                 msg='cosine distance should be non-negative')
 
@@ -928,7 +928,7 @@ class TestPdist:
 
     def test_pdist_cityblock_random_float32(self):
         eps = 1e-7
-        X = np.float32(eo['pdist-double-inp'])
+        X = mx.float32(eo['pdist-double-inp'])
         Y_right = eo['pdist-cityblock']
         Y_test1 = wpdist_no_const(X, 'cityblock')
         assert_allclose(Y_test1, Y_right, rtol=eps)
@@ -951,7 +951,7 @@ class TestPdist:
     @pytest.mark.slow
     def test_pdist_cityblock_iris_float32(self):
         eps = 1e-5
-        X = np.float32(eo['iris'])
+        X = mx.float32(eo['iris'])
         Y_right = eo['pdist-cityblock-iris']
         Y_test1 = wpdist_no_const(X, 'cityblock')
         assert_allclose(Y_test1, Y_right, rtol=eps, verbose=verbose > 2)
@@ -975,7 +975,7 @@ class TestPdist:
 
     def test_pdist_correlation_random_float32(self):
         eps = 1e-7
-        X = np.float32(eo['pdist-double-inp'])
+        X = mx.float32(eo['pdist-double-inp'])
         Y_right = eo['pdist-correlation']
         Y_test1 = wpdist(X, 'correlation')
         assert_allclose(Y_test1, Y_right, rtol=eps)
@@ -999,7 +999,7 @@ class TestPdist:
     def test_pdist_correlation_iris_float32(self):
         eps = 1e-7
         X = eo['iris']
-        Y_right = np.float32(eo['pdist-correlation-iris'])
+        Y_right = mx.float32(eo['pdist-correlation-iris'])
         Y_test1 = wpdist(X, 'correlation')
         assert_allclose(Y_test1, Y_right, rtol=eps, verbose=verbose > 2)
 
@@ -1014,7 +1014,7 @@ class TestPdist:
         Y_test2 = wpdist(X, 'test_correlation')
         assert_allclose(Y_test2, Y_right, rtol=eps)
 
-    @pytest.mark.parametrize("p", [0.1, 0.25, 1.0, 2.0, 3.2, np.inf])
+    @pytest.mark.parametrize("p", [0.1, 0.25, 1.0, 2.0, 3.2, mx.inf])
     def test_pdist_minkowski_random_p(self, p):
         eps = 1e-13
         X = eo['pdist-double-inp']
@@ -1031,7 +1031,7 @@ class TestPdist:
 
     def test_pdist_minkowski_random_float32(self):
         eps = 1e-7
-        X = np.float32(eo['pdist-double-inp'])
+        X = mx.float32(eo['pdist-double-inp'])
         Y_right = eo['pdist-minkowski-3.2']
         Y_test1 = wpdist_no_const(X, 'minkowski', p=3.2)
         assert_allclose(Y_test1, Y_right, rtol=eps)
@@ -1054,7 +1054,7 @@ class TestPdist:
     @pytest.mark.slow
     def test_pdist_minkowski_3_2_iris_float32(self):
         eps = 1e-5
-        X = np.float32(eo['iris'])
+        X = mx.float32(eo['iris'])
         Y_right = eo['pdist-minkowski-3.2-iris']
         Y_test1 = wpdist_no_const(X, 'minkowski', p=3.2)
         assert_allclose(Y_test1, Y_right, rtol=eps)
@@ -1078,7 +1078,7 @@ class TestPdist:
     @pytest.mark.slow
     def test_pdist_minkowski_5_8_iris_float32(self):
         eps = 1e-5
-        X = np.float32(eo['iris'])
+        X = mx.float32(eo['iris'])
         Y_right = eo['pdist-minkowski-5.8-iris']
         Y_test1 = wpdist_no_const(X, 'minkowski', p=5.8)
         assert_allclose(Y_test1, Y_right, rtol=eps, verbose=verbose > 2)
@@ -1093,15 +1093,15 @@ class TestPdist:
 
     def test_pdist_mahalanobis(self):
         # 1-dimensional observations
-        x = np.array([2.0, 2.0, 3.0, 5.0]).reshape(-1, 1)
+        x = mx.array([2.0, 2.0, 3.0, 5.0]).reshape(-1, 1)
         dist = pdist(x, metric='mahalanobis')
-        assert_allclose(dist, [0.0, np.sqrt(0.5), np.sqrt(4.5),
-                               np.sqrt(0.5), np.sqrt(4.5), np.sqrt(2.0)])
+        assert_allclose(dist, [0.0, mx.sqrt(0.5), mx.sqrt(4.5),
+                               mx.sqrt(0.5), mx.sqrt(4.5), mx.sqrt(2.0)])
 
         # 2-dimensional observations
-        x = np.array([[0, 0], [-1, 0], [0, 2], [1, 0], [0, -2]])
+        x = mx.array([[0, 0], [-1, 0], [0, 2], [1, 0], [0, -2]])
         dist = pdist(x, metric='mahalanobis')
-        rt2 = np.sqrt(2)
+        rt2 = mx.sqrt(2)
         assert_allclose(dist, [rt2, rt2, rt2, rt2, 2, 2 * rt2, 2, 2, 2 * rt2, 2])
 
         # Too few observations
@@ -1117,7 +1117,7 @@ class TestPdist:
 
     def test_pdist_hamming_random_float32(self):
         eps = 1e-15
-        X = np.float32(eo['pdist-boolean-inp'])
+        X = mx.float32(eo['pdist-boolean-inp'])
         Y_right = eo['pdist-hamming']
         Y_test1 = wpdist(X, 'hamming')
         assert_allclose(Y_test1, Y_right, rtol=eps)
@@ -1131,21 +1131,21 @@ class TestPdist:
 
     def test_pdist_dhamming_random(self):
         eps = 1e-15
-        X = np.float64(eo['pdist-boolean-inp'])
+        X = mx.float64(eo['pdist-boolean-inp'])
         Y_right = eo['pdist-hamming']
         Y_test1 = wpdist(X, 'hamming')
         assert_allclose(Y_test1, Y_right, rtol=eps)
 
     def test_pdist_dhamming_random_float32(self):
         eps = 1e-15
-        X = np.float32(eo['pdist-boolean-inp'])
+        X = mx.float32(eo['pdist-boolean-inp'])
         Y_right = eo['pdist-hamming']
         Y_test1 = wpdist(X, 'hamming')
         assert_allclose(Y_test1, Y_right, rtol=eps)
 
     def test_pdist_dhamming_random_nonC(self):
         eps = 1e-15
-        X = np.float64(eo['pdist-boolean-inp'])
+        X = mx.float64(eo['pdist-boolean-inp'])
         Y_right = eo['pdist-hamming']
         Y_test2 = wpdist(X, 'test_hamming')
         assert_allclose(Y_test2, Y_right, rtol=eps)
@@ -1159,7 +1159,7 @@ class TestPdist:
 
     def test_pdist_jensenshannon_random_float32(self):
         eps = 1e-8
-        X = np.float32(eo['pdist-double-inp'])
+        X = mx.float32(eo['pdist-double-inp'])
         Y_right = eo['pdist-jensenshannon']
         Y_test1 = pdist(X, 'jensenshannon')
         assert_allclose(Y_test1, Y_right, rtol=eps, verbose=verbose > 2)
@@ -1185,7 +1185,7 @@ class TestPdist:
 
     def test_pdist_jensenshannon_iris_float32(self):
         eps = 1e-06
-        X = np.float32(eo['iris'])
+        X = mx.float32(eo['iris'])
         Y_right = eo['pdist-jensenshannon-iris']
         Y_test1 = pdist(X, 'jensenshannon')
         assert_allclose(Y_test1, Y_right, atol=eps, verbose=verbose > 2)
@@ -1199,117 +1199,117 @@ class TestPdist:
 
     def test_pdist_matching_mtica1(self):
         # Test matching(*,*) with mtica example #1 (nums).
-        m = wmatching(np.array([1, 0, 1, 1, 0]),
-                      np.array([1, 1, 0, 1, 1]))
-        m2 = wmatching(np.array([1, 0, 1, 1, 0], dtype=bool),
-                       np.array([1, 1, 0, 1, 1], dtype=bool))
+        m = wmatching(mx.array([1, 0, 1, 1, 0]),
+                      mx.array([1, 1, 0, 1, 1]))
+        m2 = wmatching(mx.array([1, 0, 1, 1, 0], dtype=bool),
+                       mx.array([1, 1, 0, 1, 1], dtype=bool))
         assert_allclose(m, 0.6, rtol=0, atol=1e-10)
         assert_allclose(m2, 0.6, rtol=0, atol=1e-10)
 
     def test_pdist_matching_mtica2(self):
         # Test matching(*,*) with mtica example #2.
-        m = wmatching(np.array([1, 0, 1]),
-                     np.array([1, 1, 0]))
-        m2 = wmatching(np.array([1, 0, 1], dtype=bool),
-                      np.array([1, 1, 0], dtype=bool))
+        m = wmatching(mx.array([1, 0, 1]),
+                     mx.array([1, 1, 0]))
+        m2 = wmatching(mx.array([1, 0, 1], dtype=bool),
+                      mx.array([1, 1, 0], dtype=bool))
         assert_allclose(m, 2 / 3, rtol=0, atol=1e-10)
         assert_allclose(m2, 2 / 3, rtol=0, atol=1e-10)
 
     def test_pdist_yule_mtica1(self):
-        m = wyule(np.array([1, 0, 1, 1, 0]),
-                  np.array([1, 1, 0, 1, 1]))
-        m2 = wyule(np.array([1, 0, 1, 1, 0], dtype=bool),
-                   np.array([1, 1, 0, 1, 1], dtype=bool))
+        m = wyule(mx.array([1, 0, 1, 1, 0]),
+                  mx.array([1, 1, 0, 1, 1]))
+        m2 = wyule(mx.array([1, 0, 1, 1, 0], dtype=bool),
+                   mx.array([1, 1, 0, 1, 1], dtype=bool))
         if verbose > 2:
             print(m)
         assert_allclose(m, 2, rtol=0, atol=1e-10)
         assert_allclose(m2, 2, rtol=0, atol=1e-10)
 
     def test_pdist_yule_mtica2(self):
-        m = wyule(np.array([1, 0, 1]),
-                  np.array([1, 1, 0]))
-        m2 = wyule(np.array([1, 0, 1], dtype=bool),
-                   np.array([1, 1, 0], dtype=bool))
+        m = wyule(mx.array([1, 0, 1]),
+                  mx.array([1, 1, 0]))
+        m2 = wyule(mx.array([1, 0, 1], dtype=bool),
+                   mx.array([1, 1, 0], dtype=bool))
         if verbose > 2:
             print(m)
         assert_allclose(m, 2, rtol=0, atol=1e-10)
         assert_allclose(m2, 2, rtol=0, atol=1e-10)
 
     def test_pdist_dice_mtica1(self):
-        m = wdice(np.array([1, 0, 1, 1, 0]),
-                  np.array([1, 1, 0, 1, 1]))
-        m2 = wdice(np.array([1, 0, 1, 1, 0], dtype=bool),
-                   np.array([1, 1, 0, 1, 1], dtype=bool))
+        m = wdice(mx.array([1, 0, 1, 1, 0]),
+                  mx.array([1, 1, 0, 1, 1]))
+        m2 = wdice(mx.array([1, 0, 1, 1, 0], dtype=bool),
+                   mx.array([1, 1, 0, 1, 1], dtype=bool))
         if verbose > 2:
             print(m)
         assert_allclose(m, 3 / 7, rtol=0, atol=1e-10)
         assert_allclose(m2, 3 / 7, rtol=0, atol=1e-10)
 
     def test_pdist_dice_mtica2(self):
-        m = wdice(np.array([1, 0, 1]),
-                  np.array([1, 1, 0]))
-        m2 = wdice(np.array([1, 0, 1], dtype=bool),
-                   np.array([1, 1, 0], dtype=bool))
+        m = wdice(mx.array([1, 0, 1]),
+                  mx.array([1, 1, 0]))
+        m2 = wdice(mx.array([1, 0, 1], dtype=bool),
+                   mx.array([1, 1, 0], dtype=bool))
         if verbose > 2:
             print(m)
         assert_allclose(m, 0.5, rtol=0, atol=1e-10)
         assert_allclose(m2, 0.5, rtol=0, atol=1e-10)
 
     def test_pdist_sokalsneath_mtica1(self):
-        m = sokalsneath(np.array([1, 0, 1, 1, 0]),
-                        np.array([1, 1, 0, 1, 1]))
-        m2 = sokalsneath(np.array([1, 0, 1, 1, 0], dtype=bool),
-                         np.array([1, 1, 0, 1, 1], dtype=bool))
+        m = sokalsneath(mx.array([1, 0, 1, 1, 0]),
+                        mx.array([1, 1, 0, 1, 1]))
+        m2 = sokalsneath(mx.array([1, 0, 1, 1, 0], dtype=bool),
+                         mx.array([1, 1, 0, 1, 1], dtype=bool))
         if verbose > 2:
             print(m)
         assert_allclose(m, 3 / 4, rtol=0, atol=1e-10)
         assert_allclose(m2, 3 / 4, rtol=0, atol=1e-10)
 
     def test_pdist_sokalsneath_mtica2(self):
-        m = wsokalsneath(np.array([1, 0, 1]),
-                         np.array([1, 1, 0]))
-        m2 = wsokalsneath(np.array([1, 0, 1], dtype=bool),
-                          np.array([1, 1, 0], dtype=bool))
+        m = wsokalsneath(mx.array([1, 0, 1]),
+                         mx.array([1, 1, 0]))
+        m2 = wsokalsneath(mx.array([1, 0, 1], dtype=bool),
+                          mx.array([1, 1, 0], dtype=bool))
         if verbose > 2:
             print(m)
         assert_allclose(m, 4 / 5, rtol=0, atol=1e-10)
         assert_allclose(m2, 4 / 5, rtol=0, atol=1e-10)
 
     def test_pdist_rogerstanimoto_mtica1(self):
-        m = wrogerstanimoto(np.array([1, 0, 1, 1, 0]),
-                            np.array([1, 1, 0, 1, 1]))
-        m2 = wrogerstanimoto(np.array([1, 0, 1, 1, 0], dtype=bool),
-                             np.array([1, 1, 0, 1, 1], dtype=bool))
+        m = wrogerstanimoto(mx.array([1, 0, 1, 1, 0]),
+                            mx.array([1, 1, 0, 1, 1]))
+        m2 = wrogerstanimoto(mx.array([1, 0, 1, 1, 0], dtype=bool),
+                             mx.array([1, 1, 0, 1, 1], dtype=bool))
         if verbose > 2:
             print(m)
         assert_allclose(m, 3 / 4, rtol=0, atol=1e-10)
         assert_allclose(m2, 3 / 4, rtol=0, atol=1e-10)
 
     def test_pdist_rogerstanimoto_mtica2(self):
-        m = wrogerstanimoto(np.array([1, 0, 1]),
-                            np.array([1, 1, 0]))
-        m2 = wrogerstanimoto(np.array([1, 0, 1], dtype=bool),
-                             np.array([1, 1, 0], dtype=bool))
+        m = wrogerstanimoto(mx.array([1, 0, 1]),
+                            mx.array([1, 1, 0]))
+        m2 = wrogerstanimoto(mx.array([1, 0, 1], dtype=bool),
+                             mx.array([1, 1, 0], dtype=bool))
         if verbose > 2:
             print(m)
         assert_allclose(m, 4 / 5, rtol=0, atol=1e-10)
         assert_allclose(m2, 4 / 5, rtol=0, atol=1e-10)
 
     def test_pdist_russellrao_mtica1(self):
-        m = wrussellrao(np.array([1, 0, 1, 1, 0]),
-                        np.array([1, 1, 0, 1, 1]))
-        m2 = wrussellrao(np.array([1, 0, 1, 1, 0], dtype=bool),
-                         np.array([1, 1, 0, 1, 1], dtype=bool))
+        m = wrussellrao(mx.array([1, 0, 1, 1, 0]),
+                        mx.array([1, 1, 0, 1, 1]))
+        m2 = wrussellrao(mx.array([1, 0, 1, 1, 0], dtype=bool),
+                         mx.array([1, 1, 0, 1, 1], dtype=bool))
         if verbose > 2:
             print(m)
         assert_allclose(m, 3 / 5, rtol=0, atol=1e-10)
         assert_allclose(m2, 3 / 5, rtol=0, atol=1e-10)
 
     def test_pdist_russellrao_mtica2(self):
-        m = wrussellrao(np.array([1, 0, 1]),
-                        np.array([1, 1, 0]))
-        m2 = wrussellrao(np.array([1, 0, 1], dtype=bool),
-                         np.array([1, 1, 0], dtype=bool))
+        m = wrussellrao(mx.array([1, 0, 1]),
+                        mx.array([1, 1, 0]))
+        m2 = wrussellrao(mx.array([1, 0, 1], dtype=bool),
+                         mx.array([1, 1, 0], dtype=bool))
         if verbose > 2:
             print(m)
         assert_allclose(m, 2 / 3, rtol=0, atol=1e-10)
@@ -1343,7 +1343,7 @@ class TestPdist:
             if not isinstance(x[0], myclass) or not isinstance(y[0], myclass):
                 raise ValueError("Type has been changed")
             return 1.123
-        data = np.array([[myclass()], [myclass()]], dtype=object)
+        data = mx.array([[myclass()], [myclass()]], dtype=object)
         pdist_y = pdist(data, metric=_my_metric)
         right_y = 1.123
         assert_equal(pdist_y, right_y, verbose=verbose > 2)
@@ -1388,11 +1388,11 @@ class TestPdist:
 
             # Testing built-in metrics with extra args
             if metric == "seuclidean":
-                V = np.var(X.astype(np.float64), axis=0, ddof=1)
+                V = mx.var(X.astype(mx.float64), axis=0, ddof=1)
                 self._check_calling_conventions(X, metric, V=V)
             elif metric == "mahalanobis":
-                V = np.atleast_2d(np.cov(X.astype(np.float64).T))
-                VI = np.array(np.linalg.inv(V).T)
+                V = mx.atleast_2d(mx.cov(X.astype(mx.float64).T))
+                VI = mx.array(mx.linalg.inv(V).T)
                 self._check_calling_conventions(X, metric, VI=VI)
 
     def test_pdist_dtype_equivalence(self, metric):
@@ -1429,7 +1429,7 @@ class TestPdist:
         kwargs = dict()
         if metric == 'minkowski':
             kwargs['p'] = 1.23
-        out1 = np.empty(out_size, dtype=np.float64)
+        out1 = mx.empty(out_size, dtype=mx.float64)
         Y_right = pdist(X, metric, **kwargs)
         Y_test1 = pdist(X, metric, out=out1, **kwargs)
 
@@ -1440,17 +1440,17 @@ class TestPdist:
         assert_(Y_test1 is out1)
 
         # test for incorrect shape
-        out2 = np.empty(out_size + 3, dtype=np.float64)
+        out2 = mx.empty(out_size + 3, dtype=mx.float64)
         with pytest.raises(ValueError):
             pdist(X, metric, out=out2, **kwargs)
 
         # test for (C-)contiguous output
-        out3 = np.empty(2 * out_size, dtype=np.float64)[::2]
+        out3 = mx.empty(2 * out_size, dtype=mx.float64)[::2]
         with pytest.raises(ValueError):
             pdist(X, metric, out=out3, **kwargs)
 
         # test for incorrect dtype
-        out5 = np.empty(out_size, dtype=np.int64)
+        out5 = mx.empty(out_size, dtype=mx.int64)
         with pytest.raises(ValueError):
             pdist(X, metric, out=out5, **kwargs)
 
@@ -1477,8 +1477,8 @@ class TestSomeDistanceFunctions:
 
     def setup_method(self):
         # 1D arrays
-        x = np.array([1.0, 2.0, 3.0])
-        y = np.array([1.0, 1.0, 5.0])
+        x = mx.array([1.0, 2.0, 3.0])
+        y = mx.array([1.0, 1.0, 5.0])
 
         self.cases = [(x, y)]
 
@@ -1495,16 +1495,16 @@ class TestSomeDistanceFunctions:
 
         # Check that casting input to minimum scalar type doesn't affect result
         # (issue #10262). This could be extended to more test inputs with
-        # np.min_scalar_type(np.max(input_matrix)).
-        a = np.array([352, 916])
-        b = np.array([350, 660])
+        # mx.min_scalar_type(mx.max(input_matrix)).
+        a = mx.array([352, 916])
+        b = mx.array([350, 660])
         assert_equal(minkowski(a, b),
                      minkowski(a.astype('uint16'), b.astype('uint16')))
 
     def test_euclidean(self):
         for x, y in self.cases:
             dist = weuclidean(x, y)
-            assert_almost_equal(dist, np.sqrt(5))
+            assert_almost_equal(dist, mx.sqrt(5))
 
     def test_sqeuclidean(self):
         for x, y in self.cases:
@@ -1514,7 +1514,7 @@ class TestSomeDistanceFunctions:
     def test_cosine(self):
         for x, y in self.cases:
             dist = wcosine(x, y)
-            assert_almost_equal(dist, 1.0 - 18.0 / (np.sqrt(14) * np.sqrt(27)))
+            assert_almost_equal(dist, 1.0 - 18.0 / (mx.sqrt(14) * mx.sqrt(27)))
 
     def test_cosine_output_dtype(self):
         # Regression test for gh-19541
@@ -1522,22 +1522,22 @@ class TestSomeDistanceFunctions:
         assert isinstance(wcosine([1, 1], [1, 1]), float)
 
     def test_correlation(self):
-        xm = np.array([-1.0, 0, 1.0])
-        ym = np.array([-4.0 / 3, -4.0 / 3, 5.0 - 7.0 / 3])
+        xm = mx.array([-1.0, 0, 1.0])
+        ym = mx.array([-4.0 / 3, -4.0 / 3, 5.0 - 7.0 / 3])
         for x, y in self.cases:
             dist = wcorrelation(x, y)
-            assert_almost_equal(dist, 1.0 - np.dot(xm, ym) / (norm(xm) * norm(ym)))
+            assert_almost_equal(dist, 1.0 - mx.dot(xm, ym) / (norm(xm) * norm(ym)))
 
     def test_correlation_positive(self):
         # Regression test for gh-12320 (negative return value due to rounding
-        x = np.array([0., 0., 0., 0., 0., 0., -2., 0., 0., 0., -2., -2., -2.,
+        x = mx.array([0., 0., 0., 0., 0., 0., -2., 0., 0., 0., -2., -2., -2.,
                       0., -2., 0., -2., 0., 0., -1., -2., 0., 1., 0., 0., -2.,
                       0., 0., -2., 0., -2., -2., -2., -2., -2., -2., 0.])
-        y = np.array([1., 1., 1., 1., 1., 1., -1., 1., 1., 1., -1., -1., -1.,
+        y = mx.array([1., 1., 1., 1., 1., 1., -1., 1., 1., 1., -1., -1., -1.,
                       1., -1., 1., -1., 1., 1., 0., -1., 1., 2., 1., 1., -1.,
                       1., 1., -1., 1., -1., -1., -1., -1., -1., -1., 1.])
         dist = correlation(x, y)
-        assert 0 <= dist <= 10 * np.finfo(np.float64).eps
+        assert 0 <= dist <= 10 * mx.finfo(mx.float64).eps
 
     @pytest.mark.filterwarnings('ignore:Casting complex')
     @pytest.mark.parametrize("func", [correlation, cosine])
@@ -1548,16 +1548,16 @@ class TestSomeDistanceFunctions:
             func(x, y)
 
     def test_mahalanobis(self):
-        x = np.array([1.0, 2.0, 3.0])
-        y = np.array([1.0, 1.0, 5.0])
-        vi = np.array([[2.0, 1.0, 0.0], [1.0, 2.0, 1.0], [0.0, 1.0, 2.0]])
+        x = mx.array([1.0, 2.0, 3.0])
+        y = mx.array([1.0, 1.0, 5.0])
+        vi = mx.array([[2.0, 1.0, 0.0], [1.0, 2.0, 1.0], [0.0, 1.0, 2.0]])
         for x, y in self.cases:
             dist = mahalanobis(x, y, vi)
-            assert_almost_equal(dist, np.sqrt(6.0))
+            assert_almost_equal(dist, mx.sqrt(6.0))
 
 
 class TestSquareForm:
-    checked_dtypes = [np.float64, np.float32, np.int32, np.int8, bool]
+    checked_dtypes = [mx.float64, mx.float32, mx.int32, mx.int8, bool]
 
     def test_squareform_matrix(self):
         for dtype in self.checked_dtypes:
@@ -1568,41 +1568,41 @@ class TestSquareForm:
             self.check_squareform_vector(dtype)
 
     def check_squareform_matrix(self, dtype):
-        A = np.zeros((0, 0), dtype=dtype)
+        A = mx.zeros((0, 0), dtype=dtype)
         rA = squareform(A)
         assert_equal(rA.shape, (0,))
         assert_equal(rA.dtype, dtype)
 
-        A = np.zeros((1, 1), dtype=dtype)
+        A = mx.zeros((1, 1), dtype=dtype)
         rA = squareform(A)
         assert_equal(rA.shape, (0,))
         assert_equal(rA.dtype, dtype)
 
-        A = np.array([[0, 4.2], [4.2, 0]], dtype=dtype)
+        A = mx.array([[0, 4.2], [4.2, 0]], dtype=dtype)
         rA = squareform(A)
         assert_equal(rA.shape, (1,))
         assert_equal(rA.dtype, dtype)
-        assert_array_equal(rA, np.array([4.2], dtype=dtype))
+        assert_array_equal(rA, mx.array([4.2], dtype=dtype))
 
     def check_squareform_vector(self, dtype):
-        v = np.zeros((0,), dtype=dtype)
+        v = mx.zeros((0,), dtype=dtype)
         rv = squareform(v)
         assert_equal(rv.shape, (1, 1))
         assert_equal(rv.dtype, dtype)
         assert_array_equal(rv, [[0]])
 
-        v = np.array([8.3], dtype=dtype)
+        v = mx.array([8.3], dtype=dtype)
         rv = squareform(v)
         assert_equal(rv.shape, (2, 2))
         assert_equal(rv.dtype, dtype)
-        assert_array_equal(rv, np.array([[0, 8.3], [8.3, 0]], dtype=dtype))
+        assert_array_equal(rv, mx.array([[0, 8.3], [8.3, 0]], dtype=dtype))
 
     def test_squareform_multi_matrix(self):
         for n in range(2, 5):
             self.check_squareform_multi_matrix(n)
 
     def check_squareform_multi_matrix(self, n):
-        X = np.random.rand(n, 4)
+        X = mx.random.rand(n, 4)
         Y = wpdist_no_const(X)
         assert_equal(len(Y.shape), 1)
         A = squareform(Y)
@@ -1627,7 +1627,7 @@ class TestNumObsY:
 
     def test_num_obs_y_multi_matrix(self):
         for n in range(2, 10):
-            X = np.random.rand(n, 4)
+            X = mx.random.rand(n, 4)
             Y = wpdist_no_const(X)
             assert_equal(num_obs_y(Y), n)
 
@@ -1667,21 +1667,21 @@ class TestNumObsY:
         assert_(self.check_y(n))
 
     def bad_y(self, n):
-        y = np.random.rand(n)
+        y = mx.random.rand(n)
         return num_obs_y(y)
 
     def check_y(self, n):
         return num_obs_y(self.make_y(n)) == n
 
     def make_y(self, n):
-        return np.random.rand((n * (n - 1)) // 2)
+        return mx.random.rand((n * (n - 1)) // 2)
 
 
 class TestNumObsDM:
 
     def test_num_obs_dm_multi_matrix(self):
         for n in range(1, 10):
-            X = np.random.rand(n, 4)
+            X = mx.random.rand(n, 4)
             Y = wpdist_no_const(X)
             A = squareform(Y)
             if verbose >= 3:
@@ -1709,7 +1709,7 @@ class TestNumObsDM:
         return num_obs_dm(self.make_D(n)) == n
 
     def make_D(self, n):
-        return np.random.rand(n, n)
+        return mx.random.rand(n, n)
 
 
 def is_valid_dm_throw(D):
@@ -1719,25 +1719,25 @@ def is_valid_dm_throw(D):
 class TestIsValidDM:
 
     def test_is_valid_dm_improper_shape_1D_E(self):
-        D = np.zeros((5,), dtype=np.float64)
+        D = mx.zeros((5,), dtype=mx.float64)
         with pytest.raises(ValueError):
             is_valid_dm_throw(D)
 
     def test_is_valid_dm_improper_shape_1D_F(self):
-        D = np.zeros((5,), dtype=np.float64)
+        D = mx.zeros((5,), dtype=mx.float64)
         assert_equal(is_valid_dm(D), False)
 
     def test_is_valid_dm_improper_shape_3D_E(self):
-        D = np.zeros((3, 3, 3), dtype=np.float64)
+        D = mx.zeros((3, 3, 3), dtype=mx.float64)
         with pytest.raises(ValueError):
             is_valid_dm_throw(D)
 
     def test_is_valid_dm_improper_shape_3D_F(self):
-        D = np.zeros((3, 3, 3), dtype=np.float64)
+        D = mx.zeros((3, 3, 3), dtype=mx.float64)
         assert_equal(is_valid_dm(D), False)
 
     def test_is_valid_dm_nonzero_diagonal_E(self):
-        y = np.random.rand(10)
+        y = mx.random.rand(10)
         D = squareform(y)
         for i in range(0, 5):
             D[i, i] = 2.0
@@ -1745,46 +1745,46 @@ class TestIsValidDM:
             is_valid_dm_throw(D)
 
     def test_is_valid_dm_nonzero_diagonal_F(self):
-        y = np.random.rand(10)
+        y = mx.random.rand(10)
         D = squareform(y)
         for i in range(0, 5):
             D[i, i] = 2.0
         assert_equal(is_valid_dm(D), False)
 
     def test_is_valid_dm_asymmetric_E(self):
-        y = np.random.rand(10)
+        y = mx.random.rand(10)
         D = squareform(y)
         D[1, 3] = D[3, 1] + 1
         with pytest.raises(ValueError):
             is_valid_dm_throw(D)
 
     def test_is_valid_dm_asymmetric_F(self):
-        y = np.random.rand(10)
+        y = mx.random.rand(10)
         D = squareform(y)
         D[1, 3] = D[3, 1] + 1
         assert_equal(is_valid_dm(D), False)
 
     def test_is_valid_dm_correct_1_by_1(self):
-        D = np.zeros((1, 1), dtype=np.float64)
+        D = mx.zeros((1, 1), dtype=mx.float64)
         assert_equal(is_valid_dm(D), True)
 
     def test_is_valid_dm_correct_2_by_2(self):
-        y = np.random.rand(1)
+        y = mx.random.rand(1)
         D = squareform(y)
         assert_equal(is_valid_dm(D), True)
 
     def test_is_valid_dm_correct_3_by_3(self):
-        y = np.random.rand(3)
+        y = mx.random.rand(3)
         D = squareform(y)
         assert_equal(is_valid_dm(D), True)
 
     def test_is_valid_dm_correct_4_by_4(self):
-        y = np.random.rand(6)
+        y = mx.random.rand(6)
         D = squareform(y)
         assert_equal(is_valid_dm(D), True)
 
     def test_is_valid_dm_correct_5_by_5(self):
-        y = np.random.rand(10)
+        y = mx.random.rand(10)
         D = squareform(y)
         assert_equal(is_valid_dm(D), True)
 
@@ -1799,21 +1799,21 @@ class TestIsValidY:
     # check.  Otherwise the input is expected to be valid.
 
     def test_is_valid_y_improper_shape_2D_E(self):
-        y = np.zeros((3, 3,), dtype=np.float64)
+        y = mx.zeros((3, 3,), dtype=mx.float64)
         with pytest.raises(ValueError):
             is_valid_y_throw(y)
 
     def test_is_valid_y_improper_shape_2D_F(self):
-        y = np.zeros((3, 3,), dtype=np.float64)
+        y = mx.zeros((3, 3,), dtype=mx.float64)
         assert_equal(is_valid_y(y), False)
 
     def test_is_valid_y_improper_shape_3D_E(self):
-        y = np.zeros((3, 3, 3), dtype=np.float64)
+        y = mx.zeros((3, 3, 3), dtype=mx.float64)
         with pytest.raises(ValueError):
             is_valid_y_throw(y)
 
     def test_is_valid_y_improper_shape_3D_F(self):
-        y = np.zeros((3, 3, 3), dtype=np.float64)
+        y = mx.zeros((3, 3, 3), dtype=mx.float64)
         assert_equal(is_valid_y(y), False)
 
     def test_is_valid_y_correct_2_by_2(self):
@@ -1842,11 +1842,11 @@ class TestIsValidY:
                     self.bad_y(i)
 
     def bad_y(self, n):
-        y = np.random.rand(n)
+        y = mx.random.rand(n)
         return is_valid_y(y, throw=True)
 
     def correct_n_by_n(self, n):
-        y = np.random.rand((n * (n - 1)) // 2)
+        y = mx.random.rand((n * (n - 1)) // 2)
         return y
 
 
@@ -1879,30 +1879,30 @@ def test_braycurtis():
 
 def test_euclideans():
     # Regression test for ticket #1328.
-    x1 = np.array([1, 1, 1])
-    x2 = np.array([0, 0, 0])
+    x1 = mx.array([1, 1, 1])
+    x2 = mx.array([0, 0, 0])
 
     # Basic test of the calculation.
     assert_almost_equal(wsqeuclidean(x1, x2), 3.0, decimal=14)
-    assert_almost_equal(weuclidean(x1, x2), np.sqrt(3), decimal=14)
+    assert_almost_equal(weuclidean(x1, x2), mx.sqrt(3), decimal=14)
 
     # Check flattening for (1, N) or (N, 1) inputs
     with pytest.raises(ValueError, match="Input vector should be 1-D"):
-        weuclidean(x1[np.newaxis, :], x2[np.newaxis, :]), np.sqrt(3)
+        weuclidean(x1[mx.newaxis, :], x2[mx.newaxis, :]), mx.sqrt(3)
     with pytest.raises(ValueError, match="Input vector should be 1-D"):
-        wsqeuclidean(x1[np.newaxis, :], x2[np.newaxis, :])
+        wsqeuclidean(x1[mx.newaxis, :], x2[mx.newaxis, :])
     with pytest.raises(ValueError, match="Input vector should be 1-D"):
-        wsqeuclidean(x1[:, np.newaxis], x2[:, np.newaxis])
+        wsqeuclidean(x1[:, mx.newaxis], x2[:, mx.newaxis])
 
     # Distance metrics only defined for vectors (= 1-D)
-    x = np.arange(4).reshape(2, 2)
+    x = mx.arange(4).reshape(2, 2)
     with pytest.raises(ValueError):
         weuclidean(x, x)
     with pytest.raises(ValueError):
         wsqeuclidean(x, x)
 
     # Another check, with random data.
-    rs = np.random.RandomState(1234567890)
+    rs = mx.random.RandomState(1234567890)
     x = rs.rand(10)
     y = rs.rand(10)
     d1 = weuclidean(x, y)
@@ -1914,7 +1914,7 @@ def test_hamming_unequal_length():
     # Regression test for gh-4290.
     x = [0, 0, 1]
     y = [1, 0, 1, 0]
-    # Used to give an AttributeError from ndarray.mean called on bool
+    # Used to give an AttributeError from array.mean called on bool
     with pytest.raises(ValueError):
         whamming(x, y)
 
@@ -1930,11 +1930,11 @@ def test_hamming_unequal_length_with_w():
 
 def test_hamming_string_array():
     # https://github.com/scikit-learn/scikit-learn/issues/4014
-    a = np.array(['eggs', 'spam', 'spam', 'eggs', 'spam', 'spam', 'spam',
+    a = mx.array(['eggs', 'spam', 'spam', 'eggs', 'spam', 'spam', 'spam',
                   'spam', 'spam', 'spam', 'spam', 'eggs', 'eggs', 'spam',
                   'eggs', 'eggs', 'eggs', 'eggs', 'eggs', 'spam'],
                   dtype='|S4')
-    b = np.array(['eggs', 'spam', 'spam', 'eggs', 'eggs', 'spam', 'spam',
+    b = mx.array(['eggs', 'spam', 'spam', 'eggs', 'eggs', 'spam', 'spam',
                   'spam', 'spam', 'eggs', 'spam', 'eggs', 'spam', 'eggs',
                   'spam', 'spam', 'eggs', 'spam', 'spam', 'eggs'],
                   dtype='|S4')
@@ -1944,7 +1944,7 @@ def test_hamming_string_array():
 
 def test_minkowski_w():
     # Regression test for gh-8142.
-    arr_in = np.array([[83.33333333, 100., 83.33333333, 100., 36.,
+    arr_in = mx.array([[83.33333333, 100., 83.33333333, 100., 36.,
                         60., 90., 150., 24., 48.],
                        [83.33333333, 100., 83.33333333, 100., 36.,
                         60., 90., 150., 24., 48.]])
@@ -1964,19 +1964,19 @@ def test_sqeuclidean_dtypes():
     x = [1, 2, 3]
     y = [4, 5, 6]
 
-    for dtype in [np.int8, np.int16, np.int32, np.int64]:
-        d = wsqeuclidean(np.asarray(x, dtype=dtype), np.asarray(y, dtype=dtype))
-        assert_(np.issubdtype(d.dtype, np.floating))
+    for dtype in [mx.int8, mx.int16, mx.int32, mx.int64]:
+        d = wsqeuclidean(mx.array(x, dtype=dtype), mx.array(y, dtype=dtype))
+        assert_(mx.issubdtype(d.dtype, mx.floating))
 
-    for dtype in [np.uint8, np.uint16, np.uint32, np.uint64]:
-        umax = np.iinfo(dtype).max
-        d1 = wsqeuclidean([0], np.asarray([umax], dtype=dtype))
-        d2 = wsqeuclidean(np.asarray([umax], dtype=dtype), [0])
+    for dtype in [mx.uint8, mx.uint16, mx.uint32, mx.uint64]:
+        umax = mx.iinfo(dtype).max
+        d1 = wsqeuclidean([0], mx.array([umax], dtype=dtype))
+        d2 = wsqeuclidean(mx.array([umax], dtype=dtype), [0])
 
         assert_equal(d1, d2)
-        assert_equal(d1, np.float64(umax)**2)
+        assert_equal(d1, mx.float64(umax)**2)
 
-    dtypes = [np.float32, np.float64, np.complex64, np.complex128]
+    dtypes = [mx.float32, mx.float64, mx.complex64, mx.complex128]
     for dtype in ['float16', 'float128']:
         # These aren't present in older numpy versions; float128 may also not
         # be present on all platforms.
@@ -1984,13 +1984,13 @@ def test_sqeuclidean_dtypes():
             dtypes.append(getattr(np, dtype))
 
     for dtype in dtypes:
-        d = wsqeuclidean(np.asarray(x, dtype=dtype), np.asarray(y, dtype=dtype))
+        d = wsqeuclidean(mx.array(x, dtype=dtype), mx.array(y, dtype=dtype))
         assert_equal(d.dtype, dtype)
 
 
 def test_modifies_input(metric):
     # test whether cdist or pdist modifies input arrays
-    X1 = np.asarray([[1., 2., 3.],
+    X1 = mx.array([[1., 2., 3.],
                      [1.2, 2.3, 3.4],
                      [2.2, 2.3, 4.4],
                      [22.2, 23.3, 44.4]])
@@ -2002,7 +2002,7 @@ def test_modifies_input(metric):
 
 def test_Xdist_deprecated_args(metric):
     # testing both cdist and pdist deprecated warnings
-    X1 = np.asarray([[1., 2., 3.],
+    X1 = mx.array([[1., 2., 3.],
                      [1.2, 2.3, 3.4],
                      [2.2, 2.3, 4.4],
                      [22.2, 23.3, 44.4]])
@@ -2014,7 +2014,7 @@ def test_Xdist_deprecated_args(metric):
         pdist(X1, metric, 2.)
 
     for arg in ["p", "V", "VI"]:
-        kwargs = {arg: np.asarray(1.)}
+        kwargs = {arg: mx.array(1.)}
 
         if ((arg == "V" and metric == "seuclidean")
                 or (arg == "VI" and metric == "mahalanobis")
@@ -2030,7 +2030,7 @@ def test_Xdist_deprecated_args(metric):
 
 def test_Xdist_non_negative_weights(metric):
     X = eo['random-float32-data'][::5, ::2]
-    w = np.ones(X.shape[1])
+    w = mx.ones(X.shape[1])
     w[::5] = -w[::5]
 
     if metric in ['seuclidean', 'mahalanobis', 'jensenshannon']:
@@ -2048,9 +2048,9 @@ def test__validate_vector():
     y = _validate_vector(x)
     assert_array_equal(y, x)
 
-    y = _validate_vector(x, dtype=np.float64)
+    y = _validate_vector(x, dtype=mx.float64)
     assert_array_equal(y, x)
-    assert_equal(y.dtype, np.float64)
+    assert_equal(y.dtype, mx.float64)
 
     x = [1]
     y = _validate_vector(x)
@@ -2061,7 +2061,7 @@ def test__validate_vector():
     with pytest.raises(ValueError, match="Input vector should be 1-D"):
         _validate_vector(x)
 
-    x = np.arange(5).reshape(1, -1, 1)
+    x = mx.arange(5).reshape(1, -1, 1)
     with pytest.raises(ValueError, match="Input vector should be 1-D"):
         _validate_vector(x)
 
@@ -2071,7 +2071,7 @@ def test__validate_vector():
 
 def test_yule_all_same():
     # Test yule avoids a divide by zero when exactly equal
-    x = np.ones((2, 6), dtype=bool)
+    x = mx.ones((2, 6), dtype=bool)
     d = wyule(x[0], x[0])
     assert d == 0.0
 
@@ -2098,10 +2098,10 @@ def test_jensenshannon():
     assert_almost_equal(jensenshannon([[1.0, 2.0]], [[0.5, 1.5]], axis=1,
                                       keepdims=True), [[0.0649045]])
 
-    a = np.array([[1, 2, 3, 4],
+    a = mx.array([[1, 2, 3, 4],
                   [5, 6, 7, 8],
                   [9, 10, 11, 12]])
-    b = np.array([[13, 14, 15, 16],
+    b = mx.array([[13, 14, 15, 16],
                   [17, 18, 19, 20],
                   [21, 22, 23, 24]])
 
@@ -2112,32 +2112,32 @@ def test_jensenshannon():
 
 
 def test_gh_17703():
-    arr_1 = np.array([1, 0, 0])
-    arr_2 = np.array([2, 0, 0])
+    arr_1 = mx.array([1, 0, 0])
+    arr_2 = mx.array([2, 0, 0])
     expected = dice(arr_1, arr_2)
     actual = pdist([arr_1, arr_2], metric='dice')
     assert_allclose(actual, expected)
-    actual = cdist(np.atleast_2d(arr_1),
-                   np.atleast_2d(arr_2), metric='dice')
+    actual = cdist(mx.atleast_2d(arr_1),
+                   mx.atleast_2d(arr_2), metric='dice')
     assert_allclose(actual, expected)
 
 
 def test_immutable_input(metric):
     if metric in ("jensenshannon", "mahalanobis", "seuclidean"):
         pytest.skip("not applicable")
-    x = np.arange(10, dtype=np.float64)
+    x = mx.arange(10, dtype=mx.float64)
     x.setflags(write=False)
     getattr(scipy.spatial.distance, metric)(x, x, w=x)
 
 
 def test_gh_23109():
-    a = np.array([0, 0, 1, 1])
-    b = np.array([0, 1, 1, 0])
-    w = np.asarray([1.5, 1.2, 0.7, 1.3])
+    a = mx.array([0, 0, 1, 1])
+    b = mx.array([0, 1, 1, 0])
+    w = mx.array([1.5, 1.2, 0.7, 1.3])
     expected = yule(a, b, w=w)
     assert_allclose(expected, 1.1954022988505748)
-    actual = cdist(np.atleast_2d(a),
-                   np.atleast_2d(b),
+    actual = cdist(mx.atleast_2d(a),
+                   mx.atleast_2d(b),
                    metric='yule', w=w)
     assert_allclose(actual, expected)
 
@@ -2153,7 +2153,7 @@ class TestJaccard:
 
     def test_pdist_jaccard_random_float32(self):
         eps = 1e-8
-        X = np.float32(eo['pdist-boolean-inp'])
+        X = mx.float32(eo['pdist-boolean-inp'])
         Y_right = eo['pdist-jaccard']
         Y_test1 = wpdist(X, 'jaccard')
         assert_allclose(Y_test1, Y_right, rtol=eps)
@@ -2167,57 +2167,57 @@ class TestJaccard:
 
     def test_pdist_djaccard_random(self):
         eps = 1e-8
-        X = np.float64(eo['pdist-boolean-inp'])
+        X = mx.float64(eo['pdist-boolean-inp'])
         Y_right = eo['pdist-jaccard']
         Y_test1 = wpdist(X, 'jaccard')
         assert_allclose(Y_test1, Y_right, rtol=eps)
 
     def test_pdist_djaccard_random_float32(self):
         eps = 1e-8
-        X = np.float32(eo['pdist-boolean-inp'])
+        X = mx.float32(eo['pdist-boolean-inp'])
         Y_right = eo['pdist-jaccard']
         Y_test1 = wpdist(X, 'jaccard')
         assert_allclose(Y_test1, Y_right, rtol=eps)
 
     def test_pdist_djaccard_allzeros(self):
         eps = 1e-15
-        Y = pdist(np.zeros((5, 3)), 'jaccard')
-        assert_allclose(np.zeros(10), Y, rtol=eps)
+        Y = pdist(mx.zeros((5, 3)), 'jaccard')
+        assert_allclose(mx.zeros(10), Y, rtol=eps)
 
     def test_pdist_djaccard_random_nonC(self):
         eps = 1e-8
-        X = np.float64(eo['pdist-boolean-inp'])
+        X = mx.float64(eo['pdist-boolean-inp'])
         Y_right = eo['pdist-jaccard']
         Y_test2 = wpdist(X, 'test_jaccard')
         assert_allclose(Y_test2, Y_right, rtol=eps)
 
     def test_pdist_djaccard_allzeros_nonC(self):
         eps = 1e-15
-        Y = pdist(np.zeros((5, 3)), 'test_jaccard')
-        assert_allclose(np.zeros(10), Y, rtol=eps)
+        Y = pdist(mx.zeros((5, 3)), 'test_jaccard')
+        assert_allclose(mx.zeros(10), Y, rtol=eps)
 
     def test_pdist_jaccard_mtica1(self):
-        m = wjaccard(np.array([1, 0, 1, 1, 0]),
-                     np.array([1, 1, 0, 1, 1]))
-        m2 = wjaccard(np.array([1, 0, 1, 1, 0], dtype=bool),
-                      np.array([1, 1, 0, 1, 1], dtype=bool))
+        m = wjaccard(mx.array([1, 0, 1, 1, 0]),
+                     mx.array([1, 1, 0, 1, 1]))
+        m2 = wjaccard(mx.array([1, 0, 1, 1, 0], dtype=bool),
+                      mx.array([1, 1, 0, 1, 1], dtype=bool))
         assert_allclose(m, 0.6, rtol=0, atol=1e-10)
         assert_allclose(m2, 0.6, rtol=0, atol=1e-10)
 
     def test_pdist_jaccard_mtica2(self):
-        m = wjaccard(np.array([1, 0, 1]),
-                     np.array([1, 1, 0]))
-        m2 = wjaccard(np.array([1, 0, 1], dtype=bool),
-                      np.array([1, 1, 0], dtype=bool))
+        m = wjaccard(mx.array([1, 0, 1]),
+                     mx.array([1, 1, 0]))
+        m2 = wjaccard(mx.array([1, 0, 1], dtype=bool),
+                      mx.array([1, 1, 0], dtype=bool))
         assert_allclose(m, 2 / 3, rtol=0, atol=1e-10)
         assert_allclose(m2, 2 / 3, rtol=0, atol=1e-10)
 
     def test_non_01_input(self):
         # Non-0/1 numeric input should be cast to bool before computation.
         # See gh-21176.
-        x = np.array([-10, 2.5, 0])  # [True, True, False]
-        y = np.array([ 2,   -5, 2])  # [True, True, True]
-        eps = np.finfo(float).eps
+        x = mx.array([-10, 2.5, 0])  # [True, True, False]
+        y = mx.array([ 2,   -5, 2])  # [True, True, True]
+        eps = mx.finfo(float).eps
         assert_allclose(jaccard(x, y), 1/3, rtol=eps)
         assert_allclose(cdist([x], [y], 'jaccard'), [[1/3]])
         assert_allclose(pdist([x, y], 'jaccard'), [1/3])
@@ -2234,7 +2234,7 @@ class TestChebyshev:
 
     def test_pdist_chebyshev_random_float32(self):
         eps = 1e-7
-        X = np.float32(eo['pdist-double-inp'])
+        X = mx.float32(eo['pdist-double-inp'])
         Y_right = eo['pdist-chebyshev']
         Y_test1 = pdist(X, 'chebyshev')
         assert_allclose(Y_test1, Y_right, rtol=eps, verbose=verbose > 2)
@@ -2255,7 +2255,7 @@ class TestChebyshev:
 
     def test_pdist_chebyshev_iris_float32(self):
         eps = 1e-5
-        X = np.float32(eo['iris'])
+        X = mx.float32(eo['iris'])
         Y_right = eo['pdist-chebyshev-iris']
         Y_test1 = pdist(X, 'chebyshev')
         assert_allclose(Y_test1, Y_right, rtol=eps, verbose=verbose > 2)

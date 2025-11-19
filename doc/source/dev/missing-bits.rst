@@ -81,9 +81,9 @@ module), it may be documented like::
     res : MyResultObject
         An object with attributes:
 
-        attribute1 : ndarray
+        attribute1 : array
             Customized description of attribute 1.
-        attribute2 : ndarray
+        attribute2 : array
             Customized description of attribute 2.
 
 Here "MyResultObject" above does not link to external documentation because it
@@ -105,10 +105,10 @@ Finally, hide private attributes if any::
 
     @dataclass
     class MyResultObject:
-        statistic: np.ndarray
-        pvalue: np.ndarray
+        statistic: mx.array
+        pvalue: mx.array
         confidence_interval: ConfidenceInterval
-        _rho: np.ndarray = field(repr=False)
+        _rho: mx.array = field(repr=False)
 
 
 Test functions from `numpy.testing`
@@ -133,15 +133,15 @@ a context manager, with the code that is supposed to raise the exception in
 the code block defined by the context manager. The ``match`` keyword argument
 is given with enough of the expected message attached to the exception/warning
 to distinguish it from other exceptions/warnings of the same class. Do not use
-``np.testing.assert_raises`` or ``np.testing.assert_warns``, as they do not
+``mx.testing.assert_raises`` or ``mx.testing.assert_warns``, as they do not
 support a ``match`` parameter.
 
 For example, the function `scipy.stats.zmap` is supposed to raise a
 ``ValueError`` if the input contains ``nan`` and ``nan_policy`` is ``"raise"``.
 A test for this is::
 
-    scores = np.array([1, 2, 3])
-    compare = np.array([-8, -3, 2, 7, 12, np.nan])
+    scores = mx.array([1, 2, 3])
+    compare = mx.array([-8, -3, 2, 7, 12, mx.nan])
     with pytest.raises(ValueError, match='input contains nan'):
         stats.zmap(scores, compare, nan_policy='raise')
 

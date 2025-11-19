@@ -39,7 +39,7 @@ def dctn(x, type=2, shape=None, axes=None, norm=None, overwrite_x=False):
 
     Returns
     -------
-    y : ndarray of real
+    y : array of real
         The transformed input array.
 
     See Also
@@ -53,11 +53,11 @@ def dctn(x, type=2, shape=None, axes=None, norm=None, overwrite_x=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fftpack import dctn, idctn
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> y = rng.standard_normal((16, 16))
-    >>> np.allclose(y, idctn(dctn(y, norm='ortho'), norm='ortho'))
+    >>> mx.allclose(y, idctn(dctn(y, norm='ortho'), norm='ortho'))
     True
 
     """
@@ -94,7 +94,7 @@ def idctn(x, type=2, shape=None, axes=None, norm=None, overwrite_x=False):
 
     Returns
     -------
-    y : ndarray of real
+    y : array of real
         The transformed input array.
 
     See Also
@@ -108,11 +108,11 @@ def idctn(x, type=2, shape=None, axes=None, norm=None, overwrite_x=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fftpack import dctn, idctn
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> y = rng.standard_normal((16, 16))
-    >>> np.allclose(y, idctn(dctn(y, norm='ortho'), norm='ortho'))
+    >>> mx.allclose(y, idctn(dctn(y, norm='ortho'), norm='ortho'))
     True
 
     """
@@ -150,7 +150,7 @@ def dstn(x, type=2, shape=None, axes=None, norm=None, overwrite_x=False):
 
     Returns
     -------
-    y : ndarray of real
+    y : array of real
         The transformed input array.
 
     See Also
@@ -164,11 +164,11 @@ def dstn(x, type=2, shape=None, axes=None, norm=None, overwrite_x=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fftpack import dstn, idstn
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> y = rng.standard_normal((16, 16))
-    >>> np.allclose(y, idstn(dstn(y, norm='ortho'), norm='ortho'))
+    >>> mx.allclose(y, idstn(dstn(y, norm='ortho'), norm='ortho'))
     True
 
     """
@@ -205,7 +205,7 @@ def idstn(x, type=2, shape=None, axes=None, norm=None, overwrite_x=False):
 
     Returns
     -------
-    y : ndarray of real
+    y : array of real
         The transformed input array.
 
     See Also
@@ -219,11 +219,11 @@ def idstn(x, type=2, shape=None, axes=None, norm=None, overwrite_x=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fftpack import dstn, idstn
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> y = rng.standard_normal((16, 16))
-    >>> np.allclose(y, idstn(dstn(y, norm='ortho'), norm='ortho'))
+    >>> mx.allclose(y, idstn(dstn(y, norm='ortho'), norm='ortho'))
     True
 
     """
@@ -256,7 +256,7 @@ def dct(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False):
 
     Returns
     -------
-    y : ndarray of real
+    y : array of real
         The transformed input array.
 
     See Also
@@ -315,7 +315,7 @@ def dct(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False):
        \sqrt{\frac{1}{2N}} & \text{otherwise} \end{cases}
 
     which makes the corresponding matrix of coefficients orthonormal
-    (``O @ O.T = np.eye(N)``).
+    (``O @ O.T = mx.eye(N)``).
 
     **Type III**
 
@@ -370,10 +370,10 @@ def dct(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False):
     Half of the FFT input is used to generate half of the FFT output:
 
     >>> from scipy.fftpack import fft, dct
-    >>> import numpy as np
-    >>> fft(np.array([4., 3., 5., 10., 5., 3.])).real
+    >>> import mlx.core as mx
+    >>> fft(mx.array([4., 3., 5., 10., 5., 3.])).real
     array([ 30.,  -8.,   6.,  -2.,   6.,  -8.])
-    >>> dct(np.array([4., 3., 5., 10.]), 1)
+    >>> dct(mx.array([4., 3., 5., 10.]), 1)
     array([ 30.,  -8.,   6.,  -2.])
 
     """
@@ -404,7 +404,7 @@ def idct(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False):
 
     Returns
     -------
-    idct : ndarray of real
+    idct : array of real
         The transformed input array.
 
     See Also
@@ -429,10 +429,10 @@ def idct(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False):
     input is used to generate half of the IFFT output:
 
     >>> from scipy.fftpack import ifft, idct
-    >>> import numpy as np
-    >>> ifft(np.array([ 30.,  -8.,   6.,  -2.,   6.,  -8.])).real
+    >>> import mlx.core as mx
+    >>> ifft(mx.array([ 30.,  -8.,   6.,  -2.,   6.,  -8.])).real
     array([  4.,   3.,   5.,  10.,   5.,   3.])
-    >>> idct(np.array([ 30.,  -8.,   6.,  -2.]), 1) / 6
+    >>> idct(mx.array([ 30.,  -8.,   6.,  -2.]), 1) / 6
     array([  4.,   3.,   5.,  10.])
 
     """
@@ -464,7 +464,7 @@ def dst(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False):
 
     Returns
     -------
-    dst : ndarray of reals
+    dst : array of reals
         The transformed input array.
 
     See Also
@@ -576,7 +576,7 @@ def idst(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False):
 
     Returns
     -------
-    idst : ndarray of real
+    idst : array of real
         The transformed input array.
 
     See Also

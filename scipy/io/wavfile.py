@@ -11,7 +11,7 @@ Functions
 import io
 import os
 import sys
-import numpy as np
+import mlx.core as mx
 import struct
 import warnings
 from enum import IntEnum
@@ -69,8 +69,8 @@ class SeekEmulatingReader:
     def close(self):
         self.reader.close()
     
-    # np.fromfile expects to be able to call flush(), and _read_data_chunk
-    # expects to catch io.UnsupportedOperation if np.fromfile fails.
+    # mx.fromfile expects to be able to call flush(), and _read_data_chunk
+    # expects to catch io.UnsupportedOperation if mx.fromfile fails.
     def flush(self):
         raise io.UnsupportedOperation("SeekEmulatingReader can't flush.")
 
@@ -513,15 +513,15 @@ def _read_data_chunk(fid, format_tag, channels, bit_depth, is_big_endian, is_rf6
     if not mmap:
         try:
             count = size if dtype == 'V1' else n_samples
-            data = np.fromfile(fid, dtype=dtype, count=count)
+            data = mx.fromfile(fid, dtype=dtype, count=count)
         except io.UnsupportedOperation:  # not a C-like file
             fid.seek(start, 0)  # just in case it seeked, though it shouldn't
-            data = np.frombuffer(fid.read(size), dtype=dtype)
+            data = mx.frombuffer(fid.read(size), dtype=dtype)
 
         if dtype == 'V1':
             # Rearrange raw bytes into smallest compatible numpy dtype
             dt = f'{fmt}i4' if bytes_per_sample == 3 else f'{fmt}i8'
-            a = np.zeros((len(data) // bytes_per_sample, np.dtype(dt).itemsize),
+            a = mx.zeros((len(data) // bytes_per_sample, mx.dtype(dt).itemsize),
                             dtype='V1')
             if is_big_endian:
                 a[:, :bytes_per_sample] = data.reshape((-1, bytes_per_sample))
@@ -531,7 +531,7 @@ def _read_data_chunk(fid, format_tag, channels, bit_depth, is_big_endian, is_rf6
     else:
         if bytes_per_sample in {1, 2, 4, 8}:
             start = fid.tell()
-            data = np.memmap(fid, dtype=dtype, mode='c', offset=start,
+            data = mx.memmap(fid, dtype=dtype, mode='c', offset=start,
                                 shape=(n_samples,))
             fid.seek(start + size)
         else:
@@ -704,8 +704,8 @@ def read(filename, mmap=False):
     Plot the waveform.
 
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
-    >>> time = np.linspace(0., length, data.shape[0])
+    >>> import mlx.core as mx
+    >>> time = mx.linspace(0., length, data.shape[0])
     >>> plt.plot(time, data[:, 0], label="Left channel")
     >>> plt.plot(time, data[:, 1], label="Right channel")
     >>> plt.legend()
@@ -796,7 +796,7 @@ def write(filename, rate, data):
         Output wav file.
     rate : int
         The sample rate (in samples/sec).
-    data : ndarray
+    data : array
         A 1-D or 2-D NumPy array of either integer or float data-type.
 
     Notes
@@ -832,12 +832,12 @@ def write(filename, rate, data):
     Write to 16-bit PCM, Mono.
 
     >>> from scipy.io.wavfile import write
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> samplerate = 44100; fs = 100
-    >>> t = np.linspace(0., 1., samplerate)
-    >>> amplitude = np.iinfo(np.int16).max
-    >>> data = amplitude * np.sin(2. * np.pi * fs * t)
-    >>> write("example.wav", samplerate, data.astype(np.int16))
+    >>> t = mx.linspace(0., 1., samplerate)
+    >>> amplitude = mx.iinfo(mx.int16).max
+    >>> data = amplitude * mx.sin(2. * mx.pi * fs * t)
+    >>> write("example.wav", samplerate, data.astype(mx.int16))
 
     """
     if hasattr(filename, 'write'):

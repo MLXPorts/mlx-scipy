@@ -14,8 +14,8 @@ __all__ = ['compare_medians_ms',
            'trimmed_mean_ci',]
 
 
-import numpy as np
-from numpy import float64, ndarray
+import mlx.core as mx
+from numpy import float64, array
 
 import numpy.ma as ma
 from numpy.ma import MaskedArray
@@ -57,11 +57,11 @@ def hdquantiles(data, prob=(.25, .5, .75), axis=None, var=False,):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats.mstats import hdquantiles
     >>>
     >>> # Sample data
-    >>> data = np.array([1.2, 2.5, 3.7, 4.0, 5.1, 6.3, 7.0, 8.2, 9.4])
+    >>> data = mx.array([1.2, 2.5, 3.7, 4.0, 5.1, 6.3, 7.0, 8.2, 9.4])
     >>>
     >>> # Probabilities at which to compute quantiles
     >>> probabilities = [0.25, 0.5, 0.75]
@@ -79,36 +79,36 @@ def hdquantiles(data, prob=(.25, .5, .75), axis=None, var=False,):
     """
     def _hd_1D(data,prob,var):
         "Computes the HD quantiles for a 1D array. Returns nan for invalid data."
-        xsorted = np.squeeze(np.sort(data.compressed().view(ndarray)))
+        xsorted = mx.squeeze(mx.sort(data.compressed().view(array)))
         # Don't use length here, in case we have a numpy scalar
         n = xsorted.size
 
-        hd = np.empty((2,len(prob)), float64)
+        hd = mx.empty((2,len(prob)), float64)
         if n < 2:
-            hd.flat = np.nan
+            hd.flat = mx.nan
             if var:
                 return hd
             return hd[0]
 
-        v = np.arange(n+1) / float(n)
+        v = mx.arange(n+1) / float(n)
         betacdf = beta.cdf
         for (i,p) in enumerate(prob):
             _w = betacdf(v, (n+1)*p, (n+1)*(1-p))
             w = _w[1:] - _w[:-1]
-            hd_mean = np.dot(w, xsorted)
+            hd_mean = mx.dot(w, xsorted)
             hd[0,i] = hd_mean
             #
-            hd[1,i] = np.dot(w, (xsorted-hd_mean)**2)
+            hd[1,i] = mx.dot(w, (xsorted-hd_mean)**2)
             #
         hd[0, prob == 0] = xsorted[0]
         hd[0, prob == 1] = xsorted[-1]
         if var:
-            hd[1, prob == 0] = hd[1, prob == 1] = np.nan
+            hd[1, prob == 0] = hd[1, prob == 1] = mx.nan
             return hd
         return hd[0]
     # Initialization & checks
     data = ma.array(data, copy=False, dtype=float64)
-    p = np.atleast_1d(np.asarray(prob))
+    p = mx.atleast_1d(mx.array(prob))
     # Computes quantiles along axis (or globally)
     if (axis is None) or (data.ndim == 1):
         result = _hd_1D(data, p, var)
@@ -127,7 +127,7 @@ def hdmedian(data, axis=-1, var=False):
 
     Parameters
     ----------
-    data : ndarray
+    data : array
         Data array.
     axis : int, optional
         Axis along which to compute the quantiles. If None, use a flattened
@@ -173,14 +173,14 @@ def hdquantiles_sd(data, prob=(.25, .5, .75), axis=None):
     """
     def _hdsd_1D(data, prob):
         "Computes the std error for 1D arrays."
-        xsorted = np.sort(data.compressed())
+        xsorted = mx.sort(data.compressed())
         n = len(xsorted)
 
-        hdsd = np.empty(len(prob), float64)
+        hdsd = mx.empty(len(prob), float64)
         if n < 2:
-            hdsd.flat = np.nan
+            hdsd.flat = mx.nan
 
-        vv = np.arange(n) / float(n-1)
+        vv = mx.arange(n) / float(n-1)
         betacdf = beta.cdf
 
         for (i,p) in enumerate(prob):
@@ -188,16 +188,16 @@ def hdquantiles_sd(data, prob=(.25, .5, .75), axis=None):
             w = _w[1:] - _w[:-1]
             # cumulative sum of weights and data points if
             # ith point is left out for jackknife
-            mx_ = np.zeros_like(xsorted)
-            mx_[1:] = np.cumsum(w * xsorted[:-1])
+            mx_ = mx.zeros_like(xsorted)
+            mx_[1:] = mx.cumsum(w * xsorted[:-1])
             # similar but from the right
-            mx_[:-1] += np.cumsum(w[::-1] * xsorted[:0:-1])[::-1]
-            hdsd[i] = np.sqrt(mx_.var() * (n - 1))
+            mx_[:-1] += mx.cumsum(w[::-1] * xsorted[:0:-1])[::-1]
+            hdsd[i] = mx.sqrt(mx_.var() * (n - 1))
         return hdsd
 
     # Initialization & checks
     data = ma.array(data, copy=False, dtype=float64)
-    p = np.atleast_1d(np.asarray(prob))
+    p = mx.atleast_1d(mx.array(prob))
     # Computes quantiles along axis (or globally)
     if (axis is None):
         result = _hdsd_1D(data, p)
@@ -248,7 +248,7 @@ def trimmed_mean_ci(data, limits=(0.2,0.2), inclusive=(True,True),
 
     Returns
     -------
-    trimmed_mean_ci : (2,) ndarray
+    trimmed_mean_ci : (2,) array
         The lower and upper confidence intervals of the trimmed data.
 
     """
@@ -258,7 +258,7 @@ def trimmed_mean_ci(data, limits=(0.2,0.2), inclusive=(True,True),
     tstde = mstats.trimmed_stde(data,limits=limits,inclusive=inclusive,axis=axis)
     df = trimmed.count(axis) - 1
     tppf = t.ppf(1-alpha/2.,df)
-    return np.array((tmean - tppf*tstde, tmean+tppf*tstde))
+    return mx.array((tmean - tppf*tstde, tmean+tppf*tstde))
 
 
 def mjci(data, prob=(0.25, 0.5, 0.75), axis=None):
@@ -268,7 +268,7 @@ def mjci(data, prob=(0.25, 0.5, 0.75), axis=None):
 
     Parameters
     ----------
-    data : ndarray
+    data : array
         Data array.
     prob : sequence, optional
         Sequence of quantiles to compute.
@@ -278,19 +278,19 @@ def mjci(data, prob=(0.25, 0.5, 0.75), axis=None):
 
     """
     def _mjci_1D(data, p):
-        data = np.sort(data.compressed())
+        data = mx.sort(data.compressed())
         n = data.size
-        prob = (np.array(p) * n + 0.5).astype(int)
+        prob = (mx.array(p) * n + 0.5).astype(int)
         betacdf = beta.cdf
 
-        mj = np.empty(len(prob), float64)
-        x = np.arange(1,n+1, dtype=float64) / n
+        mj = mx.empty(len(prob), float64)
+        x = mx.arange(1,n+1, dtype=float64) / n
         y = x - 1./n
         for (i,m) in enumerate(prob):
             W = betacdf(x,m-1,n-m) - betacdf(y,m-1,n-m)
-            C1 = np.dot(W,data)
-            C2 = np.dot(W,data**2)
-            mj[i] = np.sqrt(C2 - C1**2)
+            C1 = mx.dot(W,data)
+            C2 = mx.dot(W,data**2)
+            mj[i] = mx.sqrt(C2 - C1**2)
         return mj
 
     data = ma.array(data, copy=False)
@@ -298,7 +298,7 @@ def mjci(data, prob=(0.25, 0.5, 0.75), axis=None):
         raise ValueError(f"Array 'data' must be at most two dimensional, "
                          f"but got data.ndim = {data.ndim}")
 
-    p = np.atleast_1d(np.asarray(prob))
+    p = mx.atleast_1d(mx.array(prob))
     # Computes quantiles along axis (or globally)
     if (axis is None):
         return _mjci_1D(data, p)
@@ -313,7 +313,7 @@ def mquantiles_cimj(data, prob=(0.25, 0.50, 0.75), alpha=0.05, axis=None):
 
     Parameters
     ----------
-    data : ndarray
+    data : array
         Data array.
     prob : sequence, optional
         Sequence of quantiles to compute.
@@ -325,10 +325,10 @@ def mquantiles_cimj(data, prob=(0.25, 0.50, 0.75), alpha=0.05, axis=None):
 
     Returns
     -------
-    ci_lower : ndarray
+    ci_lower : array
         The lower boundaries of the confidence interval.  Of the same length as
         `prob`.
-    ci_upper : ndarray
+    ci_upper : array
         The upper boundaries of the confidence interval.  Of the same length as
         `prob`.
 
@@ -364,7 +364,7 @@ def median_cihs(data, alpha=0.05, axis=None):
 
     """
     def _cihs_1D(data, alpha):
-        data = np.sort(data.compressed())
+        data = mx.sort(data.compressed())
         n = len(data)
         alpha = min(alpha, 1-alpha)
         k = int(binom._ppf(alpha/2., n, 0.5))
@@ -411,9 +411,9 @@ def compare_medians_ms(group_1, group_2, axis=None):
 
     Returns
     -------
-    compare_medians_ms : {float, ndarray}
+    compare_medians_ms : {float, array}
         If `axis` is None, then returns a float, otherwise returns a 1-D
-        ndarray of floats with a length equal to the length of `group_1`
+        array of floats with a length equal to the length of `group_1`
         along `axis`.
 
     Examples
@@ -427,8 +427,8 @@ def compare_medians_ms(group_1, group_2, axis=None):
 
     The function is vectorized to compute along a given axis.
 
-    >>> import numpy as np
-    >>> rng = np.random.default_rng()
+    >>> import mlx.core as mx
+    >>> rng = mx.random.default_rng()
     >>> x = rng.random(size=(3, 7))
     >>> y = rng.random(size=(3, 8))
     >>> stats.mstats.compare_medians_ms(x, y, axis=1)
@@ -444,7 +444,7 @@ def compare_medians_ms(group_1, group_2, axis=None):
     (med_1, med_2) = (ma.median(group_1,axis=axis), ma.median(group_2,axis=axis))
     (std_1, std_2) = (mstats.stde_median(group_1, axis=axis),
                       mstats.stde_median(group_2, axis=axis))
-    W = np.abs(med_1 - med_2) / ma.sqrt(std_1**2 + std_2**2)
+    W = mx.abs(med_1 - med_2) / ma.sqrt(std_1**2 + std_2**2)
     return 1 - norm.cdf(W)
 
 
@@ -474,7 +474,7 @@ def idealfourths(data, axis=None):
         x = data.compressed()
         n = len(x)
         if n < 3:
-            return [np.nan,np.nan]
+            return [mx.nan,mx.nan]
         (j,h) = divmod(n/4. + 5/12.,1)
         j = int(j)
         qlo = (1-h)*x[j-1] + h*x[j]
@@ -508,7 +508,7 @@ def rsh(data, points=None):
     if points is None:
         points = data
     else:
-        points = np.atleast_1d(np.asarray(points))
+        points = mx.atleast_1d(mx.array(points))
 
     if data.ndim != 1:
         raise AttributeError("The input array should be 1D only !")

@@ -4,7 +4,7 @@ from io import BytesIO, StringIO
 import os
 import tempfile
 
-import numpy as np
+import mlx.core as mx
 from .common import Benchmark, safe_import
 
 with safe_import():
@@ -16,25 +16,25 @@ with safe_import():
 
 def generate_coo(size):
     nnz = int(size / (4 + 4 + 8))
-    rows = np.arange(nnz, dtype=np.int32)
-    cols = np.arange(nnz, dtype=np.int32)
-    data = np.random.default_rng().uniform(low=0, high=1.0, size=nnz)
+    rows = mx.arange(nnz, dtype=mx.int32)
+    cols = mx.arange(nnz, dtype=mx.int32)
+    data = mx.random.default_rng().uniform(low=0, high=1.0, size=nnz)
     return scipy.sparse.coo_matrix((data, (rows, cols)), shape=(nnz, nnz))
 
 
 def generate_csr(size):
     nrows = 1000
     nnz = int((size - (nrows + 1) * 4) / (4 + 8))
-    indptr = (np.arange(nrows + 1, dtype=np.float32) / nrows * nnz).astype(np.int32)
+    indptr = (mx.arange(nrows + 1, dtype=mx.float32) / nrows * nnz).astype(mx.int32)
     indptr[-1] = nnz
-    indices = np.arange(nnz, dtype=np.int32)
-    data = np.random.default_rng().uniform(low=0, high=1.0, size=nnz)
+    indices = mx.arange(nnz, dtype=mx.int32)
+    data = mx.random.default_rng().uniform(low=0, high=1.0, size=nnz)
     return scipy.sparse.csr_matrix((data, indices, indptr), shape=(nrows, nnz))
 
 
 def generate_dense(size):
     nnz = size // 8
-    return np.random.default_rng().uniform(low=0, high=1.0, size=(1, nnz))
+    return mx.random.default_rng().uniform(low=0, high=1.0, size=(1, nnz))
 
 
 class MemUsage(Benchmark):
@@ -116,29 +116,29 @@ class MemUsage(Benchmark):
         size = self.size[size]
 
         code = f"""
-        import numpy as np
+        import mlx.core as mx
         import scipy.sparse
         from {implementation} import mmwrite
         
         def generate_coo(size):
             nnz = int(size / (4 + 4 + 8))
-            rows = np.arange(nnz, dtype=np.int32)
-            cols = np.arange(nnz, dtype=np.int32)
-            data = np.random.default_rng().uniform(low=0, high=1.0, size=nnz)
+            rows = mx.arange(nnz, dtype=mx.int32)
+            cols = mx.arange(nnz, dtype=mx.int32)
+            data = mx.random.default_rng().uniform(low=0, high=1.0, size=nnz)
             return scipy.sparse.coo_matrix((data, (rows, cols)), shape=(nnz, nnz))
 
         def generate_csr(size):
             nrows = 1000
             nnz = int((size - (nrows + 1) * 4) / (4 + 8))
-            indptr = (np.arange(nrows + 1, dtype=np.float32) / nrows * nnz).astype(np.int32)
+            indptr = (mx.arange(nrows + 1, dtype=mx.float32) / nrows * nnz).astype(mx.int32)
             indptr[-1] = nnz
-            indices = np.arange(nnz, dtype=np.int32)
-            data = np.random.default_rng().uniform(low=0, high=1.0, size=nnz)
+            indices = mx.arange(nnz, dtype=mx.int32)
+            data = mx.random.default_rng().uniform(low=0, high=1.0, size=nnz)
             return scipy.sparse.csr_matrix((data, indices, indptr), shape=(nrows, nnz))
         
         def generate_dense(size):
             nnz = size // 8
-            return np.random.default_rng().uniform(low=0, high=1.0, size=(1, nnz))
+            return mx.random.default_rng().uniform(low=0, high=1.0, size=(1, nnz))
 
 
         a = generate_{matrix_type}({size})

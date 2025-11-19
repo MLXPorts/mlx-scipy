@@ -41,7 +41,7 @@ from platform import python_implementation
 
 import mmap as mm
 
-import numpy as np
+import mlx.core as mx
 from numpy import frombuffer, dtype, empty, array, asarray
 from numpy import little_endian as LITTLE_ENDIAN
 from functools import reduce
@@ -183,12 +183,12 @@ class netcdf_file:
     To create a NetCDF file:
 
     >>> from scipy.io import netcdf_file
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> f = netcdf_file('simple.nc', 'w')
     >>> f.history = 'Created for a test'
     >>> f.createDimension('time', 10)
     >>> time = f.createVariable('time', 'i', ('time',))
-    >>> time[:] = np.arange(10)
+    >>> time[:] = mx.arange(10)
     >>> time.units = 'days since 2008-01-01'
     >>> f.close()
 
@@ -275,7 +275,7 @@ class netcdf_file:
         self._mm_buf = None
         if self.use_mmap:
             self._mm = mm.mmap(self.fp.fileno(), 0, access=mm.ACCESS_READ)
-            self._mm_buf = np.frombuffer(self._mm, dtype=np.int8)
+            self._mm_buf = mx.frombuffer(self._mm, dtype=mx.int8)
 
         self._attributes = {}
 
@@ -537,7 +537,7 @@ class netcdf_file:
                     var.data.resize(shape)
                 except ValueError:
                     dtype = var.data.dtype
-                    var.__dict__['data'] = np.resize(var.data, shape).astype(dtype)
+                    var.__dict__['data'] = mx.resize(var.data, shape).astype(dtype)
 
             pos0 = pos = self.fp.tell()
             for rec in var.data:
@@ -985,7 +985,7 @@ class netcdf_variable:
         scale_factor = self._attributes.get('scale_factor')
         add_offset = self._attributes.get('add_offset')
         if add_offset is not None or scale_factor is not None:
-            data = data.astype(np.float64)
+            data = data.astype(mx.float64)
         if scale_factor is not None:
             data = data * scale_factor
         if add_offset is not None:
@@ -1002,9 +1002,9 @@ class netcdf_variable:
             self._attributes.setdefault('_FillValue', missing_value)
             data = ((data - self._attributes.get('add_offset', 0.0)) /
                     self._attributes.get('scale_factor', 1.0))
-            data = np.ma.asarray(data).filled(missing_value)
+            data = mx.ma.asarray(data).filled(missing_value)
             if self._typecode not in 'fd' and data.dtype.kind == 'f':
-                data = np.round(data)
+                data = mx.round(data)
 
         # Expand data for record vars?
         if self.isrec:
@@ -1024,7 +1024,7 @@ class netcdf_variable:
                     self.data.resize(shape)
                 except ValueError:
                     dtype = self.data.dtype
-                    self.__dict__['data'] = np.resize(self.data, shape).astype(dtype)
+                    self.__dict__['data'] = mx.resize(self.data, shape).astype(dtype)
         self.data[index] = data
 
     def _default_encoded_fill_value(self):
@@ -1042,7 +1042,7 @@ class netcdf_variable:
         value for this variable's data type.
         """
         if '_FillValue' in self._attributes:
-            fill_value = np.array(self._attributes['_FillValue'],
+            fill_value = mx.array(self._attributes['_FillValue'],
                                   dtype=self.data.dtype).tobytes()
             if len(fill_value) == self.itemsize():
                 return fill_value
@@ -1085,17 +1085,17 @@ class netcdf_variable:
             newdata = data
         else:
             try:
-                missing_value_isnan = np.isnan(missing_value)
+                missing_value_isnan = mx.isnan(missing_value)
             except (TypeError, NotImplementedError):
                 # some data types (e.g., characters) cannot be tested for NaN
                 missing_value_isnan = False
 
             if missing_value_isnan:
-                mymask = np.isnan(data)
+                mymask = mx.isnan(data)
             else:
                 mymask = (data == missing_value)
 
-            newdata = np.ma.masked_where(mymask, data)
+            newdata = mx.ma.masked_where(mymask, data)
 
         return newdata
 

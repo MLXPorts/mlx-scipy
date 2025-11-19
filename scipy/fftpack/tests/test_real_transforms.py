@@ -1,7 +1,7 @@
 from os.path import join, dirname
 import threading
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_array_almost_equal, assert_equal
 import pytest
 from pytest import raises as assert_raises
@@ -10,26 +10,26 @@ from scipy.fftpack._realtransforms import (
     dct, idct, dst, idst, dctn, idctn, dstn, idstn)
 
 # Matlab reference data
-MDATA = np.load(join(dirname(__file__), 'test.npz'))
+MDATA = mx.load(join(dirname(__file__), 'test.npz'))
 X = [MDATA[f'x{i}'] for i in range(8)]
 Y = [MDATA[f'y{i}'] for i in range(8)]
 
 # FFTW reference data: the data are organized as follows:
 #    * SIZES is an array containing all available sizes
 #    * for every type (1, 2, 3, 4) and every size, the array dct_type_size
-#    contains the output of the DCT applied to the input np.linspace(0, size-1,
+#    contains the output of the DCT applied to the input mx.linspace(0, size-1,
 #    size)
-FFTWDATA_DOUBLE = np.load(join(dirname(__file__), 'fftw_double_ref.npz'))
-FFTWDATA_SINGLE = np.load(join(dirname(__file__), 'fftw_single_ref.npz'))
+FFTWDATA_DOUBLE = mx.load(join(dirname(__file__), 'fftw_double_ref.npz'))
+FFTWDATA_SINGLE = mx.load(join(dirname(__file__), 'fftw_single_ref.npz'))
 FFTWDATA_SIZES = FFTWDATA_DOUBLE['sizes']
 
 
 def fftw_dct_ref(type, size, dt):
-    x = np.linspace(0, size-1, size).astype(dt)
-    dt = np.result_type(np.float32, dt)
-    if dt == np.float64:
+    x = mx.linspace(0, size-1, size).astype(dt)
+    dt = mx.result_type(mx.float32, dt)
+    if dt == mx.float64:
         data = FFTWDATA_DOUBLE
-    elif dt == np.float32:
+    elif dt == mx.float32:
         data = FFTWDATA_SINGLE
     else:
         raise ValueError()
@@ -38,11 +38,11 @@ def fftw_dct_ref(type, size, dt):
 
 
 def fftw_dst_ref(type, size, dt):
-    x = np.linspace(0, size-1, size).astype(dt)
-    dt = np.result_type(np.float32, dt)
-    if dt == np.float64:
+    x = mx.linspace(0, size-1, size).astype(dt)
+    dt = mx.result_type(mx.float32, dt)
+    if dt == mx.float64:
         data = FFTWDATA_DOUBLE
-    elif dt == np.float32:
+    elif dt == mx.float32:
         data = FFTWDATA_SINGLE
     else:
         raise ValueError()
@@ -52,7 +52,7 @@ def fftw_dst_ref(type, size, dt):
 
 def dct_2d_ref(x, **kwargs):
     """Calculate reference values for testing dct2."""
-    x = np.array(x, copy=True)
+    x = mx.array(x, copy=True)
     for row in range(x.shape[0]):
         x[row, :] = dct(x[row, :], **kwargs)
     for col in range(x.shape[1]):
@@ -62,7 +62,7 @@ def dct_2d_ref(x, **kwargs):
 
 def idct_2d_ref(x, **kwargs):
     """Calculate reference values for testing idct2."""
-    x = np.array(x, copy=True)
+    x = mx.array(x, copy=True)
     for row in range(x.shape[0]):
         x[row, :] = idct(x[row, :], **kwargs)
     for col in range(x.shape[1]):
@@ -72,7 +72,7 @@ def idct_2d_ref(x, **kwargs):
 
 def dst_2d_ref(x, **kwargs):
     """Calculate reference values for testing dst2."""
-    x = np.array(x, copy=True)
+    x = mx.array(x, copy=True)
     for row in range(x.shape[0]):
         x[row, :] = dst(x[row, :], **kwargs)
     for col in range(x.shape[1]):
@@ -82,7 +82,7 @@ def dst_2d_ref(x, **kwargs):
 
 def idst_2d_ref(x, **kwargs):
     """Calculate reference values for testing idst2."""
-    x = np.array(x, copy=True)
+    x = mx.array(x, copy=True)
     for row in range(x.shape[0]):
         x[row, :] = idst(x[row, :], **kwargs)
     for col in range(x.shape[1]):
@@ -92,49 +92,49 @@ def idst_2d_ref(x, **kwargs):
 
 def naive_dct1(x, norm=None):
     """Calculate textbook definition version of DCT-I."""
-    x = np.array(x, copy=True)
+    x = mx.array(x, copy=True)
     N = len(x)
     M = N-1
-    y = np.zeros(N)
+    y = mx.zeros(N)
     m0, m = 1, 2
     if norm == 'ortho':
-        m0 = np.sqrt(1.0/M)
-        m = np.sqrt(2.0/M)
+        m0 = mx.sqrt(1.0/M)
+        m = mx.sqrt(2.0/M)
     for k in range(N):
         for n in range(1, N-1):
-            y[k] += m*x[n]*np.cos(np.pi*n*k/M)
+            y[k] += m*x[n]*mx.cos(mx.pi*n*k/M)
         y[k] += m0 * x[0]
         y[k] += m0 * x[N-1] * (1 if k % 2 == 0 else -1)
     if norm == 'ortho':
-        y[0] *= 1/np.sqrt(2)
-        y[N-1] *= 1/np.sqrt(2)
+        y[0] *= 1/mx.sqrt(2)
+        y[N-1] *= 1/mx.sqrt(2)
     return y
 
 
 def naive_dst1(x, norm=None):
     """Calculate textbook definition version  of DST-I."""
-    x = np.array(x, copy=True)
+    x = mx.array(x, copy=True)
     N = len(x)
     M = N+1
-    y = np.zeros(N)
+    y = mx.zeros(N)
     for k in range(N):
         for n in range(N):
-            y[k] += 2*x[n]*np.sin(np.pi*(n+1.0)*(k+1.0)/M)
+            y[k] += 2*x[n]*mx.sin(mx.pi*(n+1.0)*(k+1.0)/M)
     if norm == 'ortho':
-        y *= np.sqrt(0.5/M)
+        y *= mx.sqrt(0.5/M)
     return y
 
 
 def naive_dct4(x, norm=None):
     """Calculate textbook definition version of DCT-IV."""
-    x = np.array(x, copy=True)
+    x = mx.array(x, copy=True)
     N = len(x)
-    y = np.zeros(N)
+    y = mx.zeros(N)
     for k in range(N):
         for n in range(N):
-            y[k] += x[n]*np.cos(np.pi*(n+0.5)*(k+0.5)/(N))
+            y[k] += x[n]*mx.cos(mx.pi*(n+0.5)*(k+0.5)/(N))
     if norm == 'ortho':
-        y *= np.sqrt(2.0/N)
+        y *= mx.sqrt(2.0/N)
     else:
         y *= 2
     return y
@@ -142,14 +142,14 @@ def naive_dct4(x, norm=None):
 
 def naive_dst4(x, norm=None):
     """Calculate textbook definition version of DST-IV."""
-    x = np.array(x, copy=True)
+    x = mx.array(x, copy=True)
     N = len(x)
-    y = np.zeros(N)
+    y = mx.zeros(N)
     for k in range(N):
         for n in range(N):
-            y[k] += x[n]*np.sin(np.pi*(n+0.5)*(k+0.5)/(N))
+            y[k] += x[n]*mx.sin(mx.pi*(n+0.5)*(k+0.5)/(N))
     if norm == 'ortho':
-        y *= np.sqrt(2.0/N)
+        y *= mx.sqrt(2.0/N)
     else:
         y *= 2
     return y
@@ -157,33 +157,33 @@ def naive_dst4(x, norm=None):
 
 class TestComplex:
     def test_dct_complex64(self):
-        y = dct(1j*np.arange(5, dtype=np.complex64))
-        x = 1j*dct(np.arange(5))
+        y = dct(1j*mx.arange(5, dtype=mx.complex64))
+        x = 1j*dct(mx.arange(5))
         assert_array_almost_equal(x, y)
 
     def test_dct_complex(self):
-        y = dct(np.arange(5)*1j)
-        x = 1j*dct(np.arange(5))
+        y = dct(mx.arange(5)*1j)
+        x = 1j*dct(mx.arange(5))
         assert_array_almost_equal(x, y)
 
     def test_idct_complex(self):
-        y = idct(np.arange(5)*1j)
-        x = 1j*idct(np.arange(5))
+        y = idct(mx.arange(5)*1j)
+        x = 1j*idct(mx.arange(5))
         assert_array_almost_equal(x, y)
 
     def test_dst_complex64(self):
-        y = dst(np.arange(5, dtype=np.complex64)*1j)
-        x = 1j*dst(np.arange(5))
+        y = dst(mx.arange(5, dtype=mx.complex64)*1j)
+        x = 1j*dst(mx.arange(5))
         assert_array_almost_equal(x, y)
 
     def test_dst_complex(self):
-        y = dst(np.arange(5)*1j)
-        x = 1j*dst(np.arange(5))
+        y = dst(mx.arange(5)*1j)
+        x = 1j*dst(mx.arange(5))
         assert_array_almost_equal(x, y)
 
     def test_idst_complex(self):
-        y = idst(np.arange(5)*1j)
-        x = 1j*idst(np.arange(5))
+        y = idst(mx.arange(5)*1j)
+        x = 1j*idst(mx.arange(5))
         assert_array_almost_equal(x, y)
 
 
@@ -203,16 +203,16 @@ class _TestDCTBase:
                 x, yr, dt = fftw_dct_ref(self.type, i, self.rdt)
             y = dct(x, type=self.type)
             assert_equal(y.dtype, dt)
-            # XXX: we divide by np.max(y) because the tests fail otherwise. We
+            # XXX: we divide by mx.max(y) because the tests fail otherwise. We
             # should really use something like assert_array_approx_equal. The
             # difference is due to fftw using a better algorithm w.r.t error
             # propagation compared to the ones from fftpack.
-            assert_array_almost_equal(y / np.max(y), yr / np.max(y), decimal=self.dec,
+            assert_array_almost_equal(y / mx.max(y), yr / mx.max(y), decimal=self.dec,
                     err_msg=f"Size {i} failed")
 
     def test_axis(self):
         nt = 2
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         for i in [7, 8, 9, 16, 32, 64]:
             x = rng.randn(nt, i)
             y = dct(x, type=self.type)
@@ -230,20 +230,20 @@ class _TestDCTBase:
 class _TestDCTIBase(_TestDCTBase):
     def test_definition_ortho(self):
         # Test orthornomal mode.
-        dt = np.result_type(np.float32, self.rdt)
+        dt = mx.result_type(mx.float32, self.rdt)
         for xr in X:
-            x = np.array(xr, dtype=self.rdt)
+            x = mx.array(xr, dtype=self.rdt)
             y = dct(x, norm='ortho', type=1)
             y2 = naive_dct1(x, norm='ortho')
             assert_equal(y.dtype, dt)
-            assert_array_almost_equal(y / np.max(y), y2 / np.max(y), decimal=self.dec)
+            assert_array_almost_equal(y / mx.max(y), y2 / mx.max(y), decimal=self.dec)
 
 class _TestDCTIIBase(_TestDCTBase):
     def test_definition_matlab(self):
         # Test correspondence with MATLAB (orthornomal mode).
-        dt = np.result_type(np.float32, self.rdt)
+        dt = mx.result_type(mx.float32, self.rdt)
         for xr, yr in zip(X, Y):
-            x = np.array(xr, dtype=dt)
+            x = mx.array(xr, dtype=dt)
             y = dct(x, norm="ortho", type=2)
             assert_equal(y.dtype, dt)
             assert_array_almost_equal(y, yr, decimal=self.dec)
@@ -252,9 +252,9 @@ class _TestDCTIIBase(_TestDCTBase):
 class _TestDCTIIIBase(_TestDCTBase):
     def test_definition_ortho(self):
         # Test orthornomal mode.
-        dt = np.result_type(np.float32, self.rdt)
+        dt = mx.result_type(mx.float32, self.rdt)
         for xr in X:
-            x = np.array(xr, dtype=self.rdt)
+            x = mx.array(xr, dtype=self.rdt)
             y = dct(x, norm='ortho', type=2)
             xi = dct(y, norm="ortho", type=3)
             assert_equal(xi.dtype, dt)
@@ -263,25 +263,25 @@ class _TestDCTIIIBase(_TestDCTBase):
 class _TestDCTIVBase(_TestDCTBase):
     def test_definition_ortho(self):
         # Test orthornomal mode.
-        dt = np.result_type(np.float32, self.rdt)
+        dt = mx.result_type(mx.float32, self.rdt)
         for xr in X:
-            x = np.array(xr, dtype=self.rdt)
+            x = mx.array(xr, dtype=self.rdt)
             y = dct(x, norm='ortho', type=4)
             y2 = naive_dct4(x, norm='ortho')
             assert_equal(y.dtype, dt)
-            assert_array_almost_equal(y / np.max(y), y2 / np.max(y), decimal=self.dec)
+            assert_array_almost_equal(y / mx.max(y), y2 / mx.max(y), decimal=self.dec)
 
 
 class TestDCTIDouble(_TestDCTIBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 10
         self.type = 1
 
 
 class TestDCTIFloat(_TestDCTIBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 4
         self.type = 1
 
@@ -295,14 +295,14 @@ class TestDCTIInt(_TestDCTIBase):
 
 class TestDCTIIDouble(_TestDCTIIBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 10
         self.type = 2
 
 
 class TestDCTIIFloat(_TestDCTIIBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 5
         self.type = 2
 
@@ -316,14 +316,14 @@ class TestDCTIIInt(_TestDCTIIBase):
 
 class TestDCTIIIDouble(_TestDCTIIIBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 14
         self.type = 3
 
 
 class TestDCTIIIFloat(_TestDCTIIIBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 5
         self.type = 3
 
@@ -337,14 +337,14 @@ class TestDCTIIIInt(_TestDCTIIIBase):
 
 class TestDCTIVDouble(_TestDCTIVBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 12
         self.type = 3
 
 
 class TestDCTIVFloat(_TestDCTIVBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 5
         self.type = 3
 
@@ -376,23 +376,23 @@ class _TestIDCTBase:
             else:
                 x /= 2 * i
             assert_equal(x.dtype, dt)
-            # XXX: we divide by np.max(y) because the tests fail otherwise. We
+            # XXX: we divide by mx.max(y) because the tests fail otherwise. We
             # should really use something like assert_array_approx_equal. The
             # difference is due to fftw using a better algorithm w.r.t error
             # propagation compared to the ones from fftpack.
-            assert_array_almost_equal(x / np.max(x), xr / np.max(x), decimal=self.dec,
+            assert_array_almost_equal(x / mx.max(x), xr / mx.max(x), decimal=self.dec,
                     err_msg=f"Size {i} failed")
 
 class TestIDCTIDouble(_TestIDCTBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 10
         self.type = 1
 
 
 class TestIDCTIFloat(_TestIDCTBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 4
         self.type = 1
 
@@ -406,14 +406,14 @@ class TestIDCTIInt(_TestIDCTBase):
 
 class TestIDCTIIDouble(_TestIDCTBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 10
         self.type = 2
 
 
 class TestIDCTIIFloat(_TestIDCTBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 5
         self.type = 2
 
@@ -427,14 +427,14 @@ class TestIDCTIIInt(_TestIDCTBase):
 
 class TestIDCTIIIDouble(_TestIDCTBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 14
         self.type = 3
 
 
 class TestIDCTIIIFloat(_TestIDCTBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 5
         self.type = 3
 
@@ -447,14 +447,14 @@ class TestIDCTIIIInt(_TestIDCTBase):
 
 class TestIDCTIVDouble(_TestIDCTBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 12
         self.type = 4
 
 
 class TestIDCTIVFloat(_TestIDCTBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 5
         self.type = 4
 
@@ -481,31 +481,31 @@ class _TestDSTBase:
                 xr, yr, dt = fftw_dst_ref(self.type, i, self.rdt)
             y = dst(xr, type=self.type)
             assert_equal(y.dtype, dt)
-            # XXX: we divide by np.max(y) because the tests fail otherwise. We
+            # XXX: we divide by mx.max(y) because the tests fail otherwise. We
             # should really use something like assert_array_approx_equal. The
             # difference is due to fftw using a better algorithm w.r.t error
             # propagation compared to the ones from fftpack.
-            assert_array_almost_equal(y / np.max(y), yr / np.max(y), decimal=self.dec,
+            assert_array_almost_equal(y / mx.max(y), yr / mx.max(y), decimal=self.dec,
                     err_msg=f"Size {i} failed")
 
 
 class _TestDSTIBase(_TestDSTBase):
     def test_definition_ortho(self):
         # Test orthornomal mode.
-        dt = np.result_type(np.float32, self.rdt)
+        dt = mx.result_type(mx.float32, self.rdt)
         for xr in X:
-            x = np.array(xr, dtype=self.rdt)
+            x = mx.array(xr, dtype=self.rdt)
             y = dst(x, norm='ortho', type=1)
             y2 = naive_dst1(x, norm='ortho')
             assert_equal(y.dtype, dt)
-            assert_array_almost_equal(y / np.max(y), y2 / np.max(y), decimal=self.dec)
+            assert_array_almost_equal(y / mx.max(y), y2 / mx.max(y), decimal=self.dec)
 
 class _TestDSTIVBase(_TestDSTBase):
     def test_definition_ortho(self):
         # Test orthornomal mode.
-        dt = np.result_type(np.float32, self.rdt)
+        dt = mx.result_type(mx.float32, self.rdt)
         for xr in X:
-            x = np.array(xr, dtype=self.rdt)
+            x = mx.array(xr, dtype=self.rdt)
             y = dst(x, norm='ortho', type=4)
             y2 = naive_dst4(x, norm='ortho')
             assert_equal(y.dtype, dt)
@@ -513,14 +513,14 @@ class _TestDSTIVBase(_TestDSTBase):
 
 class TestDSTIDouble(_TestDSTIBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 12
         self.type = 1
 
 
 class TestDSTIFloat(_TestDSTIBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 4
         self.type = 1
 
@@ -534,14 +534,14 @@ class TestDSTIInt(_TestDSTIBase):
 
 class TestDSTIIDouble(_TestDSTBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 14
         self.type = 2
 
 
 class TestDSTIIFloat(_TestDSTBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 6
         self.type = 2
 
@@ -555,14 +555,14 @@ class TestDSTIIInt(_TestDSTBase):
 
 class TestDSTIIIDouble(_TestDSTBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 14
         self.type = 3
 
 
 class TestDSTIIIFloat(_TestDSTBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 7
         self.type = 3
 
@@ -576,14 +576,14 @@ class TestDSTIIIInt(_TestDSTBase):
 
 class TestDSTIVDouble(_TestDSTIVBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 12
         self.type = 4
 
 
 class TestDSTIVFloat(_TestDSTIVBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 4
         self.type = 4
 
@@ -615,24 +615,24 @@ class _TestIDSTBase:
             else:
                 x /= 2 * i
             assert_equal(x.dtype, dt)
-            # XXX: we divide by np.max(x) because the tests fail otherwise. We
+            # XXX: we divide by mx.max(x) because the tests fail otherwise. We
             # should really use something like assert_array_approx_equal. The
             # difference is due to fftw using a better algorithm w.r.t error
             # propagation compared to the ones from fftpack.
-            assert_array_almost_equal(x / np.max(x), xr / np.max(x), decimal=self.dec,
+            assert_array_almost_equal(x / mx.max(x), xr / mx.max(x), decimal=self.dec,
                     err_msg=f"Size {i} failed")
 
 
 class TestIDSTIDouble(_TestIDSTBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 12
         self.type = 1
 
 
 class TestIDSTIFloat(_TestIDSTBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 4
         self.type = 1
 
@@ -646,14 +646,14 @@ class TestIDSTIInt(_TestIDSTBase):
 
 class TestIDSTIIDouble(_TestIDSTBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 14
         self.type = 2
 
 
 class TestIDSTIIFloat(_TestIDSTBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 6
         self.type = 2
 
@@ -667,14 +667,14 @@ class TestIDSTIIInt(_TestIDSTBase):
 
 class TestIDSTIIIDouble(_TestIDSTBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 14
         self.type = 3
 
 
 class TestIDSTIIIFloat(_TestIDSTBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 6
         self.type = 3
 
@@ -688,14 +688,14 @@ class TestIDSTIIIInt(_TestIDSTBase):
 
 class TestIDSTIVDouble(_TestIDSTBase):
     def setup_method(self):
-        self.rdt = np.float64
+        self.rdt = mx.float64
         self.dec = 12
         self.type = 4
 
 
 class TestIDSTIVFloat(_TestIDSTBase):
     def setup_method(self):
-        self.rdt = np.float32
+        self.rdt = mx.float32
         self.dec = 6
         self.type = 4
 
@@ -710,7 +710,7 @@ class TestIDSTIVnt(_TestIDSTBase):
 class TestOverwrite:
     """Check input overwrite behavior."""
 
-    real_dtypes = [np.float32, np.float64]
+    real_dtypes = [mx.float32, mx.float64]
 
     def _check(self, x, routine, type, fftsize, axis, norm, overwrite_x, **kw):
         x2 = x.copy()
@@ -722,8 +722,8 @@ class TestOverwrite:
             assert_equal(x2, x, err_msg=f"spurious overwrite in {sig}")
 
     def _check_1d(self, routine, dtype, shape, axis):
-        rng = np.random.RandomState(1234)
-        if np.issubdtype(dtype, np.complexfloating):
+        rng = mx.random.RandomState(1234)
+        if mx.issubdtype(dtype, mx.complexfloating):
             data = rng.randn(*shape) + 1j*rng.randn(*shape)
         else:
             data = rng.randn(*shape)
@@ -764,7 +764,7 @@ class Test_DCTN_IDCTN:
     dec = 14
     dct_type = [1, 2, 3, 4]
     norms = [None, 'ortho']
-    rstate = np.random.RandomState(1234)
+    rstate = mx.random.RandomState(1234)
     shape = (32, 16)
     data = rstate.randn(*shape)
 

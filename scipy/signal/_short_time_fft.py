@@ -19,7 +19,7 @@ from functools import partial, cached_property
 from types import GenericAlias
 from typing import get_args, Literal
 
-import numpy as np
+import mlx.core as mx
 
 import scipy.fft as fft_lib
 from scipy.signal._signaltools import detrend
@@ -35,7 +35,7 @@ PAD_TYPE = Literal['zeros', 'edge', 'even', 'odd']
 FFT_MODE_TYPE = Literal['twosided', 'centered', 'onesided', 'onesided2X']
 
 
-def _calc_dual_canonical_window(win: np.ndarray, hop: int) -> np.ndarray:
+def _calc_dual_canonical_window(win: mx.array, hop: int) -> mx.array:
     """Calculate canonical dual window for 1d window `win` and a time step
     of `hop` samples.
 
@@ -47,7 +47,7 @@ def _calc_dual_canonical_window(win: np.ndarray, hop: int) -> np.ndarray:
     if hop > len(win):
         raise ValueError(f"{hop=} is larger than window length of {len(win)}" +
                          " => STFT not invertible!")
-    if issubclass(win.dtype.type, np.integer):
+    if issubclass(win.dtype.type, mx.integer):
         raise ValueError("Parameter 'win' cannot be of integer type, but " +
                          f"{win.dtype=} => STFT not invertible!")
         # The calculation of `relative_resolution` does not work for ints.
@@ -62,17 +62,17 @@ def _calc_dual_canonical_window(win: np.ndarray, hop: int) -> np.ndarray:
         DD[:-k_] += w2[k_:]
 
     # check DD > 0:
-    relative_resolution = np.finfo(win.dtype).resolution * max(DD)
-    if not np.all(DD >= relative_resolution):
+    relative_resolution = mx.finfo(win.dtype).resolution * max(DD)
+    if not mx.all(DD >= relative_resolution):
         raise ValueError("Short-time Fourier Transform not invertible!")
 
     return win / DD
 
 
-def closest_STFT_dual_window(win: np.ndarray, hop: int,
-                             desired_dual: np.ndarray | None = None, *,
+def closest_STFT_dual_window(win: mx.array, hop: int,
+                             desired_dual: mx.array | None = None, *,
                              scaled: bool = True) \
-        -> tuple[np.ndarray, float | complex]:
+        -> tuple[mx.array, float | complex]:
     r"""Calculate the STFT dual window of a given window closest to a desired dual
         window.
 
@@ -86,21 +86,21 @@ def closest_STFT_dual_window(win: np.ndarray, hop: int,
 
         Parameters
         ----------
-        win : np.ndarray
+        win : mx.array
             The window must be a real- or complex-valued 1d array.
         hop : int
             The increment in samples by which the window is shifted in each step.
-        desired_dual: np.ndarray | None
+        desired_dual: mx.array | None
             The desired dual window must be a 1d array of the same length as `win`.
             If set to ``None`` (default), then `desired_dual` is assumed to be the
-            rectangular window, i.e., ``np.ones_like(win)``.
+            rectangular window, i.e., ``mx.ones_like(win)``.
         scaled : bool
             If set (default), the closest scaled version instead of closest dual window
             is calculated.
 
         Returns
         -------
-        dual_win : np.ndarray
+        dual_win : mx.array
             A dual window of ``alpha*win`` (with hop interval `hop`), which is closest
             to `desired_dual`. Note that the dual window of `win` is `dual_win/alpha`
             and that the dual window of `dual_win` is `alpha*win`.
@@ -121,7 +121,7 @@ def closest_STFT_dual_window(win: np.ndarray, hop: int,
         all touching window values at any given sample position results in the same
         constant :math:`\alpha`. Eq. :math:numref:`eq_STFT_AllDualWinsCond` shows that
         this is equal to having a rectangular dual window, i.e., the dual being
-        ``alpha*np.ones(m)``.
+        ``alpha*mx.ones(m)``.
 
         Some examples of windows that satisfy COLA (taken from [2]_):
 
@@ -145,21 +145,21 @@ def closest_STFT_dual_window(win: np.ndarray, hop: int,
         Let's show that a Bartlett window with 75% overlap fulfills the COLA condition:
 
         >>> import matplotlib.pyplot as plt
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.signal import closest_STFT_dual_window, windows
         ...
         >>> m = 24
-        >>> win, w_rect = windows.bartlett(m, sym=False), np.ones(m)
+        >>> win, w_rect = windows.bartlett(m, sym=False), mx.ones(m)
         >>> d_win, alpha = closest_STFT_dual_window(win, m//4, w_rect, scaled=True)
-        >>> print(f"COLA: {np.allclose(d_win, w_rect*alpha)}, {alpha = :g}")
+        >>> print(f"COLA: {mx.allclose(d_win, w_rect*alpha)}, {alpha = :g}")
         COLA: True, alpha = 0.5
 
         We can also determine for which hop intervals the COLA condition is fulfilled:
 
-        >>> hops, deviations, alphas = np.arange(1, 16, dtype=int), [], []
+        >>> hops, deviations, alphas = mx.arange(1, 16, dtype=int), [], []
         >>> for h_ in hops:
         ...     w_cola, alpha = closest_STFT_dual_window(w_rect, h_, win, scaled=True)
-        ...     deviations.append(np.linalg.norm(w_cola - win*alpha))
+        ...     deviations.append(mx.linalg.norm(w_cola - win*alpha))
         ...     alphas.append(alpha)
         ...
         >>> fg0, (ax0, ax1) = plt.subplots(2, 1, sharex='all', tight_layout=True)
@@ -188,15 +188,15 @@ def closest_STFT_dual_window(win: np.ndarray, hop: int,
 
     """
     if desired_dual is None:  # default is rectangular window
-        desired_dual = np.ones_like(win)
+        desired_dual = mx.ones_like(win)
     if not (win.ndim == 1 and win.shape == desired_dual.shape):
         raise ValueError("Parameters `win` and `desired_dual` are not 1d arrays of " +
                          f"equal length ({win.shape=}, {desired_dual.shape=})!")
-    if not all(np.isfinite(win)):
+    if not all(mx.isfinite(win)):
         raise ValueError("Parameter win must have finite entries!")
-    if not all(np.isfinite(desired_dual)):
+    if not all(mx.isfinite(desired_dual)):
         raise ValueError("Parameter desired_dual must have finite entries!")
-    if not (1 <= hop <= len(win) and isinstance(hop, int | np.integer)):
+    if not (1 <= hop <= len(win) and isinstance(hop, int | mx.integer)):
         raise ValueError(f"Parameter {hop=} is not an integer between 1 and " +
                          f"{len(win)=}!")
 
@@ -213,7 +213,7 @@ def closest_STFT_dual_window(win: np.ndarray, hop: int,
 
     numerator = q_d.conjugate().T @ w_d
     denominator = q_d.T.real @ q_d.real + q_d.T.imag @ q_d.imag  # always >= 0
-    if not (abs(numerator) > 0 and denominator > np.finfo(w_d.dtype).resolution):
+    if not (abs(numerator) > 0 and denominator > mx.finfo(w_d.dtype).resolution):
         raise ValueError(
             "Unable to calculate scaled closest dual window due to numerically " +
             "unstable scaling factor! Try setting parameter `scaled` to False.")
@@ -265,7 +265,7 @@ class ShortTimeFFT:
 
     Parameters
     ----------
-    win : np.ndarray
+    win : mx.array
         The window must be a real- or complex-valued 1d array.
     hop : int
         The increment in samples, by which the window is shifted in each step.
@@ -278,7 +278,7 @@ class ShortTimeFFT:
     mfft: int | None
         Length of the FFT used, if a zero padded FFT is desired.
         If ``None`` (default), the length of the window `win` is used.
-    dual_win : np.ndarray | None
+    dual_win : mx.array | None
         The dual window of `win`. If set to ``None``, it is calculated if
         needed.
     scale_to : 'magnitude', 'psd' | None
@@ -315,15 +315,15 @@ class ShortTimeFFT:
     The following example shows the magnitude of the STFT of a sine with
     varying frequency :math:`f_i(t)` (marked by a red dashed line in the plot):
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.signal import ShortTimeFFT
     >>> from scipy.signal.windows import gaussian
     ...
     >>> T_x, N = 1 / 20, 1000  # 20 Hz sampling rate for 50 s signal
-    >>> t_x = np.arange(N) * T_x  # time indexes for signal
-    >>> f_i = 1 * np.arctan((t_x - t_x[N // 2]) / 2) + 5  # varying frequency
-    >>> x = np.sin(2*np.pi*np.cumsum(f_i)*T_x) # the signal
+    >>> t_x = mx.arange(N) * T_x  # time indexes for signal
+    >>> f_i = 1 * mx.arctan((t_x - t_x[N // 2]) / 2) + 5  # varying frequency
+    >>> x = mx.sin(2*mx.pi*mx.cumsum(f_i)*T_x) # the signal
 
     The utilized Gaussian window is 50 samples or 2.5 s long. The parameter
     ``mfft=200`` in `ShortTimeFFT` causes the spectrum to be oversampled
@@ -372,7 +372,7 @@ class ShortTimeFFT:
     >>> SFT.invertible  # check if invertible
     True
     >>> x1 = SFT.istft(Sx, k1=N)
-    >>> np.allclose(x, x1)
+    >>> mx.allclose(x, x1)
     True
 
     It is possible to calculate the STFT of signal parts:
@@ -386,22 +386,22 @@ class ShortTimeFFT:
 
     >>> p0_ub = SFT.upper_border_begin(N2)[1] - SFT.p_min
     >>> p1_le = SFT.lower_border_end[1] - SFT.p_min
-    >>> Sx01 = np.hstack((Sx0[:, :p0_ub],
+    >>> Sx01 = mx.hstack((Sx0[:, :p0_ub],
     ...                   Sx0[:, p0_ub:] + Sx1[:, :p1_le],
     ...                   Sx1[:, p1_le:]))
-    >>> np.allclose(Sx01, Sx)  # Compare with SFT of complete signal
+    >>> mx.allclose(Sx01, Sx)  # Compare with SFT of complete signal
     True
 
     It is also possible to calculate the `itsft` for signal parts:
 
     >>> y_p = SFT.istft(Sx, N//3, N//2)
-    >>> np.allclose(y_p, x[N//3:N//2])
+    >>> mx.allclose(y_p, x[N//3:N//2])
     True
 
     """
     # immutable attributes (only have getters but no setters):
-    _win: np.ndarray  # window
-    _dual_win: np.ndarray | None = None  # canonical dual window
+    _win: mx.array  # window
+    _dual_win: mx.array | None = None  # canonical dual window
     _hop: int  # Step of STFT in number of samples
 
     # mutable attributes:
@@ -420,25 +420,25 @@ class ShortTimeFFT:
     # read/writes to alleviate potential multithreading issues):
     _cache_post_padding: tuple[int, tuple[int, int]] = -1, (0, 0)
     _cache_upper_border_begin: tuple[int, tuple[int, int]] = -1, (0, 0)
-    _cache_t: tuple[tuple[int, int | None, int | None, int, float], np.ndarray] = \
-        (-1, None, None, 0, 0.), np.ndarray([])
-    _cache_f: tuple[tuple[FFT_MODE_TYPE, int, float], np.ndarray] = \
-        ('onesided', -1, 1.), np.ndarray([])
+    _cache_t: tuple[tuple[int, int | None, int | None, int, float], mx.array] = \
+        (-1, None, None, 0, 0.), mx.array([])
+    _cache_f: tuple[tuple[FFT_MODE_TYPE, int, float], mx.array] = \
+        ('onesided', -1, 1.), mx.array([])
 
     # generic type compatibility with scipy-stubs
     __class_getitem__ = classmethod(GenericAlias)
 
-    def __init__(self, win: np.ndarray, hop: int, fs: float, *,
+    def __init__(self, win: mx.array, hop: int, fs: float, *,
                  fft_mode: FFT_MODE_TYPE = 'onesided',
                  mfft: int | None = None,
-                 dual_win: np.ndarray | None = None,
+                 dual_win: mx.array | None = None,
                  scale_to: Literal['magnitude', 'psd'] | None = None,
                  phase_shift: int | None = 0):
         if not (win.ndim == 1 and win.size > 0):
             raise ValueError(f"Parameter win must be 1d, but {win.shape=}!")
-        if not all(np.isfinite(win)):
+        if not all(mx.isfinite(win)):
             raise ValueError("Parameter win must have finite entries!")
-        if not (hop >= 1 and isinstance(hop, int | np.integer)):
+        if not (hop >= 1 and isinstance(hop, int | mx.integer)):
             raise ValueError(f"Parameter {hop=} is not an integer >= 1!")
 
         self._win, self._hop, self.fs = win, hop, fs
@@ -448,7 +448,7 @@ class ShortTimeFFT:
         if dual_win is not None:
             if dual_win.shape != win.shape:
                 raise ValueError(f"{dual_win.shape=} must equal {win.shape=}!")
-            if not all(np.isfinite(dual_win)):
+            if not all(mx.isfinite(dual_win)):
                 raise ValueError("Parameter dual_win must be a finite array!")
             dual_win.setflags(write=False)
         self._dual_win = dual_win  # needs to be set before scaling
@@ -459,7 +459,7 @@ class ShortTimeFFT:
         self.fft_mode, self.phase_shift = fft_mode, phase_shift
 
     @classmethod
-    def from_dual(cls, dual_win: np.ndarray, hop: int, fs: float, *,
+    def from_dual(cls, dual_win: mx.array, hop: int, fs: float, *,
                   fft_mode: FFT_MODE_TYPE = 'onesided',
                   mfft: int | None = None,
                   scale_to: Literal['magnitude', 'psd'] | None = None,
@@ -484,19 +484,19 @@ class ShortTimeFFT:
         frequency-shifted Gaussians. A Gaussian with standard deviation of
         one made up of 51 samples will be used:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> import matplotlib.pyplot as plt
         >>> from scipy.signal import ShortTimeFFT
         >>> from scipy.signal.windows import gaussian
         ...
         >>> T, N = 0.1, 51
         >>> d_win = gaussian(N, std=1/T, sym=True)  # symmetric Gaussian window
-        >>> t = T * (np.arange(N) - N//2)
+        >>> t = T * (mx.arange(N) - N//2)
         ...
         >>> fg1, ax1 = plt.subplots()
         >>> ax1.set_title(r"Dual Window: Gaussian with $\sigma_t=1$")
         >>> ax1.set(xlabel=f"Time $t$ in seconds ({N} samples, $T={T}$ s)",
-        ...        xlim=(t[0], t[-1]), ylim=(0, 1.1*np.max(d_win)))
+        ...        xlim=(t[0], t[-1]), ylim=(0, 1.1*mx.max(d_win)))
         >>> ax1.plot(t, d_win, 'C0-')
 
         The following plot with the overlap of 41, 11 and 2 samples show how
@@ -619,7 +619,7 @@ class ShortTimeFFT:
 
     @classmethod
     def from_win_equals_dual(
-            cls, desired_win: np.ndarray, hop: int, fs: float, *,
+            cls, desired_win: mx.array, hop: int, fs: float, *,
             fft_mode: FFT_MODE_TYPE = 'onesided', mfft: int | None = None,
             scale_to: Literal['magnitude', 'psd', 'unitary'] | None = None,
             phase_shift: int | None = 0):
@@ -640,7 +640,7 @@ class ShortTimeFFT:
 
         Parameters
         ----------
-        desired_win : np.ndarray
+        desired_win : mx.array
             A real-valued or complex-valued 1d array containing the sample of the
             desired window.
         hop : int
@@ -658,7 +658,7 @@ class ShortTimeFFT:
             If not ``None`` (default) the window function is scaled, so each STFT
             column represents either a 'magnitude' or a power spectral density ('psd')
             spectrum, Alternatively, the STFT can be scaled to a`unitary` mapping,
-            i.e., dividing the window by ``np.sqrt(mfft)`` and multiplying the dual
+            i.e., dividing the window by ``mx.sqrt(mfft)`` and multiplying the dual
             window by the same amount.
         phase_shift : int | None
             If set, add a linear phase `phase_shift` / `mfft` * `f` to each
@@ -706,7 +706,7 @@ class ShortTimeFFT:
         The following example shows that an STFT can be indeed unitary:
 
         >>> import matplotlib.pyplot as plt
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.signal import ShortTimeFFT, windows
         ...
         >>> m, hop, std = 36, 8, 5
@@ -714,22 +714,22 @@ class ShortTimeFFT:
         >>> SFT = ShortTimeFFT.from_win_equals_dual(desired_win, hop, fs=1/m,
         ...                                         fft_mode='twosided',
         ...                                         scale_to='unitary')
-        >>> np.allclose(SFT.dual_win, SFT.win * SFT.m_num)  # check if STFT is unitary
+        >>> mx.allclose(SFT.dual_win, SFT.win * SFT.m_num)  # check if STFT is unitary
         True
-        >>> x1, x2 = np.tile([-1, -1, 1, 1], 5), np.tile([1, -1, -1, 1], 5)
-        >>> np.sum(x1*x2) # scalar product is zero -> orthogonal signals
+        >>> x1, x2 = mx.tile([-1, -1, 1, 1], 5), mx.tile([1, -1, -1, 1], 5)
+        >>> mx.sum(x1*x2) # scalar product is zero -> orthogonal signals
         0
-        >>> np.sum(x1**2)  # scalar product of x1 with itself
+        >>> mx.sum(x1**2)  # scalar product of x1 with itself
         20
         >>> Sx11, Sx12 = SFT.spectrogram(x1), SFT.spectrogram(x1, x2)
-        >>> np.sum(Sx12)  # STFT scalar product is also zero
+        >>> mx.sum(Sx12)  # STFT scalar product is also zero
         -4.163336342344337e-16+0j  # may vary
-        >>> np.sum(Sx11)  # == np.sum(x1**2)
+        >>> mx.sum(Sx11)  # == mx.sum(x1**2)
         19.999999999999996  # may vary
         ...
         ... # Do the plotting:
         >>> fg1, (ax11, ax12) = plt.subplots(1, 2, tight_layout=True, figsize=(8, 4))
-        >>> s_fac = np.sqrt(SFT.mfft)
+        >>> s_fac = mx.sqrt(SFT.mfft)
         >>> _ = fg1.suptitle(f"Scaled Unitary Window of {m} Sample Gaussian with " +
         ...                  rf"{hop=}, $\sigma={std}$, Scale factor: {s_fac}")
         >>> ax11.set(ylabel="Amplitude", xlabel="Samples", xlim=(0, m))
@@ -738,7 +738,7 @@ class ShortTimeFFT:
         >>> u_win_str = rf"Unitary $\times{s_fac:g}$"
         >>> for x_, n_ in zip((desired_win, SFT.win*s_fac), ('Desired', u_win_str)):
         ...     ax11.plot(x_, '.-', alpha=0.5, label=n_)
-        ...     X_ = np.fft.rfft(x_) / np.sum(abs(x_))
+        ...     X_ = mx.fft.rfft(x_) / mx.sum(abs(x_))
         ...     ax12.semilogy(abs(X_), '.-', alpha=0.5, label=n_)
         >>> for ax_ in (ax11, ax12):
         ...     ax_.grid(True)
@@ -747,18 +747,18 @@ class ShortTimeFFT:
 
         Note that ``fftmode='twosided'`` is used, since we need sum over the complete
         time frequency plane. Due to passing ``scale_to='unitary'`` the window
-        ``SFT.win`` is scaled by ``1/np.sqrt(SFT.mfft)``. Hence, ``SFT.win`` needs to
+        ``SFT.win`` is scaled by ``1/mx.sqrt(SFT.mfft)``. Hence, ``SFT.win`` needs to
         be scaled by `s_fac` in the plot above.
         """
         if not (desired_win.ndim == 1 and desired_win.size > 0):
             raise ValueError(f"Parameter desired_win is not 1d, but "
                              f"{desired_win.shape=}!")
-        if issubclass(desired_win.dtype.type, np.integer):
+        if issubclass(desired_win.dtype.type, mx.integer):
             raise ValueError("Parameter desired_win cannot be of integer type, " +
                              f"but {desired_win.dtype=} => cast to float | complex ")
-        if not all(np.isfinite(desired_win)):
+        if not all(mx.isfinite(desired_win)):
             raise ValueError("Parameter desired_win must have finite entries!")
-        if not (1 <= hop <= len(desired_win) and isinstance(hop, int | np.integer)):
+        if not (1 <= hop <= len(desired_win) and isinstance(hop, int | mx.integer)):
             raise ValueError(f"Parameter {hop=} is not an integer between 1 and " +
                              f"{len(desired_win)=}!")
         if scale_to not in ['magnitude', 'psd', 'unitary', None]:
@@ -766,12 +766,12 @@ class ShortTimeFFT:
                              "['magnitude', 'psd', 'unitary', None]!")
 
         mfft = len(desired_win) if mfft is None else mfft
-        s_fac = np.sqrt(mfft) if scale_to == 'unitary' else 1
+        s_fac = mx.sqrt(mfft) if scale_to == 'unitary' else 1
 
         win = desired_win.copy()  # we do not want to modify input parameters
-        relative_resolution = np.finfo(win.dtype).resolution * max(win)
+        relative_resolution = mx.finfo(win.dtype).resolution * max(win)
         for m in range(hop):
-            a = np.linalg.norm(desired_win[m::hop])
+            a = mx.linalg.norm(desired_win[m::hop])
             if not (a > relative_resolution):
                 raise ValueError("Parameter desired_win does not have valid STFT dual "
                                  f"window for {hop=}!")
@@ -787,7 +787,7 @@ class ShortTimeFFT:
 
 
     @property
-    def win(self) -> np.ndarray:
+    def win(self) -> mx.array:
         """Window function as real- or complex-valued 1d array.
 
         This attribute is read-only, since `dual_win` depends on it.
@@ -801,7 +801,7 @@ class ShortTimeFFT:
         mfft: Length of input for the FFT used - may be larger than `m_num`.
         hop: ime increment in signal samples for sliding window.
         win: Window function as real- or complex-valued 1d array.
-        numpy.ndarray.setflags: Modify array flags.
+        mx.array.setflags: Modify array flags.
         ShortTimeFFT: Class this property belongs to.
         """
         return self._win
@@ -928,7 +928,7 @@ class ShortTimeFFT:
         if t not in (fft_mode_types := get_args(FFT_MODE_TYPE)):
             raise ValueError(f"fft_mode='{t}' not in {fft_mode_types}!")
 
-        if t in {'onesided', 'onesided2X'} and np.iscomplexobj(self.win):
+        if t in {'onesided', 'onesided2X'} and mx.iscomplexobj(self.win):
             raise ValueError(f"One-sided spectra, i.e., fft_mode='{t}', " +
                              "are not allowed for complex-valued windows!")
 
@@ -1040,7 +1040,7 @@ class ShortTimeFFT:
 
         Shifting (more precisely `rolling`) an `mfft`-point FFT input by
         `phase_shift` samples results in a multiplication of the output by
-        ``np.exp(2j*np.pi*q*phase_shift/mfft)`` at the frequency q * `delta_f`.
+        ``mx.exp(2j*mx.pi*q*phase_shift/mfft)`` at the frequency q * `delta_f`.
 
         The default value 0 ensures that there is no phase shift on the
         zeroth slice (in which t=0 is centered).
@@ -1069,7 +1069,7 @@ class ShortTimeFFT:
         if v is None:
             self._phase_shift = v
             return
-        if not isinstance(v, int | np.integer):
+        if not isinstance(v, int | mx.integer):
             raise ValueError(f"phase_shift={v} has the unit samples. Hence " +
                              "it needs to be an int or it may be None!")
         if not (-self.mfft < v < self.mfft):
@@ -1077,8 +1077,8 @@ class ShortTimeFFT:
                              f"for mfft={self.mfft}, phase_shift={v}!")
         self._phase_shift = v
 
-    def _x_slices(self, x: np.ndarray, k_off: int, p0: int, p1: int,
-                  padding: PAD_TYPE) -> Generator[np.ndarray, None, None]:
+    def _x_slices(self, x: mx.array, k_off: int, p0: int, p1: int,
+                  padding: PAD_TYPE) -> Generator[mx.array, None, None]:
         """Generate signal slices along last axis of `x`.
 
         This method is only used by `stft_detrend`. The parameters are
@@ -1086,7 +1086,7 @@ class ShortTimeFFT:
         """
         if padding not in (padding_types := get_args(PAD_TYPE)):
             raise ValueError(f"Parameter {padding=} not in {padding_types}!")
-        pad_kws: dict[str, dict] = {  # possible keywords to pass to np.pad:
+        pad_kws: dict[str, dict] = {  # possible keywords to pass to mx.pad:
             'zeros': dict(mode='constant', constant_values=(0, 0)),
             'edge': dict(mode='edge'),
             'even': dict(mode='reflect', reflect_type='even'),
@@ -1101,14 +1101,14 @@ class ShortTimeFFT:
         # dimensions for padding x:
         pad_width = [(0, 0)] * (x.ndim-1) + [(-min(k0, 0), max(k1 - n, 0))]
 
-        x1 = np.pad(x[..., i0:i1], pad_width, **pad_kws[padding])
+        x1 = mx.pad(x[..., i0:i1], pad_width, **pad_kws[padding])
         for k_ in range(0, n1, self.hop):
             yield x1[..., k_:k_ + self.m_num]
 
-    def stft(self, x: np.ndarray, p0: int | None = None,
+    def stft(self, x: mx.array, p0: int | None = None,
              p1: int | None = None, *, k_offset: int = 0,
              padding: PAD_TYPE = 'zeros', axis: int = -1) \
-            -> np.ndarray:
+            -> mx.array:
         """Perform the short-time Fourier transform.
 
         A two-dimensional matrix with ``p1-p0`` columns is calculated.
@@ -1118,7 +1118,7 @@ class ShortTimeFFT:
 
         Parameters
         ----------
-        x : np.ndarray
+        x : mx.array
             The input signal as real or complex valued array. For complex values, the
             property `fft_mode` must be set to 'twosided' or 'centered'.
         p0 : int | None
@@ -1142,7 +1142,7 @@ class ShortTimeFFT:
 
         Returns
         -------
-        S : np.ndarray
+        S : mx.array
             A complex array is returned with the dimension always being larger
             by one than of `x`. The last axis always represents the time slices
             of the STFT. `axis` defines the frequency axis (default second to
@@ -1165,12 +1165,12 @@ class ShortTimeFFT:
         return self.stft_detrend(x, None, p0, p1, k_offset=k_offset,
                                  padding=padding, axis=axis)
 
-    def stft_detrend(self, x: np.ndarray,
-                     detr: Callable[[np.ndarray], np.ndarray] | Literal['linear', 'constant'] | None,  # noqa: E501
+    def stft_detrend(self, x: mx.array,
+                     detr: Callable[[mx.array], mx.array] | Literal['linear', 'constant'] | None,  # noqa: E501
                      p0: int | None = None, p1: int | None = None, *,
                      k_offset: int = 0, padding: PAD_TYPE = 'zeros',
                      axis: int = -1) \
-            -> np.ndarray:
+            -> mx.array:
         """Calculate short-time Fourier transform with a trend being subtracted from
         each segment beforehand.
 
@@ -1180,10 +1180,10 @@ class ShortTimeFFT:
 
         Parameters
         ----------
-        x : np.ndarray
+        x : mx.array
             The input signal as real or complex valued array. For complex values, the
             property `fft_mode` must be set to 'twosided' or 'centered'.
-        detr : 'linear' |  'constant' |  Callable[[np.ndarray], np.ndarray] | None
+        detr : 'linear' |  'constant' |  Callable[[mx.array], mx.array] | None
             If 'constant', the mean is subtracted, if set to "linear", the linear
             trend is removed from each segment. This is achieved by calling
             `~scipy.signal.detrend`. If `detr` is a function with one parameter, `detr`
@@ -1209,7 +1209,7 @@ class ShortTimeFFT:
 
         Returns
         -------
-        S : np.ndarray
+        S : mx.array
             A complex array is returned with the dimension always being larger
             by one than of `x`. The last axis always represents the time slices
             of the STFT. `axis` defines the frequency axis (default second to
@@ -1225,7 +1225,7 @@ class ShortTimeFFT:
                                    (without detrending).
         :class:`scipy.signal.ShortTimeFFT`: Class this method belongs to.
         """
-        if self.onesided_fft and np.iscomplexobj(x):
+        if self.onesided_fft and mx.iscomplexobj(x):
             raise ValueError(f"Complex-valued `x` not allowed for {self.fft_mode=}'! "
                              "Set property `fft_mode` to 'twosided' or 'centered'.")
         if isinstance(detr, str):
@@ -1239,47 +1239,47 @@ class ShortTimeFFT:
             raise ValueError(f"{e_str} must be >= ceil(m_num/2) = {m2p}!")
 
         if x.ndim > 1:  # motivated by the NumPy broadcasting mechanisms:
-            x = np.moveaxis(x, axis, -1)
+            x = mx.moveaxis(x, axis, -1)
         # determine slice index range:
         p0, p1 = self.p_range(n, p0, p1)
         S_shape_1d = (self.f_pts, p1 - p0)
         S_shape = x.shape[:-1] + S_shape_1d if x.ndim > 1 else S_shape_1d
-        S = np.zeros(S_shape, dtype=complex)
+        S = mx.zeros(S_shape, dtype=complex)
         for p_, x_ in enumerate(self._x_slices(x, k_offset, p0, p1, padding)):
             if detr is not None:
                 x_ = detr(x_)
             S[..., :, p_] = self._fft_func(x_ * self.win.conj())
         if x.ndim > 1:
-            return np.moveaxis(S, -2, axis if axis >= 0 else axis-1)
+            return mx.moveaxis(S, -2, axis if axis >= 0 else axis-1)
         return S
 
-    def spectrogram(self, x: np.ndarray, y: np.ndarray | None = None,
-                    detr: Callable[[np.ndarray], np.ndarray] | Literal['linear', 'constant'] | None = None,  # noqa: E501
+    def spectrogram(self, x: mx.array, y: mx.array | None = None,
+                    detr: Callable[[mx.array], mx.array] | Literal['linear', 'constant'] | None = None,  # noqa: E501
                     *,
                     p0: int | None = None, p1: int | None = None,
                     k_offset: int = 0, padding: PAD_TYPE = 'zeros',
                     axis: int = -1) \
-            -> np.ndarray:
+            -> mx.array:
         r"""Calculate spectrogram or cross-spectrogram.
 
         The spectrogram is the absolute square of the STFT, i.e., it is
         ``abs(S[q,p])**2`` for given ``S[q,p]`` and thus is always
         non-negative.
         For two STFTs ``Sx[q,p], Sy[q,p]``, the cross-spectrogram is defined
-        as ``Sx[q,p] * np.conj(Sy[q,p])`` and is complex-valued.
+        as ``Sx[q,p] * mx.conj(Sy[q,p])`` and is complex-valued.
         This is a convenience function for calling `~ShortTimeFFT.stft` /
         `stft_detrend`, hence all parameters are discussed there.
 
         Parameters
         ----------
-        x : np.ndarray
+        x : mx.array
             The input signal as real or complex valued array. For complex values, the
             property `fft_mode` must be set to 'twosided' or 'centered'.
-        y : np.ndarray
+        y : mx.array
             The second input signal of the same shape as `x`. If ``None``, it is
             assumed to be `x`. For complex values, the property `fft_mode` must be
             set to 'twosided' or 'centered'.
-        detr : 'linear' |  'constant' |  Callable[[np.ndarray], np.ndarray] | None
+        detr : 'linear' |  'constant' |  Callable[[mx.array], mx.array] | None
             If 'constant', the mean is subtracted, if set to "linear", the linear
             trend is removed from each segment. This is achieved by calling
             `~scipy.signal.detrend`. If `detr` is a function with one parameter, `detr`
@@ -1305,7 +1305,7 @@ class ShortTimeFFT:
 
         Returns
         -------
-        S_xy : np.ndarray
+        S_xy : mx.array
             A real-valued array with non-negative values is returned, if ``x is y`` or
             `y` is ``None``. The dimension is always by one larger than of `x`. The
             last axis always represents the time slices of the spectrogram. `axis`
@@ -1339,14 +1339,14 @@ class ShortTimeFFT:
         effects.
 
         >>> import matplotlib.pyplot as plt
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.signal import square, ShortTimeFFT
         >>> from scipy.signal.windows import gaussian
         ...
         >>> T_x, N = 1 / 20, 1000  # 20 Hz sampling rate for 50 s signal
-        >>> t_x = np.arange(N) * T_x  # time indexes for signal
+        >>> t_x = mx.arange(N) * T_x  # time indexes for signal
         >>> f_i = 5e-3*(t_x - t_x[N // 3])**2 + 1  # varying frequency
-        >>> x = square(2*np.pi*np.cumsum(f_i)*T_x)  # the signal
+        >>> x = square(2*mx.pi*mx.cumsum(f_i)*T_x)  # the signal
         ...
         >>> g_std = 12  # standard deviation for Gaussian window in samples
         >>> win = gaussian(50, std=g_std, sym=True)  # symmetric Gaussian wind.
@@ -1362,7 +1362,7 @@ class ShortTimeFFT:
         ...         ylabel=f"Freq. $f$ in Hz ({SFT.f_pts} bins, " +
         ...                rf"$\Delta f = {SFT.delta_f:g}\,$Hz)",
         ...         xlim=(t_lo, t_hi))
-        >>> Sx_dB = 10 * np.log10(np.fmax(Sx2, 1e-4))  # limit range to -40 dB
+        >>> Sx_dB = 10 * mx.log10(mx.fmax(Sx2, 1e-4))  # limit range to -40 dB
         >>> im1 = ax1.imshow(Sx_dB, origin='lower', aspect='auto',
         ...                  extent=SFT.extent(N), cmap='magma')
         >>> ax1.plot(t_x, f_i, 'g--', alpha=.5, label='$f_i(t)$')
@@ -1399,7 +1399,7 @@ class ShortTimeFFT:
         return Sx * Sy.conj()
 
     @property
-    def dual_win(self) -> np.ndarray:
+    def dual_win(self) -> mx.array:
         """Dual window (canonical dual window by default).
 
         A STFT can be interpreted as the input signal being expressed as a
@@ -1422,7 +1422,7 @@ class ShortTimeFFT:
         win: Window function as real- or complex-valued 1d array.
         from_win_equals_dual: Create instance where `win` and `dual_win` are equal.
         closest_STFT_dual_window: Calculate dual window closest to a desired window.
-        numpy.ndarray.setflags: Modify array flags.
+        mx.array.setflags: Modify array flags.
         ShortTimeFFT: Class this property belongs to.
         """
         if self._dual_win is None:
@@ -1449,9 +1449,9 @@ class ShortTimeFFT:
         except ValueError:
             return False
 
-    def istft(self, S: np.ndarray, k0: int = 0, k1: int | None = None, *,
+    def istft(self, S: mx.array, k0: int = 0, k1: int | None = None, *,
               f_axis: int = -2, t_axis: int = -1) \
-            -> np.ndarray:
+            -> mx.array:
         """Inverse short-time Fourier transform.
 
         It returns an array of dimension ``S.ndim - 1``  which is real
@@ -1504,7 +1504,7 @@ class ShortTimeFFT:
         if t_axis != S.ndim - 1 or f_axis != S.ndim - 2:
             t_axis = S.ndim + t_axis if t_axis < 0 else t_axis
             f_axis = S.ndim + f_axis if f_axis < 0 else f_axis
-            S = np.moveaxis(S, (f_axis, t_axis), (-2, -1))
+            S = mx.moveaxis(S, (f_axis, t_axis), (-2, -1))
 
         q_max = S.shape[-1] + self.p_min
         k_max = (q_max - 1) * self.hop + self.m_num - self.m_num_mid
@@ -1522,7 +1522,7 @@ class ShortTimeFFT:
         q1 = min(self.p_max(k1), q_max)
         k_q0, k_q1 = self.nearest_k_p(k0), self.nearest_k_p(k1, left=False)
         n_pts = k_q1 - k_q0 + self.m_num - self.m_num_mid
-        x = np.zeros(S.shape[:-2] + (n_pts,),
+        x = mx.zeros(S.shape[:-2] + (n_pts,),
                      dtype=float if self.onesided_fft else complex)
         for q_ in range(q0, q1):
             xs = self._ifft_func(S[..., :, q_ - self.p_min]) * self.dual_win
@@ -1535,7 +1535,7 @@ class ShortTimeFFT:
             x[..., i0-k0:i1-k0] += xs[..., j0:j1]
         x = x[..., :k1-k0]
         if x.ndim > 1:
-            x = np.moveaxis(x, -1, f_axis if f_axis < x.ndim else t_axis)
+            x = mx.moveaxis(x, -1, f_axis if f_axis < x.ndim else t_axis)
         return x
 
     @property
@@ -1579,7 +1579,7 @@ class ShortTimeFFT:
         if self.scaling == 'psd':
             return 1
         if self._fac_psd is None:
-            self._fac_psd = 1 / np.sqrt(
+            self._fac_psd = 1 / mx.sqrt(
                 sum(self.win.real**2+self.win.imag**2) / self.T)
         return self._fac_psd
 
@@ -1807,7 +1807,7 @@ class ShortTimeFFT:
             return self._lower_border_end
 
         # first non-zero element in self.win:
-        m0 = np.flatnonzero(self.win.real**2 + self.win.imag**2)[0]
+        m0 = mx.flatnonzero(self.win.real**2 + self.win.imag**2)[0]
 
         # move window to the right until does not stick out to the left:
         k0 = -self.m_num_mid + m0
@@ -1940,7 +1940,7 @@ class ShortTimeFFT:
         return p0_, p1_
 
     def t(self, n: int, p0: int | None = None, p1: int | None = None,
-          k_offset: int = 0) -> np.ndarray:
+          k_offset: int = 0) -> mx.array:
         """Times of STFT for an input signal with `n` samples.
 
         Returns a 1d array with times of the `~ShortTimeFFT.stft` values with
@@ -1974,7 +1974,7 @@ class ShortTimeFFT:
         fs: Sampling frequency (being ``1/T``)
         ShortTimeFFT: Class this method belongs to.
         """
-        if not (n > 0 and isinstance(n, int | np.integer)):
+        if not (n > 0 and isinstance(n, int | mx.integer)):
             raise ValueError(f"Parameter {n=} is not a positive integer!")
         args = n, p0, p1, k_offset, self.T  # since `self.T` is mutable, it's needed too
         last_args, last_return_value = self._cache_t
@@ -1982,7 +1982,7 @@ class ShortTimeFFT:
             return last_return_value
 
         p0, p1 = self.p_range(n, p0, p1)
-        return_value = np.arange(p0, p1) * self.delta_t + k_offset * self.T
+        return_value = mx.arange(p0, p1) * self.delta_t + k_offset * self.T
 
         self._cache_t = args, return_value
         return return_value
@@ -2058,7 +2058,7 @@ class ShortTimeFFT:
         return self.fft_mode in {'onesided', 'onesided2X'}
 
     @property
-    def f(self) -> np.ndarray:
+    def f(self) -> mx.array:
         """Frequencies values of the STFT.
 
         A 1d array of length `f_pts` with `delta_f` spaced entries is returned.
@@ -2088,7 +2088,7 @@ class ShortTimeFFT:
         self._cache_f = current_state, return_value
         return return_value
 
-    def _fft_func(self, x: np.ndarray) -> np.ndarray:
+    def _fft_func(self, x: mx.array) -> mx.array:
         """FFT based on the `fft_mode`, `mfft`, `scaling` and `phase_shift`
         attributes.
 
@@ -2099,9 +2099,9 @@ class ShortTimeFFT:
             if x.shape[-1] < self.mfft:  # zero pad if needed
                 z_shape = list(x.shape)
                 z_shape[-1] = self.mfft - x.shape[-1]
-                x = np.hstack((x, np.zeros(z_shape, dtype=x.dtype)))
+                x = mx.hstack((x, mx.zeros(z_shape, dtype=x.dtype)))
             p_s = (self.phase_shift + self.m_num_mid) % self.m_num
-            x = np.roll(x, -p_s, axis=-1)
+            x = mx.roll(x, -p_s, axis=-1)
 
         if self.fft_mode == 'twosided':
             return fft_lib.fft(x, n=self.mfft, axis=-1)
@@ -2112,7 +2112,7 @@ class ShortTimeFFT:
         if self.fft_mode == 'onesided2X':
             X = fft_lib.rfft(x, n=self.mfft, axis=-1)
             # Either squared magnitude (psd) or magnitude is doubled:
-            fac = np.sqrt(2) if self.scaling == 'psd' else 2
+            fac = mx.sqrt(2) if self.scaling == 'psd' else 2
             # For even input length, the last entry is unpaired:
             X[..., 1: -1 if self.mfft % 2 == 0 else None] *= fac
             return X
@@ -2120,7 +2120,7 @@ class ShortTimeFFT:
         fft_modes = get_args(FFT_MODE_TYPE)
         raise RuntimeError(f"{self.fft_mode=} not in {fft_modes}!")
 
-    def _ifft_func(self, X: np.ndarray) -> np.ndarray:
+    def _ifft_func(self, X: mx.array) -> mx.array:
         """Inverse to `_fft_func`.
 
         Returned is an array of length `m_num`. If the FFT is `onesided`
@@ -2136,7 +2136,7 @@ class ShortTimeFFT:
             x = fft_lib.irfft(X, n=self.mfft, axis=-1)
         elif self.fft_mode == 'onesided2X':
             Xc = X.copy()  # we do not want to modify function parameters
-            fac = np.sqrt(2) if self.scaling == 'psd' else 2
+            fac = mx.sqrt(2) if self.scaling == 'psd' else 2
             # For even length X the last value is not paired with a negative
             # value on the two-sided FFT:
             q1 = -1 if self.mfft % 2 == 0 else None
@@ -2148,7 +2148,7 @@ class ShortTimeFFT:
         if self.phase_shift is None:
             return x[..., :self.m_num]
         p_s = (self.phase_shift + self.m_num_mid) % self.m_num
-        return np.roll(x, p_s, axis=-1)[..., :self.m_num]
+        return mx.roll(x, p_s, axis=-1)[..., :self.m_num]
 
     def extent(self, n: int, axes_seq: Literal['tf', 'ft'] = 'tf',
                center_bins: bool = False) -> tuple[float, float, float, float]:
@@ -2190,12 +2190,12 @@ class ShortTimeFFT:
         ``center_bins=True``.
 
         >>> import matplotlib.pyplot as plt
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.signal import ShortTimeFFT
         ...
         >>> n, m = 12, 6
         >>> SFT = ShortTimeFFT.from_window('hann', fs=m, nperseg=m, noverlap=0)
-        >>> Sxx = SFT.stft(np.cos(np.arange(n)))  # produces a colorful plot
+        >>> Sxx = SFT.stft(mx.cos(mx.arange(n)))  # produces a colorful plot
         ...
         >>> fig, axx = plt.subplots(1, 2, tight_layout=True, figsize=(6., 4.))
         >>> for ax_, center_bins in zip(axx, (False, True)):

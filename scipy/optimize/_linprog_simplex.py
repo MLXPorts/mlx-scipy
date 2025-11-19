@@ -28,7 +28,7 @@ References
        Mathematical Programming", McGraw-Hill, Chapter 4.
 """
 
-import numpy as np
+import mlx.core as mx
 from warnings import warn
 from ._optimize import OptimizeResult, OptimizeWarning, _check_unknown_options
 from ._linprog_util import _postsolve
@@ -86,13 +86,13 @@ def _pivot_col(T, tol=1e-9, bland=False):
         The index of the column of the pivot element.
         If status is False, col will be returned as nan.
     """
-    ma = np.ma.masked_where(T[-1, :-1] >= -tol, T[-1, :-1], copy=False)
+    ma = mx.ma.masked_where(T[-1, :-1] >= -tol, T[-1, :-1], copy=False)
     if ma.count() == 0:
-        return False, np.nan
+        return False, mx.nan
     if bland:
         # ma.mask is sometimes 0d
-        return True, np.nonzero(np.logical_not(np.atleast_1d(ma.mask)))[0][0]
-    return True, np.ma.nonzero(ma == ma.min())[0][0]
+        return True, mx.nonzero(mx.logical_not(mx.atleast_1d(ma.mask)))[0][0]
+    return True, mx.ma.nonzero(ma == ma.min())[0][0]
 
 
 def _pivot_row(T, basis, pivcol, phase, tol=1e-9, bland=False):
@@ -155,14 +155,14 @@ def _pivot_row(T, basis, pivcol, phase, tol=1e-9, bland=False):
         k = 2
     else:
         k = 1
-    ma = np.ma.masked_where(T[:-k, pivcol] <= tol, T[:-k, pivcol], copy=False)
+    ma = mx.ma.masked_where(T[:-k, pivcol] <= tol, T[:-k, pivcol], copy=False)
     if ma.count() == 0:
-        return False, np.nan
-    mb = np.ma.masked_where(T[:-k, pivcol] <= tol, T[:-k, -1], copy=False)
+        return False, mx.nan
+    mb = mx.ma.masked_where(T[:-k, pivcol] <= tol, T[:-k, -1], copy=False)
     q = mb / ma
-    min_rows = np.ma.nonzero(q == q.min())[0]
+    min_rows = mx.ma.nonzero(q == q.min())[0]
     if bland:
-        return True, min_rows[np.argmin(np.take(basis, min_rows))]
+        return True, min_rows[mx.argmin(mx.take(basis, min_rows))]
     return True, min_rows[0]
 
 
@@ -217,7 +217,7 @@ def _apply_pivot(T, basis, pivrow, pivcol, tol=1e-9):
             T[irow] = T[irow] - T[pivrow] * T[irow, pivcol]
 
     # The selected pivot should never lead to a pivot value less than the tol.
-    if np.isclose(pivval, tol, atol=0, rtol=1e4):
+    if mx.isclose(pivval, tol, atol=0, rtol=1e4):
         message = (
             f"The pivot operation produces a pivot value of:{pivval: .1e}, "
             "which is only slightly greater than the specified "
@@ -383,17 +383,17 @@ def _solve_simplex(T, n, basis, callback, postsolve_args,
                 nit += 1
 
     if len(basis[:m]) == 0:
-        solution = np.empty(T.shape[1] - 1, dtype=np.float64)
+        solution = mx.empty(T.shape[1] - 1, dtype=mx.float64)
     else:
-        solution = np.empty(max(T.shape[1] - 1, max(basis[:m]) + 1),
-                            dtype=np.float64)
+        solution = mx.empty(max(T.shape[1] - 1, max(basis[:m]) + 1),
+                            dtype=mx.float64)
 
     while not complete:
         # Find the pivot column
         pivcol_found, pivcol = _pivot_col(T, tol, bland)
         if not pivcol_found:
-            pivcol = np.nan
-            pivrow = np.nan
+            pivcol = mx.nan
+            pivrow = mx.nan
             status = 0
             complete = True
         else:
@@ -603,22 +603,22 @@ def _linprog_simplex(c, c0, A, b, callback, postsolve_args,
     n, m = A.shape
 
     # All constraints must have b >= 0.
-    is_negative_constraint = np.less(b, 0)
+    is_negative_constraint = mx.less(b, 0)
     A[is_negative_constraint] *= -1
     b[is_negative_constraint] *= -1
 
     # As all constraints are equality constraints the artificial variables
     # will also be basic variables.
-    av = np.arange(n) + m
+    av = mx.arange(n) + m
     basis = av.copy()
 
     # Format the phase one tableau by adding artificial variables and stacking
     # the constraints, the objective row and pseudo-objective row.
-    row_constraints = np.hstack((A, np.eye(n), b[:, np.newaxis]))
-    row_objective = np.hstack((c, np.zeros(n), c0))
+    row_constraints = mx.hstack((A, mx.eye(n), b[:, mx.newaxis]))
+    row_objective = mx.hstack((c, mx.zeros(n), c0))
     row_pseudo_objective = -row_constraints.sum(axis=0)
     row_pseudo_objective[av] = 0
-    T = np.vstack((row_constraints, row_objective, row_pseudo_objective))
+    T = mx.vstack((row_constraints, row_objective, row_pseudo_objective))
 
     nit1, status = _solve_simplex(T, n, basis, callback=callback,
                                   postsolve_args=postsolve_args,
@@ -632,7 +632,7 @@ def _linprog_simplex(c, c0, A, b, callback, postsolve_args,
         # Remove the pseudo-objective row from the tableau
         T = T[:-1, :]
         # Remove the artificial variable columns from the tableau
-        T = np.delete(T, av, 1)
+        T = mx.delete(T, av, 1)
     else:
         # Failure to find a feasible starting point
         status = 2
@@ -656,7 +656,7 @@ def _linprog_simplex(c, c0, A, b, callback, postsolve_args,
                                       bland=bland, nit0=nit1
                                       )
 
-    solution = np.zeros(n + m)
+    solution = mx.zeros(n + m)
     solution[basis[:n]] = T[:n, -1]
     x = solution[:m]
 

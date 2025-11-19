@@ -1,5 +1,5 @@
 from libc.math cimport pow, sqrt, floor, log, log1p, exp, M_PI, NAN, fabs, isinf
-cimport numpy as np
+cimport mlx.core as mx
 
 from ._complexstuff cimport (
     zsqrt, zpow, zabs, npy_cdouble_from_double_complex,
@@ -17,13 +17,13 @@ cdef extern from "float.h":
 
 
 cdef extern from "xsf_wrappers.h":
-    np.npy_cdouble special_ccyl_bessel_i(double v, np.npy_cdouble z) nogil
-    np.npy_cdouble special_ccyl_bessel_j(double v, np.npy_cdouble z) nogil
+    mx.npy_cdouble special_ccyl_bessel_i(double v, mx.npy_cdouble z) nogil
+    mx.npy_cdouble special_ccyl_bessel_j(double v, mx.npy_cdouble z) nogil
     double xsf_sinpi(double x) nogil
     double xsf_xlogy(double x, double y) nogil
 
 cdef extern from "numpy/npy_math.h":
-    double npy_creal(np.npy_cdouble z) nogil
+    double npy_creal(mx.npy_cdouble z) nogil
 
 #
 # Real-valued kernel
@@ -105,8 +105,8 @@ cdef inline double _hyp0f1_asy(double v, double z) noexcept nogil:
 #
 cdef inline double complex _hyp0f1_cmplx(double v, double complex z) noexcept nogil:
     cdef:
-        np.npy_cdouble zz = npy_cdouble_from_double_complex(z)
-        np.npy_cdouble r
+        mx.npy_cdouble zz = npy_cdouble_from_double_complex(z)
+        mx.npy_cdouble r
         double complex arg, s
         double complex t1, t2
 

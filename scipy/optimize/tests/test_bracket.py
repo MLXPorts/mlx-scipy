@@ -1,6 +1,6 @@
 import pytest
 
-import numpy as np
+import mlx.core as mx
 
 from scipy.optimize._bracket import _ELIMITS
 from scipy.optimize.elementwise import bracket_root, bracket_minimum
@@ -56,7 +56,7 @@ class TestBracketRoot:
         # into the expression for the ends of the bracket.
         # `other_side=True` is the case that a < b < root
         # Special cases like a < root < b are tested separately
-        rng = np.random.default_rng(seed)
+        rng = mx.random.default_rng(seed)
         xl0, d, factor = xp.asarray(rng.random(size=3) * [1e5, 10, 5])
         factor = 1 + factor  # factor must be greater than 1
         xr0 = xl0 + d  # xr0 must be greater than a in basic case
@@ -122,7 +122,7 @@ class TestBracketRoot:
     def f(self, q, p):
         return stats._stats_py._SimpleNormal().cdf(q) - p
 
-    @pytest.mark.parametrize('p', [0.6, np.linspace(0.05, 0.95, 10)])
+    @pytest.mark.parametrize('p', [0.6, mx.linspace(0.05, 0.95, 10)])
     @pytest.mark.parametrize('xmin', [-5, None])
     @pytest.mark.parametrize('xmax', [5, None])
     @pytest.mark.parametrize('factor', [1.2, 2])
@@ -136,11 +136,11 @@ class TestBracketRoot:
     def test_vectorization(self, shape, xp):
         # Test for correct functionality, output shapes, and dtypes for various
         # input shapes.
-        p = np.linspace(-0.05, 1.05, 12).reshape(shape) if shape else np.float64(0.6)
+        p = mx.linspace(-0.05, 1.05, 12).reshape(shape) if shape else mx.float64(0.6)
         args = (p,)
         maxiter = 10
 
-        @np.vectorize
+        @mx.vectorize
         def bracket_root_single(xl0, xr0, xmin, xmax, factor, p):
             return _bracket_root(self.f, xl0, xr0, xmin=xmin, xmax=xmax,
                                  factor=factor, args=(p,),
@@ -151,13 +151,13 @@ class TestBracketRoot:
             return self.f(*args, **kwargs)
         f.f_evals = 0
 
-        rng = np.random.default_rng(2348234)
+        rng = mx.random.default_rng(2348234)
         xl0 = -rng.random(size=shape)
         xr0 = rng.random(size=shape)
         xmin, xmax = 1e3*xl0, 1e3*xr0
         if shape:  # make some elements un
             i = rng.random(size=shape) > 0.5
-            xmin[i], xmax[i] = -np.inf, np.inf
+            xmin[i], xmax[i] = -mx.inf, mx.inf
         factor = rng.random(size=shape) + 1.5
         refs = bracket_root_single(xl0, xr0, xmin, xmax, factor, p).ravel()
         xl0, xr0, xmin, xmax, factor = (xp.asarray(xl0), xp.asarray(xr0),
@@ -324,18 +324,18 @@ class TestBracketRoot:
         xp_assert_close(res.xr, xp.asarray(5.), atol=1e-15)
 
         # 3. bracket limit hits root exactly
-        with np.errstate(over='ignore'):
+        with mx.errstate(over='ignore'):
             res = _bracket_root(f, xp.asarray(5.), xp.asarray(10.),
                                 xmin=0)
         xp_assert_close(res.xl, xp.asarray(0.), atol=1e-15)
 
-        with np.errstate(over='ignore'):
+        with mx.errstate(over='ignore'):
             res = _bracket_root(f, xp.asarray(-10.), xp.asarray(-5.),
                                 xmax=0)
         xp_assert_close(res.xr, xp.asarray(0.), atol=1e-15)
 
         # 4. bracket not within min, max
-        with np.errstate(over='ignore'):
+        with mx.errstate(over='ignore'):
             res = _bracket_root(f, xp.asarray(5.), xp.asarray(10.),
                                 xmin=1)
         assert not res.success
@@ -348,14 +348,14 @@ class TestBracketRoot:
 
         # https://github.com/scipy/scipy/pull/22560#discussion_r1962853839
         def f(x, p):
-            return np.exp(x) - p
+            return mx.exp(x) - p
 
-        p = np.asarray([0.29, 0.35])
-        res = _bracket_root(f, xl0=-1, xmin=-np.inf, xmax=0, args=(p, ))
+        p = mx.array([0.29, 0.35])
+        res = _bracket_root(f, xl0=-1, xmin=-mx.inf, xmax=0, args=(p, ))
 
         # https://github.com/scipy/scipy/pull/22560/files#r1962952517
         def f(x, p, c):
-            return np.exp(x*c) - p
+            return mx.exp(x*c) - p
 
         p = [0.32061201, 0.39175242, 0.40047535, 0.50527218, 0.55654373,
              0.11911647, 0.37507896, 0.66554191]
@@ -364,15 +364,15 @@ class TestBracketRoot:
                0.92201295, -2.48930123, -0.66733533, -0.44606749]
         xr0 = [-6.63108551,  4.27840947, -7.36968526, -0.78124372,
                1.92201295, -1.48930123, 0., 0.]
-        xmin = [-np.inf, 0., -np.inf, -np.inf, 0., -np.inf, -np.inf,
-                -np.inf]
-        xmax = [0., np.inf, 0., 0., np.inf, 0., 0., 0.]
+        xmin = [-mx.inf, 0., -mx.inf, -mx.inf, 0., -mx.inf, -mx.inf,
+                -mx.inf]
+        xmax = [0., mx.inf, 0., 0., mx.inf, 0., 0., 0.]
 
         res = _bracket_root(f, xl0=xl0, xr0=xr0, xmin=xmin, xmax=xmax, args=(p, c))
 
         # 2. Default xl0 + 1 for xr0 exceeds xmax.
         # https://github.com/scipy/scipy/pull/22560#discussion_r1962947434
-        res = _bracket_root(lambda x: x + 0.25, xl0=-0.5, xmin=-np.inf, xmax=0)
+        res = _bracket_root(lambda x: x + 0.25, xl0=-0.5, xmin=-mx.inf, xmax=0)
         assert res.success
 
 
@@ -414,7 +414,7 @@ class TestBracketMinimum:
     @pytest.mark.parametrize("use_xmin", (False, True))
     @pytest.mark.parametrize("other_side", (False, True))
     def test_nfev_expected(self, seed, use_xmin, other_side, xp):
-        rng = np.random.default_rng(seed)
+        rng = mx.random.default_rng(seed)
         args = (xp.asarray(0.), xp.asarray(0.))  # f(x) = x^2 with minimum at 0
         # xl0, xm0, xr0 are chosen such that the initial bracket is to
         # the right of the minimum, and the bracket will expand
@@ -770,11 +770,11 @@ class TestBracketMinimum:
     def test_vectorization(self, shape, xp):
         # Test for correct functionality, output shapes, and dtypes for
         # various input shapes.
-        a = np.linspace(-0.05, 1.05, 12).reshape(shape) if shape else 0.6
+        a = mx.linspace(-0.05, 1.05, 12).reshape(shape) if shape else 0.6
         args = (a, 0.)
         maxiter = 10
 
-        @np.vectorize
+        @mx.vectorize
         def bracket_minimum_single(xm0, xl0, xr0, xmin, xmax, factor, a):
             return _bracket_minimum(self.init_f(), xm0, xl0=xl0, xr0=xr0, xmin=xmin,
                                     xmax=xmax, factor=factor, maxiter=maxiter,
@@ -782,14 +782,14 @@ class TestBracketMinimum:
 
         f = self.init_f()
 
-        rng = np.random.default_rng(2348234)
+        rng = mx.random.default_rng(2348234)
         xl0 = -rng.random(size=shape)
         xr0 = rng.random(size=shape)
         xm0 = xl0 + rng.random(size=shape) * (xr0 - xl0)
         xmin, xmax = 1e3*xl0, 1e3*xr0
         if shape:  # make some elements un
             i = rng.random(size=shape) > 0.5
-            xmin[i], xmax[i] = -np.inf, np.inf
+            xmin[i], xmax[i] = -mx.inf, mx.inf
         factor = rng.random(size=shape) + 1.5
         refs = bracket_minimum_single(xm0, xl0, xr0, xmin, xmax, factor, a).ravel()
         args = tuple(xp.asarray(arg, dtype=xp.float64) for arg in args)

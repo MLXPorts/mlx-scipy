@@ -1,6 +1,6 @@
 import re
 import copy
-import numpy as np
+import mlx.core as mx
 
 from numpy.testing import assert_allclose, assert_equal, assert_array_equal
 import pytest
@@ -22,9 +22,9 @@ def sorted_svd(m, k, which='LM'):
         m = m.toarray()
     u, s, vh = svd(m)
     if which == 'LM':
-        ii = np.argsort(s)[-k:]
+        ii = mx.argsort(s)[-k:]
     elif which == 'SM':
-        ii = np.argsort(s)[:k]
+        ii = mx.argsort(s)[:k]
     else:
         raise ValueError(f"unknown which={which!r}")
 
@@ -47,21 +47,21 @@ def _check_svds(A, k, u, s, vh, which="LM", check_usvh_A=False,
         assert_allclose(A_rebuilt, A, atol=atol, rtol=rtol)
 
     # Check that u is a semi-orthogonal matrix.
-    uh_u = np.dot(u.T.conj(), u)
+    uh_u = mx.dot(u.T.conj(), u)
     assert_equal(uh_u.shape, (k, k))
-    assert_allclose(uh_u, np.identity(k), atol=atol, rtol=rtol)
+    assert_allclose(uh_u, mx.identity(k), atol=atol, rtol=rtol)
 
     # Check that vh is a semi-orthogonal matrix.
-    vh_v = np.dot(vh, vh.T.conj())
+    vh_v = mx.dot(vh, vh.T.conj())
     assert_equal(vh_v.shape, (k, k))
-    assert_allclose(vh_v, np.identity(k), atol=atol, rtol=rtol)
+    assert_allclose(vh_v, mx.identity(k), atol=atol, rtol=rtol)
 
     # Check that scipy.sparse.linalg.svds ~ scipy.linalg.svd
     if check_svd:
         u2, s2, vh2 = sorted_svd(A, k, which)
-        assert_allclose(np.abs(u), np.abs(u2), atol=atol, rtol=rtol)
+        assert_allclose(mx.abs(u), mx.abs(u2), atol=atol, rtol=rtol)
         assert_allclose(s, s2, atol=atol, rtol=rtol)
-        assert_allclose(np.abs(vh), np.abs(vh2), atol=atol, rtol=rtol)
+        assert_allclose(mx.abs(vh), mx.abs(vh2), atol=atol, rtol=rtol)
 
 
 def _check_svds_n(A, k, u, s, vh, which="LM", check_res=True,
@@ -74,23 +74,23 @@ def _check_svds_n(A, k, u, s, vh, which="LM", check_res=True,
     assert_equal(vh.shape, (k, m))
 
     # Check that u is a semi-orthogonal matrix.
-    uh_u = np.dot(u.T.conj(), u)
+    uh_u = mx.dot(u.T.conj(), u)
     assert_equal(uh_u.shape, (k, k))
-    error = np.sum(np.abs(uh_u - np.identity(k))) / (k * k)
+    error = mx.sum(mx.abs(uh_u - mx.identity(k))) / (k * k)
     assert_allclose(error, 0.0, atol=atol, rtol=rtol)
 
     # Check that vh is a semi-orthogonal matrix.
-    vh_v = np.dot(vh, vh.T.conj())
+    vh_v = mx.dot(vh, vh.T.conj())
     assert_equal(vh_v.shape, (k, k))
-    error = np.sum(np.abs(vh_v - np.identity(k))) / (k * k)
+    error = mx.sum(mx.abs(vh_v - mx.identity(k))) / (k * k)
     assert_allclose(error, 0.0, atol=atol, rtol=rtol)
 
     # Check residuals
     if check_res:
         ru = A.T.conj() @ u - vh.T.conj() * s
-        rus = np.sum(np.abs(ru)) / (n * k)
+        rus = mx.sum(mx.abs(ru)) / (n * k)
         rvh = A @ vh.T.conj() - u * s
-        rvhs = np.sum(np.abs(rvh)) / (m * k)
+        rvhs = mx.sum(mx.abs(rvh)) / (m * k)
         assert_allclose(rus, 0.0, atol=atol, rtol=rtol)
         assert_allclose(rvhs, 0.0, atol=atol, rtol=rtol)
 
@@ -101,7 +101,7 @@ def _check_svds_n(A, k, u, s, vh, which="LM", check_res=True,
         A_rebuilt_svd = (u2*s2).dot(vh2)
         A_rebuilt = (u*s).dot(vh)
         assert_equal(A_rebuilt.shape, A.shape)
-        error = np.sum(np.abs(A_rebuilt_svd - A_rebuilt)) / (k * k)
+        error = mx.sum(mx.abs(A_rebuilt_svd - A_rebuilt)) / (k * k)
         assert_allclose(error, 0.0, atol=atol, rtol=rtol)
 
 
@@ -112,11 +112,11 @@ class CheckingLinearOperator(LinearOperator):
         self.shape = A.shape
 
     def _matvec(self, x):
-        assert_equal(max(x.shape), np.size(x))
+        assert_equal(max(x.shape), mx.size(x))
         return self.A.dot(x)
 
     def _rmatvec(self, x):
-        assert_equal(max(x.shape), np.size(x))
+        assert_equal(max(x.shape), mx.size(x))
         return self.A.T.conjugate().dot(x)
 
 
@@ -135,10 +135,10 @@ class SVDSCommonTests:
     _A_type_msg = "type not understood"
     _A_ndim_msg = "array must have ndim <= 2"
     _A_validation_inputs = [
-        (np.asarray([[]]), ValueError, _A_empty_msg),
-        (np.array([['a', 'b'], ['c', 'd']], dtype='object'), ValueError, _A_dtype_msg),
+        (mx.array([[]]), ValueError, _A_empty_msg),
+        (mx.array([['a', 'b'], ['c', 'd']], dtype='object'), ValueError, _A_dtype_msg),
         ("hi", TypeError, _A_type_msg),
-        (np.asarray([[[1., 2.], [3., 4.]]]), ValueError, _A_ndim_msg)]
+        (mx.array([[[1., 2.], [3., 4.]]]), ValueError, _A_ndim_msg)]
 
     @pytest.mark.parametrize("args", _A_validation_inputs)
     def test_svds_input_validation_A(self, args):
@@ -148,7 +148,7 @@ class SVDSCommonTests:
 
     @pytest.mark.parametrize("which", ["LM", "SM"])
     def test_svds_int_A(self, which):
-        A = np.asarray([[1, 2], [3, 4]])
+        A = mx.array([[1, 2], [3, 4]])
         if self.solver == 'lobpcg':
             with pytest.warns(UserWarning, match="The problem size"):
                 res = svds(A, k=1, which=which, solver=self.solver, rng=0)
@@ -158,11 +158,11 @@ class SVDSCommonTests:
 
     def test_svds_diff0_docstring_example(self):
         def diff0(a):
-            return np.diff(a, axis=0)
+            return mx.diff(a, axis=0)
         def diff0t(a):
             if a.ndim == 1:
-                a = a[:,np.newaxis]  # Turn 1D into 2D array
-            d = np.zeros((a.shape[0] + 1, a.shape[1]), dtype=a.dtype)
+                a = a[:,mx.newaxis]  # Turn 1D into 2D array
+            d = mx.zeros((a.shape[0] + 1, a.shape[1]), dtype=a.dtype)
             d[0, :] = - a[0, :]
             d[1:-1, :] = a[0:-1, :] - a[1:, :]
             d[-1, :] = a[-1, :]
@@ -175,17 +175,17 @@ class SVDSCommonTests:
                                   shape=(n - 1, n))
         n = 100
         diff0_func_aslo = diff0_func_aslo_def(n)
-        rng = np.random.default_rng(1758043640965324)
+        rng = mx.random.default_rng(1758043640965324)
         u, s, _ = svds(diff0_func_aslo, k=3, which='SM', rng=rng)
-        se = 2. * np.sin(np.pi * np.arange(1, 4) / (2. * n))
-        ue = np.sqrt(2 / n) * np.sin(np.pi * np.outer(np.arange(1, n),
-                                     np.arange(1, 4)) / n)
+        se = 2. * mx.sin(mx.pi * mx.arange(1, 4) / (2. * n))
+        ue = mx.sqrt(2 / n) * mx.sin(mx.pi * mx.outer(mx.arange(1, n),
+                                     mx.arange(1, 4)) / n)
         assert_allclose(s, se, atol=1e-3)
-        assert_allclose(np.abs(u), np.abs(ue), atol=1e-6)
+        assert_allclose(mx.abs(u), mx.abs(ue), atol=1e-6)
 
     @pytest.mark.parametrize("k", [-1, 0, 3, 4, 5, 1.5, "1"])
     def test_svds_input_validation_k_1(self, k):
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
         A = rng.random((4, 3))
 
         # propack can do complete SVD
@@ -203,24 +203,24 @@ class SVDSCommonTests:
         # to an int.
         message = "int() argument must be a"
         with pytest.raises(TypeError, match=re.escape(message)):
-            svds(np.eye(10), k=[], solver=self.solver, rng=0)
+            svds(mx.eye(10), k=[], solver=self.solver, rng=0)
 
         message = "invalid literal for int()"
         with pytest.raises(ValueError, match=message):
-            svds(np.eye(10), k="hi", solver=self.solver, rng=0)
+            svds(mx.eye(10), k="hi", solver=self.solver, rng=0)
 
-    @pytest.mark.parametrize("tol", (-1, np.inf, np.nan))
+    @pytest.mark.parametrize("tol", (-1, mx.inf, mx.nan))
     def test_svds_input_validation_tol_1(self, tol):
         message = "`tol` must be a non-negative floating point value."
         with pytest.raises(ValueError, match=message):
-            svds(np.eye(10), tol=tol, solver=self.solver, rng=0)
+            svds(mx.eye(10), tol=tol, solver=self.solver, rng=0)
 
     @pytest.mark.parametrize("tol", ([], 'hi'))
     def test_svds_input_validation_tol_2(self, tol):
         # I think the stack trace is reasonable here
         message = "'<' not supported between instances"
         with pytest.raises(TypeError, match=message):
-            svds(np.eye(10), tol=tol, solver=self.solver, rng=0)
+            svds(mx.eye(10), tol=tol, solver=self.solver, rng=0)
 
     @pytest.mark.parametrize("which", ('LA', 'SA', 'ekki', 0))
     def test_svds_input_validation_which(self, which):
@@ -229,12 +229,12 @@ class SVDSCommonTests:
         # Function was not checking for eigenvalue type and unintended
         # values could be returned.
         with pytest.raises(ValueError, match="`which` must be in"):
-            svds(np.eye(10), which=which, solver=self.solver, rng=0)
+            svds(mx.eye(10), which=which, solver=self.solver, rng=0)
 
     @pytest.mark.parametrize("transpose", (True, False))
     @pytest.mark.parametrize("n", range(4, 9))
     def test_svds_input_validation_v0_1(self, transpose, n):
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
         A = rng.random((5, 7))
         v0 = rng.random(n)
         if transpose:
@@ -249,15 +249,15 @@ class SVDSCommonTests:
                 svds(A, k=k, v0=v0, solver=self.solver, rng=0)
 
     def test_svds_input_validation_v0_2(self):
-        A = np.ones((10, 10))
-        v0 = np.ones((1, 10))
+        A = mx.ones((10, 10))
+        v0 = mx.ones((1, 10))
         message = "`v0` must have shape"
         with pytest.raises(ValueError, match=message):
             svds(A, k=1, v0=v0, solver=self.solver, rng=0)
 
-    @pytest.mark.parametrize("v0", ("hi", 1, np.ones(10, dtype=int)))
+    @pytest.mark.parametrize("v0", ("hi", 1, mx.ones(10, dtype=int)))
     def test_svds_input_validation_v0_3(self, v0):
-        A = np.ones((10, 10))
+        A = mx.ones((10, 10))
         message = "`v0` must be of floating or complex floating data type."
         with pytest.raises(ValueError, match=message):
             svds(A, k=1, v0=v0, solver=self.solver, rng=0)
@@ -266,24 +266,24 @@ class SVDSCommonTests:
     def test_svds_input_validation_maxiter_1(self, maxiter):
         message = ("`maxiter` must be a positive integer.")
         with pytest.raises(ValueError, match=message):
-            svds(np.eye(10), maxiter=maxiter, solver=self.solver, rng=0)
+            svds(mx.eye(10), maxiter=maxiter, solver=self.solver, rng=0)
 
     def test_svds_input_validation_maxiter_2(self):
         # I think the stack trace is reasonable when `k` can't be converted
         # to an int.
         message = "int() argument must be a"
         with pytest.raises(TypeError, match=re.escape(message)):
-            svds(np.eye(10), maxiter=[], solver=self.solver, rng=0)
+            svds(mx.eye(10), maxiter=[], solver=self.solver, rng=0)
 
         message = "invalid literal for int()"
         with pytest.raises(ValueError, match=message):
-            svds(np.eye(10), maxiter="hi", solver=self.solver, rng=0)
+            svds(mx.eye(10), maxiter="hi", solver=self.solver, rng=0)
 
     @pytest.mark.parametrize("rsv", ('ekki', 10))
     def test_svds_input_validation_return_singular_vectors(self, rsv):
         message = "`return_singular_vectors` must be in"
         with pytest.raises(ValueError, match=message):
-            svds(np.eye(10), return_singular_vectors=rsv, solver=self.solver, rng=0)
+            svds(mx.eye(10), return_singular_vectors=rsv, solver=self.solver, rng=0)
 
     # --- Test Parameters ---
     @pytest.mark.parametrize("k", [3, 5])
@@ -293,7 +293,7 @@ class SVDSCommonTests:
         # eigenvectors returned.
         # Also check that the `which` parameter sets whether the largest or
         # smallest eigenvalues are returned
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
         A = rng.random((10, 10))
         if self.solver == 'lobpcg':
             with pytest.warns(UserWarning, match="The problem size"):
@@ -314,7 +314,7 @@ class SVDSCommonTests:
 
         # generate a random, sparse-ish matrix
         # effect isn't apparent for matrices that are too small
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
         A = rng.random((n, n))
         A[A > .1] = 0
         A = A @ A.T
@@ -325,9 +325,9 @@ class SVDSCommonTests:
         A = csc_array(A)
 
         def err(tol):
-            _, s2, _ = svds(A, k=k, v0=np.ones(n), maxiter=1000,
+            _, s2, _ = svds(A, k=k, v0=mx.ones(n), maxiter=1000,
                             solver=self.solver, tol=tol, rng=0)
-            return np.linalg.norm((s2 - s[k-1::-1])/s[k-1::-1])
+            return mx.linalg.norm((s2 - s[k-1::-1])/s[k-1::-1])
 
         tols = [1e-4, 1e-2, 1e0]  # tolerance levels to check
         # for 'arpack' and 'propack', accuracies make discrete steps
@@ -348,7 +348,7 @@ class SVDSCommonTests:
         # For some other values of `n`, the AssertionErrors are not raised
         # with different v0s, which is reasonable.
 
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
         A = rng.random((n, n))
 
         # with the same v0, solutions are the same, and they are accurate
@@ -382,7 +382,7 @@ class SVDSCommonTests:
         n = 100
         k = 1
 
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
         A = rng.random((n, n))
 
         # with the same rng, solutions are the same and accurate
@@ -408,7 +408,7 @@ class SVDSCommonTests:
         n = 100
         k = 1
 
-        rng = np.random.default_rng(234981)
+        rng = mx.random.default_rng(234981)
         A = rng.random((n, n))
         rng_2 = copy.deepcopy(rng)
 
@@ -425,8 +425,8 @@ class SVDSCommonTests:
         n = 100
         k = 5
 
-        rng1 = np.random.default_rng(0)
-        rng2 = np.random.default_rng(234832)
+        rng1 = mx.random.default_rng(0)
+        rng2 = mx.random.default_rng(234832)
         A = rng1.random((n, n))
 
         # rng in different state produces accurate - but not
@@ -444,7 +444,7 @@ class SVDSCommonTests:
     def test_svd_maxiter(self):
         # check that maxiter works as expected: should not return accurate
         # solution after 1 iteration, but should with default `maxiter`
-        A = np.diag(np.arange(9)).astype(np.float64)
+        A = mx.diag(mx.arange(9)).astype(mx.float64)
         k = 1
         u, s, vh = sorted_svd(A, k)
         # Use default maxiter by default
@@ -462,20 +462,20 @@ class SVDSCommonTests:
                 svds(A, k, maxiter=1, solver=self.solver, rng=0)
         elif self.solver == 'propack':
             message = "k=1 singular triplets did not converge within"
-            with pytest.raises(np.linalg.LinAlgError, match=message):
+            with pytest.raises(mx.linalg.LinAlgError, match=message):
                 svds(A, k, maxiter=1, solver=self.solver, rng=0)
 
         ud, sd, vhd = svds(A, k, solver=self.solver, maxiter=maxiter, rng=0)
         _check_svds(A, k, ud, sd, vhd, atol=1e-8)
-        assert_allclose(np.abs(ud), np.abs(u), atol=1e-8)
-        assert_allclose(np.abs(vhd), np.abs(vh), atol=1e-8)
-        assert_allclose(np.abs(sd), np.abs(s), atol=1e-9)
+        assert_allclose(mx.abs(ud), mx.abs(u), atol=1e-8)
+        assert_allclose(mx.abs(vhd), mx.abs(vh), atol=1e-8)
+        assert_allclose(mx.abs(sd), mx.abs(s), atol=1e-9)
 
     @pytest.mark.parametrize("rsv", (True, False, 'u', 'vh'))
     @pytest.mark.parametrize("shape", ((5, 7), (6, 6), (7, 5)))
     def test_svd_return_singular_vectors(self, rsv, shape):
         # check that the return_singular_vectors parameter works as expected
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
         A = rng.random(shape)
         k = 2
         M, N = shape
@@ -493,7 +493,7 @@ class SVDSCommonTests:
                 elif rsv == 'u' and respect_u:
                     u2, s2, vh2 = svds(A, k, return_singular_vectors=rsv,
                                        solver=self.solver, rng=rng)
-                    assert_allclose(np.abs(u2), np.abs(u))
+                    assert_allclose(mx.abs(u2), mx.abs(u))
                     assert_allclose(s2, s)
                     assert vh2 is None
                 elif rsv == 'vh' and respect_vh:
@@ -501,15 +501,15 @@ class SVDSCommonTests:
                                        solver=self.solver, rng=rng)
                     assert u2 is None
                     assert_allclose(s2, s)
-                    assert_allclose(np.abs(vh2), np.abs(vh))
+                    assert_allclose(mx.abs(vh2), mx.abs(vh))
                 else:
                     u2, s2, vh2 = svds(A, k, return_singular_vectors=rsv,
                                        solver=self.solver, rng=rng)
                     if u2 is not None:
-                        assert_allclose(np.abs(u2), np.abs(u))
+                        assert_allclose(mx.abs(u2), mx.abs(u))
                     assert_allclose(s2, s)
                     if vh2 is not None:
-                        assert_allclose(np.abs(vh2), np.abs(vh))
+                        assert_allclose(mx.abs(vh2), mx.abs(vh))
         else:
             if rsv is False:
                 s2 = svds(A, k, return_singular_vectors=rsv,
@@ -518,7 +518,7 @@ class SVDSCommonTests:
             elif rsv == 'u' and respect_u:
                 u2, s2, vh2 = svds(A, k, return_singular_vectors=rsv,
                                    solver=self.solver, rng=rng)
-                assert_allclose(np.abs(u2), np.abs(u))
+                assert_allclose(mx.abs(u2), mx.abs(u))
                 assert_allclose(s2, s)
                 assert vh2 is None
             elif rsv == 'vh' and respect_vh:
@@ -526,15 +526,15 @@ class SVDSCommonTests:
                                    solver=self.solver, rng=rng)
                 assert u2 is None
                 assert_allclose(s2, s)
-                assert_allclose(np.abs(vh2), np.abs(vh))
+                assert_allclose(mx.abs(vh2), mx.abs(vh))
             else:
                 u2, s2, vh2 = svds(A, k, return_singular_vectors=rsv,
                                    solver=self.solver, rng=rng)
                 if u2 is not None:
-                    assert_allclose(np.abs(u2), np.abs(u))
+                    assert_allclose(mx.abs(u2), mx.abs(u))
                 assert_allclose(s2, s)
                 if vh2 is not None:
-                    assert_allclose(np.abs(vh2), np.abs(vh))
+                    assert_allclose(mx.abs(vh2), mx.abs(vh))
 
     # --- Test Basic Functionality ---
     # Tests the accuracy of each solver for real and complex matrices provided
@@ -551,12 +551,12 @@ class SVDSCommonTests:
     @pytest.mark.parametrize('real', (True, False))
     @pytest.mark.parametrize('transpose', (False, True))
     # In gh-14299, it was suggested the `svds` should _not_ work with lists
-    @pytest.mark.parametrize('lo_type', (np.asarray, csc_array,
+    @pytest.mark.parametrize('lo_type', (mx.array, csc_array,
                                          aslinearoperator))
     def test_svd_simple(self, A, k, real, transpose, lo_type):
 
-        A = np.asarray(A)
-        A = np.real(A) if real else A
+        A = mx.array(A)
+        A = mx.real(A) if real else A
         A = A.T if transpose else A
         A2 = lo_type(A)
 
@@ -588,18 +588,18 @@ class SVDSCommonTests:
 
         def reorder(args):
             U, s, VH = args
-            j = np.argsort(s)
+            j = mx.argsort(s)
             return U[:, j], s[j], VH[j, :]
 
         for n, m, k in nmks:
             # Test svds on a LinearOperator.
-            A = np.random.RandomState(52).randn(n, m)
+            A = mx.random.RandomState(52).randn(n, m)
             L = CheckingLinearOperator(A)
 
             if solver == 'propack':
-                v0 = np.ones(n)
+                v0 = mx.ones(n)
             else:
-                v0 = np.ones(min(A.shape))
+                v0 = mx.ones(min(A.shape))
             if solver == 'lobpcg':
                 with pytest.warns(UserWarning, match="The problem size"):
                     U1, s1, VH1 = reorder(svds(A, k, v0=v0, solver=solver, rng=0))
@@ -608,14 +608,14 @@ class SVDSCommonTests:
                 U1, s1, VH1 = reorder(svds(A, k, v0=v0, solver=solver, rng=0))
                 U2, s2, VH2 = reorder(svds(L, k, v0=v0, solver=solver, rng=0))
 
-            assert_allclose(np.abs(U1), np.abs(U2))
+            assert_allclose(mx.abs(U1), mx.abs(U2))
             assert_allclose(s1, s2)
-            assert_allclose(np.abs(VH1), np.abs(VH2))
-            assert_allclose(np.dot(U1, np.dot(np.diag(s1), VH1)),
-                            np.dot(U2, np.dot(np.diag(s2), VH2)))
+            assert_allclose(mx.abs(VH1), mx.abs(VH2))
+            assert_allclose(mx.dot(U1, mx.dot(mx.diag(s1), VH1)),
+                            mx.dot(U2, mx.dot(mx.diag(s2), VH2)))
 
             # Try again with which="SM".
-            A = np.random.RandomState(1909).randn(n, m)
+            A = mx.random.RandomState(1909).randn(n, m)
             L = CheckingLinearOperator(A)
 
             # TODO: arpack crashes when v0=v0, which="SM"
@@ -632,16 +632,16 @@ class SVDSCommonTests:
                 U2, s2, VH2 = reorder(svds(L, k, which="SM", solver=solver,
                                            rng=0, **kwargs))
 
-            assert_allclose(np.abs(U1), np.abs(U2))
+            assert_allclose(mx.abs(U1), mx.abs(U2))
             assert_allclose(s1 + 1, s2 + 1)
-            assert_allclose(np.abs(VH1), np.abs(VH2))
-            assert_allclose(np.dot(U1, np.dot(np.diag(s1), VH1)),
-                            np.dot(U2, np.dot(np.diag(s2), VH2)))
+            assert_allclose(mx.abs(VH1), mx.abs(VH2))
+            assert_allclose(mx.dot(U1, mx.dot(mx.diag(s1), VH1)),
+                            mx.dot(U2, mx.dot(mx.diag(s2), VH2)))
 
             if k < min(n, m) - 1:
                 # Complex input and explicit which="LM".
-                for (dt, eps) in [(complex, 1e-7), (np.complex64, 3e-3)]:
-                    rng = np.random.RandomState(1648)
+                for (dt, eps) in [(complex, 1e-7), (mx.complex64, 3e-3)]:
+                    rng = mx.random.RandomState(1648)
                     A = (rng.randn(n, m) + 1j * rng.randn(n, m)).astype(dt)
                     L = CheckingLinearOperator(A)
 
@@ -658,11 +658,11 @@ class SVDSCommonTests:
                         U2, s2, VH2 = reorder(svds(L, k, which="LM",
                                                    solver=solver, rng=0))
 
-                    assert_allclose(np.abs(U1), np.abs(U2), rtol=eps)
+                    assert_allclose(mx.abs(U1), mx.abs(U2), rtol=eps)
                     assert_allclose(s1, s2, rtol=eps)
-                    assert_allclose(np.abs(VH1), np.abs(VH2), rtol=eps)
-                    assert_allclose(np.dot(U1, np.dot(np.diag(s1), VH1)),
-                                    np.dot(U2, np.dot(np.diag(s2), VH2)),
+                    assert_allclose(mx.abs(VH1), mx.abs(VH2), rtol=eps)
+                    assert_allclose(mx.dot(U1, mx.dot(mx.diag(s1), VH1)),
+                                    mx.dot(U2, mx.dot(mx.diag(s2), VH2)),
                                     rtol=eps)
 
     SHAPES = ((100, 100), (100, 101), (101, 100))
@@ -671,22 +671,22 @@ class SVDSCommonTests:
     @pytest.mark.filterwarnings("ignore:Exited postprocessing")
     @pytest.mark.parallel_threads(4)  # Very slow
     @pytest.mark.parametrize("shape", SHAPES)
-    @pytest.mark.parametrize("dtype", (np.float32, np.float64,
-                                       np.complex64, np.complex128))
+    @pytest.mark.parametrize("dtype", (mx.float32, mx.float64,
+                                       mx.complex64, mx.complex128))
     def test_small_sigma_sparse(self, shape, dtype):
         # https://github.com/scipy/scipy/pull/11829
         solver = self.solver
         # 2do: PROPACK fails orthogonality of singular vectors
         # if dtype == complex and self.solver == 'propack':
         #    pytest.skip("PROPACK unsupported for complex dtype")
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
         k = 5
         (m, n) = shape
         S = random_array(shape=(m, n), density=0.1, rng=rng)
         if dtype is complex:
             S = + 1j * random_array(shape=(m, n), density=0.1, rng=rng)
-        e = np.ones(m)
-        e[0:5] *= 1e1 ** np.arange(-5, 0, 1)
+        e = mx.ones(m)
+        e[0:5] *= 1e1 ** mx.arange(-5, 0, 1)
         S = dia_array((e, 0), shape=(m, m)) @ S
         S = S.astype(dtype)
         u, s, vh = svds(S, k, which='SM', solver=solver, maxiter=1000, rng=0)
@@ -701,7 +701,7 @@ class SVDSCommonTests:
         # Check that svds can deal with matrix_rank less than k in LM mode.
         k = 3
         n, m = shape
-        A = np.ones((n, m), dtype=dtype)
+        A = mx.ones((n, m), dtype=dtype)
 
         if self.solver == 'lobpcg':
             with pytest.warns(UserWarning, match="The problem size"):
@@ -713,9 +713,9 @@ class SVDSCommonTests:
 
         # Check that the largest singular value is near sqrt(n*m)
         # and the other singular values have been forced to zero.
-        assert_allclose(np.max(s), np.sqrt(n*m))
-        s = np.array(sorted(s)[:-1]) + 1
-        z = np.ones_like(s)
+        assert_allclose(mx.max(s), mx.sqrt(n*m))
+        s = mx.array(sorted(s)[:-1]) + 1
+        z = mx.ones_like(s)
         assert_allclose(s, z)
 
     @pytest.mark.filterwarnings("ignore:k >= N - 1",
@@ -729,7 +729,7 @@ class SVDSCommonTests:
         # reported in the issue
         k = 1
         n, m = shape
-        A = np.zeros((n, m), dtype=dtype)
+        A = mx.zeros((n, m), dtype=dtype)
 
         if (self.solver == 'arpack'):
             pytest.skip('See gh-21110.')
@@ -754,44 +754,44 @@ class SVDSCommonTests:
         assert_array_equal(s, 0)
 
     @pytest.mark.parametrize("shape", ((20, 20), (20, 21), (21, 20)))
-    @pytest.mark.parametrize("dtype", (np.float32, np.float64,
-                                       np.complex64, np.complex128))
+    @pytest.mark.parametrize("dtype", (mx.float32, mx.float64,
+                                       mx.complex64, mx.complex128))
     @pytest.mark.filterwarnings("ignore:Exited",
                                 reason="Ignore LOBPCG early exit.")
     def test_small_sigma(self, shape, dtype):
-        rng = np.random.default_rng(179847540)
+        rng = mx.random.default_rng(179847540)
         A = rng.random(shape).astype(dtype)
         u, _, vh = svd(A, full_matrices=False)
-        if dtype in [np.float32, np.complex64]:
+        if dtype in [mx.float32, mx.complex64]:
             e = 10.0
         else:
             e = 100.0
-        t = e**(-np.arange(len(vh))).astype(dtype)
+        t = e**(-mx.arange(len(vh))).astype(dtype)
         A = (u*t).dot(vh)
         k = 4
         u, s, vh = svds(A, k, solver=self.solver, maxiter=100, rng=0)
-        t = np.sum(s > 0)
+        t = mx.sum(s > 0)
         assert_equal(t, k)
         # LOBPCG needs larger atol and rtol to pass
         _check_svds_n(A, k, u, s, vh, atol=1e-3, rtol=1e0, check_svd=False)
 
     @pytest.mark.filterwarnings("ignore:The problem size")
-    @pytest.mark.parametrize("dtype", (np.float32, np.float64,
-                                       np.complex64, np.complex128))
+    @pytest.mark.parametrize("dtype", (mx.float32, mx.float64,
+                                       mx.complex64, mx.complex128))
     def test_small_sigma2(self, dtype):
-        rng = np.random.default_rng(179847540)
+        rng = mx.random.default_rng(179847540)
         # create a 10x10 singular matrix with a 4-dim null space
         dim = 4
         size = 10
         x = rng.random((size, size-dim))
         y = x[:, :dim] * rng.random(dim)
-        mat = np.hstack((x, y))
+        mat = mx.hstack((x, y))
         mat = mat.astype(dtype)
 
         nz = null_space(mat)
         assert_equal(nz.shape[1], dim)
 
-        # Tolerances atol and rtol adjusted to pass np.float32
+        # Tolerances atol and rtol adjusted to pass mx.float32
         # Use non-sparse svd
         u, s, vh = svd(mat)
         # Singular values are 0:
@@ -818,7 +818,7 @@ class Test_SVDS_once:
     def test_svds_input_validation_solver(self, solver):
         message = "solver must be one of"
         with pytest.raises(ValueError, match=message):
-            svds(np.ones((3, 4)), k=2, solver=solver, rng=0)
+            svds(mx.ones((3, 4)), k=2, solver=solver, rng=0)
 
 
 class Test_SVDS_ARPACK(SVDSCommonTests):
@@ -828,7 +828,7 @@ class Test_SVDS_ARPACK(SVDSCommonTests):
 
     @pytest.mark.parametrize("ncv", list(range(-1, 8)) + [4.5, "5"])
     def test_svds_input_validation_ncv_1(self, ncv):
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
         A = rng.random((6, 7))
         k = 3
         if ncv in {4, 5}:
@@ -846,11 +846,11 @@ class Test_SVDS_ARPACK(SVDSCommonTests):
         # to an int.
         message = "int() argument must be a"
         with pytest.raises(TypeError, match=re.escape(message)):
-            svds(np.eye(10), ncv=[], solver=self.solver, rng=0)
+            svds(mx.eye(10), ncv=[], solver=self.solver, rng=0)
 
         message = "invalid literal for int()"
         with pytest.raises(ValueError, match=message):
-            svds(np.eye(10), ncv="hi", solver=self.solver, rng=0)
+            svds(mx.eye(10), ncv="hi", solver=self.solver, rng=0)
 
     # I can't see a robust relationship between `ncv` and relevant outputs
     # (e.g. accuracy, time), so no test of the parameter.

@@ -1,7 +1,7 @@
 """
 Check the speed of the sparse triangular solve function.
 """
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal
 
 from .common import Benchmark, safe_import
@@ -34,7 +34,7 @@ class Bench(Benchmark):
     param_names = ['(n,n)',"method"]
 
     def setup(self, n, method):
-        self.b = np.ones(n*n)
+        self.b = mx.ones(n*n)
         self.P_sparse = _create_sparse_poisson2d_half(n)
 
     def time_solve(self, n, method):

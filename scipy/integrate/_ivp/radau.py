@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy.linalg import lu_factor, lu_solve
 from scipy.sparse import csc_matrix, issparse, eye
 from scipy.sparse.linalg import splu
@@ -11,8 +11,8 @@ from .base import OdeSolver, DenseOutput
 S6 = 6 ** 0.5
 
 # Butcher tableau. A is not used directly, see below.
-C = np.array([(4 - S6) / 10, (4 + S6) / 10, 1])
-E = np.array([-13 - 7 * S6, -13 + 7 * S6, -1]) / 3
+C = mx.array([(4 - S6) / 10, (4 + S6) / 10, 1])
+E = mx.array([-13 - 7 * S6, -13 + 7 * S6, -1]) / 3
 
 # Eigendecomposition of A is done: A = T L T**-1. There is 1 real eigenvalue
 # and a complex conjugate pair. They are written below.
@@ -21,11 +21,11 @@ MU_COMPLEX = (3 + 0.5 * (3 ** (1 / 3) - 3 ** (2 / 3))
               - 0.5j * (3 ** (5 / 6) + 3 ** (7 / 6)))
 
 # These are transformation matrices.
-T = np.array([
+T = mx.array([
     [0.09443876248897524, -0.14125529502095421, 0.03002919410514742],
     [0.25021312296533332, 0.20412935229379994, -0.38294211275726192],
     [1, 1, 0]])
-TI = np.array([
+TI = mx.array([
     [4.17871859155190428, 0.32768282076106237, 0.52337644549944951],
     [-4.17871859155190428, -0.32768282076106237, 0.47662355450055044],
     [0.50287263494578682, -2.57192694985560522, 0.59603920482822492]])
@@ -34,7 +34,7 @@ TI_REAL = TI[0]
 TI_COMPLEX = TI[1] + 1j * TI[2]
 
 # Interpolator coefficients.
-P = np.array([
+P = mx.array([
     [13/3 + 7*S6/3, -23/3 - 22*S6/3, 10/3 + 5 * S6],
     [13/3 - 7*S6/3, -23/3 + 22*S6/3, 10/3 - 5 * S6],
     [1/3, -8/3, 10/3]])
@@ -55,14 +55,14 @@ def solve_collocation_system(fun, t, y, h, Z0, scale, tol,
         Right-hand side of the system.
     t : float
         Current time.
-    y : ndarray, shape (n,)
+    y : array, shape (n,)
         Current state.
     h : float
         Step to try.
-    Z0 : ndarray, shape (3, n)
+    Z0 : array, shape (3, n)
         Initial guess for the solution. It determines new values of `y` at
         ``t + h * C`` as ``y + Z0``, where ``C`` is the Radau method constants.
-    scale : ndarray, shape (n)
+    scale : array, shape (n)
         Problem tolerance scale, i.e. ``rtol * abs(y) + atol``.
     tol : float
         Tolerance to which solve the system. This value is compared with
@@ -79,7 +79,7 @@ def solve_collocation_system(fun, t, y, h, Z0, scale, tol,
         Whether iterations converged.
     n_iter : int
         Number of completed iterations.
-    Z : ndarray, shape (3, n)
+    Z : array, shape (3, n)
         Found solution.
     rate : float
         The rate of convergence.
@@ -91,18 +91,18 @@ def solve_collocation_system(fun, t, y, h, Z0, scale, tol,
     W = TI.dot(Z0)
     Z = Z0
 
-    F = np.empty((3, n))
+    F = mx.empty((3, n))
     ch = h * C
 
     dW_norm_old = None
-    dW = np.empty_like(W)
+    dW = mx.empty_like(W)
     converged = False
     rate = None
     for k in range(NEWTON_MAXITER):
         for i in range(3):
             F[i] = fun(t + ch[i], y + Z[i])
 
-        if not np.all(np.isfinite(F)):
+        if not mx.all(mx.isfinite(F)):
             break
 
         f_real = F.T.dot(TI_REAL) - M_real * W[0]
@@ -170,7 +170,7 @@ def predict_factor(h_abs, h_abs_old, error_norm, error_norm_old):
     else:
         multiplier = h_abs / h_abs_old * (error_norm_old / error_norm) ** 0.25
 
-    with np.errstate(divide='ignore'):
+    with mx.errstate(divide='ignore'):
         factor = min(1, multiplier) * error_norm ** -0.25
 
     return factor
@@ -188,7 +188,7 @@ class Radau(OdeSolver):
     fun : callable
         Right-hand side of the system: the time derivative of the state ``y``
         at time ``t``. The calling signature is ``fun(t, y)``, where ``t`` is a
-        scalar and ``y`` is an ndarray with ``len(y) = len(y0)``. ``fun`` must
+        scalar and ``y`` is an array with ``len(y) = len(y0)``. ``fun`` must
         return an array of the same shape as ``y``. See `vectorized` for more
         information.
     t0 : float
@@ -202,7 +202,7 @@ class Radau(OdeSolver):
         Initial step size. Default is ``None`` which means that the algorithm
         should choose.
     max_step : float, optional
-        Maximum allowed step size. Default is np.inf, i.e., the step size is not
+        Maximum allowed step size. Default is mx.inf, i.e., the step size is not
         bounded and determined solely by the solver.
     rtol, atol : float and array_like, optional
         Relative and absolute tolerances. The solver keeps the local error
@@ -271,7 +271,7 @@ class Radau(OdeSolver):
         Integration direction: +1 or -1.
     t : float
         Current time.
-    y : ndarray
+    y : array
         Current state.
     t_old : float
         Previous time. None if no steps were made yet.
@@ -292,7 +292,7 @@ class Radau(OdeSolver):
            sparse Jacobian matrices", Journal of the Institute of Mathematics
            and its Applications, 13, pp. 117-120, 1974.
     """
-    def __init__(self, fun, t0, y0, t_bound, max_step=np.inf,
+    def __init__(self, fun, t0, y0, t_bound, max_step=mx.inf,
                  rtol=1e-3, atol=1e-6, jac=None, jac_sparsity=None,
                  vectorized=False, first_step=None, **extraneous):
         warn_extraneous(extraneous)
@@ -334,7 +334,7 @@ class Radau(OdeSolver):
             def solve_lu(LU, b):
                 return lu_solve(LU, b, overwrite_b=True)
 
-            I = np.identity(self.n)
+            I = mx.identity(self.n)
 
         self.lu = lu
         self.solve_lu = solve_lu
@@ -374,11 +374,11 @@ class Radau(OdeSolver):
                     return csc_matrix(jac(t, y), dtype=float)
 
             else:
-                J = np.asarray(J, dtype=float)
+                J = mx.array(J, dtype=float)
 
                 def jac_wrapped(t, y, _=None):
                     self.njev += 1
-                    return np.asarray(jac(t, y), dtype=float)
+                    return mx.array(jac(t, y), dtype=float)
 
             if J.shape != (self.n, self.n):
                 raise ValueError(f"`jac` is expected to have shape {(self.n, self.n)},"
@@ -387,7 +387,7 @@ class Radau(OdeSolver):
             if issparse(jac):
                 J = csc_matrix(jac)
             else:
-                J = np.asarray(jac, dtype=float)
+                J = mx.array(jac, dtype=float)
 
             if J.shape != (self.n, self.n):
                 raise ValueError(f"`jac` is expected to have shape {(self.n, self.n)},"
@@ -405,7 +405,7 @@ class Radau(OdeSolver):
         atol = self.atol
         rtol = self.rtol
 
-        min_step = 10 * np.abs(np.nextafter(t, self.direction * np.inf) - t)
+        min_step = 10 * mx.abs(mx.nextafter(t, self.direction * mx.inf) - t)
         if self.h_abs > max_step:
             h_abs = max_step
             h_abs_old = None
@@ -440,14 +440,14 @@ class Radau(OdeSolver):
                 t_new = self.t_bound
 
             h = t_new - t
-            h_abs = np.abs(h)
+            h_abs = mx.abs(h)
 
             if self.sol is None:
-                Z0 = np.zeros((3, y.shape[0]))
+                Z0 = mx.zeros((3, y.shape[0]))
             else:
                 Z0 = self.sol(t + h * C).T - y
 
-            scale = atol + np.abs(y) * rtol
+            scale = atol + mx.abs(y) * rtol
 
             converged = False
             while not converged:
@@ -477,7 +477,7 @@ class Radau(OdeSolver):
             y_new = y + Z[-1]
             ZE = Z.T.dot(E) / h
             error = self.solve_lu(LU_real, f + ZE)
-            scale = atol + np.maximum(np.abs(y), np.abs(y_new)) * rtol
+            scale = atol + mx.maximum(mx.abs(y), mx.abs(y_new)) * rtol
             error_norm = norm(error / scale)
             safety = 0.9 * (2 * NEWTON_MAXITER + 1) / (2 * NEWTON_MAXITER
                                                        + n_iter)
@@ -539,7 +539,7 @@ class Radau(OdeSolver):
         return step_accepted, message
 
     def _compute_dense_output(self):
-        Q = np.dot(self.Z.T, P)
+        Q = mx.dot(self.Z.T, P)
         return RadauDenseOutput(self.t_old, self.t, self.y_old, Q)
 
     def _dense_output_impl(self):
@@ -557,13 +557,13 @@ class RadauDenseOutput(DenseOutput):
     def _call_impl(self, t):
         x = (t - self.t_old) / self.h
         if t.ndim == 0:
-            p = np.tile(x, self.order + 1)
-            p = np.cumprod(p)
+            p = mx.tile(x, self.order + 1)
+            p = mx.cumprod(p)
         else:
-            p = np.tile(x, (self.order + 1, 1))
-            p = np.cumprod(p, axis=0)
+            p = mx.tile(x, (self.order + 1, 1))
+            p = mx.cumprod(p, axis=0)
         # Here we don't multiply by h, not a mistake.
-        y = np.dot(self.Q, p)
+        y = mx.dot(self.Q, p)
         if y.ndim == 2:
             y += self.y_old[:, None]
         else:

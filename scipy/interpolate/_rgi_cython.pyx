@@ -4,21 +4,21 @@ Cythonized routines for the RegularGridInterpolator.
 """
 
 from libc.math cimport NAN
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 cimport cython
 
 include "_poly_common.pxi"
 
-np.import_array()
+mx.import_array()
 
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
 @cython.initializedcheck(False)
 def evaluate_linear_2d(const double_or_complex[:, :] values, # cannot declare as ::1
-                       const np.intp_t[:, :] indices,        # unless prior
-                       const double[:, :] norm_distances,    # np.ascontiguousarray
+                       const mx.intp_t[:, :] indices,        # unless prior
+                       const double[:, :] norm_distances,    # mx.ascontiguousarray
                        tuple grid not None,
                        double_or_complex[:] out):
     cdef:
@@ -60,7 +60,7 @@ def evaluate_linear_2d(const double_or_complex[:, :] values, # cannot declare as
                 result = result + values[i0+1, i1+1] * y0 * y1
                 out[point] = result
 
-    return np.asarray(out)
+    return mx.array(out)
 
 
 @cython.wraparound(False)
@@ -82,10 +82,10 @@ def find_indices(tuple grid not None, const double[:, :] xi):
         int index = 0
 
         # Indices of relevant edges between which xi are situated
-        np.intp_t[:,::1] indices = np.empty_like(xi, dtype=np.intp)
+        mx.intp_t[:,::1] indices = mx.empty_like(xi, dtype=mx.intp)
 
         # Distances to lower edge in unity units
-        double[:,::1] norm_distances = np.zeros_like(xi, dtype=float)
+        double[:,::1] norm_distances = mx.zeros_like(xi, dtype=float)
 
     # iterate through dimensions
     for i in range(I):
@@ -120,4 +120,4 @@ def find_indices(tuple grid not None, const double[:, :] xi):
                     norm_distances[i, j] = NAN
 
 
-    return np.asarray(indices), np.asarray(norm_distances)
+    return mx.array(indices), mx.array(norm_distances)

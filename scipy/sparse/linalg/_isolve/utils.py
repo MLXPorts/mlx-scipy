@@ -52,9 +52,9 @@ def make_system(A, M, x0, b):
             matrix of the linear system
         M : LinearOperator
             preconditioner
-        x : rank 1 ndarray
+        x : rank 1 array
             initial guess
-        b : rank 1 ndarray
+        b : rank 1 array
             right hand side
 
     """

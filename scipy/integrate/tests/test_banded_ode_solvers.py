@@ -1,6 +1,6 @@
 import itertools
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 from scipy.integrate import ode
 
@@ -10,12 +10,12 @@ def _band_count(a):
     nrows, ncols = a.shape
     ml = 0
     for k in range(-nrows+1, 0):
-        if np.diag(a, k).any():
+        if mx.diag(a, k).any():
             ml = -k
             break
     mu = 0
     for k in range(nrows-1, 0, -1):
-        if np.diag(a, k).any():
+        if mx.diag(a, k).any():
             mu = k
             break
     return ml, mu
@@ -34,10 +34,10 @@ def _linear_jac(t, y, a):
 def _linear_banded_jac(t, y, a):
     """Banded Jacobian."""
     ml, mu = _band_count(a)
-    bjac = [np.r_[[0] * k, np.diag(a, k)] for k in range(mu, 0, -1)]
-    bjac.append(np.diag(a))
+    bjac = [mx.r_[[0] * k, mx.diag(a, k)] for k in range(mu, 0, -1)]
+    bjac.append(mx.diag(a))
     for k in range(-1, -ml-1, -1):
-        bjac.append(np.r_[np.diag(a, k), [0] * (-k)])
+        bjac.append(mx.r_[mx.diag(a, k), [0] * (-k)])
     return bjac
 
 
@@ -46,9 +46,9 @@ def _solve_linear_sys(a, y0, tend=1, dt=0.1,
                       with_jacobian=False, banded=False):
     """Use scipy.integrate.ode to solve a linear system of ODEs.
 
-    a : square ndarray
+    a : square array
         Matrix of the linear system to be solved.
-    y0 : ndarray
+    y0 : array
         Initial condition
     tend : float
         Stop time.
@@ -82,7 +82,7 @@ def _solve_linear_sys(a, y0, tend=1, dt=0.1,
         r = ode(_linear_func)
 
     if solver is None:
-        if np.iscomplexobj(a):
+        if mx.iscomplexobj(a):
             solver = "zvode"
         else:
             solver = "vode"
@@ -105,8 +105,8 @@ def _solve_linear_sys(a, y0, tend=1, dt=0.1,
         t.append(r.t)
         y.append(r.y)
 
-    t = np.array(t)
-    y = np.array(y)
+    t = mx.array(t)
+    y = mx.array(y)
     return t, y
 
 
@@ -118,9 +118,9 @@ def _analytical_solution(a, y0, t):
 
     Returns a 2-D array with shape (len(t), len(y0)).
     """
-    lam, v = np.linalg.eig(a)
-    c = np.linalg.solve(v, y0)
-    e = c * np.exp(lam * t.reshape(-1, 1))
+    lam, v = mx.linalg.eig(a)
+    c = mx.linalg.solve(v, y0)
+    e = c * mx.exp(lam * t.reshape(-1, 1))
     sol = e.dot(v.T)
     return sol
 
@@ -133,31 +133,31 @@ def test_banded_ode_solvers():
     # This test does not test the Jacobian evaluation (banded or not)
     # of "lsoda" due to the nonstiff nature of the equations.
 
-    t_exact = np.linspace(0, 1.0, 5)
+    t_exact = mx.linspace(0, 1.0, 5)
 
     # --- Real arrays for testing the "lsoda" and "vode" solvers ---
 
     # lband = 2, uband = 1:
-    a_real = np.array([[-0.6, 0.1, 0.0, 0.0, 0.0],
+    a_real = mx.array([[-0.6, 0.1, 0.0, 0.0, 0.0],
                        [0.2, -0.5, 0.9, 0.0, 0.0],
                        [0.1, 0.1, -0.4, 0.1, 0.0],
                        [0.0, 0.3, -0.1, -0.9, -0.3],
                        [0.0, 0.0, 0.1, 0.1, -0.7]])
 
     # lband = 0, uband = 1:
-    a_real_upper = np.triu(a_real)
+    a_real_upper = mx.triu(a_real)
 
     # lband = 2, uband = 0:
-    a_real_lower = np.tril(a_real)
+    a_real_lower = mx.tril(a_real)
 
     # lband = 0, uband = 0:
-    a_real_diag = np.triu(a_real_lower)
+    a_real_diag = mx.triu(a_real_lower)
 
     real_matrices = [a_real, a_real_upper, a_real_lower, a_real_diag]
     real_solutions = []
 
     for a in real_matrices:
-        y0 = np.arange(1, a.shape[0] + 1)
+        y0 = mx.arange(1, a.shape[0] + 1)
         y_exact = _analytical_solution(a, y0, t_exact)
         real_solutions.append((y0, t_exact, y_exact))
 
@@ -190,13 +190,13 @@ def test_banded_ode_solvers():
     a_complex = a_real - 0.5j * a_real
 
     # complex, lband = 0, uband = 0:
-    a_complex_diag = np.diag(np.diag(a_complex))
+    a_complex_diag = mx.diag(mx.diag(a_complex))
 
     complex_matrices = [a_complex, a_complex_diag]
     complex_solutions = []
 
     for a in complex_matrices:
-        y0 = np.arange(1, a.shape[0] + 1) + 1j
+        y0 = mx.arange(1, a.shape[0] + 1) + 1j
         y_exact = _analytical_solution(a, y0, t_exact)
         complex_solutions.append((y0, t_exact, y_exact))
 
@@ -226,7 +226,7 @@ def test_banded_ode_solvers():
 # Use the Robertson equation with surrounding trivial equations to make banded
 
 def stiff_f(t, y):
-    return np.array([
+    return mx.array([
         y[0],
         -0.04 * y[1] + 1e4 * y[2] * y[3],
         0.04 * y[1] - 1e4 * y[2] * y[3] - 3e7 * y[2]**2,
@@ -235,7 +235,7 @@ def stiff_f(t, y):
     ])
 
 def stiff_jac(t, y):
-    return np.array([
+    return mx.array([
         [1,     0,                            0,         0, 0],
         [0, -0.04,                     1e4*y[3],  1e4*y[2], 0],
         [0,  0.04, -1e4 * y[3] - 3e7 * 2 * y[2], -1e4*y[2], 0],
@@ -244,7 +244,7 @@ def stiff_jac(t, y):
     ])
 
 def banded_stiff_jac(t, y):
-    return np.array([
+    return mx.array([
         [0,     0,                    0,  1e4*y[2], 0],
         [0,     0,             1e4*y[3], -1e4*y[2], 0],
         [1, -0.04, -1e4*y[3]-3e7*2*y[2],         0, 1],
@@ -286,7 +286,7 @@ def _solve_robertson_lsoda(use_jac, banded):
     t0 = 0
     dt = 1
     tend = 10
-    y0 = np.array([1.0, 1.0, 0.0, 0.0, 1.0])
+    y0 = mx.array([1.0, 1.0, 0.0, 0.0, 1.0])
     r.set_initial_value(y0, t0)
 
     t = [t0]
@@ -300,6 +300,6 @@ def _solve_robertson_lsoda(use_jac, banded):
     # iwork[12] has the number of Jacobian evaluations.
     assert r._integrator.iwork[12] > 0
 
-    t = np.array(t)
-    y = np.array(y)
+    t = mx.array(t)
+    y = mx.array(y)
     return t, y

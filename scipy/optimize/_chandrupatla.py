@@ -1,5 +1,5 @@
 import math
-import numpy as np
+import mlx.core as mx
 import scipy._lib._elementwise_iterative_method as eim
 from scipy._lib._util import _RichResult
 from scipy._lib._array_api import xp_copy
@@ -22,7 +22,7 @@ def _chandrupatla(func, a, b, *, args=(), xatol=None, xrtol=None,
     func : callable
         The function whose root is desired. The signature must be::
 
-            func(x: ndarray, *args) -> ndarray
+            func(x: array, *args) -> array
 
          where each element of ``x`` is a finite real and ``args`` is a tuple,
          which may contain an arbitrary number of components of any type(s).
@@ -213,7 +213,7 @@ def _chandrupatla(func, a, b, *, args=(), xatol=None, xrtol=None,
     def post_termination_check(work):
         # [1] Figure 1 (third diamond and boxes / Equation 1)
         xi1 = (work.x1 - work.x2) / (work.x3 - work.x2)
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with mx.errstate(divide='ignore', invalid='ignore'):
             phi1 = (work.f1 - work.f2) / (work.f3 - work.f2)
         alpha = (work.x3 - work.x1) / (work.x2 - work.x1)
         j = ((1 - xp.sqrt(1 - xi1)) < phi1) & (phi1 < xp.sqrt(xi1))
@@ -250,16 +250,16 @@ def _chandrupatla_iv(func, args, xatol, xrtol,
     if not callable(func):
         raise ValueError('`func` must be callable.')
 
-    if not np.iterable(args):
+    if not mx.iterable(args):
         args = (args,)
 
     # tolerances are floats, not arrays; OK to use NumPy
-    tols = np.asarray([xatol if xatol is not None else 1,
+    tols = mx.array([xatol if xatol is not None else 1,
                        xrtol if xrtol is not None else 1,
                        fatol if fatol is not None else 1,
                        frtol if frtol is not None else 1])
-    if (not np.issubdtype(tols.dtype, np.number) or np.any(tols < 0)
-            or np.any(np.isnan(tols)) or tols.shape != (4,)):
+    if (not mx.issubdtype(tols.dtype, mx.number) or mx.any(tols < 0)
+            or mx.any(mx.isnan(tols)) or tols.shape != (4,)):
         raise ValueError('Tolerances must be non-negative scalars.')
 
     if maxiter is not None:
@@ -288,7 +288,7 @@ def _chandrupatla_minimize(func, x1, x2, x3, *, args=(), xatol=None,
     func : callable
         The function whose minimizer is desired. The signature must be::
 
-            func(x: ndarray, *args) -> ndarray
+            func(x: array, *args) -> array
 
          where each element of ``x`` is a finite real and ``args`` is a tuple,
          which may contain an arbitrary number of arrays that are broadcastable
@@ -504,7 +504,7 @@ def _chandrupatla_minimize(func, x1, x2, x3, *, args=(), xatol=None,
 
         # [1] Section 3 "Points 1 and 3 are interchanged if necessary to make
         # the (x2, x3) the larger interval."
-        # Note: I had used np.choose; this is much faster. This would be a good
+        # Note: I had used mx.choose; this is much faster. This would be a good
         # place to save e.g. `work.x3 - work.x2` for reuse, but I tried and
         # didn't notice a speed boost, so let's keep it simple.
         i = xp.abs(work.x3 - work.x2) < xp.abs(work.x2 - work.x1)

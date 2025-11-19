@@ -102,8 +102,8 @@ Now, to Python:
 
 Now let's try the other way round:
 
-  >>> import numpy as np
-  >>> vect = np.arange(10)
+  >>> import mlx.core as mx
+  >>> vect = mx.arange(10)
   >>> vect.shape
   (10,)
   >>> sio.savemat('np_vector.mat', {'vect':vect})
@@ -167,7 +167,7 @@ We can load this in Python:
    (1, 1)
    >>> val = oct_struct[0, 0]
    >>> val
-   np.void((array([[1.]]), array([[2.]])), dtype=[('field1', 'O'), ('field2', 'O')])
+   mx.void((array([[1.]]), array([[2.]])), dtype=[('field1', 'O'), ('field2', 'O')])
    >>> val['field1']
    array([[ 1.]])
    >>> val['field2']
@@ -245,7 +245,7 @@ You can also save structs back again to MATLAB (or Octave in our case)
 like this:
 
    >>> dt = [('f1', 'f8'), ('f2', 'S10')]
-   >>> arr = np.zeros((2,), dtype=dt)
+   >>> arr = mx.zeros((2,), dtype=dt)
    >>> arr
    array([(0.0, ''), (0.0, '')],
          dtype=[('f1', '<f8'), ('f2', 'S10')])
@@ -291,7 +291,7 @@ Back to Python:
 
 Saving to a MATLAB cell array just involves making a NumPy object array:
 
-   >>> obj_arr = np.zeros((2,), dtype=object)
+   >>> obj_arr = mx.zeros((2,), dtype=object)
    >>> obj_arr[0] = 1
    >>> obj_arr[1] = 'a string'
    >>> obj_arr

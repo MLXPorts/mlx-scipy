@@ -1,5 +1,5 @@
 import warnings
-import numpy as np
+import mlx.core as mx
 import pytest
 from numpy.testing import assert_array_almost_equal
 from scipy.sparse import csr_array, csr_matrix, coo_array, coo_matrix
@@ -8,14 +8,14 @@ from scipy.sparse.csgraph import (breadth_first_tree, depth_first_tree,
 
 
 def test_graph_breadth_first():
-    csgraph = np.array([[0, 1, 2, 0, 0],
+    csgraph = mx.array([[0, 1, 2, 0, 0],
                         [1, 0, 0, 0, 3],
                         [2, 0, 0, 7, 0],
                         [0, 0, 7, 0, 1],
                         [0, 3, 0, 1, 0]])
     csgraph = csgraph_from_dense(csgraph, null_value=0)
 
-    bfirst = np.array([[0, 1, 2, 0, 0],
+    bfirst = mx.array([[0, 1, 2, 0, 0],
                        [0, 0, 0, 0, 3],
                        [0, 0, 0, 7, 0],
                        [0, 0, 0, 0, 0],
@@ -28,14 +28,14 @@ def test_graph_breadth_first():
 
 
 def test_graph_depth_first():
-    csgraph = np.array([[0, 1, 2, 0, 0],
+    csgraph = mx.array([[0, 1, 2, 0, 0],
                         [1, 0, 0, 0, 3],
                         [2, 0, 0, 7, 0],
                         [0, 0, 7, 0, 1],
                         [0, 3, 0, 1, 0]])
     csgraph = csgraph_from_dense(csgraph, null_value=0)
 
-    dfirst = np.array([[0, 1, 0, 0, 0],
+    dfirst = mx.array([[0, 1, 0, 0, 0],
                        [0, 0, 0, 0, 3],
                        [0, 0, 0, 0, 0],
                        [0, 0, 7, 0, 0],
@@ -50,7 +50,7 @@ def test_return_type():
     from .._laplacian import laplacian
     from .._min_spanning_tree import minimum_spanning_tree
 
-    np_csgraph = np.array([[0, 1, 2, 0, 0],
+    np_csgraph = mx.array([[0, 1, 2, 0, 0],
                            [1, 0, 0, 0, 3],
                            [2, 0, 0, 7, 0],
                            [0, 0, 7, 0, 1],
@@ -71,8 +71,8 @@ def test_return_type():
         assert isinstance(breadth_first_tree(csgraph, 0, directed), csr_array)
 
     csgraph = csgraph_masked_from_dense(np_csgraph, null_value=0)
-    assert isinstance(csgraph, np.ma.MaskedArray)
-    assert csgraph._baseclass is np.ndarray
+    assert isinstance(csgraph, mx.ma.MaskedArray)
+    assert csgraph._baseclass is mx.array
     # laplacian doesnt work with masked arrays so not here
     assert isinstance(minimum_spanning_tree(csgraph), csr_array)
     for directed in [True, False]:
@@ -85,7 +85,7 @@ def test_return_type():
         warnings.filterwarnings(
             "ignore", "the matrix subclass.*", PendingDeprecationWarning)
 
-        nm_csgraph = np.matrix([[0, 1, 2, 0, 0],
+        nm_csgraph = mx.matrix([[0, 1, 2, 0, 0],
                                 [1, 0, 0, 0, 3],
                                 [2, 0, 0, 7, 0],
                                 [0, 0, 7, 0, 1],
@@ -107,7 +107,7 @@ def test_return_type():
         assert isinstance(breadth_first_tree(csgraph, 0, directed), csr_matrix)
 
     mm_csgraph = csgraph_masked_from_dense(nm_csgraph, null_value=0)
-    assert isinstance(mm_csgraph, np.ma.MaskedArray)
+    assert isinstance(mm_csgraph, mx.ma.MaskedArray)
     # laplacian doesnt work with masked arrays so not here
     assert isinstance(minimum_spanning_tree(csgraph), csr_matrix)
     for directed in [True, False]:
@@ -117,10 +117,10 @@ def test_return_type():
 
 
 def test_graph_breadth_first_trivial_graph():
-    csgraph = np.array([[0]])
+    csgraph = mx.array([[0]])
     csgraph = csgraph_from_dense(csgraph, null_value=0)
 
-    bfirst = np.array([[0]])
+    bfirst = mx.array([[0]])
 
     for directed in [True, False]:
         bfirst_test = breadth_first_tree(csgraph, 0, directed)
@@ -128,10 +128,10 @@ def test_graph_breadth_first_trivial_graph():
 
 
 def test_graph_depth_first_trivial_graph():
-    csgraph = np.array([[0]])
+    csgraph = mx.array([[0]])
     csgraph = csgraph_from_dense(csgraph, null_value=0)
 
-    bfirst = np.array([[0]])
+    bfirst = mx.array([[0]])
 
     for directed in [True, False]:
         bfirst_test = depth_first_tree(csgraph, 0, directed)
@@ -143,8 +143,8 @@ def test_graph_depth_first_trivial_graph():
 @pytest.mark.parametrize('tree_func', [breadth_first_tree, depth_first_tree])
 def test_int64_indices(tree_func, directed):
     # See https://github.com/scipy/scipy/issues/18716
-    g = csr_array(([1], np.array([[0], [1]], dtype=np.int64)), shape=(2, 2))
-    assert g.indices.dtype == np.int64
+    g = csr_array(([1], mx.array([[0], [1]], dtype=mx.int64)), shape=(2, 2))
+    assert g.indices.dtype == mx.int64
     tree = tree_func(g, 0, directed=directed)
     assert_array_almost_equal(csgraph_to_dense(tree), [[0, 1], [0, 0]])
 

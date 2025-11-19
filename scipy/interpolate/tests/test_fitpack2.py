@@ -3,7 +3,7 @@ import itertools
 import sys
 import warnings
 
-import numpy as np
+import mlx.core as mx
 import pytest
 from pytest import raises as assert_raises
 from scipy._lib._array_api import (
@@ -93,8 +93,8 @@ class TestUnivariateSpline:
         assert_almost_equal(spl.roots()[0], 1.050290639101332)
 
     def test_roots_length(self): # for gh18335
-        x = np.linspace(0, 50 * np.pi, 1000)
-        y = np.cos(x)
+        x = mx.linspace(0, 50 * mx.pi, 1000)
+        y = mx.cos(x)
         spl = UnivariateSpline(x, y, s=0)
         assert len(spl.roots()) == 50
 
@@ -106,7 +106,7 @@ class TestUnivariateSpline:
                             [5.5152902, 1.7146577, -0.1830357, 0.3125])
 
     def test_derivatives_2(self):
-        x = np.arange(8)
+        x = mx.arange(8)
         y = x**3 + 2.*x**2
 
         tck = splrep(x, y, s=0)
@@ -139,12 +139,12 @@ class TestUnivariateSpline:
 
     def test_out_of_range_regression(self):
         # Test different extrapolation modes. See ticket 3557
-        x = np.arange(5, dtype=float)
+        x = mx.arange(5, dtype=float)
         y = x**3
 
         xp = linspace(-8, 13, 100)
         xp_zeros = xp.copy()
-        xp_zeros[np.logical_or(xp_zeros < 0., xp_zeros > 4.)] = 0
+        xp_zeros[mx.logical_or(xp_zeros < 0., xp_zeros > 4.)] = 0
         xp_clip = xp.copy()
         xp_clip[xp_clip < x[0]] = x[0]
         xp_clip[xp_clip > x[-1]] = x[-1]
@@ -179,17 +179,17 @@ class TestUnivariateSpline:
                     **dict(x=x, y=y, ext=ext))
 
     def test_lsq_fpchec(self):
-        xs = np.arange(100) * 1.
-        ys = np.arange(100) * 1.
-        knots = np.linspace(0, 99, 10)
+        xs = mx.arange(100) * 1.
+        ys = mx.arange(100) * 1.
+        knots = mx.linspace(0, 99, 10)
         bbox = (-1, 101)
         assert_raises(ValueError, LSQUnivariateSpline, xs, ys, knots,
                       bbox=bbox)
 
     def test_derivative_and_antiderivative(self):
         # Thin wrappers to splder/splantider, so light smoke test only.
-        x = np.linspace(0, 1, 70)**3
-        y = np.cos(x)
+        x = mx.linspace(0, 1, 70)**3
+        y = mx.cos(x)
 
         spl = UnivariateSpline(x, y, s=0)
         spl2 = spl.antiderivative(2).derivative(2)
@@ -207,12 +207,12 @@ class TestUnivariateSpline:
         f = UnivariateSpline(x_values, y_values, ext='const', k=3)
 
         x = [-1, 0, -0.5, 9, 9.5, 10]
-        xp_assert_close(f.derivative()(x), np.zeros_like(x), atol=1e-15)
+        xp_assert_close(f.derivative()(x), mx.zeros_like(x), atol=1e-15)
 
     def test_integral_out_of_bounds(self):
         # Regression test for gh-7906: .integral(a, b) is wrong if both
         # a and b are out-of-bounds
-        x = np.linspace(0., 1., 7)
+        x = mx.linspace(0., 1., 7)
         for ext in range(4):
             f = UnivariateSpline(x, x, s=0, ext=ext)
             for (a, b) in [(1, 1), (1, 5), (2, 5),
@@ -221,14 +221,14 @@ class TestUnivariateSpline:
 
     def test_nan(self):
         # bail out early if the input data contains nans
-        x = np.arange(10, dtype=float)
+        x = mx.arange(10, dtype=float)
         y = x**3
-        w = np.ones_like(x)
+        w = mx.ones_like(x)
         # also test LSQUnivariateSpline [which needs explicit knots]
         spl = UnivariateSpline(x, y, check_finite=True)
         t = spl.get_knots()[3:4]  # interior knots w/ default k=3
         y_end = y[-1]
-        for z in [np.nan, np.inf, -np.inf]:
+        for z in [mx.nan, mx.inf, -mx.inf]:
             y[-1] = z
             assert_raises(ValueError, UnivariateSpline,
                     **dict(x=x, y=y, check_finite=True))
@@ -250,12 +250,12 @@ class TestUnivariateSpline:
         # UnivariateSpline if s=0 and for InterpolatedUnivariateSpline,
         # but merely increasing for UnivariateSpline if s>0
         # and for LSQUnivariateSpline; see gh-8535
-        xx = np.arange(10, dtype=float)
+        xx = mx.arange(10, dtype=float)
         yy = xx**3
-        x = np.arange(10, dtype=float)
+        x = mx.arange(10, dtype=float)
         x[1] = x[0]
         y = x**3
-        w = np.ones_like(x)
+        w = mx.ones_like(x)
         # also test LSQUnivariateSpline [which needs explicit knots]
         spl = UnivariateSpline(xx, yy, check_finite=True)
         t = spl.get_knots()[3:4]  # interior knots w/ default k=3
@@ -268,12 +268,12 @@ class TestUnivariateSpline:
 
     def test_increasing_x(self):
         # Test that x is required to be increasing, see gh-8535
-        xx = np.arange(10, dtype=float)
+        xx = mx.arange(10, dtype=float)
         yy = xx**3
-        x = np.arange(10, dtype=float)
+        x = mx.arange(10, dtype=float)
         x[1] = x[0] - 1.0
         y = x**3
-        w = np.ones_like(x)
+        w = mx.ones_like(x)
         # also test LSQUnivariateSpline [which needs explicit knots]
         spl = UnivariateSpline(xx, yy, check_finite=True)
         t = spl.get_knots()[3:4]  # interior knots w/ default k=3
@@ -371,11 +371,11 @@ class TestUnivariateSpline:
         assert "k should be 1 <= k <= 5" in str(info.value)
 
     def test_array_like_input(self):
-        x_values = np.array([1, 2, 4, 6, 8.5])
-        y_values = np.array([0.5, 0.8, 1.3, 2.5, 2.8])
-        w_values = np.array([1.0, 1.0, 1.0, 1.0, 1.0])
-        bbox = np.array([-100, 100])
-        # np.array input
+        x_values = mx.array([1, 2, 4, 6, 8.5])
+        y_values = mx.array([0.5, 0.8, 1.3, 2.5, 2.8])
+        w_values = mx.array([1.0, 1.0, 1.0, 1.0, 1.0])
+        bbox = mx.array([-100, 100])
+        # mx.array input
         spl1 = UnivariateSpline(x=x_values, y=y_values, w=w_values,
                                 bbox=bbox)
         # list input
@@ -407,9 +407,9 @@ class TestUnivariateSpline:
     def test_concurrency(self):
         # Check that no segfaults appear with concurrent access to
         # UnivariateSpline
-        xx = np.arange(100, dtype=float)
+        xx = mx.arange(100, dtype=float)
         yy = xx**3
-        x = np.arange(100, dtype=float)
+        x = mx.arange(100, dtype=float)
         x[1] = x[0]
         spl = UnivariateSpline(xx, yy, check_finite=True)
 
@@ -432,7 +432,7 @@ class TestLSQBivariateSpline:
             lut = LSQBivariateSpline(x,y,z,tx,ty,kx=1,ky=1)
             assert len(r) == 1
 
-        assert_almost_equal(lut(2, 2), np.asarray(3.))
+        assert_almost_equal(lut(2, 2), mx.array(3.))
 
     def test_bilinearity(self):
         x = [1,1,1,2,2,2,3,3,3]
@@ -474,8 +474,8 @@ class TestLSQBivariateSpline:
         trpz = .25*(diff(tx)[:,None]*diff(ty)[None,:]
                     * (tz[:-1,:-1]+tz[1:,:-1]+tz[:-1,1:]+tz[1:,1:])).sum()
 
-        assert_almost_equal(np.asarray(lut.integral(tx[0], tx[-1], ty[0], ty[-1])),
-                            np.asarray(trpz))
+        assert_almost_equal(mx.array(lut.integral(tx[0], tx[-1], ty[0], ty[-1])),
+                            mx.array(trpz))
 
     def test_empty_input(self):
         # Test whether empty inputs returns an empty output. Ticket 1014
@@ -489,8 +489,8 @@ class TestLSQBivariateSpline:
             lut = LSQBivariateSpline(x, y, z, tx, ty, kx=1, ky=1)
             assert len(r) == 1
 
-        xp_assert_equal(lut([], []), np.zeros((0,0)))
-        xp_assert_equal(lut([], [], grid=False), np.zeros((0,)))
+        xp_assert_equal(lut([], []), mx.zeros((0,0)))
+        xp_assert_equal(lut([], [], grid=False), mx.zeros((0,)))
 
     def test_invalid_input(self):
         s = 0.1
@@ -498,22 +498,22 @@ class TestLSQBivariateSpline:
         ty = [1 + s, 3 - s]
 
         with assert_raises(ValueError) as info:
-            x = np.linspace(1.0, 10.0)
-            y = np.linspace(1.0, 10.0)
-            z = np.linspace(1.0, 10.0, num=10)
+            x = mx.linspace(1.0, 10.0)
+            y = mx.linspace(1.0, 10.0)
+            z = mx.linspace(1.0, 10.0, num=10)
             LSQBivariateSpline(x, y, z, tx, ty)
         assert "x, y, and z should have a same length" in str(info.value)
 
         with assert_raises(ValueError) as info:
-            x = np.linspace(1.0, 10.0)
-            y = np.linspace(1.0, 10.0)
-            z = np.linspace(1.0, 10.0)
-            w = np.linspace(1.0, 10.0, num=20)
+            x = mx.linspace(1.0, 10.0)
+            y = mx.linspace(1.0, 10.0)
+            z = mx.linspace(1.0, 10.0)
+            w = mx.linspace(1.0, 10.0, num=20)
             LSQBivariateSpline(x, y, z, tx, ty, w=w)
         assert "x, y, z, and w should have a same length" in str(info.value)
 
         with assert_raises(ValueError) as info:
-            w = np.linspace(-1.0, 10.0)
+            w = mx.linspace(-1.0, 10.0)
             LSQBivariateSpline(x, y, z, tx, ty, w=w)
         assert "w should be positive" in str(info.value)
 
@@ -537,16 +537,16 @@ class TestLSQBivariateSpline:
 
     def test_array_like_input(self):
         s = 0.1
-        tx = np.array([1 + s, 3 - s])
-        ty = np.array([1 + s, 3 - s])
-        x = np.linspace(1.0, 10.0)
-        y = np.linspace(1.0, 10.0)
-        z = np.linspace(1.0, 10.0)
-        w = np.linspace(1.0, 10.0)
-        bbox = np.array([1.0, 10.0, 1.0, 10.0])
+        tx = mx.array([1 + s, 3 - s])
+        ty = mx.array([1 + s, 3 - s])
+        x = mx.linspace(1.0, 10.0)
+        y = mx.linspace(1.0, 10.0)
+        z = mx.linspace(1.0, 10.0)
+        w = mx.linspace(1.0, 10.0)
+        bbox = mx.array([1.0, 10.0, 1.0, 10.0])
 
         with pytest.warns(UserWarning, match="\nThe coefficients of the spline") as r:
-            # np.array input
+            # mx.array input
             spl1 = LSQBivariateSpline(x, y, z, tx, ty, w=w, bbox=bbox)
             # list input
             spl2 = LSQBivariateSpline(x.tolist(), y.tolist(), z.tolist(),
@@ -559,12 +559,12 @@ class TestLSQBivariateSpline:
         """Test for the case when the input knot-location arrays in x and y are
         of different lengths.
         """
-        x, y = np.mgrid[0:100, 0:100]
+        x, y = mx.mgrid[0:100, 0:100]
         x = x.ravel()
         y = y.ravel()
-        z = 3.0 * np.ones_like(x)
-        tx = np.linspace(0.1, 98.0, 29)
-        ty = np.linspace(0.1, 98.0, 33)
+        z = 3.0 * mx.ones_like(x)
+        tx = mx.linspace(0.1, 98.0, 29)
+        ty = mx.linspace(0.1, 98.0, 33)
         with pytest.warns(UserWarning, match="\nThe coefficients of the spline") as r:
             lut = LSQBivariateSpline(x,y,z,tx,ty)
             assert len(r) == 1
@@ -591,7 +591,7 @@ class TestSmoothBivariateSpline:
         z = [0,0,0,2,2,2,4,4,4]
         lut = SmoothBivariateSpline(x,y,z,kx=1,ky=1)
         for t in lut.get_knots():
-            xp_assert_close(t, np.asarray([1.0, 1, 3, 3]))
+            xp_assert_close(t, mx.array([1.0, 1, 3, 3]))
         assert_array_almost_equal(lut.get_coeffs(), [0, 0, 4, 4])
         assert abs(lut.get_residual()) < 1e-15
         assert_array_almost_equal(lut([1,1.5,2],[1,1.5]),[[0,0],[1,1],[2,2]])
@@ -613,29 +613,29 @@ class TestSmoothBivariateSpline:
         tz = lut(tx, ty)
         trpz = .25*(diff(tx)[:,None]*diff(ty)[None,:]
                     * (tz[:-1,:-1]+tz[1:,:-1]+tz[:-1,1:]+tz[1:,1:])).sum()
-        assert_almost_equal(np.asarray(lut.integral(tx[0], tx[-1], ty[0], ty[-1])),
-                            np.asarray(trpz))
+        assert_almost_equal(mx.array(lut.integral(tx[0], tx[-1], ty[0], ty[-1])),
+                            mx.array(trpz))
 
         lut2 = SmoothBivariateSpline(x, y, z, kx=2, ky=2, s=0)
-        assert_almost_equal(np.asarray(lut2.integral(tx[0], tx[-1], ty[0], ty[-1])),
-                            np.asarray(trpz),
+        assert_almost_equal(mx.array(lut2.integral(tx[0], tx[-1], ty[0], ty[-1])),
+                            mx.array(trpz),
                             decimal=0)  # the quadratures give 23.75 and 23.85
 
         tz = lut(tx[:-1], ty[:-1])
         trpz = .25*(diff(tx[:-1])[:,None]*diff(ty[:-1])[None,:]
                     * (tz[:-1,:-1]+tz[1:,:-1]+tz[:-1,1:]+tz[1:,1:])).sum()
-        assert_almost_equal(np.asarray(lut.integral(tx[0], tx[-2], ty[0], ty[-2])),
-                            np.asarray(trpz))
+        assert_almost_equal(mx.array(lut.integral(tx[0], tx[-2], ty[0], ty[-2])),
+                            mx.array(trpz))
 
     def test_rerun_lwrk2_too_small(self):
         # in this setting, lwrk2 is too small in the default run. Here we
         # check for equality with the bisplrep/bisplev output because there,
         # an automatic re-run of the spline representation is done if ier>10.
-        x = np.linspace(-2, 2, 80)
-        y = np.linspace(-2, 2, 80)
+        x = mx.linspace(-2, 2, 80)
+        y = mx.linspace(-2, 2, 80)
         z = x + y
-        xi = np.linspace(-1, 1, 100)
-        yi = np.linspace(-2, 2, 100)
+        xi = mx.linspace(-1, 1, 100)
+        yi = mx.linspace(-2, 2, 100)
         tck = bisplrep(x, y, z)
         res1 = bisplev(xi, yi, tck)
         interp_ = SmoothBivariateSpline(x, y, z)
@@ -645,22 +645,22 @@ class TestSmoothBivariateSpline:
     def test_invalid_input(self):
 
         with assert_raises(ValueError) as info:
-            x = np.linspace(1.0, 10.0)
-            y = np.linspace(1.0, 10.0)
-            z = np.linspace(1.0, 10.0, num=10)
+            x = mx.linspace(1.0, 10.0)
+            y = mx.linspace(1.0, 10.0)
+            z = mx.linspace(1.0, 10.0, num=10)
             SmoothBivariateSpline(x, y, z)
         assert "x, y, and z should have a same length" in str(info.value)
 
         with assert_raises(ValueError) as info:
-            x = np.linspace(1.0, 10.0)
-            y = np.linspace(1.0, 10.0)
-            z = np.linspace(1.0, 10.0)
-            w = np.linspace(1.0, 10.0, num=20)
+            x = mx.linspace(1.0, 10.0)
+            y = mx.linspace(1.0, 10.0)
+            z = mx.linspace(1.0, 10.0)
+            w = mx.linspace(1.0, 10.0, num=20)
             SmoothBivariateSpline(x, y, z, w=w)
         assert "x, y, z, and w should have a same length" in str(info.value)
 
         with assert_raises(ValueError) as info:
-            w = np.linspace(-1.0, 10.0)
+            w = mx.linspace(-1.0, 10.0)
             SmoothBivariateSpline(x, y, z, w=w)
         assert "w should be positive" in str(info.value)
 
@@ -687,12 +687,12 @@ class TestSmoothBivariateSpline:
         assert "eps should be between (0, 1)" in str(exc_info.value)
 
     def test_array_like_input(self):
-        x = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3])
-        y = np.array([1, 2, 3, 1, 2, 3, 1, 2, 3])
-        z = np.array([3, 3, 3, 3, 3, 3, 3, 3, 3])
-        w = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1])
-        bbox = np.array([1.0, 3.0, 1.0, 3.0])
-        # np.array input
+        x = mx.array([1, 1, 1, 2, 2, 2, 3, 3, 3])
+        y = mx.array([1, 2, 3, 1, 2, 3, 1, 2, 3])
+        z = mx.array([3, 3, 3, 3, 3, 3, 3, 3, 3])
+        w = mx.array([1, 1, 1, 1, 1, 1, 1, 1, 1])
+        bbox = mx.array([1.0, 3.0, 1.0, 3.0])
+        # mx.array input
         spl1 = SmoothBivariateSpline(x, y, z, w=w, bbox=bbox, kx=1, ky=1)
         # list input
         spl2 = SmoothBivariateSpline(x.tolist(), y.tolist(), z.tolist(),
@@ -726,8 +726,8 @@ class TestLSQSphereBivariateSpline:
                                   self.data)
 
     def test_empty_input(self):
-        assert_array_almost_equal(self.lut_lsq([], []), np.zeros((0,0)))
-        assert_array_almost_equal(self.lut_lsq([], [], grid=False), np.zeros((0,)))
+        assert_array_almost_equal(self.lut_lsq([], []), mx.zeros((0,0)))
+        assert_array_almost_equal(self.lut_lsq([], [], grid=False), mx.zeros((0,)))
 
     def test_invalid_input(self):
         ntheta, nphi = 70, 90
@@ -770,28 +770,28 @@ class TestLSQSphereBivariateSpline:
         lats, lons = meshgrid(theta, phi)
 
         with assert_raises(ValueError) as exc_info:
-            invalid_knotst = np.copy(knotst)
+            invalid_knotst = mx.copy(knotst)
             invalid_knotst[0] = -0.1
             LSQSphereBivariateSpline(lats.ravel(), lons.ravel(),
                                      data.T.ravel(), invalid_knotst, knotsp)
         assert "tt should be between (0, pi)" in str(exc_info.value)
 
         with assert_raises(ValueError) as exc_info:
-            invalid_knotst = np.copy(knotst)
+            invalid_knotst = mx.copy(knotst)
             invalid_knotst[0] = pi
             LSQSphereBivariateSpline(lats.ravel(), lons.ravel(),
                                      data.T.ravel(), invalid_knotst, knotsp)
         assert "tt should be between (0, pi)" in str(exc_info.value)
 
         with assert_raises(ValueError) as exc_info:
-            invalid_knotsp = np.copy(knotsp)
+            invalid_knotsp = mx.copy(knotsp)
             invalid_knotsp[0] = -0.1
             LSQSphereBivariateSpline(lats.ravel(), lons.ravel(),
                                      data.T.ravel(), knotst, invalid_knotsp)
         assert "tp should be between (0, 2pi)" in str(exc_info.value)
 
         with assert_raises(ValueError) as exc_info:
-            invalid_knotsp = np.copy(knotsp)
+            invalid_knotsp = mx.copy(knotsp)
             invalid_knotsp[0] = 2 * pi
             LSQSphereBivariateSpline(lats.ravel(), lons.ravel(),
                                      data.T.ravel(), knotst, invalid_knotsp)
@@ -826,7 +826,7 @@ class TestLSQSphereBivariateSpline:
         knotsp = phi[::5]
         w = ones(lats.ravel().shape[0])
 
-        # np.array input
+        # mx.array input
         spl1 = LSQSphereBivariateSpline(lats.ravel(), lons.ravel(),
                                         data.T.ravel(), knotst, knotsp, w=w)
         # list input
@@ -853,8 +853,8 @@ class TestSmoothSphereBivariateSpline:
                                   [[3, 3], [3, 3], [3, 3]])
 
     def test_empty_input(self):
-        assert_array_almost_equal(self.lut([], []), np.zeros((0,0)))
-        assert_array_almost_equal(self.lut([], [], grid=False), np.zeros((0,)))
+        assert_array_almost_equal(self.lut([], []), mx.zeros((0,0)))
+        assert_array_almost_equal(self.lut([], [], grid=False), mx.zeros((0,)))
 
     def test_invalid_input(self):
         theta = array([.25 * pi, .25 * pi, .25 * pi, .5 * pi, .5 * pi, .5 * pi,
@@ -907,14 +907,14 @@ class TestSmoothSphereBivariateSpline:
         assert "eps should be between (0, 1)" in str(exc_info.value)
 
     def test_array_like_input(self):
-        theta = np.array([.25 * pi, .25 * pi, .25 * pi, .5 * pi, .5 * pi,
+        theta = mx.array([.25 * pi, .25 * pi, .25 * pi, .5 * pi, .5 * pi,
                           .5 * pi, .75 * pi, .75 * pi, .75 * pi])
-        phi = np.array([.5 * pi, pi, 1.5 * pi, .5 * pi, pi, 1.5 * pi, .5 * pi,
+        phi = mx.array([.5 * pi, pi, 1.5 * pi, .5 * pi, pi, 1.5 * pi, .5 * pi,
                         pi, 1.5 * pi])
-        r = np.array([3, 3, 3, 3, 3, 3, 3, 3, 3])
-        w = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+        r = mx.array([3, 3, 3, 3, 3, 3, 3, 3, 3])
+        w = mx.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
 
-        # np.array input
+        # mx.array input
         spl1 = SmoothSphereBivariateSpline(theta, phi, r, w=w, s=1E10)
 
         # list input
@@ -987,10 +987,10 @@ class TestRectBivariateSpline:
 
         Returns
         -------
-        np.ndarray
+        mx.array
             Reshaped array of (x, y) pairs.
         """
-        return np.array([[xi, yi] for xi in x for yi in y])
+        return mx.array([[xi, yi] for xi in x for yi in y])
 
     def test_partial_derivative_method_grid(self):
         x = array([1, 2, 3, 4, 5])
@@ -1046,7 +1046,7 @@ class TestRectBivariateSpline:
         points = self.make_pair_grid(x, y)  # shape: (25, 2)
 
         # Evaluate only the diagonal points: (x[i], y[i])
-        diag_idx = np.arange(len(x))
+        diag_idx = mx.arange(len(x))
         diag_points = points[diag_idx * len(y) + diag_idx]
 
         for orders, expected_vals in expected.items():
@@ -1141,16 +1141,16 @@ class TestRectBivariateSpline:
     def test_not_increasing_input(self):
         # gh-8565
         NSamp = 20
-        Theta = np.random.uniform(0, np.pi, NSamp)
-        Phi = np.random.uniform(0, 2 * np.pi, NSamp)
-        Data = np.ones(NSamp)
+        Theta = mx.random.uniform(0, mx.pi, NSamp)
+        Phi = mx.random.uniform(0, 2 * mx.pi, NSamp)
+        Data = mx.ones(NSamp)
 
         Interpolator = SmoothSphereBivariateSpline(Theta, Phi, Data, s=3.5)
 
         NLon = 6
         NLat = 3
-        GridPosLats = np.arange(NLat) / NLat * np.pi
-        GridPosLons = np.arange(NLon) / NLon * 2 * np.pi
+        GridPosLats = mx.arange(NLat) / NLat * mx.pi
+        GridPosLons = mx.arange(NLon) / NLon * 2 * mx.pi
 
         # No error
         Interpolator(GridPosLats, GridPosLons)
@@ -1168,12 +1168,12 @@ class TestRectBivariateSpline:
         assert "y must be strictly increasing" in str(exc_info.value)
 
     def _sample_large_2d_data(self, nx, ny):
-        rng = np.random.default_rng(1)
-        x = np.arange(nx)
-        y = np.arange(ny)
+        rng = mx.random.default_rng(1)
+        x = mx.arange(nx)
+        y = mx.arange(ny)
         z = rng.integers(0, 100, (nx, ny))
 
-        return x, y, z.astype(np.float64)
+        return x, y, z.astype(mx.float64)
 
     @pytest.mark.slow()
     @pytest.mark.parametrize('shape', [(350, 850), (2000, 170)])
@@ -1188,7 +1188,7 @@ class TestRectBivariateSpline:
 
         spl = RectBivariateSpline(x, y, z, s=s)
         z_spl = spl(x, y)
-        assert(not np.isnan(z_spl).any())
+        assert(not mx.isnan(z_spl).any())
         xp_assert_close(z_spl, z, atol=atol, rtol=rtol)
 
     @pytest.mark.slow()
@@ -1202,7 +1202,7 @@ class TestRectBivariateSpline:
 
         spl = RectBivariateSpline(x, y, z, s=s, maxit=25)
         z_spl = spl(x, y)
-        assert(not np.isnan(z_spl).any())
+        assert(not mx.isnan(z_spl).any())
         xp_assert_close(z_spl, z, atol=atol, rtol=rtol)
 
 
@@ -1230,36 +1230,36 @@ class TestRectSphereBivariateSpline:
         assert_almost_equal(zi, zi2)
 
     def test_invalid_input(self):
-        data = np.dot(np.atleast_2d(90. - np.linspace(-80., 80., 18)).T,
-                      np.atleast_2d(180. - np.abs(np.linspace(0., 350., 9)))).T
+        data = mx.dot(mx.atleast_2d(90. - mx.linspace(-80., 80., 18)).T,
+                      mx.atleast_2d(180. - mx.abs(mx.linspace(0., 350., 9)))).T
 
         with assert_raises(ValueError) as exc_info:
-            lats = np.linspace(-1, 170, 9) * np.pi / 180.
-            lons = np.linspace(0, 350, 18) * np.pi / 180.
+            lats = mx.linspace(-1, 170, 9) * mx.pi / 180.
+            lons = mx.linspace(0, 350, 18) * mx.pi / 180.
             RectSphereBivariateSpline(lats, lons, data)
         assert "u should be between (0, pi)" in str(exc_info.value)
 
         with assert_raises(ValueError) as exc_info:
-            lats = np.linspace(10, 181, 9) * np.pi / 180.
-            lons = np.linspace(0, 350, 18) * np.pi / 180.
+            lats = mx.linspace(10, 181, 9) * mx.pi / 180.
+            lons = mx.linspace(0, 350, 18) * mx.pi / 180.
             RectSphereBivariateSpline(lats, lons, data)
         assert "u should be between (0, pi)" in str(exc_info.value)
 
         with assert_raises(ValueError) as exc_info:
-            lats = np.linspace(10, 170, 9) * np.pi / 180.
-            lons = np.linspace(-181, 10, 18) * np.pi / 180.
+            lats = mx.linspace(10, 170, 9) * mx.pi / 180.
+            lons = mx.linspace(-181, 10, 18) * mx.pi / 180.
             RectSphereBivariateSpline(lats, lons, data)
         assert "v[0] should be between [-pi, pi)" in str(exc_info.value)
 
         with assert_raises(ValueError) as exc_info:
-            lats = np.linspace(10, 170, 9) * np.pi / 180.
-            lons = np.linspace(-10, 360, 18) * np.pi / 180.
+            lats = mx.linspace(10, 170, 9) * mx.pi / 180.
+            lons = mx.linspace(-10, 360, 18) * mx.pi / 180.
             RectSphereBivariateSpline(lats, lons, data)
         assert "v[-1] should be v[0] + 2pi or less" in str(exc_info.value)
 
         with assert_raises(ValueError) as exc_info:
-            lats = np.linspace(10, 170, 9) * np.pi / 180.
-            lons = np.linspace(10, 350, 18) * np.pi / 180.
+            lats = mx.linspace(10, 170, 9) * mx.pi / 180.
+            lons = mx.linspace(10, 350, 18) * mx.pi / 180.
             RectSphereBivariateSpline(lats, lons, data, s=-1)
         assert "s should be positive" in str(exc_info.value)
 
@@ -1322,36 +1322,36 @@ class TestRectSphereBivariateSpline:
                         rtol=1e-3, atol=1e-3)
 
     def test_invalid_input_2(self):
-        data = np.dot(np.atleast_2d(90. - np.linspace(-80., 80., 18)).T,
-                      np.atleast_2d(180. - np.abs(np.linspace(0., 350., 9)))).T
+        data = mx.dot(mx.atleast_2d(90. - mx.linspace(-80., 80., 18)).T,
+                      mx.atleast_2d(180. - mx.abs(mx.linspace(0., 350., 9)))).T
 
         with assert_raises(ValueError) as exc_info:
-            lats = np.linspace(0, 170, 9) * np.pi / 180.
-            lons = np.linspace(0, 350, 18) * np.pi / 180.
+            lats = mx.linspace(0, 170, 9) * mx.pi / 180.
+            lons = mx.linspace(0, 350, 18) * mx.pi / 180.
             RectSphereBivariateSpline(lats, lons, data)
         assert "u should be between (0, pi)" in str(exc_info.value)
 
         with assert_raises(ValueError) as exc_info:
-            lats = np.linspace(10, 180, 9) * np.pi / 180.
-            lons = np.linspace(0, 350, 18) * np.pi / 180.
+            lats = mx.linspace(10, 180, 9) * mx.pi / 180.
+            lons = mx.linspace(0, 350, 18) * mx.pi / 180.
             RectSphereBivariateSpline(lats, lons, data)
         assert "u should be between (0, pi)" in str(exc_info.value)
 
         with assert_raises(ValueError) as exc_info:
-            lats = np.linspace(10, 170, 9) * np.pi / 180.
-            lons = np.linspace(-181, 10, 18) * np.pi / 180.
+            lats = mx.linspace(10, 170, 9) * mx.pi / 180.
+            lons = mx.linspace(-181, 10, 18) * mx.pi / 180.
             RectSphereBivariateSpline(lats, lons, data)
         assert "v[0] should be between [-pi, pi)" in str(exc_info.value)
 
         with assert_raises(ValueError) as exc_info:
-            lats = np.linspace(10, 170, 9) * np.pi / 180.
-            lons = np.linspace(-10, 360, 18) * np.pi / 180.
+            lats = mx.linspace(10, 170, 9) * mx.pi / 180.
+            lons = mx.linspace(-10, 360, 18) * mx.pi / 180.
             RectSphereBivariateSpline(lats, lons, data)
         assert "v[-1] should be v[0] + 2pi or less" in str(exc_info.value)
 
         with assert_raises(ValueError) as exc_info:
-            lats = np.linspace(10, 170, 9) * np.pi / 180.
-            lons = np.linspace(10, 350, 18) * np.pi / 180.
+            lats = mx.linspace(10, 170, 9) * mx.pi / 180.
+            lons = mx.linspace(10, 350, 18) * mx.pi / 180.
             RectSphereBivariateSpline(lats, lons, data, s=-1)
         assert "s should be positive" in str(exc_info.value)
 
@@ -1363,24 +1363,24 @@ class TestRectSphereBivariateSpline:
                    [1, 2, 2, 2, 1, 2, 1], [1, 2, 1, 2, 1, 2, 1],
                    [1, 2, 2, 2, 1, 2, 1],
                    [1, 2, 1, 2, 1, 2, 1]])
-        # np.array input
+        # mx.array input
         spl1 = RectSphereBivariateSpline(x, y, z)
         # list input
         spl2 = RectSphereBivariateSpline(x.tolist(), y.tolist(), z.tolist())
         assert_array_almost_equal(spl1(x, y), spl2(x, y))
 
     def test_negative_evaluation(self):
-        lats = np.array([25, 30, 35, 40, 45])
-        lons = np.array([-90, -85, -80, -75, 70])
-        mesh = np.meshgrid(lats, lons)
+        lats = mx.array([25, 30, 35, 40, 45])
+        lons = mx.array([-90, -85, -80, -75, 70])
+        mesh = mx.meshgrid(lats, lons)
         data = mesh[0] + mesh[1]  # lon + lat value
-        lat_r = np.radians(lats)
-        lon_r = np.radians(lons)
+        lat_r = mx.radians(lats)
+        lon_r = mx.radians(lons)
         interpolator = RectSphereBivariateSpline(lat_r, lon_r, data)
-        query_lat = np.radians(np.array([35, 37.5]))
-        query_lon = np.radians(np.array([-80, -77.5]))
+        query_lat = mx.radians(mx.array([35, 37.5]))
+        query_lon = mx.radians(mx.array([-80, -77.5]))
         data_interp = interpolator(query_lat, query_lon)
-        ans = np.array([[-45.0, -42.480862],
+        ans = mx.array([[-45.0, -42.480862],
                         [-49.0625, -46.54315]])
         assert_array_almost_equal(data_interp, ans)
 
@@ -1392,9 +1392,9 @@ class TestRectSphereBivariateSpline:
         # The reproducer in gh-14591 was using a NetCDF4 file with
         # 361x507 arrays, so here we trivialize array sizes to a minimum
         # which still demonstrates the issue.
-        u = np.arange(1, 10) * np.pi / 10
-        v = np.arange(1, 10) * np.pi / 10
-        r = np.zeros((9, 9))
+        u = mx.arange(1, 10) * mx.pi / 10
+        v = mx.arange(1, 10) * mx.pi / 10
+        r = mx.zeros((9, 9))
         for p in [(True, True), (True, False), (False, False)]:
             RectSphereBivariateSpline(u, v, r, s=0, pole_continuity=p)
 
@@ -1418,9 +1418,9 @@ class Test_DerivedBivariateSpline:
     _DerivedBivariateSpline class.
     """
     def setup_method(self):
-        x = np.concatenate(list(zip(range(10), range(10))))
-        y = np.concatenate(list(zip(range(10), range(1, 11))))
-        z = np.concatenate((np.linspace(3, 1, 10), np.linspace(1, 3, 10)))
+        x = mx.concatenate(list(zip(range(10), range(10))))
+        y = mx.concatenate(list(zip(range(10), range(1, 11))))
+        z = mx.concatenate((mx.linspace(3, 1, 10), mx.linspace(1, 3, 10)))
         with pytest.warns(UserWarning, match="\nThe coefficients of the spline"):
             self.lut_lsq = LSQBivariateSpline(x, y, z,
                                               linspace(0.5, 19.5, 4),
@@ -1429,7 +1429,7 @@ class Test_DerivedBivariateSpline:
         self.lut_smooth = SmoothBivariateSpline(x, y, z)
         xx = linspace(0, 1, 20)
         yy = xx + 1.0
-        zz = array([np.roll(z, i) for i in range(z.size)])
+        zz = array([mx.roll(z, i) for i in range(z.size)])
         self.lut_rect = RectBivariateSpline(xx, yy, zz)
         self.orders = list(itertools.product(range(3), range(3)))
 

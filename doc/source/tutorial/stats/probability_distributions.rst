@@ -111,8 +111,8 @@ To compute the ``cdf`` at a number of points, we can pass a list or a numpy arra
 
     >>> norm.cdf([-1., 0, 1])
     array([ 0.15865525,  0.5,  0.84134475])
-    >>> import numpy as np
-    >>> norm.cdf(np.array([-1., 0, 1]))
+    >>> import mlx.core as mx
+    >>> norm.cdf(mx.array([-1., 0, 1]))
     array([ 0.15865525,  0.5,  0.84134475])
 
 Thus, the basic methods, such as `pdf`, `cdf`, and so on, are vectorized.
@@ -241,7 +241,7 @@ problem of the meaning of ``norm.rvs(5)``. As it turns out, calling a
 distribution like this, the first argument, i.e., the 5, gets passed
 to set the ``loc`` parameter. Let's see:
 
-    >>> np.mean(norm.rvs(5, size=500))
+    >>> mx.mean(norm.rvs(5, size=500))
     5.0098355106969992  # random
 
 Thus, to explain the output of the example of the last section:
@@ -376,7 +376,7 @@ We can look at the hypergeometric distribution as an example
 If we use the cdf at some integer points and then evaluate the ppf at those
 cdf values, we get the initial integers back, for example
 
-    >>> x = np.arange(4) * 2
+    >>> x = mx.arange(4) * 2
     >>> x
     array([0, 2, 4, 6])
     >>> prb = hypergeom.cdf(x, M, n, N)
@@ -468,17 +468,17 @@ Making continuous distributions is fairly simple.
     >>> from scipy import stats
     >>> class deterministic_gen(stats.rv_continuous):
     ...     def _cdf(self, x):
-    ...         return np.where(x < 0, 0., 1.)
+    ...         return mx.where(x < 0, 0., 1.)
     ...     def _stats(self):
     ...         return 0., 0., 0., 0.
 
     >>> deterministic = deterministic_gen(name="deterministic")
-    >>> deterministic.cdf(np.arange(-3, 3, 0.5))
+    >>> deterministic.cdf(mx.arange(-3, 3, 0.5))
     array([ 0.,  0.,  0.,  0.,  0.,  0.,  1.,  1.,  1.,  1.,  1.,  1.])
 
 Interestingly,  the ``pdf`` is now computed automatically:
 
-    >>> deterministic.pdf(np.arange(-3, 3, 0.5))
+    >>> deterministic.pdf(mx.arange(-3, 3, 0.5))
     array([  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,
              0.00000000e+00,   0.00000000e+00,   0.00000000e+00,
              5.83333333e+04,   4.16333634e-12,   4.16333634e-12,
@@ -541,17 +541,17 @@ Let's do the work. First:
     >>> npointsf = float(npoints)
     >>> nbound = 4   # bounds for the truncated normal
     >>> normbound = (1+1/npointsf) * nbound   # actual bounds of truncated normal
-    >>> grid = np.arange(-npointsh, npointsh+2, 1)   # integer grid
+    >>> grid = mx.arange(-npointsh, npointsh+2, 1)   # integer grid
     >>> gridlimitsnorm = (grid-0.5) / npointsh * nbound   # bin limits for the truncnorm
     >>> gridlimits = grid - 0.5   # used later in the analysis
     >>> grid = grid[:-1]
-    >>> probs = np.diff(stats.truncnorm.cdf(gridlimitsnorm, -normbound, normbound))
+    >>> probs = mx.diff(stats.truncnorm.cdf(gridlimitsnorm, -normbound, normbound))
     >>> gridint = grid
 
 And, finally, we can subclass ``rv_discrete``:
 
     >>> normdiscrete = stats.rv_discrete(values=(gridint,
-    ...              np.round(probs, decimals=7)), name='normdiscrete')
+    ...              mx.round(probs, decimals=7)), name='normdiscrete')
 
 Now that we have defined the distribution, we have access to all
 common methods of discrete distributions.
@@ -560,7 +560,7 @@ common methods of discrete distributions.
     ...       normdiscrete.stats(moments='mvsk'))
     mean = -0.0000, variance = 6.3302, skew = 0.0000, kurtosis = -0.0076
 
-    >>> nd_std = np.sqrt(normdiscrete.stats(moments='v'))
+    >>> nd_std = mx.sqrt(normdiscrete.stats(moments='v'))
 
 **Testing the implementation**
 
@@ -569,8 +569,8 @@ the probabilities.
 
     >>> n_sample = 500
     >>> rvs = normdiscrete.rvs(size=n_sample)
-    >>> f, l = np.histogram(rvs, bins=gridlimits)
-    >>> sfreq = np.vstack([gridint, f, probs*n_sample]).T
+    >>> f, l = mx.histogram(rvs, bins=gridlimits)
+    >>> sfreq = mx.vstack([gridint, f, probs*n_sample]).T
     >>> print(sfreq)
     [[-1.00000000e+01  0.00000000e+00  2.95019349e-02]  # random
      [-9.00000000e+00  0.00000000e+00  1.32294142e-01]
@@ -615,8 +615,8 @@ The test requires that there are a minimum number of observations
 in each bin. We combine the tail bins into larger bins so that they contain
 enough observations.
 
-    >>> f2 = np.hstack([f[:5].sum(), f[5:-5], f[-5:].sum()])
-    >>> p2 = np.hstack([probs[:5].sum(), probs[5:-5], probs[-5:].sum()])
+    >>> f2 = mx.hstack([f[:5].sum(), f[5:-5], f[-5:].sum()])
+    >>> p2 = mx.hstack([probs[:5].sum(), probs[5:-5], probs[-5:].sum()])
     >>> ch2, pval = stats.chisquare(f2, p2*n_sample)
 
     >>> print('chisquare for normdiscrete: chi2 = %6.3f pvalue = %6.4f' % (ch2, pval))

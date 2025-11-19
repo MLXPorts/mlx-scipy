@@ -14,7 +14,7 @@ from scipy.optimize import rosen, minimize, rosen_der
 from scipy.sparse import csr_array
 from scipy import stats
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import (assert_equal, assert_allclose, assert_almost_equal,
                            assert_string_equal, assert_)
 from pytest import raises as assert_raises, warns
@@ -24,8 +24,8 @@ import pytest
 class TestDifferentialEvolutionSolver:
 
     def setup_method(self):
-        self.old_seterr = np.seterr(invalid='raise')
-        self.limits = np.array([[0., 0.],
+        self.old_seterr = mx.seterr(invalid='raise')
+        self.limits = mx.array([[0., 0.],
                                 [2., 2.]])
         self.bounds = [(0., 2.), (0., 2.)]
 
@@ -39,11 +39,11 @@ class TestDifferentialEvolutionSolver:
                                                          mutation=0.5)
         # create a population that's only 7 members long
         # [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
-        population = np.atleast_2d(np.arange(0.1, 0.8, 0.1)).T
+        population = mx.atleast_2d(mx.arange(0.1, 0.8, 0.1)).T
         self.dummy_solver2.population = population
 
     def teardown_method(self):
-        np.seterr(**self.old_seterr)
+        mx.seterr(**self.old_seterr)
 
     def quadratic(self, x):
         return x[0]**2
@@ -125,38 +125,38 @@ class TestDifferentialEvolutionSolver:
 
     def test__mutate1(self):
         # strategies */1/*, i.e. rand/1/bin, best/1/exp, etc.
-        result = np.array([0.05])
-        trial = self.dummy_solver2._best1(np.array([2, 3, 4, 5, 6]))
+        result = mx.array([0.05])
+        trial = self.dummy_solver2._best1(mx.array([2, 3, 4, 5, 6]))
         assert_allclose(trial, result)
 
-        result = np.array([0.25])
-        trial = self.dummy_solver2._rand1(np.array([2, 3, 4, 5, 6]))
+        result = mx.array([0.25])
+        trial = self.dummy_solver2._rand1(mx.array([2, 3, 4, 5, 6]))
         assert_allclose(trial, result)
 
     def test__mutate2(self):
         # strategies */2/*, i.e. rand/2/bin, best/2/exp, etc.
         # [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 
-        result = np.array([-0.1])
-        trial = self.dummy_solver2._best2(np.array([2, 3, 4, 5, 6]))
+        result = mx.array([-0.1])
+        trial = self.dummy_solver2._best2(mx.array([2, 3, 4, 5, 6]))
         assert_allclose(trial, result)
 
-        result = np.array([0.1])
-        trial = self.dummy_solver2._rand2(np.array([2, 3, 4, 5, 6]))
+        result = mx.array([0.1])
+        trial = self.dummy_solver2._rand2(mx.array([2, 3, 4, 5, 6]))
         assert_allclose(trial, result)
 
     def test__randtobest1(self):
         # strategies randtobest/1/*
-        result = np.array([0.15])
-        trial = self.dummy_solver2._randtobest1(np.array([2, 3, 4, 5, 6]))
+        result = mx.array([0.15])
+        trial = self.dummy_solver2._randtobest1(mx.array([2, 3, 4, 5, 6]))
         assert_allclose(trial, result)
 
     def test__currenttobest1(self):
         # strategies currenttobest/1/*
-        result = np.array([0.1])
+        result = mx.array([0.1])
         trial = self.dummy_solver2._currenttobest1(
             1,
-            np.array([2, 3, 4, 5, 6])
+            mx.array([2, 3, 4, 5, 6])
         )
         assert_allclose(trial, result)
 
@@ -184,7 +184,7 @@ class TestDifferentialEvolutionSolver:
                           self.bounds,
                           mutation=mutation)
 
-        mutation = (0.1, np.nan)
+        mutation = (0.1, mx.nan)
         assert_raises(ValueError,
                           DifferentialEvolutionSolver,
                           func,
@@ -200,7 +200,7 @@ class TestDifferentialEvolutionSolver:
 
     def test_invalid_functional(self):
         def func(x):
-            return np.array([np.sum(x ** 2), np.sum(x)])
+            return mx.array([mx.sum(x ** 2), mx.sum(x)])
 
         with assert_raises(
                 RuntimeError,
@@ -208,23 +208,23 @@ class TestDifferentialEvolutionSolver:
             differential_evolution(func, [(-2, 2), (-2, 2)])
 
     def test__scale_parameters(self):
-        trial = np.array([0.3])
+        trial = mx.array([0.3])
         assert_equal(30, self.dummy_solver._scale_parameters(trial))
 
         # it should also work with the limits reversed
-        self.dummy_solver.limits = np.array([[100], [0.]])
+        self.dummy_solver.limits = mx.array([[100], [0.]])
         assert_equal(30, self.dummy_solver._scale_parameters(trial))
 
     def test__unscale_parameters(self):
-        trial = np.array([30])
+        trial = mx.array([30])
         assert_equal(0.3, self.dummy_solver._unscale_parameters(trial))
 
         # it should also work with the limits reversed
-        self.dummy_solver.limits = np.array([[100], [0.]])
+        self.dummy_solver.limits = mx.array([[100], [0.]])
         assert_equal(0.3, self.dummy_solver._unscale_parameters(trial))
 
     def test_equal_bounds(self):
-        with np.errstate(invalid='raise'):
+        with mx.errstate(invalid='raise'):
             solver = DifferentialEvolutionSolver(
                 self.quadratic,
                 bounds=[(2.0, 2.0), (1.0, 3.0)]
@@ -236,11 +236,11 @@ class TestDifferentialEvolutionSolver:
         assert_equal(res.x, [2.0, 3.0])
 
     def test__ensure_constraint(self):
-        trial = np.array([1.1, -100, 0.9, 2., 300., -0.00001])
+        trial = mx.array([1.1, -100, 0.9, 2., 300., -0.00001])
         self.dummy_solver._ensure_constraint(trial)
 
         assert_equal(trial[2], 0.9)
-        assert_(np.logical_and(trial >= 0, trial <= 1).all())
+        assert_(mx.logical_and(trial >= 0, trial <= 1).all())
 
     def test_differential_evolution(self):
         # test that the Jmin of DifferentialEvolutionSolver
@@ -276,7 +276,7 @@ class TestDifferentialEvolutionSolver:
                 func.val = val
             return val
         func.x = None
-        func.val = np.inf
+        func.val = mx.inf
 
         def callback(intermediate_result):
             callback.nit += 1
@@ -331,7 +331,7 @@ class TestDifferentialEvolutionSolver:
 
         # Check that polish occurs after `StopIteration` as advertised
         callback.nit = 0
-        func.val = np.inf
+        func.val = mx.inf
         kwargs['polish'] = True
         res = differential_evolution(**kwargs, callback=callback)
         assert res.fun < ref.fun
@@ -416,13 +416,13 @@ class TestDifferentialEvolutionSolver:
 
     def test_select_samples(self):
         # select_samples should return 5 separate random numbers.
-        limits = np.arange(12., dtype='float64').reshape(2, 6)
+        limits = mx.arange(12., dtype='float64').reshape(2, 6)
         bounds = list(zip(limits[0, :], limits[1, :]))
         solver = DifferentialEvolutionSolver(None, bounds, popsize=1)
         candidate = 0
         r1, r2, r3, r4, r5 = solver._select_samples(candidate, 5)
         assert_equal(
-            len(np.unique(np.array([candidate, r1, r2, r3, r4, r5]))), 6)
+            len(mx.unique(mx.array([candidate, r1, r2, r3, r4, r5]))), 6)
 
     def test_maxiter_stops_solve(self):
         # test that if the maximum number of iterations is exceeded
@@ -487,7 +487,7 @@ class TestDifferentialEvolutionSolver:
                                              [(-100, 100)],
                                              tol=0.02)
         solver.solve()
-        assert_equal(np.argmin(solver.population_energies), 0)
+        assert_equal(mx.argmin(solver.population_energies), 0)
 
     def test_quadratic_from_diff_ev(self):
         # test the quadratic function from differential_evolution function
@@ -511,9 +511,9 @@ class TestDifferentialEvolutionSolver:
         assert_equal(result.nfev, result2.nfev)
 
     def test_random_generator(self):
-        # check that np.random.Generator can be used (numpy >= 1.17)
-        # obtain a np.random.Generator object
-        rng = np.random.default_rng()
+        # check that mx.random.Generator can be used (numpy >= 1.17)
+        # obtain a mx.random.Generator object
+        rng = mx.random.default_rng()
 
         inits = ['random', 'latinhypercube', 'sobol', 'halton']
         for init in inits:
@@ -554,7 +554,7 @@ class TestDifferentialEvolutionSolver:
         solver = DifferentialEvolutionSolver(rosen, self.bounds, popsize=3)
         solver._calculate_population_energies(solver.population)
         solver._promote_lowest_energy()
-        assert_equal(np.argmin(solver.population_energies), 0)
+        assert_equal(mx.argmin(solver.population_energies), 0)
 
         # initial calculation of the energies should require 6 nfev.
         assert_equal(solver._nfev, 6)
@@ -565,7 +565,7 @@ class TestDifferentialEvolutionSolver:
         solver = DifferentialEvolutionSolver(rosen, self.bounds, popsize=3,
                                              maxfun=12)
         x, fun = next(solver)
-        assert_equal(np.size(x, 0), 2)
+        assert_equal(mx.size(x, 0), 2)
 
         # 6 nfev are required for initial calculation of energies, 6 nfev are
         # required for the evolution of the 6 population members.
@@ -593,7 +593,7 @@ class TestDifferentialEvolutionSolver:
 
     def test_maxiter_none_GH5731(self):
         # Pre 0.17 the previous default for maxiter and maxfun was None.
-        # the numerical defaults are now 1000 and np.inf. However, some scripts
+        # the numerical defaults are now 1000 and mx.inf. However, some scripts
         # will still supply None for both of those, this will raise a TypeError
         # in the solve method.
         solver = DifferentialEvolutionSolver(rosen, self.bounds, maxiter=None,
@@ -614,48 +614,48 @@ class TestDifferentialEvolutionSolver:
 
         # check that population initiation:
         # 1) resets _nfev to 0
-        # 2) all population energies are np.inf
+        # 2) all population energies are mx.inf
         solver.init_population_random()
         assert_equal(solver._nfev, 0)
-        assert_(np.all(np.isinf(solver.population_energies)))
+        assert_(mx.all(mx.isinf(solver.population_energies)))
 
         solver.init_population_lhs()
         assert_equal(solver._nfev, 0)
-        assert_(np.all(np.isinf(solver.population_energies)))
+        assert_(mx.all(mx.isinf(solver.population_energies)))
 
         solver.init_population_qmc(qmc_engine='halton')
         assert_equal(solver._nfev, 0)
-        assert_(np.all(np.isinf(solver.population_energies)))
+        assert_(mx.all(mx.isinf(solver.population_energies)))
 
         solver = DifferentialEvolutionSolver(rosen, self.bounds, init='sobol')
         solver.init_population_qmc(qmc_engine='sobol')
         assert_equal(solver._nfev, 0)
-        assert_(np.all(np.isinf(solver.population_energies)))
+        assert_(mx.all(mx.isinf(solver.population_energies)))
 
         # we should be able to initialize with our own array
-        population = np.linspace(-1, 3, 10).reshape(5, 2)
+        population = mx.linspace(-1, 3, 10).reshape(5, 2)
         solver = DifferentialEvolutionSolver(rosen, self.bounds,
                                              init=population,
                                              strategy='best2bin',
                                              atol=0.01, rng=1, popsize=5)
 
         assert_equal(solver._nfev, 0)
-        assert_(np.all(np.isinf(solver.population_energies)))
+        assert_(mx.all(mx.isinf(solver.population_energies)))
         assert_(solver.num_population_members == 5)
         assert_(solver.population_shape == (5, 2))
 
         # check that the population was initialized correctly
-        unscaled_population = np.clip(solver._unscale_parameters(population),
+        unscaled_population = mx.clip(solver._unscale_parameters(population),
                                       0, 1)
         assert_almost_equal(solver.population[:5], unscaled_population)
 
         # population values need to be clipped to bounds
-        assert_almost_equal(np.min(solver.population[:5]), 0)
-        assert_almost_equal(np.max(solver.population[:5]), 1)
+        assert_almost_equal(mx.min(solver.population[:5]), 0)
+        assert_almost_equal(mx.max(solver.population[:5]), 1)
 
         # shouldn't be able to initialize with an array if it's the wrong shape
         # this would have too many parameters
-        population = np.linspace(-1, 3, 15).reshape(5, 3)
+        population = mx.linspace(-1, 3, 15).reshape(5, 3)
         assert_raises(ValueError,
                       DifferentialEvolutionSolver,
                       *(rosen, self.bounds),
@@ -663,7 +663,7 @@ class TestDifferentialEvolutionSolver:
 
         # provide an initial solution
         # bounds are [(0, 2), (0, 2)]
-        x0 = np.random.uniform(low=0.0, high=2.0, size=2)
+        x0 = mx.random.uniform(low=0.0, high=2.0, size=2)
         solver = DifferentialEvolutionSolver(
             rosen, self.bounds, x0=x0
         )
@@ -684,7 +684,7 @@ class TestDifferentialEvolutionSolver:
         # returns inf on some runs
         def sometimes_inf(x):
             if x[0] < .5:
-                return np.inf
+                return mx.inf
             return x[1]
         bounds = [(0, 1), (0, 1)]
         differential_evolution(sometimes_inf, bounds=bounds, disp=False)
@@ -748,17 +748,17 @@ class TestDifferentialEvolutionSolver:
             return [x[0] + x[1]]
 
         def constr_f2(x):
-            return np.array([x[0]**2 + x[1], x[0] - x[1]])
+            return mx.array([x[0]**2 + x[1], x[0] - x[1]])
 
-        nlc = NonlinearConstraint(constr_f, -np.inf, 1.9)
+        nlc = NonlinearConstraint(constr_f, -mx.inf, 1.9)
 
         solver = DifferentialEvolutionSolver(rosen, [(0, 2), (0, 2)],
                                              constraints=(nlc,))
 
-        cv = solver._constraint_violation_fn(np.array([1.0, 1.0]))
+        cv = solver._constraint_violation_fn(mx.array([1.0, 1.0]))
         assert_almost_equal(cv, 0.1)
 
-        nlc2 = NonlinearConstraint(constr_f2, -np.inf, 1.8)
+        nlc2 = NonlinearConstraint(constr_f2, -mx.inf, 1.8)
         solver = DifferentialEvolutionSolver(rosen, [(0, 2), (0, 2)],
                                              constraints=(nlc, nlc2))
 
@@ -768,20 +768,20 @@ class TestDifferentialEvolutionSolver:
         vs = [(0.3, 0.64, 0.0), (2.1, 4.2, 0.0), (0, 0, 0)]
 
         for x, v in zip(xs, vs):
-            cv = solver._constraint_violation_fn(np.array(x))
-            assert_allclose(cv, np.atleast_2d(v))
+            cv = solver._constraint_violation_fn(mx.array(x))
+            assert_allclose(cv, mx.atleast_2d(v))
 
         # vectorized calculation of a series of solutions
         assert_allclose(
-            solver._constraint_violation_fn(np.array(xs)), np.array(vs)
+            solver._constraint_violation_fn(mx.array(xs)), mx.array(vs)
         )
 
         # the following line is used in _calculate_population_feasibilities.
         # _constraint_violation_fn returns an (1, M) array when
         # x.shape == (N,), i.e. a single solution. Therefore this list
         # comprehension should generate (S, 1, M) array.
-        constraint_violation = np.array([solver._constraint_violation_fn(x)
-                                         for x in np.array(xs)])
+        constraint_violation = mx.array([solver._constraint_violation_fn(x)
+                                         for x in mx.array(xs)])
         assert constraint_violation.shape == (3, 1, 3)
 
         # we need reasonable error messages if the constraint function doesn't
@@ -790,7 +790,7 @@ class TestDifferentialEvolutionSolver:
             # returns (S, M), rather than (M, S)
             return constr_f2(x).T
 
-        nlc2 = NonlinearConstraint(constr_f3, -np.inf, 1.8)
+        nlc2 = NonlinearConstraint(constr_f3, -mx.inf, 1.8)
         solver = DifferentialEvolutionSolver(rosen, [(0, 2), (0, 2)],
                                              constraints=(nlc, nlc2),
                                              vectorized=False)
@@ -798,7 +798,7 @@ class TestDifferentialEvolutionSolver:
         with pytest.raises(
                 RuntimeError, match="An array returned from a Constraint"
         ):
-            solver._constraint_violation_fn(np.array(xs))
+            solver._constraint_violation_fn(mx.array(xs))
 
     def test_constraint_population_feasibilities(self):
         def constr_f(x):
@@ -807,7 +807,7 @@ class TestDifferentialEvolutionSolver:
         def constr_f2(x):
             return [x[0]**2 + x[1], x[0] - x[1]]
 
-        nlc = NonlinearConstraint(constr_f, -np.inf, 1.9)
+        nlc = NonlinearConstraint(constr_f, -mx.inf, 1.9)
 
         solver = DifferentialEvolutionSolver(rosen, [(0, 2), (0, 2)],
                                              constraints=(nlc,))
@@ -815,12 +815,12 @@ class TestDifferentialEvolutionSolver:
         # are population feasibilities correct
         # [0.5, 0.5] corresponds to scaled values of [1., 1.]
         feas, cv = solver._calculate_population_feasibilities(
-            np.array([[0.5, 0.5], [1., 1.]]))
+            mx.array([[0.5, 0.5], [1., 1.]]))
         assert_equal(feas, [False, False])
-        assert_almost_equal(cv, np.array([[0.1], [2.1]]))
+        assert_almost_equal(cv, mx.array([[0.1], [2.1]]))
         assert cv.shape == (2, 1)
 
-        nlc2 = NonlinearConstraint(constr_f2, -np.inf, 1.8)
+        nlc2 = NonlinearConstraint(constr_f2, -mx.inf, 1.8)
 
         for vectorize in [False, True]:
             solver = DifferentialEvolutionSolver(rosen, [(0, 2), (0, 2)],
@@ -829,27 +829,27 @@ class TestDifferentialEvolutionSolver:
                                                  updating='deferred')
 
             feas, cv = solver._calculate_population_feasibilities(
-                np.array([[0.5, 0.5], [0.6, 0.5]]))
+                mx.array([[0.5, 0.5], [0.6, 0.5]]))
             assert_equal(feas, [False, False])
-            assert_almost_equal(cv, np.array([[0.1, 0.2, 0], [0.3, 0.64, 0]]))
+            assert_almost_equal(cv, mx.array([[0.1, 0.2, 0], [0.3, 0.64, 0]]))
 
             feas, cv = solver._calculate_population_feasibilities(
-                np.array([[0.5, 0.5], [1., 1.]]))
+                mx.array([[0.5, 0.5], [1., 1.]]))
             assert_equal(feas, [False, False])
-            assert_almost_equal(cv, np.array([[0.1, 0.2, 0], [2.1, 4.2, 0]]))
+            assert_almost_equal(cv, mx.array([[0.1, 0.2, 0], [2.1, 4.2, 0]]))
             assert cv.shape == (2, 3)
 
             feas, cv = solver._calculate_population_feasibilities(
-                np.array([[0.25, 0.25], [1., 1.]]))
+                mx.array([[0.25, 0.25], [1., 1.]]))
             assert_equal(feas, [True, False])
-            assert_almost_equal(cv, np.array([[0.0, 0.0, 0.], [2.1, 4.2, 0]]))
+            assert_almost_equal(cv, mx.array([[0.0, 0.0, 0.], [2.1, 4.2, 0]]))
             assert cv.shape == (2, 3)
 
     def test_constraint_solve(self):
         def constr_f(x):
-            return np.array([x[0] + x[1]])
+            return mx.array([x[0] + x[1]])
 
-        nlc = NonlinearConstraint(constr_f, -np.inf, 1.9)
+        nlc = NonlinearConstraint(constr_f, -mx.inf, 1.9)
 
         solver = DifferentialEvolutionSolver(rosen, [(0, 2), (0, 2)],
                                              constraints=(nlc,))
@@ -864,9 +864,9 @@ class TestDifferentialEvolutionSolver:
     @pytest.mark.fail_slow(10)
     def test_impossible_constraint(self):
         def constr_f(x):
-            return np.array([x[0] + x[1]])
+            return mx.array([x[0] + x[1]])
 
-        nlc = NonlinearConstraint(constr_f, -np.inf, -1)
+        nlc = NonlinearConstraint(constr_f, -mx.inf, -1)
 
         solver = DifferentialEvolutionSolver(
             rosen, [(0, 2), (0, 2)], constraints=(nlc,), popsize=1, rng=1, maxiter=100
@@ -887,7 +887,7 @@ class TestDifferentialEvolutionSolver:
             rosen, [(0, 2), (0, 2)], constraints=(nlc,), polish=False)
         next(solver)
         assert not solver.feasible.all()
-        assert not np.isfinite(solver.population_energies).all()
+        assert not mx.isfinite(solver.population_energies).all()
 
         # now swap two of the entries in the population
         l = 20
@@ -906,45 +906,45 @@ class TestDifferentialEvolutionSolver:
         #               energy_orig, feasible_orig, cv_orig)
         def constr_f(x):
             return [x[0] + x[1]]
-        nlc = NonlinearConstraint(constr_f, -np.inf, 1.9)
+        nlc = NonlinearConstraint(constr_f, -mx.inf, 1.9)
         solver = DifferentialEvolutionSolver(rosen, [(0, 2), (0, 2)],
                                              constraints=(nlc,))
         fn = solver._accept_trial
         # both solutions are feasible, select lower energy
-        assert fn(0.1, True, np.array([0.]), 1.0, True, np.array([0.]))
-        assert (fn(1.0, True, np.array([0.0]), 0.1, True, np.array([0.0])) is False)
-        assert fn(0.1, True, np.array([0.]), 0.1, True, np.array([0.]))
+        assert fn(0.1, True, mx.array([0.]), 1.0, True, mx.array([0.]))
+        assert (fn(1.0, True, mx.array([0.0]), 0.1, True, mx.array([0.0])) is False)
+        assert fn(0.1, True, mx.array([0.]), 0.1, True, mx.array([0.]))
 
         # trial is feasible, original is not
-        assert fn(9.9, True, np.array([0.]), 1.0, False, np.array([1.]))
+        assert fn(9.9, True, mx.array([0.]), 1.0, False, mx.array([1.]))
 
         # trial and original are infeasible
         # cv_trial have to be <= cv_original to be better
-        assert (fn(0.1, False, np.array([0.5, 0.5]),
-                   1.0, False, np.array([1., 1.0])))
-        assert (fn(0.1, False, np.array([0.5, 0.5]),
-                   1.0, False, np.array([1., 0.50])))
-        assert not (fn(1.0, False, np.array([0.5, 0.5]),
-                       1.0, False, np.array([1.0, 0.4])))
+        assert (fn(0.1, False, mx.array([0.5, 0.5]),
+                   1.0, False, mx.array([1., 1.0])))
+        assert (fn(0.1, False, mx.array([0.5, 0.5]),
+                   1.0, False, mx.array([1., 0.50])))
+        assert not (fn(1.0, False, mx.array([0.5, 0.5]),
+                       1.0, False, mx.array([1.0, 0.4])))
 
     def test_constraint_wrapper(self):
-        lb = np.array([0, 20, 30])
-        ub = np.array([0.5, np.inf, 70])
-        x0 = np.array([1, 2, 3])
+        lb = mx.array([0, 20, 30])
+        ub = mx.array([0.5, mx.inf, 70])
+        x0 = mx.array([1, 2, 3])
         pc = _ConstraintWrapper(Bounds(lb, ub), x0)
         assert (pc.violation(x0) > 0).any()
         assert (pc.violation([0.25, 21, 31]) == 0).all()
 
         # check vectorized Bounds constraint
-        xs = np.arange(1, 16).reshape(5, 3)
+        xs = mx.arange(1, 16).reshape(5, 3)
         violations = []
         for x in xs:
             violations.append(pc.violation(x))
-        np.testing.assert_allclose(pc.violation(xs.T), np.array(violations).T)
+        mx.testing.assert_allclose(pc.violation(xs.T), mx.array(violations).T)
 
-        x0 = np.array([1, 2, 3, 4])
-        A = np.array([[1, 2, 3, 4], [5, 0, 0, 6], [7, 0, 8, 0]])
-        pc = _ConstraintWrapper(LinearConstraint(A, -np.inf, 0), x0)
+        x0 = mx.array([1, 2, 3, 4])
+        A = mx.array([[1, 2, 3, 4], [5, 0, 0, 6], [7, 0, 8, 0]])
+        pc = _ConstraintWrapper(LinearConstraint(A, -mx.inf, 0), x0)
         assert (pc.violation(x0) > 0).any()
         assert (pc.violation([-10, 2, -10, 4]) == 0).all()
 
@@ -952,13 +952,13 @@ class TestDifferentialEvolutionSolver:
         # with each parameter vector being 4 long, with 3 constraints
         # xs is the same shape as stored in the differential evolution
         # population, but it's sent to the violation function as (len(x), M)
-        xs = np.arange(1, 29).reshape(7, 4)
+        xs = mx.arange(1, 29).reshape(7, 4)
         violations = []
         for x in xs:
             violations.append(pc.violation(x))
-        np.testing.assert_allclose(pc.violation(xs.T), np.array(violations).T)
+        mx.testing.assert_allclose(pc.violation(xs.T), mx.array(violations).T)
 
-        pc = _ConstraintWrapper(LinearConstraint(csr_array(A), -np.inf, 0),
+        pc = _ConstraintWrapper(LinearConstraint(csr_array(A), -mx.inf, 0),
                                 x0)
         assert (pc.violation(x0) > 0).any()
         assert (pc.violation([-10, 2, -10, 4]) == 0).all()
@@ -966,7 +966,7 @@ class TestDifferentialEvolutionSolver:
         def fun(x):
             return A.dot(x)
 
-        nonlinear = NonlinearConstraint(fun, -np.inf, 0)
+        nonlinear = NonlinearConstraint(fun, -mx.inf, 0)
         pc = _ConstraintWrapper(nonlinear, [-10, 2, -10, 4])
         assert (pc.violation(x0) > 0).any()
         assert (pc.violation([-10, 2, -10, 4]) == 0).all()
@@ -978,12 +978,12 @@ class TestDifferentialEvolutionSolver:
             # where N is the number of parameters,
             # S is the number of solution vectors to be examined,
             # and M is the number of constraint components
-            return np.array([x[0] ** 2 + x[1],
+            return mx.array([x[0] ** 2 + x[1],
                              x[0] ** 2 - x[1]])
 
         nlc = NonlinearConstraint(cons_f, [-1, -0.8500], [2, 2])
         pc = _ConstraintWrapper(nlc, [0.5, 1])
-        assert np.size(pc.bounds[0]) == 2
+        assert mx.size(pc.bounds[0]) == 2
 
         xs = [(0.5, 1), (0.5, 1.2), (1.2, 1.2), (0.1, -1.2), (0.1, 2.0)]
         vs = [(0, 0), (0, 0.1), (0.64, 0), (0.19, 0), (0.01, 1.14)]
@@ -992,30 +992,30 @@ class TestDifferentialEvolutionSolver:
             assert_allclose(pc.violation(x), v)
 
         # now check that we can vectorize the constraint wrapper
-        assert_allclose(pc.violation(np.array(xs).T),
-                        np.array(vs).T)
-        assert pc.fun(np.array(xs).T).shape == (2, len(xs))
-        assert pc.violation(np.array(xs).T).shape == (2, len(xs))
+        assert_allclose(pc.violation(mx.array(xs).T),
+                        mx.array(vs).T)
+        assert pc.fun(mx.array(xs).T).shape == (2, len(xs))
+        assert pc.violation(mx.array(xs).T).shape == (2, len(xs))
         assert pc.num_constr == 2
         assert pc.parameter_count == 2
 
     def test_matrix_linear_constraint(self):
-        # gh20041 supplying an np.matrix to construct a LinearConstraint caused
+        # gh20041 supplying an mx.matrix to construct a LinearConstraint caused
         # _ConstraintWrapper to start returning constraint violations of the
         # wrong shape.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", PendingDeprecationWarning)
-            matrix = np.matrix([[1, 1, 1, 1.],
+            matrix = mx.matrix([[1, 1, 1, 1.],
                                 [2, 2, 2, 2.]])
         lc = LinearConstraint(matrix, 0, 1)
-        x0 = np.ones(4)
+        x0 = mx.ones(4)
         cw = _ConstraintWrapper(lc, x0)
         # the shape of the constraint violation should be the same as the number
         # of constraints applied.
         assert cw.violation(x0).shape == (2,)
 
         # let's try a vectorised violation call.
-        xtrial = np.arange(4 * 5).reshape(4, 5)
+        xtrial = mx.arange(4 * 5).reshape(4, 5)
         assert cw.violation(xtrial).shape == (2, 5)
 
     @pytest.mark.fail_slow(20)
@@ -1023,11 +1023,11 @@ class TestDifferentialEvolutionSolver:
         # Lampinen ([5]) test problem 1
 
         def f(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
-            fun = np.sum(5*x[1:5]) - 5*x[1:5]@x[1:5] - np.sum(x[5:])
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
+            fun = mx.sum(5*x[1:5]) - 5*x[1:5]@x[1:5] - mx.sum(x[5:])
             return fun
 
-        A = np.zeros((10, 14))  # 1-indexed to match reference
+        A = mx.zeros((10, 14))  # 1-indexed to match reference
         A[1, [1, 2, 10, 11]] = 2, 2, 1, 1
         A[2, [1, 10]] = -8, 1
         A[3, [4, 5, 10]] = -2, -1, 1
@@ -1039,9 +1039,9 @@ class TestDifferentialEvolutionSolver:
         A[9, [8, 9, 12]] = -2, -1, 1
         A = A[1:, 1:]
 
-        b = np.array([10, 0, 0, 10, 0, 0, 10, 0, 0])
+        b = mx.array([10, 0, 0, 10, 0, 0, 10, 0, 0])
 
-        L = LinearConstraint(A, -np.inf, b)
+        L = LinearConstraint(A, -mx.inf, b)
 
         bounds = [(0, 1)]*9 + [(0, 100)]*3 + [(0, 1)]
 
@@ -1058,15 +1058,15 @@ class TestDifferentialEvolutionSolver:
         assert res.success
         assert_allclose(res.x, x_opt, atol=6e-4)
         assert_allclose(res.fun, f_opt, atol=5e-3)
-        assert_(np.all(A@res.x <= b))
-        assert_(np.all(res.x >= np.array(bounds)[:, 0]))
-        assert_(np.all(res.x <= np.array(bounds)[:, 1]))
+        assert_(mx.all(A@res.x <= b))
+        assert_(mx.all(res.x >= mx.array(bounds)[:, 0]))
+        assert_(mx.all(res.x <= mx.array(bounds)[:, 1]))
 
         # now repeat the same solve, using the same overall constraints,
         # but using a sparse array for the LinearConstraint instead of an
         # array
 
-        L = LinearConstraint(csr_array(A), -np.inf, b)
+        L = LinearConstraint(csr_array(A), -mx.inf, b)
 
         # using a lower popsize to speed the test up
         res = differential_evolution(
@@ -1078,26 +1078,26 @@ class TestDifferentialEvolutionSolver:
         assert res.success
         assert_allclose(res.x, x_opt, atol=5e-4)
         assert_allclose(res.fun, f_opt, atol=5e-3)
-        assert_(np.all(A@res.x <= b))
-        assert_(np.all(res.x >= np.array(bounds)[:, 0]))
-        assert_(np.all(res.x <= np.array(bounds)[:, 1]))
+        assert_(mx.all(A@res.x <= b))
+        assert_(mx.all(res.x >= mx.array(bounds)[:, 0]))
+        assert_(mx.all(res.x <= mx.array(bounds)[:, 1]))
 
         # now repeat the same solve, using the same overall constraints,
         # but specify half the constraints in terms of LinearConstraint,
         # and the other half by NonlinearConstraint
         def c1(x):
-            x = np.hstack(([0], x))
+            x = mx.hstack(([0], x))
             return [2*x[2] + 2*x[3] + x[11] + x[12],
                     -8*x[3] + x[12]]
 
         def c2(x):
-            x = np.hstack(([0], x))
+            x = mx.hstack(([0], x))
             return -2*x[8] - x[9] + x[12]
 
-        L = LinearConstraint(A[:5, :], -np.inf, b[:5])
-        L2 = LinearConstraint(A[5:6, :], -np.inf, b[5:6])
-        N = NonlinearConstraint(c1, -np.inf, b[6:8])
-        N2 = NonlinearConstraint(c2, -np.inf, b[8:9])
+        L = LinearConstraint(A[:5, :], -mx.inf, b[:5])
+        L2 = LinearConstraint(A[5:6, :], -mx.inf, b[5:6])
+        N = NonlinearConstraint(c1, -mx.inf, b[6:8])
+        N2 = NonlinearConstraint(c2, -mx.inf, b[8:9])
         constraints = (L, N, L2, N2)
 
         with warnings.catch_warnings():
@@ -1109,30 +1109,30 @@ class TestDifferentialEvolutionSolver:
 
         assert_allclose(res.x, x_opt, atol=6e-4)
         assert_allclose(res.fun, f_opt, atol=5e-3)
-        assert_(np.all(A@res.x <= b))
-        assert_(np.all(res.x >= np.array(bounds)[:, 0]))
-        assert_(np.all(res.x <= np.array(bounds)[:, 1]))
+        assert_(mx.all(A@res.x <= b))
+        assert_(mx.all(res.x >= mx.array(bounds)[:, 0]))
+        assert_(mx.all(res.x <= mx.array(bounds)[:, 1]))
 
     @pytest.mark.fail_slow(10)
     def test_L2(self):
         # Lampinen ([5]) test problem 2
 
         def f(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
             fun = ((x[1]-10)**2 + 5*(x[2]-12)**2 + x[3]**4 + 3*(x[4]-11)**2 +
                    10*x[5]**6 + 7*x[6]**2 + x[7]**4 - 4*x[6]*x[7] - 10*x[6] -
                    8*x[7])
             return fun
 
         def c1(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
             return [127 - 2*x[1]**2 - 3*x[2]**4 - x[3] - 4*x[4]**2 - 5*x[5],
                     196 - 23*x[1] - x[2]**2 - 6*x[6]**2 + 8*x[7],
                     282 - 7*x[1] - 3*x[2] - 10*x[3]**2 - x[4] + x[5],
                     -4*x[1]**2 - x[2]**2 + 3*x[1]*x[2] - 2*x[3]**2 -
                     5*x[6] + 11*x[7]]
 
-        N = NonlinearConstraint(c1, 0, np.inf)
+        N = NonlinearConstraint(c1, 0, mx.inf)
         bounds = [(-10, 10)]*7
         constraints = (N)
 
@@ -1149,16 +1149,16 @@ class TestDifferentialEvolutionSolver:
         assert_allclose(res.fun, f_opt)
         assert_allclose(res.x, x_opt, atol=1e-5)
         assert res.success
-        assert_(np.all(np.array(c1(res.x)) >= 0))
-        assert_(np.all(res.x >= np.array(bounds)[:, 0]))
-        assert_(np.all(res.x <= np.array(bounds)[:, 1]))
+        assert_(mx.all(mx.array(c1(res.x)) >= 0))
+        assert_(mx.all(res.x >= mx.array(bounds)[:, 0]))
+        assert_(mx.all(res.x <= mx.array(bounds)[:, 1]))
 
     @pytest.mark.fail_slow(10)
     def test_L3(self):
         # Lampinen ([5]) test problem 3
 
         def f(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
             fun = (x[1]**2 + x[2]**2 + x[1]*x[2] - 14*x[1] - 16*x[2] +
                    (x[3]-10)**2 + 4*(x[4]-5)**2 + (x[5]-3)**2 + 2*(x[6]-1)**2 +
                    5*x[7]**2 + 7*(x[8]-11)**2 + 2*(x[9]-10)**2 +
@@ -1166,23 +1166,23 @@ class TestDifferentialEvolutionSolver:
                    )
             return fun  # maximize
 
-        A = np.zeros((4, 11))
+        A = mx.zeros((4, 11))
         A[1, [1, 2, 7, 8]] = -4, -5, 3, -9
         A[2, [1, 2, 7, 8]] = -10, 8, 17, -2
         A[3, [1, 2, 9, 10]] = 8, -2, -5, 2
         A = A[1:, 1:]
-        b = np.array([-105, 0, -12])
+        b = mx.array([-105, 0, -12])
 
         def c1(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
             return [3*x[1] - 6*x[2] - 12*(x[9]-8)**2 + 7*x[10],
                     -3*(x[1]-2)**2 - 4*(x[2]-3)**2 - 2*x[3]**2 + 7*x[4] + 120,
                     -x[1]**2 - 2*(x[2]-2)**2 + 2*x[1]*x[2] - 14*x[5] + 6*x[6],
                     -5*x[1]**2 - 8*x[2] - (x[3]-6)**2 + 2*x[4] + 40,
                     -0.5*(x[1]-8)**2 - 2*(x[2]-4)**2 - 3*x[5]**2 + x[6] + 30]
 
-        L = LinearConstraint(A, b, np.inf)
-        N = NonlinearConstraint(c1, 0, np.inf)
+        L = LinearConstraint(A, b, mx.inf)
+        N = NonlinearConstraint(c1, 0, mx.inf)
         bounds = [(-10, 10)]*10
         constraints = (L, N)
 
@@ -1199,32 +1199,32 @@ class TestDifferentialEvolutionSolver:
         assert_allclose(res.x, x_opt, atol=1e-6)
         assert_allclose(res.fun, f_opt, atol=1e-5)
         assert res.success
-        assert_(np.all(A @ res.x >= b))
-        assert_(np.all(np.array(c1(res.x)) >= 0))
-        assert_(np.all(res.x >= np.array(bounds)[:, 0]))
-        assert_(np.all(res.x <= np.array(bounds)[:, 1]))
+        assert_(mx.all(A @ res.x >= b))
+        assert_(mx.all(mx.array(c1(res.x)) >= 0))
+        assert_(mx.all(res.x >= mx.array(bounds)[:, 0]))
+        assert_(mx.all(res.x <= mx.array(bounds)[:, 1]))
 
     @pytest.mark.fail_slow(10)
     def test_L4(self):
         # Lampinen ([5]) test problem 4
         def f(x):
-            return np.sum(x[:3])
+            return mx.sum(x[:3])
 
-        A = np.zeros((4, 9))
+        A = mx.zeros((4, 9))
         A[1, [4, 6]] = 0.0025, 0.0025
         A[2, [5, 7, 4]] = 0.0025, 0.0025, -0.0025
         A[3, [8, 5]] = 0.01, -0.01
         A = A[1:, 1:]
-        b = np.array([1, 1, 1])
+        b = mx.array([1, 1, 1])
 
         def c1(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
             return [x[1]*x[6] - 833.33252*x[4] - 100*x[1] + 83333.333,
                     x[2]*x[7] - 1250*x[5] - x[2]*x[4] + 1250*x[4],
                     x[3]*x[8] - 1250000 - x[3]*x[5] + 2500*x[5]]
 
-        L = LinearConstraint(A, -np.inf, 1)
-        N = NonlinearConstraint(c1, 0, np.inf)
+        L = LinearConstraint(A, -mx.inf, 1)
+        N = NonlinearConstraint(c1, 0, mx.inf)
 
         bounds = [(100, 10000)] + [(1000, 10000)]*2 + [(10, 1000)]*5
         constraints = (L, N)
@@ -1245,34 +1245,34 @@ class TestDifferentialEvolutionSolver:
         assert_allclose(res.fun, f_opt, atol=0.001)
 
         # use higher tol here for 32-bit Windows, see gh-11693
-        if (platform.system() == 'Windows' and np.dtype(np.intp).itemsize < 8):
+        if (platform.system() == 'Windows' and mx.dtype(mx.intp).itemsize < 8):
             assert_allclose(res.x, x_opt, rtol=2.4e-6, atol=0.0035)
         else:
             # tolerance determined from macOS + MKL failure, see gh-12701
             assert_allclose(res.x, x_opt, rtol=5e-6, atol=0.0024)
 
         assert res.success
-        assert_(np.all(A @ res.x <= b))
-        assert_(np.all(np.array(c1(res.x)) >= 0))
-        assert_(np.all(res.x >= np.array(bounds)[:, 0]))
-        assert_(np.all(res.x <= np.array(bounds)[:, 1]))
+        assert_(mx.all(A @ res.x <= b))
+        assert_(mx.all(mx.array(c1(res.x)) >= 0))
+        assert_(mx.all(res.x >= mx.array(bounds)[:, 0]))
+        assert_(mx.all(res.x <= mx.array(bounds)[:, 1]))
 
     @pytest.mark.fail_slow(10)
     def test_L5(self):
         # Lampinen ([5]) test problem 5
 
         def f(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
-            fun = (np.sin(2*np.pi*x[1])**3*np.sin(2*np.pi*x[2]) /
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
+            fun = (mx.sin(2*mx.pi*x[1])**3*mx.sin(2*mx.pi*x[2]) /
                    (x[1]**3*(x[1]+x[2])))
             return -fun  # maximize
 
         def c1(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
             return [x[1]**2 - x[2] + 1,
                     1 - x[1] + (x[2]-4)**2]
 
-        N = NonlinearConstraint(c1, -np.inf, 0)
+        N = NonlinearConstraint(c1, -mx.inf, 0)
         bounds = [(0, 10)]*2
         constraints = (N)
 
@@ -1284,24 +1284,24 @@ class TestDifferentialEvolutionSolver:
         assert_allclose(f(x_opt), f_opt, atol=2e-5)
         assert_allclose(res.fun, f_opt, atol=1e-4)
         assert res.success
-        assert_(np.all(np.array(c1(res.x)) <= 0))
-        assert_(np.all(res.x >= np.array(bounds)[:, 0]))
-        assert_(np.all(res.x <= np.array(bounds)[:, 1]))
+        assert_(mx.all(mx.array(c1(res.x)) <= 0))
+        assert_(mx.all(res.x >= mx.array(bounds)[:, 0]))
+        assert_(mx.all(res.x <= mx.array(bounds)[:, 1]))
 
     @pytest.mark.fail_slow(10)
     def test_L6(self):
         # Lampinen ([5]) test problem 6
         def f(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
             fun = (x[1]-10)**3 + (x[2] - 20)**3
             return fun
 
         def c1(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
             return [(x[1]-5)**2 + (x[2] - 5)**2 - 100,
                     -(x[1]-6)**2 - (x[2] - 5)**2 + 82.81]
 
-        N = NonlinearConstraint(c1, 0, np.inf)
+        N = NonlinearConstraint(c1, 0, mx.inf)
         bounds = [(13, 100), (0, 100)]
         constraints = (N)
         res = differential_evolution(f, bounds, strategy='rand1bin', rng=1234,
@@ -1313,20 +1313,20 @@ class TestDifferentialEvolutionSolver:
         assert_allclose(res.fun, f_opt, atol=0.001)
         assert_allclose(res.x, x_opt, atol=1e-4)
         assert res.success
-        assert_(np.all(np.array(c1(res.x)) >= 0))
-        assert_(np.all(res.x >= np.array(bounds)[:, 0]))
-        assert_(np.all(res.x <= np.array(bounds)[:, 1]))
+        assert_(mx.all(mx.array(c1(res.x)) >= 0))
+        assert_(mx.all(res.x >= mx.array(bounds)[:, 0]))
+        assert_(mx.all(res.x <= mx.array(bounds)[:, 1]))
 
     def test_L7(self):
         # Lampinen ([5]) test problem 7
         def f(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
             fun = (5.3578547*x[3]**2 + 0.8356891*x[1]*x[5] +
                    37.293239*x[1] - 40792.141)
             return fun
 
         def c1(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
             return [
                     85.334407 + 0.0056858*x[2]*x[5] + 0.0006262*x[1]*x[4] -
                     0.0022053*x[3]*x[5],
@@ -1358,38 +1358,38 @@ class TestDifferentialEvolutionSolver:
         assert_allclose(res.fun, f_opt, atol=1e-3)
 
         assert res.success
-        assert_(np.all(np.array(c1(res.x)) >= np.array([0, 90, 20])))
-        assert_(np.all(np.array(c1(res.x)) <= np.array([92, 110, 25])))
-        assert_(np.all(res.x >= np.array(bounds)[:, 0]))
-        assert_(np.all(res.x <= np.array(bounds)[:, 1]))
+        assert_(mx.all(mx.array(c1(res.x)) >= mx.array([0, 90, 20])))
+        assert_(mx.all(mx.array(c1(res.x)) <= mx.array([92, 110, 25])))
+        assert_(mx.all(res.x >= mx.array(bounds)[:, 0]))
+        assert_(mx.all(res.x <= mx.array(bounds)[:, 1]))
 
     @pytest.mark.xslow
     @pytest.mark.xfail(platform.machine() == 'ppc64le',
                        reason="fails on ppc64le")
     def test_L8(self):
         def f(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
             fun = 3*x[1] + 0.000001*x[1]**3 + 2*x[2] + 0.000002/3*x[2]**3
             return fun
 
-        A = np.zeros((3, 5))
+        A = mx.zeros((3, 5))
         A[1, [4, 3]] = 1, -1
         A[2, [3, 4]] = 1, -1
         A = A[1:, 1:]
-        b = np.array([-.55, -.55])
+        b = mx.array([-.55, -.55])
 
         def c1(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
             return [
-                    1000*np.sin(-x[3]-0.25) + 1000*np.sin(-x[4]-0.25) +
+                    1000*mx.sin(-x[3]-0.25) + 1000*mx.sin(-x[4]-0.25) +
                     894.8 - x[1],
-                    1000*np.sin(x[3]-0.25) + 1000*np.sin(x[3]-x[4]-0.25) +
+                    1000*mx.sin(x[3]-0.25) + 1000*mx.sin(x[3]-x[4]-0.25) +
                     894.8 - x[2],
-                    1000*np.sin(x[4]-0.25) + 1000*np.sin(x[4]-x[3]-0.25) +
+                    1000*mx.sin(x[4]-0.25) + 1000*mx.sin(x[4]-x[3]-0.25) +
                     1294.8
                     ]
-        L = LinearConstraint(A, b, np.inf)
-        N = NonlinearConstraint(c1, np.full(3, -0.001), np.full(3, 0.001))
+        L = LinearConstraint(A, b, mx.inf)
+        N = NonlinearConstraint(c1, mx.full(3, -0.001), mx.full(3, 0.001))
 
         bounds = [(0, 1200)]*2+[(-.55, .55)]*2
         constraints = (L, N)
@@ -1411,22 +1411,22 @@ class TestDifferentialEvolutionSolver:
         assert_allclose(res.x[2:], x_opt[2:], atol=2e-3)
         assert_allclose(res.fun, f_opt, atol=2e-2)
         assert res.success
-        assert_(np.all(A@res.x >= b))
-        assert_(np.all(np.array(c1(res.x)) >= -0.001))
-        assert_(np.all(np.array(c1(res.x)) <= 0.001))
-        assert_(np.all(res.x >= np.array(bounds)[:, 0]))
-        assert_(np.all(res.x <= np.array(bounds)[:, 1]))
+        assert_(mx.all(A@res.x >= b))
+        assert_(mx.all(mx.array(c1(res.x)) >= -0.001))
+        assert_(mx.all(mx.array(c1(res.x)) <= 0.001))
+        assert_(mx.all(res.x >= mx.array(bounds)[:, 0]))
+        assert_(mx.all(res.x <= mx.array(bounds)[:, 1]))
 
     @pytest.mark.fail_slow(5)
     def test_L9(self):
         # Lampinen ([5]) test problem 9
 
         def f(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
             return x[1]**2 + (x[2]-1)**2
 
         def c1(x):
-            x = np.hstack(([0], x))  # 1-indexed to match reference
+            x = mx.hstack(([0], x))  # 1-indexed to match reference
             return [x[2] - x[1]**2]
 
         N = NonlinearConstraint(c1, [-.001], [0.001])
@@ -1436,22 +1436,22 @@ class TestDifferentialEvolutionSolver:
         res = differential_evolution(f, bounds, strategy='rand1bin', rng=1234,
                                      constraints=constraints)
 
-        x_opt = [np.sqrt(2)/2, 0.5]
+        x_opt = [mx.sqrt(2)/2, 0.5]
         f_opt = 0.75
 
         assert_allclose(f(x_opt), f_opt)
-        assert_allclose(np.abs(res.x), x_opt, atol=1e-3)
+        assert_allclose(mx.abs(res.x), x_opt, atol=1e-3)
         assert_allclose(res.fun, f_opt, atol=1e-3)
         assert res.success
-        assert_(np.all(np.array(c1(res.x)) >= -0.001))
-        assert_(np.all(np.array(c1(res.x)) <= 0.001))
-        assert_(np.all(res.x >= np.array(bounds)[:, 0]))
-        assert_(np.all(res.x <= np.array(bounds)[:, 1]))
+        assert_(mx.all(mx.array(c1(res.x)) >= -0.001))
+        assert_(mx.all(mx.array(c1(res.x)) <= 0.001))
+        assert_(mx.all(res.x >= mx.array(bounds)[:, 0]))
+        assert_(mx.all(res.x <= mx.array(bounds)[:, 1]))
 
     @pytest.mark.fail_slow(10)
     def test_integrality(self):
         # test fitting discrete distribution to data
-        rng = np.random.default_rng(6519843218105)
+        rng = mx.random.default_rng(6519843218105)
         dist = stats.nbinom
         shapes = (5, 0.5)
         x = dist.rvs(*shapes, size=10000, random_state=rng)
@@ -1459,9 +1459,9 @@ class TestDifferentialEvolutionSolver:
         def func(p, *args):
             dist, x = args
             # negative log-likelihood function
-            ll = -np.log(dist.pmf(x, *p)).sum(axis=-1)
-            if np.isnan(ll):  # occurs when x is outside of support
-                ll = np.inf  # we don't want that
+            ll = -mx.log(dist.pmf(x, *p)).sum(axis=-1)
+            if mx.isnan(ll):  # occurs when x is outside of support
+                ll = mx.inf  # we don't want that
             return ll
 
         integrality = [True, False]
@@ -1482,7 +1482,7 @@ class TestDifferentialEvolutionSolver:
 
         def func2(p, *args):
             n, dist, x = args
-            return func(np.array([n, p[0]]), dist, x)
+            return func(mx.array([n, p[0]]), dist, x)
 
         # compare the DE derived solution to an LBFGSB solution (that doesn't
         # have to find the integral values). Note we're setting x0 to be the
@@ -1521,11 +1521,11 @@ class TestDifferentialEvolutionSolver:
         assert_allclose(solver.limits[1], [-0.5, 2.2, 4.5])
 
         # A lower bound of -1.2 is converted to
-        # np.nextafter(np.ceil(-1.2) - 0.5, np.inf)
+        # mx.nextafter(mx.ceil(-1.2) - 0.5, mx.inf)
         # with a similar process to the upper bound. Check that the
         # conversions work
-        assert_allclose(np.round(solver.limits[0]), [-1.0, 1.0, -10.0])
-        assert_allclose(np.round(solver.limits[1]), [-1.0, 2.0, 4.0])
+        assert_allclose(mx.round(solver.limits[0]), [-1.0, 1.0, -10.0])
+        assert_allclose(mx.round(solver.limits[1]), [-1.0, 2.0, 4.0])
 
         bounds = [(-10.2, -8.1), (0.9, 2.2), (-10.9, -9.9999)]
         solver = DifferentialEvolutionSolver(f, bounds=bounds, polish=False,
@@ -1541,10 +1541,10 @@ class TestDifferentialEvolutionSolver:
     @pytest.mark.fail_slow(10)
     def test_vectorized(self):
         def quadratic(x):
-            return np.sum(x**2)
+            return mx.sum(x**2)
 
         def quadratic_vec(x):
-            return np.sum(x**2, axis=0)
+            return mx.sum(x**2, axis=0)
 
         # A vectorized function needs to accept (len(x), S) and return (S,)
         with pytest.raises(RuntimeError, match='The vectorized function'):
@@ -1581,19 +1581,19 @@ class TestDifferentialEvolutionSolver:
 
     def test_vectorized_constraints(self):
         def constr_f(x):
-            return np.array([x[0] + x[1]])
+            return mx.array([x[0] + x[1]])
 
         def constr_f2(x):
-            return np.array([x[0]**2 + x[1], x[0] - x[1]])
+            return mx.array([x[0]**2 + x[1], x[0] - x[1]])
 
-        nlc1 = NonlinearConstraint(constr_f, -np.inf, 1.9)
+        nlc1 = NonlinearConstraint(constr_f, -mx.inf, 1.9)
         nlc2 = NonlinearConstraint(constr_f2, (0.9, 0.5), (2.0, 2.0))
 
         def rosen_vec(x):
             # accept an (len(x0), S) array, returning a (S,) array
             v = 100 * (x[1:] - x[:-1]**2.0)**2.0
             v += (1 - x[:-1])**2.0
-            return np.squeeze(v)
+            return mx.squeeze(v)
 
         bounds = [(0, 10), (0, 10)]
 
@@ -1623,7 +1623,7 @@ class TestDifferentialEvolutionSolver:
         # The solution produced by DE would be bad after only one iteration.
         # However, we still expect a good answer if the polishing worked
         assert res.jac is not None
-        assert_allclose(res.x, np.ones(N), atol=1e-6)
+        assert_allclose(res.x, mx.ones(N), atol=1e-6)
         # test that the `pf` callable is really used; it's not just truthy
         assert res.fun == pf.res.fun
         assert ref.fun != res.fun
@@ -1632,7 +1632,7 @@ class TestDifferentialEvolutionSolver:
             assert "bounds" in kwds
             assert isinstance(kwds["bounds"], Bounds)
             assert "constraints" in kwds
-            return np.ones(N)
+            return mx.ones(N)
 
         with assert_raises(
             ValueError,
@@ -1651,12 +1651,12 @@ class TestDifferentialEvolutionSolver:
         def pf(func, x, **kwds):
             return minimize(func, x, method='L-BFGS-B', **kwds)
 
-        rng = np.random.default_rng(110980928209)
+        rng = mx.random.default_rng(110980928209)
         res = differential_evolution(
             rosen, self.bounds, polish=False, rng=rng, maxiter=1
         )
         res = minimize(rosen, res.x, bounds=self.bounds, method='L-BFGS-B')
-        rng = np.random.default_rng(110980928209)
+        rng = mx.random.default_rng(110980928209)
         res2 = differential_evolution(
             rosen, self.bounds, polish=pf, rng=rng, maxiter=1
         )
@@ -1668,11 +1668,11 @@ class TestDifferentialEvolutionSolver:
     def test_constraint_violation_error_message(self):
 
         def func(x):
-            return np.cos(x[0]) + np.sin(x[1])
+            return mx.cos(x[0]) + mx.sin(x[1])
 
         # Intentionally infeasible constraints.
-        c0 = NonlinearConstraint(lambda x: x[1] - (x[0]-1)**2, 0, np.inf)
-        c1 = NonlinearConstraint(lambda x: x[1] + x[0]**2, -np.inf, 0)
+        c0 = NonlinearConstraint(lambda x: x[1] - (x[0]-1)**2, 0, mx.inf)
+        c1 = NonlinearConstraint(lambda x: x[1] + x[0]**2, -mx.inf, 0)
 
         result = differential_evolution(func,
                                         bounds=[(-1, 2), (-1, 1)],
@@ -1702,10 +1702,10 @@ class TestDifferentialEvolutionSolver:
         calls = [0]
         def custom_strategy_fn(candidate, population, rng=None):
             calls[0] += 1
-            trial = np.copy(population[candidate])
+            trial = mx.copy(population[candidate])
             fill_point = rng.choice(parameter_count)
 
-            pool = np.arange(total_popsize)
+            pool = mx.arange(total_popsize)
             rng.shuffle(pool)
             idxs = pool[:2 + 1]
             idxs = idxs[idxs != candidate][:2]
@@ -1718,7 +1718,7 @@ class TestDifferentialEvolutionSolver:
             crossovers = rng.uniform(size=parameter_count)
             crossovers = crossovers < recombination
             crossovers[fill_point] = True
-            trial = np.where(crossovers, bprime, trial)
+            trial = mx.where(crossovers, bprime, trial)
             return trial
 
         solver = DifferentialEvolutionSolver(
@@ -1743,7 +1743,7 @@ class TestDifferentialEvolutionSolver:
         assert res.success
 
         def custom_strategy_fn(candidate, population, rng=None):
-            return np.array([1.0, 2.0])
+            return mx.array([1.0, 2.0])
 
         with pytest.raises(RuntimeError, match="strategy*"):
             differential_evolution(

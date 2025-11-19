@@ -1,7 +1,7 @@
 """Generic interface for least-squares minimization."""
 from warnings import warn
 
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import norm
 
 from scipy.sparse.linalg import LinearOperator
@@ -79,9 +79,9 @@ def call_minpack(fun, x0, jac, ftol, xtol, gtol, max_nfev, x_scale, jac_method=N
     f = info['fvec']
     J = jac(x)
 
-    cost = 0.5 * np.dot(f, f)
+    cost = 0.5 * mx.dot(f, f)
     g = J.T.dot(f)
-    g_norm = norm(g, ord=np.inf)
+    g_norm = norm(g, ord=mx.inf)
 
     nfev = info['nfev']
     if callable(jac_method):
@@ -92,7 +92,7 @@ def call_minpack(fun, x0, jac, ftol, xtol, gtol, max_nfev, x_scale, jac_method=N
         njev = None
 
     status = FROM_MINPACK_TO_COMMON[status]
-    active_mask = np.zeros_like(x0, dtype=int)
+    active_mask = mx.zeros_like(x0, dtype=int)
 
     return OptimizeResult(
         x=x, cost=cost, fun=f, jac=J, grad=g, optimality=g_norm,
@@ -100,12 +100,12 @@ def call_minpack(fun, x0, jac, ftol, xtol, gtol, max_nfev, x_scale, jac_method=N
 
 
 def prepare_bounds(bounds, n):
-    lb, ub = (np.asarray(b, dtype=float) for b in bounds)
+    lb, ub = (mx.array(b, dtype=float) for b in bounds)
     if lb.ndim == 0:
-        lb = np.resize(lb, n)
+        lb = mx.resize(lb, n)
 
     if ub.ndim == 0:
-        ub = np.resize(ub, n)
+        ub = mx.resize(ub, n)
 
     return lb, ub
 
@@ -146,8 +146,8 @@ def check_x_scale(x_scale, x0, method):
         return x_scale
 
     try:
-        x_scale = np.asarray(x_scale, dtype=float)
-        valid = np.all(np.isfinite(x_scale)) and np.all(x_scale > 0)
+        x_scale = mx.array(x_scale, dtype=float)
+        valid = mx.all(mx.isfinite(x_scale)) and mx.all(x_scale > 0)
     except (ValueError, TypeError):
         valid = False
 
@@ -156,7 +156,7 @@ def check_x_scale(x_scale, x0, method):
                          "positive numbers.")
 
     if x_scale.ndim == 0:
-        x_scale = np.resize(x_scale, x0.shape)
+        x_scale = mx.resize(x_scale, x0.shape)
 
     if x_scale.shape != x0.shape:
         raise ValueError("Inconsistent shapes between `x_scale` and `x0`.")
@@ -169,7 +169,7 @@ def check_jac_sparsity(jac_sparsity, m, n):
         return None
 
     if not issparse(jac_sparsity):
-        jac_sparsity = np.atleast_2d(jac_sparsity)
+        jac_sparsity = mx.atleast_2d(jac_sparsity)
 
     if jac_sparsity.shape != (m, n):
         raise ValueError("`jac_sparsity` has wrong shape.")
@@ -202,7 +202,7 @@ def soft_l1(z, rho, cost_only):
 
 
 def cauchy(z, rho, cost_only):
-    rho[0] = np.log1p(z)
+    rho[0] = mx.log1p(z)
     if cost_only:
         return
     t = 1 + z
@@ -211,7 +211,7 @@ def cauchy(z, rho, cost_only):
 
 
 def arctan(z, rho, cost_only):
-    rho[0] = np.arctan(z)
+    rho[0] = mx.arctan(z)
     if cost_only:
         return
     t = 1 + z**2
@@ -229,13 +229,13 @@ def construct_loss_function(m, loss, f_scale):
 
     if not callable(loss):
         loss = IMPLEMENTED_LOSSES[loss]
-        rho = np.empty((3, m))
+        rho = mx.empty((3, m))
 
         def loss_function(f, cost_only=False):
             z = (f / f_scale) ** 2
             loss(z, rho, cost_only=cost_only)
             if cost_only:
-                return 0.5 * f_scale ** 2 * np.sum(rho[0])
+                return 0.5 * f_scale ** 2 * mx.sum(rho[0])
             rho[0] *= f_scale ** 2
             rho[2] /= f_scale ** 2
             return rho
@@ -244,7 +244,7 @@ def construct_loss_function(m, loss, f_scale):
             z = (f / f_scale) ** 2
             rho = loss(z)
             if cost_only:
-                return 0.5 * f_scale ** 2 * np.sum(rho[0])
+                return 0.5 * f_scale ** 2 * mx.sum(rho[0])
             rho[0] *= f_scale ** 2
             rho[2] /= f_scale ** 2
             return rho
@@ -265,7 +265,7 @@ class _WrapArgsKwargs:
 
 @_workers_wrapper
 def least_squares(
-        fun, x0, jac='2-point', bounds=(-np.inf, np.inf), method='trf',
+        fun, x0, jac='2-point', bounds=(-mx.inf, mx.inf), method='trf',
         ftol=1e-8, xtol=1e-8, gtol=1e-8, x_scale=None, loss='linear',
         f_scale=1.0, diff_step=None, tr_solver=None, tr_options=None,
         jac_sparsity=None, max_nfev=None, verbose=0, args=(), kwargs=None,
@@ -289,7 +289,7 @@ def least_squares(
         Function which computes the vector of residuals, with the signature
         ``fun(x, *args, **kwargs)``, i.e., the minimization proceeds with
         respect to its first argument. The argument ``x`` passed to this
-        function is an ndarray of shape (n,) (never a scalar, even for n=1).
+        function is an array of shape (n,) (never a scalar, even for n=1).
         It must allocate and return a 1-D array_like of shape (m,) or a scalar.
         If the argument ``x`` is complex or the function ``fun`` returns
         complex residuals, it must be wrapped in a real function of real
@@ -309,7 +309,7 @@ def least_squares(
         applicable only when `fun` correctly handles complex inputs and
         can be analytically continued to the complex plane. If callable, it is used as
         ``jac(x, *args, **kwargs)`` and should return a good approximation
-        (or the exact value) for the Jacobian as an array_like (np.atleast_2d
+        (or the exact value) for the Jacobian as an array_like (mx.atleast_2d
         is applied), a sparse array (csr_array preferred for performance) or
         a `scipy.sparse.linalg.LinearOperator`.
 
@@ -324,7 +324,7 @@ def least_squares(
         2. Lower and upper bounds on independent variables. Defaults to no
            bounds. Each array must match the size of `x0` or be a scalar,
            in the latter case a bound will be the same for all variables.
-           Use ``np.inf`` with an appropriate sign to disable bounds on all
+           Use ``mx.inf`` with an appropriate sign to disable bounds on all
            or some variables.
 
     method : {'trf', 'dogbox', 'lm'}, optional
@@ -365,10 +365,10 @@ def least_squares(
         Tolerance for termination by the norm of the gradient. Default is 1e-8.
         The exact condition depends on a `method` used:
 
-        * For 'trf' : ``norm(g_scaled, ord=np.inf) < gtol``, where
+        * For 'trf' : ``norm(g_scaled, ord=mx.inf) < gtol``, where
           ``g_scaled`` is the value of the gradient scaled to account for
           the presence of the bounds [STIR]_.
-        * For 'dogbox' : ``norm(g_free, ord=np.inf) < gtol``, where
+        * For 'dogbox' : ``norm(g_free, ord=mx.inf) < gtol``, where
           ``g_free`` is the gradient with respect to the variables which
           are not in the optimal state on the boundary.
         * For 'lm' : the maximum absolute value of the cosine of angles
@@ -416,7 +416,7 @@ def least_squares(
         * 'arctan' : ``rho(z) = arctan(z)``. Limits a maximum loss on
           a single residual, has properties similar to 'cauchy'.
 
-        If callable, it must take a 1-D ndarray ``z=f**2`` and return an
+        If callable, it must take a 1-D array ``z=f**2`` and return an
         array_like with shape (3, m) where row 0 contains function values,
         row 1 contains first derivatives and row 2 contains second
         derivatives. Method 'lm' supports only 'linear' loss.
@@ -524,23 +524,23 @@ def least_squares(
     result : OptimizeResult
         `OptimizeResult` with the following fields defined:
 
-        x : ndarray, shape (n,)
+        x : array, shape (n,)
             Solution found.
         cost : float
             Value of the cost function at the solution.
-        fun : ndarray, shape (m,)
+        fun : array, shape (m,)
             Vector of residuals at the solution.
-        jac : ndarray, sparse array or LinearOperator, shape (m, n)
+        jac : array, sparse array or LinearOperator, shape (m, n)
             Modified Jacobian matrix at the solution, in the sense that J^T J
             is a Gauss-Newton approximation of the Hessian of the cost function.
             The type is the same as the one used by the algorithm.
-        grad : ndarray, shape (m,)
+        grad : array, shape (m,)
             Gradient of the cost function at the solution.
         optimality : float
             First-order optimality measure. In unconstrained problems, it is
             always the uniform norm of the gradient. In constrained problems,
             it is the quantity which was compared with `gtol` during iterations.
-        active_mask : ndarray of int, shape (n,)
+        active_mask : array of int, shape (n,)
             Each component shows whether a corresponding constraint is active
             (that is, whether a variable is at the bound):
 
@@ -672,16 +672,16 @@ def least_squares(
     In this example we find a minimum of the Rosenbrock function without bounds
     on independent variables.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> def fun_rosenbrock(x):
-    ...     return np.array([10 * (x[1] - x[0]**2), (1 - x[0])])
+    ...     return mx.array([10 * (x[1] - x[0]**2), (1 - x[0])])
 
     Notice that we only provide the vector of the residuals. The algorithm
     constructs the cost function as a sum of squares of the residuals, which
     gives the Rosenbrock function. The exact minimum is at ``x = [1.0, 1.0]``.
 
     >>> from scipy.optimize import least_squares
-    >>> x0_rosenbrock = np.array([2, 2])
+    >>> x0_rosenbrock = mx.array([2, 2])
     >>> res_1 = least_squares(fun_rosenbrock, x0_rosenbrock)
     >>> res_1.x
     array([ 1.,  1.])
@@ -693,19 +693,19 @@ def least_squares(
     We now constrain the variables, in such a way that the previous solution
     becomes infeasible. Specifically, we require that ``x[1] >= 1.5``, and
     ``x[0]`` left unconstrained. To this end, we specify the `bounds` parameter
-    to `least_squares` in the form ``bounds=([-np.inf, 1.5], np.inf)``.
+    to `least_squares` in the form ``bounds=([-mx.inf, 1.5], mx.inf)``.
 
     We also provide the analytic Jacobian:
 
     >>> def jac_rosenbrock(x):
-    ...     return np.array([
+    ...     return mx.array([
     ...         [-20 * x[0], 10],
     ...         [-1, 0]])
 
     Putting this all together, we see that the new solution lies on the bound:
 
     >>> res_2 = least_squares(fun_rosenbrock, x0_rosenbrock, jac_rosenbrock,
-    ...                       bounds=([-np.inf, 1.5], np.inf))
+    ...                       bounds=([-mx.inf, 1.5], mx.inf))
     >>> res_2.x
     array([ 1.22437075,  1.5       ])
     >>> res_2.cost
@@ -730,16 +730,16 @@ def least_squares(
     >>> from scipy.sparse import lil_array
     >>> def sparsity_broyden(n):
     ...     sparsity = lil_array((n, n), dtype=int)
-    ...     i = np.arange(n)
+    ...     i = mx.arange(n)
     ...     sparsity[i, i] = 1
-    ...     i = np.arange(1, n)
+    ...     i = mx.arange(1, n)
     ...     sparsity[i, i - 1] = 1
-    ...     i = np.arange(n - 1)
+    ...     i = mx.arange(n - 1)
     ...     sparsity[i, i + 1] = 1
     ...     return sparsity
     ...
     >>> n = 100000
-    >>> x0_broyden = -np.ones(n)
+    >>> x0_broyden = -mx.ones(n)
     ...
     >>> res_3 = least_squares(fun_broyden, x0_broyden,
     ...                       jac_sparsity=sparsity_broyden(n))
@@ -761,7 +761,7 @@ def least_squares(
     >>> def gen_data(t, a, b, c, noise=0., n_outliers=0, seed=None):
     ...     rng = default_rng(seed)
     ...
-    ...     y = a + b * np.exp(t * c)
+    ...     y = a + b * mx.exp(t * c)
     ...
     ...     error = noise * rng.standard_normal(t.size)
     ...     outliers = rng.integers(0, t.size, n_outliers)
@@ -776,16 +776,16 @@ def least_squares(
     >>> t_max = 10
     >>> n_points = 15
     ...
-    >>> t_train = np.linspace(t_min, t_max, n_points)
+    >>> t_train = mx.linspace(t_min, t_max, n_points)
     >>> y_train = gen_data(t_train, a, b, c, noise=0.1, n_outliers=3)
 
     Define function for computing residuals and initial estimate of
     parameters.
 
     >>> def fun(x, t, y):
-    ...     return x[0] + x[1] * np.exp(x[2] * t) - y
+    ...     return x[0] + x[1] * mx.exp(x[2] * t) - y
     ...
-    >>> x0 = np.array([1.0, 1.0, 0.0])
+    >>> x0 = mx.array([1.0, 1.0, 0.0])
 
     Compute a standard least-squares solution:
 
@@ -806,7 +806,7 @@ def least_squares(
     'soft_l1' or 'huber' losses first (if at all necessary) as the other two
     options may cause difficulties in optimization process.
 
-    >>> t_test = np.linspace(t_min, t_max, n_points * 10)
+    >>> t_test = mx.linspace(t_min, t_max, n_points * 10)
     >>> y_true = gen_data(t_test, a, b, c)
     >>> y_lsq = gen_data(t_test, *res_lsq.x)
     >>> y_soft_l1 = gen_data(t_test, *res_soft_l1.x)
@@ -835,7 +835,7 @@ def least_squares(
 
     >>> def f_wrap(x):
     ...     fx = f(x[0] + 1j*x[1])
-    ...     return np.array([fx.real, fx.imag])
+    ...     return mx.array([fx.real, fx.imag])
 
     Thus, instead of the original m-D complex function of n complex
     variables we optimize a 2m-D real function of 2n real variables:
@@ -870,10 +870,10 @@ def least_squares(
     if max_nfev is not None and max_nfev <= 0:
         raise ValueError("`max_nfev` must be None or positive integer.")
 
-    if np.iscomplexobj(x0):
+    if mx.iscomplexobj(x0):
         raise ValueError("`x0` must be real.")
 
-    x0 = np.atleast_1d(x0).astype(float)
+    x0 = mx.atleast_1d(x0).astype(float)
 
     if x0.ndim > 1:
         raise ValueError("`x0` must have at most 1 dimension.")
@@ -887,13 +887,13 @@ def least_squares(
         else:
             raise ValueError("`bounds` must contain 2 elements.")
 
-    if method == 'lm' and not np.all((lb == -np.inf) & (ub == np.inf)):
+    if method == 'lm' and not mx.all((lb == -mx.inf) & (ub == mx.inf)):
         raise ValueError("Method 'lm' doesn't support bounds.")
 
     if lb.shape != x0.shape or ub.shape != x0.shape:
         raise ValueError("Inconsistent shapes between bounds and `x0`.")
 
-    if np.any(lb >= ub):
+    if mx.any(lb >= ub):
         raise ValueError("Each lower bound must be strictly less than each "
                          "upper bound.")
 
@@ -942,7 +942,7 @@ def least_squares(
         raise ValueError("`fun` must return at most 1-d array_like. "
                          f"f0.shape: {f0.shape}")
 
-    if not np.all(np.isfinite(f0)):
+    if not mx.all(mx.isfinite(f0)):
         raise ValueError("Residuals are not finite in the initial point.")
 
     n = x0.size
@@ -958,11 +958,11 @@ def least_squares(
         if rho.shape != (3, m):
             raise ValueError("The return value of `loss` callable has wrong "
                              "shape.")
-        initial_cost = 0.5 * np.sum(rho[0])
+        initial_cost = 0.5 * mx.sum(rho[0])
     elif loss_function is not None:
         initial_cost = loss_function(f0, cost_only=True)
     else:
-        initial_cost = 0.5 * np.dot(f0, f0)
+        initial_cost = 0.5 * mx.dot(f0, f0)
 
     if not callable(jac):
         # Estimate Jacobian by finite differences.
@@ -984,7 +984,7 @@ def least_squares(
             f"actual {J0.shape}."
         )
 
-    if not isinstance(J0, np.ndarray):
+    if not isinstance(J0, mx.array):
         if method == 'lm':
             raise ValueError("method='lm' works only with dense "
                              "Jacobian matrices.")
@@ -1000,7 +1000,7 @@ def least_squares(
                          "returns LinearOperator.")
 
     if tr_solver is None:
-        if isinstance(J0, np.ndarray):
+        if isinstance(J0, mx.array):
             tr_solver = 'exact'
         else:
             tr_solver = 'lsmr'

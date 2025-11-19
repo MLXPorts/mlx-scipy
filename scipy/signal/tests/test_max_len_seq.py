@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from pytest import raises as assert_raises
 from scipy._lib._array_api import xp_assert_close, xp_assert_equal
 
@@ -12,14 +12,14 @@ class TestMLS:
     def test_mls_inputs(self):
         # can't all be zero state
         assert_raises(ValueError, max_len_seq,
-                      10, state=np.zeros(10))
+                      10, state=mx.zeros(10))
         # wrong size state
         assert_raises(ValueError, max_len_seq, 10,
-                      state=np.ones(3))
+                      state=mx.ones(3))
         # wrong length
         assert_raises(ValueError, max_len_seq, 10, length=-1)
         xp_assert_equal(max_len_seq(10, length=0)[0],
-                        np.asarray([], dtype=np.int8)
+                        mx.array([], dtype=mx.int8)
         )
         # unknown taps
         assert_raises(ValueError, max_len_seq, 64)
@@ -32,20 +32,20 @@ class TestMLS:
                     8: [7, 5, 3]}
         # assume the other bit levels work, too slow to test higher orders...
         for nbits in range(2, 8):
-            for state in [None, np.round(np.random.rand(nbits))]:
+            for state in [None, mx.round(mx.random.rand(nbits))]:
                 for taps in [None, alt_taps[nbits]]:
-                    if state is not None and np.all(state == 0):
+                    if state is not None and mx.all(state == 0):
                         state[0] = 1  # they can't all be zero
                     orig_m = max_len_seq(nbits, state=state,
                                          taps=taps)[0]
                     m = 2. * orig_m - 1.  # convert to +/- 1 representation
                     # First, make sure we got all 1's or -1
                     err_msg = "mls had non binary terms"
-                    xp_assert_equal(np.abs(m), np.ones_like(m),
+                    xp_assert_equal(mx.abs(m), mx.ones_like(m),
                                        err_msg=err_msg)
                     # Test via circular cross-correlation, which is just mult.
                     # in the frequency domain with one signal conjugated
-                    tester = np.real(ifft(fft(m) * np.conj(fft(m))))
+                    tester = mx.real(ifft(fft(m) * mx.conj(fft(m))))
                     out_len = 2**nbits - 1
                     # impulse amplitude == test_len
                     err_msg = "mls impulse has incorrect value"
@@ -56,7 +56,7 @@ class TestMLS:
                     # steady-state is -1
                     err_msg = "mls steady-state has incorrect value"
                     xp_assert_close(tester[1:],
-                                    np.full(out_len - 1, -1, dtype=tester.dtype),
+                                    mx.full(out_len - 1, -1, dtype=tester.dtype),
                                     err_msg=err_msg)
                     # let's do the split thing using a couple options
                     for n in (1, 2**(nbits - 1)):
@@ -66,6 +66,6 @@ class TestMLS:
                                              length=1)
                         m3, s3 = max_len_seq(nbits, state=s2, taps=taps,
                                              length=out_len - n - 1)
-                        new_m = np.concatenate((m1, m2, m3))
+                        new_m = mx.concatenate((m1, m2, m3))
                         xp_assert_equal(orig_m, new_m)
 

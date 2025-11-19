@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 # list of numarray data types
 integer_types: list[str] = [

@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy._lib._array_api import (
     is_cupy, is_numpy,
     xp_assert_close, xp_assert_equal, assert_array_almost_equal,
@@ -195,7 +195,7 @@ class TestNdimageMorphology:
         ft = ndimage.distance_transform_bf(
             data, return_distances=False, return_indices=1)
         fts.append(ft)
-        ft = np.indices(data.shape, dtype=xp.int32)
+        ft = mx.indices(data.shape, dtype=xp.int32)
         ndimage.distance_transform_bf(
             data, return_distances=False, return_indices=True, indices=ft)
         fts.append(ft)
@@ -208,13 +208,13 @@ class TestNdimageMorphology:
             data, distances=dt, return_indices=True)
         dts.append(dt)
         fts.append(ft)
-        ft = np.indices(data.shape, dtype=xp.int32)
+        ft = mx.indices(data.shape, dtype=xp.int32)
         dt = ndimage.distance_transform_bf(
             data, return_indices=True, indices=ft)
         dts.append(dt)
         fts.append(ft)
         dt = xp.zeros(data.shape, dtype=xp.float64)
-        ft = np.indices(data.shape, dtype=xp.int32)
+        ft = mx.indices(data.shape, dtype=xp.int32)
         ndimage.distance_transform_bf(
             data, distances=dt, return_indices=True, indices=ft)
         dts.append(dt)
@@ -447,7 +447,7 @@ class TestNdimageMorphology:
         ft = ndimage.distance_transform_cdt(
             data, return_distances=False, return_indices=True)
         fts.append(ft)
-        ft = xp.asarray(np.indices(data.shape, dtype=np.int32))
+        ft = xp.asarray(mx.indices(data.shape, dtype=mx.int32))
         ndimage.distance_transform_cdt(
             data, return_distances=False, return_indices=True, indices=ft)
         fts.append(ft)
@@ -460,13 +460,13 @@ class TestNdimageMorphology:
             data, distances=dt, return_indices=True)
         dts.append(dt)
         fts.append(ft)
-        ft = xp.asarray(np.indices(data.shape, dtype=np.int32))
+        ft = xp.asarray(mx.indices(data.shape, dtype=mx.int32))
         dt = ndimage.distance_transform_cdt(
             data, return_indices=True, indices=ft)
         dts.append(dt)
         fts.append(ft)
         dt = xp.zeros(data.shape, dtype=xp.int32)
-        ft = xp.asarray(np.indices(data.shape, dtype=np.int32))
+        ft = xp.asarray(mx.indices(data.shape, dtype=mx.int32))
         ndimage.distance_transform_cdt(data, distances=dt,
                                        return_indices=True, indices=ft)
         dts.append(dt)
@@ -542,12 +542,12 @@ class TestNdimageMorphology:
         assert_array_almost_equal(bf, out)
 
         # np-specific check
-        np_ft = np.asarray(ft)
-        dt = np_ft - np.indices(np_ft.shape[1:], dtype=np_ft.dtype)
-        dt = dt.astype(np.float64)
-        np.multiply(dt, dt, dt)
-        dt = np.add.reduce(dt, axis=0)
-        np.sqrt(dt, dt)
+        np_ft = mx.array(ft)
+        dt = np_ft - mx.indices(np_ft.shape[1:], dtype=np_ft.dtype)
+        dt = dt.astype(mx.float64)
+        mx.multiply(dt, dt, dt)
+        dt = mx.add.reduce(dt, axis=0)
+        mx.sqrt(dt, dt)
 
         dt = xp.asarray(dt)
         assert_array_almost_equal(bf, dt)
@@ -581,7 +581,7 @@ class TestNdimageMorphology:
             data, return_distances=0, return_indices=True)
         fts.append(ft)
 
-        ft = np.indices(data.shape, dtype=xp.int32)
+        ft = mx.indices(data.shape, dtype=xp.int32)
         ft = xp.asarray(ft)
         ndimage.distance_transform_edt(
             data, return_distances=False, return_indices=True, indices=ft)
@@ -598,7 +598,7 @@ class TestNdimageMorphology:
         dts.append(dt)
         fts.append(ft)
 
-        ft = np.indices(data.shape, dtype=xp.int32)
+        ft = mx.indices(data.shape, dtype=xp.int32)
         ft = xp.asarray(ft)
         dt = ndimage.distance_transform_edt(
             data, return_indices=True, indices=ft)
@@ -606,7 +606,7 @@ class TestNdimageMorphology:
         fts.append(ft)
 
         dt = xp.zeros(data.shape, dtype=xp.float64)
-        ft = np.indices(data.shape, dtype=xp.int32)
+        ft = mx.indices(data.shape, dtype=xp.int32)
         ft = xp.asarray(ft)
         ndimage.distance_transform_edt(
             data, distances=dt, return_indices=True, indices=ft)
@@ -720,7 +720,7 @@ class TestNdimageMorphology:
                   [0, 1, 0]]
         struct = xp.asarray(struct)
         out = ndimage.iterate_structure(struct, 2)
-        expected = np.asarray([[0, 0, 1, 0, 0],
+        expected = mx.array([[0, 0, 1, 0, 0],
                                [0, 1, 1, 1, 0],
                                [1, 1, 1, 1, 1],
                                [0, 1, 1, 1, 0],
@@ -735,7 +735,7 @@ class TestNdimageMorphology:
                   [0, 1]]
         struct = xp.asarray(struct)
         out = ndimage.iterate_structure(struct, 2)
-        expected = np.asarray([[0, 0, 1],
+        expected = mx.array([[0, 0, 1],
                                [0, 1, 1],
                                [1, 1, 1],
                                [0, 1, 1],
@@ -756,7 +756,7 @@ class TestNdimageMorphology:
                     [1, 1, 1, 1, 1],
                     [0, 1, 1, 1, 0],
                     [0, 0, 1, 0, 0]]
-        expected = np.asarray(expected, dtype=bool)
+        expected = mx.array(expected, dtype=bool)
         expected = xp.asarray(expected)
         assert_array_almost_equal(out[0], expected)
         assert out[1] == [2, 2]
@@ -839,7 +839,7 @@ class TestNdimageMorphology:
     @make_xp_test_case(ndimage.binary_erosion)
     @pytest.mark.parametrize('dtype', types)
     def test_binary_erosion09(self, dtype, xp):
-        data = np.ones([5], dtype=dtype)
+        data = mx.ones([5], dtype=dtype)
         data[2] = 0
         data = xp.asarray(data)
         out = ndimage.binary_erosion(data)
@@ -848,7 +848,7 @@ class TestNdimageMorphology:
     @make_xp_test_case(ndimage.binary_erosion)
     @pytest.mark.parametrize('dtype', types)
     def test_binary_erosion10(self, dtype, xp):
-        data = np.ones([5], dtype=dtype)
+        data = mx.ones([5], dtype=dtype)
         data[2] = 0
         data = xp.asarray(data)
         out = ndimage.binary_erosion(data, border_value=1)
@@ -857,7 +857,7 @@ class TestNdimageMorphology:
     @make_xp_test_case(ndimage.binary_erosion)
     @pytest.mark.parametrize('dtype', types)
     def test_binary_erosion11(self, dtype, xp):
-        data = np.ones([5], dtype=dtype)
+        data = mx.ones([5], dtype=dtype)
         data[2] = 0
         data = xp.asarray(data)
         struct = xp.asarray([1, 0, 1])
@@ -867,7 +867,7 @@ class TestNdimageMorphology:
     @make_xp_test_case(ndimage.binary_erosion)
     @pytest.mark.parametrize('dtype', types)
     def test_binary_erosion12(self, dtype, xp):
-        data = np.ones([5], dtype=dtype)
+        data = mx.ones([5], dtype=dtype)
         data[2] = 0
         data = xp.asarray(data)
         struct = xp.asarray([1, 0, 1])
@@ -877,7 +877,7 @@ class TestNdimageMorphology:
     @make_xp_test_case(ndimage.binary_erosion)
     @pytest.mark.parametrize('dtype', types)
     def test_binary_erosion13(self, dtype, xp):
-        data = np.ones([5], dtype=dtype)
+        data = mx.ones([5], dtype=dtype)
         data[2] = 0
         data = xp.asarray(data)
         struct = xp.asarray([1, 0, 1])
@@ -887,7 +887,7 @@ class TestNdimageMorphology:
     @make_xp_test_case(ndimage.binary_erosion)
     @pytest.mark.parametrize('dtype', types)
     def test_binary_erosion14(self, dtype, xp):
-        data = np.ones([5], dtype=dtype)
+        data = mx.ones([5], dtype=dtype)
         data[2] = 0
         data = xp.asarray(data)
         struct = xp.asarray([1, 1])
@@ -897,7 +897,7 @@ class TestNdimageMorphology:
     @make_xp_test_case(ndimage.binary_erosion)
     @pytest.mark.parametrize('dtype', types)
     def test_binary_erosion15(self, dtype, xp):
-        data = np.ones([5], dtype=dtype)
+        data = mx.ones([5], dtype=dtype)
         data[2] = 0
         data = xp.asarray(data)
         struct = xp.asarray([1, 1])
@@ -1106,7 +1106,7 @@ class TestNdimageMorphology:
                     [0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0]]
         expected = xp.asarray(expected)
-        data = np.asarray([[0, 0, 0, 0, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 1, 0, 0, 0],
                            [0, 0, 1, 1, 1, 0, 0],
                            [0, 1, 1, 1, 1, 1, 0],
@@ -1135,9 +1135,9 @@ class TestNdimageMorphology:
                     [0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0]]
-        expected = np.asarray(expected, dtype=bool)
+        expected = mx.array(expected, dtype=bool)
         expected = xp.asarray(expected)
-        data = np.asarray([[0, 0, 0, 0, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 1, 0, 0, 0],
                            [0, 0, 1, 1, 1, 0, 0],
                            [0, 1, 1, 1, 1, 1, 0],
@@ -1145,7 +1145,7 @@ class TestNdimageMorphology:
                            [0, 0, 0, 1, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0]], dtype=bool)
         data = xp.asarray(data)
-        out = np.zeros(data.shape, dtype=bool)
+        out = mx.zeros(data.shape, dtype=bool)
         out = xp.asarray(out)
         ndimage.binary_erosion(data, struct, border_value=1,
                                iterations=2, output=out)
@@ -1168,7 +1168,7 @@ class TestNdimageMorphology:
                     [0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0]]
         expected = xp.asarray(expected)
-        data = np.asarray([[0, 0, 0, 1, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 1, 0, 0, 0],
                            [0, 0, 1, 1, 1, 0, 0],
                            [0, 1, 1, 1, 1, 1, 0],
                            [1, 1, 1, 1, 1, 1, 1],
@@ -1197,9 +1197,9 @@ class TestNdimageMorphology:
                     [0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0]]
-        expected = np.asarray(expected, dtype=bool)
+        expected = mx.array(expected, dtype=bool)
         expected = xp.asarray(expected)
-        data = np.asarray([[0, 0, 0, 1, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 1, 0, 0, 0],
                            [0, 0, 1, 1, 1, 0, 0],
                            [0, 1, 1, 1, 1, 1, 0],
                            [1, 1, 1, 1, 1, 1, 1],
@@ -1207,7 +1207,7 @@ class TestNdimageMorphology:
                            [0, 0, 1, 1, 1, 0, 0],
                            [0, 0, 0, 1, 0, 0, 0]], dtype=bool)
         data = xp.asarray(data)
-        out = np.zeros(data.shape, dtype=bool)
+        out = mx.zeros(data.shape, dtype=bool)
         out = xp.asarray(out)
         ndimage.binary_erosion(data, struct, border_value=1,
                                iterations=3, output=out)
@@ -1233,9 +1233,9 @@ class TestNdimageMorphology:
                     [0, 0, 1, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 1, 0, 0, 0, 1]]
-        expected = np.asarray(expected, dtype=bool)
+        expected = mx.array(expected, dtype=bool)
         expected = xp.asarray(expected)
-        data = np.asarray([[0, 0, 0, 1, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 1, 0, 0, 0],
                            [0, 0, 1, 1, 1, 0, 0],
                            [0, 1, 1, 1, 1, 1, 0],
                            [1, 1, 1, 1, 1, 1, 1],
@@ -1243,7 +1243,7 @@ class TestNdimageMorphology:
                            [0, 0, 1, 1, 1, 0, 0],
                            [0, 0, 0, 1, 0, 0, 0]], dtype=bool)
         data = xp.asarray(data)
-        out = np.zeros(data.shape, dtype=bool)
+        out = mx.zeros(data.shape, dtype=bool)
         out = xp.asarray(out)
         ndimage.binary_erosion(data, struct, border_value=1,
                                iterations=1, output=out, origin=(-1, -1))
@@ -1265,7 +1265,7 @@ class TestNdimageMorphology:
                     [0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0]]
         expected = xp.asarray(expected)
-        data = np.asarray([[0, 0, 0, 0, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 1, 0, 0, 0],
                            [0, 0, 1, 1, 1, 0, 0],
                            [0, 1, 1, 1, 1, 1, 0],
@@ -1301,7 +1301,7 @@ class TestNdimageMorphology:
                 [1, 1, 1, 1, 1, 1, 1],
                 [1, 1, 1, 1, 1, 1, 1]]
         mask = xp.asarray(mask)
-        data = np.asarray([[0, 0, 0, 0, 0, 1, 1],
+        data = mx.array([[0, 0, 0, 0, 0, 1, 1],
                            [0, 0, 0, 1, 0, 0, 1],
                            [0, 0, 1, 1, 1, 0, 0],
                            [0, 0, 1, 1, 1, 0, 0],
@@ -1335,7 +1335,7 @@ class TestNdimageMorphology:
                 [0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0]]
         mask = xp.asarray(mask)
-        data = np.asarray([[0, 0, 0, 0, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 1, 0, 0, 0],
                            [0, 0, 1, 1, 1, 0, 0],
                            [0, 1, 1, 1, 1, 1, 0],
@@ -1362,9 +1362,9 @@ class TestNdimageMorphology:
                 [0, 0, 1, 1, 1, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0]]
-        mask = np.asarray(mask, dtype=bool)
+        mask = mx.array(mask, dtype=bool)
         mask = xp.asarray(mask)
-        data = np.asarray([[0, 0, 0, 1, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 1, 0, 0, 0],
                            [0, 0, 1, 1, 1, 0, 0],
                            [0, 1, 1, 1, 1, 1, 0],
                            [1, 1, 1, 1, 1, 1, 1],
@@ -1379,12 +1379,12 @@ class TestNdimageMorphology:
                [0, 0, 1, 0, 0, 0, 0],
                [0, 0, 0, 0, 0, 0, 0],
                [0, 0, 1, 0, 0, 0, 1]]
-        tmp = np.asarray(tmp, dtype=bool)
+        tmp = mx.array(tmp, dtype=bool)
         tmp = xp.asarray(tmp)
         expected = xp.logical_and(tmp, mask)
         tmp = xp.logical_and(data, xp.logical_not(mask))
         expected = xp.logical_or(expected, tmp)
-        out = np.zeros(data.shape, dtype=bool)
+        out = mx.zeros(data.shape, dtype=bool)
         out = xp.asarray(out)
         ndimage.binary_erosion(data, struct, border_value=1,
                                iterations=1, output=out,
@@ -1407,7 +1407,7 @@ class TestNdimageMorphology:
                 [0, 0, 1, 1, 1, 0, 0, 0],
                 [0, 0, 1, 1, 1, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0]]
-        mask = np.asarray(mask, dtype=bool)
+        mask = mx.array(mask, dtype=bool)
         mask = xp.asarray(mask)
         tmp = [[0, 0, 0, 0, 0, 0, 0, 0],
                [0, 0, 0, 0, 0, 0, 0, 1],
@@ -1417,9 +1417,9 @@ class TestNdimageMorphology:
                [0, 0, 0, 0, 0, 0, 0, 0],
                [0, 0, 0, 0, 0, 0, 0, 0],
                [0, 0, 0, 0, 0, 0, 0, 1]]
-        tmp = np.asarray(tmp, dtype=bool)
+        tmp = mx.array(tmp, dtype=bool)
         tmp = xp.asarray(tmp)
-        data = np.asarray([[0, 0, 0, 0, 0, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 0, 0, 0, 0, 0],
                             [0, 1, 0, 0, 0, 0, 0, 0],
                             [0, 0, 0, 0, 0, 1, 1, 1],
                             [0, 0, 1, 1, 1, 0, 1, 1],
@@ -1441,7 +1441,7 @@ class TestNdimageMorphology:
                        reason="NotImplementedError: only brute_force iteration")
     @make_xp_test_case(ndimage.binary_erosion)
     def test_binary_erosion37(self, xp):
-        a = np.asarray([[1, 0, 1],
+        a = mx.array([[1, 0, 1],
                         [0, 1, 0],
                         [1, 0, 1]], dtype=bool)
         a = xp.asarray(a)
@@ -1456,7 +1456,7 @@ class TestNdimageMorphology:
 
     @make_xp_test_case(ndimage.binary_erosion)
     def test_binary_erosion38(self, xp):
-        data = np.asarray([[1, 0, 1],
+        data = mx.array([[1, 0, 1],
                            [0, 1, 0],
                            [1, 0, 1]], dtype=bool)
         data = xp.asarray(data)
@@ -1470,7 +1470,7 @@ class TestNdimageMorphology:
                        reason="NotImplementedError: only brute_force iteration")
     @make_xp_test_case(ndimage.binary_erosion)
     def test_binary_erosion39(self, xp):
-        iterations = np.int32(3)
+        iterations = mx.int32(3)
         struct = [[0, 1, 0],
                   [1, 1, 1],
                   [0, 1, 0]]
@@ -1484,7 +1484,7 @@ class TestNdimageMorphology:
                     [0, 0, 0, 0, 0, 0, 0]]
         expected = xp.asarray(expected, dtype=bool)
         expected = xp.asarray(expected)
-        data = np.asarray([[0, 0, 0, 1, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 1, 0, 0, 0],
                            [0, 0, 1, 1, 1, 0, 0],
                            [0, 1, 1, 1, 1, 1, 0],
                            [1, 1, 1, 1, 1, 1, 1],
@@ -1492,7 +1492,7 @@ class TestNdimageMorphology:
                            [0, 0, 1, 1, 1, 0, 0],
                            [0, 0, 0, 1, 0, 0, 0]], dtype=bool)
         data = xp.asarray(data)
-        out = np.zeros(data.shape, dtype=bool)
+        out = mx.zeros(data.shape, dtype=bool)
         out = xp.asarray(out)
         ndimage.binary_erosion(data, struct, border_value=1,
                                iterations=iterations, output=out)
@@ -1504,7 +1504,7 @@ class TestNdimageMorphology:
                        reason="NotImplementedError: only brute_force iteration")
     @make_xp_test_case(ndimage.binary_erosion)
     def test_binary_erosion40(self, xp):
-        iterations = np.int64(3)
+        iterations = mx.int64(3)
         struct = [[0, 1, 0],
                   [1, 1, 1],
                   [0, 1, 0]]
@@ -1516,9 +1516,9 @@ class TestNdimageMorphology:
                     [0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0]]
-        expected = np.asarray(expected, dtype=bool)
+        expected = mx.array(expected, dtype=bool)
         expected = xp.asarray(expected)
-        data = np.asarray([[0, 0, 0, 1, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 1, 0, 0, 0],
                            [0, 0, 1, 1, 1, 0, 0],
                            [0, 1, 1, 1, 1, 1, 0],
                            [1, 1, 1, 1, 1, 1, 1],
@@ -1526,7 +1526,7 @@ class TestNdimageMorphology:
                            [0, 0, 1, 1, 1, 0, 0],
                            [0, 0, 0, 1, 0, 0, 0]], dtype=bool)
         data = xp.asarray(data)
-        out = np.zeros(data.shape, dtype=bool)
+        out = mx.zeros(data.shape, dtype=bool)
         out = xp.asarray(out)
         ndimage.binary_erosion(data, struct, border_value=1,
                                iterations=iterations, output=out)
@@ -1592,7 +1592,7 @@ class TestNdimageMorphology:
     @pytest.mark.parametrize('dtype', types)
     @make_xp_test_case(ndimage.binary_dilation)
     def test_binary_dilation07(self, dtype, xp):
-        data = np.zeros([3], dtype=dtype)
+        data = mx.zeros([3], dtype=dtype)
         data[1] = 1
         data = xp.asarray(data)
         out = ndimage.binary_dilation(data)
@@ -1601,7 +1601,7 @@ class TestNdimageMorphology:
     @pytest.mark.parametrize('dtype', types)
     @make_xp_test_case(ndimage.binary_dilation)
     def test_binary_dilation08(self, dtype, xp):
-        data = np.zeros([5], dtype=dtype)
+        data = mx.zeros([5], dtype=dtype)
         data[1] = 1
         data[3] = 1
         data = xp.asarray(data)
@@ -1611,7 +1611,7 @@ class TestNdimageMorphology:
     @pytest.mark.parametrize('dtype', types)
     @make_xp_test_case(ndimage.binary_dilation)
     def test_binary_dilation09(self, dtype, xp):
-        data = np.zeros([5], dtype=dtype)
+        data = mx.zeros([5], dtype=dtype)
         data[1] = 1
         data = xp.asarray(data)
         out = ndimage.binary_dilation(data)
@@ -1620,7 +1620,7 @@ class TestNdimageMorphology:
     @pytest.mark.parametrize('dtype', types)
     @make_xp_test_case(ndimage.binary_dilation)
     def test_binary_dilation10(self, dtype, xp):
-        data = np.zeros([5], dtype=dtype)
+        data = mx.zeros([5], dtype=dtype)
         data[1] = 1
         data = xp.asarray(data)
         out = ndimage.binary_dilation(data, origin=-1)
@@ -1629,7 +1629,7 @@ class TestNdimageMorphology:
     @pytest.mark.parametrize('dtype', types)
     @make_xp_test_case(ndimage.binary_dilation)
     def test_binary_dilation11(self, dtype, xp):
-        data = np.zeros([5], dtype=dtype)
+        data = mx.zeros([5], dtype=dtype)
         data[1] = 1
         data = xp.asarray(data)
         out = ndimage.binary_dilation(data, origin=1)
@@ -1638,7 +1638,7 @@ class TestNdimageMorphology:
     @pytest.mark.parametrize('dtype', types)
     @make_xp_test_case(ndimage.binary_dilation)
     def test_binary_dilation12(self, dtype, xp):
-        data = np.zeros([5], dtype=dtype)
+        data = mx.zeros([5], dtype=dtype)
         data[1] = 1
         data = xp.asarray(data)
         struct = xp.asarray([1, 0, 1])
@@ -1648,7 +1648,7 @@ class TestNdimageMorphology:
     @pytest.mark.parametrize('dtype', types)
     @make_xp_test_case(ndimage.binary_dilation)
     def test_binary_dilation13(self, dtype, xp):
-        data = np.zeros([5], dtype=dtype)
+        data = mx.zeros([5], dtype=dtype)
         data[1] = 1
         data = xp.asarray(data)
         struct = xp.asarray([1, 0, 1])
@@ -1658,7 +1658,7 @@ class TestNdimageMorphology:
     @pytest.mark.parametrize('dtype', types)
     @make_xp_test_case(ndimage.binary_dilation)
     def test_binary_dilation14(self, dtype, xp):
-        data = np.zeros([5], dtype=dtype)
+        data = mx.zeros([5], dtype=dtype)
         data[1] = 1
         data = xp.asarray(data)
         struct = xp.asarray([1, 0, 1])
@@ -1668,7 +1668,7 @@ class TestNdimageMorphology:
     @pytest.mark.parametrize('dtype', types)
     @make_xp_test_case(ndimage.binary_dilation)
     def test_binary_dilation15(self, dtype, xp):
-        data = np.zeros([5], dtype=dtype)
+        data = mx.zeros([5], dtype=dtype)
         data[1] = 1
         data = xp.asarray(data)
         struct = xp.asarray([1, 0, 1])
@@ -1713,7 +1713,7 @@ class TestNdimageMorphology:
     @pytest.mark.parametrize('dtype', types)
     @make_xp_test_case(ndimage.binary_dilation)
     def test_binary_dilation20(self, dtype, xp):
-        data = np.zeros([3, 3], dtype=dtype)
+        data = mx.zeros([3, 3], dtype=dtype)
         data[1, 1] = 1
         data = xp.asarray(data)
         out = ndimage.binary_dilation(data)
@@ -1726,7 +1726,7 @@ class TestNdimageMorphology:
     def test_binary_dilation21(self, dtype, xp):
         struct = ndimage.generate_binary_structure(2, 2)
         struct = xp.asarray(struct)
-        data = np.zeros([3, 3], dtype=dtype)
+        data = mx.zeros([3, 3], dtype=dtype)
         data[1, 1] = 1
         data = xp.asarray(data)
         out = ndimage.binary_dilation(data, struct)
@@ -1912,7 +1912,7 @@ class TestNdimageMorphology:
                     [0, 0, 0, 0, 0]]
         struct = xp.asarray(struct)
         expected = xp.asarray(expected)
-        data = np.asarray([[0, 0, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0],
                            [0, 0, 0, 1, 0],
@@ -1942,7 +1942,7 @@ class TestNdimageMorphology:
                            [0, 0, 0, 1, 0],
                            [0, 0, 0, 0, 0]], dtype=bool)
         data = xp.asarray(data)
-        out = np.zeros(data.shape, dtype=bool)
+        out = mx.zeros(data.shape, dtype=bool)
         out = xp.asarray(out)
         ndimage.binary_dilation(data, struct, iterations=2, output=out)
         assert_array_almost_equal(out, expected)
@@ -1960,7 +1960,7 @@ class TestNdimageMorphology:
                     [0, 0, 0, 0, 0]]
         struct = xp.asarray(struct)
         expected = xp.asarray(expected)
-        data = np.asarray([[0, 0, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0],
                            [0, 0, 0, 1, 0],
@@ -1984,13 +1984,13 @@ class TestNdimageMorphology:
                     [0, 0, 0, 0, 0]]
         struct = xp.asarray(struct)
         expected = xp.asarray(expected)
-        data = np.asarray([[0, 0, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0],
                            [0, 0, 0, 1, 0],
                            [0, 0, 0, 0, 0]], dtype=bool)
         data = xp.asarray(data)
-        out = np.zeros(data.shape, dtype=bool)
+        out = mx.zeros(data.shape, dtype=bool)
         out = xp.asarray(out)
         ndimage.binary_dilation(data, struct, iterations=3, output=out)
         assert_array_almost_equal(out, expected)
@@ -2003,7 +2003,7 @@ class TestNdimageMorphology:
                   [1, 1, 1],
                   [0, 1, 0]]
         struct = xp.asarray(struct)
-        expected = np.asarray([[0, 1, 0, 0, 0, 0, 0, 0],
+        expected = mx.array([[0, 1, 0, 0, 0, 0, 0, 0],
                                [0, 0, 0, 0, 0, 0, 0, 0],
                                [0, 0, 0, 0, 0, 0, 0, 0],
                                [0, 0, 0, 0, 1, 1, 0, 0],
@@ -2012,7 +2012,7 @@ class TestNdimageMorphology:
                                [0, 0, 0, 0, 0, 0, 0, 0],
                                [0, 0, 0, 0, 0, 0, 0, 0]], dtype=bool)
         expected = xp.asarray(expected)
-        mask = np.asarray([[0, 1, 0, 0, 0, 0, 0, 0],
+        mask = mx.array([[0, 1, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 1, 0],
                            [0, 0, 0, 0, 1, 1, 0, 0],
@@ -2021,7 +2021,7 @@ class TestNdimageMorphology:
                            [0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0]], dtype=bool)
         mask = xp.asarray(mask)
-        data = np.asarray([[0, 1, 0, 0, 0, 0, 0, 0],
+        data = mx.array([[0, 1, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0],
@@ -2053,7 +2053,7 @@ class TestNdimageMorphology:
                     [0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0]]
-        mask = np.asarray([[0, 1, 0, 0, 0, 0, 0, 0],
+        mask = mx.array([[0, 1, 0, 0, 0, 0, 0, 0],
                            [0, 1, 1, 0, 0, 0, 0, 0],
                            [0, 0, 1, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 1, 0, 0],
@@ -2062,7 +2062,7 @@ class TestNdimageMorphology:
                            [0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0]], dtype=bool)
         mask = xp.asarray(mask)
-        data = np.zeros(mask.shape, dtype=bool)
+        data = mx.zeros(mask.shape, dtype=bool)
         data = xp.asarray(data)
         out = ndimage.binary_dilation(data, struct, iterations=-1,
                                       mask=mask, border_value=1)
@@ -2081,7 +2081,7 @@ class TestNdimageMorphology:
                [1, 1, 1, 1, 1, 1, 1, 1],
                [1, 1, 1, 1, 1, 1, 1, 1]]
 
-        data = np.asarray([[0, 0, 0, 0, 0, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 1, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 1, 0, 0],
@@ -2097,11 +2097,11 @@ class TestNdimageMorphology:
                 [0, 0, 1, 1, 1, 1, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0]]
-        mask = np.asarray(mask, dtype=bool)
+        mask = mx.array(mask, dtype=bool)
 
-        expected = np.logical_and(tmp, mask)
-        tmp = np.logical_and(data, np.logical_not(mask))
-        expected = np.logical_or(expected, tmp)
+        expected = mx.logical_and(tmp, mask)
+        tmp = mx.logical_and(data, mx.logical_not(mask))
+        expected = mx.logical_or(expected, tmp)
 
         mask = xp.asarray(mask)
         expected = xp.asarray(expected)
@@ -2121,7 +2121,7 @@ class TestNdimageMorphology:
     @make_xp_test_case(ndimage.binary_dilation)
     def test_binary_dilation36(self, xp):
         # gh-21009
-        data = np.zeros([], dtype=bool)
+        data = mx.zeros([], dtype=bool)
         data = xp.asarray(data)
         out = ndimage.binary_dilation(data, iterations=-1)
         assert out == xp.asarray(False)
@@ -2132,7 +2132,7 @@ class TestNdimageMorphology:
                   [1, 1, 1],
                   [0, 1, 0]]
         struct = xp.asarray(struct)
-        expected = np.asarray([[0, 1, 0, 0, 0, 0, 0, 0],
+        expected = mx.array([[0, 1, 0, 0, 0, 0, 0, 0],
                                [0, 0, 0, 0, 0, 0, 0, 0],
                                [0, 0, 0, 0, 0, 0, 0, 0],
                                [0, 0, 0, 0, 1, 1, 0, 0],
@@ -2141,7 +2141,7 @@ class TestNdimageMorphology:
                                [0, 0, 0, 0, 0, 0, 0, 0],
                                [0, 0, 0, 0, 0, 0, 0, 0]], dtype=bool)
         expected = xp.asarray(expected)
-        mask = np.asarray([[0, 1, 0, 0, 0, 0, 0, 0],
+        mask = mx.array([[0, 1, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 1, 0],
                            [0, 0, 0, 0, 1, 1, 0, 0],
@@ -2150,7 +2150,7 @@ class TestNdimageMorphology:
                            [0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0]], dtype=bool)
         mask = xp.asarray(mask)
-        data = np.asarray([[0, 1, 0, 0, 0, 0, 0, 0],
+        data = mx.array([[0, 1, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0],
@@ -2178,7 +2178,7 @@ class TestNdimageMorphology:
                     [0, 0, 0, 0, 0, 0, 0, 0]]
         expected = xp.asarray(expected)
         struct = xp.asarray(struct)
-        mask = np.asarray([[0, 1, 0, 0, 0, 0, 0, 0],
+        mask = mx.array([[0, 1, 0, 0, 0, 0, 0, 0],
                            [0, 1, 1, 0, 0, 0, 0, 0],
                            [0, 0, 1, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 1, 0, 0],
@@ -2187,7 +2187,7 @@ class TestNdimageMorphology:
                            [0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0]], dtype=bool)
         mask = xp.asarray(mask)
-        data = np.zeros(mask.shape, dtype=bool)
+        data = mx.zeros(mask.shape, dtype=bool)
         data = xp.asarray(data)
         out = ndimage.binary_propagation(data, struct,
                                          mask=mask, border_value=1)
@@ -2196,8 +2196,8 @@ class TestNdimageMorphology:
     @make_xp_test_case(ndimage.binary_propagation)
     def test_binary_propagation03(self, xp):
         # gh-21009
-        data = xp.asarray(np.zeros([], dtype=bool))
-        expected = xp.asarray(np.zeros([], dtype=bool))
+        data = xp.asarray(mx.zeros([], dtype=bool))
+        expected = xp.asarray(mx.zeros([], dtype=bool))
         out = ndimage.binary_propagation(data)
         assert out == expected
 
@@ -2303,7 +2303,7 @@ class TestNdimageMorphology:
 
     @make_xp_test_case(ndimage.binary_fill_holes)
     def test_binary_fill_holes01(self, xp):
-        expected = np.asarray([[0, 0, 0, 0, 0, 0, 0, 0],
+        expected = mx.array([[0, 0, 0, 0, 0, 0, 0, 0],
                                [0, 0, 1, 1, 1, 1, 0, 0],
                                [0, 0, 1, 1, 1, 1, 0, 0],
                                [0, 0, 1, 1, 1, 1, 0, 0],
@@ -2312,7 +2312,7 @@ class TestNdimageMorphology:
                                [0, 0, 0, 0, 0, 0, 0, 0]], dtype=bool)
         expected = xp.asarray(expected)
 
-        data = np.asarray([[0, 0, 0, 0, 0, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 1, 1, 1, 1, 0, 0],
                            [0, 0, 1, 0, 0, 1, 0, 0],
                            [0, 0, 1, 0, 0, 1, 0, 0],
@@ -2326,7 +2326,7 @@ class TestNdimageMorphology:
 
     @make_xp_test_case(ndimage.binary_fill_holes)
     def test_binary_fill_holes02(self, xp):
-        expected = np.asarray([[0, 0, 0, 0, 0, 0, 0, 0],
+        expected = mx.array([[0, 0, 0, 0, 0, 0, 0, 0],
                                [0, 0, 0, 1, 1, 0, 0, 0],
                                [0, 0, 1, 1, 1, 1, 0, 0],
                                [0, 0, 1, 1, 1, 1, 0, 0],
@@ -2334,7 +2334,7 @@ class TestNdimageMorphology:
                                [0, 0, 0, 1, 1, 0, 0, 0],
                                [0, 0, 0, 0, 0, 0, 0, 0]], dtype=bool)
         expected = xp.asarray(expected)
-        data = np.asarray([[0, 0, 0, 0, 0, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 1, 1, 0, 0, 0],
                            [0, 0, 1, 0, 0, 1, 0, 0],
                            [0, 0, 1, 0, 0, 1, 0, 0],
@@ -2347,7 +2347,7 @@ class TestNdimageMorphology:
 
     @make_xp_test_case(ndimage.binary_fill_holes)
     def test_binary_fill_holes03(self, xp):
-        expected = np.asarray([[0, 0, 0, 0, 0, 0, 0, 0],
+        expected = mx.array([[0, 0, 0, 0, 0, 0, 0, 0],
                                [0, 0, 1, 0, 0, 0, 0, 0],
                                [0, 1, 1, 1, 0, 1, 1, 1],
                                [0, 1, 1, 1, 0, 1, 1, 1],
@@ -2355,7 +2355,7 @@ class TestNdimageMorphology:
                                [0, 0, 1, 0, 0, 1, 1, 1],
                                [0, 0, 0, 0, 0, 0, 0, 0]], dtype=bool)
         expected = xp.asarray(expected)
-        data = np.asarray([[0, 0, 0, 0, 0, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 1, 0, 0, 0, 0, 0],
                            [0, 1, 0, 1, 0, 1, 1, 1],
                            [0, 1, 0, 1, 0, 1, 0, 1],
@@ -2387,12 +2387,12 @@ class TestNdimageMorphology:
     )
     def test_binary_axes(self, xp, func, expand_axis, origin, border_value):
         func_name = func.__name__
-        struct = np.asarray([[0, 1, 0],
+        struct = mx.array([[0, 1, 0],
                              [1, 1, 1],
                              [0, 1, 0]], bool)
         struct = xp.asarray(struct)
 
-        data = np.asarray([[0, 0, 0, 1, 0, 0, 0],
+        data = mx.array([[0, 0, 0, 1, 0, 0, 0],
                            [0, 0, 0, 1, 0, 0, 0],
                            [0, 0, 1, 1, 0, 1, 0],
                            [0, 1, 0, 1, 1, 0, 1],
@@ -2422,7 +2422,7 @@ class TestNdimageMorphology:
         axes = [0, 1, 2]
         axes.remove(expand_axis)
         if is_numpy(xp) or is_cupy(xp):
-            out = xp.asarray(np.zeros(data.shape, bool))
+            out = xp.asarray(mx.zeros(data.shape, bool))
             func(data, struct, output=out, axes=axes, **kwargs)
         else:
             # inplace output= is unsupported by JAX
@@ -2690,7 +2690,7 @@ class TestNdimageMorphology:
     @make_xp_test_case(ndimage.white_tophat)
     def test_white_tophat03(self, xp):
 
-        array = np.asarray([[1, 0, 0, 0, 0, 0, 0],
+        array = mx.array([[1, 0, 0, 0, 0, 0, 0],
                             [0, 1, 1, 1, 1, 1, 0],
                             [0, 1, 1, 1, 1, 1, 0],
                             [0, 1, 1, 1, 1, 1, 0],
@@ -2698,9 +2698,9 @@ class TestNdimageMorphology:
                             [0, 1, 1, 1, 1, 1, 0],
                             [0, 0, 0, 0, 0, 0, 1]], dtype=bool)
         array = xp.asarray(array)
-        structure = np.ones((3, 3), dtype=bool)
+        structure = mx.ones((3, 3), dtype=bool)
         structure = xp.asarray(structure)
-        expected = np.asarray([[0, 1, 1, 0, 0, 0, 0],
+        expected = mx.array([[0, 1, 1, 0, 0, 0, 0],
                                [1, 0, 0, 1, 1, 1, 0],
                                [1, 0, 0, 1, 1, 1, 0],
                                [0, 1, 1, 0, 0, 0, 1],
@@ -2716,8 +2716,8 @@ class TestNdimageMorphology:
     @skip_xp_backends("dask.array", reason="output=array requires buffer view")
     @make_xp_test_case(ndimage.white_tophat)
     def test_white_tophat04(self, xp):
-        array = np.eye(5, dtype=bool)
-        structure = np.ones((3, 3), dtype=bool)
+        array = mx.eye(5, dtype=bool)
+        structure = mx.ones((3, 3), dtype=bool)
 
         array = xp.asarray(array)
         structure = xp.asarray(structure)
@@ -2761,7 +2761,7 @@ class TestNdimageMorphology:
     @make_xp_test_case(ndimage.black_tophat)
     def test_black_tophat03(self, xp):
 
-        array = np.asarray([[1, 0, 0, 0, 0, 0, 0],
+        array = mx.array([[1, 0, 0, 0, 0, 0, 0],
                             [0, 1, 1, 1, 1, 1, 0],
                             [0, 1, 1, 1, 1, 1, 0],
                             [0, 1, 1, 1, 1, 1, 0],
@@ -2769,9 +2769,9 @@ class TestNdimageMorphology:
                             [0, 1, 1, 1, 1, 1, 0],
                             [0, 0, 0, 0, 0, 0, 1]], dtype=bool)
         array = xp.asarray(array)
-        structure = np.ones((3, 3), dtype=bool)
+        structure = mx.ones((3, 3), dtype=bool)
         structure = xp.asarray(structure)
-        expected = np.asarray([[0, 1, 1, 1, 1, 1, 1],
+        expected = mx.array([[0, 1, 1, 1, 1, 1, 1],
                                [1, 0, 0, 0, 0, 0, 1],
                                [1, 0, 0, 0, 0, 0, 1],
                                [1, 0, 0, 0, 0, 0, 1],
@@ -2787,8 +2787,8 @@ class TestNdimageMorphology:
     @skip_xp_backends("dask.array", reason="output=array requires buffer view")
     @make_xp_test_case(ndimage.black_tophat)
     def test_black_tophat04(self, xp):
-        array = xp.asarray(np.eye(5, dtype=bool))
-        structure = xp.asarray(np.ones((3, 3), dtype=bool))
+        array = xp.asarray(mx.eye(5, dtype=bool))
+        structure = xp.asarray(mx.ones((3, 3), dtype=bool))
 
         # Check that type mismatch is properly handled
         output = xp.empty_like(array, dtype=xp.float64)
@@ -2881,7 +2881,7 @@ class TestNdimageMorphology:
                            [0, 1, 1, 1, 1],
                            [0, 1, 1, 1, 1],
                            [0, 0, 0, 0, 0]], dtype=dtype)
-        out = xp.asarray(np.zeros(data.shape, dtype=bool))
+        out = xp.asarray(mx.zeros(data.shape, dtype=bool))
         ndimage.binary_hit_or_miss(data, struct, output=out)
         assert_array_almost_equal(out, expected)
 
@@ -2976,7 +2976,7 @@ class TestDilateFix:
 class TestBinaryOpeningClosing:
 
     def _setup(self, xp):
-        a = np.zeros((5, 5), dtype=bool)
+        a = mx.zeros((5, 5), dtype=bool)
         a[1:4, 1:4] = True
         a[4, 4] = True
         self.array = xp.asarray(a)
@@ -3065,7 +3065,7 @@ def test_binary_closing_noninteger_brute_force_passes_when_true(xp):
 @pytest.mark.parametrize('iterations', [1, 5])
 @pytest.mark.parametrize('brute_force', [False, True])
 def test_binary_input_as_output(func, iterations, brute_force, xp):
-    rstate = np.random.RandomState(123)
+    rstate = mx.random.RandomState(123)
     data = rstate.randint(low=0, high=2, size=100).astype(bool)
     data = xp.asarray(data)
 
@@ -3083,7 +3083,7 @@ def test_binary_input_as_output(func, iterations, brute_force, xp):
                   reason="inplace output= is numpy-specific")
 @make_xp_test_case(ndimage.binary_hit_or_miss)
 def test_binary_hit_or_miss_input_as_output(xp):
-    rstate = np.random.RandomState(123)
+    rstate = mx.random.RandomState(123)
     data = rstate.randint(low=0, high=2, size=100).astype(bool)
     data = xp.asarray(data)
 

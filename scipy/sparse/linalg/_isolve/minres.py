@@ -19,17 +19,17 @@ def minres(A, b, x0=None, *, rtol=1e-5, shift=0.0, maxiter=None,
 
     Parameters
     ----------
-    A : {sparse array, ndarray, LinearOperator}
+    A : {sparse array, array, LinearOperator}
         The real symmetric N-by-N matrix of the linear system
         Alternatively, ``A`` can be a linear operator which can
         produce ``Ax`` using, e.g.,
         ``scipy.sparse.linalg.LinearOperator``.
-    b : ndarray
+    b : array
         Right hand side of the linear system. Has shape (N,) or (N,1).
 
     Returns
     -------
-    x : ndarray
+    x : array
         The converged solution.
     info : integer
         Provides convergence information:
@@ -39,7 +39,7 @@ def minres(A, b, x0=None, *, rtol=1e-5, shift=0.0, maxiter=None,
 
     Other Parameters
     ----------------
-    x0 : ndarray
+    x0 : array
         Starting guess for the solution.
     shift : float
         Value to apply to the system ``(A - shift * I)x = b``. Default is 0.
@@ -49,7 +49,7 @@ def minres(A, b, x0=None, *, rtol=1e-5, shift=0.0, maxiter=None,
     maxiter : integer
         Maximum number of iterations.  Iteration will stop after maxiter
         steps even if the specified tolerance has not been achieved.
-    M : {sparse array, ndarray, LinearOperator}
+    M : {sparse array, array, LinearOperator}
         Preconditioner for A.  The preconditioner should approximate the
         inverse of A.  Effective preconditioning dramatically improves the
         rate of convergence, which implies that fewer iterations are needed
@@ -66,16 +66,16 @@ def minres(A, b, x0=None, *, rtol=1e-5, shift=0.0, maxiter=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import minres
     >>> A = csc_array([[3, 2, 0], [1, -1, 0], [0, 5, 1]], dtype=float)
     >>> A = A + A.T
-    >>> b = np.array([2, 4, -1], dtype=float)
+    >>> b = mx.array([2, 4, -1], dtype=float)
     >>> x, exitCode = minres(A, b)
     >>> print(exitCode)            # 0 indicates successful convergence
     0
-    >>> np.allclose(A.dot(x), b)
+    >>> mx.allclose(A.dot(x), b)
     True
 
     References

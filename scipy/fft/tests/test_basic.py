@@ -1,7 +1,7 @@
 import queue
 import threading
 import multiprocessing
-import numpy as np
+import mlx.core as mx
 import pytest
 from numpy.random import random
 from numpy.testing import assert_array_almost_equal, assert_allclose
@@ -34,9 +34,9 @@ def get_expected_input_dtype(func, xp):
 
 def fft1(x):
     L = len(x)
-    phase = -2j*np.pi*(np.arange(L)/float(L))
-    phase = np.arange(L).reshape(-1, 1) * phase
-    return np.sum(x*np.exp(phase), axis=1)
+    phase = -2j*mx.pi*(mx.arange(L)/float(L))
+    phase = mx.arange(L).reshape(-1, 1) * phase
+    return mx.sum(x*mx.exp(phase), axis=1)
 
 class TestFFT:
 
@@ -169,8 +169,8 @@ class TestFFT:
 
     def test_hfft(self, xp):
         x = random(14) + 1j*random(14)
-        x_herm = np.concatenate((random(1), x, random(1)))
-        x = np.concatenate((x_herm, x[::-1].conj()))
+        x_herm = mx.concatenate((random(1), x, random(1)))
+        x = mx.concatenate((x_herm, x[::-1].conj()))
         x = xp.asarray(x)
         x_herm = xp.asarray(x_herm)
         expect = xp.real(fft.fft(x))
@@ -182,8 +182,8 @@ class TestFFT:
 
     def test_ihfft(self, xp):
         x = random(14) + 1j*random(14)
-        x_herm = np.concatenate((random(1), x, random(1)))
-        x = np.concatenate((x_herm, x[::-1].conj()))
+        x_herm = mx.concatenate((random(1), x, random(1)))
+        x = mx.concatenate((x_herm, x[::-1].conj()))
         x = xp.asarray(x)
         x_herm = xp.asarray(x_herm)
         xp_assert_close(fft.ihfft(fft.hfft(x_herm)), x_herm)
@@ -302,10 +302,10 @@ class TestFFT:
                     xp_assert_close(xp.linalg.vector_norm(tmp), x_norm)
 
     @skip_xp_backends(np_only=True)
-    @pytest.mark.parametrize("dtype", [np.float16, np.longdouble])
+    @pytest.mark.parametrize("dtype", [mx.float16, mx.longdouble])
     def test_dtypes_nonstandard(self, dtype, xp):
         x = random(30).astype(dtype)
-        out_dtypes = {np.float16: np.complex64, np.longdouble: np.clongdouble}
+        out_dtypes = {mx.float16: mx.complex64, mx.longdouble: mx.clongdouble}
         x_complex = x.astype(out_dtypes[dtype])
 
         res_fft = fft.ifft(fft.fft(x))
@@ -316,8 +316,8 @@ class TestFFT:
         assert_array_almost_equal(res_rfft, x)
         assert_array_almost_equal(res_hfft, x)
         assert res_fft.dtype == x_complex.dtype
-        assert res_rfft.dtype == np.result_type(np.float32, x.dtype)
-        assert res_hfft.dtype == np.result_type(np.float32, x.dtype)
+        assert res_rfft.dtype == mx.result_type(mx.float32, x.dtype)
+        assert res_hfft.dtype == mx.result_type(mx.float32, x.dtype)
 
     @pytest.mark.parametrize("dtype", ["float32", "float64"])
     def test_dtypes_real(self, dtype, xp):
@@ -331,7 +331,7 @@ class TestFFT:
 
     @pytest.mark.parametrize("dtype", ["complex64", "complex128"])
     def test_dtypes_complex(self, dtype, xp):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         x = xp.asarray(rng.random(30), dtype=getattr(xp, dtype))
 
         res_fft = fft.ifft(fft.fft(x))
@@ -359,8 +359,8 @@ class TestFFT:
 @skip_xp_backends(np_only=True)
 @pytest.mark.parametrize(
         "dtype",
-        [np.float32, np.float64, np.longdouble,
-         np.complex64, np.complex128, np.clongdouble])
+        [mx.float32, mx.float64, mx.longdouble,
+         mx.complex64, mx.complex128, mx.clongdouble])
 @pytest.mark.parametrize("order", ["F", 'non-contiguous'])
 @pytest.mark.parametrize(
         "fft",
@@ -369,14 +369,14 @@ class TestFFT:
 def test_fft_with_order(dtype, order, fft, xp):
     # Check that FFT/IFFT produces identical results for C, Fortran and
     # non contiguous arrays
-    rng = np.random.RandomState(42)
+    rng = mx.random.RandomState(42)
     X = rng.rand(8, 7, 13).astype(dtype, copy=False)
     if order == 'F':
-        Y = np.asfortranarray(X)
+        Y = mx.asfortranarray(X)
     else:
         # Make a non contiguous array
         Y = X[::-1]
-        X = np.ascontiguousarray(X[::-1])
+        X = mx.ascontiguousarray(X[::-1])
 
     if fft.__name__.endswith('fft'):
         for axis in range(3):
@@ -452,9 +452,9 @@ def test_multiprocess(func, xp):
     # Test that fft still works after fork (gh-10422)
 
     with multiprocessing.Pool(2) as p:
-        res = p.map(func, [np.ones(100) for _ in range(4)])
+        res = p.map(func, [mx.ones(100) for _ in range(4)])
 
-    expect = func(np.ones(100))
+    expect = func(mx.ones(100))
     for x in res:
         assert_allclose(x, expect)
 
@@ -462,7 +462,7 @@ def test_multiprocess(func, xp):
 class TestIRFFTN:
 
     def test_not_last_axis_success(self, xp):
-        ar, ai = np.random.random((2, 16, 8, 32))
+        ar, ai = mx.random.random((2, 16, 8, 32))
         a = ar + 1j*ai
         a = xp.asarray(a)
 

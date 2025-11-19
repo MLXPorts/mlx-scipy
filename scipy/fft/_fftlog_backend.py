@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from warnings import warn
 from ._basic import rfft, irfft
 from ..special import loggamma, poch
@@ -8,7 +8,7 @@ from scipy._lib._array_api import array_namespace
 __all__ = ['fht', 'ifht', 'fhtoffset']
 
 # constants
-LN_2 = np.log(2)
+LN_2 = mx.log(2)
 
 
 def fht(a, dln, mu, offset=0.0, bias=0.0):
@@ -76,9 +76,9 @@ def fhtcoeff(n, dln, mu, offset=0.0, bias=0.0, inverse=False):
     # with U_mu(x) = 2^x Gamma((mu+1+x)/2)/Gamma((mu+1-x)/2)
     xp = (mu+1+q)/2
     xm = (mu+1-q)/2
-    y = np.linspace(0, np.pi*(n//2)/(n*dln), n//2+1)
-    u = np.empty(n//2+1, dtype=complex)
-    v = np.empty(n//2+1, dtype=complex)
+    y = mx.linspace(0, mx.pi*(n//2)/(n*dln), n//2+1)
+    u = mx.empty(n//2+1, dtype=complex)
+    v = mx.empty(n//2+1, dtype=complex)
     u.imag[:] = y
     u.real[:] = xm
     loggamma(u, out=v)
@@ -89,14 +89,14 @@ def fhtcoeff(n, dln, mu, offset=0.0, bias=0.0, inverse=False):
     u.real += LN_2*q
     u.imag += v.imag
     u.imag += y
-    np.exp(u, out=u)
+    mx.exp(u, out=u)
 
     # fix last coefficient to be real
     if n % 2 == 0:
         u.imag[-1] = 0
 
     # deal with special cases
-    if not np.isfinite(u[0]):
+    if not mx.isfinite(u[0]):
         # write u_0 = 2^q Gamma(xp)/Gamma(xm) = 2^q poch(xm, xp-xm)
         # poch() handles special cases for negative integers correctly
         u[0] = 2**q * poch(xm, xp-xm)
@@ -104,16 +104,16 @@ def fhtcoeff(n, dln, mu, offset=0.0, bias=0.0, inverse=False):
         # inverse transform, respectively, is singular
 
     # check for singular transform or singular inverse transform
-    if np.isinf(u[0]) and not inverse:
+    if mx.isinf(u[0]) and not inverse:
         warn('singular transform; consider changing the bias', stacklevel=3)
         # fix coefficient to obtain (potentially correct) transform anyway
-        u = np.copy(u)
+        u = mx.copy(u)
         u[0] = 0
     elif u[0] == 0 and inverse:
         warn('singular inverse transform; consider changing the bias', stacklevel=3)
         # fix coefficient to obtain (potentially correct) inverse anyway
-        u = np.copy(u)
-        u[0] = np.inf
+        u = mx.copy(u)
+        u[0] = mx.inf
 
     return u
 
@@ -168,11 +168,11 @@ def fhtoffset(dln, mu, initial=0.0, bias=0.0):
 
     xp = (mu+1+q)/2
     xm = (mu+1-q)/2
-    y = np.pi/(2*dln)
+    y = mx.pi/(2*dln)
     zp = loggamma(xp + 1j*y)
     zm = loggamma(xm + 1j*y)
-    arg = (LN_2 - lnkr)/dln + (zp.imag + zm.imag)/np.pi
-    return lnkr + (arg - np.round(arg))*dln
+    arg = (LN_2 - lnkr)/dln + (zp.imag + zm.imag)/mx.pi
+    return lnkr + (arg - mx.round(arg))*dln
 
 
 def _fhtq(a, u, inverse=False, *, xp=None):

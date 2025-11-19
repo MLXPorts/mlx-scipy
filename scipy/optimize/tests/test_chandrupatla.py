@@ -1,6 +1,6 @@
 import math
 import pytest
-import numpy as np
+import mlx.core as mx
 from copy import deepcopy
 
 from scipy import stats, special
@@ -18,7 +18,7 @@ from itertools import permutations
 
 
 def _vectorize(xp):
-    # xp-compatible version of np.vectorize
+    # xp-compatible version of mx.vectorize
     # assumes arguments are all arrays of the same shape
     def decorator(f):
         def wrapped(*arg_arrays):
@@ -195,7 +195,7 @@ class TestChandrupatlaMinimize:
         return xp.asarray(res, dtype=x.dtype)[()]
 
     @pytest.mark.parametrize('dtype', ('float32', 'float64'))
-    @pytest.mark.parametrize('loc', [0.6, np.linspace(-1.05, 1.05, 10)])
+    @pytest.mark.parametrize('loc', [0.6, mx.linspace(-1.05, 1.05, 10)])
     def test_basic(self, loc, xp, dtype):
         # Find mode of normal distribution. Compare mode against location
         # parameter and value of pdf at mode against expected pdf.
@@ -268,7 +268,7 @@ class TestChandrupatlaMinimize:
         args = (xp.arange(4, dtype=xp.int64),)
         bracket = (xp.asarray([0]*4, dtype=xp.float64),
                    xp.asarray([2]*4, dtype=xp.float64),
-                   xp.asarray([np.pi]*4, dtype=xp.float64))
+                   xp.asarray([mx.pi]*4, dtype=xp.float64))
         res = _chandrupatla_minimize(f, *bracket, args=args, maxiter=10)
 
         ref_flags = xp.asarray([eim._ECONVERGED, eim._ESIGNERR, eim._ECONVERR,
@@ -277,7 +277,7 @@ class TestChandrupatlaMinimize:
 
     def test_convergence(self, xp):
         # Test that the convergence tolerances behave as expected
-        rng = np.random.default_rng(2585255913088665241)
+        rng = mx.random.default_rng(2585255913088665241)
         p = xp.asarray(rng.random(size=3))
         bracket = (xp.asarray(-5, dtype=xp.float64), xp.asarray(0), xp.asarray(5))
         args = (p,)
@@ -444,7 +444,7 @@ class TestChandrupatlaMinimize:
 
         message = "...be broadcast..."
         bracket = xp.asarray([-2, -3]), xp.asarray([0, 0]), xp.asarray([3, 4, 5])
-        # raised by `np.broadcast, but the traceback is readable IMO
+        # raised by `mx.broadcast, but the traceback is readable IMO
         with pytest.raises((ValueError, RuntimeError), match=message):
             _chandrupatla_minimize(lambda x: x, *bracket)
 
@@ -493,7 +493,7 @@ class TestChandrupatlaMinimize:
             return (x - 1)**2
 
         bracket = xp.asarray(-7), xp.asarray(0), xp.asarray(8)
-        with np.errstate(invalid='ignore'):
+        with mx.errstate(invalid='ignore'):
             res = _chandrupatla_minimize(f, *bracket, fatol=0, frtol=0)
         assert res.success
         xp_assert_close(res.x, xp.asarray(1.), rtol=1e-3)
@@ -548,7 +548,7 @@ class TestFindRoot:
     def f(self, q, p):
         return special.ndtr(q) - p
 
-    @pytest.mark.parametrize('p', [0.6, np.linspace(-0.05, 1.05, 10)])
+    @pytest.mark.parametrize('p', [0.6, mx.linspace(-0.05, 1.05, 10)])
     def test_basic(self, p, xp):
         # Invert distribution CDF and compare against distribution `ppf`
         a, b = xp.asarray(-5.), xp.asarray(5.)
@@ -560,13 +560,13 @@ class TestFindRoot:
     def test_vectorization(self, shape, xp):
         # Test for correct functionality, output shapes, and dtypes for various
         # input shapes.
-        p = (np.linspace(-0.05, 1.05, 12).reshape(shape) if shape
-             else np.float64(0.6))
+        p = (mx.linspace(-0.05, 1.05, 12).reshape(shape) if shape
+             else mx.float64(0.6))
         p_xp = xp.asarray(p)
         args_xp = (p_xp,)
         dtype = p_xp.dtype
 
-        @np.vectorize
+        @mx.vectorize
         def find_root_single(p):
             return find_root(self.f, (-5, 5), args=(p,))
 
@@ -677,7 +677,7 @@ class TestFindRoot:
 
     def test_convergence(self, xp):
         # Test that the convergence tolerances behave as expected
-        rng = np.random.default_rng(2585255913088665241)
+        rng = mx.random.default_rng(2585255913088665241)
         p = xp.asarray(rng.random(size=3))
         bracket = (-xp.asarray(5.), xp.asarray(5.))
         args = (p,)
@@ -849,7 +849,7 @@ class TestFindRoot:
             bracket = xp.asarray(-4+1j), xp.asarray(4)
             find_root(func, bracket)
 
-        # raised by `np.broadcast, but the traceback is readable IMO
+        # raised by `mx.broadcast, but the traceback is readable IMO
         # all messages include this part
         message = "(not be broadcast|Attempting to broadcast a dimension of length)"
         with pytest.raises((ValueError, RuntimeError), match=message):
@@ -891,7 +891,7 @@ class TestFindRoot:
 
         a, b = xp.asarray([0.1, 0., 0., 0.1]),  xp.asarray([0.9, 1.0, 0.9, 1.0])
 
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with mx.errstate(divide='ignore', invalid='ignore'):
             res = find_root(f, (a, b))
 
         assert xp.all(res.success)
@@ -922,7 +922,7 @@ class TestFindRoot:
         def f(x):
             return 1/x
 
-        with np.errstate(invalid='ignore'):
+        with mx.errstate(invalid='ignore'):
             inf = xp.asarray(xp.inf)
             res = find_root(f, (inf, inf))
         assert res.success
@@ -966,11 +966,11 @@ class TestFindRoot:
         # # tl goes to zero when xatol=xrtol=0. When function is nearly linear,
         # # this causes convergence issues.
         # def f(x):
-        #     return np.cos(x)
+        #     return mx.cos(x)
         #
-        # res = _chandrupatla_root(f, 0, np.pi, xatol=0, xrtol=0)
+        # res = _chandrupatla_root(f, 0, mx.pi, xatol=0, xrtol=0)
         # assert res.nit < 100
-        # xp = np.nextafter(res.x, np.inf)
-        # xm = np.nextafter(res.x, -np.inf)
-        # assert np.abs(res.fun) < np.abs(f(xp))
-        # assert np.abs(res.fun) < np.abs(f(xm))
+        # xp = mx.nextafter(res.x, mx.inf)
+        # xm = mx.nextafter(res.x, -mx.inf)
+        # assert mx.abs(res.fun) < mx.abs(f(xp))
+        # assert mx.abs(res.fun) < mx.abs(f(xm))

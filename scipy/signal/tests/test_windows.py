@@ -1,7 +1,7 @@
 import math
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy import array
 import pytest
 from pytest import raises as assert_raises
@@ -178,15 +178,15 @@ class TestTaylor:
         w = windows.taylor(M_win, nbar=4, sll=35, norm=False, sym=False, xp=xp)
         f = fft(w, N_fft)
 
-        f_np = np.asarray(f)
-        spec = 20 * np.log10(np.abs(f_np / np.max(f_np)))
+        f_np = mx.array(f)
+        spec = 20 * mx.log10(mx.abs(f_np / mx.max(f_np)))
 
-        first_zero = np.argmax(np.diff(spec) > 0)
+        first_zero = mx.argmax(mx.diff(spec) > 0)
 
-        PSLL = np.max(spec[first_zero:-first_zero])
+        PSLL = mx.max(spec[first_zero:-first_zero])
 
-        BW_3dB = 2*np.argmax(spec <= -3.0102999566398121) / N_fft * M_win
-        BW_18dB = 2*np.argmax(spec <= -18.061799739838872) / N_fft * M_win
+        BW_3dB = 2*mx.argmax(spec <= -3.0102999566398121) / N_fft * M_win
+        BW_18dB = 2*mx.argmax(spec <= -18.061799739838872) / N_fft * M_win
 
         assert math.isclose(PSLL, -35.1672, abs_tol=1)
         assert math.isclose(BW_3dB, 1.1822, abs_tol=0.1)
@@ -527,14 +527,14 @@ class TestKaiserBesselDerived:
         # M = 4:  0.518562710536, 0.855039598640
         # M = 6:  0.436168993154, 0.707106781187, 0.899864772847
         # Ref:https://github.com/scipy/scipy/pull/4747#issuecomment-172849418
-        actual = windows.kaiser_bessel_derived(2, beta=np.pi / 2, xp=xp)[:1]
+        actual = windows.kaiser_bessel_derived(2, beta=mx.pi / 2, xp=xp)[:1]
         desired = xp.ones_like(actual) * math.sqrt(2) / 2.0
         xp_assert_close(actual, desired)
 
-        xp_assert_close(windows.kaiser_bessel_derived(4, beta=np.pi / 2, xp=xp)[:2],
+        xp_assert_close(windows.kaiser_bessel_derived(4, beta=mx.pi / 2, xp=xp)[:2],
                         xp.asarray([0.518562710536, 0.855039598640], dtype=xp.float64))
 
-        xp_assert_close(windows.kaiser_bessel_derived(6, beta=np.pi / 2, xp=xp)[:3],
+        xp_assert_close(windows.kaiser_bessel_derived(6, beta=mx.pi / 2, xp=xp)[:3],
                         xp.asarray([0.436168993154, 0.707106781187, 0.899864772847],
                                    dtype=xp.float64))
 
@@ -688,19 +688,19 @@ class TestDPSS:
             # corrected w/approximation (default)
             win = windows.dpss(M, M / 2.1, xp=xp)
             expected = M % 2  # one for odd, none for even
-            xp_assert_equal(np.isclose(win, 1.).sum(), expected,
+            xp_assert_equal(mx.isclose(win, 1.).sum(), expected,
                          err_msg=f'{win}')
             # corrected w/subsample delay (slower)
             win_sub = windows.dpss(M, M / 2.1, norm='subsample', xp=xp)
             if M > 2:
                 # @M=2 the subsample doesn't do anything
-                xp_assert_equal(np.isclose(win_sub, 1.).sum(), expected,
+                xp_assert_equal(mx.isclose(win_sub, 1.).sum(), expected,
                              err_msg=f'{win_sub}')
                 xp_assert_close(win, win_sub, rtol=0.03)  # within 3%
             # not the same, l2-norm
             win_2 = windows.dpss(M, M / 2.1, norm=2, xp=xp)
             expected = 1 if M == 1 else 0
-            xp_assert_equal(np.isclose(win_2, 1.).sum(), expected,
+            xp_assert_equal(mx.isclose(win_2, 1.).sum(), expected,
                          err_msg=f'{win_2}')
 
     def test_extremes(self, xp):
@@ -732,7 +732,7 @@ class TestDPSS:
         assert ratio == 1.
         w, ratio = windows.dpss(1, 1., Kmax=4, return_ratios=True)
         xp_assert_equal(w, [1.])
-        assert isinstance(ratio, np.ndarray)
+        assert isinstance(ratio, mx.array)
         xp_assert_equal(ratio, [1.])
 
         assert_raises(ValueError, windows.dpss, 4, 1.5, -1, xp=xp)  # Bad Kmax
@@ -839,7 +839,7 @@ class TestGetWindow:
         win2 = windows.kaiser(64, 7.2, False, xp=xp)
         xp_assert_equal(win1, win2)
 
-    @pytest.mark.parametrize('Nx', [-1, 3.0, np.float64(3)])
+    @pytest.mark.parametrize('Nx', [-1, 3.0, mx.float64(3)])
     def test_invalid_parameter_NX(self, Nx, xp):
         with pytest.raises(ValueError, match="^Parameter Nx=.*"):
             windows.get_window('hann', Nx, xp=xp)
@@ -921,11 +921,11 @@ class TestGetWindow:
     def test_xp_default(self, xp):
         # no explicit xp= argument, default to numpy
         win = get_window('lanczos', 6)
-        assert isinstance(win, np.ndarray)
+        assert isinstance(win, mx.array)
 
         win = get_window('lanczos', 6, xp=xp)
         if not is_numpy(xp):
-            assert not isinstance(win, np.ndarray)
+            assert not isinstance(win, mx.array)
 
 
 @skip_xp_backends("dask.array", reason="https://github.com/dask/dask/issues/2620")

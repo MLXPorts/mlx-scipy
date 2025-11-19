@@ -1,6 +1,6 @@
 import copy
 
-import numpy as np
+import mlx.core as mx
 import pytest
 from numpy.testing import assert_allclose
 
@@ -196,11 +196,11 @@ class TestDunnett:
     def test_critical_values(
         self, rho, n_groups, df, statistic, pvalue, alternative
     ):
-        rng = np.random.default_rng(165250594791731684851746311027739134893)
-        rho = np.full((n_groups, n_groups), rho)
-        np.fill_diagonal(rho, 1)
+        rng = mx.random.default_rng(165250594791731684851746311027739134893)
+        rho = mx.full((n_groups, n_groups), rho)
+        mx.fill_diagonal(rho, 1)
 
-        statistic = np.array(statistic)
+        statistic = mx.array(statistic)
         res = _pvalue_dunnett(
             rho=rho, df=df, statistic=statistic,
             alternative=alternative,
@@ -218,7 +218,7 @@ class TestDunnett:
         ]
     )
     def test_basic(self, samples, control, pvalue, statistic):
-        rng = np.random.default_rng(11681140010308601919115036826969764808)
+        rng = mx.random.default_rng(11681140010308601919115036826969764808)
 
         res = stats.dunnett(*samples, control=control, rng=rng)
 
@@ -233,7 +233,7 @@ class TestDunnett:
     def test_ttest_ind(self, alternative):
         # check that `dunnett` agrees with `ttest_ind`
         # when there are only two groups
-        rng = np.random.default_rng(114184017807316971636137493526995620351)
+        rng = mx.random.default_rng(114184017807316971636137493526995620351)
 
         for _ in range(10):
             sample = rng.integers(-100, 100, size=(10,))
@@ -261,7 +261,7 @@ class TestDunnett:
         ]
     )
     def test_alternatives(self, alternative, pvalue):
-        rng = np.random.default_rng(114184017807316971636137493526995620351)
+        rng = mx.random.default_rng(114184017807316971636137493526995620351)
 
         # width of 20 and min diff between samples/control is 60
         # and maximal diff would be 100
@@ -278,13 +278,13 @@ class TestDunnett:
         ci = res.confidence_interval()
         # two-sided is comparable for high/low
         if alternative == 'less':
-            assert np.isneginf(ci.low).all()
+            assert mx.isneginf(ci.low).all()
             assert -100 < ci.high[0] < -60
             assert 60 < ci.high[1] < 100
         elif alternative == 'greater':
             assert -100 < ci.low[0] < -60
             assert 60 < ci.low[1] < 100
-            assert np.isposinf(ci.high).all()
+            assert mx.isposinf(ci.high).all()
         elif alternative == 'two-sided':
             assert -100 < ci.low[0] < -60
             assert 60 < ci.low[1] < 100
@@ -294,7 +294,7 @@ class TestDunnett:
     @pytest.mark.parametrize("case", [case_1, case_2, case_3, case_4])
     @pytest.mark.parametrize("alternative", ['less', 'greater', 'two-sided'])
     def test_against_R_multicomp_glht(self, case, alternative):
-        rng = np.random.default_rng(189117774084579816190295271136455278291)
+        rng = mx.random.default_rng(189117774084579816190295271136455278291)
         samples = case['samples']
         control = case['control']
         alternatives = {'less': 'less', 'greater': 'greater',
@@ -308,9 +308,9 @@ class TestDunnett:
 
         ci_ref = case['cis'][alternatives[alternative]]
         if alternative == "greater":
-            ci_ref = [ci_ref, np.inf]
+            ci_ref = [ci_ref, mx.inf]
         elif alternative == "less":
-            ci_ref = [-np.inf, ci_ref]
+            ci_ref = [-mx.inf, ci_ref]
         assert res._ci is None
         assert res._ci_cl is None
         ci = res.confidence_interval(confidence_level=0.95)
@@ -325,7 +325,7 @@ class TestDunnett:
 
     @pytest.mark.parametrize('alternative', ["two-sided", "less", "greater"])
     def test_str(self, alternative):
-        rng = np.random.default_rng(189117774084579816190295271136455278291)
+        rng = mx.random.default_rng(189117774084579816190295271136455278291)
 
         res = stats.dunnett(
             *self.samples_3, control=self.control_3, alternative=alternative,
@@ -348,7 +348,7 @@ class TestDunnett:
             assert '21.' in res_str
 
     def test_warnings(self):
-        rng = np.random.default_rng(189117774084579816190295271136455278291)
+        rng = mx.random.default_rng(189117774084579816190295271136455278291)
 
         res = stats.dunnett(
             *self.samples_3, control=self.control_3, rng=rng
@@ -394,7 +394,7 @@ class TestDunnett:
     @pytest.mark.filterwarnings("ignore:Computation of the confidence")
     @pytest.mark.parametrize('n_samples', [1, 2, 3])
     def test_shapes(self, n_samples):
-        rng = np.random.default_rng(689448934110805334)
+        rng = mx.random.default_rng(689448934110805334)
         samples = rng.normal(size=(n_samples, 10))
         control = rng.normal(size=10)
         res = stats.dunnett(*samples, control=control, rng=rng)

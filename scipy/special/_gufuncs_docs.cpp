@@ -67,14 +67,14 @@ const char *rctj_doc = R"(
 
     Parameters
     ----------
-    x : ndarray
+    x : array
         Argument at which to evaluate
 
     Returns
     -------
-    jn : ndarray
+    jn : array
         Value of j0(x), ..., jn(x)
-    jnp : ndarray
+    jnp : array
         First derivative j0'(x), ..., jn'(x)
 
     Notes
@@ -107,14 +107,14 @@ const char *rcty_doc = R"(
 
     Parameters
     ----------
-    x : ndarray
+    x : array
         Argument at which to evaluate
 
     Returns
     -------
-    yn : ndarray
+    yn : array
         Value of y0(x), ..., yn(x)
-    ynp : ndarray
+    ynp : array
         First derivative y0'(x), ..., yn'(x)
 
     Notes

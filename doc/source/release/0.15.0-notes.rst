@@ -295,7 +295,7 @@ Issues closed
 - `#3787 <https://github.com/scipy/scipy/issues/3787>`__: BUG: signal: Division by zero in lombscargle
 - `#3800 <https://github.com/scipy/scipy/issues/3800>`__: BUG: scipy.sparse.csgraph.shortest_path overwrites input matrix
 - `#3817 <https://github.com/scipy/scipy/issues/3817>`__: Warning in calculating moments from Binomial distribution for...
-- `#3821 <https://github.com/scipy/scipy/issues/3821>`__: review scipy usage of `np.ma.is_masked`
+- `#3821 <https://github.com/scipy/scipy/issues/3821>`__: review scipy usage of `mx.ma.is_masked`
 - `#3829 <https://github.com/scipy/scipy/issues/3829>`__: Linear algebra function documentation doesn't mention default...
 - `#3830 <https://github.com/scipy/scipy/issues/3830>`__: A bug in Docstring of scipy.linalg.eig
 - `#3844 <https://github.com/scipy/scipy/issues/3844>`__: Issue with shape parameter returned by genextreme
@@ -457,7 +457,7 @@ Pull requests
 - `#3803 <https://github.com/scipy/scipy/pull/3803>`__: TST: lombscargle regression test related to atan vs atan2
 - `#3809 <https://github.com/scipy/scipy/pull/3809>`__: ENH: orthogonal procrustes solver
 - `#3811 <https://github.com/scipy/scipy/pull/3811>`__: ENH: scipy.special, Implemented Ellipsoidal harmonic function:...
-- `#3819 <https://github.com/scipy/scipy/pull/3819>`__: BUG: make a fully connected csgraph from an ndarray with no zeros
+- `#3819 <https://github.com/scipy/scipy/pull/3819>`__: BUG: make a fully connected csgraph from an array with no zeros
 - `#3820 <https://github.com/scipy/scipy/pull/3820>`__: MAINT: avoid spurious warnings in binom(n, p=0).mean() etc
 - `#3825 <https://github.com/scipy/scipy/pull/3825>`__: Don't claim scipy.cluster does distance matrix calculations.
 - `#3827 <https://github.com/scipy/scipy/pull/3827>`__: get and set diagonal of coo_matrix, and related csgraph laplacian...
@@ -472,7 +472,7 @@ Pull requests
 - `#3865 <https://github.com/scipy/scipy/pull/3865>`__: Feature request: ability to read heterogeneous types in FortranFile
 - `#3866 <https://github.com/scipy/scipy/pull/3866>`__: MAINT: update pip wheelhouse for installs
 - `#3871 <https://github.com/scipy/scipy/pull/3871>`__: MAINT: linalg: get rid of calc_lwork.f
-- `#3872 <https://github.com/scipy/scipy/pull/3872>`__: MAINT: use scipy.linalg instead of np.dual
+- `#3872 <https://github.com/scipy/scipy/pull/3872>`__: MAINT: use scipy.linalg instead of mx.dual
 - `#3873 <https://github.com/scipy/scipy/pull/3873>`__: BLD: show a more informative message if Cython wasn't installed.
 - `#3874 <https://github.com/scipy/scipy/pull/3874>`__: TST: cluster: cleanup the hierarchy test data
 - `#3877 <https://github.com/scipy/scipy/pull/3877>`__: DOC: Savitzky-Golay filter version added
@@ -535,7 +535,7 @@ Pull requests
 - `#3984 <https://github.com/scipy/scipy/pull/3984>`__: Wrap her, syr, her2, syr2 blas routines
 - `#3990 <https://github.com/scipy/scipy/pull/3990>`__: improve UnivariateSpline docs
 - `#3991 <https://github.com/scipy/scipy/pull/3991>`__: ENH: stats: return namedtuple for describe output
-- `#3993 <https://github.com/scipy/scipy/pull/3993>`__: DOC: stats: percentileofscore references np.percentile
+- `#3993 <https://github.com/scipy/scipy/pull/3993>`__: DOC: stats: percentileofscore references mx.percentile
 - `#3997 <https://github.com/scipy/scipy/pull/3997>`__: BUG: linalg: pascal(35) was incorrect: last element overflowed...
 - `#3998 <https://github.com/scipy/scipy/pull/3998>`__: MAINT: use isMaskedArray instead of is_masked to check type
 - `#3999 <https://github.com/scipy/scipy/pull/3999>`__: TST: test against all of boost data files.
@@ -578,7 +578,7 @@ Pull requests
 - `#4165 <https://github.com/scipy/scipy/pull/4165>`__: DOC: add missing special functions to __doc__
 - `#4172 <https://github.com/scipy/scipy/pull/4172>`__: DOC: remove misleading procrustes docstring line
 - `#4175 <https://github.com/scipy/scipy/pull/4175>`__: DOC: sparse: clarify CSC and CSR constructor usage
-- `#4177 <https://github.com/scipy/scipy/pull/4177>`__: MAINT: enable np.matrix inputs to solve_discrete_lyapunov
+- `#4177 <https://github.com/scipy/scipy/pull/4177>`__: MAINT: enable mx.matrix inputs to solve_discrete_lyapunov
 - `#4179 <https://github.com/scipy/scipy/pull/4179>`__: TST: fix an intermittently failing test case for special.legendre
 - `#4181 <https://github.com/scipy/scipy/pull/4181>`__: MAINT: remove unnecessary null checks before free
 - `#4182 <https://github.com/scipy/scipy/pull/4182>`__: Ellipsoidal harmonics

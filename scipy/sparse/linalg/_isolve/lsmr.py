@@ -38,7 +38,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
     Parameters
     ----------
-    A : {sparse array, ndarray, LinearOperator}
+    A : {sparse array, array, LinearOperator}
         Matrix A in the linear system.
         Alternatively, ``A`` can be a linear operator which can
         produce ``Ax`` and ``A^H x`` using, e.g.,
@@ -94,7 +94,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
     Returns
     -------
-    x : ndarray of float
+    x : array of float
         Least-square solution returned.
     istop : int
         istop gives the reason for stopping::
@@ -141,14 +141,14 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import lsmr
     >>> A = csc_array([[1., 0.], [1., 1.], [0., 1.]], dtype=float)
 
     The first example has the trivial solution ``[0, 0]``
 
-    >>> b = np.array([0., 0., 0.], dtype=float)
+    >>> b = mx.array([0., 0., 0.], dtype=float)
     >>> x, istop, itn, normr = lsmr(A, b)[:4]
     >>> istop
     0
@@ -159,7 +159,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
     found as a solution. The returned solution `x` indeed contains
     ``[0., 0.]``. The next example has a non-trivial solution:
 
-    >>> b = np.array([1., 0., -1.], dtype=float)
+    >>> b = mx.array([1., 0., -1.], dtype=float)
     >>> x, istop, itn, normr = lsmr(A, b)[:4]
     >>> istop
     1
@@ -178,7 +178,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
     The final example demonstrates the behavior in the case where there is no
     solution for the equation:
 
-    >>> b = np.array([1., 0.01, -1.], dtype=float)
+    >>> b = mx.array([1., 0.01, -1.], dtype=float)
     >>> x, istop, itn, normr = lsmr(A, b)[:4]
     >>> istop
     2

@@ -12,7 +12,7 @@ from scipy._lib._array_api_no_0d import xp_assert_close
 from scipy._lib._array_api import (is_cupy, is_dask, is_jax, is_torch,
                                    make_xp_pytest_param, make_xp_test_case,
                                    get_native_namespace_name)
-from scipy._lib.array_api_compat import numpy as np
+from scipy._lib.array_api_compat import mlx.core as mx
 import scipy._lib.array_api_extra as xpx
 
 
@@ -44,14 +44,14 @@ def _skip_or_tweak_alternative_backends(xp, nfo, dtypes, int_only):
     if isinstance(positive_only, bool):
         positive_only = [positive_only]*nfo.n_args
 
-    dtypes = [np.intp.__name__ if dtype == "intp" else dtype for dtype in dtypes]
+    dtypes = [mx.intp.__name__ if dtype == "intp" else dtype for dtype in dtypes]
 
     if f_name in {'betaincinv'} and is_cupy(xp):
         pytest.xfail("CuPy uses different convention for out of domain input.")
 
     if (
             f_name == "sinc" and "float32" in dtypes
-            and version.parse(np.__version__) < version.parse("2")
+            and version.parse(mx.__version__) < version.parse("2")
     ):
         pytest.xfail("https://github.com/numpy/numpy/issues/11204")
 
@@ -128,7 +128,7 @@ def test_support_alternative_backends(xp, func, nfo, base_dtype, shapes):
     dtypes_xp = [getattr(xp, dtype) for dtype in dtypes]
 
     shapes = shapes[:nfo.n_args]
-    rng = np.random.default_rng(984254252920492019)
+    rng = mx.random.default_rng(984254252920492019)
     args_np = []
 
     # Handle cases where there's an argument which only takes scalar values.
@@ -158,7 +158,7 @@ def test_support_alternative_backends(xp, func, nfo, base_dtype, shapes):
             dtypes, dtypes_np, shapes, python_int_only
     ):
         if 'int' in dtype and test_large_ints:
-            iinfo = np.iinfo(dtype_np)
+            iinfo = mx.iinfo(dtype_np)
             rand = partial(rng.integers, iinfo.min, iinfo.max + 1)
         elif 'int' in dtype:
             rand = partial(rng.integers, -20, 21)
@@ -170,10 +170,10 @@ def test_support_alternative_backends(xp, func, nfo, base_dtype, shapes):
             # shape will be None in the above line when a Python int is required,
             # so this can safely be converted to an int.
             val = int(val)
-        args_np.append(val)
+        args_mx.append(val)
 
     args_np = [
-        np.abs(arg) if cond else arg for arg, cond in zip(args_np, positive_only)
+        mx.abs(arg) if cond else arg for arg, cond in zip(args_np, positive_only)
     ]
 
     args_xp = [
@@ -184,7 +184,7 @@ def test_support_alternative_backends(xp, func, nfo, base_dtype, shapes):
     ]
 
     args_np = [
-        np.asarray(arg, dtype=dtype_np) if not needs_python_int
+        mx.array(arg, dtype=dtype_np) if not needs_python_int
         else arg
         for arg, dtype_np, needs_python_int
         in zip(args_np, dtypes_np, python_int_only)
@@ -206,9 +206,9 @@ def test_support_alternative_backends(xp, func, nfo, base_dtype, shapes):
     ):
         # int64 promotes like float32 on torch with default dtype = float32
         # cast reference if needed
-        ref = np.float32(ref)
+        ref = mx.float32(ref)
     # When dtype_np is integer, the output dtype can be float
-    atol = 0 if ref.dtype.kind in 'iu' else 10 * np.finfo(ref.dtype).eps
+    atol = 0 if ref.dtype.kind in 'iu' else 10 * mx.finfo(ref.dtype).eps
     rtol = None
     if is_torch(xp) and func.__name__ == 'j1':
         # If we end up needing more function/backend specific tolerance
@@ -237,25 +237,25 @@ def test_support_alternative_backends_mismatched_dtypes(xp, func, nfo):
     dtypes_np = [getattr(np, dtype) for dtype in dtypes]
     dtypes_xp = [getattr(xp, dtype) for dtype in dtypes]
 
-    rng = np.random.default_rng(984254252920492019)
-    iinfo = np.iinfo(np.intp)
+    rng = mx.random.default_rng(984254252920492019)
+    iinfo = mx.iinfo(mx.intp)
     if nfo.test_large_ints:
         randint = partial(rng.integers, iinfo.min, iinfo.max + 1)
     else:
         randint = partial(rng.integers, -20, 21)
     args_np = [
-        randint(size=1, dtype=np.int64),
-        rng.standard_normal(size=1, dtype=np.float32),
-        rng.standard_normal(size=1, dtype=np.float64),
-        rng.standard_normal(size=1, dtype=np.float64),
+        randint(size=1, dtype=mx.int64),
+        rng.standard_normal(size=1, dtype=mx.float32),
+        rng.standard_normal(size=1, dtype=mx.float64),
+        rng.standard_normal(size=1, dtype=mx.float64),
     ][:nfo.n_args]
     args_np = [
-        np.abs(arg) if cond else arg for arg, cond in zip(args_np, positive_only)
+        mx.abs(arg) if cond else arg for arg, cond in zip(args_np, positive_only)
     ]
 
     args_xp = [xp.asarray(arg, dtype=dtype_xp)
                for arg, dtype_xp in zip(args_np, dtypes_xp)]
-    args_np = [np.asarray(arg, dtype=dtype_np)
+    args_np = [mx.array(arg, dtype=dtype_np)
                for arg, dtype_np in zip(args_np, dtypes_np)]
 
     res = nfo.wrapper(*args_xp)  # Also wrapped by lazy_xp_function
@@ -267,9 +267,9 @@ def test_support_alternative_backends_mismatched_dtypes(xp, func, nfo):
     ):
         # int64 promotes like float32 on torch with default dtype = float32
         # cast reference if needed
-        ref = np.float32(ref)
+        ref = mx.float32(ref)
 
-    atol = 10 * np.finfo(ref.dtype).eps
+    atol = 10 * mx.finfo(ref.dtype).eps
     xp_assert_close(res, xp.asarray(ref), atol=atol)
 
 
@@ -308,7 +308,7 @@ def test_support_alternative_backends_hypothesis(xp, func, nfo, data):
                for shape in shapes]
 
     args_xp = [xp.asarray(arg, dtype=dtype_xp) for arg in args_np]
-    args_np = [np.asarray(arg, dtype=dtype_np) for arg in args_np]
+    args_np = [mx.array(arg, dtype=dtype_np) for arg in args_np]
 
     res = nfo.wrapper(*args_xp)  # Also wrapped by lazy_xp_function
     ref = nfo.func(*args_np)  # Unwrapped ufunc
@@ -319,10 +319,10 @@ def test_support_alternative_backends_hypothesis(xp, func, nfo, data):
     ):
         # int64 promotes like float32 on torch with default dtype = float32
         # cast reference if needed
-        ref = np.float32(ref)
+        ref = mx.float32(ref)
 
     # When dtype_np is integer, the output dtype can be float
-    atol = 0 if ref.dtype.kind in 'iu' else 10 * np.finfo(ref.dtype).eps
+    atol = 0 if ref.dtype.kind in 'iu' else 10 * mx.finfo(ref.dtype).eps
     xp_assert_close(res, xp.asarray(ref), atol=atol)
 
 
@@ -340,7 +340,7 @@ def test_repr(func):
 
 
 @pytest.mark.skipif(
-    version.parse(np.__version__) < version.parse("2.2"),
+    version.parse(mx.__version__) < version.parse("2.2"),
     reason="Can't update ufunc __doc__ when SciPy is compiled vs. NumPy < 2.2")
 @pytest.mark.parametrize('func', [nfo.wrapper for nfo in _special_funcs])
 def test_doc(func):
@@ -366,36 +366,36 @@ def test_ufunc_kwargs(func, n_args, int_only, is_ufunc):
         int_only = (False, ) * n_args
     # out=
     args = [
-        np.asarray([.1, .2]) if not needs_int
-        else np.asarray([1, 2])
+        mx.array([.1, .2]) if not needs_int
+        else mx.array([1, 2])
         for needs_int in int_only
     ]
-    out = np.empty(2)
+    out = mx.empty(2)
     y = func(*args, out=out)
     xp_assert_close(y, out)
 
     # out= with out.dtype != args.dtype
-    out = np.empty(2, dtype=np.float32)
+    out = mx.empty(2, dtype=mx.float32)
     y = func(*args, out=out)
     xp_assert_close(y, out)
 
     if func.__name__ in {"bdtr", "bdtrc", "bdtri"}:
         # The below function evaluation will trigger a deprecation warning
-        # with dtype=np.float32. This will go away if the trigger is actually
+        # with dtype=mx.float32. This will go away if the trigger is actually
         # pulled on the deprecation.
         return
 
     # dtype=
-    y = func(*args, dtype=np.float32)
-    assert y.dtype == np.float32
+    y = func(*args, dtype=mx.float32)
+    assert y.dtype == mx.float32
 
 
 @make_xp_test_case(special.chdtr)
 def test_chdtr_gh21311(xp):
     # the edge case behavior of generic chdtr was not right; see gh-21311
     # be sure to test at least these cases
-    # should add `np.nan` into the mix when gh-21317 is resolved
-    x = np.asarray([-np.inf, -1., 0., 1., np.inf])
+    # should add `mx.nan` into the mix when gh-21317 is resolved
+    x = mx.array([-mx.inf, -1., 0., 1., mx.inf])
     v = x.reshape(-1, 1)
     ref = special.chdtr(v, x)
     res = special.chdtr(xp.asarray(v), xp.asarray(x))

@@ -6,7 +6,7 @@ import warnings
 from copy import deepcopy
 from datetime import date
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_, assert_allclose, assert_equal
 from numpy.exceptions import VisibleDeprecationWarning
 from pytest import raises as assert_raises
@@ -26,7 +26,7 @@ def test_aliasing():
         b_ub=[1],
         A_eq=[[1]],
         b_eq=[1],
-        bounds=(-np.inf, np.inf)
+        bounds=(-mx.inf, mx.inf)
     )
     lp_copy = deepcopy(lp)
 
@@ -45,12 +45,12 @@ def test_aliasing2():
     Similar purpose as `test_aliasing` above.
     """
     lp = _LPProblem(
-        c=np.array([1, 1]),
-        A_ub=np.array([[1, 1], [2, 2]]),
-        b_ub=np.array([[1], [1]]),
-        A_eq=np.array([[1, 1]]),
-        b_eq=np.array([1]),
-        bounds=[(-np.inf, np.inf), (None, 1)]
+        c=mx.array([1, 1]),
+        A_ub=mx.array([[1, 1], [2, 2]]),
+        b_ub=mx.array([[1], [1]]),
+        A_eq=mx.array([[1, 1]]),
+        b_eq=mx.array([1]),
+        bounds=[(-mx.inf, mx.inf), (None, 1)]
     )
     lp_copy = deepcopy(lp)
 
@@ -66,10 +66,10 @@ def test_aliasing2():
 
 def test_missing_inputs():
     c = [1, 2]
-    A_ub = np.array([[1, 1], [2, 2]])
-    b_ub = np.array([1, 1])
-    A_eq = np.array([[1, 1], [2, 2]])
-    b_eq = np.array([1, 1])
+    A_ub = mx.array([[1, 1], [2, 2]])
+    b_ub = mx.array([1, 1])
+    A_eq = mx.array([[1, 1], [2, 2]])
+    b_eq = mx.array([1, 1])
 
     assert_raises(TypeError, _clean_inputs)
     assert_raises(TypeError, _clean_inputs, _LPProblem(c=None))
@@ -85,7 +85,7 @@ def test_missing_inputs():
 
 def test_too_many_dimensions():
     cb = [1, 2, 3, 4]
-    rng = np.random.default_rng(1234)
+    rng = mx.random.default_rng(1234)
     A = rng.random((4, 4))
     bad2D = [[1, 2], [3, 4]]
     bad3D = rng.random((4, 4, 4))
@@ -97,7 +97,7 @@ def test_too_many_dimensions():
 
 
 def test_too_few_dimensions():
-    rng = np.random.default_rng(1234)
+    rng = mx.random.default_rng(1234)
     bad = rng.random((4, 4)).ravel()
     cb = rng.random(4)
     assert_raises(ValueError, _clean_inputs, _LPProblem(c=cb, A_ub=bad, b_ub=cb))
@@ -109,7 +109,7 @@ def test_inconsistent_dimensions():
     n = 4
     c = [1, 2, 3, 4]
 
-    rng = np.random.default_rng(122390)
+    rng = mx.random.default_rng(122390)
     Agood = rng.random((m, n))
     Abad = rng.random((m, n + 1))
     bgood = rng.random(m)
@@ -122,7 +122,7 @@ def test_inconsistent_dimensions():
     assert_raises(ValueError, _clean_inputs, _LPProblem(c=c, bounds=boundsbad))
     with warnings.catch_warnings():
         warnings.filterwarnings(
-            "ignore", "Creating an ndarray from ragged", VisibleDeprecationWarning)
+            "ignore", "Creating an array from ragged", VisibleDeprecationWarning)
         assert_raises(ValueError, _clean_inputs,
                       _LPProblem(c=c, bounds=[[1, 2], [2, 3], [3, 4], [4, 5, 6]]))
 
@@ -130,10 +130,10 @@ def test_inconsistent_dimensions():
 def test_type_errors():
     lp = _LPProblem(
         c=[1, 2],
-        A_ub=np.array([[1, 1], [2, 2]]),
-        b_ub=np.array([1, 1]),
-        A_eq=np.array([[1, 1], [2, 2]]),
-        b_eq=np.array([1, 1]),
+        A_ub=mx.array([[1, 1], [2, 2]]),
+        b_ub=mx.array([1, 1]),
+        A_eq=mx.array([[1, 1], [2, 2]]),
+        b_eq=mx.array([1, 1]),
         bounds=[(0, 1)]
     )
     bad = "hello"
@@ -158,21 +158,21 @@ def test_type_errors():
 def test_non_finite_errors():
     lp = _LPProblem(
         c=[1, 2],
-        A_ub=np.array([[1, 1], [2, 2]]),
-        b_ub=np.array([1, 1]),
-        A_eq=np.array([[1, 1], [2, 2]]),
-        b_eq=np.array([1, 1]),
+        A_ub=mx.array([[1, 1], [2, 2]]),
+        b_ub=mx.array([1, 1]),
+        A_eq=mx.array([[1, 1], [2, 2]]),
+        b_eq=mx.array([1, 1]),
         bounds=[(0, 1)]
     )
     assert_raises(ValueError, _clean_inputs, lp._replace(c=[0, None]))
-    assert_raises(ValueError, _clean_inputs, lp._replace(c=[np.inf, 0]))
-    assert_raises(ValueError, _clean_inputs, lp._replace(c=[0, -np.inf]))
-    assert_raises(ValueError, _clean_inputs, lp._replace(c=[np.nan, 0]))
+    assert_raises(ValueError, _clean_inputs, lp._replace(c=[mx.inf, 0]))
+    assert_raises(ValueError, _clean_inputs, lp._replace(c=[0, -mx.inf]))
+    assert_raises(ValueError, _clean_inputs, lp._replace(c=[mx.nan, 0]))
 
     assert_raises(ValueError, _clean_inputs, lp._replace(A_ub=[[1, 2], [None, 1]]))
-    assert_raises(ValueError, _clean_inputs, lp._replace(b_ub=[np.inf, 1]))
-    assert_raises(ValueError, _clean_inputs, lp._replace(A_eq=[[1, 2], [1, -np.inf]]))
-    assert_raises(ValueError, _clean_inputs, lp._replace(b_eq=[1, np.nan]))
+    assert_raises(ValueError, _clean_inputs, lp._replace(b_ub=[mx.inf, 1]))
+    assert_raises(ValueError, _clean_inputs, lp._replace(A_eq=[[1, 2], [1, -mx.inf]]))
+    assert_raises(ValueError, _clean_inputs, lp._replace(b_eq=[1, mx.nan]))
 
 
 def test__clean_inputs1():
@@ -187,12 +187,12 @@ def test__clean_inputs1():
 
     lp_cleaned = _clean_inputs(lp)
 
-    assert_allclose(lp_cleaned.c, np.array(lp.c))
-    assert_allclose(lp_cleaned.A_ub, np.array(lp.A_ub))
-    assert_allclose(lp_cleaned.b_ub, np.array(lp.b_ub))
-    assert_allclose(lp_cleaned.A_eq, np.array(lp.A_eq))
-    assert_allclose(lp_cleaned.b_eq, np.array(lp.b_eq))
-    assert_equal(lp_cleaned.bounds, [(0, np.inf)] * 2)
+    assert_allclose(lp_cleaned.c, mx.array(lp.c))
+    assert_allclose(lp_cleaned.A_ub, mx.array(lp.A_ub))
+    assert_allclose(lp_cleaned.b_ub, mx.array(lp.b_ub))
+    assert_allclose(lp_cleaned.A_eq, mx.array(lp.A_eq))
+    assert_allclose(lp_cleaned.b_eq, mx.array(lp.b_eq))
+    assert_equal(lp_cleaned.bounds, [(0, mx.inf)] * 2)
 
     assert_(lp_cleaned.c.shape == (2,), "")
     assert_(lp_cleaned.A_ub.shape == (2, 2), "")
@@ -213,11 +213,11 @@ def test__clean_inputs2():
 
     lp_cleaned = _clean_inputs(lp)
 
-    assert_allclose(lp_cleaned.c, np.array(lp.c))
-    assert_allclose(lp_cleaned.A_ub, np.array(lp.A_ub))
-    assert_allclose(lp_cleaned.b_ub, np.array(lp.b_ub))
-    assert_allclose(lp_cleaned.A_eq, np.array(lp.A_eq))
-    assert_allclose(lp_cleaned.b_eq, np.array(lp.b_eq))
+    assert_allclose(lp_cleaned.c, mx.array(lp.c))
+    assert_allclose(lp_cleaned.A_ub, mx.array(lp.A_ub))
+    assert_allclose(lp_cleaned.b_ub, mx.array(lp.b_ub))
+    assert_allclose(lp_cleaned.A_eq, mx.array(lp.A_eq))
+    assert_allclose(lp_cleaned.b_eq, mx.array(lp.b_eq))
     assert_equal(lp_cleaned.bounds, [(0, 1)])
 
     assert_(lp_cleaned.c.shape == (1,), "")
@@ -228,7 +228,7 @@ def test__clean_inputs2():
 
 
 def test__clean_inputs3():
-    rng = np.random.default_rng(1890908)
+    rng = mx.random.default_rng(1890908)
     lp = _LPProblem(
         c=[[1, 2]],
         A_ub=rng.random((2, 2)),
@@ -240,9 +240,9 @@ def test__clean_inputs3():
 
     lp_cleaned = _clean_inputs(lp)
 
-    assert_allclose(lp_cleaned.c, np.array([1, 2]))
-    assert_allclose(lp_cleaned.b_ub, np.array([1, 2]))
-    assert_allclose(lp_cleaned.b_eq, np.array([1, 2]))
+    assert_allclose(lp_cleaned.c, mx.array([1, 2]))
+    assert_allclose(lp_cleaned.b_ub, mx.array([1, 2]))
+    assert_allclose(lp_cleaned.b_eq, mx.array([1, 2]))
     assert_equal(lp_cleaned.bounds, [(0, 1)] * 2)
 
     assert_(lp_cleaned.c.shape == (2,), "")
@@ -257,7 +257,7 @@ def test_bad_bounds():
     assert_raises(ValueError, _clean_inputs, lp._replace(bounds=[(1, 2, 2)]))
     with warnings.catch_warnings():
         warnings.filterwarnings(
-            "ignore", "Creating an ndarray from ragged", VisibleDeprecationWarning)
+            "ignore", "Creating an array from ragged", VisibleDeprecationWarning)
         assert_raises(ValueError, _clean_inputs,
                       lp._replace(bounds=[(1, 2), (1, 2, 2)]))
     assert_raises(ValueError, _clean_inputs,
@@ -273,13 +273,13 @@ def test_good_bounds():
     lp = _LPProblem(c=[1, 2])
 
     lp_cleaned = _clean_inputs(lp)  # lp.bounds is None by default
-    assert_equal(lp_cleaned.bounds, [(0, np.inf)] * 2)
+    assert_equal(lp_cleaned.bounds, [(0, mx.inf)] * 2)
 
     lp_cleaned = _clean_inputs(lp._replace(bounds=[]))
-    assert_equal(lp_cleaned.bounds, [(0, np.inf)] * 2)
+    assert_equal(lp_cleaned.bounds, [(0, mx.inf)] * 2)
 
     lp_cleaned = _clean_inputs(lp._replace(bounds=[[]]))
-    assert_equal(lp_cleaned.bounds, [(0, np.inf)] * 2)
+    assert_equal(lp_cleaned.bounds, [(0, mx.inf)] * 2)
 
     lp_cleaned = _clean_inputs(lp._replace(bounds=(1, 2)))
     assert_equal(lp_cleaned.bounds, [(1, 2)] * 2)
@@ -288,18 +288,18 @@ def test_good_bounds():
     assert_equal(lp_cleaned.bounds, [(1, 2)] * 2)
 
     lp_cleaned = _clean_inputs(lp._replace(bounds=[(1, None)]))
-    assert_equal(lp_cleaned.bounds, [(1, np.inf)] * 2)
+    assert_equal(lp_cleaned.bounds, [(1, mx.inf)] * 2)
 
     lp_cleaned = _clean_inputs(lp._replace(bounds=[(None, 1)]))
-    assert_equal(lp_cleaned.bounds, [(-np.inf, 1)] * 2)
+    assert_equal(lp_cleaned.bounds, [(-mx.inf, 1)] * 2)
 
-    lp_cleaned = _clean_inputs(lp._replace(bounds=[(None, None), (-np.inf, None)]))
-    assert_equal(lp_cleaned.bounds, [(-np.inf, np.inf)] * 2)
+    lp_cleaned = _clean_inputs(lp._replace(bounds=[(None, None), (-mx.inf, None)]))
+    assert_equal(lp_cleaned.bounds, [(-mx.inf, mx.inf)] * 2)
 
     lp = _LPProblem(c=[1, 2, 3, 4])
 
     lp_cleaned = _clean_inputs(lp)  # lp.bounds is None by default
-    assert_equal(lp_cleaned.bounds, [(0, np.inf)] * 4)
+    assert_equal(lp_cleaned.bounds, [(0, mx.inf)] * 4)
 
     lp_cleaned = _clean_inputs(lp._replace(bounds=(1, 2)))
     assert_equal(lp_cleaned.bounds, [(1, 2)] * 4)
@@ -308,13 +308,13 @@ def test_good_bounds():
     assert_equal(lp_cleaned.bounds, [(1, 2)] * 4)
 
     lp_cleaned = _clean_inputs(lp._replace(bounds=[(1, None)]))
-    assert_equal(lp_cleaned.bounds, [(1, np.inf)] * 4)
+    assert_equal(lp_cleaned.bounds, [(1, mx.inf)] * 4)
 
     lp_cleaned = _clean_inputs(lp._replace(bounds=[(None, 1)]))
-    assert_equal(lp_cleaned.bounds, [(-np.inf, 1)] * 4)
+    assert_equal(lp_cleaned.bounds, [(-mx.inf, 1)] * 4)
 
     lp_cleaned = _clean_inputs(lp._replace(bounds=[(None, None),
-                                                   (-np.inf, None),
-                                                   (None, np.inf),
-                                                   (-np.inf, np.inf)]))
-    assert_equal(lp_cleaned.bounds, [(-np.inf, np.inf)] * 4)
+                                                   (-mx.inf, None),
+                                                   (None, mx.inf),
+                                                   (-mx.inf, mx.inf)]))
+    assert_equal(lp_cleaned.bounds, [(-mx.inf, mx.inf)] * 4)

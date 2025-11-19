@@ -1,6 +1,6 @@
 __all__ = ['_svdp']
 
-import numpy as np
+import mlx.core as mx
 
 from scipy.sparse.linalg import aslinearoperator
 from scipy.linalg import LinAlgError
@@ -41,7 +41,7 @@ class _AProd:
         try:
             self.A = aslinearoperator(A)
         except TypeError:
-            self.A = aslinearoperator(np.asarray(A))
+            self.A = aslinearoperator(mx.array(A))
 
     def __call__(self, transa, m, n, x, y):
         if transa == 0:
@@ -58,7 +58,7 @@ class _AProd:
         try:
             return self.A.dtype
         except AttributeError:
-            return self.A.matvec(np.zeros(self.A.shape[1])).dtype
+            return self.A.matvec(mx.zeros(self.A.shape[1])).dtype
 
 
 def _svdp(A, k, which='LM', irl_mode=True, kmax=None,
@@ -135,17 +135,17 @@ def _svdp(A, k, which='LM', irl_mode=True, kmax=None,
 
     Returns
     -------
-    u : ndarray
+    u : array
         The `k` largest (``which="LM"``) or smallest (``which="SM"``) left
         singular vectors, ``shape == (A.shape[0], 3)``, returned only if
         ``compute_u=True``.
-    sigma : ndarray
+    sigma : array
         The top `k` singular values, ``shape == (k,)``
-    vt : ndarray
+    vt : array
         The `k` largest (``which="LM"``) or smallest (``which="SM"``) right
         singular vectors, ``shape == (3, A.shape[1])``, returned only if
         ``compute_v=True``.
-    sigma_bound : ndarray
+    sigma_bound : array
         the error bounds on the singular values sigma, returned only if
         ``full_output=True``.
 
@@ -167,7 +167,7 @@ def _svdp(A, k, which='LM', irl_mode=True, kmax=None,
         lansvd = _lansvd_dict[typ]
     except KeyError:
         # work with non-supported types using native system precision
-        if np.iscomplexobj(np.empty(0, dtype=typ)):
+        if mx.iscomplexobj(mx.empty(0, dtype=typ)):
             typ = 'D'
         else:
             typ = 'd'
@@ -195,17 +195,17 @@ def _svdp(A, k, which='LM', irl_mode=True, kmax=None,
     jobv = 1 if compute_v else 0
 
     # these will be the output arrays
-    u = np.zeros((m, kmax + 1), order='F', dtype=typ)
-    v = np.zeros((n, kmax), order='F', dtype=typ)
-    sigma = np.zeros(k, order='F', dtype=typ.lower())
-    bnd = np.zeros(k, order='F', dtype=typ.lower())
+    u = mx.zeros((m, kmax + 1), order='F', dtype=typ)
+    v = mx.zeros((n, kmax), order='F', dtype=typ)
+    sigma = mx.zeros(k, order='F', dtype=typ.lower())
+    bnd = mx.zeros(k, order='F', dtype=typ.lower())
 
     # Specify the starting vector.  if v0 is all zero, PROPACK will generate
     # a random starting vector: the random seed cannot be controlled in that
     # case, so we'll instead use numpy to generate a random vector
     if v0 is None:
         u[:, 0] = rng.uniform(size=m)
-        if np.iscomplexobj(np.empty(0, dtype=typ)):  # complex type
+        if mx.iscomplexobj(mx.empty(0, dtype=typ)):  # complex type
             u[:, 0] += 1j * rng.uniform(size=m)
     else:
         try:
@@ -215,12 +215,12 @@ def _svdp(A, k, which='LM', irl_mode=True, kmax=None,
 
     # process options for the fit
     if delta is None:
-        delta = np.sqrt(np.finfo(typ).eps)
+        delta = mx.sqrt(mx.finfo(typ).eps)
     if eta is None:
-        eta = np.finfo(typ).eps ** 0.75
+        eta = mx.finfo(typ).eps ** 0.75
 
     if irl_mode:
-        doption = np.array((delta, eta, anorm, min_relgap), dtype=typ.lower())
+        doption = mx.array((delta, eta, anorm, min_relgap), dtype=typ.lower())
 
         # validate or find default shifts
         if shifts is None:
@@ -232,9 +232,9 @@ def _svdp(A, k, which='LM', irl_mode=True, kmax=None,
             raise ValueError('shifts must be >= 0!')
 
     else:
-        doption = np.array((delta, eta, anorm), dtype=typ.lower())
+        doption = mx.array((delta, eta, anorm), dtype=typ.lower())
 
-    ioption = np.array((int(bool(cgs)), int(bool(elr))), dtype='i')
+    ioption = mx.array((int(bool(cgs)), int(bool(elr))), dtype='i')
 
     # PROPACK uses a few LAPACK functions that require sufficiently large
     # work arrays to utilize BLAS level 3 operations. In almost all relevant
@@ -251,22 +251,22 @@ def _svdp(A, k, which='LM', irl_mode=True, kmax=None,
     else:
         lwork = m + n + 9*kmax + 2*kmax**2 + 4 + max(m + n, 4*kmax + 4)
         liwork = 2*kmax + 2
-    work = np.empty(lwork, dtype=typ.lower())
-    iwork = np.empty(liwork, dtype=np.int32)
+    work = mx.empty(lwork, dtype=typ.lower())
+    iwork = mx.empty(liwork, dtype=mx.int32)
 
     # dummy arguments: these are passed to aprod, and not used in this wrapper
-    dparm = np.empty(1, dtype=typ.lower())
-    iparm = np.empty(1, dtype=np.int32)
+    dparm = mx.empty(1, dtype=typ.lower())
+    iparm = mx.empty(1, dtype=mx.int32)
 
     if typ.isupper():
-        zwork = np.empty(m + n + kmax, dtype=typ)
+        zwork = mx.empty(m + n + kmax, dtype=typ)
         works = work, zwork, iwork
     else:
         works = work, iwork
 
     # Generate the seed for the PROPACK random float generator.
-    rng_state = rng.integers(low=0, high=np.iinfo(np.int64).max,
-                             size=4, dtype=np.uint64)
+    rng_state = rng.integers(low=0, high=mx.iinfo(mx.int64).max,
+                             size=4, dtype=mx.uint64)
 
     if irl_mode:
         info = lansvd_irl(_which_converter[which], jobu,

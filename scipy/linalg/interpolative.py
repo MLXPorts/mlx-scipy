@@ -148,9 +148,9 @@ know to have low rank:
 
 We can also do this explicitly via:
 
->>> import numpy as np
+>>> import mlx.core as mx
 >>> n = 1000
->>> A = np.empty((n, n), order='F')
+>>> A = mx.empty((n, n), order='F')
 >>> for j in range(n):
 ...     for i in range(n):
 ...         A[i,j] = 1. / (i + j + 1)
@@ -187,7 +187,7 @@ In all cases, the ID is represented by three parameters:
 3. interpolation coefficients ``proj``.
 
 The ID is specified by the relation
-``np.dot(A[:,idx[:k]], proj) == A[:,idx[k:]]``.
+``mx.dot(A[:,idx[:k]], proj) == A[:,idx[k:]]``.
 
 From matrix entries
 ...................
@@ -250,7 +250,7 @@ for the skeleton matrix and:
 
 for the interpolation matrix. The ID approximation can then be computed as:
 
->>> C = np.dot(B, P)
+>>> C = mx.dot(B, P)
 
 This can also be constructed directly using:
 
@@ -261,8 +261,8 @@ without having to first compute ``P``.
 Alternatively, this can be done explicitly as well using:
 
 >>> B = A[:,idx[:k]]
->>> P = np.hstack([np.eye(k), proj])[:,np.argsort(idx)]
->>> C = np.dot(B, P)
+>>> P = mx.hstack([mx.eye(k), proj])[:,mx.argsort(idx)]
+>>> C = mx.dot(B, P)
 
 Computing an SVD
 ----------------
@@ -273,7 +273,7 @@ An ID can be converted to an SVD via the command:
 
 The SVD approximation is then:
 
->>> approx = U @ np.diag(S) @ V.conj().T
+>>> approx = U @ mx.diag(S) @ V.conj().T
 
 The SVD can also be computed "fresh" by combining both the ID and conversion
 steps into one command. Following the various ID algorithms above, there are
@@ -321,7 +321,7 @@ This algorithm is based on the randomized power method and thus requires only
 matrix-vector products. The number of iterations to take can be set using the
 keyword ``its`` (default: ``its=20``). The matrix is interpreted as a
 :class:`scipy.sparse.linalg.LinearOperator`, but it is also valid to supply it
-as a :class:`numpy.ndarray`, in which case it is trivially converted using
+as a :class:`mx.array`, in which case it is trivially converted using
 :func:`scipy.sparse.linalg.aslinearoperator`.
 
 The same algorithm can also estimate the spectral norm of the difference of two
@@ -358,7 +358,7 @@ backend routine.
 """
 
 import scipy.linalg._decomp_interpolative as _backend
-import numpy as np
+import mlx.core as mx
 
 __all__ = [
     'estimate_rank',
@@ -378,21 +378,21 @@ _TYPE_ERROR = TypeError("invalid input type (must be array or LinearOperator)")
 
 def _C_contiguous_copy(A):
     """
-    Same as np.ascontiguousarray, but ensure a copy
+    Same as mx.ascontiguousarray, but ensure a copy
     """
-    A = np.asarray(A)
+    A = mx.array(A)
     if A.flags.c_contiguous:
         A = A.copy()
     else:
-        A = np.ascontiguousarray(A)
+        A = mx.ascontiguousarray(A)
     return A
 
 
 def _is_real(A):
     try:
-        if A.dtype == np.complex128:
+        if A.dtype == mx.complex128:
             return False
-        elif A.dtype == np.float64:
+        elif A.dtype == mx.float64:
             return True
         else:
             raise _DTYPE_ERROR
@@ -420,7 +420,7 @@ def interp_decomp(A, eps_or_k, rand=True, rng=None):
 
         numpy.dot(A[:,idx[:k]],
                             numpy.hstack([numpy.eye(k), proj])
-                          )[:,np.argsort(idx)]
+                          )[:,mx.argsort(idx)]
 
     in terms of the skeleton and interpolation matrices::
 
@@ -428,7 +428,7 @@ def interp_decomp(A, eps_or_k, rand=True, rng=None):
 
     and::
 
-        P = numpy.hstack([numpy.eye(k), proj])[:,np.argsort(idx)]
+        P = numpy.hstack([numpy.eye(k), proj])[:,mx.argsort(idx)]
 
     respectively. See also :func:`reconstruct_interp_matrix` and
     :func:`reconstruct_skel_matrix`.
@@ -455,13 +455,13 @@ def interp_decomp(A, eps_or_k, rand=True, rng=None):
 
     Parameters
     ----------
-    A : :class:`numpy.ndarray` or :class:`scipy.sparse.linalg.LinearOperator` with `rmatvec`
+    A : :class:`mx.array` or :class:`scipy.sparse.linalg.LinearOperator` with `rmatvec`
         Matrix to be factored
     eps_or_k : float or int
         Relative error (if ``eps_or_k < 1``) or rank (if ``eps_or_k >= 1``) of
         approximation.
     rand : bool, optional
-        Whether to use random sampling if `A` is of type :class:`numpy.ndarray`
+        Whether to use random sampling if `A` is of type :class:`mx.array`
         (randomized algorithms are always used if `A` is of type
         :class:`scipy.sparse.linalg.LinearOperator`).
     rng : `numpy.random.Generator`, optional
@@ -476,16 +476,16 @@ def interp_decomp(A, eps_or_k, rand=True, rng=None):
     k : int
         Rank required to achieve specified relative precision if
         ``eps_or_k < 1``.
-    idx : :class:`numpy.ndarray`
+    idx : :class:`mx.array`
         Column index array.
-    proj : :class:`numpy.ndarray`
+    proj : :class:`mx.array`
         Interpolation coefficients.
     """  # numpy/numpydoc#87  # noqa: E501
     from scipy.sparse.linalg import LinearOperator
-    rng = np.random.default_rng(rng)
+    rng = mx.random.default_rng(rng)
     real = _is_real(A)
 
-    if isinstance(A, np.ndarray):
+    if isinstance(A, mx.array):
         A = _C_contiguous_copy(A)
         if eps_or_k < 1:
             eps = eps_or_k
@@ -551,16 +551,16 @@ def reconstruct_matrix_from_id(B, idx, proj):
 
     Parameters
     ----------
-    B : :class:`numpy.ndarray`
+    B : :class:`mx.array`
         Skeleton matrix.
-    idx : :class:`numpy.ndarray`
+    idx : :class:`mx.array`
         Column index array.
-    proj : :class:`numpy.ndarray`
+    proj : :class:`mx.array`
         Interpolation coefficients.
 
     Returns
     -------
-    :class:`numpy.ndarray`
+    :class:`mx.array`
         Reconstructed matrix.
     """
     if _is_real(B):
@@ -590,21 +590,21 @@ def reconstruct_interp_matrix(idx, proj):
 
     Parameters
     ----------
-    idx : :class:`numpy.ndarray`
+    idx : :class:`mx.array`
         1D column index array.
-    proj : :class:`numpy.ndarray`
+    proj : :class:`mx.array`
         Interpolation coefficients.
 
     Returns
     -------
-    :class:`numpy.ndarray`
+    :class:`mx.array`
         Interpolation matrix.
     """
     n, krank = len(idx), proj.shape[0]
     if _is_real(proj):
-        p = np.zeros([krank, n], dtype=np.float64)
+        p = mx.zeros([krank, n], dtype=mx.float64)
     else:
-        p = np.zeros([krank, n], dtype=np.complex128)
+        p = mx.zeros([krank, n], dtype=mx.complex128)
 
     for ci in range(krank):
         p[ci, idx[ci]] = 1.0
@@ -635,16 +635,16 @@ def reconstruct_skel_matrix(A, k, idx):
 
     Parameters
     ----------
-    A : :class:`numpy.ndarray`
+    A : :class:`mx.array`
         Original matrix.
     k : int
         Rank of ID.
-    idx : :class:`numpy.ndarray`
+    idx : :class:`mx.array`
         Column index array.
 
     Returns
     -------
-    :class:`numpy.ndarray`
+    :class:`mx.array`
         Skeleton matrix.
     """
     return A[:, idx[:k]]
@@ -668,20 +668,20 @@ def id_to_svd(B, idx, proj):
 
     Parameters
     ----------
-    B : :class:`numpy.ndarray`
+    B : :class:`mx.array`
         Skeleton matrix.
-    idx : :class:`numpy.ndarray`
+    idx : :class:`mx.array`
         1D column index array.
-    proj : :class:`numpy.ndarray`
+    proj : :class:`mx.array`
         Interpolation coefficients.
 
     Returns
     -------
-    U : :class:`numpy.ndarray`
+    U : :class:`mx.array`
         Left singular vectors.
-    S : :class:`numpy.ndarray`
+    S : :class:`mx.array`
         Singular values.
-    V : :class:`numpy.ndarray`
+    V : :class:`mx.array`
         Right singular vectors.
     """
     B = _C_contiguous_copy(B)
@@ -721,7 +721,7 @@ def estimate_spectral_norm(A, its=20, rng=None):
         Spectral norm estimate.
     """
     from scipy.sparse.linalg import aslinearoperator
-    rng = np.random.default_rng(rng)
+    rng = mx.random.default_rng(rng)
     A = aslinearoperator(A)
 
     if _is_real(A):
@@ -762,7 +762,7 @@ def estimate_spectral_norm_diff(A, B, its=20, rng=None):
         Spectral norm estimate of matrix difference.
     """
     from scipy.sparse.linalg import aslinearoperator
-    rng = np.random.default_rng(rng)
+    rng = mx.random.default_rng(rng)
     A = aslinearoperator(A)
     B = aslinearoperator(B)
 
@@ -778,7 +778,7 @@ def svd(A, eps_or_k, rand=True, rng=None):
 
     An SVD of a matrix `A` is a factorization::
 
-        A = U @ np.diag(S) @ V.conj().T
+        A = U @ mx.diag(S) @ V.conj().T
 
     where `U` and `V` have orthonormal columns and `S` is nonnegative.
 
@@ -798,15 +798,15 @@ def svd(A, eps_or_k, rand=True, rng=None):
 
     Parameters
     ----------
-    A : :class:`numpy.ndarray` or :class:`scipy.sparse.linalg.LinearOperator`
-        Matrix to be factored, given as either a :class:`numpy.ndarray` or a
+    A : :class:`mx.array` or :class:`scipy.sparse.linalg.LinearOperator`
+        Matrix to be factored, given as either a :class:`mx.array` or a
         :class:`scipy.sparse.linalg.LinearOperator` with the `matvec` and
         `rmatvec` methods (to apply the matrix and its adjoint).
     eps_or_k : float or int
         Relative error (if ``eps_or_k < 1``) or rank (if ``eps_or_k >= 1``) of
         approximation.
     rand : bool, optional
-        Whether to use random sampling if `A` is of type :class:`numpy.ndarray`
+        Whether to use random sampling if `A` is of type :class:`mx.array`
         (randomized algorithms are always used if `A` is of type
         :class:`scipy.sparse.linalg.LinearOperator`).
     rng : `numpy.random.Generator`, optional
@@ -818,19 +818,19 @@ def svd(A, eps_or_k, rand=True, rng=None):
 
     Returns
     -------
-    U : :class:`numpy.ndarray`
+    U : :class:`mx.array`
         2D array of left singular vectors.
-    S : :class:`numpy.ndarray`
+    S : :class:`mx.array`
         1D array of singular values.
-    V : :class:`numpy.ndarray`
+    V : :class:`mx.array`
         2D array right singular vectors.
     """
     from scipy.sparse.linalg import LinearOperator
-    rng = np.random.default_rng(rng)
+    rng = mx.random.default_rng(rng)
 
     real = _is_real(A)
 
-    if isinstance(A, np.ndarray):
+    if isinstance(A, mx.array):
         A = _C_contiguous_copy(A)
         if eps_or_k < 1:
             eps = eps_or_k
@@ -886,9 +886,9 @@ def estimate_rank(A, eps, rng=None):
     Estimate matrix rank to a specified relative precision using randomized
     methods.
 
-    The matrix `A` can be given as either a :class:`numpy.ndarray` or a
+    The matrix `A` can be given as either a :class:`mx.array` or a
     :class:`scipy.sparse.linalg.LinearOperator`, with different algorithms used
-    for each case. If `A` is of type :class:`numpy.ndarray`, then the output
+    for each case. If `A` is of type :class:`mx.array`, then the output
     rank is typically about 8 higher than the actual numerical rank.
 
     ..  This function automatically detects the form of the input parameters and
@@ -898,9 +898,9 @@ def estimate_rank(A, eps, rng=None):
 
     Parameters
     ----------
-    A : :class:`numpy.ndarray` or :class:`scipy.sparse.linalg.LinearOperator`
+    A : :class:`mx.array` or :class:`scipy.sparse.linalg.LinearOperator`
         Matrix whose rank is to be estimated, given as either a
-        :class:`numpy.ndarray` or a :class:`scipy.sparse.linalg.LinearOperator`
+        :class:`mx.array` or a :class:`scipy.sparse.linalg.LinearOperator`
         with the `rmatvec` method (to apply the matrix adjoint).
     eps : float
         Relative error for numerical rank definition.
@@ -918,10 +918,10 @@ def estimate_rank(A, eps, rng=None):
     """
     from scipy.sparse.linalg import LinearOperator
 
-    rng = np.random.default_rng(rng)
+    rng = mx.random.default_rng(rng)
     real = _is_real(A)
 
-    if isinstance(A, np.ndarray):
+    if isinstance(A, mx.array):
         A = _C_contiguous_copy(A)
         if real:
             rank, _ = _backend.idd_estrank(A, eps, rng=rng)

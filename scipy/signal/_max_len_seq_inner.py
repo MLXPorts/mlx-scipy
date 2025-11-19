@@ -1,7 +1,7 @@
 # Author: Eric Larson
 # 2014
 
-import numpy as np
+import mlx.core as mx
 
 #pythran export _max_len_seq_inner(int32[], int8[], int, int, int8[])
 #pythran export _max_len_seq_inner(int64[], int8[], int, int, int8[])
@@ -9,7 +9,7 @@ import numpy as np
 # Fast inner loop of max_len_seq.
 def _max_len_seq_inner(taps, state, nbits, length, seq):
     # Here we compute MLS using a shift register, indexed using a ring buffer
-    # technique (faster than using something like np.roll to shift)
+    # technique (faster than using something like mx.roll to shift)
     n_taps = taps.shape[0]
     idx = 0
     for i in range(length):
@@ -20,4 +20,4 @@ def _max_len_seq_inner(taps, state, nbits, length, seq):
         state[idx] = feedback
         idx = (idx + 1) % nbits
     # state must be rolled s.t. next run, when idx==0, it's in the right place
-    return np.roll(state, -idx, axis=0)
+    return mx.roll(state, -idx, axis=0)

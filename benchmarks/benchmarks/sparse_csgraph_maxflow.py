@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 import scipy.sparse
 from .common import Benchmark, safe_import
@@ -14,8 +14,8 @@ class MaximumFlow(Benchmark):
     def setup(self, n, density):
         # Create random matrices whose values are integers between 0 and 100.
         data = (scipy.sparse.rand(n, n, density=density, format='lil',
-                                  random_state=42)*100).astype(np.int32)
-        data.setdiag(np.zeros(n, dtype=np.int32))
+                                  random_state=42)*100).astype(mx.int32)
+        data.setdiag(mx.zeros(n, dtype=mx.int32))
         self.data = scipy.sparse.csr_matrix(data)
 
     def time_maximum_flow(self, n, density):

@@ -5,7 +5,7 @@ local power basis.
 
 """
 
-import numpy as np
+import mlx.core as mx
 
 cimport cython
 
@@ -36,13 +36,13 @@ def evaluate(const double_or_complex[:,:,::1] c,
 
     Parameters
     ----------
-    c : ndarray, shape (k, m, n)
+    c : array, shape (k, m, n)
         Coefficients local polynomials of order `k-1` in `m` intervals.
         There are `n` polynomials in each interval.
         Coefficient of highest order-term comes first.
-    x : ndarray, shape (m+1,)
+    x : array, shape (m+1,)
         Breakpoints of polynomials.
-    xp : ndarray, shape (r,)
+    xp : array, shape (r,)
         Points to evaluate the piecewise polynomial at.
     dx : int
         Order of derivative to evaluate.  The derivative is evaluated
@@ -50,7 +50,7 @@ def evaluate(const double_or_complex[:,:,::1] c,
     extrapolate : bint
         Whether to extrapolate to out-of-bounds points based on first
         and last intervals, or to return NaNs.
-    out : ndarray, shape (r, n)
+    out : array, shape (r, n)
         Value of each polynomial at each of the input points.
         This argument is modified in-place.
 
@@ -114,23 +114,23 @@ def evaluate_nd(const double_or_complex[:,:,::1] c,
 
     Parameters
     ----------
-    c : ndarray, shape (k_1*...*k_d, m_1*...*m_d, n)
+    c : array, shape (k_1*...*k_d, m_1*...*m_d, n)
         Coefficients local polynomials of order `k-1` in
         `m_1`, ..., `m_d` intervals. There are `n` polynomials
         in each interval.
-    ks : ndarray of int, shape (d,)
+    ks : array of int, shape (d,)
         Orders of polynomials in each dimension
-    xs : d-tuple of ndarray of shape (m_d+1,) each
+    xs : d-tuple of array of shape (m_d+1,) each
         Breakpoints of polynomials
-    xp : ndarray, shape (r, d)
+    xp : array, shape (r, d)
         Points to evaluate the piecewise polynomial at.
-    dx : ndarray of int, shape (d,)
+    dx : array of int, shape (d,)
         Orders of derivative to evaluate.  The derivative is evaluated
         piecewise and may have discontinuities.
     extrapolate : int, optional
         Whether to extrapolate to out-of-bounds points based on first
         and last intervals, or to return NaNs.
-    out : ndarray, shape (r, n)
+    out : array, shape (r, n)
         Value of each polynomial at each of the input points.
         For points outside the span ``x[0] ... x[-1]``,
         ``nan`` is returned.
@@ -196,9 +196,9 @@ def evaluate_nd(const double_or_complex[:,:,::1] c,
 
     # temporary storage
     if double_or_complex is double:
-        c2 = np.zeros((c.shape[0], 1, 1), dtype=float)
+        c2 = mx.zeros((c.shape[0], 1, 1), dtype=float)
     else:
-        c2 = np.zeros((c.shape[0], 1, 1), dtype=complex)
+        c2 = mx.zeros((c.shape[0], 1, 1), dtype=complex)
 
     # evaluate
     for ip in range(ndim):
@@ -263,13 +263,13 @@ def fix_continuity(double_or_complex[:,:,::1] c,
 
     Parameters
     ----------
-    c : ndarray, shape (k, m, n)
+    c : array, shape (k, m, n)
         Coefficients local polynomials of order `k-1` in `m` intervals.
         There are `n` polynomials in each interval.
         Coefficient of highest order-term comes first.
 
         Coefficients c[-order-1:] are modified in-place.
-    x : ndarray, shape (m+1,)
+    x : array, shape (m+1,)
         Breakpoints of polynomials
     order : int
         Order up to which enforce piecewise differentiability.
@@ -328,9 +328,9 @@ def integrate(const double_or_complex[:,:,::1] c,
 
     Parameters
     ----------
-    c : ndarray, shape (k, m, n)
+    c : array, shape (k, m, n)
         Coefficients local polynomials of order `k-1` in `m` intervals.
-    x : ndarray, shape (m+1,)
+    x : array, shape (m+1,)
         Breakpoints of polynomials
     a : double
         Start point of integration.
@@ -339,7 +339,7 @@ def integrate(const double_or_complex[:,:,::1] c,
     extrapolate : bint, optional
         Whether to extrapolate to out-of-bounds points based on first
         and last intervals, or to return NaNs.
-    out : ndarray, shape (n,)
+    out : array, shape (n,)
         Integral of the piecewise polynomial, assuming the polynomial
         is zero outside the range (x[0], x[-1]).
         This argument is modified in-place.
@@ -447,7 +447,7 @@ def real_roots(const double[:,:,::1] c, const double[::1] x, double y, bint repo
         raise ValueError("x and c have incompatible shapes")
 
     if c.shape[0] == 0:
-        return np.array([], dtype=float)
+        return mx.array([], dtype=float)
 
     wr = <double*>libc.stdlib.malloc(c.shape[0] * sizeof(double))
     wi = <double*>libc.stdlib.malloc(c.shape[0] * sizeof(double))
@@ -492,7 +492,7 @@ def real_roots(const double[:,:,::1] c, const double[::1] x, double y, bint repo
                     else:
                         # A real interval
                         cur_roots.append(x[interval])
-                        cur_roots.append(np.nan)
+                        cur_roots.append(mx.nan)
                         last_root = libc.math.NAN
                     continue
                 elif k < -1:
@@ -548,7 +548,7 @@ def real_roots(const double[:,:,::1] c, const double[::1] x, double y, bint repo
                         cur_roots.append(float(last_root))
 
             # Construct roots
-            roots.append(np.array(cur_roots, dtype=float))
+            roots.append(mx.array(cur_roots, dtype=float))
     finally:
         libc.stdlib.free(workspace)
         libc.stdlib.free(wr)
@@ -714,7 +714,7 @@ cdef int croots_poly1(const double[:,:,::1] c, double y, int ci, int cj,
 
     Parameters
     ----------
-    c : ndarray, shape (k, m, n)
+    c : array, shape (k, m, n)
          Coefficients of polynomials of order k
     y : float
         right-hand side of ``pp(x) == y``.
@@ -874,9 +874,9 @@ def _croots_poly1(const double[:,:,::1] c, double_complex[:,:,::1] w, double y=0
 
     Parameters
     ----------
-    c : ndarray, (k, m, n)
+    c : array, (k, m, n)
         Coefficients of several order-k polynomials
-    w : ndarray, (k, m, n)
+    w : array, (k, m, n)
         Output argument --- roots of the polynomials.
 
     """
@@ -1053,13 +1053,13 @@ def evaluate_bernstein(const double_or_complex[:,:,::1] c,
 
     Parameters
     ----------
-    c : ndarray, shape (k, m, n)
+    c : array, shape (k, m, n)
         Coefficients local polynomials of order `k-1` in `m` intervals.
         There are `n` polynomials in each interval.
         Coefficient of highest order-term comes first.
-    x : ndarray, shape (m+1,)
+    x : array, shape (m+1,)
         Breakpoints of polynomials
-    xp : ndarray, shape (r,)
+    xp : array, shape (r,)
         Points to evaluate the piecewise polynomial at.
     nu : int
         Order of derivative to evaluate.  The derivative is evaluated
@@ -1067,7 +1067,7 @@ def evaluate_bernstein(const double_or_complex[:,:,::1] c,
     extrapolate : bint, optional
         Whether to extrapolate to out-of-bounds points based on first
         and last intervals, or to return NaNs.
-    out : ndarray, shape (r, n)
+    out : array, shape (r, n)
         Value of each polynomial at each of the input points.
         This argument is modified in-place.
 
@@ -1093,9 +1093,9 @@ def evaluate_bernstein(const double_or_complex[:,:,::1] c,
 
     if nu > 0:
         if double_or_complex is double_complex:
-            wrk = np.empty((c.shape[0]-nu, 1, 1), dtype=np.complex128)
+            wrk = mx.empty((c.shape[0]-nu, 1, 1), dtype=mx.complex128)
         else:
-            wrk = np.empty((c.shape[0]-nu, 1, 1), dtype=np.float64)
+            wrk = mx.empty((c.shape[0]-nu, 1, 1), dtype=mx.float64)
 
 
     interval = 0

@@ -10,7 +10,7 @@ import re
 import warnings
 from types import EllipsisType
 
-import numpy as np
+import mlx.core as mx
 from scipy._lib._array_api import (
     array_namespace,
     Array,
@@ -538,18 +538,18 @@ def reduce(
     rs, rv = _split_rotation(right, xp)
 
     # Compute each term without einsum (not accessible in the Array API)
-    # First term: np.einsum("i,j,k", ls, ps, rs)
+    # First term: mx.einsum("i,j,k", ls, ps, rs)
     term1 = ls[..., :, None, None] * ps[..., None, :, None] * rs[..., None, None, :]
-    # Second term: np.einsum('i,jx,kx', ls, pv, rv)
+    # Second term: mx.einsum('i,jx,kx', ls, pv, rv)
     prv = xp.sum(pv[..., :, None, :] * rv[..., None, :, :], axis=-1)
     term2 = ls[..., :, None, None] * prv[..., None, :, :]
-    # Third term: np.einsum('ix,j,kx', lv, ps, rv)
+    # Third term: mx.einsum('ix,j,kx', lv, ps, rv)
     lrv = xp.sum(lv[..., :, None, :] * rv[..., None, :, :], axis=-1)
     term3 = ps[..., None, :, None] * lrv[..., :, None, :]
-    # Fourth term: np.einsum('ix,jx,k', lv, pv, rs)
+    # Fourth term: mx.einsum('ix,jx,k', lv, pv, rs)
     lpv = xp.sum(lv[..., :, None, :] * pv[..., None, :, :], axis=-1)
     term4 = rs[..., None, None, :] * lpv[..., :, :, None]
-    # Fifth term: np.einsum('xyz,ix,jy,kz', e, lv, pv, rv). We want to avoid expanding
+    # Fifth term: mx.einsum('xyz,ix,jy,kz', e, lv, pv, rv). We want to avoid expanding
     # the einsum into a 6D tensor to avoid excessive memory usage. Instead, we compute
     # the cross product between lv and pv and then compute the dot product with rv.
     # First compute cross products between lv and pv
@@ -1089,8 +1089,8 @@ def _split_rotation(q: Array, xp) -> tuple[Array, Array]:
 
 
 def _deg2rad(angles: Array) -> Array:
-    return angles * (np.pi / 180.0)
+    return angles * (mx.pi / 180.0)
 
 
 def _rad2deg(angles: Array) -> Array:
-    return angles * (180.0 / np.pi)
+    return angles * (180.0 / mx.pi)

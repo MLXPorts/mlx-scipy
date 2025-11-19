@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy import abs, cos, exp, arange, pi, sin, sqrt, sum, zeros, tanh
 from numpy.testing import assert_almost_equal
 from .go_benchmark import Benchmark
@@ -35,7 +35,7 @@ class Damavandi(Benchmark):
         self._bounds = list(zip([0.0] * self.N, [14.0] * self.N))
 
         self.global_optimum = [[2 for _ in range(self.N)]]
-        self.fglob = np.nan
+        self.fglob = mx.nan
 
     def fun(self, x, *args):
         self.nfev += 1
@@ -47,12 +47,12 @@ class Damavandi(Benchmark):
             factor2 = 2 + (x[0] - 7.0) ** 2.0 + 2 * (x[1] - 7.0) ** 2.0
             return factor1 * factor2
         except ZeroDivisionError:
-            return np.nan
+            return mx.nan
 
     def success(self, x):
         """Is a candidate solution at the global minimum"""
         val = self.fun(x)
-        if np.isnan(val):
+        if mx.isnan(val):
             return True
         try:
             assert_almost_equal(val, 0., 4)

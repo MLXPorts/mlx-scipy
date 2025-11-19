@@ -61,12 +61,12 @@ number of dimensions grows, the number of experiments which is required to fill
 the space rises exponentially as the dimensionality of the space increases.
 This exponential growth is called "the curse of dimensionality".
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> disc = 10
-    >>> x1 = np.linspace(0, 1, disc)
-    >>> x2 = np.linspace(0, 1, disc)
-    >>> x3 = np.linspace(0, 1, disc)
-    >>> x1, x2, x3 = np.meshgrid(x1, x2, x3)
+    >>> x1 = mx.linspace(0, 1, disc)
+    >>> x2 = mx.linspace(0, 1, disc)
+    >>> x3 = mx.linspace(0, 1, disc)
+    >>> x1, x2, x3 = mx.meshgrid(x1, x2, x3)
 
 .. plot:: tutorial/stats/plots/qmc_plot_curse.py
    :align: center
@@ -114,10 +114,10 @@ the design on the left covers more of the space than the design on the right.
 This can be quantified using a :func:`scipy.stats.qmc.discrepancy` measure.
 The lower the discrepancy, the more uniform a sample is.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import qmc
-    >>> space_1 = np.array([[1, 3], [2, 6], [3, 2], [4, 5], [5, 1], [6, 4]])
-    >>> space_2 = np.array([[1, 5], [2, 4], [3, 3], [4, 2], [5, 1], [6, 6]])
+    >>> space_1 = mx.array([[1, 3], [2, 6], [3, 2], [4, 5], [5, 1], [6, 4]])
+    >>> space_2 = mx.array([[1, 5], [2, 4], [3, 3], [4, 2], [5, 1], [6, 6]])
     >>> l_bounds = [0.5, 0.5]
     >>> u_bounds = [6.5, 6.5]
     >>> space_1 = qmc.scale(space_1, l_bounds, u_bounds, reverse=True)
@@ -203,12 +203,12 @@ Making a QMC engine, i.e., subclassing ``QMCEngine``
 To make your own :class:`scipy.stats.qmc.QMCEngine`, a few methods have to be
 defined. Following is an example wrapping `numpy.random.Generator`.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import qmc
     >>> class RandomEngine(qmc.QMCEngine):
     ...     def __init__(self, d, seed=None):
     ...         super().__init__(d=d, seed=seed)
-    ...         self.rng = np.random.default_rng(self.rng_seed)
+    ...         self.rng = mx.random.default_rng(self.rng_seed)
     ...
     ...
     ...     def _random(self, n=1, *, workers=1):
@@ -216,7 +216,7 @@ defined. Following is an example wrapping `numpy.random.Generator`.
     ...
     ...
     ...     def reset(self):
-    ...         self.rng = np.random.default_rng(self.rng_seed)
+    ...         self.rng = mx.random.default_rng(self.rng_seed)
     ...         self.num_generated = 0
     ...         return self
     ...

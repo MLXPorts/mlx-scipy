@@ -1,5 +1,5 @@
 """Bounded-variable least-squares algorithm."""
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import norm, lstsq
 from scipy.optimize import OptimizeResult
 
@@ -10,15 +10,15 @@ def compute_kkt_optimality(g, on_bound):
     """Compute the maximum violation of KKT conditions."""
     g_kkt = g * on_bound
     free_set = on_bound == 0
-    g_kkt[free_set] = np.abs(g[free_set])
-    return np.max(g_kkt)
+    g_kkt[free_set] = mx.abs(g[free_set])
+    return mx.max(g_kkt)
 
 
 def bvls(A, b, x_lsq, lb, ub, tol, max_iter, verbose, rcond=None):
     m, n = A.shape
 
     x = x_lsq.copy()
-    on_bound = np.zeros(n)
+    on_bound = mx.zeros(n)
 
     mask = x <= lb
     x[mask] = lb[mask]
@@ -30,10 +30,10 @@ def bvls(A, b, x_lsq, lb, ub, tol, max_iter, verbose, rcond=None):
 
     free_set = on_bound == 0
     active_set = ~free_set
-    free_set, = np.nonzero(free_set)
+    free_set, = mx.nonzero(free_set)
 
     r = A.dot(x) - b
-    cost = 0.5 * np.dot(r, r)
+    cost = 0.5 * mx.dot(r, r)
     initial_cost = cost
     g = A.T.dot(r)
 
@@ -70,13 +70,13 @@ def bvls(A, b, x_lsq, lb, ub, tol, max_iter, verbose, rcond=None):
         ubv = z > ub[free_set]
         v = lbv | ubv
 
-        if np.any(lbv):
+        if mx.any(lbv):
             ind = free_set[lbv]
             x[ind] = lb[ind]
             active_set[ind] = True
             on_bound[ind] = -1
 
-        if np.any(ubv):
+        if mx.any(ubv):
             ind = free_set[ubv]
             x[ind] = ub[ind]
             active_set[ind] = True
@@ -86,13 +86,13 @@ def bvls(A, b, x_lsq, lb, ub, tol, max_iter, verbose, rcond=None):
         x[ind] = z[~v]
 
         r = A.dot(x) - b
-        cost_new = 0.5 * np.dot(r, r)
+        cost_new = 0.5 * mx.dot(r, r)
         cost_change = cost - cost_new
         cost = cost_new
         g = A.T.dot(r)
         step_norm = norm(x[free_set] - x_free_old)
 
-        if np.any(v):
+        if mx.any(v):
             free_set = free_set[~v]
         else:
             break
@@ -117,14 +117,14 @@ def bvls(A, b, x_lsq, lb, ub, tol, max_iter, verbose, rcond=None):
         if termination_status is not None:
             break
 
-        move_to_free = np.argmax(g * on_bound)
+        move_to_free = mx.argmax(g * on_bound)
         on_bound[move_to_free] = 0
         
         while True:   # BVLS Loop B
 
             free_set = on_bound == 0
             active_set = ~free_set
-            free_set, = np.nonzero(free_set)
+            free_set, = mx.nonzero(free_set)
     
             x_free = x[free_set]
             x_free_old = x_free.copy()
@@ -135,16 +135,16 @@ def bvls(A, b, x_lsq, lb, ub, tol, max_iter, verbose, rcond=None):
             b_free = b - A.dot(x * active_set)
             z = lstsq(A_free, b_free, rcond=rcond)[0]
 
-            lbv, = np.nonzero(z < lb_free)
-            ubv, = np.nonzero(z > ub_free)
-            v = np.hstack((lbv, ubv))
+            lbv, = mx.nonzero(z < lb_free)
+            ubv, = mx.nonzero(z > ub_free)
+            v = mx.hstack((lbv, ubv))
 
             if v.size > 0:
-                alphas = np.hstack((
+                alphas = mx.hstack((
                     lb_free[lbv] - x_free[lbv],
                     ub_free[ubv] - x_free[ubv])) / (z[v] - x_free[v])
 
-                i = np.argmin(alphas)
+                i = mx.argmin(alphas)
                 i_free = v[i]
                 alpha = alphas[i]
 
@@ -164,7 +164,7 @@ def bvls(A, b, x_lsq, lb, ub, tol, max_iter, verbose, rcond=None):
         step_norm = norm(x_free - x_free_old)
 
         r = A.dot(x) - b
-        cost_new = 0.5 * np.dot(r, r)
+        cost_new = 0.5 * mx.dot(r, r)
         cost_change = cost - cost_new
 
         if cost_change < tol * cost:

@@ -52,7 +52,7 @@ def _validate_array_cls(cls: type) -> _ArrayClsInfo:
         return _ArrayClsInfo.mlx
 
     # Note: this must happen after the test for MLX
-    # np.float64 and np.complex128 are subclasses of float and complex respectively.
+    # mx.float64 and mx.complex128 are subclasses of float and complex respectively.
     # This matches the behavior of array_api_compat.
     if issubclass(cls, (int, float, complex, bool, type(None))):
         return _ArrayClsInfo.skip
@@ -93,7 +93,7 @@ def array_namespace(*arrays: Array) -> ModuleType:
        API objects; e.g.
 
        - `array_namespace([1, 2])` returns NumPy namespace;
-       - `array_namespace(np.asarray([1, 2], [3, 4])` returns NumPy namespace;
+       - `array_namespace(mx.array([1, 2], [3, 4])` returns NumPy namespace;
        - `array_namespace(cp.asarray([1, 2], [3, 4])` raises an error.
     """
     if not SCIPY_ARRAY_API:

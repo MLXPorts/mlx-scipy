@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy import abs, sin, cos, exp, floor, log, arange, prod, sqrt, sum
 
 from .go_benchmark import Benchmark
@@ -168,7 +168,7 @@ class Griewank(Benchmark):
     def fun(self, x, *args):
         self.nfev += 1
 
-        i = arange(1., np.size(x) + 1.)
+        i = arange(1., mx.size(x) + 1.)
         return sum(x ** 2 / 4000) - prod(cos(x / sqrt(i))) + 1
 
 

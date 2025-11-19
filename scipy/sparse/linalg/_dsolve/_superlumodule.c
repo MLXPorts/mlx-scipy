@@ -14,7 +14,7 @@
 #include <Python.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL _scipy_sparse_superlu_ARRAY_API
-#include <numpy/ndarrayobject.h>
+#include <numpy/arrayobject.h>
 
 #include "_superluobject.h"
 #include "SuperLU/SRC/superlu_enum_consts.h"

@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import numpy as np
+import mlx.core as mx
 import scipy.signal as signal
 
 fs, numtaps = 2, 41  # sampling frequency and number of taps
@@ -14,7 +14,7 @@ ax.set(title=f"Frequency Response of {numtaps}-tap Band-pass FIR-Filter",
        ylabel="Gain", xlim=(0, fs/2),
        xlabel=rf"Frequency $f\,$ in hertz (sampling frequency $f_S={fs}\,$Hz)")
 ax.plot(freqs, gains, 'ko--', alpha=.5, label="Desired Gains")
-ax.plot(f, np.abs(H), label="Response $|H(f)|$")
+ax.plot(f, mx.abs(H), label="Response $|H(f)|$")
 ax.grid()
 ax.legend()
 plt.show()

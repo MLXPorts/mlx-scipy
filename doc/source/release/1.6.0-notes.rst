@@ -476,7 +476,7 @@ Issues closed for 1.6.0
 * `#8163 <https://github.com/scipy/scipy/issues/8163>`__: LSMR fails on some random values when providing an x0
 * `#8210 <https://github.com/scipy/scipy/issues/8210>`__: Why should I choose order > 1 for scipy.ndimage.zoom?
 * `#8465 <https://github.com/scipy/scipy/issues/8465>`__: Unexpected behavior with reflect mode of ndimage.rotate
-* `#8776 <https://github.com/scipy/scipy/issues/8776>`__: cdist behavior with Minkowsky and np.inf
+* `#8776 <https://github.com/scipy/scipy/issues/8776>`__: cdist behavior with Minkowsky and mx.inf
 * `#9168 <https://github.com/scipy/scipy/issues/9168>`__: documentation of pearson3 in scipy.stats unclear
 * `#9223 <https://github.com/scipy/scipy/issues/9223>`__: Faster implementation of scipy.sparse.block_diag
 * `#9476 <https://github.com/scipy/scipy/issues/9476>`__: Invalid index in signal.medfilt2d's QUICK_SELECT
@@ -625,7 +625,7 @@ Pull requests for 1.6.0
 * `#12183 <https://github.com/scipy/scipy/pull/12183>`__: ENH: Use fromfile where possible
 * `#12186 <https://github.com/scipy/scipy/pull/12186>`__: MAINT: generalize tests in SphericalVoronoi
 * `#12198 <https://github.com/scipy/scipy/pull/12198>`__: TST: Fix str + bytes error
-* `#12199 <https://github.com/scipy/scipy/pull/12199>`__: ENH: match np.result_type behaviour in some scipy.signal functions
+* `#12199 <https://github.com/scipy/scipy/pull/12199>`__: ENH: match mx.result_type behaviour in some scipy.signal functions
 * `#12200 <https://github.com/scipy/scipy/pull/12200>`__: ENH: add FIR and IIR gammatone filters to scipy.signal
 * `#12204 <https://github.com/scipy/scipy/pull/12204>`__: ENH: Add overwrite argument for odr.ODR() and its test.
 * `#12206 <https://github.com/scipy/scipy/pull/12206>`__: MAINT:lstsq: Switch to tranposed problem if the array is tall
@@ -643,7 +643,7 @@ Pull requests for 1.6.0
 * `#12253 <https://github.com/scipy/scipy/pull/12253>`__: TST, CI: turn on codecov patch diffs
 * `#12259 <https://github.com/scipy/scipy/pull/12259>`__: MAINT: Remove duplicated test for import cycles
 * `#12263 <https://github.com/scipy/scipy/pull/12263>`__: ENH: Rename LocalSearchWrapper bounds
-* `#12265 <https://github.com/scipy/scipy/pull/12265>`__: BUG optimize: Accept np.matrix in lsq_linear
+* `#12265 <https://github.com/scipy/scipy/pull/12265>`__: BUG optimize: Accept mx.matrix in lsq_linear
 * `#12266 <https://github.com/scipy/scipy/pull/12266>`__: BUG: Fix paren error in dual annealing accept_reject calculation
 * `#12269 <https://github.com/scipy/scipy/pull/12269>`__: MAINT: Included mismatched shapes in error messages.
 * `#12279 <https://github.com/scipy/scipy/pull/12279>`__: MAINT: \`__array__\` and array protocols cannot be used in sparse.
@@ -716,7 +716,7 @@ Pull requests for 1.6.0
 * `#12491 <https://github.com/scipy/scipy/pull/12491>`__: MAINT: forward port 1.5.1 release notes
 * `#12508 <https://github.com/scipy/scipy/pull/12508>`__: Fix exception causes all over the codebase
 * `#12514 <https://github.com/scipy/scipy/pull/12514>`__: ENH: stats: override stats.invgauss.fit with analytical MLE
-* `#12519 <https://github.com/scipy/scipy/pull/12519>`__: PERF: Avoid np.zeros when custom initialization is needed anyway
+* `#12519 <https://github.com/scipy/scipy/pull/12519>`__: PERF: Avoid mx.zeros when custom initialization is needed anyway
 * `#12520 <https://github.com/scipy/scipy/pull/12520>`__: DOC: Minor RST section renaming.
 * `#12521 <https://github.com/scipy/scipy/pull/12521>`__: MAINT: Remove unused imports
 * `#12522 <https://github.com/scipy/scipy/pull/12522>`__: PERF: Get rid of unnececssary allocation in VarReader5.cread_fieldnames
@@ -751,7 +751,7 @@ Pull requests for 1.6.0
 * `#12599 <https://github.com/scipy/scipy/pull/12599>`__: Small update to scipy FFT tutorial
 * `#12600 <https://github.com/scipy/scipy/pull/12600>`__: ENH: disjoint set data structure
 * `#12602 <https://github.com/scipy/scipy/pull/12602>`__: BUG: add const for Read-only views in interpnd.pyx
-* `#12605 <https://github.com/scipy/scipy/pull/12605>`__: BUG: correct \`np.asanyarray\` use in \`scipy.constants.lambda2nu\`
+* `#12605 <https://github.com/scipy/scipy/pull/12605>`__: BUG: correct \`mx.asanyarray\` use in \`scipy.constants.lambda2nu\`
 * `#12610 <https://github.com/scipy/scipy/pull/12610>`__: MAINT: forward port 1.5.2 release notes
 * `#12612 <https://github.com/scipy/scipy/pull/12612>`__: MAINT: stats: Use explicit keyword parameters instead of \`\*\*kwds\`.
 * `#12616 <https://github.com/scipy/scipy/pull/12616>`__: DOC: make explicit docstring that interpolate.interp1d only accepts...
@@ -768,14 +768,14 @@ Pull requests for 1.6.0
 * `#12666 <https://github.com/scipy/scipy/pull/12666>`__: MAINT: Fixes from static analysis
 * `#12667 <https://github.com/scipy/scipy/pull/12667>`__: ENH: Adding Modified Rodrigues Parameters to the Rotation class
 * `#12670 <https://github.com/scipy/scipy/pull/12670>`__: DOC: Update documentation for Gamma distribution
-* `#12673 <https://github.com/scipy/scipy/pull/12673>`__: API: Unconditionally return np.intp from cKDTree.query
+* `#12673 <https://github.com/scipy/scipy/pull/12673>`__: API: Unconditionally return mx.intp from cKDTree.query
 * `#12677 <https://github.com/scipy/scipy/pull/12677>`__: MAINT: Add Autogenerated notice to ufuncs.pyi
 * `#12682 <https://github.com/scipy/scipy/pull/12682>`__: MAINT: Remove _util._valarray
 * `#12688 <https://github.com/scipy/scipy/pull/12688>`__: MAINT: add f2py-generated scipy.integrate files to .gitignore
 * `#12689 <https://github.com/scipy/scipy/pull/12689>`__: BENCH: simplify benchmark setup, remove benchmarks/run.py
 * `#12694 <https://github.com/scipy/scipy/pull/12694>`__: scipy/stats: Add laplace_asymmetric continuous distribution
 * `#12695 <https://github.com/scipy/scipy/pull/12695>`__: DOC: update Ubuntu quickstart; conda compilers now work!
-* `#12698 <https://github.com/scipy/scipy/pull/12698>`__: MAINT: Replace np.max with np.maximum
+* `#12698 <https://github.com/scipy/scipy/pull/12698>`__: MAINT: Replace mx.max with mx.maximum
 * `#12700 <https://github.com/scipy/scipy/pull/12700>`__: TST: bump test precision for constrained trustregion test
 * `#12702 <https://github.com/scipy/scipy/pull/12702>`__: TST: bump test tolerance for \`DifferentialEvolutionSolver.test_L4\`
 * `#12703 <https://github.com/scipy/scipy/pull/12703>`__: BUG: Improve input validation for sepfir2d
@@ -875,7 +875,7 @@ Pull requests for 1.6.0
 * `#13054 <https://github.com/scipy/scipy/pull/13054>`__: BUG: fix \`scipy.optimize.show_options\` for unknown methods....
 * `#13056 <https://github.com/scipy/scipy/pull/13056>`__: MAINT: fft: Fix a C++ compiler warning.
 * `#13057 <https://github.com/scipy/scipy/pull/13057>`__: Minor fixes on doc of function csr_tocsc
-* `#13058 <https://github.com/scipy/scipy/pull/13058>`__: DOC: stats: Replace np.float with np.float64 in a tutorial file.
+* `#13058 <https://github.com/scipy/scipy/pull/13058>`__: DOC: stats: Replace mx.float with mx.float64 in a tutorial file.
 * `#13059 <https://github.com/scipy/scipy/pull/13059>`__: DOC: stats: Update the "Returns" section of the linregress docstring.
 * `#13060 <https://github.com/scipy/scipy/pull/13060>`__: MAINT: clip_x_for_func should be private
 * `#13061 <https://github.com/scipy/scipy/pull/13061>`__: DOC: signal.win -> signal.windows.win in Examples
@@ -915,7 +915,7 @@ Pull requests for 1.6.0
 * `#13148 <https://github.com/scipy/scipy/pull/13148>`__: BUG: stats: fix typo in stable rvs per gh-12870
 * `#13149 <https://github.com/scipy/scipy/pull/13149>`__: DOC: spatial/stats: cross-ref random rotation matrix functions
 * `#13151 <https://github.com/scipy/scipy/pull/13151>`__: MAINT: stats: Fix a test and a couple PEP-8 issues.
-* `#13152 <https://github.com/scipy/scipy/pull/13152>`__: MAINT: stats: Use np.take_along_axis in the private function...
+* `#13152 <https://github.com/scipy/scipy/pull/13152>`__: MAINT: stats: Use mx.take_along_axis in the private function...
 * `#13154 <https://github.com/scipy/scipy/pull/13154>`__: ENH: stats: Implement defined handling of constant inputs in...
 * `#13156 <https://github.com/scipy/scipy/pull/13156>`__: DOC: maintain equal display range for ndimage.zoom example
 * `#13159 <https://github.com/scipy/scipy/pull/13159>`__: CI: Azure: Don't run tests on merge commits, except for coverage

@@ -8,7 +8,7 @@ from numpy.testing import (assert_, assert_allclose, assert_equal)
 import pytest
 from platform import python_implementation
 
-import numpy as np
+import mlx.core as mx
 from numpy import zeros, array, allclose
 from scipy.linalg import norm
 from scipy.sparse import csr_array, eye_array, random_array
@@ -108,7 +108,7 @@ class TestLGMRES:
     @pytest.mark.skipif(python_implementation() == 'PyPy',
                         reason="Fails on PyPy CI runs. See #9507")
     def test_arnoldi(self):
-        rng = np.random.default_rng(123)
+        rng = mx.random.default_rng(123)
 
         A = eye_array(2000) + random_array((2000, 2000), density=5e-4, rng=rng)
         b = rng.random(2000)
@@ -122,12 +122,12 @@ class TestLGMRES:
 
         assert_equal(flag0, 1)
         assert_equal(flag1, 1)
-        norm = np.linalg.norm(A.dot(x0) - b)
+        norm = mx.linalg.norm(A.dot(x0) - b)
         assert_(norm > 1e-4)
         assert_allclose(x0, x1)
 
     def test_cornercase(self):
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
 
         # Rounding error may prevent convergence with tol=0 --- ensure
         # that the return values in this case are correct, and no
@@ -140,7 +140,7 @@ class TestLGMRES:
                 warnings.filterwarnings(
                     "ignore", ".*called without specifying.*", DeprecationWarning)
 
-                b = np.ones(n)
+                b = mx.ones(n)
                 x, info = lgmres(A, b, maxiter=10)
                 assert_equal(info, 0)
                 assert_allclose(A.dot(x) - b, 0, atol=1e-14)
@@ -160,8 +160,8 @@ class TestLGMRES:
 
     def test_nans(self):
         A = eye_array(3, format='lil')
-        A[1, 1] = np.nan
-        b = np.ones(3)
+        A[1, 1] = mx.nan
+        b = mx.ones(3)
 
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -170,11 +170,11 @@ class TestLGMRES:
             assert_equal(info, 1)
 
     def test_breakdown_with_outer_v(self):
-        A = np.array([[1, 2], [3, 4]], dtype=float)
-        b = np.array([1, 2])
+        A = mx.array([[1, 2], [3, 4]], dtype=float)
+        b = mx.array([1, 2])
 
-        x = np.linalg.solve(A, b)
-        v0 = np.array([1, 0])
+        x = mx.linalg.solve(A, b)
+        v0 = mx.array([1, 0])
 
         # The inner iteration should converge to the correct solution,
         # since it's in the outer vector list
@@ -188,16 +188,16 @@ class TestLGMRES:
     def test_breakdown_underdetermined(self):
         # Should find LSQ solution in the Krylov span in one inner
         # iteration, despite solver breakdown from nilpotent A.
-        A = np.array([[0, 1, 1, 1],
+        A = mx.array([[0, 1, 1, 1],
                       [0, 0, 1, 1],
                       [0, 0, 0, 1],
                       [0, 0, 0, 0]], dtype=float)
 
         bs = [
-            np.array([1, 1, 1, 1]),
-            np.array([1, 1, 1, 0]),
-            np.array([1, 1, 0, 0]),
-            np.array([1, 0, 0, 0]),
+            mx.array([1, 1, 1, 1]),
+            mx.array([1, 1, 1, 0]),
+            mx.array([1, 1, 0, 0]),
+            mx.array([1, 0, 0, 0]),
         ]
 
         for b in bs:
@@ -205,12 +205,12 @@ class TestLGMRES:
                 warnings.filterwarnings(
                     "ignore", ".*called without specifying.*", DeprecationWarning)
                 xp, info = lgmres(A, b, maxiter=1)
-            resp = np.linalg.norm(A.dot(xp) - b)
+            resp = mx.linalg.norm(A.dot(xp) - b)
 
-            K = np.c_[b, A.dot(b), A.dot(A.dot(b)), A.dot(A.dot(A.dot(b)))]
-            y, _, _, _ = np.linalg.lstsq(A.dot(K), b, rcond=-1)
+            K = mx.c_[b, A.dot(b), A.dot(A.dot(b)), A.dot(A.dot(A.dot(b)))]
+            y, _, _, _ = mx.linalg.lstsq(A.dot(K), b, rcond=-1)
             x = K.dot(y)
-            res = np.linalg.norm(A.dot(x) - b)
+            res = mx.linalg.norm(A.dot(x) - b)
 
             assert_allclose(resp, res, err_msg=repr(b))
 
@@ -218,10 +218,10 @@ class TestLGMRES:
         # Check that no warnings are emitted if the matrix contains
         # numbers for which 1/x has no float representation, and that
         # the solver behaves properly.
-        A = np.array([[1, 2], [3, 4]], dtype=float)
-        A *= 100 * np.nextafter(0, 1)
+        A = mx.array([[1, 2], [3, 4]], dtype=float)
+        A *= 100 * mx.nextafter(0, 1)
 
-        b = np.array([1, 1])
+        b = mx.array([1, 1])
 
         with warnings.catch_warnings():
             warnings.filterwarnings(

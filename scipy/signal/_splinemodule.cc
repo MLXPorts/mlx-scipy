@@ -33,18 +33,18 @@ static char doc_FIRsepsym2d[] = "out = sepfir2d(input, hrow, hcol)\n"
 "\n"
 "    Parameters\n"
 "    ----------\n"
-"    input : ndarray\n"
+"    input : array\n"
 "        The input signal. Must be a rank-2 array.\n"
-"    hrow : ndarray\n"
+"    hrow : array\n"
 "        A rank-1 array defining the row direction of the filter.\n"
 "        Must be odd-length\n"
-"    hcol : ndarray\n"
+"    hcol : array\n"
 "        A rank-1 array defining the column direction of the filter.\n"
 "        Must be odd-length\n"
 "\n"
 "    Returns\n"
 "    -------\n"
-"    output : ndarray\n"
+"    output : array\n"
 "        The filtered signal.\n"
 "\n"
 "    Examples\n"
@@ -152,7 +152,7 @@ static char doc_IIRsymorder1_ic[] = "out = symiirorder1_ic(input, z1, precision=
 "\n"
 "    Parameters\n"
 "    ----------\n"
-"    input : ndarray\n"
+"    input : array\n"
 "        The input signal. If 2D, then it will find the initial conditions \n"
 "        for each of the elements on the last axis.\n"
 "    z1 : scalar\n"
@@ -163,7 +163,7 @@ static char doc_IIRsymorder1_ic[] = "out = symiirorder1_ic(input, z1, precision=
 "\n"
 "    Returns\n"
 "    -------\n"
-"    z_0 : ndarray\n"
+"    z_0 : array\n"
 "        The mirror-symmetric initial condition for the forward IIR filter.";
 
 static PyObject *IIRsymorder1_ic(PyObject *NPY_UNUSED(dummy), PyObject *args) {
@@ -290,7 +290,7 @@ static char doc_IIRsymorder2_ic_fwd[] = "out = symiirorder2_ic_fwd(input, r, ome
 "\n"
 "    Parameters\n"
 "    ----------\n"
-"    input : ndarray\n"
+"    input : array\n"
 "        The input signal.\n"
 "    r, omega : float\n"
 "        Parameters in the transfer function.\n"
@@ -300,7 +300,7 @@ static char doc_IIRsymorder2_ic_fwd[] = "out = symiirorder2_ic_fwd(input, r, ome
 "\n"
 "    Returns\n"
 "    -------\n"
-"    zi : ndarray\n"
+"    zi : array\n"
 "        The mirror-symmetric initial condition for the forward IIR filter.";
 
 static PyObject *IIRsymorder2_ic_fwd(PyObject *NPY_UNUSED(dummy), PyObject *args) {
@@ -406,7 +406,7 @@ static char doc_IIRsymorder2_ic_bwd[] = "out = symiirorder2_ic_bwd(input, r, ome
 "\n"
 "    Parameters\n"
 "    ----------\n"
-"    input : ndarray\n"
+"    input : array\n"
 "        The input signal.\n"
 "    r, omega : float\n"
 "        Parameters in the transfer function.\n"
@@ -416,7 +416,7 @@ static char doc_IIRsymorder2_ic_bwd[] = "out = symiirorder2_ic_bwd(input, r, ome
 "\n"
 "    Returns\n"
 "    -------\n"
-"    zi : ndarray\n"
+"    zi : array\n"
 "        The mirror-symmetric initial condition for the forward IIR filter.";
 
 static PyObject *IIRsymorder2_ic_bwd(PyObject *NPY_UNUSED(dummy), PyObject *args) {

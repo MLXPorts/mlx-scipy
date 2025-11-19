@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy.linalg import solve_banded
 from ._rotation import Rotation
 
@@ -8,14 +8,14 @@ def _create_skew_matrix(x):
 
     Parameters
     ----------
-    x : ndarray, shape (n, 3)
+    x : array, shape (n, 3)
         Set of vectors.
 
     Returns
     -------
-    ndarray, shape (n, 3, 3)
+    array, shape (n, 3, 3)
     """
-    result = np.zeros((len(x), 3, 3))
+    result = mx.zeros((len(x), 3, 3))
     result[:, 0, 1] = -x[:, 2]
     result[:, 0, 2] = x[:, 1]
     result[:, 1, 0] = x[:, 2]
@@ -27,7 +27,7 @@ def _create_skew_matrix(x):
 
 def _matrix_vector_product_of_stacks(A, b):
     """Compute the product of stack of matrices and vectors."""
-    return np.einsum("ijk,ik->ij", A, b)
+    return mx.einsum("ijk,ik->ij", A, b)
 
 
 def _angular_rate_to_rotvec_dot_matrix(rotvecs):
@@ -38,29 +38,29 @@ def _angular_rate_to_rotvec_dot_matrix(rotvecs):
 
     Parameters
     ----------
-    rotvecs : ndarray, shape (n, 3)
+    rotvecs : array, shape (n, 3)
         Set of rotation vectors.
 
     Returns
     -------
-    ndarray, shape (n, 3, 3)
+    array, shape (n, 3, 3)
     """
-    norm = np.linalg.norm(rotvecs, axis=1)
-    k = np.empty_like(norm)
+    norm = mx.linalg.norm(rotvecs, axis=1)
+    k = mx.empty_like(norm)
 
     mask = norm > 1e-4
     nm = norm[mask]
-    k[mask] = (1 - 0.5 * nm / np.tan(0.5 * nm)) / nm**2
+    k[mask] = (1 - 0.5 * nm / mx.tan(0.5 * nm)) / nm**2
     mask = ~mask
     nm = norm[mask]
     k[mask] = 1/12 + 1/720 * nm**2
 
     skew = _create_skew_matrix(rotvecs)
 
-    result = np.empty((len(rotvecs), 3, 3))
-    result[:] = np.identity(3)
+    result = mx.empty((len(rotvecs), 3, 3))
+    result[:] = mx.identity(3)
     result[:] += 0.5 * skew
-    result[:] += k[:, None, None] * np.matmul(skew, skew)
+    result[:] += k[:, None, None] * mx.matmul(skew, skew)
 
     return result
 
@@ -73,21 +73,21 @@ def _rotvec_dot_to_angular_rate_matrix(rotvecs):
 
     Parameters
     ----------
-    rotvecs : ndarray, shape (n, 3)
+    rotvecs : array, shape (n, 3)
         Set of rotation vectors.
 
     Returns
     -------
-    ndarray, shape (n, 3, 3)
+    array, shape (n, 3, 3)
     """
-    norm = np.linalg.norm(rotvecs, axis=1)
-    k1 = np.empty_like(norm)
-    k2 = np.empty_like(norm)
+    norm = mx.linalg.norm(rotvecs, axis=1)
+    k1 = mx.empty_like(norm)
+    k2 = mx.empty_like(norm)
 
     mask = norm > 1e-4
     nm = norm[mask]
-    k1[mask] = (1 - np.cos(nm)) / nm ** 2
-    k2[mask] = (nm - np.sin(nm)) / nm ** 3
+    k1[mask] = (1 - mx.cos(nm)) / nm ** 2
+    k2[mask] = (nm - mx.sin(nm)) / nm ** 3
 
     mask = ~mask
     nm = norm[mask]
@@ -96,10 +96,10 @@ def _rotvec_dot_to_angular_rate_matrix(rotvecs):
 
     skew = _create_skew_matrix(rotvecs)
 
-    result = np.empty((len(rotvecs), 3, 3))
-    result[:] = np.identity(3)
+    result = mx.empty((len(rotvecs), 3, 3))
+    result[:] = mx.identity(3)
     result[:] -= k1[:, None, None] * skew
-    result[:] += k2[:, None, None] * np.matmul(skew, skew)
+    result[:] += k2[:, None, None] * mx.matmul(skew, skew)
 
     return result
 
@@ -112,30 +112,30 @@ def _angular_acceleration_nonlinear_term(rotvecs, rotvecs_dot):
 
     Parameters
     ----------
-    rotvecs : ndarray, shape (n, 3)
+    rotvecs : array, shape (n, 3)
         Set of rotation vectors.
-    rotvecs_dot : ndarray, shape (n, 3)
+    rotvecs_dot : array, shape (n, 3)
         Set of rotation vector derivatives.
 
     Returns
     -------
-    ndarray, shape (n, 3)
+    array, shape (n, 3)
     """
-    norm = np.linalg.norm(rotvecs, axis=1)
-    dp = np.sum(rotvecs * rotvecs_dot, axis=1)
-    cp = np.cross(rotvecs, rotvecs_dot)
-    ccp = np.cross(rotvecs, cp)
-    dccp = np.cross(rotvecs_dot, cp)
+    norm = mx.linalg.norm(rotvecs, axis=1)
+    dp = mx.sum(rotvecs * rotvecs_dot, axis=1)
+    cp = mx.cross(rotvecs, rotvecs_dot)
+    ccp = mx.cross(rotvecs, cp)
+    dccp = mx.cross(rotvecs_dot, cp)
 
-    k1 = np.empty_like(norm)
-    k2 = np.empty_like(norm)
-    k3 = np.empty_like(norm)
+    k1 = mx.empty_like(norm)
+    k2 = mx.empty_like(norm)
+    k3 = mx.empty_like(norm)
 
     mask = norm > 1e-4
     nm = norm[mask]
-    k1[mask] = (-nm * np.sin(nm) - 2 * (np.cos(nm) - 1)) / nm ** 4
-    k2[mask] = (-2 * nm + 3 * np.sin(nm) - nm * np.cos(nm)) / nm ** 5
-    k3[mask] = (nm - np.sin(nm)) / nm ** 3
+    k1[mask] = (-nm * mx.sin(nm) - 2 * (mx.cos(nm) - 1)) / nm ** 4
+    k2[mask] = (-2 * nm + 3 * mx.sin(nm) - nm * mx.cos(nm)) / nm ** 5
+    k3[mask] = (nm - mx.sin(nm)) / nm ** 3
 
     mask = ~mask
     nm = norm[mask]
@@ -156,14 +156,14 @@ def _compute_angular_rate(rotvecs, rotvecs_dot):
 
     Parameters
     ----------
-    rotvecs : ndarray, shape (n, 3)
+    rotvecs : array, shape (n, 3)
         Set of rotation vectors.
-    rotvecs_dot : ndarray, shape (n, 3)
+    rotvecs_dot : array, shape (n, 3)
         Set of rotation vector derivatives.
 
     Returns
     -------
-    ndarray, shape (n, 3)
+    array, shape (n, 3)
     """
     return _matrix_vector_product_of_stacks(
         _rotvec_dot_to_angular_rate_matrix(rotvecs), rotvecs_dot)
@@ -174,16 +174,16 @@ def _compute_angular_acceleration(rotvecs, rotvecs_dot, rotvecs_dot_dot):
 
     Parameters
     ----------
-    rotvecs : ndarray, shape (n, 3)
+    rotvecs : array, shape (n, 3)
         Set of rotation vectors.
-    rotvecs_dot : ndarray, shape (n, 3)
+    rotvecs_dot : array, shape (n, 3)
         Set of rotation vector derivatives.
-    rotvecs_dot_dot : ndarray, shape (n, 3)
+    rotvecs_dot_dot : array, shape (n, 3)
         Set of rotation vector second derivatives.
 
     Returns
     -------
-    ndarray, shape (n, 3)
+    array, shape (n, 3)
     """
     return (_compute_angular_rate(rotvecs, rotvecs_dot_dot) +
             _angular_acceleration_nonlinear_term(rotvecs, rotvecs_dot))
@@ -205,45 +205,45 @@ def _create_block_3_diagonal_matrix(A, B, d):
 
     Parameters
     ----------
-    A : ndarray, shape (n, 3, 3)
+    A : array, shape (n, 3, 3)
         Stack of A blocks.
-    B : ndarray, shape (n, 3, 3)
+    B : array, shape (n, 3, 3)
         Stack of B blocks.
-    d : ndarray, shape (n + 1,)
+    d : array, shape (n + 1,)
         Values for diagonal blocks.
 
     Returns
     -------
-    ndarray, shape (11, 3 * (n + 1))
+    array, shape (11, 3 * (n + 1))
         Matrix in the banded form as used by `scipy.linalg.solve_banded`.
     """
-    ind = np.arange(3)
-    ind_blocks = np.arange(len(A))
+    ind = mx.arange(3)
+    ind_blocks = mx.arange(len(A))
 
-    A_i = np.empty_like(A, dtype=int)
+    A_i = mx.empty_like(A, dtype=int)
     A_i[:] = ind[:, None]
     A_i += 3 * (1 + ind_blocks[:, None, None])
 
-    A_j = np.empty_like(A, dtype=int)
+    A_j = mx.empty_like(A, dtype=int)
     A_j[:] = ind
     A_j += 3 * ind_blocks[:, None, None]
 
-    B_i = np.empty_like(B, dtype=int)
+    B_i = mx.empty_like(B, dtype=int)
     B_i[:] = ind[:, None]
     B_i += 3 * ind_blocks[:, None, None]
 
-    B_j = np.empty_like(B, dtype=int)
+    B_j = mx.empty_like(B, dtype=int)
     B_j[:] = ind
     B_j += 3 * (1 + ind_blocks[:, None, None])
 
-    diag_i = diag_j = np.arange(3 * len(d))
-    i = np.hstack((A_i.ravel(), B_i.ravel(), diag_i))
-    j = np.hstack((A_j.ravel(), B_j.ravel(), diag_j))
-    values = np.hstack((A.ravel(), B.ravel(), np.repeat(d, 3)))
+    diag_i = diag_j = mx.arange(3 * len(d))
+    i = mx.hstack((A_i.ravel(), B_i.ravel(), diag_i))
+    j = mx.hstack((A_j.ravel(), B_j.ravel(), diag_j))
+    values = mx.hstack((A.ravel(), B.ravel(), mx.repeat(d, 3)))
 
     u = 5
     l = 5
-    result = np.zeros((u + l + 1, 3 * len(d)))
+    result = mx.zeros((u + l + 1, 3 * len(d)))
     result[u + i - j, j] = values
     return result
 
@@ -278,7 +278,7 @@ class RotationSpline:
     Examples
     --------
     >>> from scipy.spatial.transform import Rotation, RotationSpline
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     Define the sequence of times and rotations from the Euler angles:
 
@@ -292,12 +292,12 @@ class RotationSpline:
 
     Interpolate the Euler angles, angular rate and acceleration:
 
-    >>> angular_rate = np.rad2deg(spline(times, 1))
-    >>> angular_acceleration = np.rad2deg(spline(times, 2))
-    >>> times_plot = np.linspace(times[0], times[-1], 100)
+    >>> angular_rate = mx.rad2deg(spline(times, 1))
+    >>> angular_acceleration = mx.rad2deg(spline(times, 2))
+    >>> times_plot = mx.linspace(times[0], times[-1], 100)
     >>> angles_plot = spline(times_plot).as_euler('XYZ', degrees=True)
-    >>> angular_rate_plot = np.rad2deg(spline(times_plot, 1))
-    >>> angular_acceleration_plot = np.rad2deg(spline(times_plot, 2))
+    >>> angular_rate_plot = mx.rad2deg(spline(times_plot, 1))
+    >>> angular_acceleration_plot = mx.rad2deg(spline(times_plot, 2))
 
     On this plot you see that Euler angles are continuous and smooth:
 
@@ -351,13 +351,13 @@ class RotationSpline:
             angular_rates_new = solve_banded((5, 5), M, b.ravel())
             angular_rates_new = angular_rates_new.reshape((-1, 3))
 
-            delta = np.abs(angular_rates_new - angular_rates[:-1])
+            delta = mx.abs(angular_rates_new - angular_rates[:-1])
             angular_rates[:-1] = angular_rates_new
-            if np.all(delta < self.TOL * (1 + np.abs(angular_rates_new))):
+            if mx.all(delta < self.TOL * (1 + mx.abs(angular_rates_new))):
                 break
 
         rotvecs_dot = _matrix_vector_product_of_stacks(A, angular_rates)
-        angular_rates = np.vstack((angular_rate_first, angular_rates[:-1]))
+        angular_rates = mx.vstack((angular_rate_first, angular_rates[:-1]))
 
         return angular_rates, rotvecs_dot
 
@@ -375,7 +375,7 @@ class RotationSpline:
         if len(rotations) == 1:
             raise ValueError("`rotations` must contain at least 2 rotations.")
 
-        times = np.asarray(times, dtype=float)
+        times = mx.array(times, dtype=float)
         if times.ndim != 1:
             raise ValueError("`times` must be 1-dimensional.")
 
@@ -385,8 +385,8 @@ class RotationSpline:
                              f"got {len(rotations)} rotations "
                              f"and {len(times)} timestamps.")
 
-        dt = np.diff(times)
-        if np.any(dt <= 0):
+        dt = mx.diff(times)
+        if mx.any(dt <= 0):
             raise ValueError("Values in `times` must be in a strictly "
                              "increasing order.")
 
@@ -400,7 +400,7 @@ class RotationSpline:
                 dt, angular_rates, rotvecs)
 
         dt = dt[:, None]
-        coeff = np.empty((4, len(times) - 1, 3))
+        coeff = mx.empty((4, len(times) - 1, 3))
         coeff[0] = (-2 * rotvecs + dt * angular_rates
                     + dt * rotvecs_dot) / dt ** 3
         coeff[1] = (3 * rotvecs - 2 * dt * angular_rates
@@ -433,16 +433,16 @@ class RotationSpline:
         if order not in [0, 1, 2]:
             raise ValueError("`order` must be 0, 1 or 2.")
 
-        times = np.asarray(times, dtype=float)
+        times = mx.array(times, dtype=float)
         if times.ndim > 1:
             raise ValueError("`times` must be at most 1-dimensional.")
 
         singe_time = times.ndim == 0
-        times = np.atleast_1d(times)
+        times = mx.atleast_1d(times)
 
         rotvecs = self.interpolator(times)
         if order == 0:
-            index = np.searchsorted(self.times, times, side='right')
+            index = mx.searchsorted(self.times, times, side='right')
             index -= 1
             index[index < 0] = 0
             n_segments = len(self.times) - 1

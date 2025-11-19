@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import scipy.sparse
 from scipy.spatial.distance import cdist
 
@@ -16,11 +16,11 @@ class MaximumBipartiteMatching(Benchmark):
 
     def setup(self, n, density):
         # Create random sparse matrices. Note that we could use
-        # scipy.sparse.rand for this purpose, but simply using np.random and
+        # scipy.sparse.rand for this purpose, but simply using mx.random and
         # disregarding duplicates is quite a bit faster.
-        rng = np.random.default_rng(42)
+        rng = mx.random.default_rng(42)
         d = rng.integers(0, n, size=(int(n*n*density), 2))
-        graph = scipy.sparse.csr_matrix((np.ones(len(d)), (d[:, 0], d[:, 1])),
+        graph = scipy.sparse.csr_matrix((mx.ones(len(d)), (d[:, 0], d[:, 1])),
                                         shape=(n, n))
         self.graph = graph
 
@@ -58,7 +58,7 @@ def machol_wien(shape, rng):
     # Machol--Wien instances being harder than the other examples, we cut
     # down the size of the instance by 5.
     return scipy.sparse.csr_matrix(
-        np.outer(np.arange(shape[0]//5) + 1, np.arange(shape[1]//5) + 1))
+        mx.outer(mx.arange(shape[0]//5) + 1, mx.arange(shape[1]//5) + 1))
 
 
 class MinWeightFullBipartiteMatching(Benchmark):
@@ -72,7 +72,7 @@ class MinWeightFullBipartiteMatching(Benchmark):
     ]
 
     def setup(self, shape, input_type):
-        rng = np.random.default_rng(42)
+        rng = mx.random.default_rng(42)
         input_func = {'random_uniform': random_uniform,
                       'random_uniform_sparse': random_uniform_sparse,
                       'random_uniform_integer': random_uniform_integer,

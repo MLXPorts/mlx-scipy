@@ -1,6 +1,6 @@
 import re
 
-import numpy as np
+import mlx.core as mx
 import pytest
 
 from importlib import import_module
@@ -28,12 +28,12 @@ lazy_xp_function(xp_copy)
 class TestArrayAPI:
 
     def test_array_namespace(self):
-        x, y = np.array([0, 1, 2]), np.array([0, 1, 2])
+        x, y = mx.array([0, 1, 2]), mx.array([0, 1, 2])
         xp = array_namespace(x, y)
         assert 'array_api_compat.numpy' in xp.__name__
 
     def test_asarray(self, xp):
-        x, y = _asarray([0, 1, 2], xp=xp), _asarray(np.arange(3), xp=xp)
+        x, y = _asarray([0, 1, 2], xp=xp), _asarray(mx.arange(3), xp=xp)
         ref = xp.asarray([0, 1, 2])
         xp_assert_equal(x, ref)
         xp_assert_equal(y, ref)
@@ -42,11 +42,11 @@ class TestArrayAPI:
     def test_raises(self):
         msg = "of type `numpy.ma.MaskedArray` are not supported"
         with pytest.raises(TypeError, match=msg):
-            array_namespace(np.ma.array(1), np.array(1))
+            array_namespace(mx.ma.array(1), mx.array(1))
 
         msg = "of type `numpy.matrix` are not supported"
         with pytest.raises(TypeError, match=msg):
-            array_namespace(np.array(1), np.matrix(1))
+            array_namespace(mx.array(1), mx.matrix(1))
 
         msg = "only boolean and numerical dtypes are supported"
         with pytest.raises(TypeError, match=msg):
@@ -63,7 +63,7 @@ class TestArrayAPI:
         assert array_namespace((0, 1, 2)) is xp
         assert array_namespace(1, 2, 3) is xp
         assert array_namespace(1) is xp
-        assert array_namespace(np.int64(1)) is xp
+        assert array_namespace(mx.int64(1)) is xp
         assert array_namespace([0, 1, 2], 3) is xp
         assert array_namespace() is xp
         assert array_namespace(None) is xp
@@ -71,8 +71,8 @@ class TestArrayAPI:
         assert array_namespace(None, 1) is xp
 
         # This only works when xp is numpy!
-        assert array_namespace(np.asarray([1, 2]), [3, 4]) is xp
-        assert array_namespace(np.int64(1), [3, 4]) is xp
+        assert array_namespace(mx.array([1, 2]), [3, 4]) is xp
+        assert array_namespace(mx.int64(1), [3, 4]) is xp
 
     def test_array_and_array_likes_mix(self, xp):
         """Test that if there is at least one Array API object among
@@ -93,13 +93,13 @@ class TestArrayAPI:
             with pytest.raises(TypeError, match="Multiple namespaces"):
                 array_namespace(x, [1, 2])
             with pytest.raises(TypeError, match="Multiple namespaces"):
-                array_namespace(x, np.int64(1))
+                array_namespace(x, mx.int64(1))
             with pytest.raises(TypeError, match="Multiple namespaces"):
                  # Subclass of float; matches array_api_compat behavior
-                array_namespace(x, np.float64(1))
+                array_namespace(x, mx.float64(1))
             with pytest.raises(TypeError, match="Multiple namespaces"):
                 # Subclass of complex; matches array_api_compat behavior
-                array_namespace(x, np.complex128(1))
+                array_namespace(x, mx.complex128(1))
 
     def test_array_api_extra_hook(self):
         """Test that the `array_namespace` function used by
@@ -124,7 +124,7 @@ class TestArrayAPI:
         """A void dtype that is not a jax.float0 must not be caught in the
         special case for JAX zero-gradient arrays.
         """
-        void = np.empty(0, dtype=np.dtype([]))
+        void = mx.empty(0, dtype=mx.dtype([]))
         with pytest.raises(TypeError, match="only boolean and numerical dtypes"):
             array_namespace(void)
         with pytest.raises(TypeError, match="only boolean and numerical dtypes"):
@@ -134,7 +134,7 @@ class TestArrayAPI:
         for _xp in [xp, None]:
             x = xp.asarray([1, 2, 3])
             y = xp_copy(x, xp=_xp)
-            # with numpy we'd want to use np.shared_memory, but that's not specified
+            # with numpy we'd want to use mx.shared_memory, but that's not specified
             # in the array-api
             assert id(x) != id(y)
             try:
@@ -265,14 +265,14 @@ lists = [[1], [1.], [1. + 1j]]
 types = ('int8 int16 int32 int64 '
          'uint8 uint16 uint32 uint64 '
          'float32 float64 complex64 complex128').split()
-arrays = [np.asarray([1], dtype=getattr(np, t)) for t in types]
+arrays = [mx.array([1], dtype=getattr(np, t)) for t in types]
 
 
 def convert_type(x, xp):
     # Convert NumPy array to xp-array
     # Convert string to indicated dtype from xp
     # Return Python scalars unchanged
-    if isinstance(x, np.ndarray):
+    if isinstance(x, mx.array):
         return xp.asarray(x)
     elif isinstance(x, str):
         return getattr(xp, x)
@@ -281,7 +281,7 @@ def convert_type(x, xp):
 
 def is_inexact(x, xp):
     # Determine whether `x` is of inexact (real of complex floating) dtype
-    x = xp.asarray(x) if np.isscalar(x) or isinstance(x, list) else x
+    x = xp.asarray(x) if mx.isscalar(x) or isinstance(x, list) else x
     dtype = getattr(x, 'dtype', x)
     return xp.isdtype(dtype, ('real floating', 'complex floating'))
 
@@ -323,7 +323,7 @@ def test_xp_result_type_force_floating(x, y, xp):
     # the result type of any inexact (real or complex floating) arguments
     # and the default floating point type.
     if (is_torch(xp) and not(isinstance(x, str) or isinstance(y, str))
-            and np.isscalar(x) and np.isscalar(y)):
+            and mx.isscalar(x) and mx.isscalar(y)):
         pytest.skip("See 3/27/2024 comment at  data-apis/array-api-compat#277")
 
     x = convert_type(x, xp)

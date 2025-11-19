@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import scipy.signal as signal
 import matplotlib.pyplot as plt
 
@@ -11,7 +11,7 @@ b1 = signal.firwin(n1, ff1_c, fs=fs)
 
 f0, H0 = signal.freqz(b0, fs=fs)  # calculate frequency responses
 f1, H1 = signal.freqz(b1, fs=fs)
-H0_dB, H1_dB = (20 * np.log10(np.abs(H_)) for H_ in (H0, H1))  # convert to dB
+H0_dB, H1_dB = (20 * mx.log10(mx.abs(H_)) for H_ in (H0, H1))  # convert to dB
 
 # do the plotting:
 fg0, (ax0, ax1) = plt.subplots(2, 1, sharex='all', layout="constrained",

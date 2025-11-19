@@ -1,17 +1,17 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 import scipy.special._ufuncs as scu
 from scipy.integrate import tanhsinh
 
 
-type_char_to_type_tol = {'f': (np.float32, 32*np.finfo(np.float32).eps),
-                         'd': (np.float64, 32*np.finfo(np.float64).eps)}
+type_char_to_type_tol = {'f': (mx.float32, 32*mx.finfo(mx.float32).eps),
+                         'd': (mx.float64, 32*mx.finfo(mx.float64).eps)}
 
 
 # Each item in this list is
 #   (func, args, expected_value)
-# All the values can be represented exactly, even with np.float32.
+# All the values can be represented exactly, even with mx.float32.
 #
 # This is not an exhaustive test data set of all the functions!
 # It is a spot check of several functions, primarily for
@@ -39,7 +39,7 @@ def test_stats_boost_ufunc(func, args, expected):
         # Harmless overflow warnings are a "feature" of some wrappers on some
         # platforms. This test is about dtype and accuracy, so let's avoid false
         # test failures cause by these warnings. See gh-17432.
-        with np.errstate(over='ignore'):
+        with mx.errstate(over='ignore'):
             value = func(*args)
         assert isinstance(value, typ)
         assert_allclose(value, expected, rtol=rtol)
@@ -48,9 +48,9 @@ def test_stats_boost_ufunc(func, args, expected):
 def test_landau():
     # Test that Landau distribution ufuncs are wrapped as expected;
     # accuracy is tested by Boost.
-    x = np.linspace(-3, 10, 10)
+    x = mx.linspace(-3, 10, 10)
     args = (0, 1)
-    res = tanhsinh(lambda x: scu._landau_pdf(x, *args), -np.inf, x)
+    res = tanhsinh(lambda x: scu._landau_pdf(x, *args), -mx.inf, x)
     cdf = scu._landau_cdf(x, *args)
     assert_allclose(res.integral, cdf)
     sf = scu._landau_sf(x, *args)

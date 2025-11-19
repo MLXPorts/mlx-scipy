@@ -7,7 +7,7 @@ __all__ = ['coo_array', 'coo_matrix', 'isspmatrix_coo']
 import math
 from warnings import warn
 
-import numpy as np
+import mlx.core as mx
 
 from .._lib._util import copy_if_needed
 from ._matrix import spmatrix
@@ -39,9 +39,9 @@ class _coo_base(_data_matrix, _minmax_mixin):
                 self._shape = check_shape(arg1, allow_nd=self._allow_nd)
                 idx_dtype = self._get_index_dtype(maxval=max(self._shape))
                 data_dtype = getdtype(dtype, default=float)
-                self.coords = tuple(np.array([], dtype=idx_dtype)
+                self.coords = tuple(mx.array([], dtype=idx_dtype)
                                      for _ in range(len(self._shape)))
-                self.data = np.array([], dtype=data_dtype)
+                self.data = mx.array([], dtype=data_dtype)
                 self.has_canonical_format = True
             else:
                 try:
@@ -53,13 +53,13 @@ class _coo_base(_data_matrix, _minmax_mixin):
                     if any(len(idx) == 0 for idx in coords):
                         raise ValueError('cannot infer dimensions from zero '
                                          'sized index arrays')
-                    shape = tuple(operator.index(np.max(idx)) + 1
+                    shape = tuple(operator.index(mx.max(idx)) + 1
                                   for idx in coords)
                 self._shape = check_shape(shape, allow_nd=self._allow_nd)
                 idx_dtype = self._get_index_dtype(coords,
                                                   maxval=max(self.shape),
                                                   check_contents=True)
-                self.coords = tuple(np.array(idx, copy=copy, dtype=idx_dtype)
+                self.coords = tuple(mx.array(idx, copy=copy, dtype=idx_dtype)
                                      for idx in coords)
                 self.data = getdata(obj, copy=copy, dtype=dtype)
                 self.has_canonical_format = False
@@ -78,9 +78,9 @@ class _coo_base(_data_matrix, _minmax_mixin):
                     self.has_canonical_format = False
             else:
                 # dense argument
-                M = np.asarray(arg1)
+                M = mx.array(arg1)
                 if not isinstance(self, sparray):
-                    M = np.atleast_2d(M)
+                    M = mx.atleast_2d(M)
                     if M.ndim != 2:
                         raise TypeError(f'expected 2D array or matrix, not {M.ndim}D')
 
@@ -98,7 +98,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
                 self.has_canonical_format = True
 
         if len(self._shape) > 2:
-            self.coords = tuple(idx.astype(np.int64, copy=False) for idx in self.coords)
+            self.coords = tuple(idx.astype(mx.int64, copy=False) for idx in self.coords)
 
         self._check()
 
@@ -106,7 +106,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
     def row(self):
         if self.ndim > 1:
             return self.coords[-2]
-        result = np.zeros_like(self.col)
+        result = mx.zeros_like(self.col)
         result.setflags(write=False)
         return result
 
@@ -115,7 +115,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
     def row(self, new_row):
         if self.ndim < 2:
             raise ValueError('cannot set row attribute of a 1-dimensional sparse array')
-        new_row = np.asarray(new_row, dtype=self.coords[-2].dtype)
+        new_row = mx.array(new_row, dtype=self.coords[-2].dtype)
         self.coords = self.coords[:-2] + (new_row,) + self.coords[-1:]
 
     @property
@@ -124,7 +124,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
     @col.setter
     def col(self, new_col):
-        new_col = np.asarray(new_col, dtype=self.coords[-1].dtype)
+        new_col = mx.array(new_col, dtype=self.coords[-1].dtype)
         self.coords = self.coords[:-1] + (new_col,)
 
     def reshape(self, *args, **kwargs):
@@ -140,7 +140,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
         # When reducing the number of dimensions, we need to be careful about
         # index overflow. This is why we can't simply call
-        # `np.ravel_multi_index()` followed by `np.unravel_index()` here.
+        # `mx.ravel_multi_index()` followed by `mx.unravel_index()` here.
         flat_coords = _ravel_coords(self.coords, self.shape, order=order)
         if len(shape) == 2:
             if order == 'C':
@@ -148,10 +148,10 @@ class _coo_base(_data_matrix, _minmax_mixin):
             else:
                 new_coords = divmod(flat_coords, shape[0])[::-1]
         else:
-            new_coords = np.unravel_index(flat_coords, shape, order=order)
+            new_coords = mx.unravel_index(flat_coords, shape, order=order)
 
         idx_dtype = self._get_index_dtype(self.coords, maxval=max(shape))
-        new_coords = tuple(np.asarray(co, dtype=idx_dtype) for co in new_coords)
+        new_coords = tuple(mx.array(co, dtype=idx_dtype) for co in new_coords)
 
         # Handle copy here rather than passing on to the constructor so that no
         # copy will be made of `new_coords` regardless.
@@ -181,7 +181,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
         if axis >= self.ndim:
             raise ValueError('axis out of bounds')
 
-        return np.bincount(downcast_intp_index(self.coords[1 - axis]),
+        return mx.bincount(downcast_intp_index(self.coords[1 - axis]),
                            minlength=self.shape[1 - axis])
 
     _getnnz.__doc__ = _spbase._getnnz.__doc__
@@ -189,7 +189,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
     def count_nonzero(self, axis=None):
         self.sum_duplicates()
         if axis is None:
-            return np.count_nonzero(self.data)
+            return mx.count_nonzero(self.data)
 
         if axis < 0:
             axis += self.ndim
@@ -197,7 +197,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
             raise ValueError('axis out of bounds')
         mask = self.data != 0
         coord = self.coords[1 - axis][mask]
-        return np.bincount(downcast_intp_index(coord), minlength=self.shape[1 - axis])
+        return mx.bincount(downcast_intp_index(coord), minlength=self.shape[1 - axis])
 
     count_nonzero.__doc__ = _spbase.count_nonzero.__doc__
 
@@ -214,7 +214,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
                      stacklevel=3)
 
         idx_dtype = self._get_index_dtype(self.coords, maxval=max(self.shape))
-        self.coords = tuple(np.asarray(idx, dtype=idx_dtype)
+        self.coords = tuple(mx.array(idx, dtype=idx_dtype)
                              for idx in self.coords)
         self.data = to_native(self.data)
 
@@ -256,7 +256,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
         if len(shape) > self.ndim:
             flat_coords = _ravel_coords(self.coords, self.shape)
             max_size = math.prod(shape)
-            self.coords = np.unravel_index(flat_coords[:max_size], shape)
+            self.coords = mx.unravel_index(flat_coords[:max_size], shape)
             self.data = self.data[:max_size]
             self._shape = shape
             return
@@ -275,7 +275,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
         # Handle truncation of existing dimensions.
         is_truncating = any(old > new for old, new in zip(self.shape, shape))
         if is_truncating:
-            mask = np.logical_and.reduce([
+            mask = mx.logical_and.reduce([
                 idx < size for idx, size in zip(self.coords, shape)
             ])
             if not mask.all():
@@ -294,7 +294,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
         # This handles both 0D and 1D cases correctly regardless of the
         # original shape.
         if self.ndim == 1:
-            coo_todense_nd(np.array([1]), self.nnz, self.ndim,
+            coo_todense_nd(mx.array([1]), self.nnz, self.ndim,
                            self.coords[0], self.data, B.ravel('A'), fortran)
         elif self.ndim == 2:
             M, N = self.shape
@@ -302,10 +302,10 @@ class _coo_base(_data_matrix, _minmax_mixin):
                         B.ravel('A'), fortran)
         else:  # dim>2
             if fortran:
-                strides = np.append(1, np.cumprod(self.shape[:-1]))
+                strides = mx.append(1, mx.cumprod(self.shape[:-1]))
             else:
-                strides = np.append(np.cumprod(self.shape[1:][::-1])[::-1], 1)
-            coords = np.concatenate(self.coords)
+                strides = mx.append(mx.cumprod(self.shape[1:][::-1])[::-1], 1)
+            coords = mx.concatenate(self.coords)
             coo_todense_nd(strides, self.nnz, self.ndim,
                            coords, self.data, B.ravel('A'), fortran)
         # Note: reshape() doesn't copy here, but does return a new array (view).
@@ -390,7 +390,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
         if self.ndim == 1:
             indices = self.coords[0].copy() if copy else self.coords[0]
             nnz = len(indices)
-            indptr = np.array([0, nnz], dtype=idx_dtype)
+            indptr = mx.array([0, nnz], dtype=idx_dtype)
             data = self.data.copy() if copy else self.data
             return indptr, indices, data, self.shape
 
@@ -400,9 +400,9 @@ class _coo_base(_data_matrix, _minmax_mixin):
         major = major.astype(idx_dtype, copy=False)
         minor = minor.astype(idx_dtype, copy=False)
 
-        indptr = np.empty(M + 1, dtype=idx_dtype)
-        indices = np.empty_like(minor, dtype=idx_dtype)
-        data = np.empty_like(self.data, dtype=self.dtype)
+        indptr = mx.empty(M + 1, dtype=idx_dtype)
+        indices = mx.empty_like(minor, dtype=idx_dtype)
+        data = mx.empty_like(self.data, dtype=self.dtype)
 
         coo_tocsr(M, N, nnz, major, minor, self.data, indptr, indices, data)
         return indptr, indices, data, self.shape
@@ -420,7 +420,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
             raise ValueError(f'Cannot convert. DIA format must be 2D. Got {self.ndim}D')
         self.sum_duplicates()
         ks = self.col - self.row  # the diagonal for each nonzero
-        diags, diag_idx = np.unique(ks, return_inverse=True)
+        diags, diag_idx = mx.unique(ks, return_inverse=True)
 
         if len(diags) > 100:
             # probably undesired, should todia() have a maxdiags parameter?
@@ -430,9 +430,9 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
         #initialize and fill in data array
         if self.data.size == 0:
-            data = np.zeros((0, 0), dtype=self.dtype)
+            data = mx.zeros((0, 0), dtype=self.dtype)
         else:
-            data = np.zeros((len(diags), self.col.max()+1), dtype=self.dtype)
+            data = mx.zeros((len(diags), self.col.max()+1), dtype=self.dtype)
             data[diag_idx, self.col] = self.data
 
         return self._dia_container((data, diags), shape=self.shape)
@@ -460,8 +460,8 @@ class _coo_base(_data_matrix, _minmax_mixin):
             raise ValueError("diagonal requires two dimensions")
         rows, cols = self.shape
         if k <= -rows or k >= cols:
-            return np.empty(0, dtype=self.data.dtype)
-        diag = np.zeros(min(rows + min(k, 0), cols - max(k, 0)),
+            return mx.empty(0, dtype=self.data.dtype)
+        diag = mx.zeros(min(rows + min(k, 0), cols - max(k, 0)),
                         dtype=self.dtype)
         diag_mask = (self.row + k) == self.col
 
@@ -491,28 +491,28 @@ class _coo_base(_data_matrix, _minmax_mixin):
             max_index = min(M+k, N)
             if values.ndim:
                 max_index = min(max_index, len(values))
-            keep = np.logical_or(full_keep, self.col >= max_index)
-            new_row = np.arange(-k, -k + max_index, dtype=idx_dtype)
-            new_col = np.arange(max_index, dtype=idx_dtype)
+            keep = mx.logical_or(full_keep, self.col >= max_index)
+            new_row = mx.arange(-k, -k + max_index, dtype=idx_dtype)
+            new_col = mx.arange(max_index, dtype=idx_dtype)
         else:
             max_index = min(M, N-k)
             if values.ndim:
                 max_index = min(max_index, len(values))
-            keep = np.logical_or(full_keep, self.row >= max_index)
-            new_row = np.arange(max_index, dtype=idx_dtype)
-            new_col = np.arange(k, k + max_index, dtype=idx_dtype)
+            keep = mx.logical_or(full_keep, self.row >= max_index)
+            new_row = mx.arange(max_index, dtype=idx_dtype)
+            new_col = mx.arange(k, k + max_index, dtype=idx_dtype)
 
         # Define the array of data consisting of the entries to be added.
         if values.ndim:
             new_data = values[:max_index]
         else:
-            new_data = np.empty(max_index, dtype=self.dtype)
+            new_data = mx.empty(max_index, dtype=self.dtype)
             new_data[:] = values
 
         # Update the internal structure.
-        self.coords = (np.concatenate((self.row[keep], new_row)),
-                       np.concatenate((self.col[keep], new_col)))
-        self.data = np.concatenate((self.data[keep], new_data))
+        self.coords = (mx.concatenate((self.row[keep], new_row)),
+                       mx.concatenate((self.col[keep], new_col)))
+        self.data = mx.concatenate((self.data[keep], new_data))
         self.has_canonical_format = False
 
     # needed by _data_matrix
@@ -531,7 +531,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
             key, self.shape, self.format
         )
         # handle int, slice and int-array indices
-        index_mask = np.ones(len(self.data), dtype=np.bool_)
+        index_mask = mx.ones(len(self.data), dtype=mx.bool_)
         slice_coords = []
         arr_coords = []
         arr_indices = []
@@ -548,7 +548,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
                             in_range = (co <= start) & (co > stop)
                         else:
                             in_range = (co >= start) & (co < stop)
-                        new_ix, m = np.divmod(co - start, step)
+                        new_ix, m = mx.divmod(co - start, step)
                         index_mask &= (m == 0) & in_range
                     else:
                         in_range = (co >= start) & (co < stop)
@@ -582,13 +582,13 @@ class _coo_base(_data_matrix, _minmax_mixin):
             # Equate with broadcasting and check for all equal across (arr_dim) axis 0.
             # 1st array is "keyarr" (arr_dim by 1 by arr_size) from arr_indices.
             # 2nd array is "arr_coords" (arr_dim by masked_nnz by 1) from arr_coords.
-            keyarr = np.array(arr_indices).reshape(len(arr_indices), 1, -1)
-            arr_coords = np.array([co[index_mask] for co in arr_coords])[:, :, None]
+            keyarr = mx.array(arr_indices).reshape(len(arr_indices), 1, -1)
+            arr_coords = mx.array([co[index_mask] for co in arr_coords])[:, :, None]
             found = (keyarr == arr_coords).all(axis=0)
             arr_co, arr_ix = found.nonzero()
             new_data = new_data[arr_co]
             new_coords = [co[arr_co] for co in new_coords]
-            new_arr_coords = list(np.unravel_index(arr_ix, shape=arr_shape))
+            new_arr_coords = list(mx.unravel_index(arr_ix, shape=arr_shape))
 
             # check for contiguous positions of array and int indices
             if len(arr_int_pos) == arr_int_pos[-1] - arr_int_pos[0] + 1:
@@ -601,9 +601,9 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
         if none_pos:
             if new_coords:
-                coord_like = np.zeros_like(new_coords[0])
+                coord_like = mx.zeros_like(new_coords[0])
             else:
-                coord_like = np.zeros(len(new_data), dtype=self.coords[0].dtype)
+                coord_like = mx.zeros(len(new_data), dtype=self.coords[0].dtype)
             new_coords.insert(none_pos[0], coord_like)
             for i in none_pos[1:]:
                 new_coords.insert(i, coord_like.copy())
@@ -629,7 +629,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
                 return  # Nothing to set.
             x_data, x_coords = _get_sparse_data_and_coords(x, new_shape, self.dtype)
         else:
-            x = np.asarray(x, dtype=self.dtype)
+            x = mx.array(x, dtype=self.dtype)
             if x.size == 0:
                 return  # Nothing to set.
             x_data, x_coords = _get_dense_data_and_coords(x, new_shape)
@@ -670,7 +670,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
                     # compute the raveled coords of the array part of x_coords.
                     # Used to build the new coords from the index arrays.
                     x_arr_coo = x_coords[pos:pos + len(arr_shape)]
-                    # could use np.ravel_multi_index but _ravel_coords avoids overflow
+                    # could use mx.ravel_multi_index but _ravel_coords avoids overflow
                     x_arr_coo_ravel = _ravel_coords(x_arr_coo, arr_shape)
                     break
 
@@ -689,7 +689,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
         new_nnz = len(x_data)
         for i, idx in enumerate(index):
             if isintlike(idx):
-                new_coords[i] = (np.broadcast_to(idx, (new_nnz,)))
+                new_coords[i] = (mx.broadcast_to(idx, (new_nnz,)))
                 continue
             elif isinstance(idx, slice):
                 start, stop, step = idx.indices(self.shape[i])
@@ -705,18 +705,18 @@ class _coo_base(_data_matrix, _minmax_mixin):
         # If matching NumPy is not crucial, we could make dups a feature where
         # integer array indices  with repeated indices creates duplicate values.
         # Not doing that here. We are just removing duplicates (keep 1st data found)
-        new_coords = np.array(new_coords)
-        _, ind = np.unique(new_coords, axis=1, return_index=True)
+        new_coords = mx.array(new_coords)
+        _, ind = mx.unique(new_coords, axis=1, return_index=True)
 
         # update values with stack of old and new data and coords.
-        self.data = np.hstack([old_data, new_data[ind]])
-        self.coords = tuple(np.hstack(c) for c in zip(old_coords, new_coords[:, ind]))
+        self.data = mx.hstack([old_data, new_data[ind]])
+        self.coords = tuple(mx.hstack(c) for c in zip(old_coords, new_coords[:, ind]))
         self.has_canonical_format = False
 
     def _zero_many(self, index):
         # handle int, slice and integer-array indices
         # index_mask accumulates a bool array of nonzeros that match index
-        index_mask=np.ones(len(self.data), dtype=np.bool_)
+        index_mask=mx.ones(len(self.data), dtype=mx.bool_)
         arr_coords = []
         arr_indices = []
         for i, (idx, co) in enumerate(zip(index, self.coords)):
@@ -729,7 +729,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
                         in_range = (co <= start) & (co > stop)
                     else:
                         in_range = (co >= start) & (co < stop)
-                    m = np.mod(co - start, step)
+                    m = mx.mod(co - start, step)
                     index_mask &= (m == 0) & in_range
                 else:
                     in_range = (co >= start) & (co < stop)
@@ -743,11 +743,11 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
         # match array indices with masked coords. See comments in __getitem__
         if arr_indices:
-            keyarr = np.array(arr_indices).reshape(len(arr_indices), 1, -1)
-            arr_coords = np.array([co[index_mask] for co in arr_coords])[:, :, None]
+            keyarr = mx.array(arr_indices).reshape(len(arr_indices), 1, -1)
+            arr_coords = mx.array([co[index_mask] for co in arr_coords])[:, :, None]
             found = (keyarr == arr_coords).all(axis=0)
             arr_coo, _ = found.nonzero()
-            arr_index_mask = np.zeros_like(index_mask)
+            arr_index_mask = mx.zeros_like(index_mask)
             arr_index_mask[index_mask.nonzero()[0][arr_coo]] = True
             index_mask &= arr_index_mask
 
@@ -774,16 +774,16 @@ class _coo_base(_data_matrix, _minmax_mixin):
         # Sort coords w.r.t. rows, then cols. This corresponds to C-order,
         # which we rely on for argmin/argmax to return the first index in the
         # same way that numpy does (in the case of ties).
-        order = np.lexsort(coords[::-1])
+        order = mx.lexsort(coords[::-1])
         coords = tuple(idx[order] for idx in coords)
         data = data[order]
-        unique_mask = np.logical_or.reduce([
+        unique_mask = mx.logical_or.reduce([
             idx[1:] != idx[:-1] for idx in coords
         ])
-        unique_mask = np.append(True, unique_mask)
+        unique_mask = mx.append(True, unique_mask)
         coords = tuple(idx[unique_mask] for idx in coords)
-        unique_inds, = np.nonzero(unique_mask)
-        data = np.add.reduceat(data, downcast_intp_index(unique_inds), dtype=self.dtype)
+        unique_inds, = mx.nonzero(unique_mask)
+        data = mx.add.reduceat(data, downcast_intp_index(unique_inds), dtype=self.dtype)
         return coords, data
 
     def eliminate_zeros(self):
@@ -803,10 +803,10 @@ class _coo_base(_data_matrix, _minmax_mixin):
         if other.shape != self.shape:
             raise ValueError(f'Incompatible shapes ({self.shape} and {other.shape})')
         dtype = upcast_char(self.dtype.char, other.dtype.char)
-        result = np.array(other, dtype=dtype, copy=True)
+        result = mx.array(other, dtype=dtype, copy=True)
         fortran = int(result.flags.f_contiguous)
         if self.ndim == 1:
-            coo_todense_nd(np.array([1]), self.nnz, self.ndim,
+            coo_todense_nd(mx.array([1]), self.nnz, self.ndim,
                            self.coords[0], self.data, result.ravel('A'), fortran)
         elif self.ndim == 2:
             M, N = self._shape_as_2d
@@ -814,10 +814,10 @@ class _coo_base(_data_matrix, _minmax_mixin):
                         result.ravel('A'), fortran)
         else:
             if fortran:
-                strides = np.append(1, np.cumprod(self.shape[:-1]))
+                strides = mx.append(1, mx.cumprod(self.shape[:-1]))
             else:
-                strides = np.append(np.cumprod(self.shape[1:][::-1])[::-1], 1)
-            coords = np.concatenate(self.coords)
+                strides = mx.append(mx.cumprod(self.shape[1:][::-1])[::-1], 1)
+            coords = mx.concatenate(self.coords)
             coo_todense_nd(strides, self.nnz, self.ndim,
                            coords, self.data, result.ravel('A'), fortran)
         return self._container(result, copy=False)
@@ -830,8 +830,8 @@ class _coo_base(_data_matrix, _minmax_mixin):
         if other.shape != self.shape:
             raise ValueError(f'Incompatible shapes ({self.shape} and {other.shape})')
         other = self.__class__(other)
-        new_data = np.concatenate((self.data, other.data))
-        new_coords = tuple(np.concatenate((self.coords, other.coords), axis=1))
+        new_data = mx.concatenate((self.data, other.data))
+        new_coords = tuple(mx.concatenate((self.coords, other.coords), axis=1))
         A = self.__class__((new_data, new_coords), shape=self.shape)
         return A
 
@@ -842,18 +842,18 @@ class _coo_base(_data_matrix, _minmax_mixin):
         if other.shape != self.shape:
             raise ValueError(f'Incompatible shapes ({self.shape} and {other.shape})')
         other = self.__class__(other)
-        new_data = np.concatenate((self.data, -other.data))
-        new_coords = tuple(np.concatenate((self.coords, other.coords), axis=1))
+        new_data = mx.concatenate((self.data, -other.data))
+        new_coords = tuple(mx.concatenate((self.coords, other.coords), axis=1))
         A = coo_array((new_data, new_coords), shape=self.shape)
         return A
 
     def _matmul_vector(self, other):
         if self.ndim > 2:
-            result = np.zeros(math.prod(self.shape[:-1]),
+            result = mx.zeros(math.prod(self.shape[:-1]),
                               dtype=upcast_char(self.dtype.char, other.dtype.char))
-            shape = np.array(self.shape)
-            strides = np.append(np.cumprod(shape[:-1][::-1])[::-1][1:], 1)
-            coords = np.concatenate(self.coords)
+            shape = mx.array(self.shape)
+            strides = mx.append(mx.cumprod(shape[:-1][::-1])[::-1][1:], 1)
+            coords = mx.concatenate(self.coords)
             coo_matvec_nd(self.nnz, len(self.shape), strides, coords, self.data,
                           other, result)
 
@@ -862,14 +862,14 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
         # self.ndim <= 2
         result_shape = self.shape[0] if self.ndim > 1 else 1
-        result = np.zeros(result_shape,
+        result = mx.zeros(result_shape,
                           dtype=upcast_char(self.dtype.char, other.dtype.char))
         if self.ndim == 2:
             col = self.col
             row = self.row
         elif self.ndim == 1:
             col = self.coords[0]
-            row = np.zeros_like(col)
+            row = mx.zeros_like(col)
         else:
             raise NotImplementedError(
                 f"coo_matvec not implemented for ndim={self.ndim}")
@@ -888,7 +888,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
             try:
                 o_ndim = other.ndim
             except AttributeError:
-                other = np.asarray(other)
+                other = mx.array(other)
                 o_ndim = other.ndim
             perm = tuple(range(o_ndim)[:-2]) + tuple(range(o_ndim)[-2:][::-1])
             tr = other.transpose(perm)
@@ -911,9 +911,9 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
         if not (issparse(other) or isdense(other)):
             # If it's a list or whatever, treat it like an array
-            other_a = np.asanyarray(other)
+            other_a = mx.asanyarray(other)
 
-            if other_a.ndim == 0 and other_a.dtype == np.object_:
+            if other_a.ndim == 0 and other_a.dtype == mx.object_:
                 # Not interpretable as an array; return NotImplemented so that
                 # other's __rmatmul__ can kick in if that's implemented.
                 return NotImplemented
@@ -928,7 +928,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
         N = self.shape[-1]
         err_prefix = "matmul: dimension mismatch with signature"
-        if other.__class__ is np.ndarray:
+        if other.__class__ is mx.array:
             if other.shape == (N,):
                 return self._matmul_vector(other)
             if other.shape == (N, 1):
@@ -944,7 +944,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
                 if batch_shape_A != batch_shape_B:
                     try:
                         # This will raise an error if the shapes are not broadcastable
-                        np.broadcast_shapes(batch_shape_A, batch_shape_B)
+                        mx.broadcast_shapes(batch_shape_A, batch_shape_B)
                     except ValueError:
                         raise ValueError("Batch dimensions are not broadcastable")
 
@@ -983,7 +983,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
                 if batch_shape_A != batch_shape_B:
                     try:
                         # This will raise an error if the shapes are not broadcastable
-                        np.broadcast_shapes(batch_shape_A, batch_shape_B)
+                        mx.broadcast_shapes(batch_shape_A, batch_shape_B)
                     except ValueError:
                         raise ValueError("Batch dimensions are not broadcastable")
 
@@ -1006,17 +1006,17 @@ class _coo_base(_data_matrix, _minmax_mixin):
                 result = self.reshape(1, self.shape[0])._matmul_multivector(other)
                 return result.reshape(tuple(other.shape[:-2]) + tuple(other.shape[-1:]))
 
-            broadcast_shape = np.broadcast_shapes(self.shape[:-2], other.shape[:-2])
+            broadcast_shape = mx.broadcast_shapes(self.shape[:-2], other.shape[:-2])
             self_shape = broadcast_shape + self.shape[-2:]
             other_shape = broadcast_shape + other.shape[-2:]
 
             self = self._broadcast_to(self_shape)
-            other = np.broadcast_to(other, other_shape)
+            other = mx.broadcast_to(other, other_shape)
             result_shape = broadcast_shape + self.shape[-2:-1] + other.shape[-1:]
-            result = np.zeros(result_shape, dtype=result_dtype)
+            result = mx.zeros(result_shape, dtype=result_dtype)
             coo_matmat_dense_nd(self.nnz, len(self.shape), other.shape[-1],
-                                np.array(other_shape), np.array(result_shape),
-                                np.concatenate(self.coords),
+                                mx.array(other_shape), mx.array(result_shape),
+                                mx.concatenate(self.coords),
                                 self.data, other.ravel('C'), result)
             return result
 
@@ -1027,8 +1027,8 @@ class _coo_base(_data_matrix, _minmax_mixin):
         elif self.ndim == 1:
             result_shape = (other.shape[1],)
             col = self.coords[0]
-            row = np.zeros_like(col)
-        result = np.zeros(result_shape, dtype=result_dtype)
+            row = mx.zeros_like(col)
+        result = mx.zeros(result_shape, dtype=result_dtype)
         coo_matmat_dense(self.nnz, other.shape[-1], row, col,
                          self.data, other.ravel('C'), result)
         return result.view(type=type(other))
@@ -1064,10 +1064,10 @@ class _coo_base(_data_matrix, _minmax_mixin):
         Examples
         --------
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.sparse import coo_array
         >>> A = coo_array([[1, 2, 0], [0, 0, 3], [4, 0, 5]])
-        >>> v = np.array([1, 0, -1])
+        >>> v = mx.array([1, 0, -1])
         >>> A.dot(v)
         array([ 1, -3, -1], dtype=int64)
 
@@ -1081,17 +1081,17 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
         For 3-D arrays the shape extends unused axes by other unused axes.
 
-        >>> A = coo_array(np.arange(3*4*5*6)).reshape((3,4,5,6))
-        >>> B = coo_array(np.arange(3*4*5*6)).reshape((5,4,6,3))
+        >>> A = coo_array(mx.arange(3*4*5*6)).reshape((3,4,5,6))
+        >>> B = coo_array(mx.arange(3*4*5*6)).reshape((5,4,6,3))
         >>> A.dot(B).shape
         (3, 4, 5, 5, 4, 3)
         """
         # handle non-array input:  lists, ints, etc
         if not (issparse(other) or isdense(other) or isscalarlike(other)):
             # If it's a list or whatever, treat it like an array
-            o_array = np.asanyarray(other)
+            o_array = mx.asanyarray(other)
 
-            if o_array.ndim == 0 and o_array.dtype == np.object_:
+            if o_array.ndim == 0 and o_array.dtype == mx.object_:
                 raise TypeError(f"dot argument not supported type: '{type(other)}'")
             try:
                 other.shape
@@ -1129,7 +1129,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
         coords = []
         new_shapes = (s_new_shape, o_new_shape) if s_new_shape else (o_new_shape,)
         for c, s in zip(prod.coords, new_shapes):
-            coords.extend(np.unravel_index(c, s))
+            coords.extend(mx.unravel_index(c, s))
 
         # Construct the resulting COO array with coords and shape
         return coo_array((prod.data, coords), shape=combined_shape)
@@ -1151,7 +1151,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
         else:
             o_new_shape = other.shape[:-2] + other.shape[-1:]
             reorder_dims = (o_ndim - 2, *range(o_ndim - 2), o_ndim - 1)
-            o_reorg = np.transpose(other, reorder_dims)
+            o_reorg = mx.transpose(other, reorder_dims)
             other_2d = o_reorg.reshape((other.shape[-2], math.prod(o_new_shape)))
 
         prod = self_2d @ other_2d  # routes via 2-D CSR
@@ -1208,7 +1208,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
         Examples
         --------
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> import scipy.sparse
         >>> A = scipy.sparse.coo_array([[[2, 3], [0, 0]], [[0, 1], [0, 5]]])
         >>> A.shape
@@ -1237,8 +1237,8 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
         Using tuple for axes:
 
-        >>> a = scipy.sparse.coo_array(np.arange(60).reshape(3,4,5))
-        >>> b = np.arange(24).reshape(4,3,2)
+        >>> a = scipy.sparse.coo_array(mx.arange(60).reshape(3,4,5))
+        >>> b = mx.arange(24).reshape(4,3,2)
         >>> c = a.tensordot(b, axes=([1,0],[0,1]))
         >>> c.shape
         (5, 2)
@@ -1252,9 +1252,9 @@ class _coo_base(_data_matrix, _minmax_mixin):
         """
         if not isdense(other) and not issparse(other):
             # If it's a list or whatever, treat it like an array
-            other_array = np.asanyarray(other)
+            other_array = mx.asanyarray(other)
 
-            if other_array.ndim == 0 and other_array.dtype == np.object_:
+            if other_array.ndim == 0 and other_array.dtype == mx.object_:
                 raise TypeError(f"tensordot arg not supported type: '{type(other)}'")
             try:
                 other.shape
@@ -1294,7 +1294,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
         new_shapes = (s_new_shape, o_new_shape) if s_new_shape else (o_new_shape,)
         for c, s in zip(prod.coords, new_shapes):
             if s:
-                coords.extend(np.unravel_index(c, s))
+                coords.extend(mx.unravel_index(c, s))
 
         # Construct the resulting COO array with coords and shape
         return coo_array((prod.data, coords), shape=combined_shape)
@@ -1312,7 +1312,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
         o_non_axes_shape = [other.shape[i] for i in o_non_axes]
 
         left = self.transpose(s_non_axes + s_axes)
-        right = np.transpose(other, o_non_axes[:-1] + o_axes + o_non_axes[-1:])
+        right = mx.transpose(other, o_non_axes[:-1] + o_axes + o_non_axes[-1:])
 
         reshape_left = (*s_non_axes_shape, math.prod(s_axes_shape))
         reshape_right = (*o_non_axes_shape[:-1], math.prod(o_axes_shape),
@@ -1342,7 +1342,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
         other_shape = other.shape
 
         # Determine the new shape to broadcast self and other
-        broadcast_shape = np.broadcast_shapes(self_shape[:-2], other_shape[:-2])
+        broadcast_shape = mx.broadcast_shapes(self_shape[:-2], other_shape[:-2])
         self_new_shape = tuple(broadcast_shape) + self_shape[-2:]
         other_new_shape = tuple(broadcast_shape) + other_shape[-2:]
 
@@ -1393,8 +1393,8 @@ class _coo_base(_data_matrix, _minmax_mixin):
         if shape[-1] != new_shape[-1]: # broadcasting the n-th (col) dimension
             repeat_count = new_shape[-1]
             cum_repeat *= repeat_count
-            new_data = np.tile(new_data, repeat_count)
-            new_dim = np.repeat(np.arange(0, repeat_count, dtype=idx_dtype), self.nnz)
+            new_data = mx.tile(new_data, repeat_count)
+            new_dim = mx.repeat(mx.arange(0, repeat_count, dtype=idx_dtype), self.nnz)
             new_coords = (new_dim,)
 
         for i in range(-2, -(len(shape)+1), -1):
@@ -1404,15 +1404,15 @@ class _coo_base(_data_matrix, _minmax_mixin):
                 nnz = len(new_data) # Number of non-zero elements so far
 
                 # Tile data and coordinates to match the new repeat count
-                new_data = np.tile(new_data, repeat_count)
-                new_coords = tuple(np.tile(new_coords[i+1:], repeat_count))
+                new_data = mx.tile(new_data, repeat_count)
+                new_coords = tuple(mx.tile(new_coords[i+1:], repeat_count))
 
                 # Create new dimensions and stack them
-                new_dim = np.repeat(np.arange(0, repeat_count, dtype=idx_dtype), nnz)
+                new_dim = mx.repeat(mx.arange(0, repeat_count, dtype=idx_dtype), nnz)
                 new_coords = (new_dim,) + new_coords
             else:
                 # If no broadcasting needed, tile the coordinates
-                new_dim = np.tile(coords[i], cum_repeat)
+                new_dim = mx.tile(coords[i], cum_repeat)
                 new_coords = (new_dim,) + new_coords
 
         return coo_array((new_data, new_coords), new_shape)
@@ -1420,7 +1420,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
     def _sum_nd(self, axis, res_dtype, out):
         # axis and out are preprocessed. out.shape is new_shape
         A2d, new_shape = _convert_to_2d(self, axis)
-        ones = np.ones((A2d.shape[1], 1), dtype=res_dtype)
+        ones = mx.ones((A2d.shape[1], 1), dtype=res_dtype)
         # sets dtype while loading into out
         out[...] = (A2d @ ones).reshape(new_shape)
         return out
@@ -1428,7 +1428,7 @@ class _coo_base(_data_matrix, _minmax_mixin):
     def _min_or_max_axis_nd(self, axis, min_or_max, explicit):
         A2d, new_shape = _convert_to_2d(self, axis)
         res = A2d._min_or_max_axis(1, min_or_max, explicit)
-        unraveled_coords = np.unravel_index(res.coords[0], new_shape)
+        unraveled_coords = mx.unravel_index(res.coords[0], new_shape)
 
         return coo_array((res.data, unraveled_coords), new_shape)
 
@@ -1471,7 +1471,7 @@ def _extract_block_diag(self, shape):
     row, col = self.row, self.col
 
     # Initialize new coordinates array
-    new_coords = np.empty((len(shape), self.nnz), dtype=int)
+    new_coords = mx.empty((len(shape), self.nnz), dtype=int)
 
     # Calculate within-block indices
     new_coords[-2] = row % n_row
@@ -1504,7 +1504,7 @@ def _get_sparse_data_and_coords(x, new_shape, dtype):
     if len_diff > 0:
         # prepend ones to shape of x to match ndim
         x_shape = [1] * len_diff + list(x_shape)
-        coord_zeros = np.zeroslike(x_coords[0])
+        coord_zeros = mx.zeroslike(x_coords[0])
         x_coords = tuple([coord_zeros] * len_diff + x_coords)
     # taking away axes (squeezing) is not part of broadcasting, but long
     # spmatrix history of using 2d vectors in 1d space, so we manually
@@ -1527,22 +1527,22 @@ def _get_sparse_data_and_coords(x, new_shape, dtype):
         if nx != 1:
             raise ValueError("shape mismatch in assignment")
         x_nnz = len(x_coords[0])
-        x_coords[i] = np.repeat(np.arange(nn), x_nnz)
+        x_coords[i] = mx.repeat(mx.arange(nn), x_nnz)
         for j, co in enumerate(x_coords):
             if j == i:
                 continue
-            x_coords[j] = np.tile(co, nn)
+            x_coords[j] = mx.tile(co, nn)
         tot_expand *= nn
-    x_data = np.tile(x_data.ravel(), tot_expand)
+    x_data = mx.tile(x_data.ravel(), tot_expand)
     return x_data, x_coords
 
 
 def _get_dense_data_and_coords(x, new_shape):
     if x.shape != new_shape:
-        x = np.broadcast_to(x.squeeze(), new_shape)
+        x = mx.broadcast_to(x.squeeze(), new_shape)
     # shift scalar input to 1d so has coords
     if new_shape == ():
-        x_coords = tuple([np.array([0])] * len(new_shape))
+        x_coords = tuple([mx.array([0])] * len(new_shape))
         x_data = x.ravel()
     else:
         x_coords = x.nonzero()
@@ -1596,7 +1596,7 @@ def _convert_to_2d(coo, axis):
 
 
 def _ravel_coords(coords, shape, order='C'):
-    """Like np.ravel_multi_index, but avoids some overflow issues."""
+    """Like mx.ravel_multi_index, but avoids some overflow issues."""
     if len(coords) == 1:
         return coords[0]
     # Handle overflow as in https://github.com/scipy/scipy/pull/9132
@@ -1606,14 +1606,14 @@ def _ravel_coords(coords, shape, order='C'):
         if order == 'C':
             maxval = (ncols * max(0, nrows - 1) + max(0, ncols - 1))
             idx_dtype = get_index_dtype(maxval=maxval)
-            return np.multiply(ncols, row, dtype=idx_dtype) + col
+            return mx.multiply(ncols, row, dtype=idx_dtype) + col
         elif order == 'F':
             maxval = (nrows * max(0, ncols - 1) + max(0, nrows - 1))
             idx_dtype = get_index_dtype(maxval=maxval)
-            return np.multiply(nrows, col, dtype=idx_dtype) + row
+            return mx.multiply(nrows, col, dtype=idx_dtype) + row
         else:
             raise ValueError("'order' must be 'C' or 'F'")
-    return np.ravel_multi_index(coords, shape, order=order)
+    return mx.ravel_multi_index(coords, shape, order=order)
 
 
 def isspmatrix_coo(x):
@@ -1651,7 +1651,7 @@ class coo_array(_coo_base, sparray):
 
     This can be instantiated in several ways:
         coo_array(D)
-            where D is an ndarray
+            where D is an array
 
         coo_array(S)
             with another sparse array or matrix S (equivalent to S.tocoo())
@@ -1720,17 +1720,17 @@ class coo_array(_coo_base, sparray):
     --------
 
     >>> # Constructing an empty sparse array
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import coo_array
-    >>> coo_array((3, 4), dtype=np.int8).toarray()
+    >>> coo_array((3, 4), dtype=mx.int8).toarray()
     array([[0, 0, 0, 0],
            [0, 0, 0, 0],
            [0, 0, 0, 0]], dtype=int8)
 
     >>> # Constructing a sparse array using ijv format
-    >>> row  = np.array([0, 3, 1, 0])
-    >>> col  = np.array([0, 3, 1, 2])
-    >>> data = np.array([4, 5, 7, 9])
+    >>> row  = mx.array([0, 3, 1, 0])
+    >>> col  = mx.array([0, 3, 1, 2])
+    >>> data = mx.array([4, 5, 7, 9])
     >>> coo_array((data, (row, col)), shape=(4, 4)).toarray()
     array([[4, 0, 9, 0],
            [0, 7, 0, 0],
@@ -1738,12 +1738,12 @@ class coo_array(_coo_base, sparray):
            [0, 0, 0, 5]])
 
     >>> # Constructing a sparse array with duplicate coordinates
-    >>> row  = np.array([0, 0, 1, 3, 1, 0, 0])
-    >>> col  = np.array([0, 2, 1, 3, 1, 0, 0])
-    >>> data = np.array([1, 1, 1, 1, 1, 1, 1])
+    >>> row  = mx.array([0, 0, 1, 3, 1, 0, 0])
+    >>> col  = mx.array([0, 2, 1, 3, 1, 0, 0])
+    >>> data = mx.array([1, 1, 1, 1, 1, 1, 1])
     >>> coo = coo_array((data, (row, col)), shape=(4, 4))
     >>> # Duplicate coordinates are maintained until implicitly or explicitly summed
-    >>> np.max(coo.data)
+    >>> mx.max(coo.data)
     1
     >>> coo.toarray()
     array([[3, 0, 1, 0],
@@ -1762,7 +1762,7 @@ class coo_matrix(spmatrix, _coo_base):
 
     This can be instantiated in several ways:
         coo_matrix(D)
-            where D is a 2-D ndarray
+            where D is a 2-D array
 
         coo_matrix(S)
             with another sparse array or matrix S (equivalent to S.tocoo())
@@ -1834,17 +1834,17 @@ class coo_matrix(spmatrix, _coo_base):
     --------
 
     >>> # Constructing an empty matrix
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import coo_matrix
-    >>> coo_matrix((3, 4), dtype=np.int8).toarray()
+    >>> coo_matrix((3, 4), dtype=mx.int8).toarray()
     array([[0, 0, 0, 0],
            [0, 0, 0, 0],
            [0, 0, 0, 0]], dtype=int8)
 
     >>> # Constructing a matrix using ijv format
-    >>> row  = np.array([0, 3, 1, 0])
-    >>> col  = np.array([0, 3, 1, 2])
-    >>> data = np.array([4, 5, 7, 9])
+    >>> row  = mx.array([0, 3, 1, 0])
+    >>> col  = mx.array([0, 3, 1, 2])
+    >>> data = mx.array([4, 5, 7, 9])
     >>> coo_matrix((data, (row, col)), shape=(4, 4)).toarray()
     array([[4, 0, 9, 0],
            [0, 7, 0, 0],
@@ -1852,12 +1852,12 @@ class coo_matrix(spmatrix, _coo_base):
            [0, 0, 0, 5]])
 
     >>> # Constructing a matrix with duplicate coordinates
-    >>> row  = np.array([0, 0, 1, 3, 1, 0, 0])
-    >>> col  = np.array([0, 2, 1, 3, 1, 0, 0])
-    >>> data = np.array([1, 1, 1, 1, 1, 1, 1])
+    >>> row  = mx.array([0, 0, 1, 3, 1, 0, 0])
+    >>> col  = mx.array([0, 2, 1, 3, 1, 0, 0])
+    >>> data = mx.array([1, 1, 1, 1, 1, 1, 1])
     >>> coo = coo_matrix((data, (row, col)), shape=(4, 4))
     >>> # Duplicate coordinates are maintained until implicitly or explicitly summed
-    >>> np.max(coo.data)
+    >>> mx.max(coo.data)
     1
     >>> coo.toarray()
     array([[3, 0, 1, 0],

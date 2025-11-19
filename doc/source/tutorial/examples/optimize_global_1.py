@@ -1,18 +1,18 @@
-import numpy as np
+import mlx.core as mx
 import matplotlib.pyplot as plt
 from scipy import optimize
 
 
 def eggholder(x):
-    return (-(x[1] + 47) * np.sin(np.sqrt(abs(x[0]/2 + (x[1]  + 47))))
-            -x[0] * np.sin(np.sqrt(abs(x[0] - (x[1]  + 47)))))
+    return (-(x[1] + 47) * mx.sin(mx.sqrt(abs(x[0]/2 + (x[1]  + 47))))
+            -x[0] * mx.sin(mx.sqrt(abs(x[0] - (x[1]  + 47)))))
 
 bounds = [(-512, 512), (-512, 512)]
 
-x = np.arange(-512, 513)
-y = np.arange(-512, 513)
-xgrid, ygrid = np.meshgrid(x, y)
-xy = np.stack([xgrid, ygrid])
+x = mx.arange(-512, 513)
+y = mx.arange(-512, 513)
+xgrid, ygrid = mx.meshgrid(x, y)
+xy = mx.stack([xgrid, ygrid])
 
 results = dict()
 results['shgo'] = optimize.shgo(eggholder, bounds)

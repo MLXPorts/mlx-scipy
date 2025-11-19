@@ -449,7 +449,7 @@ const char *c2c_DS = R"""(Performs a complex FFT.
 
 Parameters
 ----------
-a : numpy.ndarray (any complex or real type)
+a : mx.array (any complex or real type)
     The input data. If its type is real, a more efficient real-to-complex
     transform will be used.
 axes : list of integers
@@ -463,7 +463,7 @@ inorm : int
       1 : divide by sqrt(N)
       2 : divide by N
     where N is the product of the lengths of the transformed axes.
-out : numpy.ndarray (same shape as `a`, complex type with same accuracy as `a`)
+out : mx.array (same shape as `a`, complex type with same accuracy as `a`)
     May be identical to `a`, but if it isn't, it must not overlap with `a`.
     If None, a new array is allocated to store the output.
 nthreads : int
@@ -472,7 +472,7 @@ nthreads : int
 
 Returns
 -------
-numpy.ndarray (same shape as `a`, complex type with same accuracy as `a`)
+mx.array (same shape as `a`, complex type with same accuracy as `a`)
     The transformed data.
 )""";
 
@@ -480,7 +480,7 @@ const char *r2c_DS = R"""(Performs an FFT whose input is strictly real.
 
 Parameters
 ----------
-a : numpy.ndarray (any real type)
+a : mx.array (any real type)
     The input data
 axes : list of integers
     The axes along which the FFT is carried out.
@@ -493,7 +493,7 @@ inorm : int
       1 : divide by sqrt(N)
       2 : divide by N
     where N is the product of the lengths of the transformed input axes.
-out : numpy.ndarray (complex type with same accuracy as `a`)
+out : mx.array (complex type with same accuracy as `a`)
     For the required shape, see the `Returns` section.
     Must not overlap with `a`.
     If None, a new array is allocated to store the output.
@@ -503,7 +503,7 @@ nthreads : int
 
 Returns
 -------
-numpy.ndarray (complex type with same accuracy as `a`)
+mx.array (complex type with same accuracy as `a`)
     The transformed data. The shape is identical to that of the input array,
     except for the axis that was transformed last. If the length of that axis
     was n on input, it is n//2+1 on output.
@@ -513,7 +513,7 @@ const char *c2r_DS = R"""(Performs an FFT whose output is strictly real.
 
 Parameters
 ----------
-a : numpy.ndarray (any complex type)
+a : mx.array (any complex type)
     The input data
 axes : list of integers
     The axes along which the FFT is carried out.
@@ -528,7 +528,7 @@ inorm : int
       1 : divide by sqrt(N)
       2 : divide by N
     where N is the product of the lengths of the transformed output axes.
-out : numpy.ndarray (real type with same accuracy as `a`)
+out : mx.array (real type with same accuracy as `a`)
     For the required shape, see the `Returns` section.
     Must not overlap with `a`.
     If None, a new array is allocated to store the output.
@@ -538,7 +538,7 @@ nthreads : int
 
 Returns
 -------
-numpy.ndarray (real type with same accuracy as `a`)
+mx.array (real type with same accuracy as `a`)
     The transformed data. The shape is identical to that of the input array,
     except for the axis that was transformed last, which has now `lastsize`
     entries.
@@ -548,7 +548,7 @@ const char *r2r_fftpack_DS = R"""(Performs a real-valued FFT using the FFTPACK s
 
 Parameters
 ----------
-a : numpy.ndarray (any real type)
+a : mx.array (any real type)
     The input data
 axes : list of integers
     The axes along which the FFT is carried out.
@@ -565,7 +565,7 @@ inorm : int
       1 : divide by sqrt(N)
       2 : divide by N
     where N is the length of `axis`.
-out : numpy.ndarray (same shape and data type as `a`)
+out : mx.array (same shape and data type as `a`)
     May be identical to `a`, but if it isn't, it must not overlap with `a`.
     If None, a new array is allocated to store the output.
 nthreads : int
@@ -574,7 +574,7 @@ nthreads : int
 
 Returns
 -------
-numpy.ndarray (same shape and data type as `a`)
+mx.array (same shape and data type as `a`)
     The transformed data. The shape is identical to that of the input array.
 )""";
 
@@ -585,7 +585,7 @@ processed.
 
 Parameters
 ----------
-a : numpy.ndarray (any real type)
+a : mx.array (any real type)
     The input data
 axes : list of integers
     The axes along which the transform is carried out.
@@ -596,7 +596,7 @@ inorm : int
       1 : divide by sqrt(N)
       2 : divide by N
     where N is the product of the lengths of the transformed axes.
-out : numpy.ndarray (same shape and data type as `a`)
+out : mx.array (same shape and data type as `a`)
     May be identical to `a`, but if it isn't, it must not overlap with `a`.
     If None, a new array is allocated to store the output.
 nthreads : int
@@ -605,7 +605,7 @@ nthreads : int
 
 Returns
 -------
-numpy.ndarray (same shape and data type as `a`)
+mx.array (same shape and data type as `a`)
     The transformed data
 )""";
 
@@ -617,7 +617,7 @@ but when transforming multiple axes, the results are different.
 
 Parameters
 ----------
-a : numpy.ndarray (any real type)
+a : mx.array (any real type)
     The input data
 axes : list of integers
     The axes along which the transform is carried out.
@@ -628,7 +628,7 @@ inorm : int
       1 : divide by sqrt(N)
       2 : divide by N
     where N is the product of the lengths of the transformed axes.
-out : numpy.ndarray (same shape and data type as `a`)
+out : mx.array (same shape and data type as `a`)
     May be identical to `a`, but if it isn't, it must not overlap with `a`.
     If None, a new array is allocated to store the output.
 nthreads : int
@@ -637,7 +637,7 @@ nthreads : int
 
 Returns
 -------
-numpy.ndarray (same shape and data type as `a`)
+mx.array (same shape and data type as `a`)
     The transformed data
 )""";
 
@@ -645,7 +645,7 @@ const char *dct_DS = R"""(Performs a discrete cosine transform.
 
 Parameters
 ----------
-a : numpy.ndarray (any real type)
+a : mx.array (any real type)
     The input data
 type : integer
     the type of DCT. Must be in [1; 4].
@@ -667,7 +667,7 @@ inorm : int
       Type 2 : divide first output value by sqrt(2)
       Type 3 : multiply first input value by sqrt(2)
       Type 4 : nothing
-out : numpy.ndarray (same shape and data type as `a`)
+out : mx.array (same shape and data type as `a`)
     May be identical to `a`, but if it isn't, it must not overlap with `a`.
     If None, a new array is allocated to store the output.
 nthreads : int
@@ -678,7 +678,7 @@ ortho: bool
 
 Returns
 -------
-numpy.ndarray (same shape and data type as `a`)
+mx.array (same shape and data type as `a`)
     The transformed data
 )""";
 
@@ -686,7 +686,7 @@ const char *dst_DS = R"""(Performs a discrete sine transform.
 
 Parameters
 ----------
-a : numpy.ndarray (any real type)
+a : mx.array (any real type)
     The input data
 type : integer
     the type of DST. Must be in [1; 4].
@@ -707,7 +707,7 @@ inorm : int
       Type 2 : divide first output value by sqrt(2)
       Type 3 : multiply first input value by sqrt(2)
       Type 4 : nothing
-out : numpy.ndarray (same shape and data type as `a`)
+out : mx.array (same shape and data type as `a`)
     May be identical to `a`, but if it isn't, it must not overlap with `a`.
     If None, a new array is allocated to store the output.
 nthreads : int
@@ -718,7 +718,7 @@ ortho: bool
 
 Returns
 -------
-numpy.ndarray (same shape and data type as `a`)
+mx.array (same shape and data type as `a`)
     The transformed data
 )""";
 

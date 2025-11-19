@@ -1,7 +1,7 @@
-cimport numpy as np
-import numpy as np
+cimport mlx.core as mx
+import mlx.core as mx
 
-np.import_array()
+mx.import_array()
 
 from cpython.pycapsule cimport PyCapsule_GetPointer, PyCapsule_IsValid
 from libc.stdint cimport uint32_t, uint64_t, int64_t
@@ -24,9 +24,9 @@ cdef extern from "./_rcont.h":
 
 
 cdef bitgen_t* get_bitgen(random_state):
-    if isinstance(random_state, np.random.RandomState):
+    if isinstance(random_state, mx.random.RandomState):
         bg = random_state._bit_generator
-    elif isinstance(random_state, np.random.Generator):
+    elif isinstance(random_state, mx.random.Generator):
         bg = random_state.bit_generator
     else:
         raise ValueError('random_state is not RandomState or Generator')
@@ -49,12 +49,12 @@ def rvs_rcont1(const tab_t[::1] row, const tab_t[::1] col, tab_t ntot,
         int nr = row.shape[0]
         int nc = col.shape[0]
 
-    cdef np.ndarray[tab_t, ndim=3, mode="c"] result = np.zeros(
-        (size, nr, nc), dtype=np.int64
+    cdef mx.array[tab_t, ndim=3, mode="c"] result = mx.zeros(
+        (size, nr, nc), dtype=mx.int64
     )
 
-    cdef np.ndarray[tab_t, ndim=1, mode="c"] work = np.empty(
-        ntot, dtype=np.int64
+    cdef mx.array[tab_t, ndim=1, mode="c"] work = mx.empty(
+        ntot, dtype=mx.int64
     )
 
     if nc == 0 or nr == 0 or ntot == 0:
@@ -76,8 +76,8 @@ def rvs_rcont2(const tab_t[::1] row, const tab_t[::1] col, tab_t ntot,
         int nr = row.shape[0]
         int nc = col.shape[0]
 
-    cdef np.ndarray[tab_t, ndim=3, mode="c"] result = np.zeros(
-        (size, nr, nc), dtype=np.int64
+    cdef mx.array[tab_t, ndim=3, mode="c"] result = mx.zeros(
+        (size, nr, nc), dtype=mx.int64
     )
 
     if nc == 0 or nr == 0 or ntot == 0:

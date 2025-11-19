@@ -19,7 +19,7 @@ from .infos import FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, \
     SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_F, NAN_INF_X, NAN_INF_MODEL, DAMAGING_ROUNDING, \
     NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT, CALLBACK_TERMINATE
 from .present import present
-import numpy as np
+import mlx.core as mx
 
 spaces = '   '
 
@@ -81,7 +81,7 @@ def retmsg(solver, info, iprint, nf, f, x, cstrv=None, constr=None):
 
     # Decide whether the problem is truly constrained.
     if present(constr):
-        is_constrained = (np.size(constr) > 0)
+        is_constrained = (mx.size(constr) > 0)
     else:
         is_constrained = present(cstrv)
 
@@ -89,14 +89,14 @@ def retmsg(solver, info, iprint, nf, f, x, cstrv=None, constr=None):
     if present(cstrv):
         cstrv_loc = cstrv
     elif present(constr):
-        cstrv_loc = np.max(np.append(0, -constr))  # N.B.: We assume that the constraint is CONSTR >= 0.
+        cstrv_loc = mx.max(mx.append(0, -constr))  # N.B.: We assume that the constraint is CONSTR >= 0.
     else:
         cstrv_loc = 0
 
     # Decide the return message.
     ret_message = get_info_string(solver, info)
 
-    if np.size(x) <= 2:
+    if mx.size(x) <= 2:
         x_message = f'\nThe corresponding X is: {x}'  # Printed in one line
     else:
         x_message = f'\nThe corresponding X is:\n{x}'
@@ -108,7 +108,7 @@ def retmsg(solver, info, iprint, nf, f, x, cstrv=None, constr=None):
         nf_message = f'\nNumber of function values = {nf}{spaces}Least value of F = {f}'
 
     if is_constrained and present(constr):
-        if np.size(constr) <= 2:
+        if mx.size(constr) <= 2:
             constr_message = f'\nThe constraint value is: {constr}'  # Printed in one line
         else:
             constr_message = f'\nThe constraint value is:\n{constr}'
@@ -144,7 +144,7 @@ def rhomsg(solver, iprint, nf, delta, f, rho, x, cstrv=None, constr=None, cpen=N
 
     # Decide whether the problem is truly constrained.
     if present(constr):
-        is_constrained = (np.size(constr) > 0)
+        is_constrained = (mx.size(constr) > 0)
     else:
         is_constrained = present(cstrv)
 
@@ -152,7 +152,7 @@ def rhomsg(solver, iprint, nf, delta, f, rho, x, cstrv=None, constr=None, cpen=N
     if present(cstrv):
         cstrv_loc = cstrv
     elif present(constr):
-        cstrv_loc = np.max(np.append(0, -constr))  # N.B.: We assume that the constraint is CONSTR >= 0.
+        cstrv_loc = mx.max(mx.append(0, -constr))  # N.B.: We assume that the constraint is CONSTR >= 0.
     else:
         cstrv_loc = 0
 
@@ -162,7 +162,7 @@ def rhomsg(solver, iprint, nf, delta, f, rho, x, cstrv=None, constr=None, cpen=N
     else:
         rho_message = f'\nNew RHO = {rho}{spaces}Delta = {delta}'
 
-    if np.size(x) <= 2:
+    if mx.size(x) <= 2:
         x_message = f'\nThe corresponding X is: {x}'  # Printed in one line
     else:
         x_message = f'\nThe corresponding X is:\n{x}'
@@ -174,7 +174,7 @@ def rhomsg(solver, iprint, nf, delta, f, rho, x, cstrv=None, constr=None, cpen=N
         nf_message = f'\nNumber of function values = {nf}{spaces}Least value of F = {f}'
 
     if is_constrained and present(constr):
-        if np.size(constr) <= 2:
+        if mx.size(constr) <= 2:
             constr_message = f'\nThe constraint value is: {constr}'  # Printed in one line
         else:
             constr_message = f'\nThe constraint value is:\n{constr}'
@@ -245,7 +245,7 @@ def fmsg(solver, state, iprint, nf, delta, f, x, cstrv=None, constr=None):
 
     # Decide whether the problem is truly constrained.
     if present(constr):
-        is_constrained = (np.size(constr) > 0)
+        is_constrained = (mx.size(constr) > 0)
     else:
         is_constrained = present(cstrv)
 
@@ -253,7 +253,7 @@ def fmsg(solver, state, iprint, nf, delta, f, x, cstrv=None, constr=None):
     if present(cstrv):
         cstrv_loc = cstrv
     elif present(constr):
-        cstrv_loc = np.max(np.append(0, -constr))  # N.B.: We assume that the constraint is CONSTR >= 0.
+        cstrv_loc = mx.max(mx.append(0, -constr))  # N.B.: We assume that the constraint is CONSTR >= 0.
     else:
         cstrv_loc = 0
 
@@ -265,13 +265,13 @@ def fmsg(solver, state, iprint, nf, delta, f, x, cstrv=None, constr=None):
     else:
         nf_message = f'\nNumber of function values = {nf}{spaces}Least value of F = {f}'
 
-    if np.size(x) <= 2:
+    if mx.size(x) <= 2:
         x_message = f'\nThe corresponding X is: {x}'  # Printed in one line
     else:
         x_message = f'\nThe corresponding X is:\n{x}'
 
     if is_constrained and present(constr):
-        if np.size(constr) <= 2:
+        if mx.size(constr) <= 2:
             constr_message = f'\nThe constraint value is: {constr}'  # Printed in one line
         else:
             constr_message = f'\nThe constraint value is:\n{constr}'

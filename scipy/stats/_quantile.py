@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy.special import betainc
 from scipy._lib._array_api import (
     xp_capabilities,
@@ -31,7 +31,7 @@ def _quantile_iv(x, p, method, axis, nan_policy, keepdims):
         x = xp_ravel(x)
         p = xp_ravel(p)
         axis = 0
-    elif np.iterable(axis) or int(axis) != axis:
+    elif mx.iterable(axis) or int(axis) != axis:
         message = "`axis` must be an integer or None."
         raise ValueError(message)
     elif (axis >= ndim) or (axis < -ndim):
@@ -171,7 +171,7 @@ def quantile(x, p, *, method='linear', axis=0, nan_policy='propagate', keepdims=
 
     Returns
     -------
-    quantile : scalar or ndarray
+    quantile : scalar or array
         The resulting quantile(s). The dtype is the result dtype of `x` and `p`.
 
     Notes
@@ -241,9 +241,9 @@ def quantile(x, p, *, method='linear', axis=0, nan_policy='propagate', keepdims=
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
-    >>> x = np.asarray([[10, 8, 7, 5, 4],
+    >>> x = mx.array([[10, 8, 7, 5, 4],
     ...                 [0, 1, 2, 3, 5]])
 
     Take the median along the last axis.

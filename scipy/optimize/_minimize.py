@@ -13,7 +13,7 @@ __all__ = ['minimize', 'minimize_scalar']
 import inspect
 from warnings import warn
 
-import numpy as np
+import mlx.core as mx
 
 # unconstrained minimization
 from ._optimize import (_minimize_neldermead, _minimize_powell, _minimize_cg,
@@ -73,7 +73,7 @@ def minimize(fun, x0, args=(), method=None, jac=None, hess=None,
         only ``x``; e.g., pass ``fun=lambda x: f0(x, *my_args, **my_kwargs)`` as the
         callable, where ``my_args`` (tuple) and ``my_kwargs`` (dict) have been
         gathered before invoking this function.
-    x0 : ndarray, shape (n,)
+    x0 : array, shape (n,)
         Initial guess. Array of real elements of size (n,),
         where ``n`` is the number of independent variables.
     args : tuple, optional
@@ -130,7 +130,7 @@ def minimize(fun, x0, args=(), method=None, jac=None, hess=None,
 
             hess(x, *args) -> {LinearOperator, spmatrix, array}, (n, n)
 
-        where ``x`` is a (n,) ndarray and ``args`` is a tuple with the fixed
+        where ``x`` is a (n,) array and ``args`` is a tuple with the fixed
         parameters.
         The keywords {'2-point', '3-point', 'cs'} can also be used to select
         a finite difference scheme for numerical estimation of the hessian.
@@ -150,9 +150,9 @@ def minimize(fun, x0, args=(), method=None, jac=None, hess=None,
         provided, then `hessp` will be ignored. `hessp` must compute the
         Hessian times an arbitrary vector::
 
-            hessp(x, p, *args) ->  ndarray shape (n,)
+            hessp(x, p, *args) ->  array shape (n,)
 
-        where ``x`` is a (n,) ndarray, ``p`` is an arbitrary vector with
+        where ``x`` is a (n,) array, ``p`` is an arbitrary vector with
         dimension (n,) and ``args`` is a tuple with the fixed
         parameters.
     bounds : sequence or `Bounds`, optional
@@ -559,7 +559,7 @@ def minimize(fun, x0, args=(), method=None, jac=None, hess=None,
     function at solution:
 
     >>> cons[0]['fun'](res.x)
-    np.float64(1.4901224698604665e-09)
+    mx.float64(1.4901224698604665e-09)
 
     Also, notice that at optimality there is a non-zero multiplier:
 
@@ -577,21 +577,21 @@ def minimize(fun, x0, args=(), method=None, jac=None, hess=None,
     approximately ``eps * res.multipliers[0]``:
 
     >>> eps * res.multipliers[0]  # Expected change in f0
-    np.float64(0.008000000027153205)
+    mx.float64(0.008000000027153205)
     >>> f0 = res.fun  # Keep track of the previous optimal value
     >>> res = minimize(fun, (2, 0), method='SLSQP', bounds=bnds, constraints=cons)
     >>> f1 = res.fun  # New optimal value
     >>> f1 - f0
-    np.float64(0.008019998807885509)
+    mx.float64(0.008019998807885509)
 
     """
-    x0 = np.atleast_1d(np.asarray(x0))
+    x0 = mx.atleast_1d(mx.array(x0))
 
     if x0.ndim != 1:
         raise ValueError("'x0' must only have one dimension.")
 
-    if x0.dtype.kind in np.typecodes["AllInteger"]:
-        x0 = np.asarray(x0, dtype=float)
+    if x0.dtype.kind in mx.typecodes["AllInteger"]:
+        x0 = mx.array(x0, dtype=float)
 
     if not isinstance(args, tuple):
         args = (args,)
@@ -631,7 +631,7 @@ def minimize(fun, x0, args=(), method=None, jac=None, hess=None,
              RuntimeWarning, stacklevel=2)
     # - constraints or bounds
     if (meth not in ('cobyla', 'cobyqa', 'slsqp', 'trust-constr', '_custom') and
-            np.any(constraints)):
+            mx.any(constraints)):
         warn(f'Method {method} cannot handle constraints.',
              RuntimeWarning, stacklevel=2)
     if meth not in (
@@ -715,7 +715,7 @@ def minimize(fun, x0, args=(), method=None, jac=None, hess=None,
             # determine whether any variables are fixed
             i_fixed = (bounds.lb == bounds.ub)
 
-            if np.all(i_fixed):
+            if mx.all(i_fixed):
                 # all the parameters are fixed, a minimizer is not able to do
                 # anything
                 return _optimize_result_for_equal_bounds(
@@ -816,7 +816,7 @@ def minimize(fun, x0, args=(), method=None, jac=None, hess=None,
 
     if remove_vars:
         res.x = _add_to_array(res.x, i_fixed, x_fixed)
-        res.jac = _add_to_array(res.jac, i_fixed, np.nan)
+        res.jac = _add_to_array(res.jac, i_fixed, mx.nan)
         if "hess_inv" in res:
             res.hess_inv = None  # unknown
 
@@ -1034,8 +1034,8 @@ def minimize_scalar(fun, bracket=None, bounds=None, args=(),
     # gh-16196 reported inconsistencies in the output shape of `res.x`. While
     # fixing this, future-proof it for when the function is vectorized:
     # the shape of `res.x` should match that of `res.fun`.
-    res.fun = np.asarray(res.fun)[()]
-    res.x = np.reshape(res.x, res.fun.shape)[()]
+    res.fun = mx.array(res.fun)[()]
+    res.x = mx.reshape(res.x, res.fun.shape)[()]
     return res
 
 
@@ -1055,7 +1055,7 @@ class _Patch_Callback_Equal_Variables:
 
     def __call__(self, intermediate_result):
         x_in = intermediate_result.x
-        x_out = np.zeros_like(self.i_fixed, dtype=x_in.dtype)
+        x_out = mx.zeros_like(self.i_fixed, dtype=x_in.dtype)
         x_out[self.i_fixed] = self.x_fixed
         x_out[~self.i_fixed] = x_in
         intermediate_result.x = x_out
@@ -1072,16 +1072,16 @@ class _Remove_From_Func:
         self.remove = remove
 
     def __call__(self, x_in, *args, **kwargs):
-        x_out = np.zeros_like(self.i_fixed, dtype=x_in.dtype)
+        x_out = mx.zeros_like(self.i_fixed, dtype=x_in.dtype)
         x_out[self.i_fixed] = self.x_fixed
         x_out[~self.i_fixed] = x_in
         y_out = self.fun_in(x_out, *args, **kwargs)
-        y_out = np.array(y_out)
+        y_out = mx.array(y_out)
 
         if self.min_dim == 1:
-            y_out = np.atleast_1d(y_out)
+            y_out = mx.atleast_1d(y_out)
         elif self.min_dim == 2:
-            y_out = np.atleast_2d(y_out)
+            y_out = mx.atleast_2d(y_out)
 
         if self.remove == 1:
             y_out = y_out[..., ~self.i_fixed]
@@ -1096,7 +1096,7 @@ def _add_to_array(x_in, i_fixed, x_fixed):
     i_free = ~i_fixed
     if x_in.ndim == 2:
         i_free = i_free[:, None] @ i_free[None, :]
-    x_out = np.zeros_like(i_free, dtype=x_in.dtype)
+    x_out = mx.zeros_like(i_free, dtype=x_in.dtype)
     x_out[~i_free] = x_fixed
     x_out[i_free] = x_in.ravel()
     return x_out
@@ -1106,13 +1106,13 @@ def _validate_bounds(bounds, x0, meth):
     """Check that bounds are valid."""
 
     msg = "An upper bound is less than the corresponding lower bound."
-    if np.any(bounds.ub < bounds.lb):
+    if mx.any(bounds.ub < bounds.lb):
         raise ValueError(msg)
 
     msg = "The number of bounds is not compatible with the length of `x0`."
     try:
-        bounds.lb = np.broadcast_to(bounds.lb, x0.shape)
-        bounds.ub = np.broadcast_to(bounds.ub, x0.shape)
+        bounds.lb = mx.broadcast_to(bounds.lb, x0.shape)
+        bounds.ub = mx.broadcast_to(bounds.ub, x0.shape)
     except Exception as e:
         raise ValueError(msg) from e
 
@@ -1186,8 +1186,8 @@ def _optimize_result_for_equal_bounds(
     for c in constraints:
         pc = PreparedConstraint(c, x0)
         violation = pc.violation(x0)
-        if np.sum(violation):
-            maxcv = max(maxcv, np.max(violation))
+        if mx.sum(violation):
+            maxcv = max(maxcv, mx.max(violation))
             success = False
             message = (f"All independent variables were fixed by bounds, but "
                        f"the independent variables do not satisfy the "

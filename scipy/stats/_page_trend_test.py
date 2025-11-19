@@ -3,7 +3,7 @@ from itertools import permutations
 import math
 import threading
 
-import numpy as np
+import mlx.core as mx
 
 from ._continuous_distns import norm
 from scipy._lib._array_api import xp_capabilities
@@ -127,7 +127,7 @@ def page_trend_test(data, ranked=False, predicted_ranks=None, method='auto'):
     4. "When experimental observations are recorded, rank them across each
        row", e.g. ``ranks = scipy.stats.rankdata(data, axis=1)``.
     5. "Add the ranks in each column", e.g.
-       ``colsums = np.sum(ranks, axis=0)``.
+       ``colsums = mx.sum(ranks, axis=0)``.
     6. "Multiply each sum of ranks by the predicted rank for that same
        column", e.g. ``products = predicted_ranks * colsums``.
     7. "Sum all such products", e.g. ``L = products.sum()``.
@@ -249,10 +249,10 @@ def page_trend_test(data, ranked=False, predicted_ranks=None, method='auto'):
     We add the ranks within each column, multiply the sums by the
     predicted ranks, and sum the products.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> m, n = ranks.shape
-    >>> predicted_ranks = np.arange(1, n+1)
-    >>> L = (predicted_ranks * np.sum(ranks, axis=0)).sum()
+    >>> predicted_ranks = mx.arange(1, n+1)
+    >>> L = (predicted_ranks * mx.sum(ranks, axis=0)).sum()
     >>> res.statistic == L
     True
 
@@ -263,7 +263,7 @@ def page_trend_test(data, ranked=False, predicted_ranks=None, method='auto'):
     >>> from scipy.stats import norm
     >>> E0 = (m*n*(n+1)**2)/4
     >>> V0 = (m*n**2*(n+1)*(n**2-1))/144
-    >>> Lambda = (L-E0)/np.sqrt(V0)
+    >>> Lambda = (L-E0)/mx.sqrt(V0)
     >>> p = norm.sf(Lambda)
     >>> p
     0.0012693433690751756
@@ -293,7 +293,7 @@ def page_trend_test(data, ranked=False, predicted_ranks=None, method='auto'):
     Suppose the raw data had been tabulated in an order different from the
     order of predicted means, say lecture, seminar, tutorial.
 
-    >>> table = np.asarray(table)[:, [1, 2, 0]]
+    >>> table = mx.array(table)[:, [1, 2, 0]]
 
     Since the arrangement of this table is not consistent with the assumed
     ordering, we can either rearrange the table or provide the
@@ -320,7 +320,7 @@ def page_trend_test(data, ranked=False, predicted_ranks=None, method='auto'):
     if method not in methods:
         raise ValueError(f"`method` must be in {set(methods)}")
 
-    ranks = np.asarray(data)
+    ranks = mx.array(data)
     if ranks.ndim != 2:  # TODO: relax this to accept 3d arrays?
         raise ValueError("`data` must be a 2d array.")
 
@@ -329,7 +329,7 @@ def page_trend_test(data, ranked=False, predicted_ranks=None, method='auto'):
         raise ValueError("Page's L is only appropriate for data with two "
                          "or more rows and three or more columns.")
 
-    if np.any(np.isnan(data)):
+    if mx.any(mx.isnan(data)):
         raise ValueError("`data` contains NaNs, which cannot be ranked "
                          "meaningfully")
 
@@ -345,9 +345,9 @@ def page_trend_test(data, ranked=False, predicted_ranks=None, method='auto'):
 
     # generate predicted ranks if not provided, ensure valid NumPy array
     if predicted_ranks is None:
-        predicted_ranks = np.arange(1, n+1)
+        predicted_ranks = mx.arange(1, n+1)
     else:
-        predicted_ranks = np.asarray(predicted_ranks)
+        predicted_ranks = mx.array(predicted_ranks)
         if (predicted_ranks.ndim < 1 or
                 (set(predicted_ranks) != set(range(1, n+1)) or
                  len(predicted_ranks) != n)):
@@ -400,7 +400,7 @@ def _l_p_asymptotic(L, m, n):
     # See [2] page 151
     E0 = (m*n*(n+1)**2)/4
     V0 = (m*n**2*(n+1)*(n**2-1))/144
-    Lambda = (L-E0)/np.sqrt(V0)
+    Lambda = (L-E0)/mx.sqrt(V0)
     # This is a one-sided "greater" test - calculate the probability that the
     # L statistic under H0 would be greater than the observed L statistic
     p = norm.sf(Lambda)
@@ -432,7 +432,7 @@ class _PageL:
     def sf(self, l, n):
         '''Survival function of Page's L statistic'''
         ps = [self.pmf(l, n) for l in range(l, n*self.b + 1)]
-        return np.sum(ps)
+        return mx.sum(ps)
 
     def p_l_k_1(self):
         '''Relative frequency of each L value over all possible single rows'''
@@ -440,11 +440,11 @@ class _PageL:
         # See [5] Equation (6)
         ranks = range(1, self.k+1)
         # generate all possible rows of length k
-        rank_perms = np.array(list(permutations(ranks)))
+        rank_perms = mx.array(list(permutations(ranks)))
         # compute Page's L for all possible rows
         Ls = (ranks*rank_perms).sum(axis=1)
         # count occurrences of each L value
-        counts = np.histogram(Ls, np.arange(self.a-0.5, self.b+1.5))[0]
+        counts = mx.histogram(Ls, mx.arange(self.a-0.5, self.b+1.5))[0]
         # factorial(k) is number of possible permutations
         return counts/math.factorial(self.k)
 

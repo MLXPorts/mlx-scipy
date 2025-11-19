@@ -1,7 +1,7 @@
 import warnings
 from . import _minpack
 
-import numpy as np
+import mlx.core as mx
 from numpy import (atleast_1d, triu, shape, transpose, zeros, prod, greater,
                    asarray, inf,
                    finfo, inexact, issubdtype, dtype)
@@ -57,7 +57,7 @@ def fsolve(func, x0, args=(), fprime=None, full_output=0,
     func : callable ``f(x, *args)``
         A function that takes at least one (possibly vector) argument,
         and returns a value of the same length.
-    x0 : ndarray
+    x0 : array
         The starting estimate for the roots of ``func(x) = 0``.
     args : tuple, optional
         Any extra arguments to `func`.
@@ -96,7 +96,7 @@ def fsolve(func, x0, args=(), fprime=None, full_output=0,
 
     Returns
     -------
-    x : ndarray
+    x : array
         The solution (or the result of the last iteration for
         an unsuccessful call).
     infodict : dict
@@ -138,15 +138,15 @@ def fsolve(func, x0, args=(), fprime=None, full_output=0,
     Find a solution to the system of equations:
     ``x0*cos(x1) = 4,  x1*x0 - x1 = 5``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import fsolve
     >>> def func(x):
-    ...     return [x[0] * np.cos(x[1]) - 4,
+    ...     return [x[0] * mx.cos(x[1]) - 4,
     ...             x[1] * x[0] - x[1] - 5]
     >>> root = fsolve(func, [1, 1])
     >>> root
     array([6.50409711, 0.90841421])
-    >>> np.isclose(func(root), [0.0, 0.0])  # func(root) should be almost 0.0.
+    >>> mx.isclose(func(root), [0.0, 0.0])  # func(root) should be almost 0.0.
     array([ True,  True])
 
     """
@@ -306,7 +306,7 @@ def leastsq(func, x0, args=(), Dfun=None, full_output=False,
         Should take at least one (possibly length ``N`` vector) argument and
         returns ``M`` floating point numbers. It must not return NaNs or
         fitting might fail. ``M`` must be greater than or equal to ``N``.
-    x0 : ndarray
+    x0 : array
         The starting estimate for the minimization.
     args : tuple, optional
         Any extra arguments to func are placed in this tuple.
@@ -343,10 +343,10 @@ def leastsq(func, x0, args=(), Dfun=None, full_output=False,
 
     Returns
     -------
-    x : ndarray
+    x : array
         The solution (or the result of the last iteration for an unsuccessful
         call).
-    cov_x : ndarray
+    cov_x : array
         The inverse of the Hessian. `fjac` and `ipvt` are used to construct an
         estimate of the Hessian. A value of None indicates a singular matrix,
         which means the curvature in parameters `x` is numerically flat. To
@@ -515,7 +515,7 @@ def _lightweight_memoizer(f):
         if _memoized_func.skip_lookup:
             return f(params)
 
-        if np.all(_memoized_func.last_params == params):
+        if mx.all(_memoized_func.last_params == params):
             return _memoized_func.last_val
         elif _memoized_func.last_params is not None:
             _memoized_func.skip_lookup = True
@@ -523,7 +523,7 @@ def _lightweight_memoizer(f):
         val = f(params)
 
         if _memoized_func.last_params is None:
-            _memoized_func.last_params = np.copy(params)
+            _memoized_func.last_params = mx.copy(params)
             _memoized_func.last_val = val
 
         return val
@@ -561,19 +561,19 @@ def _wrap_jac(jac, xdata, transform):
             return jac(xdata, *params)
     elif transform.ndim == 1:
         def jac_wrapped(params):
-            return transform[:, np.newaxis] * np.asarray(jac(xdata, *params))
+            return transform[:, mx.newaxis] * mx.array(jac(xdata, *params))
     else:
         def jac_wrapped(params):
             return solve_triangular(transform,
-                                    np.asarray(jac(xdata, *params)),
+                                    mx.array(jac(xdata, *params)),
                                     lower=True)
     return jac_wrapped
 
 
 def _initialize_feasible(lb, ub):
-    p0 = np.ones_like(lb)
-    lb_finite = np.isfinite(lb)
-    ub_finite = np.isfinite(ub)
+    p0 = mx.ones_like(lb)
+    lb_finite = mx.isfinite(lb)
+    ub_finite = mx.isfinite(ub)
 
     mask = lb_finite & ub_finite
     p0[mask] = 0.5 * (lb[mask] + ub[mask])
@@ -588,7 +588,7 @@ def _initialize_feasible(lb, ub):
 
 
 def curve_fit(f, xdata, ydata, p0=None, sigma=None, absolute_sigma=False,
-              check_finite=None, bounds=(-np.inf, np.inf), method=None,
+              check_finite=None, bounds=(-mx.inf, mx.inf), method=None,
               jac=None, *, full_output=False, nan_policy=None,
               **kwargs):
     """
@@ -657,7 +657,7 @@ def curve_fit(f, xdata, ydata, p0=None, sigma=None, absolute_sigma=False,
         - 2-tuple of array_like: Each element of the tuple must be either
           an array with the length equal to the number of parameters, or a
           scalar (in which case the bound is taken to be the same for all
-          parameters). Use ``np.inf`` with an appropriate sign to disable
+          parameters). Use ``mx.inf`` with an appropriate sign to disable
           bounds on all or some parameters.
 
     method : {'lm', 'trf', 'dogbox'}, optional
@@ -709,7 +709,7 @@ def curve_fit(f, xdata, ydata, p0=None, sigma=None, absolute_sigma=False,
         The estimated approximate covariance of popt. The diagonals provide
         the variance of the parameter estimate. To compute one standard
         deviation errors on the parameters, use
-        ``perr = np.sqrt(np.diag(pcov))``. Note that the relationship between
+        ``perr = mx.sqrt(mx.diag(pcov))``. Note that the relationship between
         `cov` and parameter error estimates is derived based on a linear
         approximation to the model function around the optimum [1]_.
         When this approximation becomes inaccurate, `cov` may not provide an
@@ -719,7 +719,7 @@ def curve_fit(f, xdata, ydata, p0=None, sigma=None, absolute_sigma=False,
         depends on `absolute_sigma` argument, as described above.
 
         If the Jacobian matrix at the solution doesn't have a full rank, then
-        'lm' method returns a matrix filled with ``np.inf``, on the other hand
+        'lm' method returns a matrix filled with ``mx.inf``, on the other hand
         'trf'  and 'dogbox' methods use Moore-Penrose pseudoinverse to compute
         the covariance matrix. Covariance matrices with large condition numbers
         (e.g. computed with `numpy.linalg.cond`) may indicate that results are
@@ -813,18 +813,18 @@ def curve_fit(f, xdata, ydata, p0=None, sigma=None, absolute_sigma=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.optimize import curve_fit
 
     >>> def func(x, a, b, c):
-    ...     return a * np.exp(-b * x) + c
+    ...     return a * mx.exp(-b * x) + c
 
     Define the data to be fit with some noise:
 
-    >>> xdata = np.linspace(0, 4, 50)
+    >>> xdata = mx.linspace(0, 4, 50)
     >>> y = func(xdata, 2.5, 1.3, 0.5)
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> y_noise = 0.2 * rng.normal(size=xdata.size)
     >>> ydata = y + y_noise
     >>> plt.plot(xdata, ydata, 'b-', label='data')
@@ -856,23 +856,23 @@ def curve_fit(f, xdata, ydata, p0=None, sigma=None, absolute_sigma=False,
     cases, poorer quality fits. As a quick check of whether the model may be
     overparameterized, calculate the condition number of the covariance matrix:
 
-    >>> np.linalg.cond(pcov)
+    >>> mx.linalg.cond(pcov)
     34.571092161547405  # may vary
 
     The value is small, so it does not raise much concern. If, however, we were
     to add a fourth parameter ``d`` to `func` with the same effect as ``a``:
 
     >>> def func2(x, a, b, c, d):
-    ...     return a * d * np.exp(-b * x) + c  # a and d are redundant
+    ...     return a * d * mx.exp(-b * x) + c  # a and d are redundant
     >>> popt, pcov = curve_fit(func2, xdata, ydata)
-    >>> np.linalg.cond(pcov)
+    >>> mx.linalg.cond(pcov)
     1.13250718925596e+32  # may vary
 
     Such a large value is cause for concern. The diagonal elements of the
     covariance matrix, which is related to uncertainty of the fit, gives more
     information:
 
-    >>> np.diag(pcov)
+    >>> mx.diag(pcov)
     array([1.48814742e+29, 3.78596560e-02, 5.39253738e-03, 2.76417220e+28])  # may vary
 
     Note that the first and last terms are much larger than the other elements,
@@ -907,7 +907,7 @@ def curve_fit(f, xdata, ydata, p0=None, sigma=None, absolute_sigma=False,
             raise ValueError("Unable to determine number of fit parameters.")
         n = len(args) - 1
     else:
-        p0 = np.atleast_1d(p0)
+        p0 = mx.atleast_1d(p0)
         n = p0.size
 
     if isinstance(bounds, Bounds):
@@ -917,7 +917,7 @@ def curve_fit(f, xdata, ydata, p0=None, sigma=None, absolute_sigma=False,
     if p0 is None:
         p0 = _initialize_feasible(lb, ub)
 
-    bounded_problem = np.any((lb > -np.inf) | (ub < np.inf))
+    bounded_problem = mx.any((lb > -mx.inf) | (ub < mx.inf))
     if method is None:
         if bounded_problem:
             method = 'trf'
@@ -933,17 +933,17 @@ def curve_fit(f, xdata, ydata, p0=None, sigma=None, absolute_sigma=False,
 
     # optimization may produce garbage for float32 inputs, cast them to float64
     if check_finite:
-        ydata = np.asarray_chkfinite(ydata, float)
+        ydata = mx.array_chkfinite(ydata, float)
     else:
-        ydata = np.asarray(ydata, float)
+        ydata = mx.array(ydata, float)
 
-    if isinstance(xdata, list | tuple | np.ndarray):
+    if isinstance(xdata, list | tuple | mx.array):
         # `xdata` is passed straight to the user-defined `f`, so allow
         # non-array_like `xdata`.
         if check_finite:
-            xdata = np.asarray_chkfinite(xdata, float)
+            xdata = mx.array_chkfinite(xdata, float)
         else:
-            xdata = np.asarray(xdata, float)
+            xdata = mx.array(xdata, float)
 
     if ydata.size == 0:
         raise ValueError("`ydata` must not be empty!")
@@ -964,16 +964,16 @@ def curve_fit(f, xdata, ydata, p0=None, sigma=None, absolute_sigma=False,
 
         if (x_contains_nan or y_contains_nan) and nan_policy == 'omit':
             # ignore NaNs for N dimensional arrays
-            has_nan = np.isnan(xdata)
+            has_nan = mx.isnan(xdata)
             has_nan = has_nan.any(axis=tuple(range(has_nan.ndim-1)))
-            has_nan |= np.isnan(ydata)
+            has_nan |= mx.isnan(ydata)
 
             xdata = xdata[..., ~has_nan]
             ydata = ydata[~has_nan]
 
             # Also omit the corresponding entries from sigma
             if sigma is not None:
-                sigma = np.asarray(sigma)
+                sigma = mx.array(sigma)
                 if sigma.ndim == 1:
                     sigma = sigma[~has_nan]
                 elif sigma.ndim == 2:
@@ -982,7 +982,7 @@ def curve_fit(f, xdata, ydata, p0=None, sigma=None, absolute_sigma=False,
 
     # Determine type of sigma
     if sigma is not None:
-        sigma = np.asarray(sigma)
+        sigma = mx.array(sigma)
 
         # if 1-D or a scalar, sigma are errors, define transform = 1/sigma
         if sigma.size == 1 or sigma.shape == (ydata.size,):
@@ -1021,7 +1021,7 @@ def curve_fit(f, xdata, ydata, p0=None, sigma=None, absolute_sigma=False,
         res = leastsq(func, p0, Dfun=jac, full_output=1, **kwargs)
         popt, pcov, infodict, errmsg, ier = res
         ysize = len(infodict['fvec'])
-        cost = np.sum(infodict['fvec'] ** 2)
+        cost = mx.sum(infodict['fvec'] ** 2)
         if ier not in [1, 2, 3, 4]:
             raise RuntimeError("Optimal parameters not found: " + errmsg)
     else:
@@ -1045,13 +1045,13 @@ def curve_fit(f, xdata, ydata, p0=None, sigma=None, absolute_sigma=False,
 
         # Do Moore-Penrose inverse discarding zero singular values.
         _, s, VT = svd(res.jac, full_matrices=False)
-        threshold = np.finfo(float).eps * max(res.jac.shape) * s[0]
+        threshold = mx.finfo(float).eps * max(res.jac.shape) * s[0]
         s = s[s > threshold]
         VT = VT[:s.size]
-        pcov = np.dot(VT.T / s**2, VT)
+        pcov = mx.dot(VT.T / s**2, VT)
 
     warn_cov = False
-    if pcov is None or np.isnan(pcov).any():
+    if pcov is None or mx.isnan(pcov).any():
         # indeterminate covariance
         pcov = zeros((len(popt), len(popt)), dtype=float)
         pcov.fill(inf)
@@ -1106,7 +1106,7 @@ def check_gradient(fcn, Dfcn, x0, args=(), col_deriv=0):
 
 
 def _del2(p0, p1, d):
-    return p0 - np.square(p1 - p0) / d
+    return p0 - mx.square(p1 - p0) / d
 
 
 def _relerr(actual, desired):
@@ -1124,7 +1124,7 @@ def _fixed_point_helper(func, x0, args, xtol, maxiter, use_accel):
         else:
             p = p1
         relerr = xpx.apply_where(p0 != 0, (p, p0), _relerr, fill_value=p)
-        if np.all(np.abs(relerr) < xtol):
+        if mx.all(mx.abs(relerr) < xtol):
             return p
         p0 = p
     msg = f"Failed to converge after {maxiter} iterations, value is {p}"
@@ -1163,12 +1163,12 @@ def fixed_point(func, x0, args=(), xtol=1e-8, maxiter=500, method='del2'):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import optimize
     >>> def func(x, c1, c2):
-    ...    return np.sqrt(c1/(x+c2))
-    >>> c1 = np.array([10,12.])
-    >>> c2 = np.array([3, 5.])
+    ...    return mx.sqrt(c1/(x+c2))
+    >>> c1 = mx.array([10,12.])
+    >>> c2 = mx.array([3, 5.])
     >>> optimize.fixed_point(func, [1.2, 1.3], args=(c1,c2))
     array([ 1.4920333 ,  1.37228132])
 

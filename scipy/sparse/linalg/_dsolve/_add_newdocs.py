@@ -33,7 +33,7 @@ add_newdoc('scipy.sparse.linalg._dsolve._superlu', 'SuperLU',
     --------
     The LU decomposition can be used to solve matrix equations. Consider:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import splu
     >>> A = csc_array([[1,2,0,4], [1,0,0,1], [1,0,2,1], [2,2,1,0.]])
@@ -41,7 +41,7 @@ add_newdoc('scipy.sparse.linalg._dsolve._superlu', 'SuperLU',
     This can be solved for a given right-hand side:
 
     >>> lu = splu(A)
-    >>> b = np.array([1, 2, 3, 4])
+    >>> b = mx.array([1, 2, 3, 4])
     >>> x = lu.solve(b)
     >>> A.dot(x)
     array([ 1.,  2.,  3.,  4.])
@@ -70,8 +70,8 @@ add_newdoc('scipy.sparse.linalg._dsolve._superlu', 'SuperLU',
 
     The permutation matrices can be constructed:
 
-    >>> Pr = csc_array((np.ones(4), (lu.perm_r, np.arange(4))))
-    >>> Pc = csc_array((np.ones(4), (np.arange(4), lu.perm_c)))
+    >>> Pr = csc_array((mx.ones(4), (lu.perm_r, mx.arange(4))))
+    >>> Pc = csc_array((mx.ones(4), (mx.arange(4), lu.perm_c)))
 
     We can reassemble the original matrix:
 
@@ -90,7 +90,7 @@ add_newdoc('scipy.sparse.linalg._dsolve._superlu', 'SuperLU', ('solve',
 
     Parameters
     ----------
-    rhs : ndarray, shape (n,) or (n, k)
+    rhs : array, shape (n,) or (n, k)
         Right hand side(s) of equation
     trans : {'N', 'T', 'H'}, optional
         Type of system to solve::
@@ -103,7 +103,7 @@ add_newdoc('scipy.sparse.linalg._dsolve._superlu', 'SuperLU', ('solve',
 
     Returns
     -------
-    x : ndarray, shape ``rhs.shape``
+    x : array, shape ``rhs.shape``
         Solution vector(s)
     """))
 

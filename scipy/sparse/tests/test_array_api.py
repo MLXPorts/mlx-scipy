@@ -1,5 +1,5 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 import numpy.testing as npt
 import scipy.sparse
 import scipy.sparse.linalg as spla
@@ -11,18 +11,18 @@ sparray_classes = [
     getattr(scipy.sparse, f'{T}_array') for T in sparray_types
 ]
 
-A = np.array([
+A = mx.array([
     [0, 1, 2, 0],
     [2, 0, 0, 3],
     [1, 4, 0, 0]
 ])
 
-B = np.array([
+B = mx.array([
     [0, 1],
     [2, 0]
 ])
 
-X = np.array([
+X = mx.array([
     [1, 0, 0, 1],
     [2, 1, 2, 0],
     [0, 2, 1, 0],
@@ -47,7 +47,7 @@ parametrize_eig_sparrays = pytest.mark.parametrize(
 
 @parametrize_sparrays
 def test_sum(A):
-    assert not isinstance(A.sum(axis=0), np.matrix), \
+    assert not isinstance(A.sum(axis=0), mx.matrix), \
         "Expected array, got matrix"
     assert A.sum(axis=0).shape == (4,)
     assert A.sum(axis=1).shape == (3,)
@@ -55,7 +55,7 @@ def test_sum(A):
 
 @parametrize_sparrays
 def test_mean(A):
-    assert not isinstance(A.mean(axis=1), np.matrix), \
+    assert not isinstance(A.mean(axis=1), mx.matrix), \
         "Expected array, got matrix"
 
 
@@ -63,22 +63,22 @@ def test_mean(A):
 def test_min_max(A):
     # Some formats don't support min/max operations, so we skip those here.
     if hasattr(A, 'min'):
-        assert not isinstance(A.min(axis=1), np.matrix), \
+        assert not isinstance(A.min(axis=1), mx.matrix), \
             "Expected array, got matrix"
     if hasattr(A, 'max'):
-        assert not isinstance(A.max(axis=1), np.matrix), \
+        assert not isinstance(A.max(axis=1), mx.matrix), \
             "Expected array, got matrix"
     if hasattr(A, 'argmin'):
-        assert not isinstance(A.argmin(axis=1), np.matrix), \
+        assert not isinstance(A.argmin(axis=1), mx.matrix), \
             "Expected array, got matrix"
     if hasattr(A, 'argmax'):
-        assert not isinstance(A.argmax(axis=1), np.matrix), \
+        assert not isinstance(A.argmax(axis=1), mx.matrix), \
             "Expected array, got matrix"
 
 
 @parametrize_sparrays
 def test_todense(A):
-    assert not isinstance(A.todense(), np.matrix), \
+    assert not isinstance(A.todense(), mx.matrix), \
         "Expected array, got matrix"
 
 
@@ -106,8 +106,8 @@ def test_indexing(A):
 
 @parametrize_sparrays
 def test_dense_addition(A):
-    X = np.random.random(A.shape)
-    assert not isinstance(A + X, np.matrix), "Expected array, got matrix"
+    X = mx.random.random(A.shape)
+    assert not isinstance(A + X, mx.matrix), "Expected array, got matrix"
 
 
 @parametrize_sparrays
@@ -117,7 +117,7 @@ def test_sparse_addition(A):
 
 @parametrize_sparrays
 def test_elementwise_mul(A):
-    assert np.all((A * A).todense() == A.power(2).todense())
+    assert mx.all((A * A).todense() == A.power(2).todense())
 
 
 @parametrize_sparrays
@@ -126,16 +126,16 @@ def test_elementwise_rmul(A):
         None * A
 
     with pytest.raises(ValueError):
-        np.eye(3) * scipy.sparse.csr_array(np.arange(6).reshape(2, 3))
+        mx.eye(3) * scipy.sparse.csr_array(mx.arange(6).reshape(2, 3))
 
-    assert np.all((2 * A) == (A.todense() * 2))
+    assert mx.all((2 * A) == (A.todense() * 2))
 
-    assert np.all((A.todense() * A) == (A.todense() ** 2))
+    assert mx.all((A.todense() * A) == (A.todense() ** 2))
 
 
 @parametrize_sparrays
 def test_matmul(A):
-    assert np.all((A @ A.T).todense() == A.dot(A.T).todense())
+    assert mx.all((A @ A.T).todense() == A.dot(A.T).todense())
 
 
 @parametrize_sparrays
@@ -152,7 +152,7 @@ def test_power_operator(A):
 
 @parametrize_sparrays
 def test_sparse_divide(A):
-    assert isinstance(A / A, np.ndarray)
+    assert isinstance(A / A, mx.array)
 
 @parametrize_sparrays
 def test_sparse_dense_divide(A):
@@ -198,7 +198,7 @@ def test_inv(B):
     C = spla.inv(B)
 
     assert isinstance(C, scipy.sparse.sparray)
-    npt.assert_allclose(C.todense(), np.linalg.inv(B.todense()))
+    npt.assert_allclose(C.todense(), mx.linalg.inv(B.todense()))
 
 
 @parametrize_square_sparrays
@@ -223,7 +223,7 @@ def test_expm_multiply(B):
         return
 
     npt.assert_allclose(
-        spla.expm_multiply(B, np.array([1, 2])),
+        spla.expm_multiply(B, mx.array([1, 2])),
         spla.expm(B) @ [1, 2]
     )
 
@@ -231,13 +231,13 @@ def test_expm_multiply(B):
 @parametrize_sparrays
 def test_norm(A):
     C = spla.norm(A)
-    npt.assert_allclose(C, np.linalg.norm(A.todense()))
+    npt.assert_allclose(C, mx.linalg.norm(A.todense()))
 
 
 @parametrize_square_sparrays
 def test_onenormest(B):
     C = spla.onenormest(B)
-    npt.assert_allclose(C, np.linalg.norm(B.todense(), 1))
+    npt.assert_allclose(C, mx.linalg.norm(B.todense(), 1))
 
 
 @parametrize_square_sparrays
@@ -247,7 +247,7 @@ def test_spsolve(B):
 
     npt.assert_allclose(
         spla.spsolve(B, [1, 2]),
-        np.linalg.solve(B.todense(), [1, 2])
+        mx.linalg.solve(B.todense(), [1, 2])
     )
 
 
@@ -273,8 +273,8 @@ def test_factorized(B):
 
     LU = spla.factorized(B)
     npt.assert_allclose(
-        LU(np.array([1, 2])),
-        np.linalg.solve(B.todense(), [1, 2])
+        LU(mx.array([1, 2])),
+        mx.linalg.solve(B.todense(), [1, 2])
     )
 
 
@@ -290,7 +290,7 @@ def test_solvers(B, solver):
     else:
         kwargs = {'atol': 1e-5}
 
-    x, info = getattr(spla, solver)(B, np.array([1, 2]), **kwargs)
+    x, info = getattr(spla, solver)(B, mx.array([1, 2]), **kwargs)
     assert info >= 0  # no errors, even if perhaps did not converge fully
     npt.assert_allclose(x, [1, 1], atol=1e-1)
 
@@ -327,9 +327,9 @@ def test_eigsh(X):
 @parametrize_eig_sparrays
 def test_svds(X):
     u, s, vh = spla.svds(X, k=3)
-    u2, s2, vh2 = np.linalg.svd(X.todense())
-    s = np.sort(s)
-    s2 = np.sort(s2[:3])
+    u2, s2, vh2 = mx.linalg.svd(X.todense())
+    s = mx.sort(s)
+    s2 = mx.sort(s2[:3])
     npt.assert_allclose(s, s2, atol=1e-3)
 
 
@@ -342,8 +342,8 @@ def test_splu():
     ])
     LU = spla.splu(X)
     npt.assert_allclose(
-        LU.solve(np.array([1, 2, 3, 4])),
-        np.asarray([1, 0, 0, 0], dtype=np.float64),
+        LU.solve(mx.array([1, 2, 3, 4])),
+        mx.array([1, 0, 0, 0], dtype=mx.float64),
         rtol=1e-14, atol=3e-16
     )
 
@@ -357,8 +357,8 @@ def test_spilu():
     ])
     LU = spla.spilu(X)
     npt.assert_allclose(
-        LU.solve(np.array([1, 2, 3, 4])),
-        np.asarray([1, 0, 0, 0], dtype=np.float64),
+        LU.solve(mx.array([1, 2, 3, 4])),
+        mx.array([1, 0, 0, 0], dtype=mx.float64),
         rtol=1e-14, atol=3e-16
     )
 
@@ -380,9 +380,9 @@ def test_spilu():
         ),
     ]
 )
-@pytest.mark.parametrize("expected_dtype", [np.int64, np.int32])
+@pytest.mark.parametrize("expected_dtype", [mx.int64, mx.int32])
 def test_index_dtype_compressed(cls, indices_attrs, expected_dtype):
-    input_array = scipy.sparse.coo_array(np.arange(9).reshape(3, 3))
+    input_array = scipy.sparse.coo_array(mx.arange(9).reshape(3, 3))
     coo_tuple = (
         input_array.data,
         (
@@ -438,21 +438,21 @@ def test_default_is_matrix_identity():
 
 def test_default_is_matrix_kron_dense():
     m = scipy.sparse.kron(
-        np.array([[1, 2], [3, 4]]), np.array([[4, 3], [2, 1]])
+        mx.array([[1, 2], [3, 4]]), mx.array([[4, 3], [2, 1]])
     )
     assert not isinstance(m, scipy.sparse.sparray)
 
 
 def test_default_is_matrix_kron_sparse():
     m = scipy.sparse.kron(
-        np.array([[1, 2], [3, 4]]), np.array([[1, 0], [0, 0]])
+        mx.array([[1, 2], [3, 4]]), mx.array([[1, 0], [0, 0]])
     )
     assert not isinstance(m, scipy.sparse.sparray)
 
 
 def test_default_is_matrix_kronsum():
     m = scipy.sparse.kronsum(
-        np.array([[1, 0], [0, 1]]), np.array([[0, 1], [1, 0]])
+        mx.array([[1, 0], [0, 1]]), mx.array([[0, 1], [1, 0]])
     )
     assert not isinstance(m, scipy.sparse.sparray)
 
@@ -471,7 +471,7 @@ def test_default_is_matrix_rand():
 def test_default_is_matrix_stacks(fn):
     """Same idea as `test_default_construction_fn_matrices`, but for the
     stacking creation functions."""
-    A = scipy.sparse.coo_matrix(np.eye(2))
+    A = scipy.sparse.coo_matrix(mx.eye(2))
     B = scipy.sparse.coo_matrix([[0, 1], [1, 0]])
     m = fn([A, B])
     assert not isinstance(m, scipy.sparse.sparray)
@@ -480,7 +480,7 @@ def test_default_is_matrix_stacks(fn):
 def test_blocks_default_construction_fn_matrices():
     """Same idea as `test_default_construction_fn_matrices`, but for the block
     creation function"""
-    A = scipy.sparse.coo_matrix(np.eye(2))
+    A = scipy.sparse.coo_matrix(mx.eye(2))
     B = scipy.sparse.coo_matrix([[2], [0]])
     C = scipy.sparse.coo_matrix([[3]])
 
@@ -513,7 +513,7 @@ def test_issparse():
     assert scipy.sparse.issparse(a)
     assert scipy.sparse.issparse(m)
 
-    # ndarray and array_likes are not sparse
+    # array and array_likes are not sparse
     assert not scipy.sparse.issparse(a.todense())
     assert not scipy.sparse.issparse(m.todense())
 
@@ -528,7 +528,7 @@ def test_isspmatrix():
     assert not scipy.sparse.isspmatrix(a)
     assert scipy.sparse.isspmatrix(m)
 
-    # ndarray and array_likes are not sparse
+    # array and array_likes are not sparse
     assert not scipy.sparse.isspmatrix(a.todense())
     assert not scipy.sparse.isspmatrix(m.todense())
 
@@ -555,6 +555,6 @@ def test_isspmatrix_format(fmt, fn):
     assert not fn(a)
     assert fn(m)
 
-    # ndarray and array_likes are not sparse
+    # array and array_likes are not sparse
     assert not fn(a.todense())
     assert not fn(m.todense())

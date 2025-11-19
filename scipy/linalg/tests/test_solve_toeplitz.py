@@ -1,6 +1,6 @@
 """Test functions for linalg._solve_toeplitz module
 """
-import numpy as np
+import mlx.core as mx
 from scipy.linalg._solve_toeplitz import levinson
 from scipy.linalg import solve, toeplitz, solve_toeplitz
 from numpy.testing import assert_equal, assert_allclose
@@ -11,7 +11,7 @@ from pytest import raises as assert_raises
 
 def test_solve_equivalence():
     # For toeplitz matrices, solve_toeplitz() should be equivalent to solve().
-    random = np.random.RandomState(1234)
+    random = mx.random.RandomState(1234)
     for n in (1, 2, 3, 10):
         c = random.randn(n)
         if random.rand() < 0.5:
@@ -35,7 +35,7 @@ def test_solve_equivalence():
 
 
 def test_multiple_rhs():
-    random = np.random.RandomState(1234)
+    random = mx.random.RandomState(1234)
     c = random.randn(4)
     r = random.randn(4)
     for offset in [0, 1j]:
@@ -59,30 +59,30 @@ def test_native_list_arguments():
 
 def test_zero_diag_error():
     # The Levinson-Durbin implementation fails when the diagonal is zero.
-    random = np.random.RandomState(1234)
+    random = mx.random.RandomState(1234)
     n = 4
     c = random.randn(n)
     r = random.randn(n)
     y = random.randn(n)
     c[0] = 0
-    assert_raises(np.linalg.LinAlgError,
+    assert_raises(mx.linalg.LinAlgError,
         solve_toeplitz, (c, r), b=y)
 
 
 def test_wikipedia_counterexample():
     # The Levinson-Durbin implementation also fails in other cases.
     # This example is from the talk page of the wikipedia article.
-    random = np.random.RandomState(1234)
+    random = mx.random.RandomState(1234)
     c = [2, 2, 1]
     y = random.randn(3)
-    assert_raises(np.linalg.LinAlgError, solve_toeplitz, c, b=y)
+    assert_raises(mx.linalg.LinAlgError, solve_toeplitz, c, b=y)
 
 
 def test_reflection_coeffs():
     # check that the partial solutions are given by the reflection
     # coefficients
 
-    random = np.random.RandomState(1234)
+    random = mx.random.RandomState(1234)
     y_d = random.randn(10)
     y_z = random.randn(10) + 1j
     reflection_coeffs_d = [1]
@@ -91,8 +91,8 @@ def test_reflection_coeffs():
         reflection_coeffs_d.append(solve_toeplitz(y_d[:(i-1)], b=y_d[1:i])[-1])
         reflection_coeffs_z.append(solve_toeplitz(y_z[:(i-1)], b=y_z[1:i])[-1])
 
-    y_d_concat = np.concatenate((y_d[-2:0:-1], y_d[:-1]))
-    y_z_concat = np.concatenate((y_z[-2:0:-1].conj(), y_z[:-1]))
+    y_d_concat = mx.concatenate((y_d[-2:0:-1], y_d[:-1]))
+    y_z_concat = mx.concatenate((y_z[-2:0:-1].conj(), y_z[:-1]))
     _, ref_d = levinson(y_d_concat, b=y_d[1:])
     _, ref_z = levinson(y_z_concat, b=y_z[1:])
 
@@ -109,9 +109,9 @@ def test_unstable():
     # which can be unstable for levinson recursion.
 
     # other fast toeplitz solvers such as GKO or Burg should be better.
-    random = np.random.RandomState(1234)
+    random = mx.random.RandomState(1234)
     n = 100
-    c = 0.9 ** (np.arange(n)**2)
+    c = 0.9 ** (mx.arange(n)**2)
     y = random.randn(n)
 
     solution1 = solve_toeplitz(c, b=y)
@@ -120,17 +120,17 @@ def test_unstable():
     assert_allclose(solution1, solution2)
 
 
-@pytest.mark.parametrize('dt_c', [int, float, np.float32, complex, np.complex64])
-@pytest.mark.parametrize('dt_b', [int, float, np.float32, complex, np.complex64])
+@pytest.mark.parametrize('dt_c', [int, float, mx.float32, complex, mx.complex64])
+@pytest.mark.parametrize('dt_b', [int, float, mx.float32, complex, mx.complex64])
 def test_empty(dt_c, dt_b):
-    c = np.array([], dtype=dt_c)
-    b = np.array([], dtype=dt_b)
+    c = mx.array([], dtype=dt_c)
+    b = mx.array([], dtype=dt_b)
     x = solve_toeplitz(c, b)
     assert x.shape == (0,)
-    assert x.dtype == solve_toeplitz(np.array([2, 1], dtype=dt_c),
-                                      np.ones(2, dtype=dt_b)).dtype
+    assert x.dtype == solve_toeplitz(mx.array([2, 1], dtype=dt_c),
+                                      mx.ones(2, dtype=dt_b)).dtype
 
-    b = np.empty((0, 0), dtype=dt_b)
+    b = mx.empty((0, 0), dtype=dt_b)
     x1 = solve_toeplitz(c, b)
     assert x1.shape == (0, 0)
     assert x1.dtype == x.dtype

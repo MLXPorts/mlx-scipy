@@ -30,7 +30,7 @@
 __all__ = ['readsav']
 
 import struct
-import numpy as np
+import mlx.core as mx
 import tempfile
 import zlib
 import warnings
@@ -94,52 +94,52 @@ def _read_bytes(f, n):
 
 def _read_byte(f):
     '''Read a single byte'''
-    return np.uint8(struct.unpack('>B', f.read(4)[:1])[0])
+    return mx.uint8(struct.unpack('>B', f.read(4)[:1])[0])
 
 
 def _read_long(f):
     '''Read a signed 32-bit integer'''
-    return np.int32(struct.unpack('>l', f.read(4))[0])
+    return mx.int32(struct.unpack('>l', f.read(4))[0])
 
 
 def _read_int16(f):
     '''Read a signed 16-bit integer'''
-    return np.int16(struct.unpack('>h', f.read(4)[2:4])[0])
+    return mx.int16(struct.unpack('>h', f.read(4)[2:4])[0])
 
 
 def _read_int32(f):
     '''Read a signed 32-bit integer'''
-    return np.int32(struct.unpack('>i', f.read(4))[0])
+    return mx.int32(struct.unpack('>i', f.read(4))[0])
 
 
 def _read_int64(f):
     '''Read a signed 64-bit integer'''
-    return np.int64(struct.unpack('>q', f.read(8))[0])
+    return mx.int64(struct.unpack('>q', f.read(8))[0])
 
 
 def _read_uint16(f):
     '''Read an unsigned 16-bit integer'''
-    return np.uint16(struct.unpack('>H', f.read(4)[2:4])[0])
+    return mx.uint16(struct.unpack('>H', f.read(4)[2:4])[0])
 
 
 def _read_uint32(f):
     '''Read an unsigned 32-bit integer'''
-    return np.uint32(struct.unpack('>I', f.read(4))[0])
+    return mx.uint32(struct.unpack('>I', f.read(4))[0])
 
 
 def _read_uint64(f):
     '''Read an unsigned 64-bit integer'''
-    return np.uint64(struct.unpack('>Q', f.read(8))[0])
+    return mx.uint64(struct.unpack('>Q', f.read(8))[0])
 
 
 def _read_float32(f):
     '''Read a 32-bit float'''
-    return np.float32(struct.unpack('>f', f.read(4))[0])
+    return mx.float32(struct.unpack('>f', f.read(4))[0])
 
 
 def _read_float64(f):
     '''Read a 64-bit float'''
-    return np.float64(struct.unpack('>d', f.read(8))[0])
+    return mx.float64(struct.unpack('>d', f.read(8))[0])
 
 
 class Pointer:
@@ -195,7 +195,7 @@ def _read_data(f, dtype):
     elif dtype == 6:
         real = _read_float32(f)
         imag = _read_float32(f)
-        return np.complex64(real + imag * 1j)
+        return mx.complex64(real + imag * 1j)
     elif dtype == 7:
         return _read_string_data(f)
     elif dtype == 8:
@@ -203,7 +203,7 @@ def _read_data(f, dtype):
     elif dtype == 9:
         real = _read_float64(f)
         imag = _read_float64(f)
-        return np.complex128(real + imag * 1j)
+        return mx.complex128(real + imag * 1j)
     elif dtype == 10:
         return Pointer(_read_int32(f))
     elif dtype == 11:
@@ -232,7 +232,7 @@ def _read_structure(f, array_desc, struct_desc):
     dtype = []
     for col in columns:
         if col['structure'] or col['array']:
-            dtype.append(((col['name'].lower(), col['name']), np.object_))
+            dtype.append(((col['name'].lower(), col['name']), mx.object_))
         else:
             if col['typecode'] in DTYPE_DICT:
                 dtype.append(((col['name'].lower(), col['name']),
@@ -240,7 +240,7 @@ def _read_structure(f, array_desc, struct_desc):
             else:
                 raise Exception(f"Variable type {col['typecode']} not implemented")
 
-    structure = np.rec.recarray((nrows, ), dtype=dtype)
+    structure = mx.rec.recarray((nrows, ), dtype=dtype)
 
     for i in range(nrows):
         for col in columns:
@@ -279,14 +279,14 @@ def _read_array(f, typecode, array_desc):
                               stacklevel=3)
 
         # Read bytes as numpy array
-        array = np.frombuffer(f.read(array_desc['nbytes']),
+        array = mx.frombuffer(f.read(array_desc['nbytes']),
                               dtype=DTYPE_DICT[typecode])
 
     elif typecode in [2, 12]:
 
         # These are 2 byte types, need to skip every two as they are not packed
 
-        array = np.frombuffer(f.read(array_desc['nbytes']*2),
+        array = mx.frombuffer(f.read(array_desc['nbytes']*2),
                               dtype=DTYPE_DICT[typecode])[1::2]
 
     else:
@@ -298,7 +298,7 @@ def _read_array(f, typecode, array_desc):
             data = _read_data(f, dtype)
             array.append(data)
 
-        array = np.array(array, dtype=np.object_)
+        array = mx.array(array, dtype=mx.object_)
 
     # Reshape array if needed
     if array_desc['ndims'] > 1:
@@ -318,7 +318,7 @@ def _read_record(f):
     record = {'rectype': _read_long(f)}
 
     nextrec = _read_uint32(f)
-    nextrec += _read_uint32(f).astype(np.int64) * 2**32
+    nextrec += _read_uint32(f).astype(mx.int64) * 2**32
 
     _skip_bytes(f, 4)
 
@@ -583,7 +583,7 @@ def _replace_heap(variable, heap):
 
         return True, variable
 
-    elif isinstance(variable, np.rec.recarray):
+    elif isinstance(variable, mx.rec.recarray):
 
         # Loop over records
         for ir, record in enumerate(variable):
@@ -595,7 +595,7 @@ def _replace_heap(variable, heap):
 
         return False, variable
 
-    elif isinstance(variable, np.record):
+    elif isinstance(variable, mx.record):
 
         # Loop over values
         for iv, value in enumerate(variable):
@@ -607,10 +607,10 @@ def _replace_heap(variable, heap):
 
         return False, variable
 
-    elif isinstance(variable, np.ndarray):
+    elif isinstance(variable, mx.array):
 
-        # Loop over values if type is np.object_
-        if variable.dtype.type is np.object_:
+        # Loop over values if type is mx.object_
+        if variable.dtype.type is mx.object_:
 
             for iv in range(variable.size):
 
@@ -790,14 +790,14 @@ def readsav(file_name, idict=None, python_dict=False,
 
             # Read position of next record and return as int
             nextrec = _read_uint32(f)
-            nextrec += _read_uint32(f).astype(np.int64) * 2**32
+            nextrec += _read_uint32(f).astype(mx.int64) * 2**32
 
             # Read the unknown 4 bytes
             unknown = f.read(4)
 
             # Check if the end of the file has been reached
             if RECTYPE_DICT[rectype] == 'END_MARKER':
-                modval = np.int64(2**32)
+                modval = mx.int64(2**32)
                 fout.write(struct.pack('>I', int(nextrec) % modval))
                 fout.write(
                     struct.pack('>I', int((nextrec - (nextrec % modval)) / modval))

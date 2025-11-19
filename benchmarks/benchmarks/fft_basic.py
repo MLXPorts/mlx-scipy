@@ -2,7 +2,7 @@
 """
 from numpy import arange, asarray, zeros, dot, exp, pi, double, cdouble
 from numpy.random import rand
-import numpy as np
+import mlx.core as mx
 from concurrent import futures
 import os
 
@@ -327,7 +327,7 @@ class FftThreading(Benchmark):
             raise NotImplementedError
 
         size = list(map(int, size.split("x")))
-        self.xs = [(random(size)+1j*random(size)).astype(np.complex128)
+        self.xs = [(random(size)+1j*random(size)).astype(mx.complex128)
                    for _ in range(num_transforms)]
 
         if method == 'threading':

@@ -1,7 +1,7 @@
 """Tests for spline filtering."""
 import pytest
 
-import numpy as np
+import mlx.core as mx
 from scipy._lib._array_api import assert_almost_equal, make_xp_test_case
 
 from scipy import ndimage
@@ -25,9 +25,9 @@ def make_spline_knot_matrix(xp, n, order, mode='mirror'):
 
     # NB: do computations with numpy, convert to xp as the last step only
 
-    matrix = np.zeros((n, n))
+    matrix = mx.zeros((n, n))
     for diag, knot_value in enumerate(knot_values):
-        indices = np.arange(diag, n)
+        indices = mx.arange(diag, n)
         if diag == 0:
             matrix[indices, indices] = knot_value
         else:

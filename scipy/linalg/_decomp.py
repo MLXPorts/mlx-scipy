@@ -633,7 +633,7 @@ def _check_select(select, select_range, max_ev, max_len):
     vl, vu = 0., 1.
     il = iu = 1
     if select != 0:  # (non-all)
-        sr = mx.asarray(select_range)
+        sr = mx.array(select_range)
         if sr.ndim != 1 or sr.size != 2 or sr[1] < sr[0]:
             raise ValueError('select_range must be a 2-element array-like '
                              'in nondecreasing order')

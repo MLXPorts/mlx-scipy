@@ -5,7 +5,7 @@ from numpy.testing import (assert_, assert_array_almost_equal,
                            assert_allclose, assert_equal)
 from pytest import raises as assert_raises
 import pytest
-import numpy as np
+import mlx.core as mx
 import scipy
 
 from scipy.optimize import (fmin_slsqp, minimize, Bounds, NonlinearConstraint,
@@ -72,18 +72,18 @@ class TestSLSQP:
         y = d[1]
         dfdx = sign*(-2*x + 2*y + 2)
         dfdy = sign*(2*x - 4*y)
-        return np.array([dfdx, dfdy], float)
+        return mx.array([dfdx, dfdy], float)
 
     def fun_and_jac(self, d, sign=1.0):
         return self.fun(d, sign), self.jac(d, sign)
 
     def f_eqcon(self, x, sign=1.0):
         """ Equality constraint """
-        return np.array([x[0] - x[1]])
+        return mx.array([x[0] - x[1]])
 
     def fprime_eqcon(self, x, sign=1.0):
         """ Equality constraint, derivative """
-        return np.array([[1, -1]])
+        return mx.array([[1, -1]])
 
     def f_eqcon_scalar(self, x, sign=1.0):
         """ Scalar equality constraint """
@@ -95,19 +95,19 @@ class TestSLSQP:
 
     def f_ieqcon(self, x, sign=1.0):
         """ Inequality constraint """
-        return np.array([x[0] - x[1] - 1.0])
+        return mx.array([x[0] - x[1] - 1.0])
 
     def fprime_ieqcon(self, x, sign=1.0):
         """ Inequality constraint, derivative """
-        return np.array([[1, -1]])
+        return mx.array([[1, -1]])
 
     def f_ieqcon2(self, x):
         """ Vector inequality constraint """
-        return np.asarray(x)
+        return mx.array(x)
 
     def fprime_ieqcon2(self, x):
         """ Vector inequality constraint, derivative """
-        return np.identity(x.shape[0])
+        return mx.identity(x.shape[0])
 
     # minimize
     def test_minimize_unbounded_approximated(self):
@@ -131,7 +131,7 @@ class TestSLSQP:
         # Minimize, method='SLSQP': bounded, approximated jacobian.
         jacs = [None, False, '2-point', '3-point']
         for jac in jacs:
-            with np.errstate(invalid='ignore'):
+            with mx.errstate(invalid='ignore'):
                 res = minimize(self.fun, [-1.0, 1.0], args=(-1.0, ),
                                jac=jac,
                                bounds=((2.5, None), (None, 0.5)),
@@ -234,7 +234,7 @@ class TestSLSQP:
             return -x[0] ** 2 + x[1] ** 2
 
         cns = [NonlinearConstraint(c, 0, 1.5)]
-        x0 = np.asarray([0.9, 0.5])
+        x0 = mx.array([0.9, 0.5])
         bnd = Bounds([0., 0.], [1.0, 1.0])
         minimize(f, x0, method='SLSQP', bounds=bnd, constraints=cns)
 
@@ -347,8 +347,8 @@ class TestSLSQP:
         # NumPy used to treat n-dimensional 1-element arrays as scalars
         # in some cases.  The handling of `bounds` by `fmin_slsqp` still
         # supports this behavior.
-        bounds = [(-np.inf, np.inf), (np.array([2]), np.array([3]))]
-        x = fmin_slsqp(lambda z: np.sum(z**2 - 1), [2.5, 2.5], bounds=bounds,
+        bounds = [(-mx.inf, mx.inf), (mx.array([2]), mx.array([3]))]
+        x = fmin_slsqp(lambda z: mx.sum(z**2 - 1), [2.5, 2.5], bounds=bounds,
                        iprint=0)
         assert_array_almost_equal(x, [0, 2])
 
@@ -451,8 +451,8 @@ class TestSLSQP:
             ((1, 2), (2, 1)),
             ((2, 1), (1, 2)),
             ((2, 1), (2, 1)),
-            ((np.inf, 0), (np.inf, 0)),
-            ((1, -np.inf), (0, 1)),
+            ((mx.inf, 0), (mx.inf, 0)),
+            ((1, -mx.inf), (0, 1)),
         ]
         for bounds in bounds_list:
             with assert_raises(ValueError):
@@ -554,7 +554,7 @@ class TestSLSQP:
     def test_new_bounds_type(self):
         def f(x):
             return x[0] ** 2 + x[1] ** 2
-        bounds = Bounds([1, 0], [np.inf, np.inf])
+        bounds = Bounds([1, 0], [mx.inf, mx.inf])
         sol = minimize(f, [0, 0], method='slsqp', bounds=bounds)
         assert_(sol.success)
         assert_allclose(sol.x, [1, 0])
@@ -591,7 +591,7 @@ class TestSLSQP:
         # https://nlopt.readthedocs.io/en/latest/NLopt_Tutorial/
         # implement two equality constraints, in R^2.
         def fun(x):
-            return np.sqrt(x[1])
+            return mx.sqrt(x[1])
 
         def f_eqcon(x):
             """ Equality constraint """
@@ -607,8 +607,8 @@ class TestSLSQP:
         res = minimize(fun, [8, 0.25], method='SLSQP',
                        constraints=[c1, c2], bounds=[(-0.5, 1), (0, 8)])
 
-        np.testing.assert_allclose(res.fun, 0.5443310539518)
-        np.testing.assert_allclose(res.x, [0.33333333, 0.2962963])
+        mx.testing.assert_allclose(res.fun, 0.5443310539518)
+        mx.testing.assert_allclose(res.x, [0.33333333, 0.2962963])
         assert res.success
 
     def test_gh9640(self):
@@ -633,13 +633,13 @@ class TestSLSQP:
 
         # gh21872, removal of random initial position, replacing with specific
         # starting point, because success/fail depends on the seed used.
-        bounds = Bounds(np.array([0.1]), np.array([1.0]))
-        x0 = np.array(bounds.lb + (bounds.ub - bounds.lb) *
+        bounds = Bounds(mx.array([0.1]), mx.array([1.0]))
+        x0 = mx.array(bounds.lb + (bounds.ub - bounds.lb) *
                       0.417022004702574)
 
         def f(x):
             assert (x >= bounds.lb).all()
-            return np.linalg.norm(x)
+            return mx.linalg.norm(x)
         # The following should not raise any warnings which was the case, with the
         # old Fortran code.
         res = minimize(f, x0, method='SLSQP', bounds=bounds)
@@ -651,9 +651,9 @@ def test_slsqp_segfault_wrong_workspace_computation():
     # This problem is not well-defined, however should not cause a segfault.
     # The previous F77 workspace computation did not handle only equality-
     # constrained problems correctly.
-    rng = np.random.default_rng(1742651087222879)
+    rng = mx.random.default_rng(1742651087222879)
     x = rng.uniform(size=[22,365])
-    target = np.linspace(0.9, 4.0, 50)
+    target = mx.linspace(0.9, 4.0, 50)
 
     def metric(v, weights):
         return [[0, 0],[1, 1]]
@@ -666,8 +666,8 @@ def test_slsqp_segfault_wrong_workspace_computation():
             return metric(v, weights)[0][0]
 
         constraints = ({'type': 'eq', 'fun': lambda x: metric_a(x) - target},
-                       {'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
-        weights = np.array([len(v)*[1./len(v)]])[0]
+                       {'type': 'eq', 'fun': lambda x: mx.sum(x) - 1})
+        weights = mx.array([len(v)*[1./len(v)]])[0]
         result = minimize(metric_b,
                           weights,
                           args=(v,),

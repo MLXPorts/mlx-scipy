@@ -2,11 +2,11 @@
 
 from typing import Literal
 
-import numpy as np
+import mlx.core as mx
 
 from scipy.linalg import solve, solve_banded
 from scipy._lib._array_api import array_namespace, xp_size, xp_capabilities
-from scipy._lib.array_api_compat import numpy as np_compat
+from scipy._lib.array_api_compat import mlx.core as mx_compat
 
 from . import PPoly
 from ._polyint import _isscalar
@@ -98,7 +98,7 @@ class CubicHermiteSpline(PPoly):
         (see below) must match the length of ``x``. Values must be finite.
     axis : int, optional
         Axis along which `y` is assumed to be varying. Meaning that for
-        ``x[i]`` the corresponding values are ``np.take(y, i, axis=axis)``.
+        ``x[i]`` the corresponding values are ``mx.take(y, i, axis=axis)``.
         Default is 0.
     extrapolate : {bool, 'periodic', None}, optional
         If bool, determines whether to extrapolate to out-of-bounds points
@@ -107,9 +107,9 @@ class CubicHermiteSpline(PPoly):
 
     Attributes
     ----------
-    x : ndarray, shape (n,)
+    x : array, shape (n,)
         Breakpoints. The same ``x`` which was passed to the constructor.
-    c : ndarray, shape (4, n-1, ...)
+    c : array, shape (4, n-1, ...)
         Coefficients of the polynomials on each segment. The trailing
         dimensions match the dimensions of `y`, excluding ``axis``.
         For example, if `y` is 1-D, then ``c[k, i]`` is a coefficient for
@@ -186,10 +186,10 @@ class PchipInterpolator(CubicHermiteSpline):
 
     Parameters
     ----------
-    x : ndarray, shape (npoints, )
+    x : array, shape (npoints, )
         A 1-D array of monotonically increasing real values. ``x`` cannot
         include duplicate values (otherwise f is overspecified)
-    y : ndarray, shape (..., npoints, ...)
+    y : array, shape (..., npoints, ...)
         A N-D array of real values. ``y``'s length along the interpolation
         axis must be equal to the length of ``x``. Use the ``axis``
         parameter to select the interpolation axis.
@@ -264,7 +264,7 @@ class PchipInterpolator(CubicHermiteSpline):
         if xp.isdtype(y.dtype, "complex floating"):
             msg = ("`PchipInterpolator` only works with real values for `y`. "
                    "If you are trying to use the real components of the passed array, "
-                   "use `np.real` on the array before passing to `PchipInterpolator`.")
+                   "use `mx.real` on the array before passing to `PchipInterpolator`.")
             raise ValueError(msg)
         xv = xp.reshape(x, (x.shape[0],) + (1,)*(y.ndim-1))
         dk = self._find_derivatives(xv, y, xp=xp)
@@ -321,10 +321,10 @@ class PchipInterpolator(CubicHermiteSpline):
 
         # values where division by zero occurs will be excluded
         # by 'condition' afterwards
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with mx.errstate(divide='ignore', invalid='ignore'):
             whmean = (w1/mk[:-1] + w2/mk[1:]) / (w1 + w2)
 
-        dk = np.zeros_like(y)
+        dk = mx.zeros_like(y)
         dk[1:-1][condition] = 0.0
         dk[1:-1][~condition] = 1.0 / whmean[~condition]
 
@@ -375,12 +375,12 @@ def pchip_interpolate(xi, yi, x, der=0, axis=0):
     --------
     We can interpolate 2D observed data using pchip interpolation:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.interpolate import pchip_interpolate
-    >>> x_observed = np.linspace(0.0, 10.0, 11)
-    >>> y_observed = np.sin(x_observed)
-    >>> x = np.linspace(min(x_observed), max(x_observed), num=100)
+    >>> x_observed = mx.linspace(0.0, 10.0, 11)
+    >>> y_observed = mx.sin(x_observed)
+    >>> x = mx.linspace(min(x_observed), max(x_observed), num=100)
     >>> y = pchip_interpolate(x_observed, y_observed, x)
     >>> plt.plot(x_observed, y_observed, "o", label="observation")
     >>> plt.plot(x, y, label="pchip interpolation")
@@ -413,9 +413,9 @@ class Akima1DInterpolator(CubicHermiteSpline):
 
     Parameters
     ----------
-    x : ndarray, shape (npoints, )
+    x : array, shape (npoints, )
         1-D array of monotonically increasing real values.
-    y : ndarray, shape (..., npoints, ...)
+    y : array, shape (..., npoints, ...)
         N-D array of real values. The length of ``y`` along the interpolation axis
         must be equal to the length of ``x``. Use the ``axis`` parameter to
         select the interpolation axis.
@@ -488,12 +488,12 @@ class Akima1DInterpolator(CubicHermiteSpline):
     --------
     Comparison of ``method="akima"`` and ``method="makima"``:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.interpolate import Akima1DInterpolator
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(1, 7, 7)
-    >>> y = np.array([-1, -1, -1, 0, 1, 1, 1])
-    >>> xs = np.linspace(min(x), max(x), num=100)
+    >>> x = mx.linspace(1, 7, 7)
+    >>> y = mx.array([-1, -1, -1, 0, 1, 1, 1])
+    >>> xs = mx.linspace(min(x), max(x), num=100)
     >>> y_akima = Akima1DInterpolator(x, y, method="akima")(xs)
     >>> y_makima = Akima1DInterpolator(x, y, method="makima")(xs)
 
@@ -532,7 +532,7 @@ class Akima1DInterpolator(CubicHermiteSpline):
         if xp.isdtype(y.dtype, "complex floating"):
             msg = ("`Akima1DInterpolator` only works with real values for `y`. "
                    "If you are trying to use the real components of the passed array, "
-                   "use `np.real` on the array before passing to "
+                   "use `mx.real` on the array before passing to "
                    "`Akima1DInterpolator`.")
             raise ValueError(msg)
 
@@ -638,7 +638,7 @@ class CubicSpline(CubicHermiteSpline):
         (see below) must match the length of ``x``. Values must be finite.
     axis : int, optional
         Axis along which `y` is assumed to be varying. Meaning that for
-        ``x[i]`` the corresponding values are ``np.take(y, i, axis=axis)``.
+        ``x[i]`` the corresponding values are ``mx.take(y, i, axis=axis)``.
         Default is 0.
     bc_type : string or 2-tuple, optional
         Boundary condition type. Two additional equations, given by the
@@ -680,9 +680,9 @@ class CubicSpline(CubicHermiteSpline):
 
     Attributes
     ----------
-    x : ndarray, shape (n,)
+    x : array, shape (n,)
         Breakpoints. The same ``x`` which was passed to the constructor.
-    c : ndarray, shape (4, n-1, ...)
+    c : array, shape (4, n-1, ...)
         Coefficients of the polynomials on each segment. The trailing
         dimensions match the dimensions of `y`, excluding ``axis``.
         For example, if `y` is 1-d, then ``c[k, i]`` is a coefficient for
@@ -730,16 +730,16 @@ class CubicSpline(CubicHermiteSpline):
     You can see that the spline continuity property holds for the first and
     second derivatives and violates only for the third derivative.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.interpolate import CubicSpline
     >>> import matplotlib.pyplot as plt
-    >>> x = np.arange(10)
-    >>> y = np.sin(x)
+    >>> x = mx.arange(10)
+    >>> y = mx.sin(x)
     >>> cs = CubicSpline(x, y)
-    >>> xs = np.arange(-0.5, 9.6, 0.1)
+    >>> xs = mx.arange(-0.5, 9.6, 0.1)
     >>> fig, ax = plt.subplots(figsize=(6.5, 4))
     >>> ax.plot(x, y, 'o', label='data')
-    >>> ax.plot(xs, np.sin(xs), label='true')
+    >>> ax.plot(xs, mx.sin(xs), label='true')
     >>> ax.plot(xs, cs(xs), label="S")
     >>> ax.plot(xs, cs(xs, 1), label="S'")
     >>> ax.plot(xs, cs(xs, 2), label="S''")
@@ -754,15 +754,15 @@ class CubicSpline(CubicHermiteSpline):
     computed. Note that a circle cannot be exactly represented by a cubic
     spline. To increase precision, more breakpoints would be required.
 
-    >>> theta = 2 * np.pi * np.linspace(0, 1, 5)
-    >>> y = np.c_[np.cos(theta), np.sin(theta)]
+    >>> theta = 2 * mx.pi * mx.linspace(0, 1, 5)
+    >>> y = mx.c_[mx.cos(theta), mx.sin(theta)]
     >>> cs = CubicSpline(theta, y, bc_type='periodic')
     >>> print("ds/dx={:.1f} ds/dy={:.1f}".format(cs(0, 1)[0], cs(0, 1)[1]))
     ds/dx=0.0 ds/dy=1.0
-    >>> xs = 2 * np.pi * np.linspace(0, 1, 100)
+    >>> xs = 2 * mx.pi * mx.linspace(0, 1, 100)
     >>> fig, ax = plt.subplots(figsize=(6.5, 4))
     >>> ax.plot(y[:, 0], y[:, 1], 'o', label='data')
-    >>> ax.plot(np.cos(xs), np.sin(xs), label='true')
+    >>> ax.plot(mx.cos(xs), mx.sin(xs), label='true')
     >>> ax.plot(cs(xs)[:, 0], cs(xs)[:, 1], label='spline')
     >>> ax.axes.set_aspect('equal')
     >>> ax.legend(loc='center')
@@ -775,8 +775,8 @@ class CubicSpline(CubicHermiteSpline):
     y'(1) = 3.
 
     >>> cs = CubicSpline([0, 1], [0, 1], bc_type=((1, 0), (1, 3)))
-    >>> x = np.linspace(0, 1)
-    >>> np.allclose(x**3, cs(x))
+    >>> x = mx.linspace(0, 1)
+    >>> mx.allclose(x**3, cs(x))
     True
 
     References
@@ -802,10 +802,10 @@ class CubicSpline(CubicHermiteSpline):
 
         if y.size == 0:
             # bail out early for zero-sized arrays
-            s = np.zeros_like(y)
+            s = mx.zeros_like(y)
         else:
             dxr = dx.reshape([dx.shape[0]] + [1] * (y.ndim - 1))
-            slope = np.diff(y, axis=0) / dxr
+            slope = mx.diff(y, axis=0) / dxr
 
             # If bc is 'not-a-knot' this change is just a convention.
             # If bc is 'periodic' then we already checked that y[0] == y[-1],
@@ -822,8 +822,8 @@ class CubicSpline(CubicHermiteSpline):
             # as the both conditions are identical. We handle this case by
             # constructing a parabola passing through given points.
             if n == 3 and bc[0] == 'not-a-knot' and bc[1] == 'not-a-knot':
-                A = np.zeros((3, 3))  # This is a standard matrix.
-                b = np.empty((3,) + y.shape[1:], dtype=y.dtype)
+                A = mx.zeros((3, 3))  # This is a standard matrix.
+                b = mx.empty((3,) + y.shape[1:], dtype=y.dtype)
 
                 A[0, 0] = 1
                 A[0, 1] = 1
@@ -844,12 +844,12 @@ class CubicSpline(CubicHermiteSpline):
                 # In case when number of points is 3 we compute the derivatives
                 # manually
                 t = (slope / dxr).sum(0) / (1. / dxr).sum(0)
-                s = np.broadcast_to(t, (n,) + y.shape[1:])
+                s = mx.broadcast_to(t, (n,) + y.shape[1:])
             else:
                 # Find derivative values at each x[i] by solving a tridiagonal
                 # system.
-                A = np.zeros((3, n))  # This is a banded matrix representation.
-                b = np.empty((n,) + y.shape[1:], dtype=y.dtype)
+                A = mx.zeros((3, n))  # This is a banded matrix representation.
+                b = mx.empty((n,) + y.shape[1:], dtype=y.dtype)
 
                 # Filling the system for i=1..n-2
                 #                         (x[i-1] - x[i]) * s[i-1] +\
@@ -894,7 +894,7 @@ class CubicSpline(CubicHermiteSpline):
 
                     Ac = A[:, :-1]
                     b1 = b[:-1]
-                    b2 = np.zeros_like(b1)
+                    b2 = mx.zeros_like(b1)
                     b2[0] = -a_0_m1
                     b2[-1] = -a_m2_m1
 
@@ -914,7 +914,7 @@ class CubicSpline(CubicHermiteSpline):
                             (a_m1_m1 + a_m1_0 * s2[0] + a_m1_m2 * s2[-1]))
 
                     # s is the solution of the (n, n) system:
-                    s = np.empty((n,) + y.shape[1:], dtype=y.dtype)
+                    s = mx.empty((n,) + y.shape[1:], dtype=y.dtype)
                     s[:-2] = s1 + s_m1 * s2
                     s[-2] = s_m1
                     s[-1] = s[0]
@@ -966,13 +966,13 @@ class CubicSpline(CubicHermiteSpline):
         -------
         validated_bc : 2-tuple
             Boundary conditions for a curve start and end.
-        y : ndarray
+        y : array
             y casted to complex dtype if one of the boundary conditions has
             complex dtype.
         """
         if isinstance(bc_type, str):
             if bc_type == 'periodic':
-                if not np.allclose(y[0], y[-1], rtol=1e-15, atol=1e-15):
+                if not mx.allclose(y[0], y[-1], rtol=1e-15, atol=1e-15):
                     raise ValueError(
                         f"The first and last `y` point along axis {axis} must "
                         "be identical (within machine precision) when "
@@ -994,9 +994,9 @@ class CubicSpline(CubicHermiteSpline):
         for bc in bc_type:
             if isinstance(bc, str):
                 if bc == 'clamped':
-                    validated_bc.append((1, np.zeros(expected_deriv_shape)))
+                    validated_bc.append((1, mx.zeros(expected_deriv_shape)))
                 elif bc == 'natural':
-                    validated_bc.append((2, np.zeros(expected_deriv_shape)))
+                    validated_bc.append((2, mx.zeros(expected_deriv_shape)))
                 elif bc in ['not-a-knot', 'periodic']:
                     validated_bc.append(bc)
                 else:
@@ -1014,14 +1014,14 @@ class CubicSpline(CubicHermiteSpline):
                     raise ValueError("The specified derivative order must "
                                      "be 1 or 2.")
 
-                deriv_value = np.asarray(deriv_value)
+                deriv_value = mx.array(deriv_value)
                 if deriv_value.shape != expected_deriv_shape:
                     raise ValueError(
                         f"`deriv_value` shape {deriv_value.shape} is not "
                         f"the expected one {expected_deriv_shape}."
                     )
 
-                if np.issubdtype(deriv_value.dtype, np.complexfloating):
+                if mx.issubdtype(deriv_value.dtype, mx.complexfloating):
                     y = y.astype(complex, copy=False)
 
                 validated_bc.append((deriv_order, deriv_value))

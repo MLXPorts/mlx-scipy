@@ -15,7 +15,7 @@ def _cholesky(a, lower=False, overwrite_a=False, clean=True,
               check_finite=True):
     """Common code for cholesky() and cho_factor()."""
 
-    a1 = mx.asarray_chkfinite(a) if check_finite else mx.asarray(a)
+    a1 = mx.array_chkfinite(a) if check_finite else mx.array(a)
     a1 = mx.atleast_2d(a1)
 
     # Dimension check
@@ -232,11 +232,11 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
 @_apply_over_batch(('c', 2), ('b', '1|2'))
 def _cho_solve(c, b, lower, overwrite_b, check_finite):
     if check_finite:
-        b1 = mx.asarray_chkfinite(b)
-        c = mx.asarray_chkfinite(c)
+        b1 = mx.array_chkfinite(b)
+        c = mx.array_chkfinite(c)
     else:
-        b1 = mx.asarray(b)
-        c = mx.asarray(c)
+        b1 = mx.array(b)
+        c = mx.array(c)
 
     if c.ndim != 2 or c.shape[0] != c.shape[1]:
         raise ValueError("The factored matrix c is not square.")
@@ -320,9 +320,9 @@ def cholesky_banded(ab, overwrite_ab=False, lower=False, check_finite=True):
 
     """
     if check_finite:
-        ab = mx.asarray_chkfinite(ab)
+        ab = mx.array_chkfinite(ab)
     else:
-        ab = mx.asarray(ab)
+        ab = mx.array(ab)
 
     # accommodate square empty matrices
     if ab.size == 0:
@@ -397,11 +397,11 @@ def cho_solve_banded(cb_and_lower, b, overwrite_b=False, check_finite=True):
 @_apply_over_batch(('cb', 2), ('b', '1|2'))
 def _cho_solve_banded(cb, b, lower, overwrite_b, check_finite):
     if check_finite:
-        cb = mx.asarray_chkfinite(cb)
-        b = mx.asarray_chkfinite(b)
+        cb = mx.array_chkfinite(cb)
+        b = mx.array_chkfinite(b)
     else:
-        cb = mx.asarray(cb)
-        b = mx.asarray(b)
+        cb = mx.array(cb)
+        b = mx.array(b)
 
     # Validate shapes.
     if cb.shape[-1] != b.shape[0]:

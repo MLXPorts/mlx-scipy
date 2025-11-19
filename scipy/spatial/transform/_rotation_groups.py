@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy.constants import golden as phi
 
 
@@ -7,7 +7,7 @@ def icosahedral(cls):
     a = 0.5
     b = 0.5 / phi
     c = phi / 2
-    g2 = np.array([[+a, +b, +c, 0],
+    g2 = mx.array([[+a, +b, +c, 0],
                    [+a, +b, -c, 0],
                    [+a, +c, 0, +b],
                    [+a, +c, 0, -b],
@@ -55,13 +55,13 @@ def icosahedral(cls):
                    [0, +c, +b, -a],
                    [0, +c, -b, +a],
                    [0, +c, -b, -a]])
-    return cls.from_quat(np.concatenate((g1, g2)))
+    return cls.from_quat(mx.concatenate((g1, g2)))
 
 
 def octahedral(cls):
     g1 = tetrahedral(cls).as_quat()
-    c = np.sqrt(2) / 2
-    g2 = np.array([[+c, 0, 0, +c],
+    c = mx.sqrt(2) / 2
+    g2 = mx.array([[+c, 0, 0, +c],
                    [0, +c, 0, +c],
                    [0, 0, +c, +c],
                    [0, 0, -c, +c],
@@ -73,13 +73,13 @@ def octahedral(cls):
                    [-c, 0, +c, 0],
                    [+c, +c, 0, 0],
                    [-c, +c, 0, 0]])
-    return cls.from_quat(np.concatenate((g1, g2)))
+    return cls.from_quat(mx.concatenate((g1, g2)))
 
 
 def tetrahedral(cls):
-    g1 = np.eye(4)
+    g1 = mx.eye(4)
     c = 0.5
-    g2 = np.array([[c, -c, -c, +c],
+    g2 = mx.array([[c, -c, -c, +c],
                    [c, -c, +c, +c],
                    [c, +c, -c, +c],
                    [c, +c, +c, +c],
@@ -87,22 +87,22 @@ def tetrahedral(cls):
                    [c, -c, +c, -c],
                    [c, +c, -c, -c],
                    [c, +c, +c, -c]])
-    return cls.from_quat(np.concatenate((g1, g2)))
+    return cls.from_quat(mx.concatenate((g1, g2)))
 
 
 def dicyclic(cls, n, axis=2):
     g1 = cyclic(cls, n, axis).as_rotvec()
 
-    thetas = np.linspace(0, np.pi, n, endpoint=False)
-    rv = np.pi * np.vstack([np.zeros(n), np.cos(thetas), np.sin(thetas)]).T
-    g2 = np.roll(rv, axis, axis=1)
-    return cls.from_rotvec(np.concatenate((g1, g2)))
+    thetas = mx.linspace(0, mx.pi, n, endpoint=False)
+    rv = mx.pi * mx.vstack([mx.zeros(n), mx.cos(thetas), mx.sin(thetas)]).T
+    g2 = mx.roll(rv, axis, axis=1)
+    return cls.from_rotvec(mx.concatenate((g1, g2)))
 
 
 def cyclic(cls, n, axis=2):
-    thetas = np.linspace(0, 2 * np.pi, n, endpoint=False)
-    rv = np.vstack([thetas, np.zeros(n), np.zeros(n)]).T
-    return cls.from_rotvec(np.roll(rv, axis, axis=1))
+    thetas = mx.linspace(0, 2 * mx.pi, n, endpoint=False)
+    rv = mx.vstack([thetas, mx.zeros(n), mx.zeros(n)]).T
+    return cls.from_rotvec(mx.roll(rv, axis, axis=1))
 
 
 def create_group(cls, group, axis='Z'):

@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy.interpolate import pade
 from scipy._lib._array_api import (
     xp_assert_equal, assert_array_almost_equal
@@ -6,12 +6,12 @@ from scipy._lib._array_api import (
 
 def test_pade_trivial():
     nump, denomp = pade([1.0], 0)
-    xp_assert_equal(nump.c, np.asarray([1.0]))
-    xp_assert_equal(denomp.c, np.asarray([1.0]))
+    xp_assert_equal(nump.c, mx.array([1.0]))
+    xp_assert_equal(denomp.c, mx.array([1.0]))
 
     nump, denomp = pade([1.0], 0, 0)
-    xp_assert_equal(nump.c, np.asarray([1.0]))
-    xp_assert_equal(denomp.c, np.asarray([1.0]))
+    xp_assert_equal(nump.c, mx.array([1.0]))
+    xp_assert_equal(denomp.c, mx.array([1.0]))
 
 
 def test_pade_4term_exp():

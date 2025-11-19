@@ -1,12 +1,12 @@
 import matplotlib.pyplot as plt
-import numpy as np
+import mlx.core as mx
 
 from scipy.fft import rfft, rfftfreq
 
 n, T = 100, 0.01  # number of samples and sampling interval
 fcc = (20, 20.5)  # frequencies of sines
-t = np.arange(n) * T
-xx = (np.sin(2 * np.pi * fx_ * t) for fx_ in fcc)  # sine signals
+t = mx.arange(n) * T
+xx = (mx.sin(2 * mx.pi * fx_ * t) for fx_ in fcc)  # sine signals
 
 f = rfftfreq(n, T)  # frequency bins range from 0 Hz to Nyquist freq.
 XX = (rfft(x_) / n for x_ in xx)  # one-sided magnitude spectrum

@@ -1,5 +1,5 @@
 import math
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._array_api import (
     xp_assert_equal,
@@ -25,7 +25,7 @@ class TestNdimageFourier:
     def test_fourier_gaussian_real01(self, shape, dtype, dec, xp):
         fft = getattr(xp, 'fft')
 
-        a = np.zeros(shape, dtype=dtype)
+        a = mx.zeros(shape, dtype=dtype)
         a[0, 0] = 1.0
         a = xp.asarray(a)
 
@@ -43,7 +43,7 @@ class TestNdimageFourier:
     def test_fourier_gaussian_complex01(self, shape, dtype, dec, xp):
         fft = getattr(xp, 'fft')
 
-        a = np.zeros(shape, dtype=dtype)
+        a = mx.zeros(shape, dtype=dtype)
         a[0, 0] = 1.0
         a = xp.asarray(a)
 
@@ -61,7 +61,7 @@ class TestNdimageFourier:
     def test_fourier_uniform_real01(self, shape, dtype, dec, xp):
         fft = getattr(xp, 'fft')
 
-        a = np.zeros(shape, dtype=dtype)
+        a = mx.zeros(shape, dtype=dtype)
         a[0, 0] = 1.0
         a = xp.asarray(a)
 
@@ -79,7 +79,7 @@ class TestNdimageFourier:
     def test_fourier_uniform_complex01(self, shape, dtype, dec, xp):
         fft = getattr(xp, 'fft')
 
-        a = np.zeros(shape, dtype=dtype)
+        a = mx.zeros(shape, dtype=dtype)
         a[0, 0] = 1.0
         a = xp.asarray(a)
 
@@ -97,7 +97,7 @@ class TestNdimageFourier:
     def test_fourier_shift_real01(self, shape, dtype, dec, xp):
         fft = getattr(xp, 'fft')
 
-        expected = np.arange(shape[0] * shape[1], dtype=dtype).reshape(shape)
+        expected = mx.arange(shape[0] * shape[1], dtype=dtype).reshape(shape)
         expected = xp.asarray(expected)
 
         a = fft.rfft(expected, n=shape[0], axis=0)
@@ -113,7 +113,7 @@ class TestNdimageFourier:
     def test_fourier_shift_complex01(self, shape, dtype, dec, xp):
         fft = getattr(xp, 'fft')
 
-        expected = np.arange(shape[0] * shape[1], dtype=dtype).reshape(shape)
+        expected = mx.arange(shape[0] * shape[1], dtype=dtype).reshape(shape)
         expected = xp.asarray(expected)
 
         a = fft.fft(expected, n=shape[0], axis=0)
@@ -130,7 +130,7 @@ class TestNdimageFourier:
     def test_fourier_ellipsoid_real01(self, shape, dtype, dec, xp):
         fft = getattr(xp, 'fft')
 
-        a = np.zeros(shape, dtype=dtype)
+        a = mx.zeros(shape, dtype=dtype)
         a[0, 0] = 1.0
         a = xp.asarray(a)
 
@@ -148,7 +148,7 @@ class TestNdimageFourier:
     def test_fourier_ellipsoid_complex01(self, shape, dtype, dec, xp):
         fft = getattr(xp, 'fft')
 
-        a = np.zeros(shape, dtype=dtype)
+        a = mx.zeros(shape, dtype=dtype)
         a[0, 0] = 1.0
         a = xp.asarray(a)
 

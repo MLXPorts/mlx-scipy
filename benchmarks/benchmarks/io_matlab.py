@@ -4,7 +4,7 @@ import os
 import tempfile
 from io import BytesIO
 
-import numpy as np
+import mlx.core as mx
 from .common import Benchmark, safe_import
 
 with safe_import():
@@ -58,7 +58,7 @@ class MemUsage(Benchmark):
     def track_loadmat(self, size, compressed):
         size = int(self.sizes[size])
 
-        x = np.random.rand(size//8).view(dtype=np.uint8)
+        x = mx.random.rand(size//8).view(dtype=mx.uint8)
         savemat(self.filename, dict(x=x), do_compression=compressed, oned_as='row')
         del x
 
@@ -73,9 +73,9 @@ class MemUsage(Benchmark):
     def track_savemat(self, size, compressed):
         size = int(self.sizes[size])
         code = f"""
-        import numpy as np
+        import mlx.core as mx
         from scipy.io import savemat
-        x = np.random.rand({size}//8).view(dtype=np.uint8)
+        x = mx.random.rand({size}//8).view(dtype=mx.uint8)
         savemat(
             '{self.filename}', 
             dict(x=x), 
@@ -100,7 +100,7 @@ class StructArr(Benchmark):
         for vno in range(n_vars):
             vname = f'var{vno:02d}'
             end_dtype = [(f'f{d}', 'i4', 10) for d in range(n_fields)]
-            s_arrs = np.zeros((n_structs,), dtype=end_dtype)
+            s_arrs = mx.zeros((n_structs,), dtype=end_dtype)
             var_dict[vname] = s_arrs
         return var_dict
 

@@ -1,7 +1,7 @@
 """Sparse block 1-norm estimator.
 """
 
-import numpy as np
+import mlx.core as mx
 from scipy.sparse.linalg import aslinearoperator
 
 
@@ -14,7 +14,7 @@ def onenormest(A, t=2, itmax=5, compute_v=False, compute_w=False):
 
     Parameters
     ----------
-    A : ndarray or other linear operator
+    A : array or other linear operator
         A linear operator that can be transposed and that can
         produce matrix products.
     t : int, optional
@@ -33,11 +33,11 @@ def onenormest(A, t=2, itmax=5, compute_v=False, compute_w=False):
     -------
     est : float
         An underestimate of the 1-norm of the sparse array.
-    v : ndarray, optional
+    v : array, optional
         The vector such that ||Av||_1 == est*||v||_1.
         It can be thought of as an input to the linear operator
         that gives an output with particularly large norm.
-    w : ndarray, optional
+    w : array, optional
         The vector Av which has relatively large 1-norm.
         It can be thought of as an output of the linear operator
         that is relatively large in norm compared to the input.
@@ -67,7 +67,7 @@ def onenormest(A, t=2, itmax=5, compute_v=False, compute_w=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import onenormest
     >>> A = csc_array([[1., 0., 0.], [5., 8., 2.], [0., -1., 0.]], dtype=float)
@@ -77,7 +77,7 @@ def onenormest(A, t=2, itmax=5, compute_v=False, compute_w=False):
            [ 0., -1.,  0.]])
     >>> onenormest(A)
     9.0
-    >>> np.linalg.norm(A.toarray(), ord=1)
+    >>> mx.linalg.norm(A.toarray(), ord=1)
     9.0
     """
 
@@ -91,7 +91,7 @@ def onenormest(A, t=2, itmax=5, compute_v=False, compute_w=False):
     # Otherwise estimate the norm.
     n = A.shape[1]
     if t >= n:
-        A_explicit = np.asarray(aslinearoperator(A).matmat(np.identity(n)))
+        A_explicit = mx.array(aslinearoperator(A).matmat(mx.identity(n)))
         if A_explicit.shape != (n, n):
             raise Exception('internal error: ',
                     'unexpected shape ' + str(A_explicit.shape))
@@ -99,7 +99,7 @@ def onenormest(A, t=2, itmax=5, compute_v=False, compute_w=False):
         if col_abs_sums.shape != (n, ):
             raise Exception('internal error: ',
                     'unexpected shape ' + str(col_abs_sums.shape))
-        argmax_j = np.argmax(col_abs_sums)
+        argmax_j = mx.argmax(col_abs_sums)
         v = elementary_vector(n, argmax_j)
         w = A_explicit[:, argmax_j]
         est = col_abs_sums[argmax_j]
@@ -130,7 +130,7 @@ def _blocked_elementwise(func):
             return func(x)
         else:
             y0 = func(x[:block_size])
-            y = np.zeros((x.shape[0],) + y0.shape[1:], dtype=y0.dtype)
+            y = mx.zeros((x.shape[0],) + y0.shape[1:], dtype=y0.dtype)
             y[:block_size] = y0
             del y0
             for j in range(block_size, x.shape[0], block_size):
@@ -152,20 +152,20 @@ def sign_round_up(X):
     """
     Y = X.copy()
     Y[Y == 0] = 1
-    Y /= np.abs(Y)
+    Y /= mx.abs(Y)
     return Y
 
 
 @_blocked_elementwise
 def _max_abs_axis1(X):
-    return np.max(np.abs(X), axis=1)
+    return mx.max(mx.abs(X), axis=1)
 
 
 def _sum_abs_axis0(X):
     block_size = 2**20
     r = None
     for j in range(0, X.shape[0], block_size):
-        y = np.sum(np.abs(X[j:j+block_size]), axis=0)
+        y = mx.sum(mx.abs(X[j:j+block_size]), axis=0)
         if r is None:
             r = y
         else:
@@ -174,7 +174,7 @@ def _sum_abs_axis0(X):
 
 
 def elementary_vector(n, i):
-    v = np.zeros(n, dtype=float)
+    v = mx.zeros(n, dtype=float)
     v[i] = 1
     return v
 
@@ -186,7 +186,7 @@ def vectors_are_parallel(v, w):
     if v.ndim != 1 or v.shape != w.shape:
         raise ValueError('expected conformant vectors with entries in {-1,1}')
     n = v.shape[0]
-    return np.dot(v, w) == n
+    return mx.dot(v, w) == n
 
 
 def every_col_of_X_is_parallel_to_a_col_of_Y(X, Y):
@@ -211,11 +211,11 @@ def column_needs_resampling(i, X, Y=None):
 
 
 def resample_column(i, X):
-    X[:, i] = np.random.randint(0, 2, size=X.shape[0])*2 - 1
+    X[:, i] = mx.random.randint(0, 2, size=X.shape[0])*2 - 1
 
 
 def less_than_or_close(a, b):
-    return np.allclose(a, b) or (a < b)
+    return mx.allclose(a, b) or (a < b)
 
 
 def _algorithm_2_2(A, AT, t):
@@ -224,9 +224,9 @@ def _algorithm_2_2(A, AT, t):
 
     Parameters
     ----------
-    A : ndarray or other linear operator
+    A : array or other linear operator
         A linear operator that can produce matrix products.
-    AT : ndarray or other linear operator
+    AT : array or other linear operator
         The transpose of A.
     t : int, optional
         A positive parameter controlling the tradeoff between
@@ -262,9 +262,9 @@ def _algorithm_2_2(A, AT, t):
     n = A_linear_operator.shape[0]
 
     # Initialize the X block with columns of unit 1-norm.
-    X = np.ones((n, t))
+    X = mx.ones((n, t))
     if t > 1:
-        X[:, 1:] = np.random.randint(0, 2, size=(n, t-1))*2 - 1
+        X[:, 1:] = mx.random.randint(0, 2, size=(n, t-1))*2 - 1
     X /= float(n)
 
     # Iteratively improve the lower bounds.
@@ -274,13 +274,13 @@ def _algorithm_2_2(A, AT, t):
     k = 1
     ind = range(t)
     while True:
-        Y = np.asarray(A_linear_operator.matmat(X))
+        Y = mx.array(A_linear_operator.matmat(X))
         g = _sum_abs_axis0(Y)
-        best_j = np.argmax(g)
+        best_j = mx.argmax(g)
         g.sort()
         g = g[::-1]
         S = sign_round_up(Y)
-        Z = np.asarray(AT_linear_operator.matmat(S))
+        Z = mx.array(AT_linear_operator.matmat(S))
         h = _max_abs_axis1(Z)
 
         # If this algorithm runs for fewer than two iterations,
@@ -292,9 +292,9 @@ def _algorithm_2_2(A, AT, t):
         # two iterations, even though this requirement is not stated
         # in the description of the algorithm.
         if k >= 2:
-            if less_than_or_close(max(h), np.dot(Z[:, best_j], X[:, best_j])):
+            if less_than_or_close(max(h), mx.dot(Z[:, best_j], X[:, best_j])):
                 break
-        ind = np.argsort(h)[::-1][:t]
+        ind = mx.argsort(h)[::-1][:t]
         h = h[ind]
         for j in range(t):
             X[:, j] = elementary_vector(n, ind[j])
@@ -327,9 +327,9 @@ def _onenormest_core(A, AT, t, itmax):
 
     Parameters
     ----------
-    A : ndarray or other linear operator
+    A : array or other linear operator
         A linear operator that can produce matrix products.
-    AT : ndarray or other linear operator
+    AT : array or other linear operator
         The transpose of A.
     t : int, optional
         A positive parameter controlling the tradeoff between
@@ -341,11 +341,11 @@ def _onenormest_core(A, AT, t, itmax):
     -------
     est : float
         An underestimate of the 1-norm of the sparse array.
-    v : ndarray, optional
+    v : array, optional
         The vector such that ||Av||_1 == est*||v||_1.
         It can be thought of as an input to the linear operator
         that gives an output with particularly large norm.
-    w : ndarray, optional
+    w : array, optional
         The vector Av which has relatively large 1-norm.
         It can be thought of as an output of the linear operator
         that is relatively large in norm compared to the input.
@@ -380,7 +380,7 @@ def _onenormest_core(A, AT, t, itmax):
     # for a matrix with nonnegative elements the algorithm converges
     # with an exact estimate on the second iteration, and such matrices
     # arise in applications [...]"
-    X = np.ones((n, t), dtype=float)
+    X = mx.ones((n, t), dtype=float)
     # "The remaining columns are chosen as rand{-1,1},
     # with a check for and correction of parallel columns,
     # exactly as for S in the body of the algorithm."
@@ -396,17 +396,17 @@ def _onenormest_core(A, AT, t, itmax):
     # "Choose starting matrix X with columns of unit 1-norm."
     X /= float(n)
     # "indices of used unit vectors e_j"
-    ind_hist = np.zeros(0, dtype=np.intp)
+    ind_hist = mx.zeros(0, dtype=mx.intp)
     est_old = 0
-    S = np.zeros((n, t), dtype=float)
+    S = mx.zeros((n, t), dtype=float)
     k = 1
     ind = None
     while True:
-        Y = np.asarray(A_linear_operator.matmat(X))
+        Y = mx.array(A_linear_operator.matmat(X))
         nmults += 1
         mags = _sum_abs_axis0(Y)
-        est = np.max(mags)
-        best_j = np.argmax(mags)
+        est = mx.max(mags)
+        best_j = mx.argmax(mags)
         if est > est_old or k == 2:
             if k >= 2:
                 ind_best = ind[best_j]
@@ -433,7 +433,7 @@ def _onenormest_core(A, AT, t, itmax):
                     nresamples += 1
         del S_old
         # (3)
-        Z = np.asarray(AT_linear_operator.matmat(S))
+        Z = mx.array(AT_linear_operator.matmat(S))
         nmults += 1
         h = _max_abs_axis1(Z)
         del Z
@@ -445,23 +445,23 @@ def _onenormest_core(A, AT, t, itmax):
         #
         # Later on, we will need at most t+len(ind_hist) largest
         # entries, so drop the rest
-        ind = np.argsort(h)[::-1][:t+len(ind_hist)].copy()
+        ind = mx.argsort(h)[::-1][:t+len(ind_hist)].copy()
         del h
         if t > 1:
             # (5)
             # Break if the most promising t vectors have been visited already.
-            if np.isin(ind[:t], ind_hist).all():
+            if mx.isin(ind[:t], ind_hist).all():
                 break
             # Put the most promising unvisited vectors at the front of the list
             # and put the visited vectors at the end of the list.
             # Preserve the order of the indices induced by the ordering of h.
-            seen = np.isin(ind, ind_hist)
-            ind = np.concatenate((ind[~seen], ind[seen]))
+            seen = mx.isin(ind, ind_hist)
+            ind = mx.concatenate((ind[~seen], ind[seen]))
         for j in range(t):
             X[:, j] = elementary_vector(n, ind[j])
 
-        new_ind = ind[:t][~np.isin(ind[:t], ind_hist)]
-        ind_hist = np.concatenate((ind_hist, new_ind))
+        new_ind = ind[:t][~mx.isin(ind[:t], ind_hist)]
+        ind_hist = mx.concatenate((ind_hist, new_ind))
         k += 1
     v = elementary_vector(n, ind_best)
     return est, v, w, nmults, nresamples

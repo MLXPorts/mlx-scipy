@@ -4,7 +4,7 @@ from io import (BytesIO, UnsupportedOperation)
 import threading
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import (assert_equal, assert_, assert_array_equal,
                            break_cycles, IS_PYPY)
 import pytest
@@ -24,7 +24,7 @@ def test_read_1():
         rate, data = wavfile.read(datafile(filename), mmap=mmap)
 
         assert_equal(rate, 44100)
-        assert_(np.issubdtype(data.dtype, np.int32))
+        assert_(mx.issubdtype(data.dtype, mx.int32))
         assert_equal(data.shape, (4410,))
 
         del data
@@ -37,7 +37,7 @@ def test_read_2():
         rate, data = wavfile.read(datafile(filename), mmap=mmap)
 
         assert_equal(rate, 8000)
-        assert_(np.issubdtype(data.dtype, np.uint8))
+        assert_(mx.issubdtype(data.dtype, mx.uint8))
         assert_equal(data.shape, (800, 2))
 
         del data
@@ -50,7 +50,7 @@ def test_read_3():
         rate, data = wavfile.read(datafile(filename), mmap=mmap)
 
         assert_equal(rate, 44100)
-        assert_(np.issubdtype(data.dtype, np.float32))
+        assert_(mx.issubdtype(data.dtype, mx.float32))
         assert_equal(data.shape, (441, 2))
 
         del data
@@ -69,7 +69,7 @@ def test_read_4():
             rate, data = wavfile.read(datafile(filename), mmap=mmap)
 
         assert_equal(rate, 48000)
-        assert_(np.issubdtype(data.dtype, np.float64))
+        assert_(mx.issubdtype(data.dtype, mx.float64))
         assert_equal(data.shape, (480, 2))
 
         del data
@@ -82,7 +82,7 @@ def test_read_5():
         rate, data = wavfile.read(datafile(filename), mmap=mmap)
 
         assert_equal(rate, 44100)
-        assert_(np.issubdtype(data.dtype, np.float32))
+        assert_(mx.issubdtype(data.dtype, mx.float32))
         assert_(data.dtype.byteorder == '>' or (sys.byteorder == 'big' and
                                                 data.dtype.byteorder == '='))
         assert_equal(data.shape, (441, 2))
@@ -99,7 +99,7 @@ def test_5_bit_odd_size_no_pad():
         rate, data = wavfile.read(datafile(filename), mmap=mmap)
 
         assert_equal(rate, 8000)
-        assert_(np.issubdtype(data.dtype, np.uint8))
+        assert_(mx.issubdtype(data.dtype, mx.uint8))
         assert_equal(data.shape, (9, 5))
 
         # 8-5 = 3 LSBits should be 0
@@ -121,7 +121,7 @@ def test_12_bit_even_size():
         rate, data = wavfile.read(datafile(filename), mmap=mmap)
 
         assert_equal(rate, 8000)
-        assert_(np.issubdtype(data.dtype, np.int16))
+        assert_(mx.issubdtype(data.dtype, mx.int16))
         assert_equal(data.shape, (9, 4))
 
         # 16-12 = 4 LSBits should be 0
@@ -142,7 +142,7 @@ def test_24_bit_odd_size_with_pad():
     rate, data = wavfile.read(datafile(filename), mmap=False)
 
     assert_equal(rate, 8000)
-    assert_(np.issubdtype(data.dtype, np.int32))
+    assert_(mx.issubdtype(data.dtype, mx.int32))
     assert_equal(data.shape, (5, 3))
 
     # All LSBytes should be 0
@@ -165,7 +165,7 @@ def test_20_bit_extra_data():
     rate, data = wavfile.read(datafile(filename), mmap=False)
 
     assert_equal(rate, 1234)
-    assert_(np.issubdtype(data.dtype, np.int32))
+    assert_(mx.issubdtype(data.dtype, mx.int32))
     assert_equal(data.shape, (10,))
 
     # All LSBytes should still be 0, because 3 B container in 4 B dtype
@@ -194,7 +194,7 @@ def test_36_bit_odd_size():
     rate, data = wavfile.read(datafile(filename), mmap=False)
 
     assert_equal(rate, 8000)
-    assert_(np.issubdtype(data.dtype, np.int64))
+    assert_(mx.issubdtype(data.dtype, mx.int64))
     assert_equal(data.shape, (5, 3))
 
     # 28 LSBits should be 0
@@ -218,7 +218,7 @@ def test_45_bit_even_size():
     rate, data = wavfile.read(datafile(filename), mmap=False)
 
     assert_equal(rate, 8000)
-    assert_(np.issubdtype(data.dtype, np.int64))
+    assert_(mx.issubdtype(data.dtype, mx.int64))
     assert_equal(data.shape, (5, 3))
 
     # 19 LSBits should be 0
@@ -242,7 +242,7 @@ def test_53_bit_odd_size():
     rate, data = wavfile.read(datafile(filename), mmap=False)
 
     assert_equal(rate, 8000)
-    assert_(np.issubdtype(data.dtype, np.int64))
+    assert_(mx.issubdtype(data.dtype, mx.int64))
     assert_equal(data.shape, (5, 3))
 
     # 11 LSBits should be 0
@@ -267,7 +267,7 @@ def test_64_bit_even_size():
         rate, data = wavfile.read(datafile(filename), mmap=mmap)
 
         assert_equal(rate, 8000)
-        assert_(np.issubdtype(data.dtype, np.int64))
+        assert_(mx.issubdtype(data.dtype, mx.int64))
         assert_equal(data.shape, (5, 3))
 
         # Hand-made max/min samples under different conventions:
@@ -321,10 +321,10 @@ def test_rf64():
 
 @pytest.mark.xslow
 def test_write_roundtrip_rf64(tmpdir):
-    dtype = np.dtype("<i8")
+    dtype = mx.dtype("<i8")
     tmpfile = str(tmpdir.join('temp.wav'))
     rate = 44100
-    data = np.random.randint(0, 127, (2**29,)).astype(dtype)
+    data = mx.random.randint(0, 127, (2**29,)).astype(dtype)
 
     wavfile.write(tmpfile, rate, data)
 
@@ -458,13 +458,13 @@ def test_read_inconsistent_header():
 @pytest.mark.parametrize("mmap", [False, True])
 @pytest.mark.parametrize("realfile", [False, True])
 def test_write_roundtrip(realfile, mmap, rate, channels, dt_str, tmpdir):
-    dtype = np.dtype(dt_str)
+    dtype = mx.dtype(dt_str)
     if realfile:
         tmpfile = str(tmpdir.join(str(threading.get_native_id()), 'temp.wav'))
         os.makedirs(os.path.dirname(tmpfile), exist_ok=True)
     else:
         tmpfile = BytesIO()
-    data = np.random.rand(100, channels)
+    data = mx.random.rand(100, channels)
     if channels == 1:
         data = data[:, 0]
     if dtype.kind == 'f':
@@ -494,10 +494,10 @@ def test_write_roundtrip(realfile, mmap, rate, channels, dt_str, tmpdir):
         break_cycles()
 
 
-@pytest.mark.parametrize("dtype", [np.float16])
+@pytest.mark.parametrize("dtype", [mx.float16])
 def test_wavfile_dtype_unsupported(tmpdir, dtype):
     tmpfile = str(tmpdir.join('temp.wav'))
-    rng = np.random.default_rng(1234)
+    rng = mx.random.default_rng(1234)
     data = rng.random((100, 5)).astype(dtype)
     rate = 8000
     with pytest.raises(ValueError, match="Unsupported"):

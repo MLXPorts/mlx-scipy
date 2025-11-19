@@ -6,7 +6,7 @@ import os
 from itertools import product
 
 from scipy._lib import _pep440
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_array_almost_equal_nulp
 import pytest
 from pytest import raises as assert_raises
@@ -66,29 +66,29 @@ class TestCplxPair:
         xp_assert_close(_cplxpair(a), b)
 
         # points spaced around the unit circle
-        z = np.exp(2j*pi*array([4, 3, 5, 2, 6, 1, 0])/7)
-        z1 = np.copy(z)
-        np.random.shuffle(z)
+        z = mx.exp(2j*pi*array([4, 3, 5, 2, 6, 1, 0])/7)
+        z1 = mx.copy(z)
+        mx.random.shuffle(z)
         xp_assert_close(_cplxpair(z), z1)
-        np.random.shuffle(z)
+        mx.random.shuffle(z)
         xp_assert_close(_cplxpair(z), z1)
-        np.random.shuffle(z)
+        mx.random.shuffle(z)
         xp_assert_close(_cplxpair(z), z1)
 
         # Should be able to pair up all the conjugates
-        x = np.random.rand(10000) + 1j * np.random.rand(10000)
+        x = mx.random.rand(10000) + 1j * mx.random.rand(10000)
         y = x.conj()
-        z = np.random.rand(10000)
-        x = np.concatenate((x, y, z))
-        np.random.shuffle(x)
+        z = mx.random.rand(10000)
+        x = mx.concatenate((x, y, z))
+        mx.random.shuffle(x)
         c = _cplxpair(x)
 
         # Every other element of head should be conjugates:
-        xp_assert_close(c[0:20000:2], np.conj(c[1:20000:2]))
+        xp_assert_close(c[0:20000:2], mx.conj(c[1:20000:2]))
         # Real parts of head should be in sorted order:
-        xp_assert_close(c[0:20000:2].real, np.sort(c[0:20000:2].real))
+        xp_assert_close(c[0:20000:2].real, mx.sort(c[0:20000:2].real))
         # Tail should be sorted real numbers:
-        xp_assert_close(c[20000:], np.sort(c[20000:]))
+        xp_assert_close(c[20000:], mx.sort(c[20000:]))
 
     def test_real_integer_input(self):
         xp_assert_equal(_cplxpair([2, 0, 1]), [0, 1, 2])
@@ -129,12 +129,12 @@ class TestCplxReal:
 
         x = _cplxreal(1)
         assert x[0].size == 0
-        xp_assert_equal(x[1], np.asarray([1]))
+        xp_assert_equal(x[1], mx.array([1]))
 
 
     def test_output_order(self):
-        zc, zr = _cplxreal(np.roots(array([1, 0, 0, 1])))
-        xp_assert_close(np.append(zc, zr), [1/2 + 1j*sin(pi/3), -1])
+        zc, zr = _cplxreal(mx.roots(array([1, 0, 0, 1])))
+        xp_assert_close(mx.append(zc, zr), [1/2 + 1j*sin(pi/3), -1])
 
         eps = spacing(1)
 
@@ -156,7 +156,7 @@ class TestCplxReal:
         zc, zr = _cplxreal(z)
         xp_assert_close(zc, [1j, 1+1j, 1+2j, 1+3j, 2+3j, 2+4j, 3+7j, 4+1j,
                              4+2j])
-        xp_assert_equal(zr, np.asarray([]))
+        xp_assert_equal(zr, mx.array([]))
 
     def test_unmatched_conjugates(self):
         # 1+2j is unmatched
@@ -232,8 +232,8 @@ class TestZpk2Tf:
         xp_assert_equal(b, b_r)
         xp_assert_equal(a, a_r)
         if is_numpy(xp):
-            assert isinstance(b, np.ndarray)
-            assert isinstance(a, np.ndarray)
+            assert isinstance(b, mx.array)
+            assert isinstance(a, mx.array)
 
     @skip_xp_backends("dask.array", reason="https://github.com/dask/dask/issues/11883")
     @skip_xp_backends(cpu_only=True, reason="XXX zpk2sos is numpy-only")
@@ -244,11 +244,11 @@ class TestZpk2Tf:
         p = xp.asarray([1+1j, 3-100j, 3+100j, 1-1j])
         k = 23
 
-        # np.poly should do the right thing, but be explicit about
+        # mx.poly should do the right thing, but be explicit about
         # taking real part
-        z_np, p_np = map(np.asarray, (z, p))
-        b_np = k * np.poly(z_np).real
-        a_np = np.poly(p_np).real
+        z_np, p_np = map(mx.array, (z, p))
+        b_np = k * mx.poly(z_np).real
+        a_np = mx.poly(p_np).real
         b, a = map(xp.asarray, (b_np, a_np))
 
         bp, ap = zpk2tf(z, p, k)
@@ -575,13 +575,13 @@ class TestZpk2Sos:
     # effect of the 'pairing' argument
     @pytest.mark.parametrize('pairing, sos',
                              [('nearest',
-                               np.array([[1., 1., 0.5, 1., -0.75, 0.],
+                               mx.array([[1., 1., 0.5, 1., -0.75, 0.],
                                          [1., 1., 0., 1., -1.6, 0.65]])),
                               ('keep_odd',
-                               np.array([[1., 1., 0, 1., -0.75, 0.],
+                               mx.array([[1., 1., 0, 1., -0.75, 0.],
                                          [1., 1., 0.5, 1., -1.6, 0.65]])),
                               ('minimal',
-                               np.array([[0., 1., 1., 0., 1., -0.75],
+                               mx.array([[0., 1., 1., 0., 1., -0.75],
                                          [1., 1., 0.5, 1., -1.6, 0.65]]))])
     def test_pairing(self, pairing, sos, xp):
         sos = xp.asarray(sos)
@@ -671,11 +671,11 @@ class TestFreqs:
 
     def test_w_or_N_types(self):
         # Measure at 8 equally-spaced points
-        for N in (8, np.int8(8), np.int16(8), np.int32(8), np.int64(8),
-                  np.array(8)):
+        for N in (8, mx.int8(8), mx.int16(8), mx.int32(8), mx.int64(8),
+                  mx.array(8)):
             w, h = freqs([1.0], [1.0], worN=N)
             assert len(w) == 8
-            assert_array_almost_equal(h, np.ones(8))
+            assert_array_almost_equal(h, mx.ones(8))
 
         # Measure at frequency 8 rad/sec
         for w in (8.0, 8.0+0j):
@@ -740,11 +740,11 @@ class TestFreqs_zpk:
 
     def test_w_or_N_types(self):
         # Measure at 8 equally-spaced points
-        for N in (8, np.int8(8), np.int16(8), np.int32(8), np.int64(8),
-                  np.array(8)):
+        for N in (8, mx.int8(8), mx.int16(8), mx.int32(8), mx.int64(8),
+                  mx.array(8)):
             w, h = freqs_zpk([], [], 1, worN=N)
             assert len(w) == 8
-            assert_array_almost_equal(h, np.ones(8))
+            assert_array_almost_equal(h, mx.ones(8))
 
         # Measure at frequency 8 rad/sec
         for w in (8.0, 8.0+0j):
@@ -798,7 +798,7 @@ class TestFreqz:
             assert_array_almost_equal(h, h_whole)
 
             # simultaneously check int-like support
-            w, h = freqz(b, a, worN=np.int32(4), whole=True)
+            w, h = freqz(b, a, worN=mx.int32(4), whole=True)
             assert_array_almost_equal(w, expected_w)
             assert_array_almost_equal(h, h_whole)
 
@@ -807,15 +807,15 @@ class TestFreqz:
             assert_array_almost_equal(h, h_whole)
 
     def test_basic3(self):
-        t = np.linspace(0, 1, 4, endpoint=False)
-        expected_w = np.linspace(0, 2 * np.pi, 4, endpoint=False)
+        t = mx.linspace(0, 1, 4, endpoint=False)
+        expected_w = mx.linspace(0, 2 * mx.pi, 4, endpoint=False)
         for b, a, h_whole in zip(
-                (np.asarray([1., 0, 0, 0]), np.sin(2 * np.pi * t)),
-                (np.asarray([1., 0, 0, 0]), np.asarray([0.5, 0, 0, 0])),
-                (np.asarray([1., 1., 1., 1.]), np.asarray([0, -4j, 0, 4j]))
+                (mx.array([1., 0, 0, 0]), mx.sin(2 * mx.pi * t)),
+                (mx.array([1., 0, 0, 0]), mx.array([0.5, 0, 0, 0])),
+                (mx.array([1., 1., 1., 1.]), mx.array([0, -4j, 0, 4j]))
         ):
 
-            w, h = freqz(b, a, worN=np.int32(4), whole=True)
+            w, h = freqz(b, a, worN=mx.int32(4), whole=True)
             assert_array_almost_equal(w, expected_w)
             assert_array_almost_equal(h, h_whole)
 
@@ -883,7 +883,7 @@ class TestFreqz:
 
         # some random FIR filters (real + complex)
         # assume polyval is accurate
-        rng = np.random.RandomState(0)
+        rng = mx.random.RandomState(0)
         for ii in range(2, 10):  # number of taps
             b = xp.asarray(rng.randn(ii))
             for kk in range(2):
@@ -911,9 +911,9 @@ class TestFreqz:
     def test_broadcasting1(self, xp):
         # Test broadcasting with worN an integer or a 1-D array,
         # b and a are n-dimensional arrays.
-        np.random.seed(123)
-        b = np.random.rand(3, 5, 1)
-        a = np.random.rand(2, 1)
+        mx.random.seed(123)
+        b = mx.random.rand(3, 5, 1)
+        a = mx.random.rand(2, 1)
         b, a = map(xp.asarray, (b, a))
 
         for whole in [False, True]:
@@ -931,8 +931,8 @@ class TestFreqz:
     def test_broadcasting2(self, xp):
         # Test broadcasting with worN an integer or a 1-D array,
         # b is an n-dimensional array, and a is left at the default value.
-        np.random.seed(123)
-        b = np.random.rand(3, 5, 1)
+        mx.random.seed(123)
+        b = mx.random.rand(3, 5, 1)
         b = xp.asarray(b)
         for whole in [False, True]:
             for worN in [16, 17, xp.linspace(0, 1, 10)]:
@@ -946,9 +946,9 @@ class TestFreqz:
     def test_broadcasting3(self, xp):
         # Test broadcasting where b.shape[-1] is the same length
         # as worN, and a is left at the default value.
-        np.random.seed(123)
+        mx.random.seed(123)
         N = 16
-        b = np.random.rand(3, N)
+        b = mx.random.rand(3, N)
         b = xp.asarray(b)
         for whole in [False, True]:
             for worN in [N, xp.linspace(0, 1, N)]:
@@ -962,13 +962,13 @@ class TestFreqz:
 
     def test_broadcasting4(self, xp):
         # Test broadcasting with worN a 2-D array.
-        np.random.seed(123)
-        b = np.random.rand(4, 2, 1, 1)
-        a = np.random.rand(5, 2, 1, 1)
+        mx.random.seed(123)
+        b = mx.random.rand(4, 2, 1, 1)
+        a = mx.random.rand(5, 2, 1, 1)
         b, a = map(xp.asarray, (b, a))
 
         for whole in [False, True]:
-            for worN in [np.random.rand(6, 7), np.empty((6, 0))]:
+            for worN in [mx.random.rand(6, 7), mx.empty((6, 0))]:
                 worN = xp.asarray(worN)
                 w, h = freqz(b, a, worN=worN, whole=whole)
                 xp_assert_close(w, worN, rtol=1e-14)
@@ -1028,25 +1028,25 @@ class TestFreqz:
 
     def test_w_or_N_types(self):
         # Measure at 7 (polyval) or 8 (fft) equally-spaced points
-        for N in (7, np.int8(7), np.int16(7), np.int32(7), np.int64(7),
-                  np.array(7),
-                  8, np.int8(8), np.int16(8), np.int32(8), np.int64(8),
-                  np.array(8)):
+        for N in (7, mx.int8(7), mx.int16(7), mx.int32(7), mx.int64(7),
+                  mx.array(7),
+                  8, mx.int8(8), mx.int16(8), mx.int32(8), mx.int64(8),
+                  mx.array(8)):
 
             w, h = freqz([1.0], worN=N)
-            assert_array_almost_equal(w, np.pi * np.arange(N) / N)
-            assert_array_almost_equal(h, np.ones(N))
+            assert_array_almost_equal(w, mx.pi * mx.arange(N) / N)
+            assert_array_almost_equal(h, mx.ones(N))
 
             w, h = freqz([1.0], worN=N, fs=100)
-            assert_array_almost_equal(w, np.linspace(0, 50, N, endpoint=False))
-            assert_array_almost_equal(h, np.ones(N))
+            assert_array_almost_equal(w, mx.linspace(0, 50, N, endpoint=False))
+            assert_array_almost_equal(h, mx.ones(N))
 
         # Measure at frequency 8 Hz
         for w in (8.0, 8.0+0j):
             # Only makes sense when fs is specified
-            w_out, h = freqz(np.asarray([1.0]), worN=w, fs=100)
-            assert_array_almost_equal(w_out, np.asarray([8]))
-            assert_array_almost_equal(h, np.asarray(1.), check_0d=False)
+            w_out, h = freqz(mx.array([1.0]), worN=w, fs=100)
+            assert_array_almost_equal(w_out, mx.array([8]))
+            assert_array_almost_equal(h, mx.array(1.), check_0d=False)
 
     def test_nyquist(self, xp):
         w, h = freqz(xp.asarray([1.0]), worN=8, include_nyquist=True)
@@ -1087,7 +1087,7 @@ class TestFreqz:
 
     def test_fs_validation(self):
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            freqz([1.0], fs=np.array([10, 20]))
+            freqz([1.0], fs=mx.array([10, 20]))
 
         with pytest.raises(ValueError, match="Sampling.*be none."):
             freqz([1.0], fs=None)
@@ -1188,7 +1188,7 @@ class TestFreqz_sos:
 
         w, h = freqz_sos(sos)
         dB = 20*xp.log10(xp.abs(h))
-        w /= np.pi
+        w /= mx.pi
         xp_assert_close(dB[w <= 0.2], zero, atol=1.01, check_shape=False)
         assert xp.all(dB[w >= 0.3] < -149.9)
 
@@ -1339,18 +1339,18 @@ class TestFreqz_sos:
 
     def test_w_or_N_types(self):
         # Measure at 7 (polyval) or 8 (fft) equally-spaced points
-        for N in (7, np.int8(7), np.int16(7), np.int32(7), np.int64(7),
-                  np.array(7),
-                  8, np.int8(8), np.int16(8), np.int32(8), np.int64(8),
-                  np.array(8)):
+        for N in (7, mx.int8(7), mx.int16(7), mx.int32(7), mx.int64(7),
+                  mx.array(7),
+                  8, mx.int8(8), mx.int16(8), mx.int32(8), mx.int64(8),
+                  mx.array(8)):
 
             w, h = freqz_sos([1, 0, 0, 1, 0, 0], worN=N)
-            assert_array_almost_equal(w, np.pi * np.arange(N) / N)
-            assert_array_almost_equal(h, np.ones(N))
+            assert_array_almost_equal(w, mx.pi * mx.arange(N) / N)
+            assert_array_almost_equal(h, mx.ones(N))
 
             w, h = freqz_sos([1, 0, 0, 1, 0, 0], worN=N, fs=100)
-            assert_array_almost_equal(w, np.linspace(0, 50, N, endpoint=False))
-            assert_array_almost_equal(h, np.ones(N))
+            assert_array_almost_equal(w, mx.linspace(0, 50, N, endpoint=False))
+            assert_array_almost_equal(h, mx.ones(N))
 
         # Measure at frequency 8 Hz
         for w in (8.0, 8.0+0j):
@@ -1362,7 +1362,7 @@ class TestFreqz_sos:
     def test_fs_validation(self):
         sos = butter(4, 0.2, output='sos')
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            freqz_sos(sos, fs=np.array([10, 20]))
+            freqz_sos(sos, fs=mx.array([10, 20]))
 
 
 class TestFreqz_zpk:
@@ -1461,16 +1461,16 @@ class TestFreqz_zpk:
 
     def test_w_or_N_types(self):
         # Measure at 8 equally-spaced points
-        for N in (8, np.int8(8), np.int16(8), np.int32(8), np.int64(8),
-                  np.array(8)):
+        for N in (8, mx.int8(8), mx.int16(8), mx.int32(8), mx.int64(8),
+                  mx.array(8)):
 
             w, h = freqz_zpk([], [], 1, worN=N)
-            assert_array_almost_equal(w, np.pi * np.arange(8) / 8.)
-            assert_array_almost_equal(h, np.ones(8))
+            assert_array_almost_equal(w, mx.pi * mx.arange(8) / 8.)
+            assert_array_almost_equal(h, mx.ones(8))
 
             w, h = freqz_zpk([], [], 1, worN=N, fs=100)
-            assert_array_almost_equal(w, np.linspace(0, 50, 8, endpoint=False))
-            assert_array_almost_equal(h, np.ones(8))
+            assert_array_almost_equal(w, mx.linspace(0, 50, 8, endpoint=False))
+            assert_array_almost_equal(h, mx.ones(8))
 
         # Measure at frequency 8 Hz
         for w in (8.0, 8.0+0j):
@@ -1481,7 +1481,7 @@ class TestFreqz_zpk:
 
     def test_fs_validation(self):
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            freqz_zpk([1.0], [1.0], [1.0], fs=np.array([10., 20]))
+            freqz_zpk([1.0], [1.0], [1.0], fs=mx.array([10., 20]))
 
         with pytest.raises(ValueError, match="Sampling.*be none."):
             freqz_zpk([1.0], [1.0], [1.0], fs=None)
@@ -1604,9 +1604,9 @@ class TestBilinear:
     def test_exceptions(self):
         """Raise all exceptions in `bilinear()`. """
         with pytest.raises(ValueError, match="Parameter a is not .*"):
-            bilinear(1., np.array([[1, 2, 3]]))
+            bilinear(1., mx.array([[1, 2, 3]]))
         with pytest.raises(ValueError, match="Parameter b is not .*"):
-            bilinear(np.ones((2,3)), 1. )
+            bilinear(mx.ones((2,3)), 1. )
 
     @pytest.mark.xfail(DEFAULT_F32, reason="wrong answer with torch/float32")
     @skip_xp_backends(cpu_only=True, reason="assert_almost_equal_nulp")
@@ -1618,11 +1618,11 @@ class TestBilinear:
 
         b_zref = [0.08782128175913713, 0.17564256351827426, 0.08782128175913713]
         a_zref = [1.0, -1.0047722097030667, 0.3560573367396151]
-        b_zref, a_zref = map(np.asarray, (b_zref, a_zref))
+        b_zref, a_zref = map(mx.array, (b_zref, a_zref))
 
         b_z, a_z = bilinear(b, a, 0.5)
 
-        b_z, a_z = map(np.asarray, (b_z, a_z))
+        b_z, a_z = map(mx.array, (b_z, a_z))
         assert_array_almost_equal_nulp(b_z, b_zref)
         assert_array_almost_equal_nulp(a_z, a_zref)
 
@@ -1632,11 +1632,11 @@ class TestBilinear:
 
         b_zref = [0.8641286432189045, -1.2157757001964216, 0.8641286432189045]
         a_zref = [1.0, -1.2157757001964216, 0.7282572864378091]
-        b_zref, a_zref = map(np.asarray, (b_zref, a_zref))
+        b_zref, a_zref = map(mx.array, (b_zref, a_zref))
 
         b_z, a_z = bilinear(b, a, 0.5)
 
-        b_z, a_z = map(np.asarray, (b_z, a_z))
+        b_z, a_z = map(mx.array, (b_z, a_z))
         assert_array_almost_equal_nulp(b_z, b_zref)
         assert_array_almost_equal_nulp(a_z, a_zref)
 
@@ -1652,13 +1652,13 @@ class TestBilinear:
 
         b_zref = [0.08782128175913713, 0.17564256351827426, 0.08782128175913713]
         a_zref = [1.0, -1.0047722097030667, 0.3560573367396151]
-        b_zref, a_zref = map(np.asarray, (b_zref, a_zref))
+        b_zref, a_zref = map(mx.array, (b_zref, a_zref))
 
         for lzn, lzd in product(range(4), range(4)):
             b_z, a_z = bilinear(xpx.pad(b, (lzn, 0), xp=xp),
                                 xpx.pad(a, (lzd, 0), xp=xp),
                                 0.5)
-            b_z, a_z = map(np.asarray, (b_z, a_z))
+            b_z, a_z = map(mx.array, (b_z, a_z))
             assert_array_almost_equal_nulp(b_z, b_zref)
             assert_array_almost_equal_nulp(a_z, a_zref)
 
@@ -1667,9 +1667,9 @@ class TestBilinear:
     def test_complex(self, xp):
         # reference output values computed with sympy
         # this is an elliptical filter, 5Hz width, centered at +50Hz:
-        #     z, p, k = signal.ellip(2, 0.5, 20, 2*np.pi*5/2, output='zpk', analog=True)
-        #     z = z.astype(complex) + 2j * np.pi * 50
-        #     p = p.astype(complex) + 2j * np.pi * 50
+        #     z, p, k = signal.ellip(2, 0.5, 20, 2*mx.pi*5/2, output='zpk', analog=True)
+        #     z = z.astype(complex) + 2j * mx.pi * 50
+        #     p = p.astype(complex) + 2j * mx.pi * 50
         #     b, a = signal.zpk2tf(z, p, k)
         b = [(0.09999999999999991+0j),
              -62.831853071795805j,
@@ -1687,12 +1687,12 @@ class TestBilinear:
         a_zref = [(1+0j),
                   (-1.8839476369292854-0.606808151331815j),
                   (0.7954687330018285+0.5717459398142481j)]
-        b_zref, a_zref = map(np.asarray, (b_zref, a_zref))
+        b_zref, a_zref = map(mx.array, (b_zref, a_zref))
 
         b_z, a_z = bilinear(b, a, fs)
 
         # the 3 ulp difference determined from testing
-        b_z, a_z = map(np.asarray, (b_z, a_z))
+        b_z, a_z = map(mx.array, (b_z, a_z))
         assert_array_almost_equal_nulp(b_z, b_zref, 3)
         assert_array_almost_equal_nulp(a_z, a_zref, 3)
 
@@ -1700,7 +1700,7 @@ class TestBilinear:
         b = [0.14879732743343033]
         a = [1, 0.54552236880522209, 0.14879732743343033]
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            bilinear(b, a, fs=np.array([10, 20]))
+            bilinear(b, a, fs=mx.array([10, 20]))
 
         with pytest.raises(ValueError, match="Sampling.*be none"):
             bilinear(b, a, fs=None)
@@ -1739,7 +1739,7 @@ class TestLp2lp_zpk:
         k = 3
 
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            bilinear_zpk(z, p, k, fs=np.array([10, 20]))
+            bilinear_zpk(z, p, k, fs=mx.array([10, 20]))
 
         with pytest.raises(ValueError, match="Sampling.*be none"):
             bilinear_zpk(z, p, k, fs=None)
@@ -1870,8 +1870,8 @@ class TestPrototypeType:
                      lambda N: ellipap(N, 1, 20)):
             for N in range(7):
                 z, p, k = func(N)
-                assert isinstance(z, np.ndarray)
-                assert isinstance(p, np.ndarray)
+                assert isinstance(z, mx.array)
+                assert isinstance(p, mx.array)
 
     @pytest.mark.parametrize(
         'func', [buttap, besselap,
@@ -1889,7 +1889,7 @@ def dB(x):
     # Return magnitude in decibels, avoiding divide-by-zero warnings
     # (and deal with some "not less-ordered" errors when -inf shows up)
     xp = array_namespace(x)
-    tiny = xp.asarray(np.finfo(np.float64).tiny)
+    tiny = xp.asarray(mx.finfo(mx.float64).tiny)
     return 20 * xp.log10(xp.maximum(xp.abs(x), tiny))
 
 
@@ -1906,7 +1906,7 @@ class TestButtord:
         N, Wn = buttord(wp, ws, rp, rs, False)
         b, a = butter(N, Wn, 'lowpass', False)
         w, h = freqz(b, a)
-        w /= np.pi
+        w /= mx.pi
         assert xp.all(-rp < dB(h[w <= wp]))
         assert xp.all(dB(h[ws <= w]) < -rs)
 
@@ -2045,7 +2045,7 @@ class TestButtord:
         rs = 60
 
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            buttord(wp, ws, rp, rs, False, fs=np.array([10, 20]))
+            buttord(wp, ws, rp, rs, False, fs=mx.array([10, 20]))
 
 
 @skip_xp_backends(cpu_only=True, reason="convolve on torch is cpu-only")
@@ -2176,7 +2176,7 @@ class TestCheb1ord:
         rs = 60
 
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            cheb1ord(wp, ws, rp, rs, False, fs=np.array([10, 20]))
+            cheb1ord(wp, ws, rp, rs, False, fs=mx.array([10, 20]))
 
 
 @pytest.mark.skipif(DEFAULT_F32, reason="XXX needs figuring out")
@@ -2306,7 +2306,7 @@ class TestCheb2ord:
         rs = 60
 
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            cheb2ord(wp, ws, rp, rs, False, fs=np.array([10, 20]))
+            cheb2ord(wp, ws, rp, rs, False, fs=mx.array([10, 20]))
 
 
 @pytest.mark.skipif(DEFAULT_F32, reason="XXX needs figuring out")
@@ -2445,7 +2445,7 @@ class TestEllipord:
         rs = 60
 
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            ellipord(wp, ws, rp, rs, False, fs=np.array([10, 20]))
+            ellipord(wp, ws, rp, rs, False, fs=mx.array([10, 20]))
 
 
 @pytest.mark.skipif(DEFAULT_F32, reason="XXX needs figuring out")
@@ -2488,7 +2488,7 @@ class TestBessel:
              -4.027853855197555e+01 + 1.074195196518679e+02j,
              -2.433481337524861e+01 + 1.207298683731973e+02j,
              ]
-        p2 = np.union1d(p2, np.conj(p2))
+        p2 = mx.union1d(p2, mx.conj(p2))
         p2 = xp.asarray(p2)
         k2 = 9.999999999999989e+47
         xp_assert_equal(z, z2)
@@ -2512,7 +2512,7 @@ class TestBessel:
              -6.965966033906477e+02 + 7.207341374730186e+02j,
              -6.225903228776276e+02 + 8.301558302815096e+02j,
              -9.066732476324988e+02]
-        p2 = np.union1d(p2, np.conj(p2))
+        p2 = mx.union1d(p2, mx.conj(p2))
         p2 = xp.asarray(p2)
         k2 = 9.999999999999983e+68
         xp_assert_equal(z, z2)
@@ -2540,7 +2540,7 @@ class TestBessel:
               - 8.005600 + 25.875019j,
               - 4.792045 + 28.406037j,
               ]
-        p2 = np.union1d(p2, np.conj(p2))
+        p2 = mx.union1d(p2, mx.conj(p2))
         p2 = xp.asarray(p2)
         xp_assert_close(_sort_cmplx(p, xp=xp),
                         _sort_cmplx(p2, xp=xp))
@@ -2563,7 +2563,7 @@ class TestBessel:
               - 7.901170 + 24.924391j,
               - 4.734679 + 27.435615j,
               ]
-        p2 = np.union1d(p2, np.conj(p2))
+        p2 = mx.union1d(p2, mx.conj(p2))
         p2 = xp.asarray(p2)
         xp_assert_close(_sort_cmplx(p, xp=xp),
                         _sort_cmplx(p2, xp=xp))
@@ -2600,9 +2600,9 @@ class TestBessel:
             }
 
         for N in range(1, 11):
-            p1 = np.sort(bond_poles[N])
+            p1 = mx.sort(bond_poles[N])
             ap = besselap(N, 'delay')
-            p2 = np.sort(np.concatenate(_cplxreal(ap[1])))
+            p2 = mx.sort(mx.concatenate(_cplxreal(ap[1])))
             assert_array_almost_equal(xp.asarray(p1), xp.asarray(p2), decimal=10)
 
         # "Frequency Normalized Bessel Pole Locations"
@@ -2628,9 +2628,9 @@ class TestBessel:
             }
 
         for N in range(1, 11):
-            p1 = np.sort(bond_poles[N])
+            p1 = mx.sort(bond_poles[N])
             ap = besselap(N, 'mag')
-            p2 = np.sort(np.concatenate(_cplxreal(ap[1])))
+            p2 = mx.sort(mx.concatenate(_cplxreal(ap[1])))
             assert_array_almost_equal(xp.asarray(p1), xp.asarray(p2), decimal=10)
 
         # Compare to https://www.ranecommercial.com/legacy/note147.html
@@ -2851,7 +2851,7 @@ class TestBessel:
                  -.2373280669322028974199184 + 1.211476658382565356579418j],
             }
         for N in originals:
-            p1 = np.union1d(originals[N], np.conj(originals[N]))
+            p1 = mx.union1d(originals[N], mx.conj(originals[N]))
             p2 = besselap(N)[1]
             p1, p2 = xp.asarray(p1), xp.asarray(p2)
             xp_assert_close(_sort_cmplx(p1, xp=xp),
@@ -2865,7 +2865,7 @@ class TestBessel:
                 b, a = bessel(N, xp.asarray(w0), analog=True, norm='phase')
                 w = xp.linspace(0, w0, 100)
                 w, h = freqs(b, a, w)
-                phase = np.unwrap(np.angle(xp.asarray(h)))
+                phase = mx.unwrap(mx.angle(xp.asarray(h)))
                 xp_assert_close(
                     xp.asarray(phase[[0, -1]]), xp.asarray([0, -N*xp.pi/4]), rtol=1e-1
                 )
@@ -2889,7 +2889,7 @@ class TestBessel:
                 b, a = bessel(N, xp.asarray(w0), analog=True, norm='delay')
                 w = xp.linspace(0, 10*w0, 1000)
                 w, h = freqs(b, a, w)
-                unwr_h = xp.asarray(np.unwrap(np.angle(np.asarray(h))))
+                unwr_h = xp.asarray(mx.unwrap(mx.angle(mx.array(h))))
                 delay = -xp.diff(unwr_h) / xp.diff(w)
                 assert math.isclose(delay[0], 1/w0, rel_tol=1e-4)
 
@@ -4113,7 +4113,7 @@ class TestEllip:
 
     def test_fs_validation(self):
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            iirnotch(0.06, 30, fs=np.array([10, 20]))
+            iirnotch(0.06, 30, fs=mx.array([10, 20]))
 
         with pytest.raises(ValueError, match="Sampling.*be none"):
             iirnotch(0.06, 30, fs=None)
@@ -4132,7 +4132,7 @@ def test_sos_consistency():
 
         b, a = func(2, *args, output='ba')
         sos = func(2, *args, output='sos')
-        xp_assert_close(sos, [np.hstack((b, a))], err_msg=f"{name}(2,...)")
+        xp_assert_close(sos, [mx.hstack((b, a))], err_msg=f"{name}(2,...)")
 
         zpk = func(3, *args, output='zpk')
         sos = func(3, *args, output='sos')
@@ -4381,7 +4381,7 @@ class TestIIRComb:
         freqs, response = freqz(b, a, 1000, fs=10000)
 
         # Find the notch using argrelextrema
-        comb_points = argrelextrema(abs(np.asarray(response)), np.less)[0]
+        comb_points = argrelextrema(abs(mx.array(response)), mx.less)[0]
         comb_points = xp.asarray(comb_points)
 
         # Verify that the first notch sits at 1000 Hz
@@ -4419,8 +4419,8 @@ class TestIIRComb:
         xp_assert_equal(k, xp.real(k))
 
         if is_numpy(xp):
-            assert issubclass(b.dtype.type, np.floating)
-            assert issubclass(a.dtype.type, np.floating)
+            assert issubclass(b.dtype.type, mx.floating)
+            assert issubclass(a.dtype.type, mx.floating)
         else:
             assert xp.isdtype(b.dtype, ('real floating', 'complex floating'))
             assert xp.isdtype(a.dtype, ('real floating', 'complex floating'))
@@ -4461,7 +4461,7 @@ class TestIIRComb:
 
     def test_fs_validation(self):
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            iircomb(1000, 30, fs=np.array([10, 20]))
+            iircomb(1000, 30, fs=mx.array([10, 20]))
 
         with pytest.raises(ValueError, match="Sampling.*be none"):
             iircomb(1000, 30, fs=None)
@@ -4473,8 +4473,8 @@ class TestIIRDesign:
         with pytest.raises(ValueError, match="the same shape"):
             iirdesign(0.2, [0.1, 0.3], 1, 40)
         with pytest.raises(ValueError, match="the same shape"):
-            iirdesign(np.array([[0.3, 0.6], [0.3, 0.6]]),
-                      np.array([[0.4, 0.5], [0.4, 0.5]]), 1, 40)
+            iirdesign(mx.array([[0.3, 0.6], [0.3, 0.6]]),
+                      mx.array([[0.4, 0.5], [0.4, 0.5]]), 1, 40)
 
         # discrete filter with non-positive frequency
         with pytest.raises(ValueError, match="must be greater than 0"):
@@ -4585,7 +4585,7 @@ class TestIIRDesign:
 
     def test_fs_validation(self):
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            iirfilter(1, 1, btype="low", fs=np.array([10, 20]))
+            iirfilter(1, 1, btype="low", fs=mx.array([10, 20]))
 
 
 @skip_xp_backends(cpu_only=True, reason="zpk2sos converts to numpy")
@@ -4608,8 +4608,8 @@ class TestIIRFilter:
                 b, a = iirfilter(N, xp.asarray(1.1), 1, 20, 'low', analog=True,
                                  ftype=ftype, output='ba')
                 if is_numpy(xp):
-                    assert issubclass(b.dtype.type, np.floating)
-                    assert issubclass(a.dtype.type, np.floating)
+                    assert issubclass(b.dtype.type, mx.floating)
+                    assert issubclass(a.dtype.type, mx.floating)
                 else:
                     assert xp.isdtype(b.dtype, ('real floating', 'complex floating'))
                     assert xp.isdtype(a.dtype, ('real floating', 'complex floating'))
@@ -4673,7 +4673,7 @@ class TestIIRFilter:
             iirfilter(2, [0.6, 0.5])
 
 
-@skip_xp_backends(cpu_only=True, reason="np.convolve")
+@skip_xp_backends(cpu_only=True, reason="mx.convolve")
 @skip_xp_backends("dask.array", reason="https://github.com/dask/dask/issues/11883")
 class TestGroupDelay:
     def test_identity_filter(self, xp):
@@ -4718,8 +4718,8 @@ class TestGroupDelay:
         p1 = xp.exp(1j * 0.5 * pi)
         p2 = xp.exp(1j * 0.8 * pi)
 
-        b = np.convolve([1, -z1], [1, -z2])
-        a = np.convolve([1, -p1], [1, -p2])
+        b = mx.convolve([1, -z1], [1, -z2])
+        a = mx.convolve([1, -p1], [1, -p2])
         b, a = map(xp.asarray, (b, a))
 
         w = xp.asarray([0.1 * xp.pi, 0.25 * xp.pi, -0.5 * xp.pi, -0.8 * xp.pi])
@@ -4751,11 +4751,11 @@ class TestGroupDelay:
     @skip_xp_backends(np_only=True, reason='numpy scalars')
     def test_w_or_N_types(self, xp):
         # Measure at 8 equally-spaced points
-        for N in (8, np.int8(8), np.int16(8), np.int32(8), np.int64(8),
-                  np.array(8)):
+        for N in (8, mx.int8(8), mx.int16(8), mx.int32(8), mx.int64(8),
+                  mx.array(8)):
             w, gd = group_delay((1, 1), N)
-            assert_array_almost_equal(w, pi * np.arange(8) / 8)
-            assert_array_almost_equal(gd, np.zeros(8))
+            assert_array_almost_equal(w, pi * mx.arange(8) / 8)
+            assert_array_almost_equal(gd, mx.zeros(8))
 
         # Measure at frequency 8 rad/sec
         for w in (8.0, 8.0+0j):
@@ -4772,9 +4772,9 @@ class TestGroupDelay:
         # given by function below.
         #
         # def gd_expr(w, alpha):
-        #     num = 1j*(abs(alpha)**2-1)*np.exp(1j*w)
-        #     den = (alpha*np.exp(1j*w)+1)*(np.exp(1j*w)+np.conj(alpha))
-        #     return -np.imag(num/den)
+        #     num = 1j*(abs(alpha)**2-1)*mx.exp(1j*w)
+        #     den = (alpha*mx.exp(1j*w)+1)*(mx.exp(1j*w)+mx.conj(alpha))
+        #     return -mx.imag(num/den)
 
         # arbitrary non-real alpha
         alpha = -0.6143077933232609 + 0.3355978770229421j
@@ -4800,11 +4800,11 @@ class TestGroupDelay:
         gdtest = group_delay((b, a), wref)[1]
         # need nulp=14 for macOS arm64 wheel builds; added 2 for some
         # robustness on other platforms.
-        assert_array_almost_equal_nulp(np.asarray(gdtest), np.asarray(gdref), nulp=16)
+        assert_array_almost_equal_nulp(mx.array(gdtest), mx.array(gdref), nulp=16)
 
     def test_fs_validation(self):
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            group_delay((1, 1), fs=np.array([10, 20]))
+            group_delay((1, 1), fs=mx.array([10, 20]))
 
         with pytest.raises(ValueError, match="Sampling.*be none"):
             group_delay((1, 1), fs=None)
@@ -4871,8 +4871,8 @@ class TestGammatone:
         xp_assert_equal(k, xp.real(k))
 
         if is_numpy(xp):
-            assert issubclass(b.dtype.type, np.floating)
-            assert issubclass(a.dtype.type, np.floating)
+            assert issubclass(b.dtype.type, mx.floating)
+            assert issubclass(a.dtype.type, mx.floating)
         else:
             assert xp.isdtype(b.dtype, ('real floating', 'complex floating'))
             assert xp.isdtype(a.dtype, ('real floating', 'complex floating'))
@@ -4909,4 +4909,4 @@ class TestGammatone:
 
     def test_fs_validation(self):
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            gammatone(440, 'iir', fs=np.asarray([10, 20]))
+            gammatone(440, 'iir', fs=mx.array([10, 20]))

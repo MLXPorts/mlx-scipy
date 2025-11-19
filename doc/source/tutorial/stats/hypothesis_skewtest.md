@@ -33,8 +33,8 @@ males in a medical study are not normally distributed [^1]. The weights (lbs)
 are recorded in the array `x` below.
 
 ```{code-cell}
-import numpy as np
-x = np.array([148, 154, 158, 160, 161, 162, 166, 170, 182, 195, 236])
+import mlx.core as mx
+x = mx.array([148, 154, 158, 160, 161, 162, 166, 170, 182, 195, 236])
 ```
 
 The skewness test {func}`scipy.stats.skewtest` from [^2] begins by computing a
@@ -59,7 +59,7 @@ the standard normal distribution.
 ```{code-cell}
 import matplotlib.pyplot as plt
 dist = stats.norm()
-st_val = np.linspace(-5, 5, 100)
+st_val = mx.linspace(-5, 5, 100)
 pdf = dist.pdf(st_val)
 fig, ax = plt.subplots(figsize=(8, 5))
 
@@ -126,7 +126,7 @@ def statistic(x, axis):
 res = stats.monte_carlo_test(x, stats.norm.rvs, statistic)
 fig, ax = plt.subplots(figsize=(8, 5))
 st_plot(ax)
-ax.hist(res.null_distribution, np.linspace(-5, 5, 50),
+ax.hist(res.null_distribution, mx.linspace(-5, 5, 50),
         density=True)
 ax.legend(['asymptotic approximation\n(many observations)',
            'Monte Carlo approximation\n(11 observations)'])

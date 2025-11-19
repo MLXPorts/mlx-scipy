@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy.sparse import coo_matrix
 from scipy._lib._bunch import _make_tuple_bunch
 
@@ -32,7 +32,7 @@ def crosstab(*args, levels=None, sparse=False):
         `args` that are to be counted.  If any value in the sequences in `args`
         does not occur in the corresponding sequence in `levels`, that value
         is ignored and not counted in the returned array `count`.  The default
-        value of `levels` for ``args[i]`` is ``np.unique(args[i])``
+        value of `levels` for ``args[i]`` is ``mx.unique(args[i])``
     sparse : bool, optional
         If True, return a sparse matrix.  The matrix will be an instance of
         the `scipy.sparse.coo_matrix` class.  Because SciPy's sparse matrices
@@ -44,13 +44,13 @@ def crosstab(*args, levels=None, sparse=False):
     res : CrosstabResult
         An object containing the following attributes:
 
-        elements : tuple of numpy.ndarrays.
+        elements : tuple of mx.arrays.
             Tuple of length ``len(args)`` containing the arrays of elements
             that are counted in `count`.  These can be interpreted as the
             labels of the corresponding dimensions of `count`. If `levels` was
             given, then if ``levels[i]`` is not None, ``elements[i]`` will
             hold the values given in ``levels[i]``.
-        count : numpy.ndarray or scipy.sparse.coo_matrix
+        count : mx.array or scipy.sparse.coo_matrix
             Counts of the unique elements in ``zip(*args)``, stored in an
             array. Also known as a *contingency table* when ``len(args) > 1``.
 
@@ -165,8 +165,8 @@ def crosstab(*args, levels=None, sparse=False):
                          "are allowed.")
 
     if levels is None:
-        # Call np.unique with return_inverse=True on each argument.
-        actual_levels, indices = zip(*[np.unique(a, return_inverse=True)
+        # Call mx.unique with return_inverse=True on each argument.
+        actual_levels, indices = zip(*[mx.unique(a, return_inverse=True)
                                        for a in args])
     else:
         # `levels` is not None...
@@ -174,17 +174,17 @@ def crosstab(*args, levels=None, sparse=False):
             raise ValueError('len(levels) must equal the number of input '
                              'sequences')
 
-        args = [np.asarray(arg) for arg in args]
-        mask = np.zeros((nargs, len0), dtype=np.bool_)
-        inv = np.zeros((nargs, len0), dtype=np.intp)
+        args = [mx.array(arg) for arg in args]
+        mask = mx.zeros((nargs, len0), dtype=mx.bool_)
+        inv = mx.zeros((nargs, len0), dtype=mx.intp)
         actual_levels = []
         for k, (levels_list, arg) in enumerate(zip(levels, args)):
             if levels_list is None:
-                levels_list, inv[k, :] = np.unique(arg, return_inverse=True)
+                levels_list, inv[k, :] = mx.unique(arg, return_inverse=True)
                 mask[k, :] = True
             else:
-                q = arg == np.asarray(levels_list).reshape(-1, 1)
-                mask[k, :] = np.any(q, axis=0)
+                q = arg == mx.array(levels_list).reshape(-1, 1)
+                mask[k, :] = mx.any(q, axis=0)
                 qnz = q.T.nonzero()
                 inv[k, qnz[0]] = qnz[1]
             actual_levels.append(levels_list)
@@ -193,12 +193,12 @@ def crosstab(*args, levels=None, sparse=False):
         indices = tuple(inv[:, mask_all])
 
     if sparse:
-        count = coo_matrix((np.ones(len(indices[0]), dtype=int),
+        count = coo_matrix((mx.ones(len(indices[0]), dtype=int),
                             (indices[0], indices[1])))
         count.sum_duplicates()
     else:
         shape = [len(u) for u in actual_levels]
-        count = np.zeros(shape, dtype=int)
-        np.add.at(count, indices, 1)
+        count = mx.zeros(shape, dtype=int)
+        mx.add.at(count, indices, 1)
 
     return CrosstabResult(actual_levels, count)

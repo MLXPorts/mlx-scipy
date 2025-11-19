@@ -5,7 +5,7 @@ This is in the spirit of code written by Neil Martinsen-Burrell and Joe Zuntz.
 
 """
 import warnings
-import numpy as np
+import mlx.core as mx
 
 __all__ = ['FortranFile', 'FortranEOFError', 'FortranFormattingError']
 
@@ -73,16 +73,16 @@ class FortranFile:
     To create an unformatted sequential Fortran file:
 
     >>> from scipy.io import FortranFile
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> f = FortranFile('test.unf', 'w')
-    >>> f.write_record(np.array([1,2,3,4,5], dtype=np.int32))
-    >>> f.write_record(np.linspace(0,1,20).reshape((5,4)).T)
+    >>> f.write_record(mx.array([1,2,3,4,5], dtype=mx.int32))
+    >>> f.write_record(mx.linspace(0,1,20).reshape((5,4)).T)
     >>> f.close()
 
     To read this file:
 
     >>> f = FortranFile('test.unf', 'r')
-    >>> print(f.read_ints(np.int32))
+    >>> print(f.read_ints(mx.int32))
     [1 2 3 4 5]
     >>> print(f.read_reals(float).reshape((5,4), order="F"))
     [[0.         0.05263158 0.10526316 0.15789474]
@@ -106,11 +106,11 @@ class FortranFile:
         end do
 
     """
-    def __init__(self, filename, mode='r', header_dtype=np.uint32):
+    def __init__(self, filename, mode='r', header_dtype=mx.uint32):
         if header_dtype is None:
             raise ValueError('Must specify dtype')
 
-        header_dtype = np.dtype(header_dtype)
+        header_dtype = mx.dtype(header_dtype)
         if header_dtype.kind != 'u':
             warnings.warn("Given a dtype which is not unsigned.", stacklevel=2)
 
@@ -132,7 +132,7 @@ class FortranFile:
         elif len(b) < n:
             raise FortranFormattingError(
                 "End of file in the middle of the record size")
-        return int(np.frombuffer(b, dtype=self._header_dtype, count=1)[0])
+        return int(mx.frombuffer(b, dtype=self._header_dtype, count=1)[0])
 
     def write_record(self, *items):
         """
@@ -157,10 +157,10 @@ class FortranFile:
         writing them.
 
         """
-        items = tuple(np.asarray(item) for item in items)
+        items = tuple(mx.array(item) for item in items)
         total_size = sum(item.nbytes for item in items)
 
-        nb = np.array([total_size], dtype=self._header_dtype)
+        nb = mx.array([total_size], dtype=self._header_dtype)
 
         nb.tofile(self._fp)
         for item in items:
@@ -178,7 +178,7 @@ class FortranFile:
 
         Returns
         -------
-        data : ndarray
+        data : array
             A 1-D array object.
 
         Raises
@@ -227,7 +227,7 @@ class FortranFile:
             integer :: b(3,4)
             write(1) a, b
 
-            record = f.read_record('<f4', np.dtype(('<i4', (4, 3))))
+            record = f.read_record('<f4', mx.dtype(('<i4', (4, 3))))
             a = record[0]
             b = record[1].T
 
@@ -252,7 +252,7 @@ class FortranFile:
 
         first_size = self._read_size(eof_ok=True)
 
-        dtypes = tuple(np.dtype(dtype) for dtype in dtypes)
+        dtypes = tuple(mx.dtype(dtype) for dtype in dtypes)
         block_size = sum(dtype.itemsize for dtype in dtypes)
 
         num_blocks, remainder = divmod(first_size, block_size)
@@ -269,7 +269,7 @@ class FortranFile:
 
         data = []
         for dtype in dtypes:
-            r = np.fromfile(self._fp, dtype=dtype, count=num_blocks)
+            r = mx.fromfile(self._fp, dtype=dtype, count=num_blocks)
             if len(r) != num_blocks:
                 raise FortranFormattingError(
                     "End of file in the middle of a record")
@@ -304,7 +304,7 @@ class FortranFile:
 
         Returns
         -------
-        data : ndarray
+        data : array
             A 1-D array object.
 
         See Also
@@ -327,7 +327,7 @@ class FortranFile:
 
         Returns
         -------
-        data : ndarray
+        data : array
             A 1-D array object.
 
         See Also

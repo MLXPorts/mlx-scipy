@@ -1,17 +1,17 @@
 from itertools import groupby
 from warnings import warn
-import numpy as np
+import mlx.core as mx
 from scipy.sparse import find, coo_matrix
 
 
-EPS = np.finfo(float).eps
+EPS = mx.finfo(float).eps
 
 
 def validate_first_step(first_step, t0, t_bound):
     """Assert that first_step is valid and return it."""
     if first_step <= 0:
         raise ValueError("`first_step` must be positive.")
-    if first_step > np.abs(t_bound - t0):
+    if first_step > mx.abs(t_bound - t0):
         raise ValueError("`first_step` exceeds bounds.")
     return first_step
 
@@ -44,17 +44,17 @@ def warn_extraneous(extraneous):
 def validate_tol(rtol, atol, n):
     """Validate tolerance values."""
 
-    if np.any(rtol < 100 * EPS):
+    if mx.any(rtol < 100 * EPS):
         warn("At least one element of `rtol` is too small. "
-             f"Setting `rtol = np.maximum(rtol, {100 * EPS})`.",
+             f"Setting `rtol = mx.maximum(rtol, {100 * EPS})`.",
              stacklevel=3)
-        rtol = np.maximum(rtol, 100 * EPS)
+        rtol = mx.maximum(rtol, 100 * EPS)
 
-    atol = np.asarray(atol)
+    atol = mx.array(atol)
     if atol.ndim > 0 and atol.shape != (n,):
         raise ValueError("`atol` has wrong shape.")
 
-    if np.any(atol < 0):
+    if mx.any(atol < 0):
         raise ValueError("`atol` must be positive.")
 
     return rtol, atol
@@ -62,7 +62,7 @@ def validate_tol(rtol, atol, n):
 
 def norm(x):
     """Compute RMS norm."""
-    return np.linalg.norm(x) / x.size ** 0.5
+    return mx.linalg.norm(x) / x.size ** 0.5
 
 
 def select_initial_step(fun, t0, y0, t_bound,
@@ -77,14 +77,14 @@ def select_initial_step(fun, t0, y0, t_bound,
         Right-hand side of the system.
     t0 : float
         Initial value of the independent variable.
-    y0 : ndarray, shape (n,)
+    y0 : array, shape (n,)
         Initial value of the dependent variable.
     t_bound : float
         End-point of integration interval; used to ensure that t0+step<=tbound
         and that fun is only evaluated in the interval [t0,tbound]
     max_step : float
         Maximum allowable step size.
-    f0 : ndarray, shape (n,)
+    f0 : array, shape (n,)
         Initial value of the derivative, i.e., ``fun(t0, y0)``.
     direction : float
         Integration direction.
@@ -107,13 +107,13 @@ def select_initial_step(fun, t0, y0, t_bound,
            Equations I: Nonstiff Problems", Sec. II.4.
     """
     if y0.size == 0:
-        return np.inf
+        return mx.inf
 
     interval_length = abs(t_bound - t0)
     if interval_length == 0.0:
         return 0.0
 
-    scale = atol + np.abs(y0) * rtol
+    scale = atol + mx.abs(y0) * rtol
     d0 = norm(y0 / scale)
     d1 = norm(f0 / scale)
     if d0 < 1e-5 or d1 < 1e-5:
@@ -172,11 +172,11 @@ class OdeSolution:
         Time range of the interpolation.
     """
     def __init__(self, ts, interpolants, alt_segment=False):
-        ts = np.asarray(ts)
-        d = np.diff(ts)
+        ts = mx.array(ts)
+        d = mx.diff(ts)
         # The first case covers integration on zero segment.
         if not ((ts.size == 2 and ts[0] == ts[-1])
-                or np.all(d > 0) or np.all(d < 0)):
+                or mx.all(d > 0) or mx.all(d < 0)):
             raise ValueError("`ts` must be strictly increasing or decreasing.")
 
         self.n_segments = len(interpolants)
@@ -203,7 +203,7 @@ class OdeSolution:
         # Here we preserve a certain symmetry that when t is in self.ts,
         # if alt_segment=False, then we prioritize a segment with a lower
         # index.
-        ind = np.searchsorted(self.ts_sorted, t, side=self.side)
+        ind = mx.searchsorted(self.ts_sorted, t, side=self.side)
 
         segment = min(max(ind - 1, 0), self.n_segments - 1)
         if not self.ascending:
@@ -221,22 +221,22 @@ class OdeSolution:
 
         Returns
         -------
-        y : ndarray, shape (n_states,) or (n_states, n_points)
+        y : array, shape (n_states,) or (n_states, n_points)
             Computed values. Shape depends on whether `t` is a scalar or a
             1-D array.
         """
-        t = np.asarray(t)
+        t = mx.array(t)
 
         if t.ndim == 0:
             return self._call_single(t)
 
-        order = np.argsort(t)
-        reverse = np.empty_like(order)
-        reverse[order] = np.arange(order.shape[0])
+        order = mx.argsort(t)
+        reverse = mx.empty_like(order)
+        reverse[order] = mx.arange(order.shape[0])
         t_sorted = t[order]
 
         # See comment in self._call_single.
-        segments = np.searchsorted(self.ts_sorted, t_sorted, side=self.side)
+        segments = mx.searchsorted(self.ts_sorted, t_sorted, side=self.side)
         segments -= 1
         segments[segments < 0] = 0
         segments[segments > self.n_segments - 1] = self.n_segments - 1
@@ -251,7 +251,7 @@ class OdeSolution:
             ys.append(y)
             group_start = group_end
 
-        ys = np.hstack(ys)
+        ys = mx.hstack(ys)
         ys = ys[:, reverse]
 
         return ys
@@ -276,7 +276,7 @@ def num_jac(fun, t, y, f, threshold, factor, sparsity=None):
     A special feature of this function is the ability to correct the step
     size from iteration to iteration. The main idea is to keep the finite
     difference significantly separated from its round-off error which
-    approximately equals ``EPS * np.abs(f)``. It reduces a possibility of a
+    approximately equals ``EPS * mx.abs(f)``. It reduces a possibility of a
     huge error and assures that the estimated derivative are reasonably close
     to the true values (i.e., the finite difference approximation is at least
     qualitatively reflects the structure of the true Jacobian).
@@ -287,15 +287,15 @@ def num_jac(fun, t, y, f, threshold, factor, sparsity=None):
         Right-hand side of the system implemented in a vectorized fashion.
     t : float
         Current time.
-    y : ndarray, shape (n,)
+    y : array, shape (n,)
         Current state.
-    f : ndarray, shape (n,)
+    f : array, shape (n,)
         Value of the right hand side at (t, y).
     threshold : float
         Threshold for `y` value used for computing the step size as
-        ``factor * np.maximum(np.abs(y), threshold)``. Typically, the value of
+        ``factor * mx.maximum(mx.abs(y), threshold)``. Typically, the value of
         absolute tolerance (atol) for a solver should be passed as `threshold`.
-    factor : ndarray with shape (n,) or None
+    factor : array with shape (n,) or None
         Factor to use for computing the step size. Pass None for the very
         evaluation, then use the value returned from this function.
     sparsity : tuple (structure, groups) or None
@@ -303,31 +303,31 @@ def num_jac(fun, t, y, f, threshold, factor, sparsity=None):
 
     Returns
     -------
-    J : ndarray or csc_matrix, shape (n, n)
+    J : array or csc_matrix, shape (n, n)
         Jacobian matrix.
-    factor : ndarray, shape (n,)
+    factor : array, shape (n,)
         Suggested `factor` for the next evaluation.
     """
-    y = np.asarray(y)
+    y = mx.array(y)
     n = y.shape[0]
     if n == 0:
-        return np.empty((0, 0)), factor
+        return mx.empty((0, 0)), factor
 
     if factor is None:
-        factor = np.full(n, EPS ** 0.5)
+        factor = mx.full(n, EPS ** 0.5)
     else:
         factor = factor.copy()
 
     # Direct the step as ODE dictates, hoping that such a step won't lead to
     # a problematic region. For complex ODEs it makes sense to use the real
     # part of f as we use steps along real axis.
-    f_sign = 2 * (np.real(f) >= 0).astype(float) - 1
-    y_scale = f_sign * np.maximum(threshold, np.abs(y))
+    f_sign = 2 * (mx.real(f) >= 0).astype(float) - 1
+    y_scale = f_sign * mx.maximum(threshold, mx.abs(y))
     h = (y + factor * y_scale) - y
 
     # Make sure that the step is not 0 to start with. Not likely it will be
     # executed often.
-    for i in np.nonzero(h == 0)[0]:
+    for i in mx.nonzero(h == 0)[0]:
         while h[i] == 0:
             factor[i] *= 10
             h[i] = (y[i] + factor[i] * y_scale[i]) - y[i]
@@ -342,30 +342,30 @@ def num_jac(fun, t, y, f, threshold, factor, sparsity=None):
 
 def _dense_num_jac(fun, t, y, f, h, factor, y_scale):
     n = y.shape[0]
-    h_vecs = np.diag(h)
+    h_vecs = mx.diag(h)
     f_new = fun(t, y[:, None] + h_vecs)
     diff = f_new - f[:, None]
-    max_ind = np.argmax(np.abs(diff), axis=0)
-    r = np.arange(n)
-    max_diff = np.abs(diff[max_ind, r])
-    scale = np.maximum(np.abs(f[max_ind]), np.abs(f_new[max_ind, r]))
+    max_ind = mx.argmax(mx.abs(diff), axis=0)
+    r = mx.arange(n)
+    max_diff = mx.abs(diff[max_ind, r])
+    scale = mx.maximum(mx.abs(f[max_ind]), mx.abs(f_new[max_ind, r]))
 
     diff_too_small = max_diff < NUM_JAC_DIFF_REJECT * scale
-    if np.any(diff_too_small):
-        ind, = np.nonzero(diff_too_small)
+    if mx.any(diff_too_small):
+        ind, = mx.nonzero(diff_too_small)
         new_factor = NUM_JAC_FACTOR_INCREASE * factor[ind]
         h_new = (y[ind] + new_factor * y_scale[ind]) - y[ind]
         h_vecs[ind, ind] = h_new
         f_new = fun(t, y[:, None] + h_vecs[:, ind])
         diff_new = f_new - f[:, None]
-        max_ind = np.argmax(np.abs(diff_new), axis=0)
-        r = np.arange(ind.shape[0])
-        max_diff_new = np.abs(diff_new[max_ind, r])
-        scale_new = np.maximum(np.abs(f[max_ind]), np.abs(f_new[max_ind, r]))
+        max_ind = mx.argmax(mx.abs(diff_new), axis=0)
+        r = mx.arange(ind.shape[0])
+        max_diff_new = mx.abs(diff_new[max_ind, r])
+        scale_new = mx.maximum(mx.abs(f[max_ind]), mx.abs(f_new[max_ind, r]))
 
         update = max_diff[ind] * scale_new < max_diff_new * scale[ind]
-        if np.any(update):
-            update, = np.nonzero(update)
+        if mx.any(update):
+            update, = mx.nonzero(update)
             update_ind = ind[update]
             factor[update_ind] = new_factor[update]
             h[update_ind] = h_new[update]
@@ -377,17 +377,17 @@ def _dense_num_jac(fun, t, y, f, h, factor, y_scale):
 
     factor[max_diff < NUM_JAC_DIFF_SMALL * scale] *= NUM_JAC_FACTOR_INCREASE
     factor[max_diff > NUM_JAC_DIFF_BIG * scale] *= NUM_JAC_FACTOR_DECREASE
-    factor = np.maximum(factor, NUM_JAC_MIN_FACTOR)
+    factor = mx.maximum(factor, NUM_JAC_MIN_FACTOR)
 
     return diff, factor
 
 
 def _sparse_num_jac(fun, t, y, f, h, factor, y_scale, structure, groups):
     n = y.shape[0]
-    n_groups = np.max(groups) + 1
-    h_vecs = np.empty((n_groups, n))
+    n_groups = mx.max(groups) + 1
+    h_vecs = mx.empty((n_groups, n))
     for group in range(n_groups):
-        e = np.equal(group, groups)
+        e = mx.equal(group, groups)
         h_vecs[group] = h * e
     h_vecs = h_vecs.T
 
@@ -396,25 +396,25 @@ def _sparse_num_jac(fun, t, y, f, h, factor, y_scale, structure, groups):
 
     i, j, _ = find(structure)
     diff = coo_matrix((df[i, groups[j]], (i, j)), shape=(n, n)).tocsc()
-    max_ind = np.array(abs(diff).argmax(axis=0)).ravel()
-    r = np.arange(n)
-    max_diff = np.asarray(np.abs(diff[max_ind, r])).ravel()
-    scale = np.maximum(np.abs(f[max_ind]),
-                       np.abs(f_new[max_ind, groups[r]]))
+    max_ind = mx.array(abs(diff).argmax(axis=0)).ravel()
+    r = mx.arange(n)
+    max_diff = mx.array(mx.abs(diff[max_ind, r])).ravel()
+    scale = mx.maximum(mx.abs(f[max_ind]),
+                       mx.abs(f_new[max_ind, groups[r]]))
 
     diff_too_small = max_diff < NUM_JAC_DIFF_REJECT * scale
-    if np.any(diff_too_small):
-        ind, = np.nonzero(diff_too_small)
+    if mx.any(diff_too_small):
+        ind, = mx.nonzero(diff_too_small)
         new_factor = NUM_JAC_FACTOR_INCREASE * factor[ind]
         h_new = (y[ind] + new_factor * y_scale[ind]) - y[ind]
-        h_new_all = np.zeros(n)
+        h_new_all = mx.zeros(n)
         h_new_all[ind] = h_new
 
-        groups_unique = np.unique(groups[ind])
-        groups_map = np.empty(n_groups, dtype=int)
-        h_vecs = np.empty((groups_unique.shape[0], n))
+        groups_unique = mx.unique(groups[ind])
+        groups_map = mx.empty(n_groups, dtype=int)
+        h_vecs = mx.empty((groups_unique.shape[0], n))
         for k, group in enumerate(groups_unique):
-            e = np.equal(group, groups)
+            e = mx.equal(group, groups)
             h_vecs[k] = h_new_all * e
             groups_map[group] = k
         h_vecs = h_vecs.T
@@ -425,16 +425,16 @@ def _sparse_num_jac(fun, t, y, f, h, factor, y_scale, structure, groups):
         diff_new = coo_matrix((df[i, groups_map[groups[ind[j]]]],
                                (i, j)), shape=(n, ind.shape[0])).tocsc()
 
-        max_ind_new = np.array(abs(diff_new).argmax(axis=0)).ravel()
-        r = np.arange(ind.shape[0])
-        max_diff_new = np.asarray(np.abs(diff_new[max_ind_new, r])).ravel()
-        scale_new = np.maximum(
-            np.abs(f[max_ind_new]),
-            np.abs(f_new[max_ind_new, groups_map[groups[ind]]]))
+        max_ind_new = mx.array(abs(diff_new).argmax(axis=0)).ravel()
+        r = mx.arange(ind.shape[0])
+        max_diff_new = mx.array(mx.abs(diff_new[max_ind_new, r])).ravel()
+        scale_new = mx.maximum(
+            mx.abs(f[max_ind_new]),
+            mx.abs(f_new[max_ind_new, groups_map[groups[ind]]]))
 
         update = max_diff[ind] * scale_new < max_diff_new * scale[ind]
-        if np.any(update):
-            update, = np.nonzero(update)
+        if mx.any(update):
+            update, = mx.nonzero(update)
             update_ind = ind[update]
             factor[update_ind] = new_factor[update]
             h[update_ind] = h_new[update]
@@ -442,10 +442,10 @@ def _sparse_num_jac(fun, t, y, f, h, factor, y_scale, structure, groups):
             scale[update_ind] = scale_new[update]
             max_diff[update_ind] = max_diff_new[update]
 
-    diff.data /= np.repeat(h, np.diff(diff.indptr))
+    diff.data /= mx.repeat(h, mx.diff(diff.indptr))
 
     factor[max_diff < NUM_JAC_DIFF_SMALL * scale] *= NUM_JAC_FACTOR_INCREASE
     factor[max_diff > NUM_JAC_DIFF_BIG * scale] *= NUM_JAC_FACTOR_DECREASE
-    factor = np.maximum(factor, NUM_JAC_MIN_FACTOR)
+    factor = mx.maximum(factor, NUM_JAC_MIN_FACTOR)
 
     return diff, factor

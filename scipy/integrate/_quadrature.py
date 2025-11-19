@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import math
 import warnings
 from collections import namedtuple
@@ -48,7 +48,7 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
 
     Returns
     -------
-    trapezoid : float or ndarray
+    trapezoid : float or array
         Definite integral of `y` = n-dimensional array as approximated along
         a single axis by the trapezoidal rule. If `y` is a 1-dimensional array,
         then the result is a float. If `n` is greater than 1, then the result
@@ -77,7 +77,7 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
     --------
     Use the trapezoidal rule on evenly spaced points:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import integrate
     >>> integrate.trapezoid([1, 2, 3])
     4.0
@@ -98,7 +98,7 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
     More generally ``x`` is used to integrate along a parametric curve. We can
     estimate the integral :math:`\int_0^1 x^2 = 1/3` using:
 
-    >>> x = np.linspace(0, 1, num=50)
+    >>> x = mx.linspace(0, 1, num=50)
     >>> y = x**2
     >>> integrate.trapezoid(y, x)
     0.33340274885464394
@@ -106,14 +106,14 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
     Or estimate the area of a circle, noting we repeat the sample which closes
     the curve:
 
-    >>> theta = np.linspace(0, 2 * np.pi, num=1000, endpoint=True)
-    >>> integrate.trapezoid(np.cos(theta), x=np.sin(theta))
+    >>> theta = mx.linspace(0, 2 * mx.pi, num=1000, endpoint=True)
+    >>> integrate.trapezoid(mx.cos(theta), x=mx.sin(theta))
     3.141571941375841
 
     ``trapezoid`` can be applied along a specified axis to do multiple
     computations in one call:
 
-    >>> a = np.arange(6).reshape(2, 3)
+    >>> a = mx.arange(6).reshape(2, 3)
     >>> a
     array([[0, 1, 2],
            [3, 4, 5]])
@@ -153,7 +153,7 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
             axis=axis, dtype=result_dtype
         )
     except ValueError:
-        # Operations didn't work, cast to ndarray
+        # Operations didn't work, cast to array
         d = xp.asarray(d)
         y = xp.asarray(y)
         ret = xp.sum(
@@ -220,7 +220,7 @@ def fixed_quad(func, a, b, args=(), n=5):
     Examples
     --------
     >>> from scipy import integrate
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> f = lambda x: x**8
     >>> integrate.fixed_quad(f, 0.0, 1.0, n=4)
     (0.1110884353741496, None)
@@ -229,21 +229,21 @@ def fixed_quad(func, a, b, args=(), n=5):
     >>> print(1/9.0)  # analytical result
     0.1111111111111111
 
-    >>> integrate.fixed_quad(np.cos, 0.0, np.pi/2, n=4)
+    >>> integrate.fixed_quad(mx.cos, 0.0, mx.pi/2, n=4)
     (0.9999999771971152, None)
-    >>> integrate.fixed_quad(np.cos, 0.0, np.pi/2, n=5)
+    >>> integrate.fixed_quad(mx.cos, 0.0, mx.pi/2, n=5)
     (1.000000000039565, None)
-    >>> np.sin(np.pi/2)-np.sin(0)  # analytical result
+    >>> mx.sin(mx.pi/2)-mx.sin(0)  # analytical result
     1.0
 
     """
     x, w = _cached_roots_legendre(n)
-    x = np.real(x)
-    if np.isinf(a) or np.isinf(b):
+    x = mx.real(x)
+    if mx.isinf(a) or mx.isinf(b):
         raise ValueError("Gaussian quadrature is only available for "
                          "finite limits.")
     y = (b-a)*(x+1)/2.0 + a
-    return (b-a)/2.0 * np.sum(w*func(y, *args), axis=-1), None
+    return (b-a)/2.0 * mx.sum(w*func(y, *args), axis=-1), None
 
 
 def tupleset(t, i, value):
@@ -275,7 +275,7 @@ def cumulative_trapezoid(y, x=None, dx=1.0, axis=-1, initial=None):
 
     Returns
     -------
-    res : ndarray
+    res : array
         The result of cumulative integration of `y` along `axis`.
         If `initial` is None, the shape is such that the axis of integration
         has one less value than `y`. If `initial` is given, the shape is equal
@@ -294,10 +294,10 @@ def cumulative_trapezoid(y, x=None, dx=1.0, axis=-1, initial=None):
     Examples
     --------
     >>> from scipy import integrate
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
 
-    >>> x = np.linspace(-2, 2, num=20)
+    >>> x = mx.linspace(-2, 2, num=20)
     >>> y = x
     >>> y_int = integrate.cumulative_trapezoid(y, x, initial=0)
     >>> plt.plot(x, y_int, 'ro', x, y[0] + 0.5 * x**2, 'b-')
@@ -338,7 +338,7 @@ def cumulative_trapezoid(y, x=None, dx=1.0, axis=-1, initial=None):
     if initial is not None:
         if initial != 0:
             raise ValueError("`initial` must be `None` or `0`.")
-        if not np.isscalar(initial):
+        if not mx.isscalar(initial):
             raise ValueError("`initial` parameter should be a scalar.")
 
         shape = list(res.shape)
@@ -360,29 +360,29 @@ def _basic_simpson(y, start, stop, x, dx, axis):
     slice2 = tupleset(slice_all, axis, slice(start+2, stop+2, step))
 
     if x is None:  # Even-spaced Simpson's rule.
-        result = np.sum(y[slice0] + 4.0*y[slice1] + y[slice2], axis=axis)
+        result = mx.sum(y[slice0] + 4.0*y[slice1] + y[slice2], axis=axis)
         result *= dx / 3.0
     else:
         # Account for possibly different spacings.
         #    Simpson's rule changes a bit.
-        h = np.diff(x, axis=axis)
+        h = mx.diff(x, axis=axis)
         sl0 = tupleset(slice_all, axis, slice(start, stop, step))
         sl1 = tupleset(slice_all, axis, slice(start+1, stop+1, step))
         h0 = h[sl0].astype(float, copy=False)
         h1 = h[sl1].astype(float, copy=False)
         hsum = h0 + h1
         hprod = h0 * h1
-        h0divh1 = np.true_divide(h0, h1, out=np.zeros_like(h0), where=h1 != 0)
+        h0divh1 = mx.true_divide(h0, h1, out=mx.zeros_like(h0), where=h1 != 0)
         tmp = hsum/6.0 * (y[slice0] *
-                          (2.0 - np.true_divide(1.0, h0divh1,
-                                                out=np.zeros_like(h0divh1),
+                          (2.0 - mx.true_divide(1.0, h0divh1,
+                                                out=mx.zeros_like(h0divh1),
                                                 where=h0divh1 != 0)) +
                           y[slice1] * (hsum *
-                                       np.true_divide(hsum, hprod,
-                                                      out=np.zeros_like(hsum),
+                                       mx.true_divide(hsum, hprod,
+                                                      out=mx.zeros_like(hsum),
                                                       where=hprod != 0)) +
                           y[slice2] * (2.0 - h0divh1))
-        result = np.sum(tmp, axis=axis)
+        result = mx.sum(tmp, axis=axis)
     return result
 
 
@@ -435,27 +435,27 @@ def simpson(y, x=None, *, dx=1.0, axis=-1):
     Examples
     --------
     >>> from scipy import integrate
-    >>> import numpy as np
-    >>> x = np.arange(0, 10)
-    >>> y = np.arange(0, 10)
+    >>> import mlx.core as mx
+    >>> x = mx.arange(0, 10)
+    >>> y = mx.arange(0, 10)
 
     >>> integrate.simpson(y, x=x)
     40.5
 
-    >>> y = np.power(x, 3)
+    >>> y = mx.power(x, 3)
     >>> integrate.simpson(y, x=x)
     1640.5
     >>> integrate.quad(lambda x: x**3, 0, 9)[0]
     1640.25
 
     """
-    y = np.asarray(y)
+    y = mx.array(y)
     nd = len(y.shape)
     N = y.shape[axis]
     last_dx = dx
     returnshape = 0
     if x is not None:
-        x = np.asarray(x)
+        x = mx.array(x)
         if len(x.shape) == 1:
             shapex = [1] * nd
             shapex[axis] = x.shape[0]
@@ -491,15 +491,15 @@ def simpson(y, x=None, *, dx=1.0, axis=-1):
             slice2 = tupleset(slice_all, axis, -2)
             slice3 = tupleset(slice_all, axis, -3)
 
-            h = np.asarray([dx, dx], dtype=np.float64)
+            h = mx.array([dx, dx], dtype=mx.float64)
             if x is not None:
                 # grab the last two spacings from the appropriate axis
                 hm2 = tupleset(slice_all, axis, slice(-2, -1, 1))
                 hm1 = tupleset(slice_all, axis, slice(-1, None, 1))
 
-                diffs = np.float64(np.diff(x, axis=axis))
-                h = [np.squeeze(diffs[hm2], axis=axis),
-                     np.squeeze(diffs[hm1], axis=axis)]
+                diffs = mx.float64(mx.diff(x, axis=axis))
+                h = [mx.squeeze(diffs[hm2], axis=axis),
+                     mx.squeeze(diffs[hm1], axis=axis)]
 
             # This is the correction for the last interval according to
             # Cartwright.
@@ -513,28 +513,28 @@ def simpson(y, x=None, *, dx=1.0, axis=-1):
             # the values shown.
             num = 2 * h[1] ** 2 + 3 * h[0] * h[1]
             den = 6 * (h[1] + h[0])
-            alpha = np.true_divide(
+            alpha = mx.true_divide(
                 num,
                 den,
-                out=np.zeros_like(den),
+                out=mx.zeros_like(den),
                 where=den != 0
             )
 
             num = h[1] ** 2 + 3.0 * h[0] * h[1]
             den = 6 * h[0]
-            beta = np.true_divide(
+            beta = mx.true_divide(
                 num,
                 den,
-                out=np.zeros_like(den),
+                out=mx.zeros_like(den),
                 where=den != 0
             )
 
             num = 1 * h[1] ** 3
             den = 6 * h[0] * (h[0] + h[1])
-            eta = np.true_divide(
+            eta = mx.true_divide(
                 num,
                 den,
-                out=np.zeros_like(den),
+                out=mx.zeros_like(den),
                 where=den != 0
             )
 
@@ -549,11 +549,11 @@ def simpson(y, x=None, *, dx=1.0, axis=-1):
 
 
 def _cumulatively_sum_simpson_integrals(
-    y: np.ndarray,
-    dx: np.ndarray,
-    integration_func: Callable[[np.ndarray, np.ndarray], np.ndarray],
+    y: mx.array,
+    dx: mx.array,
+    integration_func: Callable[[mx.array, mx.array], mx.array],
     xp
-) -> np.ndarray:
+) -> mx.array:
     """Calculate cumulative sum of Simpson integrals.
     Takes as input the integration function to be used.
     The integration_func is assumed to return the cumulative sum using
@@ -577,7 +577,7 @@ def _cumulatively_sum_simpson_integrals(
     return res
 
 
-def _cumulative_simpson_equal_intervals(y: np.ndarray, dx: np.ndarray) -> np.ndarray:
+def _cumulative_simpson_equal_intervals(y: mx.array, dx: mx.array) -> mx.array:
     """Calculate the Simpson integrals for all h1 intervals assuming equal interval
     widths. The function can also be used to calculate the integral for all
     h2 intervals by reversing the inputs, `y` and `dx`.
@@ -591,7 +591,7 @@ def _cumulative_simpson_equal_intervals(y: np.ndarray, dx: np.ndarray) -> np.nda
     return d / 3 * (5 * f1 / 4 + 2 * f2 - f3 / 4)
 
 
-def _cumulative_simpson_unequal_intervals(y: np.ndarray, dx: np.ndarray) -> np.ndarray:
+def _cumulative_simpson_unequal_intervals(y: mx.array, dx: mx.array) -> mx.array:
     """Calculate the Simpson integrals for all h1 intervals assuming unequal interval
     widths. The function can also be used to calculate the integral for all
     h2 intervals by reversing the inputs, `y` and `dx`.
@@ -650,7 +650,7 @@ def cumulative_simpson(y, *, x=None, dx=1.0, axis=-1, initial=None):
 
     Returns
     -------
-    res : ndarray
+    res : array
         The result of cumulative integration of `y` along `axis`.
         If `initial` is None, the shape is such that the axis of integration
         has one less value than `y`. If `initial` is given, the shape is equal
@@ -707,9 +707,9 @@ def cumulative_simpson(y, *, x=None, dx=1.0, axis=-1, initial=None):
     Examples
     --------
     >>> from scipy import integrate
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(-2, 2, num=20)
+    >>> x = mx.linspace(-2, 2, num=20)
     >>> y = x**2
     >>> y_int = integrate.cumulative_simpson(y, x=x, initial=0)
     >>> fig, ax = plt.subplots()
@@ -722,16 +722,16 @@ def cumulative_simpson(y, *, x=None, dx=1.0, axis=-1, initial=None):
     not identical.
 
     >>> def cumulative_simpson_reference(y, x):
-    ...     return np.asarray([integrate.simpson(y[:i], x=x[:i])
+    ...     return mx.array([integrate.simpson(y[:i], x=x[:i])
     ...                        for i in range(2, len(y) + 1)])
     >>>
-    >>> rng = np.random.default_rng(354673834679465)
+    >>> rng = mx.random.default_rng(354673834679465)
     >>> x, y = rng.random(size=(2, 10))
     >>> x.sort()
     >>>
     >>> res = integrate.cumulative_simpson(y, x=x)
     >>> ref = cumulative_simpson_reference(y, x)
-    >>> equal = np.abs(res - ref) < 1e-15
+    >>> equal = mx.abs(res - ref) < 1e-15
     >>> equal  # not equal when `simpson` has even number of subintervals
     array([False,  True, False,  True, False,  True, False,  True,  True])
 
@@ -822,7 +822,7 @@ def romb(y, dx=1.0, axis=-1, show=False):
 
     Returns
     -------
-    romb : ndarray
+    romb : array
         The integrated result for `axis`.
 
     See Also
@@ -837,14 +837,14 @@ def romb(y, dx=1.0, axis=-1, show=False):
     Examples
     --------
     >>> from scipy import integrate
-    >>> import numpy as np
-    >>> x = np.arange(10, 14.25, 0.25)
-    >>> y = np.arange(3, 12)
+    >>> import mlx.core as mx
+    >>> x = mx.arange(10, 14.25, 0.25)
+    >>> y = mx.arange(3, 12)
 
     >>> integrate.romb(y)
     56.0
 
-    >>> y = np.sin(np.power(x, 2.5))
+    >>> y = mx.sin(mx.power(x, 2.5))
     >>> integrate.romb(y)
     -0.742561336672229
 
@@ -896,7 +896,7 @@ def romb(y, dx=1.0, axis=-1, show=False):
         h /= 2.0
 
     if show:
-        if not np.isscalar(R[(0, 0)]):
+        if not mx.isscalar(R[(0, 0)]):
             print("*** Printing table only supported for integrals" +
                   " of a single data set.")
         else:
@@ -1012,7 +1012,7 @@ def newton_cotes(rn, equal=0):
 
     Returns
     -------
-    an : ndarray
+    an : array
         1-D array of weights to apply to the function at the provided sample
         positions.
     B : float
@@ -1028,17 +1028,17 @@ def newton_cotes(rn, equal=0):
     Compute the integral of sin(x) in [0, :math:`\pi`]:
 
     >>> from scipy.integrate import newton_cotes
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> def f(x):
-    ...     return np.sin(x)
+    ...     return mx.sin(x)
     >>> a = 0
-    >>> b = np.pi
+    >>> b = mx.pi
     >>> exact = 2
     >>> for N in [2, 4, 6, 8, 10]:
-    ...     x = np.linspace(a, b, N + 1)
+    ...     x = mx.linspace(a, b, N + 1)
     ...     an, B = newton_cotes(N, 1)
     ...     dx = (b - a) / N
-    ...     quad = dx * np.sum(an * f(x))
+    ...     quad = dx * mx.sum(an * f(x))
     ...     error = abs(quad - exact)
     ...     print('{:2d}  {:10.9f}  {:.5e}'.format(N, quad, error))
     ...
@@ -1052,17 +1052,17 @@ def newton_cotes(rn, equal=0):
     try:
         N = len(rn)-1
         if equal:
-            rn = np.arange(N+1)
-        elif np.all(np.diff(rn) == 1):
+            rn = mx.arange(N+1)
+        elif mx.all(mx.diff(rn) == 1):
             equal = 1
     except Exception:
         N = rn
-        rn = np.arange(N+1)
+        rn = mx.arange(N+1)
         equal = 1
 
     if equal and N in _builtincoeffs:
         na, da, vi, nb, db = _builtincoeffs[N]
-        an = na * np.array(vi, dtype=float) / da
+        an = na * mx.array(vi, dtype=float) / da
         return an, float(nb)/db
 
     if (rn[0] != 0) or (rn[-1] != N):
@@ -1070,9 +1070,9 @@ def newton_cotes(rn, equal=0):
                          " and end at N")
     yi = rn / float(N)
     ti = 2 * yi - 1
-    nvec = np.arange(N+1)
-    C = ti ** nvec[:, np.newaxis]
-    Cinv = np.linalg.inv(C)
+    nvec = mx.arange(N+1)
+    C = ti ** nvec[:, mx.newaxis]
+    Cinv = mx.linalg.inv(C)
     # improve precision of result
     for i in range(2):
         Cinv = 2*Cinv - Cinv.dot(C).dot(Cinv)
@@ -1086,7 +1086,7 @@ def newton_cotes(rn, equal=0):
         BN = N/(N+2.)
         power = N+1
 
-    BN = BN - np.dot(yi**power, ai)
+    BN = BN - mx.dot(yi**power, ai)
     p1 = power+1
     fac = power*math.log(N) - gammaln(p1)
     fac = math.exp(fac)
@@ -1142,7 +1142,7 @@ def _qmc_quad_iv(func, a, b, n_points, n_estimates, qrng, log, xp):
         warnings.warn(message, stacklevel=3)
 
         def vfunc(x):
-            return np.apply_along_axis(func, axis=-1, arr=x)
+            return mx.apply_along_axis(func, axis=-1, arr=x)
 
     n_points_int = int(n_points)
     if n_points != n_points_int:
@@ -1255,11 +1255,11 @@ def qmc_quad(func, a, b, *, n_estimates=8, n_points=1024, qrng=None,
     dimensions. An example integrand is the probability density function
     of a multivariate normal distribution.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
     >>> dim = 8
-    >>> mean = np.zeros(dim)
-    >>> cov = np.eye(dim)
+    >>> mean = mx.zeros(dim)
+    >>> cov = mx.eye(dim)
     >>> def func(x):
     ...     # `multivariate_normal` expects the _last_ axis to correspond with
     ...     # the dimensionality of the space, so `x` must be transposed
@@ -1268,9 +1268,9 @@ def qmc_quad(func, a, b, *, n_estimates=8, n_points=1024, qrng=None,
     To compute the integral over the unit hypercube:
 
     >>> from scipy.integrate import qmc_quad
-    >>> a = np.zeros(dim)
-    >>> b = np.ones(dim)
-    >>> rng = np.random.default_rng()
+    >>> a = mx.zeros(dim)
+    >>> b = mx.ones(dim)
+    >>> rng = mx.random.default_rng()
     >>> qrng = stats.qmc.Halton(d=dim, seed=rng)
     >>> n_estimates = 8
     >>> res = qmc_quad(func, a, b, n_estimates=n_estimates, qrng=qrng)

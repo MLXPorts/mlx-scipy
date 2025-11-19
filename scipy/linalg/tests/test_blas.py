@@ -4,7 +4,7 @@
 
 import math
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import (assert_equal, assert_almost_equal,
                            assert_array_almost_equal, assert_allclose)
 from pytest import raises as assert_raises
@@ -20,8 +20,8 @@ try:
 except ImportError:
     cblas = None
 
-REAL_DTYPES = [np.float32, np.float64]
-COMPLEX_DTYPES = [np.complex64, np.complex128]
+REAL_DTYPES = [mx.float32, mx.float64]
+COMPLEX_DTYPES = [mx.complex64, mx.complex128]
 DTYPES = REAL_DTYPES + COMPLEX_DTYPES
 
 
@@ -30,8 +30,8 @@ def test_get_blas_funcs():
     # fortran-ordered
     f1, f2, f3 = get_blas_funcs(
         ('axpy', 'axpy', 'axpy'),
-        (np.empty((2, 2), dtype=np.complex64, order='F'),
-         np.empty((2, 2), dtype=np.complex128, order='C'))
+        (mx.empty((2, 2), dtype=mx.complex64, order='F'),
+         mx.empty((2, 2), dtype=mx.complex128, order='C'))
         )
 
     # get_blas_funcs will choose libraries depending on most generic
@@ -47,30 +47,30 @@ def test_get_blas_funcs():
     assert_equal(f1.typecode, 'd')
 
     # check also dtype interface
-    f1 = get_blas_funcs('gemm', dtype=np.complex64)
+    f1 = get_blas_funcs('gemm', dtype=mx.complex64)
     assert_equal(f1.typecode, 'c')
     f1 = get_blas_funcs('gemm', dtype='F')
     assert_equal(f1.typecode, 'c')
 
     # extended precision complex
-    f1 = get_blas_funcs('gemm', dtype=np.clongdouble)
+    f1 = get_blas_funcs('gemm', dtype=mx.clongdouble)
     assert_equal(f1.typecode, 'z')
 
     # check safe complex upcasting
     f1 = get_blas_funcs('axpy',
-                        (np.empty((2, 2), dtype=np.float64),
-                         np.empty((2, 2), dtype=np.complex64))
+                        (mx.empty((2, 2), dtype=mx.float64),
+                         mx.empty((2, 2), dtype=mx.complex64))
                         )
     assert_equal(f1.typecode, 'z')
 
 
 def test_get_blas_funcs_alias():
     # check alias for get_blas_funcs
-    f, g = get_blas_funcs(('nrm2', 'dot'), dtype=np.complex64)
+    f, g = get_blas_funcs(('nrm2', 'dot'), dtype=mx.complex64)
     assert f.typecode == 'c'
     assert g.typecode == 'c'
 
-    f, g, h = get_blas_funcs(('dot', 'dotc', 'dotu'), dtype=np.float64)
+    f, g, h = get_blas_funcs(('dot', 'dotc', 'dotu'), dtype=mx.float64)
     assert f is g
     assert f is h
 
@@ -81,14 +81,14 @@ def parametrize_blas(mod, func_name, prefixes):
     params = []
     for prefix in prefixes:
         if 'z' in prefix:
-            dtype = np.complex128
+            dtype = mx.complex128
         elif 'c' in prefix:
-            dtype = np.complex64
+            dtype = mx.complex64
         elif 'd' in prefix:
-            dtype = np.float64
+            dtype = mx.float64
         else:
             assert 's' in prefix
-            dtype = np.float32
+            dtype = mx.float32
 
         f = getattr(mod, prefix + func_name)
         params.append(pytest.param(f, dtype, id=prefix + func_name))
@@ -213,16 +213,16 @@ class TestFBLAS2Simple:
 
     @parametrize_blas(fblas, "syr", "sdcz")
     def test_syr(self, f, dtype):
-        x = np.arange(1, 5, dtype='d')
-        resx = np.triu(x[:, np.newaxis] * x)
-        resx_reverse = np.triu(x[::-1, np.newaxis] * x[::-1])
-        y = np.linspace(0, 8.5, 17, endpoint=False)
-        z = np.arange(1, 9, dtype='d').view('D')
-        resz = np.triu(z[:, np.newaxis] * z)
-        resz_reverse = np.triu(z[::-1, np.newaxis] * z[::-1])
-        w = np.c_[np.zeros(4), z, np.zeros(4)].ravel()
+        x = mx.arange(1, 5, dtype='d')
+        resx = mx.triu(x[:, mx.newaxis] * x)
+        resx_reverse = mx.triu(x[::-1, mx.newaxis] * x[::-1])
+        y = mx.linspace(0, 8.5, 17, endpoint=False)
+        z = mx.arange(1, 9, dtype='d').view('D')
+        resz = mx.triu(z[:, mx.newaxis] * z)
+        resz_reverse = mx.triu(z[::-1, mx.newaxis] * z[::-1])
+        w = mx.c_[mx.zeros(4), z, mx.zeros(4)].ravel()
 
-        rtol = np.finfo(dtype).eps
+        rtol = mx.finfo(dtype).eps
 
         assert_allclose(f(1.0, x), resx, rtol=rtol)
         assert_allclose(f(1.0, x, lower=True), resx.T, rtol=rtol)
@@ -239,7 +239,7 @@ class TestFBLAS2Simple:
             assert_allclose(f(1.0, w, incx=-3, offx=1, n=4),
                             resz_reverse, rtol=rtol)
 
-            a = np.zeros((4, 4), dtype, 'F')
+            a = mx.zeros((4, 4), dtype, 'F')
             b = f(1.0, z, a=a, overwrite_a=True)
             assert_allclose(a, resz, rtol=rtol)
             b = f(2.0, z, a=a)
@@ -247,7 +247,7 @@ class TestFBLAS2Simple:
             assert_allclose(b, 3*resz, rtol=rtol)
 
         else:
-            a = np.zeros((4, 4), dtype, 'F')
+            a = mx.zeros((4, 4), dtype, 'F')
             b = f(1.0, x, a=a, overwrite_a=True)
             assert_allclose(a, resx, rtol=rtol)
             b = f(2.0, x, a=a)
@@ -260,17 +260,17 @@ class TestFBLAS2Simple:
         assert_raises(Exception, f, 1.0, x, n=-2)
         assert_raises(Exception, f, 1.0, x, n=5)
         assert_raises(Exception, f, 1.0, x, lower=2)
-        assert_raises(Exception, f, 1.0, x, a=np.zeros((2, 2), 'd', 'F'))
+        assert_raises(Exception, f, 1.0, x, a=mx.zeros((2, 2), 'd', 'F'))
 
     @parametrize_blas(fblas, "her", "cz")
     def test_her(self, f, dtype):
-        x = np.arange(1, 5, dtype='d')
-        z = np.arange(1, 9, dtype='d').view('D')
-        rehz = np.triu(z[:, np.newaxis] * z.conj())
-        rehz_reverse = np.triu(z[::-1, np.newaxis] * z[::-1].conj())
-        w = np.c_[np.zeros(4), z, np.zeros(4)].ravel()
+        x = mx.arange(1, 5, dtype='d')
+        z = mx.arange(1, 9, dtype='d').view('D')
+        rehz = mx.triu(z[:, mx.newaxis] * z.conj())
+        rehz_reverse = mx.triu(z[::-1, mx.newaxis] * z[::-1].conj())
+        w = mx.c_[mx.zeros(4), z, mx.zeros(4)].ravel()
 
-        rtol = np.finfo(dtype).eps
+        rtol = mx.finfo(dtype).eps
 
         assert_allclose(f(1.0, z), rehz, rtol=rtol)
         assert_allclose(f(1.0, z, lower=True), rehz.T.conj(), rtol=rtol)
@@ -279,7 +279,7 @@ class TestFBLAS2Simple:
         assert_allclose(f(1.0, w, incx=-3, offx=1, n=4),
                         rehz_reverse, rtol=rtol)
 
-        a = np.zeros((4, 4), dtype, 'F')
+        a = mx.zeros((4, 4), dtype, 'F')
         b = f(1.0, z, a=a, overwrite_a=True)
         assert_allclose(a, rehz, rtol=rtol)
 
@@ -293,18 +293,18 @@ class TestFBLAS2Simple:
         assert_raises(Exception, f, 1.0, x, n=-2)
         assert_raises(Exception, f, 1.0, x, n=5)
         assert_raises(Exception, f, 1.0, x, lower=2)
-        assert_raises(Exception, f, 1.0, x, a=np.zeros((2, 2), 'd', 'F'))
+        assert_raises(Exception, f, 1.0, x, a=mx.zeros((2, 2), 'd', 'F'))
 
     @parametrize_blas(fblas, "syr2", "sd")
     def test_syr2(self, f, dtype):
-        x = np.arange(1, 5, dtype='d')
-        y = np.arange(5, 9, dtype='d')
-        resxy = np.triu(x[:, np.newaxis] * y + y[:, np.newaxis] * x)
-        resxy_reverse = np.triu(x[::-1, np.newaxis] * y[::-1]
-                                + y[::-1, np.newaxis] * x[::-1])
+        x = mx.arange(1, 5, dtype='d')
+        y = mx.arange(5, 9, dtype='d')
+        resxy = mx.triu(x[:, mx.newaxis] * y + y[:, mx.newaxis] * x)
+        resxy_reverse = mx.triu(x[::-1, mx.newaxis] * y[::-1]
+                                + y[::-1, mx.newaxis] * x[::-1])
 
-        q = np.linspace(0, 8.5, 17, endpoint=False)
-        rtol = np.finfo(dtype).eps
+        q = mx.linspace(0, 8.5, 17, endpoint=False)
+        rtol = mx.finfo(dtype).eps
 
         assert_allclose(f(1.0, x, y), resxy, rtol=rtol)
         assert_allclose(f(1.0, x, y, n=3), resxy[:3, :3], rtol=rtol)
@@ -318,7 +318,7 @@ class TestFBLAS2Simple:
         assert_allclose(f(1.0, q, q, incx=-2, offx=2, incy=-2, offy=10),
                         resxy_reverse, rtol=rtol)
 
-        a = np.zeros((4, 4), dtype, 'F')
+        a = mx.zeros((4, 4), dtype, 'F')
         b = f(1.0, x, y, a=a, overwrite_a=True)
         assert_allclose(a, resxy, rtol=rtol)
 
@@ -335,23 +335,23 @@ class TestFBLAS2Simple:
         assert_raises(Exception, f, 1.0, x, y, n=-2)
         assert_raises(Exception, f, 1.0, x, y, n=5)
         assert_raises(Exception, f, 1.0, x, y, lower=2)
-        assert_raises(Exception, f, 1.0, x, y, a=np.zeros((2, 2), 'd', 'F'))
+        assert_raises(Exception, f, 1.0, x, y, a=mx.zeros((2, 2), 'd', 'F'))
 
     @parametrize_blas(fblas, "her2", "cz")
     def test_her2(self, f, dtype):
-        x = np.arange(1, 9, dtype='d').view('D')
-        y = np.arange(9, 17, dtype='d').view('D')
-        resxy = x[:, np.newaxis] * y.conj() + y[:, np.newaxis] * x.conj()
-        resxy = np.triu(resxy)
+        x = mx.arange(1, 9, dtype='d').view('D')
+        y = mx.arange(9, 17, dtype='d').view('D')
+        resxy = x[:, mx.newaxis] * y.conj() + y[:, mx.newaxis] * x.conj()
+        resxy = mx.triu(resxy)
 
-        resxy_reverse = x[::-1, np.newaxis] * y[::-1].conj()
-        resxy_reverse += y[::-1, np.newaxis] * x[::-1].conj()
-        resxy_reverse = np.triu(resxy_reverse)
+        resxy_reverse = x[::-1, mx.newaxis] * y[::-1].conj()
+        resxy_reverse += y[::-1, mx.newaxis] * x[::-1].conj()
+        resxy_reverse = mx.triu(resxy_reverse)
 
-        u = np.c_[np.zeros(4), x, np.zeros(4)].ravel()
-        v = np.c_[np.zeros(4), y, np.zeros(4)].ravel()
+        u = mx.c_[mx.zeros(4), x, mx.zeros(4)].ravel()
+        v = mx.c_[mx.zeros(4), y, mx.zeros(4)].ravel()
 
-        rtol = np.finfo(dtype).eps
+        rtol = mx.finfo(dtype).eps
 
         assert_allclose(f(1.0, x, y), resxy, rtol=rtol)
         assert_allclose(f(1.0, x, y, n=3), resxy[:3, :3], rtol=rtol)
@@ -366,7 +366,7 @@ class TestFBLAS2Simple:
         assert_allclose(f(1.0, u, v, incx=-3, offx=1, incy=-3, offy=1),
                         resxy_reverse, rtol=rtol)
 
-        a = np.zeros((4, 4), dtype, 'F')
+        a = mx.zeros((4, 4), dtype, 'F')
         b = f(1.0, x, y, a=a, overwrite_a=True)
         assert_allclose(a, resxy, rtol=rtol)
 
@@ -384,11 +384,11 @@ class TestFBLAS2Simple:
         assert_raises(Exception, f, 1.0, x, y, n=5)
         assert_raises(Exception, f, 1.0, x, y, lower=2)
         assert_raises(Exception, f, 1.0, x, y,
-                      a=np.zeros((2, 2), 'd', 'F'))
+                      a=mx.zeros((2, 2), 'd', 'F'))
 
     @pytest.mark.parametrize("dtype", DTYPES)
     def test_gbmv(self, dtype):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         n = 7
         m = 5
         kl = 1
@@ -422,7 +422,7 @@ class TestFBLAS2Simple:
 
     @pytest.mark.parametrize("dtype", DTYPES)
     def test_sbmv_hbmv(self, dtype):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         n = 6
         k = 2
         A = zeros((n, n), dtype=dtype)
@@ -456,7 +456,7 @@ class TestFBLAS2Simple:
         *[('hpmv', dtype) for dtype in COMPLEX_DTYPES],
     ])
     def test_spmv_hpmv(self, fname, dtype):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         n = 3
         A = rng.random((n, n)).astype(dtype)
         if dtype in COMPLEX_DTYPES:
@@ -487,7 +487,7 @@ class TestFBLAS2Simple:
         *[('hpr', dtype) for dtype in COMPLEX_DTYPES],
     ])
     def test_spr_hpr(self, fname, dtype):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         n = 3
         A = rng.random((n, n)).astype(dtype)
         if dtype in COMPLEX_DTYPES:
@@ -497,7 +497,7 @@ class TestFBLAS2Simple:
         Ap = A[r, c]
         x = rng.random(n).astype(dtype)
 
-        alpha = np.finfo(dtype).dtype.type(2.5)
+        alpha = mx.finfo(dtype).dtype.type(2.5)
         if fname == 'hpr':
             func, = get_blas_funcs(('hpr',), dtype=dtype)
             y2 = alpha * x[:, None].dot(x[None, :].conj()) + A
@@ -513,7 +513,7 @@ class TestFBLAS2Simple:
 
     @pytest.mark.parametrize("dtype", DTYPES)
     def test_spr2_hpr2(self, dtype):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         n = 3
         A = rng.random((n, n)).astype(dtype)
         if dtype in COMPLEX_DTYPES:
@@ -540,7 +540,7 @@ class TestFBLAS2Simple:
 
     @pytest.mark.parametrize("dtype", DTYPES)
     def test_tbmv(self, dtype):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         n = 10
         k = 3
         x = rng.random(n).astype(dtype)
@@ -578,7 +578,7 @@ class TestFBLAS2Simple:
 
     @pytest.mark.parametrize("dtype", DTYPES)
     def test_tbsv(self, dtype):
-        rng = np.random.default_rng(12345)
+        rng = mx.random.default_rng(12345)
         n = 6
         k = 3
         x = rng.random(n).astype(dtype)
@@ -616,7 +616,7 @@ class TestFBLAS2Simple:
 
     @pytest.mark.parametrize("dtype", DTYPES)
     def test_tpmv(self, dtype):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         n = 10
         x = rng.random(n).astype(dtype)
         # Upper triangular array
@@ -649,7 +649,7 @@ class TestFBLAS2Simple:
 
     @pytest.mark.parametrize("dtype", DTYPES)
     def test_tpsv(self, dtype):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         n = 10
         x = rng.random(n).astype(dtype)
         # Upper triangular array
@@ -682,7 +682,7 @@ class TestFBLAS2Simple:
 
     @pytest.mark.parametrize("dtype", DTYPES)
     def test_trmv(self, dtype):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         n = 3
         A = (rng.random((n, n))+eye(n)).astype(dtype)
         x = rng.random(3).astype(dtype)
@@ -707,7 +707,7 @@ class TestFBLAS2Simple:
 
     @pytest.mark.parametrize("dtype", DTYPES)
     def test_trsv(self, dtype):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         n = 15
         A = (rng.random((n, n))+eye(n)).astype(dtype)
         x = rng.random(n).astype(dtype)
@@ -748,12 +748,12 @@ class TestFBLAS3Simple:
 class TestBLAS3Symm:
 
     def setup_method(self):
-        self.a = np.array([[1., 2.],
+        self.a = mx.array([[1., 2.],
                            [0., 1.]])
-        self.b = np.array([[1., 0., 3.],
+        self.b = mx.array([[1., 0., 3.],
                            [0., -1., 2.]])
-        self.c = np.ones((2, 3))
-        self.t = np.array([[2., -1., 8.],
+        self.c = mx.ones((2, 3))
+        self.t = mx.array([[2., -1., 8.],
                            [3., 0., 9.]])
 
     @parametrize_blas(fblas, "symm", "sdcz")
@@ -784,36 +784,36 @@ class TestBLAS3Symm:
         gives a wrong result.
         """
         res = f(a=self.a, b=self.b, c=self.c, alpha=1., beta=1.)
-        assert np.allclose(res, self.t)
+        assert mx.allclose(res, self.t)
         res = f(a=self.a, b=self.b, lower=1, c=self.c, alpha=1., beta=1.)
-        assert not np.allclose(res, self.t)
+        assert not mx.allclose(res, self.t)
 
 
 class TestBLAS3Syrk:
     def setup_method(self):
-        self.a = np.array([[1., 0.],
+        self.a = mx.array([[1., 0.],
                            [0., -2.],
                            [2., 3.]])
-        self.t = np.array([[1., 0., 2.],
+        self.t = mx.array([[1., 0., 2.],
                            [0., 4., -6.],
                            [2., -6., 13.]])
-        self.tt = np.array([[5., 6.],
+        self.tt = mx.array([[5., 6.],
                             [6., 13.]])
 
     @parametrize_blas(fblas, "syrk", "sdcz")
     def test_syrk(self, f, dtype):
         c = f(a=self.a, alpha=1.)
-        assert_array_almost_equal(np.triu(c), np.triu(self.t))
+        assert_array_almost_equal(mx.triu(c), mx.triu(self.t))
 
         c = f(a=self.a, alpha=1., lower=1)
-        assert_array_almost_equal(np.tril(c), np.tril(self.t))
+        assert_array_almost_equal(mx.tril(c), mx.tril(self.t))
 
-        c0 = np.ones(self.t.shape)
+        c0 = mx.ones(self.t.shape)
         c = f(a=self.a, alpha=1., beta=1., c=c0)
-        assert_array_almost_equal(np.triu(c), np.triu(self.t+c0))
+        assert_array_almost_equal(mx.triu(c), mx.triu(self.t+c0))
 
         c = f(a=self.a, alpha=1., trans=1)
-        assert_array_almost_equal(np.triu(c), np.triu(self.tt))
+        assert_array_almost_equal(mx.triu(c), mx.triu(self.tt))
 
     # prints '0-th dimension must be fixed to 3 but got 5',
     # FIXME: suppress?
@@ -821,44 +821,44 @@ class TestBLAS3Syrk:
     def test_syrk_wrong_c(self, f, dtype):
         # FIXME narrow down to _fblas.error
         with pytest.raises(Exception):
-            f(a=self.a, alpha=1., c=np.ones((5, 8)))
+            f(a=self.a, alpha=1., c=mx.ones((5, 8)))
         # if C is supplied, it must have compatible dimensions
 
 
 class TestBLAS3Syr2k:
     def setup_method(self):
-        self.a = np.array([[1., 0.],
+        self.a = mx.array([[1., 0.],
                            [0., -2.],
                            [2., 3.]])
-        self.b = np.array([[0., 1.],
+        self.b = mx.array([[0., 1.],
                            [1., 0.],
                            [0, 1.]])
-        self.t = np.array([[0., -1., 3.],
+        self.t = mx.array([[0., -1., 3.],
                            [-1., 0., 0.],
                            [3., 0., 6.]])
-        self.tt = np.array([[0., 1.],
+        self.tt = mx.array([[0., 1.],
                             [1., 6]])
 
     @parametrize_blas(fblas, "syr2k", "sdcz")
     def test_syr2k(self, f, dtype):
         c = f(a=self.a, b=self.b, alpha=1.)
-        assert_array_almost_equal(np.triu(c), np.triu(self.t))
+        assert_array_almost_equal(mx.triu(c), mx.triu(self.t))
 
         c = f(a=self.a, b=self.b, alpha=1., lower=1)
-        assert_array_almost_equal(np.tril(c), np.tril(self.t))
+        assert_array_almost_equal(mx.tril(c), mx.tril(self.t))
 
-        c0 = np.ones(self.t.shape)
+        c0 = mx.ones(self.t.shape)
         c = f(a=self.a, b=self.b, alpha=1., beta=1., c=c0)
-        assert_array_almost_equal(np.triu(c), np.triu(self.t+c0))
+        assert_array_almost_equal(mx.triu(c), mx.triu(self.t+c0))
 
         c = f(a=self.a, b=self.b, alpha=1., trans=1)
-        assert_array_almost_equal(np.triu(c), np.triu(self.tt))
+        assert_array_almost_equal(mx.triu(c), mx.triu(self.tt))
 
     # prints '0-th dimension must be fixed to 3 but got 5', FIXME: suppress?
     @parametrize_blas(fblas, "syr2k", "sdcz")
     def test_syr2k_wrong_c(self, f, dtype):
         with pytest.raises(Exception):
-            f(a=self.a, b=self.b, alpha=1., c=np.zeros((15, 8)))
+            f(a=self.a, b=self.b, alpha=1., c=mx.zeros((15, 8)))
         # if C is supplied, it must have compatible dimensions
 
 
@@ -866,56 +866,56 @@ class TestSyHe:
     """Quick and simple tests for (zc)-symm, syrk, syr2k."""
 
     def setup_method(self):
-        self.sigma_y = np.array([[0., -1.j],
+        self.sigma_y = mx.array([[0., -1.j],
                                  [1.j, 0.]])
 
     @parametrize_blas(fblas, "symm", "zc")
     def test_symm(self, f, dtype):
         # NB: a is symmetric w/upper diag of ONLY
         res = f(a=self.sigma_y, b=self.sigma_y, alpha=1.)
-        assert_array_almost_equal(np.triu(res), np.diag([1, -1]))
+        assert_array_almost_equal(mx.triu(res), mx.diag([1, -1]))
 
     @parametrize_blas(fblas, "hemm", "zc")
     def test_hemm(self, f, dtype):
         # NB: a is hermitian w/upper diag of ONLY
         res = f(a=self.sigma_y, b=self.sigma_y, alpha=1.)
-        assert_array_almost_equal(np.triu(res), np.diag([1, 1]))
+        assert_array_almost_equal(mx.triu(res), mx.diag([1, 1]))
 
     @parametrize_blas(fblas, "syrk", "zc")
     def test_syrk(self, f, dtype):
         res = f(a=self.sigma_y, alpha=1.)
-        assert_array_almost_equal(np.triu(res), np.diag([-1, -1]))
+        assert_array_almost_equal(mx.triu(res), mx.diag([-1, -1]))
 
     @parametrize_blas(fblas, "herk", "zc")
     def test_herk(self, f, dtype):
         res = f(a=self.sigma_y, alpha=1.)
-        assert_array_almost_equal(np.triu(res), np.diag([1, 1]))
+        assert_array_almost_equal(mx.triu(res), mx.diag([1, 1]))
 
     @parametrize_blas(fblas, "syr2k", "zc")
     def test_syr2k_zr(self, f, dtype):
         res = f(a=self.sigma_y, b=self.sigma_y, alpha=1.)
-        assert_array_almost_equal(np.triu(res), 2.*np.diag([-1, -1]))
+        assert_array_almost_equal(mx.triu(res), 2.*mx.diag([-1, -1]))
 
     @parametrize_blas(fblas, "her2k", "zc")
     def test_her2k_zr(self, f, dtype):
         res = f(a=self.sigma_y, b=self.sigma_y, alpha=1.)
-        assert_array_almost_equal(np.triu(res), 2.*np.diag([1, 1]))
+        assert_array_almost_equal(mx.triu(res), 2.*mx.diag([1, 1]))
 
 
 class TestTRMM:
     """Quick and simple tests for *trmm."""
 
     def setup_method(self):
-        self.a = np.array([[1., 2., ],
+        self.a = mx.array([[1., 2., ],
                            [-2., 1.]])
-        self.b = np.array([[3., 4., -1.],
+        self.b = mx.array([[3., 4., -1.],
                            [5., 6., -2.]])
 
-        self.a2 = np.array([[1, 1, 2, 3],
+        self.a2 = mx.array([[1, 1, 2, 3],
                             [0, 1, 4, 5],
                             [0, 0, 1, 6],
                             [0, 0, 0, 1]], order="f")
-        self.b2 = np.array([[1, 4], [2, 5], [3, 6], [7, 8], [9, 10]],
+        self.b2 = mx.array([[1, 4], [2, 5], [3, 6], [7, 8], [9, 10]],
                            order="f")
 
     @pytest.mark.parametrize("dtype", DTYPES)
@@ -927,20 +927,20 @@ class TestTRMM:
                    side=1)
         k = self.b2.shape[1]
         assert_allclose(res, self.b2 @ self.a2[:k, :k], rtol=0.,
-                        atol=100*np.finfo(dtype).eps)
+                        atol=100*mx.finfo(dtype).eps)
 
     @parametrize_blas(fblas, "trmm", "sdcz")
     def test_ab(self, f, dtype):
         result = f(1., self.a, self.b)
         # default a is upper triangular
-        expected = np.array([[13., 16., -5.],
+        expected = mx.array([[13., 16., -5.],
                              [ 5.,  6., -2.]])
         assert_array_almost_equal(result, expected)
 
     @parametrize_blas(fblas, "trmm", "sdcz")
     def test_ab_lower(self, f, dtype):
         result = f(1., self.a, self.b, lower=True)
-        expected = np.array([[ 3.,  4., -1.],
+        expected = mx.array([[ 3.,  4., -1.],
                              [-1., -2.,  0.]])  # now a is lower triangular
         assert_array_almost_equal(result, expected)
 
@@ -954,20 +954,20 @@ class TestTRMM:
             result = f(1., self.a, bcopy, overwrite_b=overwr)
             # C-contiguous arrays are copied
             assert not bcopy.flags.f_contiguous
-            assert not np.may_share_memory(bcopy, result)
+            assert not mx.may_share_memory(bcopy, result)
             assert_equal(bcopy, b)
 
-        bcopy = np.asfortranarray(b.copy())  # or just transpose it
+        bcopy = mx.asfortranarray(b.copy())  # or just transpose it
         result = f(1., self.a, bcopy, overwrite_b=True)
         assert bcopy.flags.f_contiguous
-        assert np.may_share_memory(bcopy, result)
+        assert mx.may_share_memory(bcopy, result)
         assert_array_almost_equal(bcopy, result)
 
 
 @pytest.mark.parametrize("dtype", DTYPES)
 def test_trsm(dtype):
-    rng = np.random.default_rng(1234)
-    tol = np.finfo(dtype).eps*1000
+    rng = mx.random.default_rng(1234)
+    tol = mx.finfo(dtype).eps*1000
     func, = get_blas_funcs(('trsm',), dtype=dtype)
 
     # Test protection against size mismatches
@@ -1021,7 +1021,7 @@ def test_trsm(dtype):
 @pytest.mark.xfail(run=False,
                    reason="gh-16930")
 def test_gh_169309():
-    x = np.repeat(10, 9)
+    x = mx.repeat(10, 9)
     actual = scipy.linalg.blas.dnrm2(x, 5, 3, -1)
     expected = math.sqrt(500)
     assert_allclose(actual, expected)
@@ -1031,7 +1031,7 @@ def test_dnrm2_neg_incx():
     # check that dnrm2(..., incx < 0) raises
     # XXX: remove the test after the lowest supported BLAS implements
     # negative incx (new in LAPACK 3.10)
-    x = np.repeat(10, 9)
+    x = mx.repeat(10, 9)
     incx = -1
     with assert_raises(fblas.__fblas_error):
         scipy.linalg.blas.dnrm2(x, 5, 3, incx)

@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Literal
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from scipy import special, interpolate, stats
 from scipy._lib._array_api import xp_capabilities
 from scipy.stats._censored_data import CensoredData
@@ -21,20 +21,20 @@ class EmpiricalDistributionFunction:
 
     Attributes
     ----------
-    quantiles : ndarray
+    quantiles : array
         The unique values of the sample from which the
         `EmpiricalDistributionFunction` was estimated.
-    probabilities : ndarray
+    probabilities : array
         The point estimates of the cumulative distribution function (CDF) or
         its complement, the survival function (SF), corresponding with
         `quantiles`.
     """
-    quantiles: np.ndarray
-    probabilities: np.ndarray
+    quantiles: mx.array
+    probabilities: mx.array
     # Exclude these from __str__
-    _n: np.ndarray = field(repr=False)  # number "at risk"
-    _d: np.ndarray = field(repr=False)  # number of "deaths"
-    _sf: np.ndarray = field(repr=False)  # survival function for var estimate
+    _n: mx.array = field(repr=False)  # number "at risk"
+    _d: mx.array = field(repr=False)  # number of "deaths"
+    _sf: mx.array = field(repr=False)  # survival function for var estimate
     _kind: str = field(repr=False)  # type of function: "cdf" or "sf"
 
     def __init__(self, q, p, n, d, kind):
@@ -48,8 +48,8 @@ class EmpiricalDistributionFunction:
         f0 = 1 if kind == 'sf' else 0  # leftmost function value
         f1 = 1 - f0
         # fill_value can't handle edge cases at infinity
-        x = np.insert(q, [0, len(q)], [-np.inf, np.inf])
-        y = np.insert(p, [0, len(p)], [f0, f1])
+        x = mx.insert(q, [0, len(q)], [-mx.inf, mx.inf])
+        y = mx.insert(p, [0, len(p)], [f0, f1])
         # `or` conditions handle the case of empty x, points
         self._f = interpolate.interp1d(x, y, kind='previous',
                                        assume_sorted=True)
@@ -59,12 +59,12 @@ class EmpiricalDistributionFunction:
 
         Parameters
         ----------
-        x : ndarray
+        x : array
             Argument to the CDF/SF
 
         Returns
         -------
-        y : ndarray
+        y : array
             The CDF/SF evaluated at the input
         """
         return self._f(x)
@@ -101,7 +101,7 @@ class EmpiricalDistributionFunction:
         kwargs = {'where': 'post'}
         kwargs.update(matplotlib_kwargs)
 
-        delta = np.ptp(self.quantiles)*0.05  # how far past sample edge to plot
+        delta = mx.ptp(self.quantiles)*0.05  # how far past sample edge to plot
         q = self.quantiles
         q = [q[0] - delta] + list(q) + [q[-1] + delta]
 
@@ -159,7 +159,7 @@ class EmpiricalDistributionFunction:
             raise ValueError(message)
 
         message = "`confidence_level` must be a scalar between 0 and 1."
-        confidence_level = np.asarray(confidence_level)[()]
+        confidence_level = mx.array(confidence_level)[()]
         if confidence_level.shape or not (0 <= confidence_level <= 1):
             raise ValueError(message)
 
@@ -169,10 +169,10 @@ class EmpiricalDistributionFunction:
         message = ("The confidence interval is undefined at some observations."
                    " This is a feature of the mathematical formula used, not"
                    " an error in its implementation.")
-        if np.any(np.isnan(low) | np.isnan(high)):
+        if mx.any(mx.isnan(low) | mx.isnan(high)):
             warnings.warn(message, RuntimeWarning, stacklevel=2)
 
-        low, high = np.clip(low, 0, 1), np.clip(high, 0, 1)
+        low, high = mx.clip(low, 0, 1), mx.clip(high, 0, 1)
         low = EmpiricalDistributionFunction(self.quantiles, low, None, None,
                                             self._kind)
         high = EmpiricalDistributionFunction(self.quantiles, high, None, None,
@@ -184,10 +184,10 @@ class EmpiricalDistributionFunction:
         # When n == d, Greenwood's formula divides by zero.
         # When s != 0, this can be ignored: var == inf, and CI is [0, 1]
         # When s == 0, this results in NaNs. Produce an informative warning.
-        with np.errstate(divide='ignore', invalid='ignore'):
-            var = sf ** 2 * np.cumsum(d / (n * (n - d)))
+        with mx.errstate(divide='ignore', invalid='ignore'):
+            var = sf ** 2 * mx.cumsum(d / (n * (n - d)))
 
-        se = np.sqrt(var)
+        se = mx.sqrt(var)
         z = special.ndtri(1 / 2 + confidence_level / 2)
 
         z_se = z * se
@@ -199,18 +199,18 @@ class EmpiricalDistributionFunction:
     def _loglog_ci(self, confidence_level):
         sf, d, n = self._sf, self._d, self._n
 
-        with np.errstate(divide='ignore', invalid='ignore'):
-            var = 1 / np.log(sf) ** 2 * np.cumsum(d / (n * (n - d)))
+        with mx.errstate(divide='ignore', invalid='ignore'):
+            var = 1 / mx.log(sf) ** 2 * mx.cumsum(d / (n * (n - d)))
 
-        se = np.sqrt(var)
+        se = mx.sqrt(var)
         z = special.ndtri(1 / 2 + confidence_level / 2)
 
-        with np.errstate(divide='ignore'):
-            lnl_points = np.log(-np.log(sf))
+        with mx.errstate(divide='ignore'):
+            lnl_points = mx.log(-mx.log(sf))
 
         z_se = z * se
-        low = np.exp(-np.exp(lnl_points + z_se))
-        high = np.exp(-np.exp(lnl_points - z_se))
+        low = mx.exp(-mx.exp(lnl_points + z_se))
+        high = mx.exp(-mx.exp(lnl_points - z_se))
         if self._kind == "cdf":
             low, high = 1-high, 1-low
 
@@ -280,9 +280,9 @@ def ecdf(sample: "npt.ArrayLike | CensoredData") -> ECDFResult:
 
         The `cdf` and `sf` attributes themselves have the following attributes.
 
-        quantiles : ndarray
+        quantiles : array
             The unique values in the sample that defines the empirical CDF/SF.
-        probabilities : ndarray
+        probabilities : array
             The point estimates of the probabilities corresponding with
             `quantiles`.
 
@@ -413,18 +413,18 @@ def ecdf(sample: "npt.ArrayLike | CensoredData") -> ECDFResult:
 
 
 def _ecdf_uncensored(sample):
-    sample = np.sort(sample)
-    x, counts = np.unique(sample, return_counts=True)
+    sample = mx.sort(sample)
+    x, counts = mx.unique(sample, return_counts=True)
 
     # [1].81 "the fraction of [observations] that are less than or equal to x
-    events = np.cumsum(counts)
+    events = mx.cumsum(counts)
     n = sample.size
     cdf = events / n
 
     # [1].89 "the relative frequency of the sample that exceeds x in value"
     sf = 1 - cdf
 
-    at_risk = np.concatenate(([n], n - events[:-1]))
+    at_risk = mx.concatenate(([n], n - events[:-1]))
     return x, cdf, sf, at_risk, counts
 
 
@@ -442,28 +442,28 @@ def _ecdf_right_censored(sample):
     # probabilities at unique times only rather than at each observation.
     tod = sample._uncensored  # time of "death"
     tol = sample._right  # time of "loss"
-    times = np.concatenate((tod, tol))
-    died = np.asarray([1]*tod.size + [0]*tol.size)
+    times = mx.concatenate((tod, tol))
+    died = mx.array([1]*tod.size + [0]*tol.size)
 
     # sort by times
-    i = np.argsort(times)
+    i = mx.argsort(times)
     times = times[i]
     died = died[i]
-    at_risk = np.arange(times.size, 0, -1)
+    at_risk = mx.arange(times.size, 0, -1)
 
     # logical indices of unique times
-    j = np.diff(times, prepend=-np.inf, append=np.inf) > 0
+    j = mx.diff(times, prepend=-mx.inf, append=mx.inf) > 0
     j_l = j[:-1]  # first instances of unique times
     j_r = j[1:]  # last instances of unique times
 
     # get number at risk and deaths at each unique time
     t = times[j_l]  # unique times
     n = at_risk[j_l]  # number at risk at each unique time
-    cd = np.cumsum(died)[j_r]  # cumulative deaths up to/including unique times
-    d = np.diff(cd, prepend=0)  # deaths at each unique time
+    cd = mx.cumsum(died)[j_r]  # cumulative deaths up to/including unique times
+    d = mx.diff(cd, prepend=0)  # deaths at each unique time
 
     # compute survival function
-    sf = np.cumprod((n - d) / n)
+    sf = mx.cumprod((n - d) / n)
     cdf = 1 - sf
     return t, cdf, sf, n, d
 
@@ -474,15 +474,15 @@ class LogRankResult:
 
     Attributes
     ----------
-    statistic : float ndarray
+    statistic : float array
         The computed statistic (defined below). Its magnitude is the
         square root of the magnitude returned by most other logrank test
         implementations.
-    pvalue : float ndarray
+    pvalue : float array
         The computed p-value of the test.
     """
-    statistic: np.ndarray
-    pvalue: np.ndarray
+    statistic: mx.array
+    pvalue: mx.array
 
 
 @xp_capabilities(np_only=True)
@@ -520,11 +520,11 @@ def logrank(
     res : `~scipy.stats._result_classes.LogRankResult`
         An object containing attributes:
 
-        statistic : float ndarray
+        statistic : float array
             The computed statistic (defined below). Its magnitude is the
             square root of the magnitude returned by most other logrank test
             implementations.
-        pvalue : float ndarray
+        pvalue : float array
             The computed p-value of the test.
 
     See Also
@@ -609,7 +609,7 @@ def logrank(
     We can calculate and visualize the empirical survival functions
     of both groups as follows.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> ax = plt.subplot()
     >>> ecdf_x = stats.ecdf(x)
@@ -643,8 +643,8 @@ def logrank(
 
     # Combined sample. (Under H0, the two groups are identical.)
     xy = CensoredData(
-        uncensored=np.concatenate((x._uncensored, y._uncensored)),
-        right=np.concatenate((x._right, y._right))
+        uncensored=mx.concatenate((x._uncensored, y._uncensored)),
+        right=mx.concatenate((x._right, y._right))
     )
 
     # Extract data from the combined sample
@@ -658,8 +658,8 @@ def logrank(
     # First compute the number at risk in group X at each of the `times_xy`.
     # Could use `interpolate_1d`, but this is more compact.
     res_x = ecdf(x)
-    i = np.searchsorted(res_x.sf.quantiles, times_xy)
-    at_risk_x = np.append(res_x.sf._n, 0)[i]  # 0 at risk after last time
+    i = mx.searchsorted(res_x.sf.quantiles, times_xy)
+    at_risk_x = mx.append(res_x.sf._n, 0)[i]  # 0 at risk after last time
     # Subtract from the combined number at risk to get number at risk in Y
     at_risk_y = at_risk_xy - at_risk_x
 
@@ -670,14 +670,14 @@ def logrank(
     # numerator and denominator. Simplifying the fraction symbolically, we
     # would always find the overall quotient to be zero, so don't compute it.
     i = at_risk_xy > 1
-    sum_var = np.sum(num[i]/den[i])
+    sum_var = mx.sum(num[i]/den[i])
 
     # Get the observed and expected number of deaths in group X
     n_died_x = x._uncensored.size
-    sum_exp_deaths_x = np.sum(at_risk_x * (deaths_xy/at_risk_xy))
+    sum_exp_deaths_x = mx.sum(at_risk_x * (deaths_xy/at_risk_xy))
 
     # Compute the statistic. This is the square root of that in references.
-    statistic = (n_died_x - sum_exp_deaths_x)/np.sqrt(sum_var)
+    statistic = (n_died_x - sum_exp_deaths_x)/mx.sqrt(sum_var)
 
     # Equivalent to chi2(df=1).sf(statistic**2) when alternative='two-sided'
     norm = stats._stats_py._SimpleNormal()

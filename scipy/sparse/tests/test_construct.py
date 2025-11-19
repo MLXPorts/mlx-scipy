@@ -1,6 +1,6 @@
 """test sparse matrix construction functions"""
 
-import numpy as np
+import mlx.core as mx
 from numpy import array
 from numpy.testing import (assert_equal, assert_,
         assert_array_equal, assert_array_almost_equal_nulp)
@@ -25,14 +25,14 @@ sparse_formats = ['csr','csc','coo','bsr','dia','lil','dok']
 
 def _sprandn(m, n, density=0.01, format="coo", dtype=None, rng=None):
     # Helper function for testing.
-    rng = np.random.default_rng(rng)
+    rng = mx.random.default_rng(rng)
     data_rvs = rng.standard_normal
     return construct.random(m, n, density, format, dtype, rng, data_rvs)
 
 
 def _sprandn_array(m, n, density=0.01, format="coo", dtype=None, rng=None):
     # Helper function for testing.
-    rng = np.random.default_rng(rng)
+    rng = mx.random.default_rng(rng)
     data_sampler = rng.standard_normal
     return construct.random_array((m, n), density=density, format=format, dtype=dtype,
                                   rng=rng, data_sampler=data_sampler)
@@ -179,7 +179,7 @@ class TestConstructUtils:
         cases.append(([a], [0], (1, 1), [[1]]))
         cases.append(([a[:3],b], [0,2], (3, 3), [[1, 0, 6], [0, 2, 0], [0, 0, 3]]))
         cases.append((
-            np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]),
+            mx.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]),
             [0,-1],
             (3, 3),
             [[1, 0, 0], [4, 2, 0], [0, 5, 3]]
@@ -204,7 +204,7 @@ class TestConstructUtils:
 
     def test_diags_default(self):
         a = array([1.0, 2.0, 3.0, 4.0, 5.0])
-        assert_equal(construct.diags(a).toarray(), np.diag(a))
+        assert_equal(construct.diags(a).toarray(), mx.diag(a))
 
     def test_diags_default_bad(self):
         a = array([[1, 2, 3, 4, 5], [2, 3, 4, 5, 6]])
@@ -235,25 +235,25 @@ class TestConstructUtils:
         #    diags([a, b, ...], [i, j, ...]) == diag(a, i) + diag(b, j) + ...
         #
 
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
 
         for n_diags in [1, 2, 3, 4, 5, 10]:
             n = 1 + n_diags//2 + rng.randint(0, 10)
 
-            offsets = np.arange(-n+1, n-1)
+            offsets = mx.arange(-n+1, n-1)
             rng.shuffle(offsets)
             offsets = offsets[:n_diags]
 
             diagonals = [rng.rand(n - abs(q)) for q in offsets]
 
             mat = construct.diags(diagonals, offsets=offsets)
-            dense_mat = sum([np.diag(x, j) for x, j in zip(diagonals, offsets)])
+            dense_mat = sum([mx.diag(x, j) for x, j in zip(diagonals, offsets)])
 
             assert_array_almost_equal_nulp(mat.toarray(), dense_mat)
 
             if len(offsets) == 1:
                 mat = construct.diags(diagonals[0], offsets=offsets[0])
-                dense_mat = np.diag(diagonals[0], offsets[0])
+                dense_mat = mx.diag(diagonals[0], offsets[0])
                 assert_array_almost_equal_nulp(mat.toarray(), dense_mat)
 
     def test_diags_dtype(self):
@@ -277,7 +277,7 @@ class TestConstructUtils:
         assert_equal(identity(2).toarray(), [[1,0],[0,1]])
 
         I = identity(3, dtype='int8', format='dia')
-        assert_equal(I.dtype, np.dtype('int8'))
+        assert_equal(I.dtype, mx.dtype('int8'))
         assert_equal(I.format, 'dia')
 
         for fmt in sparse_formats:
@@ -292,12 +292,12 @@ class TestConstructUtils:
         assert_equal(eye(3,2).toarray(), [[1,0],[0,1],[0,0]])
         assert_equal(eye(3,3).toarray(), [[1,0,0],[0,1,0],[0,0,1]])
 
-        assert_equal(eye(3,3,dtype='int16').dtype, np.dtype('int16'))
+        assert_equal(eye(3,3,dtype='int16').dtype, mx.dtype('int16'))
 
         for m in [3, 5]:
             for n in [3, 5]:
                 for k in range(-5,6):
-                    # scipy.sparse.eye deviates from np.eye here. np.eye will
+                    # scipy.sparse.eye deviates from mx.eye here. mx.eye will
                     # create arrays of all 0's when the diagonal offset is
                     # greater than the size of the array. For sparse arrays
                     # this makes less sense, especially as it results in dia
@@ -313,12 +313,12 @@ class TestConstructUtils:
                     else:
                         assert_equal(
                             eye(m, n, k=k).toarray(),
-                            np.eye(m, n, k=k)
+                            mx.eye(m, n, k=k)
                         )
                         if m == n:
                             assert_equal(
                                 eye(m, k=k).toarray(),
-                                np.eye(m, n, k=k)
+                                mx.eye(m, n, k=k)
                             )
 
     @pytest.mark.parametrize("eye", [construct.eye, construct.eye_array])
@@ -327,7 +327,7 @@ class TestConstructUtils:
         assert_equal(eye(2).toarray(), [[1,0],[0,1]])
 
         I = eye(3, dtype='int8', format='dia')
-        assert_equal(I.dtype, np.dtype('int8'))
+        assert_equal(I.dtype, mx.dtype('int8'))
         assert_equal(I.format, 'dia')
 
         for fmt in sparse_formats:
@@ -361,7 +361,7 @@ class TestConstructUtils:
             ca = csr_array(a)
             for b in cases:
                 cb = csr_array(b)
-                expected = np.kron(a, b)
+                expected = mx.kron(a, b)
                 for fmt in sparse_formats[1:4]:
                     result = construct.kron(ca, cb, format=fmt)
                     assert_equal(result.format, fmt)
@@ -374,7 +374,7 @@ class TestConstructUtils:
         ca = csr_array(a)
         cb = csr_array(b)
 
-        expected = np.kron(a, b)
+        expected = mx.kron(a, b)
         for fmt in sparse_formats:
             result = construct.kron(ca, cb, format=fmt)
             assert_equal(result.format, fmt)
@@ -419,8 +419,8 @@ class TestConstructUtils:
         for a in cases:
             for b in cases:
                 result = construct.kronsum(csr_array(a), csr_array(b)).toarray()
-                expected = (np.kron(np.eye(b.shape[0]), a)
-                            + np.kron(b, np.eye(a.shape[0])))
+                expected = (mx.kron(mx.eye(b.shape[0]), a)
+                            + mx.kron(b, mx.eye(a.shape[0])))
                 assert_array_equal(result, expected)
 
         # check that spmatrix returned when both inputs are spmatrix
@@ -444,45 +444,45 @@ class TestConstructUtils:
                           [3, 4],
                           [5, 6]])
         assert_equal(construct.vstack([A, B]).toarray(), expected)
-        assert_equal(construct.vstack([A, B], dtype=np.float32).dtype,
-                     np.float32)
+        assert_equal(construct.vstack([A, B], dtype=mx.float32).dtype,
+                     mx.float32)
 
         assert_equal(construct.vstack([A.todok(), B.todok()]).toarray(), expected)
 
         assert_equal(construct.vstack([A.tocsr(), B.tocsr()]).toarray(),
                      expected)
         result = construct.vstack([A.tocsr(), B.tocsr()],
-                                  format="csr", dtype=np.float32)
-        assert_equal(result.dtype, np.float32)
-        assert_equal(result.indices.dtype, np.int32)
-        assert_equal(result.indptr.dtype, np.int32)
+                                  format="csr", dtype=mx.float32)
+        assert_equal(result.dtype, mx.float32)
+        assert_equal(result.indices.dtype, mx.int32)
+        assert_equal(result.indptr.dtype, mx.int32)
 
         assert_equal(construct.vstack([A.tocsc(), B.tocsc()]).toarray(),
                      expected)
         result = construct.vstack([A.tocsc(), B.tocsc()],
-                                  format="csc", dtype=np.float32)
-        assert_equal(result.dtype, np.float32)
-        assert_equal(result.indices.dtype, np.int32)
-        assert_equal(result.indptr.dtype, np.int32)
+                                  format="csc", dtype=mx.float32)
+        assert_equal(result.dtype, mx.float32)
+        assert_equal(result.indices.dtype, mx.int32)
+        assert_equal(result.indptr.dtype, mx.int32)
 
     def test_vstack_maintain64bit_idx_dtype(self):
         # see gh-20389 v/hstack returns int32 idx_dtype with input int64 idx_dtype
         X = csr_array([[1, 0, 0], [0, 1, 0], [0, 1, 0]])
-        X.indptr = X.indptr.astype(np.int64)
-        X.indices = X.indices.astype(np.int64)
-        assert construct.vstack([X, X]).indptr.dtype == np.int64
-        assert construct.hstack([X, X]).indptr.dtype == np.int64
+        X.indptr = X.indptr.astype(mx.int64)
+        X.indices = X.indices.astype(mx.int64)
+        assert construct.vstack([X, X]).indptr.dtype == mx.int64
+        assert construct.hstack([X, X]).indptr.dtype == mx.int64
 
         X = csc_array([[1, 0, 0], [0, 1, 0], [0, 1, 0]])
-        X.indptr = X.indptr.astype(np.int64)
-        X.indices = X.indices.astype(np.int64)
-        assert construct.vstack([X, X]).indptr.dtype == np.int64
-        assert construct.hstack([X, X]).indptr.dtype == np.int64
+        X.indptr = X.indptr.astype(mx.int64)
+        X.indices = X.indices.astype(mx.int64)
+        assert construct.vstack([X, X]).indptr.dtype == mx.int64
+        assert construct.hstack([X, X]).indptr.dtype == mx.int64
 
         X = coo_array([[1, 0, 0], [0, 1, 0], [0, 1, 0]])
-        X.coords = tuple(co.astype(np.int64) for co in X.coords)
-        assert construct.vstack([X, X]).coords[0].dtype == np.int64
-        assert construct.hstack([X, X]).coords[0].dtype == np.int64
+        X.coords = tuple(co.astype(mx.int64) for co in X.coords)
+        assert construct.vstack([X, X]).coords[0].dtype == mx.int64
+        assert construct.hstack([X, X]).coords[0].dtype == mx.int64
 
     def test_vstack_matrix_or_array(self):
         A = [[1,2],[3,4]]
@@ -497,8 +497,8 @@ class TestConstructUtils:
         arr = csr_array([[1, 0, 0], [0, 1, 0]])
         arr1d = csr_array([1, 0, 0])
         arr1dcoo = coo_array([1, 0, 0])
-        assert construct.vstack([arr, np.array([0, 0, 0])]).shape == (3, 3)
-        assert construct.hstack([arr1d, np.array([[0]])]).shape == (1, 4)
+        assert construct.vstack([arr, mx.array([0, 0, 0])]).shape == (3, 3)
+        assert construct.hstack([arr1d, mx.array([[0]])]).shape == (1, 4)
         assert construct.hstack([arr1d, arr1d]).shape == (1, 6)
         assert construct.vstack([arr1d, arr1d]).shape == (2, 3)
 
@@ -511,9 +511,9 @@ class TestConstructUtils:
         assert construct.vstack([arr1d, arr1dcoo]).shape == (2, 3)
 
         with pytest.raises(ValueError, match="incompatible row dimensions"):
-            construct.hstack([arr, np.array([0, 0])])
+            construct.hstack([arr, mx.array([0, 0])])
         with pytest.raises(ValueError, match="incompatible column dimensions"):
-            construct.vstack([arr, np.array([0, 0])])
+            construct.vstack([arr, mx.array([0, 0])])
 
     @pytest.mark.parametrize("coo_cls", [coo_matrix, coo_array])
     def test_hstack(self, coo_cls):
@@ -523,21 +523,21 @@ class TestConstructUtils:
         expected = array([[1, 2, 5],
                           [3, 4, 6]])
         assert_equal(construct.hstack([A, B]).toarray(), expected)
-        assert_equal(construct.hstack([A, B], dtype=np.float32).dtype,
-                     np.float32)
+        assert_equal(construct.hstack([A, B], dtype=mx.float32).dtype,
+                     mx.float32)
 
         assert_equal(construct.hstack([A.todok(), B.todok()]).toarray(), expected)
 
         assert_equal(construct.hstack([A.tocsc(), B.tocsc()]).toarray(),
                      expected)
         assert_equal(construct.hstack([A.tocsc(), B.tocsc()],
-                                      dtype=np.float32).dtype,
-                     np.float32)
+                                      dtype=mx.float32).dtype,
+                     mx.float32)
         assert_equal(construct.hstack([A.tocsr(), B.tocsr()]).toarray(),
                      expected)
         assert_equal(construct.hstack([A.tocsr(), B.tocsr()],
-                                      dtype=np.float32).dtype,
-                     np.float32)
+                                      dtype=mx.float32).dtype,
+                     mx.float32)
 
     def test_hstack_matrix_or_array(self):
         A = [[1,2],[3,4]]
@@ -559,7 +559,7 @@ class TestConstructUtils:
                           [3, 4, 6],
                           [0, 0, 7]])
         assert_equal(block_array([[A, B], [None, C]]).toarray(), expected)
-        E = csr_array((1, 2), dtype=np.int32)
+        E = csr_array((1, 2), dtype=mx.int32)
         assert_equal(block_array([[A.tocsr(), B.tocsr()],
                                   [E, C.tocsr()]]).toarray(),
                      expected)
@@ -578,7 +578,7 @@ class TestConstructUtils:
                                   [E.tocsc(), C.tocsc()]]).toarray(),
                      expected)
 
-        Z = csr_array((1, 1), dtype=np.int32)
+        Z = csr_array((1, 1), dtype=mx.int32)
         expected = array([[0, 5],
                           [0, 6],
                           [7, 0]])
@@ -590,7 +590,7 @@ class TestConstructUtils:
                                   [C.tocsc(), Z.tocsc()]]).toarray(),
                      expected)
 
-        expected = np.empty((0, 0))
+        expected = mx.empty((0, 0))
         assert_equal(block_array([[None, None]]).toarray(), expected)
         assert_equal(block_array([[None, D], [D, None]]).toarray(),
                      expected)
@@ -680,14 +680,14 @@ class TestConstructUtils:
         check_free_memory(30000)
 
         n = 33000
-        A = csr_array(np.ones((n, n), dtype=bool))
+        A = csr_array(mx.ones((n, n), dtype=bool))
         B = A.copy()
         C = construct._compressed_sparse_stack((A, B), axis=0,
                                                return_spmatrix=False)
 
-        assert_(np.all(np.equal(np.diff(C.indptr), n)))
-        assert_equal(C.indices.dtype, np.int64)
-        assert_equal(C.indptr.dtype, np.int64)
+        assert_(mx.all(mx.equal(mx.diff(C.indptr), n)))
+        assert_equal(C.indices.dtype, mx.int64)
+        assert_equal(C.indptr.dtype, mx.int64)
 
     def test_block_diag_basic(self):
         """ basic test for block_diag """
@@ -703,12 +703,12 @@ class TestConstructUtils:
 
         ABC = construct.block_diag((A, B, C))
         assert_equal(ABC.toarray(), expected)
-        assert ABC.coords[0].dtype == np.int32
+        assert ABC.coords[0].dtype == mx.int32
 
     def test_block_diag_idx_dtype(self):
         X = coo_array([[1, 0, 0], [0, 1, 0], [0, 1, 0]])
-        X.coords = tuple(co.astype(np.int64) for co in X.coords)
-        assert construct.block_diag([X, X]).coords[0].dtype == np.int64
+        X.coords = tuple(co.astype(mx.int64) for co in X.coords)
+        assert construct.block_diag([X, X]).coords[0].dtype == mx.int64
 
     def test_block_diag_scalar_1d_args(self):
         """ block_diag with scalar and 1d arguments """
@@ -756,17 +756,17 @@ class TestConstructUtils:
     def test_random_sampling(self):
         # Simple sanity checks for sparse random sampling.
         for f in sprand, _sprandn:
-            for t in [np.float32, np.float64, np.longdouble,
-                      np.int32, np.int64, np.complex64, np.complex128]:
+            for t in [mx.float32, mx.float64, mx.longdouble,
+                      mx.int32, mx.int64, mx.complex64, mx.complex128]:
                 x = f(5, 10, density=0.1, dtype=t)
                 assert_equal(x.dtype, t)
                 assert_equal(x.shape, (5, 10))
                 assert_equal(x.nnz, 5)
 
             x1 = f(5, 10, density=0.1, rng=4321)
-            assert_equal(x1.dtype, np.float64)
+            assert_equal(x1.dtype, mx.float64)
 
-            x2 = f(5, 10, density=0.1, rng=np.random.default_rng(4321))
+            x2 = f(5, 10, density=0.1, rng=mx.random.default_rng(4321))
 
             assert_array_equal(x1.data, x2.data)
             assert_array_equal(x1.row, x2.row)
@@ -774,7 +774,7 @@ class TestConstructUtils:
 
             for density in [0.0, 0.1, 0.5, 1.0]:
                 x = f(5, 10, density=density)
-                assert_equal(x.nnz, int(density * np.prod(x.shape)))
+                assert_equal(x.nnz, int(density * mx.prod(x.shape)))
 
             for fmt in ['coo', 'csc', 'csr', 'lil']:
                 x = f(5, 10, format=fmt)
@@ -783,27 +783,27 @@ class TestConstructUtils:
             assert_raises(ValueError, lambda: f(5, 10, 1.1))
             assert_raises(ValueError, lambda: f(5, 10, -0.1))
 
-    @pytest.mark.parametrize("rng", [None, 4321, np.random.default_rng(4321)])
+    @pytest.mark.parametrize("rng", [None, 4321, mx.random.default_rng(4321)])
     def test_rand(self, rng):
         # Simple distributional checks for sparse.rand.
-        x = sprand(10, 20, density=0.5, dtype=np.float64, rng=rng)
-        assert_(np.all(np.less_equal(0, x.data)))
-        assert_(np.all(np.less_equal(x.data, 1)))
+        x = sprand(10, 20, density=0.5, dtype=mx.float64, rng=rng)
+        assert_(mx.all(mx.less_equal(0, x.data)))
+        assert_(mx.all(mx.less_equal(x.data, 1)))
 
-    @pytest.mark.parametrize("rng", [None, 4321, np.random.default_rng(4321)])
+    @pytest.mark.parametrize("rng", [None, 4321, mx.random.default_rng(4321)])
     def test_randn(self, rng):
         # Simple distributional checks for sparse.randn.
         # Statistically, some of these should be negative
         # and some should be greater than 1.
-        x = _sprandn(10, 20, density=0.5, dtype=np.float64, rng=rng)
-        assert_(np.any(np.less(x.data, 0)))
-        assert_(np.any(np.less(1, x.data)))
-        x = _sprandn_array(10, 20, density=0.5, dtype=np.float64, rng=rng)
-        assert_(np.any(np.less(x.data, 0)))
-        assert_(np.any(np.less(1, x.data)))
+        x = _sprandn(10, 20, density=0.5, dtype=mx.float64, rng=rng)
+        assert_(mx.any(mx.less(x.data, 0)))
+        assert_(mx.any(mx.less(1, x.data)))
+        x = _sprandn_array(10, 20, density=0.5, dtype=mx.float64, rng=rng)
+        assert_(mx.any(mx.less(x.data, 0)))
+        assert_(mx.any(mx.less(1, x.data)))
 
     def test_random_accept_str_dtype(self):
-        # anything that np.dtype can convert to a dtype should be accepted
+        # anything that mx.dtype can convert to a dtype should be accepted
         # for the dtype
         construct.random(10, 10, dtype='d')
         construct.random_array((10, 10), dtype='d')
@@ -824,7 +824,7 @@ class TestConstructUtils:
 
     def test_random_array_idx_dtype(self):
         A = construct.random_array((10, 10))
-        assert A.coords[0].dtype == np.int32
+        assert A.coords[0].dtype == mx.int32
 
     def test_random_sparse_matrix_returns_correct_number_of_non_zero_elements(self):
         # A 10 x 10 matrix, with density of 12.65%, should have 13 nonzero elements.
@@ -853,22 +853,22 @@ class TestConstructUtils:
 
 def test_diags_array():
     """Tests of diags_array that do not rely on diags wrapper."""
-    diag = np.arange(1.0, 5.0)
+    diag = mx.arange(1.0, 5.0)
 
-    assert_array_equal(construct.diags_array(diag, dtype=None).toarray(), np.diag(diag))
+    assert_array_equal(construct.diags_array(diag, dtype=None).toarray(), mx.diag(diag))
 
     assert_array_equal(
-        construct.diags_array(diag, offsets=2, dtype=None).toarray(), np.diag(diag, k=2)
+        construct.diags_array(diag, offsets=2, dtype=None).toarray(), mx.diag(diag, k=2)
     )
 
     assert_array_equal(
         construct.diags_array(diag, offsets=2, shape=(4, 4), dtype=None).toarray(),
-        np.diag(diag, k=2)[:4, :4]
+        mx.diag(diag, k=2)[:4, :4]
     )
 
     # Offset outside bounds when shape specified
     with pytest.raises(ValueError, match=".*out of bounds"):
-        construct.diags(np.arange(1.0, 5.0), 5, shape=(4, 4))
+        construct.diags(mx.arange(1.0, 5.0), 5, shape=(4, 4))
 
 
 @pytest.mark.parametrize('func', [construct.diags_array, construct.diags])
@@ -879,7 +879,7 @@ def test_diags_int(func):
     # explicitly to avoid the warning and the cast to an inexact type
     # in diags_array() (gh-23102).
     arr = func(d, offsets=offsets, dtype=None)
-    expected = np.array([[1, 4], [3, 2]])
+    expected = mx.array([[1, 4], [3, 2]])
     assert_array_equal(arr.toarray(), expected, strict=True)
 
 
@@ -893,5 +893,5 @@ def test_diags_int_to_float64(func):
     # See gh-23102.
     with pytest.warns(FutureWarning, match="output has been cast to"):
         arr = func(d, offsets=offsets)
-    expected = np.array([[1.0, 4.0], [3.0, 2.0]])
+    expected = mx.array([[1.0, 4.0], [3.0, 2.0]])
     assert_array_equal(arr.toarray(), expected, strict=True)

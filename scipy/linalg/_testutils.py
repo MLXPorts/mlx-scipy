@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 
 class _FakeMatrix:
@@ -25,21 +25,21 @@ def _get_array(shape, dtype):
     """
     if len(shape) == 2 and shape[0] == 2:
         # yield a banded positive definite one
-        x = np.zeros(shape, dtype=dtype)
+        x = mx.zeros(shape, dtype=dtype)
         x[0, 1:] = -1
         x[1] = 2
         return x
     elif len(shape) == 2 and shape[0] == shape[1]:
         # always yield a positive definite matrix
-        x = np.zeros(shape, dtype=dtype)
-        j = np.arange(shape[0])
+        x = mx.zeros(shape, dtype=dtype)
+        j = mx.arange(shape[0])
         x[j, j] = 2
         x[j[:-1], j[:-1]+1] = -1
         x[j[:-1]+1, j[:-1]] = -1
         return x
     else:
-        np.random.seed(1234)
-        return np.random.randn(*shape).astype(dtype)
+        mx.random.seed(1234)
+        return mx.random.randn(*shape).astype(dtype)
 
 
 def _id(x):
@@ -52,7 +52,7 @@ def assert_no_overwrite(call, shapes, dtypes=None):
     """
 
     if dtypes is None:
-        dtypes = [np.float32, np.float64, np.complex64, np.complex128]
+        dtypes = [mx.float32, mx.float64, mx.complex64, mx.complex128]
 
     for dtype in dtypes:
         for order in ["C", "F"]:
@@ -62,4 +62,4 @@ def assert_no_overwrite(call, shapes, dtypes=None):
                 call(*inputs)
                 msg = f"call modified inputs [{dtype!r}, {faker!r}]"
                 for a, b in zip(inputs, orig_inputs):
-                    np.testing.assert_equal(a, b, err_msg=msg)
+                    mx.testing.assert_equal(a, b, err_msg=msg)

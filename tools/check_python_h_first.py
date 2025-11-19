@@ -20,7 +20,7 @@ PYTHON_INCLUDING_HEADERS = [
     # This isn't all of Python.h, but it is the visibility macros
     "pyconfig.h",
     "numpy/arrayobject.h",
-    "numpy/ndarrayobject.h",
+    "numpy/arrayobject.h",
     "numpy/npy_common.h",
     "numpy/npy_math.h",
     "numpy/random/distributions.h",

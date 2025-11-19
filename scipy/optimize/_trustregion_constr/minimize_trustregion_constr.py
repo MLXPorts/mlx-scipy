@@ -1,5 +1,5 @@
 import time
-import numpy as np
+import mlx.core as mx
 from scipy.sparse.linalg import LinearOperator
 from .._differentiable_functions import VectorFunction
 from .._constraints import (
@@ -49,7 +49,7 @@ class LagrangianHessian:
 
     def __call__(self, x, v_eq, v_ineq=None):
         if v_ineq is None:
-            v_ineq = np.empty(0)
+            v_ineq = mx.empty(0)
         H_objective = self.objective_hess(x)
         H_constraints = self.constraints_hess(x, v_eq, v_ineq)
 
@@ -80,18 +80,18 @@ def update_state_sqp(state, x, last_iteration_failed, objective, prepared_constr
         state.constr = [c.fun.f for c in prepared_constraints]
         state.jac = [c.fun.J for c in prepared_constraints]
         # Compute Lagrangian Gradient
-        state.lagrangian_grad = np.copy(state.grad)
+        state.lagrangian_grad = mx.copy(state.grad)
         for c in prepared_constraints:
             state.lagrangian_grad += c.fun.J.T.dot(c.fun.v)
-        state.optimality = np.linalg.norm(state.lagrangian_grad, np.inf)
+        state.optimality = mx.linalg.norm(state.lagrangian_grad, mx.inf)
         # Compute maximum constraint violation
         state.constr_violation = 0
         for i in range(len(prepared_constraints)):
             lb, ub = prepared_constraints[i].bounds
             c = state.constr[i]
-            state.constr_violation = np.max([state.constr_violation,
-                                             np.max(lb - c),
-                                             np.max(c - ub)])
+            state.constr_violation = mx.max([state.constr_violation,
+                                             mx.max(lb - c),
+                                             mx.max(c - ub)])
 
     state.execution_time = time.time() - start_time
     state.tr_radius = tr_radius
@@ -246,7 +246,7 @@ def _minimize_trustregion_constr(fun, x0, args, grad,
            function evaluations will be incremented by all calls during the
            finite difference estimation.
 
-    x : ndarray, shape (n,)
+    x : array, shape (n,)
         Solution found.
     optimality : float
         Infinity norm of the Lagrangian gradient at the solution.
@@ -254,9 +254,9 @@ def _minimize_trustregion_constr(fun, x0, args, grad,
         Maximum constraint violation at the solution.
     fun : float
         Objective function at the solution.
-    grad : ndarray, shape (n,)
+    grad : array, shape (n,)
         Gradient of the objective function at the solution.
-    lagrangian_grad : ndarray, shape (n,)
+    lagrangian_grad : array, shape (n,)
         Gradient of the Lagrangian function at the solution.
     nit : int
         Total number of iterations.
@@ -270,11 +270,11 @@ def _minimize_trustregion_constr(fun, x0, args, grad,
         Total number of the conjugate gradient method iterations.
     method : {'equality_constrained_sqp', 'tr_interior_point'}
         Optimization method used.
-    constr : list of ndarray
+    constr : list of array
         List of constraint values at the solution.
-    jac : list of {ndarray, sparse array}
+    jac : list of {array, sparse array}
         List of the Jacobian matrices of the constraints at the solution.
-    v : list of ndarray
+    v : list of array
         List of the Lagrange multipliers for the constraints at the solution.
         For an inequality constraint a positive multiplier means that the upper
         bound is active, a negative multiplier means that the lower bound is
@@ -327,8 +327,8 @@ def _minimize_trustregion_constr(fun, x0, args, grad,
     .. [1] Conn, A. R., Gould, N. I., & Toint, P. L.
            Trust region methods. 2000. Siam. pp. 19.
     """
-    x0 = np.atleast_1d(x0).astype(float)
-    n_vars = np.size(x0)
+    x0 = mx.atleast_1d(x0).astype(float)
+    n_vars = mx.size(x0)
     if hess is None:
         if callable(hessp):
             hess = HessianLinearOperator(hessp, n_vars)
@@ -338,17 +338,17 @@ def _minimize_trustregion_constr(fun, x0, args, grad,
         verbose = 1
 
     if bounds is not None:
-        modified_lb = np.nextafter(bounds.lb, -np.inf, where=bounds.lb > -np.inf,
+        modified_lb = mx.nextafter(bounds.lb, -mx.inf, where=bounds.lb > -mx.inf,
                                    out=None)
-        modified_ub = np.nextafter(bounds.ub, np.inf, where=bounds.ub < np.inf,
+        modified_ub = mx.nextafter(bounds.ub, mx.inf, where=bounds.ub < mx.inf,
                                    out=None)
-        modified_lb = np.where(np.isfinite(bounds.lb), modified_lb, bounds.lb)
-        modified_ub = np.where(np.isfinite(bounds.ub), modified_ub, bounds.ub)
+        modified_lb = mx.where(mx.isfinite(bounds.lb), modified_lb, bounds.lb)
+        modified_ub = mx.where(mx.isfinite(bounds.ub), modified_ub, bounds.ub)
         bounds = Bounds(modified_lb, modified_ub, keep_feasible=bounds.keep_feasible)
         finite_diff_bounds = strict_bounds(bounds.lb, bounds.ub,
                                            bounds.keep_feasible, n_vars)
     else:
-        finite_diff_bounds = (-np.inf, np.inf)
+        finite_diff_bounds = (-mx.inf, mx.inf)
 
     # Define Objective Function
     objective = ScalarFunction(fun, x0, args, grad, hess,
@@ -410,7 +410,7 @@ def _minimize_trustregion_constr(fun, x0, args, grad,
         nit=0, nfev=0, njev=0, nhev=0,
         cg_niter=0, cg_stop_cond=0,
         fun=objective.f, grad=objective.g,
-        lagrangian_grad=np.copy(objective.g),
+        lagrangian_grad=mx.copy(objective.g),
         constr=[c.fun.f for c in prepared_constraints],
         jac=[c.fun.J for c in prepared_constraints],
         constr_nfev=[0 for c in prepared_constraints],

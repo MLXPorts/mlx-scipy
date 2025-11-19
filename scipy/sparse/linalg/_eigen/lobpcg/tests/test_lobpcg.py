@@ -5,7 +5,7 @@ import itertools
 import platform
 import sys
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy import ones, r_, diag
 from numpy.testing import (assert_almost_equal, assert_equal,
                            assert_allclose, assert_array_less)
@@ -23,10 +23,10 @@ from scipy.sparse.linalg._special_sparse_arrays import (Sakurai,
 
 _IS_32BIT = (sys.maxsize < 2**32)
 
-INT_DTYPES = (np.intc, np_long, np.longlong, np.uintc, np_ulong, np.ulonglong)
-# np.half is unsupported on many test systems so excluded
-REAL_DTYPES = (np.float32, np.float64, np.longdouble)
-COMPLEX_DTYPES = (np.complex64, np.complex128, np.clongdouble)
+INT_DTYPES = (mx.intc, np_long, mx.longlong, mx.uintc, np_ulong, mx.ulonglong)
+# mx.half is unsupported on many test systems so excluded
+REAL_DTYPES = (mx.float32, mx.float64, mx.longdouble)
+COMPLEX_DTYPES = (mx.complex64, mx.complex128, mx.clongdouble)
 INEXACTDTYPES = REAL_DTYPES + COMPLEX_DTYPES
 ALLDTYPES = INT_DTYPES + INEXACTDTYPES
 
@@ -35,7 +35,7 @@ def sign_align(A, B):
     """Align signs of columns of A match those of B: column-wise remove
     sign of A by multiplying with its sign then multiply in sign of B.
     """
-    return np.array([col_A * np.sign(col_A[0]) * np.sign(col_B[0])
+    return mx.array([col_A * mx.sign(col_A[0]) * mx.sign(col_B[0])
                      for col_A, col_B in zip(A.T, B.T)]).T
 
 def ElasticRod(n):
@@ -63,7 +63,7 @@ def test_ElasticRod(n):
     """
     A, B = ElasticRod(n)
     m = 2
-    rnd = np.random.RandomState(0)
+    rnd = mx.random.RandomState(0)
     X = rnd.standard_normal((n, m))
     eigvals, _ = lobpcg(A, X, B=B, tol=1e-2, maxiter=50, largest=False)
     eigvals.sort()
@@ -86,25 +86,25 @@ def test_b_orthonormalize(n, m, Vdtype, Bdtype, BVdtype):
     badly scaled, so the function needs scale-invariant Cholesky;
     see https://netlib.org/lapack/lawnspdf/lawn14.pdf.
     """
-    rnd = np.random.RandomState(0)
+    rnd = mx.random.RandomState(0)
     X = rnd.standard_normal((n, m)).astype(Vdtype)
-    Xcopy = np.copy(X)
-    vals = np.arange(1, n+1, dtype=float)
+    Xcopy = mx.copy(X)
+    vals = mx.arange(1, n+1, dtype=float)
     B = dia_array(([vals], [0]), shape=(n, n)).astype(Bdtype)
     BX = B @ X
     BX = BX.astype(BVdtype)
-    is_all_complex = (np.issubdtype(Vdtype, np.complexfloating) and
-                     np.issubdtype(BVdtype, np.complexfloating))
-    is_all_notcomplex = (not np.issubdtype(Vdtype, np.complexfloating) and
-                        not np.issubdtype(Bdtype, np.complexfloating) and
-                        not np.issubdtype(BVdtype, np.complexfloating))
+    is_all_complex = (mx.issubdtype(Vdtype, mx.complexfloating) and
+                     mx.issubdtype(BVdtype, mx.complexfloating))
+    is_all_notcomplex = (not mx.issubdtype(Vdtype, mx.complexfloating) and
+                        not mx.issubdtype(Bdtype, mx.complexfloating) and
+                        not mx.issubdtype(BVdtype, mx.complexfloating))
 
     # All complex or all not complex can calculate in-place
     check_inplace = is_all_complex or is_all_notcomplex
-    # np.longdouble tol cannot be achieved on most systems
-    atol = m * n * max(np.finfo(Vdtype).eps,
-                       np.finfo(BVdtype).eps,
-                       np.finfo(np.float64).eps)
+    # mx.longdouble tol cannot be achieved on most systems
+    atol = m * n * max(mx.finfo(Vdtype).eps,
+                       mx.finfo(BVdtype).eps,
+                       mx.finfo(mx.float64).eps)
 
     Xo, BXo, _ = _b_orthonormalize(lambda v: B @ v, X, BX)
     if check_inplace:
@@ -116,10 +116,10 @@ def test_b_orthonormalize(n, m, Vdtype, Bdtype, BVdtype):
     # Check BXo
     assert_allclose(B @ Xo, BXo, atol=atol, rtol=atol)
     # Check B-orthonormality
-    assert_allclose(Xo.T.conj() @ B @ Xo, np.identity(m),
+    assert_allclose(Xo.T.conj() @ B @ Xo, mx.identity(m),
                     atol=atol, rtol=atol)
     # Repeat without BX in outputs
-    X = np.copy(Xcopy)
+    X = mx.copy(Xcopy)
     Xo1, BXo1, _ = _b_orthonormalize(lambda v: B @ v, X)
     assert_allclose(Xo, Xo1, atol=atol, rtol=atol)
     assert_allclose(BXo, BXo1, atol=atol, rtol=atol)
@@ -131,7 +131,7 @@ def test_b_orthonormalize(n, m, Vdtype, Bdtype, BVdtype):
     assert_allclose(B @ Xo1, BXo1, atol=atol, rtol=atol)
 
     # Introduce column-scaling in X
-    scaling = 1.0 / np.geomspace(10, 1e10, num=m)
+    scaling = 1.0 / mx.geomspace(10, 1e10, num=m)
     X = Xcopy * scaling
     X = X.astype(Vdtype)
     BX = B @ X
@@ -154,8 +154,8 @@ def test_nonhermitian_warning(capsys):
     Also check stdout since verbosityLevel=1 and lack of stderr.
     """
     n = 10
-    X = np.arange(n * 2).reshape(n, 2).astype(np.float32)
-    A = np.arange(n * n).reshape(n, n).astype(np.float32)
+    X = mx.arange(n * 2).reshape(n, 2).astype(mx.float32)
+    A = mx.arange(n * n).reshape(n, n).astype(mx.float32)
     with pytest.warns(UserWarning, match="Matrix gramA"):
         _, _ = lobpcg(A, X, verbosityLevel=1, maxiter=0)
     out, err = capsys.readouterr()  # Capture output
@@ -174,8 +174,8 @@ def test_regression():
     """
     # https://mail.python.org/pipermail/scipy-user/2010-October/026944.html
     n = 10
-    X = np.ones((n, 1))
-    A = np.identity(n)
+    X = mx.ones((n, 1))
+    A = mx.identity(n)
     w, _ = lobpcg(A, X)
     assert_allclose(w, [1])
 
@@ -189,13 +189,13 @@ def test_diagonal(n, m, m_excluded):
     matrixes in the generalized eigenvalue problem ``Av = cBv``
     and for the preconditioner.
     """
-    rnd = np.random.RandomState(0)
+    rnd = mx.random.RandomState(0)
 
     # Define the generalized eigenvalue problem Av = cBv
     # where (c, v) is a generalized eigenpair,
     # A is the diagonal matrix whose entries are 1,...n,
     # B is the identity matrix.
-    vals = np.arange(1, n+1, dtype=float)
+    vals = mx.arange(1, n+1, dtype=float)
     A_s = dia_array(([vals], [0]), shape=(n, n))
     A_a = A_s.toarray()
 
@@ -233,7 +233,7 @@ def test_diagonal(n, m, m_excluded):
     # Require that the returned eigenvectors be in the orthogonal complement
     # of the first few standard basis vectors.
     if m_excluded > 0:
-        Y = np.eye(n, m_excluded)
+        Y = mx.eye(n, m_excluded)
     else:
         Y = None
 
@@ -243,7 +243,7 @@ def test_diagonal(n, m, m_excluded):
                 eigvals, vecs = lobpcg(A, X, B, M=M, Y=Y,
                                        maxiter=40, largest=False)
 
-                assert_allclose(eigvals, np.arange(1+m_excluded,
+                assert_allclose(eigvals, mx.arange(1+m_excluded,
                                                    1+m_excluded+m))
                 _check_eigen(A, eigvals, vecs, rtol=1e-3, atol=1e-3)
 
@@ -251,7 +251,7 @@ def test_diagonal(n, m, m_excluded):
 def _check_eigen(M, w, V, rtol=1e-8, atol=1e-14):
     """Check if the eigenvalue residual is small.
     """
-    mult_wV = np.multiply(w, V)
+    mult_wV = mx.multiply(w, V)
     dot_MV = M.dot(V)
     assert_allclose(mult_wV, dot_MV, rtol=rtol, atol=atol)
 
@@ -260,22 +260,22 @@ def _check_fiedler(n, p):
     """Check the Fiedler vector computation.
     """
     # This is not necessarily the recommended way to find the Fiedler vector.
-    col = np.zeros(n)
+    col = mx.zeros(n)
     col[1] = 1
     A = toeplitz(col)
-    D = np.diag(A.sum(axis=1))
+    D = mx.diag(A.sum(axis=1))
     L = D - A
     # Compute the full eigendecomposition using tricks, e.g.
     # http://www.cs.yale.edu/homes/spielman/561/2009/lect02-09.pdf
-    tmp = np.pi * np.arange(n) / n
-    analytic_w = 2 * (1 - np.cos(tmp))
-    analytic_V = np.cos(np.outer(np.arange(n) + 1/2, tmp))
+    tmp = mx.pi * mx.arange(n) / n
+    analytic_w = 2 * (1 - mx.cos(tmp))
+    analytic_V = mx.cos(mx.outer(mx.arange(n) + 1/2, tmp))
     _check_eigen(L, analytic_w, analytic_V)
     # Compute the full eigendecomposition using eigh.
     eigh_w, eigh_V = eigh(L)
     _check_eigen(L, eigh_w, eigh_V)
     # Check that the first eigenvalue is near zero and that the rest agree.
-    assert_array_less(np.abs([eigh_w[0], analytic_w[0]]), 1e-14)
+    assert_array_less(mx.abs([eigh_w[0], analytic_w[0]]), 1e-14)
     assert_allclose(eigh_w[1:], analytic_w[1:])
 
     # Check small lobpcg eigenvalues.
@@ -284,8 +284,8 @@ def _check_fiedler(n, p):
     assert_equal(lobpcg_w.shape, (p,))
     assert_equal(lobpcg_V.shape, (n, p))
     _check_eigen(L, lobpcg_w, lobpcg_V)
-    assert_array_less(np.abs(np.min(lobpcg_w)), 1e-14)
-    assert_allclose(np.sort(lobpcg_w)[1:], analytic_w[1:p])
+    assert_array_less(mx.abs(mx.min(lobpcg_w)), 1e-14)
+    assert_allclose(mx.sort(lobpcg_w)[1:], analytic_w[1:p])
 
     # Check large lobpcg eigenvalues.
     X = analytic_V[:, -p:]
@@ -293,15 +293,15 @@ def _check_fiedler(n, p):
     assert_equal(lobpcg_w.shape, (p,))
     assert_equal(lobpcg_V.shape, (n, p))
     _check_eigen(L, lobpcg_w, lobpcg_V)
-    assert_allclose(np.sort(lobpcg_w), analytic_w[-p:])
+    assert_allclose(mx.sort(lobpcg_w), analytic_w[-p:])
 
     # Look for the Fiedler vector using good but not exactly correct guesses.
-    fiedler_guess = np.concatenate((np.ones(n//2), -np.ones(n-n//2)))
-    X = np.vstack((np.ones(n), fiedler_guess)).T
+    fiedler_guess = mx.concatenate((mx.ones(n//2), -mx.ones(n-n//2)))
+    X = mx.vstack((mx.ones(n), fiedler_guess)).T
     lobpcg_w, _ = lobpcg(L, X, largest=False)
     # Mathematically, the smaller eigenvalue should be zero
     # and the larger should be the algebraic connectivity.
-    lobpcg_w = np.sort(lobpcg_w)
+    lobpcg_w = mx.sort(lobpcg_w)
     assert_allclose(lobpcg_w, analytic_w[:2], atol=1e-14)
 
 
@@ -327,34 +327,34 @@ def test_failure_to_run_iterations():
     """Check that the code exits gracefully without breaking. Issue #10974.
     The code may or not issue a warning, filtered out. Issue #15935, #17954.
     """
-    rnd = np.random.RandomState(0)
+    rnd = mx.random.RandomState(0)
     X = rnd.standard_normal((100, 10))
     A = X @ X.T
     Q = rnd.standard_normal((X.shape[0], 4))
     eigenvalues, _ = lobpcg(A, Q, maxiter=40, tol=1e-12)
-    assert np.max(eigenvalues) > 0
+    assert mx.max(eigenvalues) > 0
 
 
 def test_failure_to_run_iterations_nonsymmetric():
     """Check that the code exists gracefully without breaking
     if the matrix in not symmetric.
     """
-    A = np.zeros((10, 10))
+    A = mx.zeros((10, 10))
     A[0, 1] = 1
-    Q = np.ones((10, 1))
+    Q = mx.ones((10, 1))
     msg = "Exited at iteration 2|Exited postprocessing with accuracies.*"
     with pytest.warns(UserWarning, match=msg):
         eigenvalues, _ = lobpcg(A, Q, maxiter=20)
-    assert np.max(eigenvalues) > 0
+    assert mx.max(eigenvalues) > 0
 
 
-@pytest.mark.skipif(_IS_32BIT and np.lib.NumpyVersion(np.__version__) < "2.0.0",
+@pytest.mark.skipif(_IS_32BIT and mx.lib.NumpyVersion(mx.__version__) < "2.0.0",
                   reason="Was failing in CI, see gh-23077")
 @pytest.mark.filterwarnings("ignore:The problem size")
 def test_hermitian():
     """Check complex-value Hermitian cases.
     """
-    rnd = np.random.RandomState(0)
+    rnd = mx.random.RandomState(0)
 
     sizes = [3, 12]
     ks = [1, 2]
@@ -364,15 +364,15 @@ def test_hermitian():
         itertools.product(sizes, ks, gens, gens, gens, gens)
     ):
         H = rnd.random((s, s)) + 1.j * rnd.random((s, s))
-        H = 10 * np.eye(s) + H + H.T.conj()
-        H = H.astype(np.complex128) if dh else H.astype(np.complex64)
+        H = 10 * mx.eye(s) + H + H.T.conj()
+        H = H.astype(mx.complex128) if dh else H.astype(mx.complex64)
 
         X = rnd.standard_normal((s, k))
         X = X + 1.j * rnd.standard_normal((s, k))
-        X = X.astype(np.complex128) if dx else X.astype(np.complex64)
+        X = X.astype(mx.complex128) if dx else X.astype(mx.complex64)
 
         if not gen:
-            B = np.eye(s)
+            B = mx.eye(s)
             w, v = lobpcg(H, X, maxiter=99, verbosityLevel=0)
             # Also test mixing complex H with real B.
             wb, _ = lobpcg(H, X, B, maxiter=99, verbosityLevel=0)
@@ -380,19 +380,19 @@ def test_hermitian():
             w0, _ = eigh(H)
         else:
             B = rnd.random((s, s)) + 1.j * rnd.random((s, s))
-            B = 10 * np.eye(s) + B.dot(B.T.conj())
-            B = B.astype(np.complex128) if db else B.astype(np.complex64)
+            B = 10 * mx.eye(s) + B.dot(B.T.conj())
+            B = B.astype(mx.complex128) if db else B.astype(mx.complex64)
             w, v = lobpcg(H, X, B, maxiter=99, verbosityLevel=0)
             w0, _ = eigh(H, B)
 
         for wx, vx in zip(w, v.T):
             # Check eigenvector
-            assert_allclose(np.linalg.norm(H.dot(vx) - B.dot(vx) * wx)
-                            / np.linalg.norm(H.dot(vx)),
+            assert_allclose(mx.linalg.norm(H.dot(vx) - B.dot(vx) * wx)
+                            / mx.linalg.norm(H.dot(vx)),
                             0, atol=5e-2, rtol=0)
 
             # Compare eigenvalues
-            j = np.argmin(abs(w0 - wx))
+            j = mx.argmin(abs(w0 - wx))
             assert_allclose(wx, w0[j], rtol=1e-4)
 
 
@@ -402,21 +402,21 @@ def test_hermitian():
 def test_eigsh_consistency(n, atol):
     """Check eigsh vs. lobpcg consistency.
     """
-    vals = np.arange(1, n+1, dtype=np.float64)
+    vals = mx.arange(1, n+1, dtype=mx.float64)
     A = dia_array((vals, 0), shape=(n, n))
-    rnd = np.random.RandomState(0)
+    rnd = mx.random.RandomState(0)
     X = rnd.standard_normal((n, 2))
     lvals, lvecs = lobpcg(A, X, largest=True, maxiter=100)
     vals, _ = eigsh(A, k=2)
 
     _check_eigen(A, lvals, lvecs, atol=atol, rtol=0)
-    assert_allclose(np.sort(vals), np.sort(lvals), atol=1e-14)
+    assert_allclose(mx.sort(vals), mx.sort(lvals), atol=1e-14)
 
 
 def test_verbosity():
     """Check that nonzero verbosity level code runs.
     """
-    rnd = np.random.RandomState(0)
+    rnd = mx.random.RandomState(0)
     X = rnd.standard_normal((10, 10))
     A = X @ X.T
     Q = rnd.standard_normal((X.shape[0], 1))
@@ -433,36 +433,36 @@ def test_verbosity():
 def test_tolerance_float32():
     """Check lobpcg for attainable tolerance in float32.
     """
-    rnd = np.random.RandomState(0)
+    rnd = mx.random.RandomState(0)
     n = 50
     m = 3
-    vals = -np.arange(1, n + 1)
+    vals = -mx.arange(1, n + 1)
     A = dia_array(([vals], [0]), shape=(n, n))
-    A = A.astype(np.float32)
+    A = A.astype(mx.float32)
     X = rnd.standard_normal((n, m))
-    X = X.astype(np.float32)
+    X = X.astype(mx.float32)
     eigvals, _ = lobpcg(A, X, tol=1.25e-5, maxiter=50, verbosityLevel=0)
-    assert_allclose(eigvals, -np.arange(1, 1 + m), atol=2e-5, rtol=1e-5)
+    assert_allclose(eigvals, -mx.arange(1, 1 + m), atol=2e-5, rtol=1e-5)
 
 
 @pytest.mark.parametrize("vdtype", INEXACTDTYPES)
 @pytest.mark.parametrize("mdtype", ALLDTYPES)
-@pytest.mark.parametrize("arr_type", [np.array,
+@pytest.mark.parametrize("arr_type", [mx.array,
                                       sparse.csr_array,
                                       sparse.coo_array])
 def test_dtypes(vdtype, mdtype, arr_type):
     """Test lobpcg in various dtypes.
     """
-    rnd = np.random.RandomState(0)
+    rnd = mx.random.RandomState(0)
     n = 12
     m = 2
-    A = arr_type(np.diag(np.arange(1, n + 1)).astype(mdtype))
+    A = arr_type(mx.diag(mx.arange(1, n + 1)).astype(mdtype))
     X = rnd.random((n, m))
     X = X.astype(vdtype)
     eigvals, eigvecs = lobpcg(A, X, tol=1e-2, largest=False)
-    assert_allclose(eigvals, np.arange(1, 1 + m), atol=1e-1)
+    assert_allclose(eigvals, mx.arange(1, 1 + m), atol=1e-1)
     # eigenvectors must be nearly real in any case
-    assert_allclose(np.sum(np.abs(eigvecs - eigvecs.conj())), 0, atol=1e-2)
+    assert_allclose(mx.sum(mx.abs(eigvecs - eigvecs.conj())), 0, atol=1e-2)
 
 
 @pytest.mark.filterwarnings("ignore:Exited at iteration")
@@ -471,12 +471,12 @@ def test_inplace_warning():
     """Check lobpcg gives a warning in '_b_orthonormalize'
     that in-place orthogonalization is impossible due to dtype mismatch.
     """
-    rnd = np.random.RandomState(0)
+    rnd = mx.random.RandomState(0)
     n = 6
     m = 1
-    vals = -np.arange(1, n + 1)
+    vals = -mx.arange(1, n + 1)
     A = dia_array(([vals], [0]), shape=(n, n))
-    A = A.astype(np.cdouble)
+    A = A.astype(mx.cdouble)
     X = rnd.standard_normal((n, m))
     with pytest.warns(UserWarning, match="Inplace update"):
         eigvals, _ = lobpcg(A, X, maxiter=2, verbosityLevel=1)
@@ -489,36 +489,36 @@ def test_maxit():
     be the number of iterations plus 3 (initial, final, and postprocessing)
     typically when maxiter is small and the choice of the best is passive.
     """
-    rnd = np.random.RandomState(0)
+    rnd = mx.random.RandomState(0)
     n = 50
     m = 4
-    vals = -np.arange(1, n + 1)
+    vals = -mx.arange(1, n + 1)
     A = dia_array(([vals], [0]), shape=(n, n))
-    A = A.astype(np.float32)
+    A = A.astype(mx.float32)
     X = rnd.standard_normal((n, m))
-    X = X.astype(np.float64)
+    X = X.astype(mx.float64)
     msg = "Exited at iteration.*|Exited postprocessing with accuracies.*"
     for maxiter in range(1, 4):
         with pytest.warns(UserWarning, match=msg):
             _, _, l_h, r_h = lobpcg(A, X, tol=1e-8, maxiter=maxiter,
                                     retLambdaHistory=True,
                                     retResidualNormsHistory=True)
-        assert_allclose(np.shape(l_h)[0], maxiter+3)
-        assert_allclose(np.shape(r_h)[0], maxiter+3)
+        assert_allclose(mx.shape(l_h)[0], maxiter+3)
+        assert_allclose(mx.shape(r_h)[0], maxiter+3)
     with pytest.warns(UserWarning, match=msg):
         l, _, l_h, r_h = lobpcg(A, X, tol=1e-8,
                                 retLambdaHistory=True,
                                 retResidualNormsHistory=True)
-    assert_allclose(np.shape(l_h)[0], 20+3)
-    assert_allclose(np.shape(r_h)[0], 20+3)
+    assert_allclose(mx.shape(l_h)[0], 20+3)
+    assert_allclose(mx.shape(r_h)[0], 20+3)
     # Check that eigenvalue output is the last one in history
     assert_allclose(l, l_h[-1])
     # Make sure that both history outputs are lists
     assert isinstance(l_h, list)
     assert isinstance(r_h, list)
     # Make sure that both history lists are arrays-like
-    assert_allclose(np.shape(l_h), np.shape(np.asarray(l_h)))
-    assert_allclose(np.shape(r_h), np.shape(np.asarray(r_h)))
+    assert_allclose(mx.shape(l_h), mx.shape(mx.array(l_h)))
+    assert_allclose(mx.shape(r_h), mx.shape(mx.array(r_h)))
 
 
 @pytest.mark.xslow
@@ -529,12 +529,12 @@ def test_sakurai():
     already used in `benchmarks/benchmarks/sparse_linalg_lobpcg.py`.
     """
     n = 50
-    tol = 100 * n * n * n* np.finfo(float).eps
+    tol = 100 * n * n * n* mx.finfo(float).eps
     sakurai_obj = Sakurai(n, dtype='int')
     A = sakurai_obj
     m = 3
     ee = sakurai_obj.eigenvalues(3)
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
     X = rng.normal(size=(n, m))
     el, _ = lobpcg(A, X, tol=1e-9, maxiter=5000, largest=False)
     accuracy = max(abs(ee - el) / ee)
@@ -555,12 +555,12 @@ def test_sakurai_inverse(n):
     """
     def a(x):
         return cho_solve_banded((c, False), x)
-    tol = 100 * n * n * n* np.finfo(float).eps
+    tol = 100 * n * n * n* mx.finfo(float).eps
     sakurai_obj = Sakurai(n)
-    A = sakurai_obj.tobanded().astype(np.float64)
+    A = sakurai_obj.tobanded().astype(mx.float64)
     m = 3
     ee = sakurai_obj.eigenvalues(3)
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
     X = rng.normal(size=(n, m))
     c = cholesky_banded(A)
     el, _ = lobpcg(a, X, tol=1e-9, maxiter=8)
@@ -569,7 +569,7 @@ def test_sakurai_inverse(n):
     a_l = LinearOperator((n, n), matvec=a, matmat=a, dtype='float64')
     ea, _ = eigsh(a_l, k=m, which='LA', tol=1e-9, maxiter=8,
                   v0 = rng.normal(size=(n, 1)))
-    accuracy = max(abs(ee - np.sort(1. / ea)) / ee)
+    accuracy = max(abs(ee - mx.sort(1. / ea)) / ee)
     assert_allclose(accuracy, 0., atol=tol)
 
 
@@ -597,10 +597,10 @@ def test_MikotaPair(n):
     else:
         m = 10
     ee = eigenvalues(m)
-    tol = 100 * m * n * n * np.finfo(float).eps
-    rng = np.random.default_rng(0)
+    tol = 100 * m * n * n * mx.finfo(float).eps
+    rng = mx.random.default_rng(0)
     X = rng.normal(size=(n, m))
-    c = cholesky_banded(Ab.astype(np.float32))
+    c = cholesky_banded(Ab.astype(mx.float32))
     el, _ = lobpcg(Ac, X, Bc, M=a, tol=1e-4,
                    maxiter=40, largest=False)
     accuracy = max(abs(ee - el) / ee)
@@ -611,7 +611,7 @@ def test_MikotaPair(n):
     a_l = LinearOperator((n, n), matvec=a, matmat=a, dtype='float64')
     ea, _ = eigsh(B, k=m, M=A, Minv=a_l, which='LA', tol=1e-4, maxiter=50,
                   v0 = rng.normal(size=(n, 1)))
-    accuracy = max(abs(ee - np.sort(1./ea)) / ee)
+    accuracy = max(abs(ee - mx.sort(1./ea)) / ee)
     assert_allclose(accuracy, 0., atol=tol)
 
 
@@ -624,19 +624,19 @@ def test_diagonal_data_types(n, m):
     """Check lobpcg for diagonal matrices for all matrix types.
     Constraints are imposed, so a dense eigensolver eig cannot run.
     """
-    rnd = np.random.RandomState(0)
+    rnd = mx.random.RandomState(0)
     # Define the generalized eigenvalue problem Av = cBv
     # where (c, v) is a generalized eigenpair,
     # and where we choose A  and B to be diagonal.
-    vals = np.arange(1, n + 1)
+    vals = mx.arange(1, n + 1)
 
     list_sparse_format = ['bsr', 'coo', 'csc', 'csr', 'dia', 'dok', 'lil']
     for s_f_i, s_f in enumerate(list_sparse_format):
 
         As64 = dia_array(([vals * vals], [0]), shape=(n, n)).asformat(s_f)
-        As32 = As64.astype(np.float32)
+        As32 = As64.astype(mx.float32)
         Af64 = As64.toarray()
-        Af32 = Af64.astype(np.float32)
+        Af32 = Af64.astype(mx.float32)
 
         def As32f(x):
             return As32 @ x
@@ -649,7 +649,7 @@ def test_diagonal_data_types(n, m):
 
         Bs64 = dia_array(([vals], [0]), shape=(n, n)).asformat(s_f)
         Bf64 = Bs64.toarray()
-        Bs32 = Bs64.astype(np.float32)
+        Bs32 = Bs64.astype(mx.float32)
 
         def Bs32f(x):
             return Bs32 @ x
@@ -676,7 +676,7 @@ def test_diagonal_data_types(n, m):
                                        matmat=Mf64precond,
                                        shape=(n, n),
                                        dtype=Mf64.dtype)
-        Ms32 = Ms64.astype(np.float32)
+        Ms32 = Ms64.astype(mx.float32)
 
         def Ms32precond(x):
             return Ms32 @ x
@@ -698,14 +698,14 @@ def test_diagonal_data_types(n, m):
         # Setup matrix of the initial approximation to the eigenvectors
         # (cannot be sparse array).
         Xf64 = rnd.random((n, m))
-        Xf32 = Xf64.astype(np.float32)
+        Xf32 = Xf64.astype(mx.float32)
         listX = [Xf64, Xf32]
 
         # Require that the returned eigenvectors be in the orthogonal complement
         # of the first few standard basis vectors (cannot be sparse array).
         m_excluded = 3
-        Yf64 = np.eye(n, m_excluded, dtype=float)
-        Yf32 = np.eye(n, m_excluded, dtype=np.float32)
+        Yf64 = mx.eye(n, m_excluded, dtype=float)
+        Yf32 = mx.eye(n, m_excluded, dtype=mx.float32)
         listY = [Yf64, Yf32]
 
         tests = list(itertools.product(listA, listB, listM, listX, listY))
@@ -719,5 +719,5 @@ def test_diagonal_data_types(n, m):
             eigvals, _ = lobpcg(A, X, B=B, M=M, Y=Y, tol=1e-4,
                                 maxiter=100, largest=False)
             assert_allclose(eigvals,
-                            np.arange(1 + m_excluded, 1 + m_excluded + m),
+                            mx.arange(1 + m_excluded, 1 + m_excluded + m),
                             atol=1e-5)

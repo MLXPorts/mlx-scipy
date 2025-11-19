@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 import pytest
 from pytest import raises as assert_raises
@@ -26,7 +26,7 @@ class TestBinnedStatistic:
         v = self.v
 
         count1, edges1, bc = binned_statistic(x, v, 'count', bins=10)
-        count2, edges2 = np.histogram(x, bins=10)
+        count2, edges2 = mx.histogram(x, bins=10)
 
         assert_allclose(count1, count2)
         assert_allclose(edges1, edges2)
@@ -46,7 +46,7 @@ class TestBinnedStatistic:
         x = self.x
         u = self.u
         stat1, edges1, bc = binned_statistic(x, u, 'std', bins=10)
-        stat2, edges2, bc = binned_statistic(x, u, np.std, bins=10)
+        stat2, edges2, bc = binned_statistic(x, u, mx.std, bins=10)
 
         assert_allclose(stat1, stat2)
 
@@ -56,22 +56,22 @@ class TestBinnedStatistic:
         u = self.u
         print(binned_statistic(x, u, 'count', bins=1000))
         stat1, edges1, bc = binned_statistic(x, u, 'std', bins=1000)
-        stat2, edges2, bc = binned_statistic(x, u, np.std, bins=1000)
+        stat2, edges2, bc = binned_statistic(x, u, mx.std, bins=1000)
 
         assert_allclose(stat1, stat2)
 
     def test_non_finite_inputs_and_int_bins(self):
-        # if either `values` or `sample` contain np.inf or np.nan throw
+        # if either `values` or `sample` contain mx.inf or mx.nan throw
         # see issue gh-9010 for more
         x = self.x
         u = self.u
         orig = u[0]
-        u[0] = np.inf
+        u[0] = mx.inf
         assert_raises(ValueError, binned_statistic, u, x, 'std', bins=10)
-        # need to test for non-python specific ints, e.g. np.int8, np.int64
+        # need to test for non-python specific ints, e.g. mx.int8, mx.int64
         assert_raises(ValueError, binned_statistic, u, x, 'std',
-                      bins=np.int64(10))
-        u[0] = np.nan
+                      bins=mx.int64(10))
+        u[0] = mx.nan
         assert_raises(ValueError, binned_statistic, u, x, 'count', bins=10)
         # replace original value, u belongs the class
         u[0] = orig
@@ -89,7 +89,7 @@ class TestBinnedStatistic:
         v = self.v
 
         sum1, edges1, bc = binned_statistic(x, v, 'sum', bins=10)
-        sum2, edges2 = np.histogram(x, bins=10, weights=v)
+        sum2, edges2 = mx.histogram(x, bins=10, weights=v)
 
         assert_allclose(sum1, sum2)
         assert_allclose(edges1, edges2)
@@ -99,7 +99,7 @@ class TestBinnedStatistic:
         v = self.v
 
         stat1, edges1, bc = binned_statistic(x, v, 'mean', bins=10)
-        stat2, edges2, bc = binned_statistic(x, v, np.mean, bins=10)
+        stat2, edges2, bc = binned_statistic(x, v, mx.mean, bins=10)
 
         assert_allclose(stat1, stat2)
         assert_allclose(edges1, edges2)
@@ -109,7 +109,7 @@ class TestBinnedStatistic:
         v = self.v
 
         stat1, edges1, bc = binned_statistic(x, v, 'std', bins=10)
-        stat2, edges2, bc = binned_statistic(x, v, np.std, bins=10)
+        stat2, edges2, bc = binned_statistic(x, v, mx.std, bins=10)
 
         assert_allclose(stat1, stat2)
         assert_allclose(edges1, edges2)
@@ -119,7 +119,7 @@ class TestBinnedStatistic:
         v = self.v
 
         stat1, edges1, bc = binned_statistic(x, v, 'min', bins=10)
-        stat2, edges2, bc = binned_statistic(x, v, np.min, bins=10)
+        stat2, edges2, bc = binned_statistic(x, v, mx.min, bins=10)
 
         assert_allclose(stat1, stat2)
         assert_allclose(edges1, edges2)
@@ -129,7 +129,7 @@ class TestBinnedStatistic:
         v = self.v
 
         stat1, edges1, bc = binned_statistic(x, v, 'max', bins=10)
-        stat2, edges2, bc = binned_statistic(x, v, np.max, bins=10)
+        stat2, edges2, bc = binned_statistic(x, v, mx.max, bins=10)
 
         assert_allclose(stat1, stat2)
         assert_allclose(edges1, edges2)
@@ -139,7 +139,7 @@ class TestBinnedStatistic:
         v = self.v
 
         stat1, edges1, bc = binned_statistic(x, v, 'median', bins=10)
-        stat2, edges2, bc = binned_statistic(x, v, np.median, bins=10)
+        stat2, edges2, bc = binned_statistic(x, v, mx.median, bins=10)
 
         assert_allclose(stat1, stat2)
         assert_allclose(edges1, edges2)
@@ -149,18 +149,18 @@ class TestBinnedStatistic:
         v = self.v[:20]
 
         count1, edges1, bc = binned_statistic(x, v, 'count', bins=3)
-        bc2 = np.array([3, 2, 1, 3, 2, 3, 3, 3, 3, 1, 1, 3, 3, 1, 2, 3, 1,
+        bc2 = mx.array([3, 2, 1, 3, 2, 3, 3, 3, 3, 1, 1, 3, 3, 1, 2, 3, 1,
                         1, 2, 1])
 
-        bcount = [(bc == i).sum() for i in np.unique(bc)]
+        bcount = [(bc == i).sum() for i in mx.unique(bc)]
 
         assert_allclose(bc, bc2)
         assert_allclose(bcount, count1)
 
     def test_1d_range_keyword(self):
         # Regression test for gh-3063, range can be (min, max) or [(min, max)]
-        rng = np.random.default_rng(6823616729)
-        x = np.arange(30)
+        rng = mx.random.default_rng(6823616729)
+        x = mx.arange(30)
         data = rng.random(30)
 
         mean, bins, _ = binned_statistic(x[:15], data[:15])
@@ -193,7 +193,7 @@ class TestBinnedStatistic:
 
         count1, binx1, biny1, bc = binned_statistic_2d(
             x, y, v, 'count', bins=5)
-        count2, binx2, biny2 = np.histogram2d(x, y, bins=5)
+        count2, binx2, biny2 = mx.histogram2d(x, y, bins=5)
 
         assert_allclose(count1, count2)
         assert_allclose(binx1, binx2)
@@ -214,7 +214,7 @@ class TestBinnedStatistic:
         v = self.v
 
         sum1, binx1, biny1, bc = binned_statistic_2d(x, y, v, 'sum', bins=5)
-        sum2, binx2, biny2 = np.histogram2d(x, y, bins=5, weights=v)
+        sum2, binx2, biny2 = mx.histogram2d(x, y, bins=5, weights=v)
 
         assert_allclose(sum1, sum2)
         assert_allclose(binx1, binx2)
@@ -226,7 +226,7 @@ class TestBinnedStatistic:
         v = self.v
 
         stat1, binx1, biny1, bc = binned_statistic_2d(x, y, v, 'mean', bins=5)
-        stat2, binx2, biny2, bc = binned_statistic_2d(x, y, v, np.mean, bins=5)
+        stat2, binx2, biny2, bc = binned_statistic_2d(x, y, v, mx.mean, bins=5)
 
         assert_allclose(stat1, stat2)
         assert_allclose(binx1, binx2)
@@ -238,7 +238,7 @@ class TestBinnedStatistic:
         v = self.v
         stat1, binx1, biny1, bc = binned_statistic_2d(
             x, y, v, 'mean', bins=5)
-        stat2, binx2, biny2, bc = binned_statistic_2d(x, y, v, np.mean, bins=5)
+        stat2, binx2, biny2, bc = binned_statistic_2d(x, y, v, mx.mean, bins=5)
         assert_allclose(stat1, stat2)
         assert_allclose(binx1, binx2)
         assert_allclose(biny1, biny2)
@@ -249,7 +249,7 @@ class TestBinnedStatistic:
         v = self.v
 
         stat1, binx1, biny1, bc = binned_statistic_2d(x, y, v, 'std', bins=5)
-        stat2, binx2, biny2, bc = binned_statistic_2d(x, y, v, np.std, bins=5)
+        stat2, binx2, biny2, bc = binned_statistic_2d(x, y, v, mx.std, bins=5)
 
         assert_allclose(stat1, stat2)
         assert_allclose(binx1, binx2)
@@ -261,7 +261,7 @@ class TestBinnedStatistic:
         v = self.v
 
         stat1, binx1, biny1, bc = binned_statistic_2d(x, y, v, 'min', bins=5)
-        stat2, binx2, biny2, bc = binned_statistic_2d(x, y, v, np.min, bins=5)
+        stat2, binx2, biny2, bc = binned_statistic_2d(x, y, v, mx.min, bins=5)
 
         assert_allclose(stat1, stat2)
         assert_allclose(binx1, binx2)
@@ -273,7 +273,7 @@ class TestBinnedStatistic:
         v = self.v
 
         stat1, binx1, biny1, bc = binned_statistic_2d(x, y, v, 'max', bins=5)
-        stat2, binx2, biny2, bc = binned_statistic_2d(x, y, v, np.max, bins=5)
+        stat2, binx2, biny2, bc = binned_statistic_2d(x, y, v, mx.max, bins=5)
 
         assert_allclose(stat1, stat2)
         assert_allclose(binx1, binx2)
@@ -287,7 +287,7 @@ class TestBinnedStatistic:
         stat1, binx1, biny1, bc = binned_statistic_2d(
             x, y, v, 'median', bins=5)
         stat2, binx2, biny2, bc = binned_statistic_2d(
-            x, y, v, np.median, bins=5)
+            x, y, v, mx.median, bins=5)
 
         assert_allclose(stat1, stat2)
         assert_allclose(binx1, binx2)
@@ -300,10 +300,10 @@ class TestBinnedStatistic:
 
         count1, binx1, biny1, bc = binned_statistic_2d(
             x, y, v, 'count', bins=3)
-        bc2 = np.array([17, 11, 6, 16, 11, 17, 18, 17, 17, 7, 6, 18, 16,
+        bc2 = mx.array([17, 11, 6, 16, 11, 17, 18, 17, 17, 7, 6, 18, 16,
                         6, 11, 16, 6, 6, 11, 8])
 
-        bcount = [(bc == i).sum() for i in np.unique(bc)]
+        bcount = [(bc == i).sum() for i in mx.unique(bc)]
 
         assert_allclose(bc, bc2)
         count1adj = count1[count1.nonzero()]
@@ -339,8 +339,8 @@ class TestBinnedStatistic:
         stat2, edgesx2, edgesy2, bc2 = binned_statistic_2d(
             x, y, v, 'mean', bins=(20, 10), expand_binnumbers=True)
 
-        bcx3 = np.searchsorted(edgesx, x, side='right')
-        bcy3 = np.searchsorted(edgesy, y, side='right')
+        bcx3 = mx.searchsorted(edgesx, x, side='right')
+        bcy3 = mx.searchsorted(edgesy, y, side='right')
 
         # `numpy.searchsorted` is non-inclusive on right-edge, compensate
         bcx3[x == x.max()] -= 1
@@ -356,7 +356,7 @@ class TestBinnedStatistic:
         v = self.v
 
         count1, edges1, bc = binned_statistic_dd(X, v, 'count', bins=3)
-        count2, edges2 = np.histogramdd(X, bins=3)
+        count2, edges2 = mx.histogramdd(X, bins=3)
 
         assert_allclose(count1, count2)
         assert_allclose(edges1, edges2)
@@ -374,8 +374,8 @@ class TestBinnedStatistic:
         v = self.v
 
         sum1, edges1, bc = binned_statistic_dd(X, v, 'sum', bins=3)
-        sum2, edges2 = np.histogramdd(X, bins=3, weights=v)
-        sum3, edges3, bc = binned_statistic_dd(X, v, np.sum, bins=3)
+        sum2, edges2 = mx.histogramdd(X, bins=3, weights=v)
+        sum3, edges3, bc = binned_statistic_dd(X, v, mx.sum, bins=3)
 
         assert_allclose(sum1, sum2)
         assert_allclose(edges1, edges2)
@@ -387,7 +387,7 @@ class TestBinnedStatistic:
         v = self.v
 
         stat1, edges1, bc = binned_statistic_dd(X, v, 'mean', bins=3)
-        stat2, edges2, bc = binned_statistic_dd(X, v, np.mean, bins=3)
+        stat2, edges2, bc = binned_statistic_dd(X, v, mx.mean, bins=3)
 
         assert_allclose(stat1, stat2)
         assert_allclose(edges1, edges2)
@@ -397,7 +397,7 @@ class TestBinnedStatistic:
         v = self.v
 
         stat1, edges1, bc = binned_statistic_dd(X, v, 'std', bins=3)
-        stat2, edges2, bc = binned_statistic_dd(X, v, np.std, bins=3)
+        stat2, edges2, bc = binned_statistic_dd(X, v, mx.std, bins=3)
 
         assert_allclose(stat1, stat2)
         assert_allclose(edges1, edges2)
@@ -407,7 +407,7 @@ class TestBinnedStatistic:
         v = self.v
 
         stat1, edges1, bc = binned_statistic_dd(X, v, 'min', bins=3)
-        stat2, edges2, bc = binned_statistic_dd(X, v, np.min, bins=3)
+        stat2, edges2, bc = binned_statistic_dd(X, v, mx.min, bins=3)
 
         assert_allclose(stat1, stat2)
         assert_allclose(edges1, edges2)
@@ -417,7 +417,7 @@ class TestBinnedStatistic:
         v = self.v
 
         stat1, edges1, bc = binned_statistic_dd(X, v, 'max', bins=3)
-        stat2, edges2, bc = binned_statistic_dd(X, v, np.max, bins=3)
+        stat2, edges2, bc = binned_statistic_dd(X, v, mx.max, bins=3)
 
         assert_allclose(stat1, stat2)
         assert_allclose(edges1, edges2)
@@ -427,7 +427,7 @@ class TestBinnedStatistic:
         v = self.v
 
         stat1, edges1, bc = binned_statistic_dd(X, v, 'median', bins=3)
-        stat2, edges2, bc = binned_statistic_dd(X, v, np.median, bins=3)
+        stat2, edges2, bc = binned_statistic_dd(X, v, mx.median, bins=3)
 
         assert_allclose(stat1, stat2)
         assert_allclose(edges1, edges2)
@@ -437,10 +437,10 @@ class TestBinnedStatistic:
         v = self.v[:20]
 
         count1, edges1, bc = binned_statistic_dd(X, v, 'count', bins=3)
-        bc2 = np.array([63, 33, 86, 83, 88, 67, 57, 33, 42, 41, 82, 83, 92,
+        bc2 = mx.array([63, 33, 86, 83, 88, 67, 57, 33, 42, 41, 82, 83, 92,
                         32, 36, 91, 43, 87, 81, 81])
 
-        bcount = [(bc == i).sum() for i in np.unique(bc)]
+        bcount = [(bc == i).sum() for i in mx.unique(bc)]
 
         assert_allclose(bc, bc2)
         count1adj = count1[count1.nonzero()]
@@ -452,7 +452,7 @@ class TestBinnedStatistic:
         w = self.w
 
         for stat in ["count", "sum", "mean", "std", "min", "max", "median",
-                     np.std]:
+                     mx.std]:
             stat1v, edges1v, bc1v = binned_statistic_dd(X, v, stat, bins=8)
             stat1w, edges1w, bc1w = binned_statistic_dd(X, w, stat, bins=8)
             stat2, edges2, bc2 = binned_statistic_dd(X, [v, w], stat, bins=8)
@@ -479,10 +479,10 @@ class TestBinnedStatistic:
 
     def test_dd_binned_statistic_result(self):
         # NOTE: tests the reuse of bin_edges from previous call
-        rng = np.random.default_rng(8111360615)
+        rng = mx.random.default_rng(8111360615)
         x = rng.random((10000, 3))
         v = rng.random(10000)
-        bins = np.linspace(0, 1, 10)
+        bins = mx.linspace(0, 1, 10)
         bins = (bins, bins, bins)
 
         result = binned_statistic_dd(x, v, 'mean', bins=bins)
@@ -495,11 +495,11 @@ class TestBinnedStatistic:
         assert_allclose(stat, stat2)
 
     def test_dd_zero_dedges(self):
-        rng = np.random.default_rng(1132724173)
+        rng = mx.random.default_rng(1132724173)
         x = rng.random((10000, 3))
         v = rng.random(10000)
-        bins = np.linspace(0, 1, 10)
-        bins = np.append(bins, 1)
+        bins = mx.linspace(0, 1, 10)
+        bins = mx.append(bins, 1)
         bins = (bins, bins, bins)
         with assert_raises(ValueError, match='difference is numerically 0'):
             binned_statistic_dd(x, v, 'mean', bins=bins)
@@ -528,9 +528,9 @@ class TestBinnedStatistic:
                                 range=[[0, 1]])
 
     def test_binned_statistic_float32(self):
-        X = np.array([0, 0.42358226], dtype=np.float32)
+        X = mx.array([0, 0.42358226], dtype=mx.float32)
         stat, _, _ = binned_statistic(X, None, 'count', bins=5)
-        assert_allclose(stat, np.array([1, 0, 0, 0, 1], dtype=np.float64))
+        assert_allclose(stat, mx.array([1, 0, 0, 0, 1], dtype=mx.float64))
 
     def test_gh14332(self):
         # Test the wrong output when the `sample` is close to bin edge
@@ -539,32 +539,32 @@ class TestBinnedStatistic:
         for i in range(size):
             x += [1-0.1**i]
 
-        bins = np.linspace(0,1,11)
-        sum1, edges1, bc = binned_statistic_dd(x, np.ones(len(x)),
+        bins = mx.linspace(0,1,11)
+        sum1, edges1, bc = binned_statistic_dd(x, mx.ones(len(x)),
                                                bins=[bins], statistic='sum')
-        sum2, edges2 = np.histogram(x, bins=bins)
+        sum2, edges2 = mx.histogram(x, bins=bins)
 
         assert_allclose(sum1, sum2)
         assert_allclose(edges1[0], edges2)
 
-    @pytest.mark.parametrize("dtype", [np.float64, np.complex128])
-    @pytest.mark.parametrize("statistic", [np.mean, np.median, np.sum, np.std,
-                                           np.min, np.max, 'count',
+    @pytest.mark.parametrize("dtype", [mx.float64, mx.complex128])
+    @pytest.mark.parametrize("statistic", [mx.mean, mx.median, mx.sum, mx.std,
+                                           mx.min, mx.max, 'count',
                                            lambda x: (x**2).sum(),
                                            lambda x: (x**2).sum() * 1j])
     def test_dd_all(self, dtype, statistic):
         def ref_statistic(x):
             return len(x) if statistic == 'count' else statistic(x)
 
-        rng = np.random.default_rng(3704743126639371)
+        rng = mx.random.default_rng(3704743126639371)
         n = 10
         x = rng.random(size=n)
         i = x >= 0.5
         v = rng.random(size=n)
-        if dtype is np.complex128:
+        if dtype is mx.complex128:
             v = v + rng.random(size=n)*1j
 
         stat, _, _ = binned_statistic_dd(x, v, statistic, bins=2)
-        ref = np.array([ref_statistic(v[~i]), ref_statistic(v[i])])
+        ref = mx.array([ref_statistic(v[~i]), ref_statistic(v[i])])
         assert_allclose(stat, ref)
-        assert stat.dtype == np.result_type(ref.dtype, np.float64)
+        assert stat.dtype == mx.result_type(ref.dtype, mx.float64)

@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import (assert_allclose,
                            assert_equal)
 import scipy.linalg.cython_blas as blas
@@ -7,9 +7,9 @@ class TestDGEMM:
     
     def test_transposes(self):
 
-        a = np.arange(12, dtype='d').reshape((3, 4))[:2,:2]
-        b = np.arange(1, 13, dtype='d').reshape((4, 3))[:2,:2]
-        c = np.empty((2, 4))[:2,:2]
+        a = mx.arange(12, dtype='d').reshape((3, 4))[:2,:2]
+        b = mx.arange(1, 13, dtype='d').reshape((4, 3))[:2,:2]
+        c = mx.empty((2, 4))[:2,:2]
 
         blas._test_dgemm(1., a, b, 0., c)
         assert_allclose(c, a.dot(b))
@@ -36,9 +36,9 @@ class TestDGEMM:
         assert_allclose(c, a.T.dot(b.T).T)
     
     def test_shapes(self):
-        a = np.arange(6, dtype='d').reshape((3, 2))
-        b = np.arange(-6, 2, dtype='d').reshape((2, 4))
-        c = np.empty((3, 4))
+        a = mx.arange(6, dtype='d').reshape((3, 2))
+        b = mx.arange(-6, 2, dtype='d').reshape((2, 4))
+        c = mx.empty((3, 4))
 
         blas._test_dgemm(1., a, b, 0., c)
         assert_allclose(c, a.dot(b))
@@ -53,8 +53,8 @@ class TestWfuncPointers:
 
     def test_complex_args(self):
 
-        cx = np.array([.5 + 1.j, .25 - .375j, 12.5 - 4.j], np.complex64)
-        cy = np.array([.8 + 2.j, .875 - .625j, -1. + 2.j], np.complex64)
+        cx = mx.array([.5 + 1.j, .25 - .375j, 12.5 - 4.j], mx.complex64)
+        cy = mx.array([.8 + 2.j, .875 - .625j, -1. + 2.j], mx.complex64)
 
         assert_allclose(blas._test_cdotc(cx, cy),
                         -17.6468753815+21.3718757629j)
@@ -75,8 +75,8 @@ class TestWfuncPointers:
     
     def test_double_args(self):
 
-        x = np.array([5., -3, -.5], np.float64)
-        y = np.array([2, 1, .5], np.float64)
+        x = mx.array([5., -3, -.5], mx.float64)
+        y = mx.array([2, 1, .5], mx.float64)
 
         assert_allclose(blas._test_dasum(x), 8.5)
         assert_allclose(blas._test_ddot(x, y), 6.75)
@@ -90,8 +90,8 @@ class TestWfuncPointers:
 
     def test_float_args(self):
 
-        x = np.array([5., -3, -.5], np.float32)
-        y = np.array([2, 1, .5], np.float32)
+        x = mx.array([5., -3, -.5], mx.float32)
+        y = mx.array([2, 1, .5], mx.float32)
 
         assert_equal(blas._test_isamax(x), 1)
 
@@ -105,8 +105,8 @@ class TestWfuncPointers:
 
     def test_double_complex_args(self):
 
-        cx = np.array([.5 + 1.j, .25 - .375j, 13. - 4.j], np.complex128)
-        cy = np.array([.875 + 2.j, .875 - .625j, -1. + 2.j], np.complex128)
+        cx = mx.array([.5 + 1.j, .25 - .375j, 13. - 4.j], mx.complex128)
+        cy = mx.array([.875 + 2.j, .875 - .625j, -1. + 2.j], mx.complex128)
 
         assert_equal(blas._test_izamax(cx), 3)
 

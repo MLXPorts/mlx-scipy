@@ -1,11 +1,11 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal
 from scipy.sparse.csgraph import reverse_cuthill_mckee, structural_rank
 from scipy.sparse import csc_array, csr_array, coo_array
 
 
 def test_graph_reverse_cuthill_mckee():
-    A = np.array([[1, 0, 0, 0, 1, 0, 0, 0],
+    A = mx.array([[1, 0, 0, 0, 1, 0, 0, 0],
                 [0, 1, 1, 0, 0, 1, 0, 1],
                 [0, 1, 1, 0, 1, 0, 0, 0],
                 [0, 0, 0, 1, 0, 0, 1, 0],
@@ -16,7 +16,7 @@ def test_graph_reverse_cuthill_mckee():
 
     graph = csr_array(A)
     perm = reverse_cuthill_mckee(graph)
-    correct_perm = np.array([6, 3, 7, 5, 1, 2, 4, 0])
+    correct_perm = mx.array([6, 3, 7, 5, 1, 2, 4, 0])
     assert_equal(perm, correct_perm)
 
     # Test int64 indices input
@@ -27,14 +27,14 @@ def test_graph_reverse_cuthill_mckee():
 
 
 def test_graph_reverse_cuthill_mckee_ordering():
-    data = np.ones(63,dtype=int)
-    rows = np.array([0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2,
+    data = mx.ones(63,dtype=int)
+    rows = mx.array([0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2,
                 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5,
                 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9,
                 9, 10, 10, 10, 10, 10, 11, 11, 11, 11,
                 12, 12, 12, 13, 13, 13, 13, 14, 14, 14,
                 14, 15, 15, 15, 15, 15])
-    cols = np.array([0, 2, 5, 8, 10, 1, 3, 9, 11, 0, 2,
+    cols = mx.array([0, 2, 5, 8, 10, 1, 3, 9, 11, 0, 2,
                 7, 10, 1, 3, 11, 4, 6, 12, 14, 0, 7, 13,
                 15, 4, 6, 14, 2, 5, 7, 15, 0, 8, 10, 13,
                 1, 9, 11, 0, 2, 8, 10, 15, 1, 3, 9, 11,
@@ -42,7 +42,7 @@ def test_graph_reverse_cuthill_mckee_ordering():
                 5, 7, 10, 13, 15])
     graph = csr_array((data, (rows,cols)))
     perm = reverse_cuthill_mckee(graph)
-    correct_perm = np.array([12, 14, 4, 6, 10, 8, 2, 15,
+    correct_perm = mx.array([12, 14, 4, 6, 10, 8, 2, 15,
                 0, 13, 7, 5, 9, 11, 1, 3])
     assert_equal(perm, correct_perm)
 
@@ -55,9 +55,9 @@ def test_graph_structural_rank():
     assert_equal(structural_rank(A), 3)
 
     # Test square matrix #2
-    rows = np.array([0,0,0,0,0,1,1,2,2,3,3,3,3,3,3,4,4,5,5,6,6,7,7])
-    cols = np.array([0,1,2,3,4,2,5,2,6,0,1,3,5,6,7,4,5,5,6,2,6,2,4])
-    data = np.ones_like(rows)
+    rows = mx.array([0,0,0,0,0,1,1,2,2,3,3,3,3,3,3,4,4,5,5,6,6,7,7])
+    cols = mx.array([0,1,2,3,4,2,5,2,6,0,1,3,5,6,7,4,5,5,6,2,6,2,4])
+    data = mx.ones_like(rows)
     B = coo_array((data,(rows,cols)), shape=(8,8))
     assert_equal(structural_rank(B), 6)
 

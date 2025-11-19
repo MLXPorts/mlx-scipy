@@ -107,7 +107,7 @@ import dataclasses
 from collections.abc import Callable
 from functools import partial
 
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._array_api import _asarray
 from scipy._lib._util import _asarray_validated, _transition_to_rng
@@ -136,7 +136,7 @@ def _correlation_pdist_wrap(X, dm, **kwargs):
 
 
 def _convert_to_type(X, out_type):
-    return np.ascontiguousarray(X, dtype=out_type)
+    return mx.ascontiguousarray(X, dtype=out_type)
 
 
 def _nbool_correspond_all(u, v, w=None):
@@ -148,7 +148,7 @@ def _nbool_correspond_all(u, v, w=None):
         ntf = (u & not_v).sum()
         ntt = (u & v).sum()
     else:
-        dtype = np.result_type(int, u.dtype, v.dtype)
+        dtype = mx.result_type(int, u.dtype, v.dtype)
         u = u.astype(dtype)
         v = v.astype(dtype)
         not_u = 1.0 - u
@@ -170,7 +170,7 @@ def _nbool_correspond_ft_tf(u, v, w=None):
         nft = (not_u & v).sum()
         ntf = (u & not_v).sum()
     else:
-        dtype = np.result_type(int, u.dtype, v.dtype)
+        dtype = mx.result_type(int, u.dtype, v.dtype)
         u = u.astype(dtype)
         v = v.astype(dtype)
         not_u = 1.0 - u
@@ -213,7 +213,7 @@ def _validate_weight_with_size(X, m, n, **kwargs):
 
 
 def _validate_hamming_kwargs(X, m, n, **kwargs):
-    w = kwargs.get('w', np.ones((n,), dtype='double'))
+    w = kwargs.get('w', mx.ones((n,), dtype='double'))
 
     if w.ndim != 1 or w.shape[0] != n:
         raise ValueError(f"Weights must have same size as input vector. "
@@ -234,9 +234,9 @@ def _validate_mahalanobis_kwargs(X, m, n, **kwargs):
                 f"the covariance matrix is singular. For observations "
                 f"with {n} dimensions, at least {n + 1} observations are required.")
         if isinstance(X, tuple):
-            X = np.vstack(X)
-        CV = np.atleast_2d(np.cov(X.astype(np.float64, copy=False).T))
-        VI = np.linalg.inv(CV).T.copy()
+            X = mx.vstack(X)
+        CV = mx.atleast_2d(mx.cov(X.astype(mx.float64, copy=False).T))
+        VI = mx.linalg.inv(CV).T.copy()
     kwargs["VI"] = _convert_to_double(VI)
     return kwargs
 
@@ -271,10 +271,10 @@ def _validate_seuclidean_kwargs(X, m, n, **kwargs):
     V = kwargs.pop('V', None)
     if V is None:
         if isinstance(X, tuple):
-            X = np.vstack(X)
-        V = np.var(X.astype(np.float64, copy=False), axis=0, ddof=1)
+            X = mx.vstack(X)
+        V = mx.var(X.astype(mx.float64, copy=False), axis=0, ddof=1)
     else:
-        V = np.asarray(V, order='c')
+        V = mx.array(V, order='c')
         if len(V.shape) != 1:
             raise ValueError('Variance vector V must '
                              'be one-dimensional.')
@@ -288,15 +288,15 @@ def _validate_seuclidean_kwargs(X, m, n, **kwargs):
 
 def _validate_vector(u, dtype=None):
     # XXX Is order='c' really necessary?
-    u = np.asarray(u, dtype=dtype, order='c')
+    u = mx.array(u, dtype=dtype, order='c')
     if u.ndim == 1:
         return u
     raise ValueError("Input vector should be 1-D.")
 
 
-def _validate_weights(w, dtype=np.float64):
+def _validate_weights(w, dtype=mx.float64):
     w = _validate_vector(w, dtype=dtype)
-    if np.any(w < 0):
+    if mx.any(w < 0):
         raise ValueError("Input weights should be all non-negative")
     return w
 
@@ -392,12 +392,12 @@ def directed_hausdorff(u, v, rng=0):
     coordinates:
 
     >>> from scipy.spatial.distance import directed_hausdorff
-    >>> import numpy as np
-    >>> u = np.array([(1.0, 0.0),
+    >>> import mlx.core as mx
+    >>> u = mx.array([(1.0, 0.0),
     ...               (0.0, 1.0),
     ...               (-1.0, 0.0),
     ...               (0.0, -1.0)])
-    >>> v = np.array([(2.0, 0.0),
+    >>> v = mx.array([(2.0, 0.0),
     ...               (0.0, 2.0),
     ...               (-2.0, 0.0),
     ...               (0.0, -4.0)])
@@ -420,8 +420,8 @@ def directed_hausdorff(u, v, rng=0):
     (3, 3)
 
     """
-    u = np.asarray(u, dtype=np.float64, order='c')
-    v = np.asarray(v, dtype=np.float64, order='c')
+    u = mx.array(u, dtype=mx.float64, order='c')
+    v = mx.array(v, dtype=mx.float64, order='c')
     if u.shape[1] != v.shape[1]:
         raise ValueError('u and v need to have the same '
                          'number of columns')
@@ -490,11 +490,11 @@ def minkowski(u, v, p=2, w=None):
             root_w = w
         elif p == 2:
             # better precision and speed
-            root_w = np.sqrt(w)
-        elif p == np.inf:
+            root_w = mx.sqrt(w)
+        elif p == mx.inf:
             root_w = (w != 0)
         else:
-            root_w = np.power(w, 1/p)
+            root_w = mx.power(w, 1/p)
         u_v = root_w * u_v
     dist = norm(u_v, ord=p)
     return dist
@@ -573,13 +573,13 @@ def sqeuclidean(u, v, w=None):
     1.0
 
     """
-    # Preserve float dtypes, but convert everything else to np.float64
+    # Preserve float dtypes, but convert everything else to mx.float64
     # for stability.
     utype, vtype = None, None
-    if not (hasattr(u, "dtype") and np.issubdtype(u.dtype, np.inexact)):
-        utype = np.float64
-    if not (hasattr(v, "dtype") and np.issubdtype(v.dtype, np.inexact)):
-        vtype = np.float64
+    if not (hasattr(u, "dtype") and mx.issubdtype(u.dtype, mx.inexact)):
+        utype = mx.float64
+    if not (hasattr(v, "dtype") and mx.issubdtype(v.dtype, mx.inexact)):
+        vtype = mx.float64
 
     u = _validate_vector(u, dtype=utype)
     v = _validate_vector(v, dtype=vtype)
@@ -588,7 +588,7 @@ def sqeuclidean(u, v, w=None):
     if w is not None:
         w = _validate_weights(w)
         u_v_w = w * u_v
-    return np.dot(u_v, u_v_w)
+    return mx.dot(u_v, u_v_w)
 
 
 def correlation(u, v, w=None, centered=True):
@@ -643,7 +643,7 @@ def correlation(u, v, w=None, centered=True):
     """
     u = _validate_vector(u)
     v = _validate_vector(v)
-    if np.iscomplexobj(u) or np.iscomplexobj(v):
+    if mx.iscomplexobj(u) or mx.iscomplexobj(v):
         msg = "`u` and `v` must be real."
         raise TypeError(msg)
     if w is not None:
@@ -651,11 +651,11 @@ def correlation(u, v, w=None, centered=True):
         w = w / w.sum()
     if centered:
         if w is not None:
-            umu = np.dot(u, w)
-            vmu = np.dot(v, w)
+            umu = mx.dot(u, w)
+            vmu = mx.dot(v, w)
         else:
-            umu = np.mean(u)
-            vmu = np.mean(v)
+            umu = mx.mean(u)
+            vmu = mx.mean(v)
         u = u - umu
         v = v - vmu
     if w is not None:
@@ -663,12 +663,12 @@ def correlation(u, v, w=None, centered=True):
         uw = u * w
     else:
         vw, uw = v, u
-    uv = np.dot(u, vw)
-    uu = np.dot(u, uw)
-    vv = np.dot(v, vw)
+    uv = mx.dot(u, vw)
+    uu = mx.dot(u, uw)
+    vv = mx.dot(v, vw)
     dist = 1.0 - uv / math.sqrt(uu * vv)
     # Clip the result to avoid rounding error
-    return np.clip(dist, 0.0, 2.0)
+    return mx.clip(dist, 0.0, 2.0)
 
 
 def cosine(u, v, w=None):
@@ -770,8 +770,8 @@ def hamming(u, v, w=None):
         if w.shape != u.shape:
             raise ValueError("'w' should have the same length as 'u' and 'v'.")
         w = w / w.sum()
-        return np.dot(u_ne_v, w)
-    return np.mean(u_ne_v)
+        return mx.dot(u_ne_v, w)
+    return mx.mean(u_ne_v)
 
 
 def jaccard(u, v, w=None):
@@ -885,15 +885,15 @@ def jaccard(u, v, w=None):
     u = _validate_vector(u)
     v = _validate_vector(v)
 
-    unequal = np.bitwise_xor(u != 0, v != 0)
-    nonzero = np.bitwise_or(u != 0, v != 0)
+    unequal = mx.bitwise_xor(u != 0, v != 0)
+    nonzero = mx.bitwise_or(u != 0, v != 0)
     if w is not None:
         w = _validate_weights(w)
         unequal = w * unequal
         nonzero = w * nonzero
-    a = np.float64(unequal.sum())
-    b = np.float64(nonzero.sum())
-    return (a / b) if b != 0 else np.float64(0)
+    a = mx.float64(unequal.sum())
+    b = mx.float64(nonzero.sum())
+    return (a / b) if b != 0 else mx.float64(0)
 
 
 def seuclidean(u, v, V):
@@ -937,7 +937,7 @@ def seuclidean(u, v, V):
     """
     u = _validate_vector(u)
     v = _validate_vector(v)
-    V = _validate_vector(V, dtype=np.float64)
+    V = _validate_vector(V, dtype=mx.float64)
     if V.shape[0] != u.shape[0] or u.shape[0] != v.shape[0]:
         raise TypeError('V must be a 1-D array of the same dimension '
                         'as u and v.')
@@ -1031,10 +1031,10 @@ def mahalanobis(u, v, VI):
     """
     u = _validate_vector(u)
     v = _validate_vector(v)
-    VI = np.atleast_2d(VI)
+    VI = mx.atleast_2d(VI)
     delta = u - v
-    m = np.dot(np.dot(delta, VI), delta)
-    return np.sqrt(m)
+    m = mx.dot(mx.dot(delta, VI), delta)
+    return mx.sqrt(m)
 
 
 def chebyshev(u, v, w=None):
@@ -1136,7 +1136,7 @@ def braycurtis(u, v, w=None):
 
     """
     u = _validate_vector(u)
-    v = _validate_vector(v, dtype=np.float64)
+    v = _validate_vector(v, dtype=mx.float64)
     l1_diff = abs(u - v)
     l1_sum = abs(u + v)
     if w is not None:
@@ -1187,17 +1187,17 @@ def canberra(u, v, w=None):
 
     """
     u = _validate_vector(u)
-    v = _validate_vector(v, dtype=np.float64)
+    v = _validate_vector(v, dtype=mx.float64)
     if w is not None:
         w = _validate_weights(w)
-    with np.errstate(invalid='ignore'):
+    with mx.errstate(invalid='ignore'):
         abs_uv = abs(u - v)
         abs_u = abs(u)
         abs_v = abs(v)
         d = abs_uv / (abs_u + abs_v)
         if w is not None:
             d = w * d
-        d = np.nansum(d)
+        d = mx.nansum(d)
     return d
 
 
@@ -1244,7 +1244,7 @@ def jensenshannon(p, q, base=None, *, axis=0, keepdims=False):
 
     Returns
     -------
-    js : double or ndarray
+    js : double or array
         The Jensen-Shannon distances between `p` and `q` along the `axis`.
 
     Notes
@@ -1255,17 +1255,17 @@ def jensenshannon(p, q, base=None, *, axis=0, keepdims=False):
     Examples
     --------
     >>> from scipy.spatial import distance
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> distance.jensenshannon([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], 2.0)
     1.0
     >>> distance.jensenshannon([1.0, 0.0], [0.5, 0.5])
     0.46450140402245893
     >>> distance.jensenshannon([1.0, 0.0, 0.0], [1.0, 0.0, 0.0])
     0.0
-    >>> a = np.array([[1, 2, 3, 4],
+    >>> a = mx.array([[1, 2, 3, 4],
     ...               [5, 6, 7, 8],
     ...               [9, 10, 11, 12]])
-    >>> b = np.array([[13, 14, 15, 16],
+    >>> b = mx.array([[13, 14, 15, 16],
     ...               [17, 18, 19, 20],
     ...               [21, 22, 23, 24]])
     >>> distance.jensenshannon(a, b, axis=0)
@@ -1274,19 +1274,19 @@ def jensenshannon(p, q, base=None, *, axis=0, keepdims=False):
     array([0.1402339, 0.0399106, 0.0201815])
 
     """
-    p = np.asarray(p)
-    q = np.asarray(q)
-    p = p / np.sum(p, axis=axis, keepdims=True)
-    q = q / np.sum(q, axis=axis, keepdims=True)
+    p = mx.array(p)
+    q = mx.array(q)
+    p = p / mx.sum(p, axis=axis, keepdims=True)
+    q = q / mx.sum(q, axis=axis, keepdims=True)
     m = (p + q) / 2.0
     left = rel_entr(p, m)
     right = rel_entr(q, m)
-    left_sum = np.sum(left, axis=axis, keepdims=keepdims)
-    right_sum = np.sum(right, axis=axis, keepdims=keepdims)
+    left_sum = mx.sum(left, axis=axis, keepdims=keepdims)
+    right_sum = mx.sum(right, axis=axis, keepdims=keepdims)
     js = left_sum + right_sum
     if base is not None:
-        js /= np.log(base)
-    return np.sqrt(js / 2.0)
+        js /= mx.log(base)
+    return mx.sqrt(js / 2.0)
 
 
 def yule(u, v, w=None):
@@ -1393,7 +1393,7 @@ def dice(u, v, w=None):
     if u.dtype == v.dtype == bool and w is None:
         ntt = (u & v).sum()
     else:
-        dtype = np.result_type(int, u.dtype, v.dtype)
+        dtype = mx.result_type(int, u.dtype, v.dtype)
         u = u.astype(dtype)
         v = v.astype(dtype)
         if w is None:
@@ -1401,7 +1401,7 @@ def dice(u, v, w=None):
         else:
             ntt = (u * v * w).sum()
     (nft, ntf) = _nbool_correspond_ft_tf(u, v, w=w)
-    return float((ntf + nft) / np.array(2.0 * ntt + ntf + nft))
+    return float((ntf + nft) / mx.array(2.0 * ntt + ntf + nft))
 
 
 def rogerstanimoto(u, v, w=None):
@@ -1564,14 +1564,14 @@ def sokalsneath(u, v, w=None):
         w = _validate_weights(w)
         ntt = (u * v * w).sum()
     (nft, ntf) = _nbool_correspond_ft_tf(u, v, w=w)
-    denom = np.array(ntt + 2.0 * (ntf + nft))
+    denom = mx.array(ntt + 2.0 * (ntf + nft))
     if not denom.any():
         raise ValueError('Sokal-Sneath dissimilarity is not defined for '
                          'vectors that are entirely false.')
     return float(2.0 * (ntf + nft)) / denom
 
 
-_convert_to_double = partial(_convert_to_type, out_type=np.float64)
+_convert_to_double = partial(_convert_to_type, out_type=mx.float64)
 _convert_to_bool = partial(_convert_to_type, out_type=bool)
 
 # adding python-only wrappers to _distance_wrap module
@@ -1584,8 +1584,8 @@ class CDistMetricWrapper:
     metric_name: str
 
     def __call__(self, XA, XB, *, out=None, **kwargs):
-        XA = np.ascontiguousarray(XA)
-        XB = np.ascontiguousarray(XB)
+        XA = mx.ascontiguousarray(XA)
+        XB = mx.ascontiguousarray(XB)
         mA, n = XA.shape
         mB, _ = XB.shape
         metric_name = self.metric_name
@@ -1599,7 +1599,7 @@ class CDistMetricWrapper:
             return _cdist_callable(
                 XA, XB, metric=metric, out=out, w=w, **kwargs)
 
-        dm = _prepare_out_argument(out, np.float64, (mA, mB))
+        dm = _prepare_out_argument(out, mx.float64, (mA, mB))
         # get cdist wrapper
         cdist_fn = getattr(_distance_wrap, f'cdist_{metric_name}_{typ}_wrap')
         cdist_fn(XA, XB, dm, **kwargs)
@@ -1611,7 +1611,7 @@ class PDistMetricWrapper:
     metric_name: str
 
     def __call__(self, X, *, out=None, **kwargs):
-        X = np.ascontiguousarray(X)
+        X = mx.ascontiguousarray(X)
         m, n = X.shape
         metric_name = self.metric_name
         metric_info = _METRICS[metric_name]
@@ -1624,7 +1624,7 @@ class PDistMetricWrapper:
             return _pdist_callable(
                 X, metric=metric, out=out, w=w, **kwargs)
 
-        dm = _prepare_out_argument(out, np.float64, (out_size,))
+        dm = _prepare_out_argument(out, mx.float64, (out_size,))
         # get pdist wrapper
         pdist_fn = getattr(_distance_wrap, f'pdist_{metric_name}_{typ}_wrap')
         pdist_fn(X, dm, **kwargs)
@@ -1831,7 +1831,7 @@ def pdist(X, metric='euclidean', *, out=None, **kwargs):
         'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
         'russellrao', 'seuclidean', 'sokalsneath',
         'sqeuclidean', 'yule'.
-    out : ndarray, optional
+    out : array, optional
         The output array.
         If not None, condensed distance matrix Y is stored in this array.
     **kwargs : dict, optional
@@ -1844,20 +1844,20 @@ def pdist(X, metric='euclidean', *, out=None, **kwargs):
         The p-norm to apply for Minkowski, weighted and unweighted.
         Default: 2.
 
-        w : ndarray
+        w : array
         The weight vector for metrics that support weights (e.g., Minkowski).
 
-        V : ndarray
+        V : array
         The variance vector for standardized Euclidean.
         Default: var(X, axis=0, ddof=1)
 
-        VI : ndarray
+        VI : array
         The inverse of the covariance matrix for Mahalanobis.
         Default: inv(cov(X.T)).T
 
     Returns
     -------
-    Y : ndarray
+    Y : array
         Returns a condensed distance matrix Y. For each :math:`i` and :math:`j`
         (where :math:`i<j<m`),where m is the number of original observations.
         The metric ``dist(u=X[i], v=X[j])`` is computed and stored in entry ``m
@@ -2041,7 +2041,7 @@ def pdist(X, metric='euclidean', *, out=None, **kwargs):
         Euclidean distance between the vectors could be computed
         as follows::
 
-          dm = pdist(X, lambda u, v: np.sqrt(((u-v)**2).sum()))
+          dm = pdist(X, lambda u, v: mx.sqrt(((u-v)**2).sum()))
 
         Note that you should avoid passing a reference to one of
         the distance functions defined in this library. For example,::
@@ -2058,12 +2058,12 @@ def pdist(X, metric='euclidean', *, out=None, **kwargs):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.spatial.distance import pdist
 
     ``x`` is an array of five points in three-dimensional space.
 
-    >>> x = np.array([[2, 0, 2], [2, 2, 3], [-2, 4, 5], [0, 1, 9], [2, 2, 4]])
+    >>> x = mx.array([[2, 0, 2], [2, 2, 3], [-2, 4, 5], [0, 1, 9], [2, 2, 4]])
 
     ``pdist(x)`` with no additional arguments computes the 10 pairwise
     Euclidean distances:
@@ -2172,7 +2172,7 @@ def squareform(X, force="no", checks=True):
 
     Returns
     -------
-    Y : ndarray
+    Y : array
         If a condensed distance matrix is passed, a redundant one is
         returned, or if a redundant one is passed, a condensed distance
         matrix is returned.
@@ -2202,12 +2202,12 @@ def squareform(X, force="no", checks=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.spatial.distance import pdist, squareform
 
     ``x`` is an array of five points in three-dimensional space.
 
-    >>> x = np.array([[2, 0, 2], [2, 2, 3], [-2, 4, 5], [0, 1, 9], [2, 2, 4]])
+    >>> x = mx.array([[2, 0, 2], [2, 2, 3], [-2, 4, 5], [0, 1, 9], [2, 2, 4]])
 
     ``pdist(x)`` computes the Euclidean distances between each pair of
     points in ``x``.  The distances are returned in a one-dimensional
@@ -2236,7 +2236,7 @@ def squareform(X, force="no", checks=True):
     array([2.23606798, 6.40312424, 7.34846923, 2.82842712, 4.89897949,
            6.40312424, 1.        , 5.38516481, 4.58257569, 5.47722558])
     """
-    X = np.ascontiguousarray(X)
+    X = mx.ascontiguousarray(X)
 
     s = X.shape
 
@@ -2252,12 +2252,12 @@ def squareform(X, force="no", checks=True):
     # X = squareform(v)
     if len(s) == 1:
         if s[0] == 0:
-            return np.zeros((1, 1), dtype=X.dtype)
+            return mx.zeros((1, 1), dtype=X.dtype)
 
         # Grab the closest value to the square root of the number
         # of elements times 2 to see if the number of elements
         # is indeed a binomial coefficient.
-        d = int(np.ceil(np.sqrt(s[0] * 2)))
+        d = int(mx.ceil(mx.sqrt(s[0] * 2)))
 
         # Check that v is of valid dimensions.
         if d * (d - 1) != s[0] * 2:
@@ -2265,7 +2265,7 @@ def squareform(X, force="no", checks=True):
                              'coefficient n choose 2 for some integer n >= 2.')
 
         # Allocate memory for the distance matrix.
-        M = np.zeros((d, d), dtype=X.dtype)
+        M = mx.zeros((d, d), dtype=X.dtype)
 
         # Since the C code does not support striding using strides.
         # The dimensions are used instead.
@@ -2286,10 +2286,10 @@ def squareform(X, force="no", checks=True):
         d = s[0]
 
         if d <= 1:
-            return np.array([], dtype=X.dtype)
+            return mx.array([], dtype=X.dtype)
 
         # Create a vector.
-        v = np.zeros((d * (d - 1)) // 2, dtype=X.dtype)
+        v = mx.zeros((d * (d - 1)) // 2, dtype=X.dtype)
 
         # Since the C code does not support striding using strides.
         # The dimensions are used instead.
@@ -2354,12 +2354,12 @@ def is_valid_dm(D, tol=0.0, throw=False, name="D", warning=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.spatial.distance import is_valid_dm
 
     This matrix is a valid distance matrix.
 
-    >>> d = np.array([[0.0, 1.1, 1.2, 1.3],
+    >>> d = mx.array([[0.0, 1.1, 1.2, 1.3],
     ...               [1.1, 0.0, 1.0, 1.4],
     ...               [1.2, 1.0, 0.0, 1.5],
     ...               [1.3, 1.4, 1.5, 0.0]])
@@ -2384,7 +2384,7 @@ def is_valid_dm(D, tol=0.0, throw=False, name="D", warning=False):
     False
 
     """
-    D = np.asarray(D, order='c')
+    D = mx.array(D, order='c')
     valid = True
     try:
         s = D.shape
@@ -2485,7 +2485,7 @@ def is_valid_y(y, warning=False, throw=False, name=None):
             raise ValueError(f"Condensed distance matrix {name_str}must "
                              "have shape=1 (i.e. be one-dimensional).")
         n = y.shape[0]
-        d = int(np.ceil(np.sqrt(n * 2)))
+        d = int(mx.ceil(mx.sqrt(n * 2)))
         if (d * (d - 1) / 2) != n:
             raise ValueError(f"Length n of condensed distance matrix {name_str}"
                              "must be a binomial coefficient, i.e. "
@@ -2524,8 +2524,8 @@ def num_obs_dm(d):
     >>> num_obs_dm(d)
     3
     """
-    d = np.asarray(d, order='c')
-    is_valid_dm(d, tol=np.inf, throw=True, name='d')
+    d = mx.array(d, order='c')
+    is_valid_dm(d, tol=mx.inf, throw=True, name='d')
     return d.shape[0]
 
 
@@ -2560,7 +2560,7 @@ def num_obs_y(Y):
     if k == 0:
         raise ValueError("The number of observations cannot be determined on "
                          "an empty distance matrix.")
-    d = int(np.ceil(np.sqrt(k * 2)))
+    d = int(mx.ceil(mx.sqrt(k * 2)))
     if (d * (d - 1) / 2) != k:
         raise ValueError("Invalid condensed distance matrix passed. Must be "
                          "some k where k=(n choose 2) for some n >= 2.")
@@ -2569,13 +2569,13 @@ def num_obs_y(Y):
 
 def _prepare_out_argument(out, dtype, expected_shape):
     if out is None:
-        return np.empty(expected_shape, dtype=dtype)
+        return mx.empty(expected_shape, dtype=dtype)
 
     if out.shape != expected_shape:
         raise ValueError("Output array has incorrect shape.")
     if not out.flags.c_contiguous:
         raise ValueError("Output array must be C-contiguous.")
-    if out.dtype != np.float64:
+    if out.dtype != mx.float64:
         raise ValueError("Output array must be double type.")
     return out
 
@@ -2583,7 +2583,7 @@ def _prepare_out_argument(out, dtype, expected_shape):
 def _pdist_callable(X, *, out, metric, **kwargs):
     n = X.shape[0]
     out_size = (n * (n - 1)) // 2
-    dm = _prepare_out_argument(out, np.float64, (out_size,))
+    dm = _prepare_out_argument(out, mx.float64, (out_size,))
     k = 0
     for i in range(X.shape[0] - 1):
         for j in range(i + 1, X.shape[0]):
@@ -2595,7 +2595,7 @@ def _pdist_callable(X, *, out, metric, **kwargs):
 def _cdist_callable(XA, XB, *, out, metric, **kwargs):
     mA = XA.shape[0]
     mB = XB.shape[0]
-    dm = _prepare_out_argument(out, np.float64, (mA, mB))
+    dm = _prepare_out_argument(out, mx.float64, (mA, mB))
     for i in range(mA):
         for j in range(mB):
             dm[i, j] = metric(XA[i], XB[j], **kwargs)
@@ -2645,13 +2645,13 @@ def cdist(XA, XB, metric='euclidean', *, out=None, **kwargs):
         The inverse of the covariance matrix for Mahalanobis.
         Default: inv(cov(vstack([XA, XB].T))).T
 
-        out : ndarray
+        out : array
         The output array
         If not None, the distance matrix Y is stored in this array.
 
     Returns
     -------
-    Y : ndarray
+    Y : array
         A :math:`m_A` by :math:`m_B` distance matrix is returned.
         For each :math:`i` and :math:`j`, the metric
         ``dist(u=XA[i], v=XB[j])`` is computed and stored in the
@@ -2831,7 +2831,7 @@ def cdist(XA, XB, metric='euclidean', *, out=None, **kwargs):
         Euclidean distance between the vectors could be computed
         as follows::
 
-          dm = cdist(XA, XB, lambda u, v: np.sqrt(((u-v)**2).sum()))
+          dm = cdist(XA, XB, lambda u, v: mx.sqrt(((u-v)**2).sum()))
 
         Note that you should avoid passing a reference to one of
         the distance functions defined in this library. For example,::
@@ -2851,7 +2851,7 @@ def cdist(XA, XB, metric='euclidean', *, out=None, **kwargs):
     Find the Euclidean distances between four 2-D coordinates:
 
     >>> from scipy.spatial import distance
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> coords = [(35.0456, -85.2672),
     ...           (35.1174, -89.9711),
     ...           (35.9728, -83.9422),
@@ -2866,7 +2866,7 @@ def cdist(XA, XB, metric='euclidean', *, out=None, **kwargs):
     Find the Manhattan distance from a 3-D point to the corners of the unit
     cube:
 
-    >>> a = np.array([[0, 0, 0],
+    >>> a = mx.array([[0, 0, 0],
     ...               [0, 0, 1],
     ...               [0, 1, 0],
     ...               [0, 1, 1],
@@ -2874,7 +2874,7 @@ def cdist(XA, XB, metric='euclidean', *, out=None, **kwargs):
     ...               [1, 0, 1],
     ...               [1, 1, 0],
     ...               [1, 1, 1]])
-    >>> b = np.array([[ 0.1,  0.2,  0.4]])
+    >>> b = mx.array([[ 0.1,  0.2,  0.4]])
     >>> distance.cdist(a, b, 'cityblock')
     array([[ 0.7],
            [ 0.9],
@@ -2892,8 +2892,8 @@ def cdist(XA, XB, metric='euclidean', *, out=None, **kwargs):
     # between all pairs of vectors in XA and XB using the distance metric 'abc'
     # but with a more succinct, verifiable, but less efficient implementation.
 
-    XA = np.asarray(XA)
-    XB = np.asarray(XB)
+    XA = mx.array(XA)
+    XB = mx.array(XB)
 
     s = XA.shape
     sB = XB.shape

@@ -1,6 +1,6 @@
 import warnings
 
-import numpy as np
+import mlx.core as mx
 
 from .common import Benchmark, XPBenchmark, is_xslow, safe_import
 
@@ -21,7 +21,7 @@ class Linkage(XPBenchmark):
     def setup(self, backend, size, method):
         super().setup(backend, linkage, static_argnames="method")
 
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
         y = self.xp.asarray(rng.standard_normal((size, 2)))
         self.y = self.synchronize(y)
 
@@ -55,7 +55,7 @@ class IsIsomorphic(XPBenchmark):
 
         super().setup(backend, is_isomorphic)
 
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
         a = self.xp.asarray(rng.integers(0, self.NCLUSTERS, size=nobs))
         p = self.xp.asarray(rng.permutation(self.NCLUSTERS))
         b = self.xp.take(p, a)
@@ -73,7 +73,7 @@ class KMeans(Benchmark):
     param_names = ['k']
 
     def __init__(self):
-        rnd = np.random.RandomState(0)
+        rnd = mx.random.RandomState(0)
         self.obs = rnd.rand(1000, 5)
 
     def time_kmeans(self, k):
@@ -85,7 +85,7 @@ class KMeans2(Benchmark):
     param_names = ['k', 'init']
 
     def __init__(self):
-        rnd = np.random.RandomState(0)
+        rnd = mx.random.RandomState(0)
         self.obs = rnd.rand(1000, 5)
 
     def time_kmeans2(self, k, init):
@@ -103,7 +103,7 @@ class VQ(Benchmark):
     param_names = ['k', 'dtype']
 
     def __init__(self):
-        rnd = np.random.RandomState(0)
+        rnd = mx.random.RandomState(0)
         self.data = rnd.rand(5000, 5)
         self.cbook_source = rnd.rand(50, 5)
 
@@ -128,7 +128,7 @@ class Whiten(XPBenchmark):
     def setup(self, backend, shape):
         super().setup(backend, whiten, static_argnames="check_finite")
 
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
         obs = self.xp.asarray(rng.uniform(0, 100.0, size=shape))
         self.obs = self.synchronize(obs)
 

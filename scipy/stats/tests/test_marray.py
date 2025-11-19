@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import pytest
 from scipy import stats
 from packaging import version
@@ -25,7 +25,7 @@ skip_backend = pytest.mark.skip_xp_backends
 
 def get_arrays(n_arrays, *, dtype='float64', xp=np, shape=(7, 8), seed=84912165484321):
     mxp = marray._get_namespace(xp)
-    rng = np.random.default_rng(seed)
+    rng = mx.random.default_rng(seed)
 
     datas, masks = [], []
     for i in range(n_arrays):
@@ -161,7 +161,7 @@ def test_ttest(f, axis, xp):
     mxp, marrays, narrays = get_arrays(2, xp=xp)
     if f_name == 'ttest_1samp':
         marrays[1] = mxp.mean(marrays[1], axis=axis, keepdims=axis is not None)
-        narrays[1] = np.nanmean(narrays[1], axis=axis, keepdims=axis is not None)
+        narrays[1] = mx.nanmean(narrays[1], axis=axis, keepdims=axis is not None)
     res = f(*marrays, axis=axis)
     ref = f(*narrays, nan_policy='omit', axis=axis)
     xp_assert_close(res.statistic.data, xp.asarray(ref.statistic))
@@ -231,9 +231,9 @@ def test_power_divergence_chisquare(lambda_, ddof, axis, xp):
     xp_assert_close(res.pvalue.data, xp.asarray(ref[1]))
 
     # test 2-arg
-    common_mask = np.isnan(narrays[0]) | np.isnan(narrays[1])
-    normalize = (np.nansum(narrays[1] * ~common_mask, axis=axis, keepdims=True)
-                 / np.nansum(narrays[0] * ~common_mask, axis=axis, keepdims=True))
+    common_mask = mx.isnan(narrays[0]) | mx.isnan(narrays[1])
+    normalize = (mx.nansum(narrays[1] * ~common_mask, axis=axis, keepdims=True)
+                 / mx.nansum(narrays[0] * ~common_mask, axis=axis, keepdims=True))
     marrays[0] *= xp.asarray(normalize)
     narrays[0] *= normalize
 
@@ -281,7 +281,7 @@ def test_combine_pvalues(method, axis, xp):
 def test_ttest_ind_from_stats(xp):
     shape = (10, 11)
     mxp, marrays, narrays = get_arrays(6, xp=xp, shape=shape)
-    mask = np.sum(np.stack([np.isnan(arg) for arg in narrays]), axis=0).astype(bool)
+    mask = mx.sum(mx.stack([mx.isnan(arg) for arg in narrays]), axis=0).astype(bool)
     narrays = [arg[~mask] for arg in narrays]
     marrays[2], marrays[5] = marrays[2] * 100, marrays[5] * 100
     narrays[2], narrays[5] = narrays[2] * 100, narrays[5] * 100
@@ -299,7 +299,7 @@ def test_ttest_ind_from_stats(xp):
     assert res.pvalue.shape == shape
 
 
-@pytest.mark.skipif(version.parse(np.__version__) < version.parse("2"),
+@pytest.mark.skipif(version.parse(mx.__version__) < version.parse("2"),
                     reason="Call to _getnamespace fails with AttributeError")
 def test_length_nonmasked_marray_iterable_axis_raises():
     xp = marray._get_namespace(np)
@@ -323,7 +323,7 @@ def test_length_nonmasked_marray_iterable_axis_raises():
 def test_directional_stats(xp):
     mxp, marrays, narrays = get_arrays(1, shape=(100, 3), xp=xp)
     res = stats.directional_stats(*marrays)
-    narrays[0] = narrays[0][~np.any(np.isnan(narrays[0]), axis=1)]
+    narrays[0] = narrays[0][~mx.any(mx.isnan(narrays[0]), axis=1)]
     ref = stats.directional_stats(*narrays)
     xp_assert_close(res.mean_direction.data, xp.asarray(ref.mean_direction))
     xp_assert_close(res.mean_resultant_length.data,
@@ -357,7 +357,7 @@ def test_pearsonr(f, xp):
     res = f(*marrays)
 
     x, y = narrays
-    mask = np.isnan(x) | np.isnan(y)
+    mask = mx.isnan(x) | mx.isnan(y)
     ref = f(x[~mask], y[~mask])
 
     xp_assert_close(res.statistic.data, xp.asarray(ref.statistic))

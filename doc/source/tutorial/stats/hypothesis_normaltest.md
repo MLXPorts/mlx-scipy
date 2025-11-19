@@ -34,8 +34,8 @@ males in a medical study are not normally distributed [^3]. The weights (lbs)
 are recorded in the array `x` below.
 
 ```{code-cell}
-import numpy as np
-x = np.array([148, 154, 158, 160, 161, 162, 166, 170, 182, 195, 236])
+import mlx.core as mx
+x = mx.array([148, 154, 158, 160, 161, 162, 166, 170, 182, 195, 236])
 ```
 
 The normality test {func}`scipy.stats.normaltest` of [^1] and [^2] begins by
@@ -61,7 +61,7 @@ distribution with two degrees of freedom.
 ```{code-cell}
 import matplotlib.pyplot as plt
 dist = stats.chi2(df=2)
-stat_vals = np.linspace(0, 16, 100)
+stat_vals = mx.linspace(0, 16, 100)
 pdf = dist.pdf(stat_vals)
 fig, ax = plt.subplots(figsize=(8, 5))
 
@@ -124,7 +124,7 @@ res = stats.monte_carlo_test(x, stats.norm.rvs, statistic,
                              alternative='greater')
 fig, ax = plt.subplots(figsize=(8, 5))
 plot(ax)
-ax.hist(res.null_distribution, np.linspace(0, 25, 50),
+ax.hist(res.null_distribution, mx.linspace(0, 25, 50),
         density=True)
 ax.legend(['asymptotic approximation (many observations)',
            'Monte Carlo approximation (11 observations)'])

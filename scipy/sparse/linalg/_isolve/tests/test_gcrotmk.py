@@ -6,7 +6,7 @@ import warnings
 
 from numpy.testing import (assert_, assert_allclose, assert_equal)
 
-import numpy as np
+import mlx.core as mx
 from numpy import zeros, array, allclose
 from scipy.linalg import norm
 from scipy.sparse import csr_array, eye_array, random_array
@@ -76,7 +76,7 @@ class TestGCROTMK:
         assert niter.n[0] < 3
 
     def test_arnoldi(self):
-        rng = np.random.default_rng(1)
+        rng = mx.random.default_rng(1)
 
         A = eye_array(2000) + random_array((2000, 2000), density=5e-4, rng=rng)
         b = rng.random(2000)
@@ -90,12 +90,12 @@ class TestGCROTMK:
 
         assert_equal(flag0, 1)
         assert_equal(flag1, 1)
-        assert np.linalg.norm(A.dot(x0) - b) > 1e-4
+        assert mx.linalg.norm(A.dot(x0) - b) > 1e-4
 
         assert_allclose(x0, x1)
 
     def test_cornercase(self):
-        np.random.seed(1234)
+        mx.random.seed(1234)
 
         # Rounding error may prevent convergence with tol=0 --- ensure
         # that the return values in this case are correct, and no
@@ -107,7 +107,7 @@ class TestGCROTMK:
             with warnings.catch_warnings():
                 warnings.filterwarnings(
                     "ignore", ".*called without specifying.*", DeprecationWarning)
-                b = np.ones(n)
+                b = mx.ones(n)
                 x, info = gcrotmk(A, b, maxiter=10)
                 assert_equal(info, 0)
                 assert_allclose(A.dot(x) - b, 0, atol=1e-14)
@@ -116,7 +116,7 @@ class TestGCROTMK:
                 if info == 0:
                     assert_allclose(A.dot(x) - b, 0, atol=1e-14)
 
-                b = np.random.rand(n)
+                b = mx.random.rand(n)
                 x, info = gcrotmk(A, b, maxiter=10)
                 assert_equal(info, 0)
                 assert_allclose(A.dot(x) - b, 0, atol=1e-14)
@@ -127,8 +127,8 @@ class TestGCROTMK:
 
     def test_nans(self):
         A = eye_array(3, format='lil')
-        A[1,1] = np.nan
-        b = np.ones(3)
+        A[1,1] = mx.nan
+        b = mx.ones(3)
 
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -137,9 +137,9 @@ class TestGCROTMK:
             assert_equal(info, 1)
 
     def test_truncate(self):
-        np.random.seed(1234)
-        A = np.random.rand(30, 30) + np.eye(30)
-        b = np.random.rand(30)
+        mx.random.seed(1234)
+        A = mx.random.rand(30, 30) + mx.eye(30)
+        b = mx.random.rand(30)
 
         for truncate in ['oldest', 'smallest']:
             with warnings.catch_warnings():
@@ -175,10 +175,10 @@ class TestGCROTMK:
         # Check that no warnings are emitted if the matrix contains
         # numbers for which 1/x has no float representation, and that
         # the solver behaves properly.
-        A = np.array([[1, 2], [3, 4]], dtype=float)
-        A *= 100 * np.nextafter(0, 1)
+        A = mx.array([[1, 2], [3, 4]], dtype=float)
+        A *= 100 * mx.nextafter(0, 1)
 
-        b = np.array([1, 1])
+        b = mx.array([1, 1])
 
         with warnings.catch_warnings():
             warnings.filterwarnings(

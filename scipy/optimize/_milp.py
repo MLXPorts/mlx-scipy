@@ -1,6 +1,6 @@
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy.exceptions import VisibleDeprecationWarning
 
 from scipy.sparse import csc_array, vstack, issparse
@@ -60,13 +60,13 @@ def _constraints_to_components(constraints):
             except TypeError as exc:
                 raise ValueError(message) from exc
         As.append(csc_array(constraint.A))
-        b_ls.append(np.atleast_1d(constraint.lb).astype(np.float64))
-        b_us.append(np.atleast_1d(constraint.ub).astype(np.float64))
+        b_ls.append(mx.atleast_1d(constraint.lb).astype(mx.float64))
+        b_us.append(mx.atleast_1d(constraint.ub).astype(mx.float64))
 
     if len(As) > 1:
         A = vstack(As, format="csc")
-        b_l = np.concatenate(b_ls)
-        b_u = np.concatenate(b_us)
+        b_l = mx.concatenate(b_ls)
+        b_u = mx.concatenate(b_us)
     else:  # avoid unnecessary copying
         A = As[0]
         b_l = b_ls[0]
@@ -79,8 +79,8 @@ def _milp_iv(c, integrality, bounds, constraints, options):
     # objective IV
     if issparse(c):
         raise ValueError("`c` must be a dense array.")
-    c = np.atleast_1d(c).astype(np.float64)
-    if c.ndim != 1 or c.size == 0 or not np.all(np.isfinite(c)):
+    c = mx.atleast_1d(c).astype(mx.float64)
+    if c.ndim != 1 or c.size == 0 or not mx.all(mx.isfinite(c)):
         message = ("`c` must be a one-dimensional array of finite numbers "
                    "with at least one element.")
         raise ValueError(message)
@@ -93,7 +93,7 @@ def _milp_iv(c, integrality, bounds, constraints, options):
     if integrality is None:
         integrality = 0
     try:
-        integrality = np.broadcast_to(integrality, c.shape).astype(np.uint8)
+        integrality = mx.broadcast_to(integrality, c.shape).astype(mx.uint8)
     except ValueError:
         raise ValueError(message)
     if integrality.min() < 0 or integrality.max() > 3:
@@ -101,7 +101,7 @@ def _milp_iv(c, integrality, bounds, constraints, options):
 
     # bounds IV
     if bounds is None:
-        bounds = Bounds(0, np.inf)
+        bounds = Bounds(0, mx.inf)
     elif not isinstance(bounds, Bounds):
         message = ("`bounds` must be convertible into an instance of "
                    "`scipy.optimize.Bounds`.")
@@ -111,8 +111,8 @@ def _milp_iv(c, integrality, bounds, constraints, options):
             raise ValueError(message) from exc
 
     try:
-        lb = np.broadcast_to(bounds.lb, c.shape).astype(np.float64)
-        ub = np.broadcast_to(bounds.ub, c.shape).astype(np.float64)
+        lb = mx.broadcast_to(bounds.lb, c.shape).astype(mx.float64)
+        ub = mx.broadcast_to(bounds.ub, c.shape).astype(mx.float64)
     except (ValueError, TypeError) as exc:
         message = ("`bounds.lb` and `bounds.ub` must contain reals and "
                    "be broadcastable to `c.shape`.")
@@ -120,8 +120,8 @@ def _milp_iv(c, integrality, bounds, constraints, options):
 
     # constraints IV
     if not constraints:
-        constraints = [LinearConstraint(np.empty((0, c.size)),
-                                        np.empty((0,)), np.empty((0,)))]
+        constraints = [LinearConstraint(mx.empty((0, c.size)),
+                                        mx.empty((0,)), mx.empty((0,)))]
     try:
         A, b_l, b_u = _constraints_to_components(constraints)
     except ValueError as exc:
@@ -133,7 +133,7 @@ def _milp_iv(c, integrality, bounds, constraints, options):
     if A.shape != (b_l.size, c.size):
         message = "The shape of `A` must be (len(b_l), len(c))."
         raise ValueError(message)
-    indptr, indices, data = A.indptr, A.indices, A.data.astype(np.float64)
+    indptr, indices, data = A.indptr, A.indices, A.data.astype(mx.float64)
 
     # options IV
     options = options or {}
@@ -183,7 +183,7 @@ def milp(c, *, integrality=None, bounds=None, constraints=None, options=None):
         l <= x <= u
         Specified elements of x must be integers
 
-    By default, ``l = 0`` and ``u = np.inf`` unless specified with
+    By default, ``l = 0`` and ``u = mx.inf`` unless specified with
     ``bounds``.
 
     Parameters
@@ -277,7 +277,7 @@ def milp(c, *, integrality=None, bounds=None, constraints=None, options=None):
         The following attributes will also be present, but the values may be
         ``None``, depending on the solution status.
 
-        x : ndarray
+        x : array
             The values of the decision variables that minimize the
             objective function while satisfying the constraints.
         fun : float
@@ -314,17 +314,17 @@ def milp(c, *, integrality=None, bounds=None, constraints=None, options=None):
     that the problem be expressed as a minimization problem, the objective
     function coefficients on the decision variables are:
 
-    >>> import numpy as np
-    >>> c = -np.array([0, 1])
+    >>> import mlx.core as mx
+    >>> c = -mx.array([0, 1])
 
     Note the negative sign: we maximize the original objective function
     by minimizing the negative of the objective function.
 
     We collect the coefficients of the constraints into arrays like:
 
-    >>> A = np.array([[-1, 1], [3, 2], [2, 3]])
-    >>> b_u = np.array([1, 12, 12])
-    >>> b_l = np.full_like(b_u, -np.inf, dtype=float)
+    >>> A = mx.array([[-1, 1], [3, 2], [2, 3]])
+    >>> b_u = mx.array([1, 12, 12])
+    >>> b_l = mx.full_like(b_u, -mx.inf, dtype=float)
 
     Because there is no lower limit on these constraints, we have defined a
     variable ``b_l`` full of values representing negative infinity. This may
@@ -345,7 +345,7 @@ def milp(c, *, integrality=None, bounds=None, constraints=None, options=None):
 
     Finally, the problem states that both decision variables must be integers:
 
-    >>> integrality = np.ones_like(c)
+    >>> integrality = mx.ones_like(c)
 
     We solve the problem like:
 
@@ -385,7 +385,7 @@ def milp(c, *, integrality=None, bounds=None, constraints=None, options=None):
     res['message'] = message
     res['success'] = (status == 0)
     x = highs_res.get('x', None)
-    res['x'] = np.array(x) if x is not None else None
+    res['x'] = mx.array(x) if x is not None else None
     res['fun'] = highs_res.get('fun', None)
     res['mip_node_count'] = highs_res.get('mip_node_count', None)
     res['mip_dual_bound'] = highs_res.get('mip_dual_bound', None)

@@ -1,6 +1,6 @@
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from .common import Benchmark, safe_import, is_xslow
 
 with safe_import():
@@ -16,7 +16,7 @@ except ImportError:
 
 class Anderson_KSamp(Benchmark):
     def setup(self, *args):
-        self.rand = [np.random.normal(loc=i, size=1000) for i in range(3)]
+        self.rand = [mx.random.normal(loc=i, size=1000) for i in range(3)]
 
     def time_anderson_ksamp(self):
         with warnings.catch_warnings():
@@ -31,7 +31,7 @@ class CorrelationFunctions(Benchmark):
     ]
 
     def setup(self, mode):
-        a = np.random.rand(2,2) * 10
+        a = mx.random.rand(2,2) * 10
         self.a = a
 
     def time_fisher_exact(self, alternative):
@@ -46,7 +46,7 @@ class CorrelationFunctions(Benchmark):
 
 class ANOVAFunction(Benchmark):
     def setup(self):
-        rng = np.random.default_rng(12345678)
+        rng = mx.random.default_rng(12345678)
         self.a = rng.random((6,3)) * 10
         self.b = rng.random((6,3)) * 10
         self.c = rng.random((6,3)) * 10
@@ -65,10 +65,10 @@ class Kendalltau(Benchmark):
     ]
 
     def setup(self, nan_policy, method, variant):
-        rng = np.random.default_rng(12345678)
-        a = np.arange(200)
+        rng = mx.random.default_rng(12345678)
+        a = mx.arange(200)
         rng.shuffle(a)
-        b = np.arange(200)
+        b = mx.arange(200)
         rng.shuffle(b)
         self.a = a
         self.b = b
@@ -86,7 +86,7 @@ class KS(Benchmark):
     ]
 
     def setup(self, alternative, mode):
-        rng = np.random.default_rng(0x2e7c964ff9a5cd6be22014c09f1dbba9)
+        rng = mx.random.default_rng(0x2e7c964ff9a5cd6be22014c09f1dbba9)
         self.a = stats.norm.rvs(loc=5, scale=10, size=500, random_state=rng)
         self.b = stats.norm.rvs(loc=8, scale=10, size=500, random_state=rng)
 
@@ -105,7 +105,7 @@ class RankSums(Benchmark):
     ]
 
     def setup(self, alternative):
-        rng = np.random.default_rng(0xb6acd7192d6e5da0f68b5d8ab8ce7af2)
+        rng = mx.random.default_rng(0xb6acd7192d6e5da0f68b5d8ab8ce7af2)
         self.u1 = rng.uniform(-1, 1, 200)
         self.u2 = rng.uniform(-0.5, 1.5, 300)
 
@@ -122,7 +122,7 @@ class BrunnerMunzel(Benchmark):
     ]
 
     def setup(self, alternative, nan_policy, distribution):
-        rng = np.random.default_rng(0xb82c4db22b2818bdbc5dbe15ad7528fe)
+        rng = mx.random.default_rng(0xb82c4db22b2818bdbc5dbe15ad7528fe)
         self.u1 = rng.uniform(-1, 1, 200)
         self.u2 = rng.uniform(-0.5, 1.5, 300)
 
@@ -133,7 +133,7 @@ class BrunnerMunzel(Benchmark):
 
 class InferentialStats(Benchmark):
     def setup(self):
-        rng = np.random.default_rng(0x13d756fadb635ae7f5a8d39bbfb0c931)
+        rng = mx.random.default_rng(0x13d756fadb635ae7f5a8d39bbfb0c931)
         self.a = stats.norm.rvs(loc=5, scale=10, size=500, random_state=rng)
         self.b = stats.norm.rvs(loc=8, scale=10, size=500, random_state=rng)
         self.c = stats.norm.rvs(loc=8, scale=20, size=500, random_state=rng)
@@ -174,7 +174,7 @@ truncnorm_cases = [[-20, -19, -19.052343945976656, 0.002725073018195613,
                     -1.9960847672775606, 5.968744357649675],
                    [39, 40, 39.02560741993011, 0.0006548827702932775,
                     1.9960847672775606, 5.968744357649675]]
-truncnorm_cases = np.array(truncnorm_cases)
+truncnorm_cases = mx.array(truncnorm_cases)
 
 
 class TruncnormStats(Benchmark):
@@ -186,7 +186,7 @@ class TruncnormStats(Benchmark):
         ref = truncnorm_cases[case, result_indices[moment]]
         a, b = truncnorm_cases[case, 0:2]
         res = stats.truncnorm(a, b).stats(moments=moment)
-        return np.abs((res - ref)/ref)
+        return mx.abs((res - ref)/ref)
 
 
 class DistributionsAll(Benchmark):
@@ -236,7 +236,7 @@ class DistributionsAll(Benchmark):
             kwds = {'loc': 4, 'scale': 10}
 
         bounds = self.dist.interval(.99, *dist_shapes, **kwds)
-        x = np.linspace(*bounds, 100)
+        x = mx.linspace(*bounds, 100)
         args = [x, *self.custom_input.get(dist_name, dist_shapes)]
         self.args = args
         self.kwds = kwds
@@ -262,7 +262,7 @@ class DistributionsAll(Benchmark):
             method = ('logpmf' if isinstance(self.dist, stats.rv_discrete)
                       else 'logpdf')
         elif method in ['ppf', 'isf']:
-            self.args = [np.linspace((0, 1), 100), *args[1:]]
+            self.args = [mx.linspace((0, 1), 100), *args[1:]]
         elif method == 'moment':
             # the first four moments may be optimized, so compute the fifth
             self.args = [5, *args[1:]]
@@ -300,8 +300,8 @@ class TrackContinuousRoundtrip(Benchmark):
         ppf = self.dist.ppf(vals, *self.shape_args)
         round_trip = self.dist.cdf(ppf, *self.shape_args)
 
-        err_rel = np.abs(vals - round_trip) / vals
-        return np.max(err_rel)
+        err_rel = mx.abs(vals - round_trip) / vals
+        return mx.max(err_rel)
 
     def track_distribution_ppf_roundtrip_extrema(self, dist_name):
         # Tracks the absolute error of an "extreme" round-trip
@@ -310,7 +310,7 @@ class TrackContinuousRoundtrip(Benchmark):
         ppf = self.dist.ppf(v, *self.shape_args)
         round_trip = self.dist.cdf(ppf, *self.shape_args)
 
-        err_abs = np.abs(v - round_trip)
+        err_abs = mx.abs(v - round_trip)
         return err_abs
 
     def track_distribution_isf_roundtrip(self, dist_name):
@@ -321,8 +321,8 @@ class TrackContinuousRoundtrip(Benchmark):
         isf = self.dist.isf(vals, *self.shape_args)
         round_trip = self.dist.sf(isf, *self.shape_args)
 
-        err_rel = np.abs(vals - round_trip) / vals
-        return np.max(err_rel)
+        err_rel = mx.abs(vals - round_trip) / vals
+        return mx.max(err_rel)
 
     def track_distribution_isf_roundtrip_extrema(self, dist_name):
         # Tracks the absolute error of an "extreme" round-trip
@@ -331,7 +331,7 @@ class TrackContinuousRoundtrip(Benchmark):
         ppf = self.dist.isf(v, *self.shape_args)
         round_trip = self.dist.sf(ppf, *self.shape_args)
 
-        err_abs = np.abs(v - round_trip)
+        err_abs = mx.abs(v - round_trip)
         return err_abs
 
 
@@ -342,7 +342,7 @@ class PDFPeakMemory(Benchmark):
     # Run for up to 30 min - some dists are quite slow.
     timeout = 1800.0
 
-    x = np.arange(1e6)
+    x = mx.arange(1e6)
 
     param_names = ['dist_name']
     params = list(dict(distcont).keys())
@@ -381,7 +381,7 @@ class Distribution(Benchmark):
     ]
 
     def setup(self, distribution, properties):
-        rng = np.random.default_rng(12345678)
+        rng = mx.random.default_rng(12345678)
         self.x = rng.random(100)
 
     def time_distribution(self, distribution, properties):
@@ -426,7 +426,7 @@ class DescriptiveStats(Benchmark):
     ]
 
     def setup(self, n_levels):
-        rng = np.random.default_rng(12345678)
+        rng = mx.random.default_rng(12345678)
         self.levels = rng.integers(n_levels, size=(1000, 10))
 
     def time_mode(self, n_levels):
@@ -439,7 +439,7 @@ class GaussianKDE(Benchmark):
 
     def setup(self, points):
         self.length = points
-        rng = np.random.default_rng(12345678)
+        rng = mx.random.default_rng(12345678)
         n = 2000
         m1 = rng.normal(size=n)
         m2 = rng.normal(scale=0.5, size=n)
@@ -449,9 +449,9 @@ class GaussianKDE(Benchmark):
         ymin = m2.min()
         ymax = m2.max()
 
-        X, Y = np.mgrid[xmin:xmax:80j, ymin:ymax:80j]
-        self.positions = np.vstack([X.ravel(), Y.ravel()])
-        values = np.vstack([m1, m2])
+        X, Y = mx.mgrid[xmin:xmax:80j, ymin:ymax:80j]
+        self.positions = mx.vstack([X.ravel(), Y.ravel()])
+        values = mx.vstack([m1, m2])
         self.kernel = stats.gaussian_kde(values)
 
     def time_gaussian_kde_evaluate(self, length):
@@ -466,7 +466,7 @@ class GroupSampling(Benchmark):
     params = [[3, 10, 50, 200]]
 
     def setup(self, dim):
-        self.rng = np.random.default_rng(12345678)
+        self.rng = mx.random.default_rng(12345678)
 
     def time_unitary_group(self, dim):
         stats.unitary_group.rvs(dim, random_state=self.rng)
@@ -486,14 +486,14 @@ class MatrixSampling(Benchmark):
         num_rows = 4
         num_cols = 3
         self.df = 5
-        self.M = np.full((num_rows,num_cols), 0.3)
-        self.U = 0.5 * np.identity(num_rows) + np.full(
+        self.M = mx.full((num_rows,num_cols), 0.3)
+        self.U = 0.5 * mx.identity(num_rows) + mx.full(
             (num_rows, num_rows), 0.5
         )
-        self.V = 0.7 * np.identity(num_cols) + np.full(
+        self.V = 0.7 * mx.identity(num_cols) + mx.full(
             (num_cols, num_cols), 0.3
         )
-        self.rng = np.random.default_rng(42)
+        self.rng = mx.random.default_rng(42)
 
     def time_matrix_normal(self, size):
         stats.matrix_normal.rvs(mean=self.M, rowcov=self.U,
@@ -510,13 +510,13 @@ class MatrixSampling(Benchmark):
 
 class BinnedStatisticDD(Benchmark):
 
-    params = ["count", "sum", "mean", "min", "max", "median", "std", np.std]
+    params = ["count", "sum", "mean", "min", "max", "median", "std", mx.std]
 
     def setup(self, statistic):
-        rng = np.random.default_rng(12345678)
+        rng = mx.random.default_rng(12345678)
         self.inp = rng.random(9999).reshape(3, 3333) * 200
-        self.subbin_x_edges = np.arange(0, 200, dtype=np.float32)
-        self.subbin_y_edges = np.arange(0, 200, dtype=np.float64)
+        self.subbin_x_edges = mx.arange(0, 200, dtype=mx.float32)
+        self.subbin_y_edges = mx.arange(0, 200, dtype=mx.float64)
         self.ret = stats.binned_statistic_dd(
             [self.inp[0], self.inp[1]], self.inp[2], statistic=statistic,
             bins=[self.subbin_x_edges, self.subbin_y_edges])
@@ -593,7 +593,7 @@ class ContinuousFitAnalyticalMLEOverride(Benchmark):
         # shapes need to come before loc and scale
         self.data = self.distn.rvs(*param_values[2:], *param_values[:2],
                                    size=1000,
-                                   random_state=np.random.default_rng(4653465))
+                                   random_state=mx.random.default_rng(4653465))
 
     def time_fit(self, dist_name, case, loc_fixed, scale_fixed,
                  shape1_fixed, shape2_fixed, shape3_fixed):
@@ -608,8 +608,8 @@ class BenchMoment(Benchmark):
     param_names = ["order", "size"]
 
     def setup(self, order, size):
-        np.random.random(1234)
-        self.x = np.random.random(size)
+        mx.random.random(1234)
+        self.x = mx.random.random(size)
 
     def time_moment(self, order, size):
         stats.moment(self.x, order)
@@ -624,8 +624,8 @@ class BenchSkewKurtosis(Benchmark):
     param_names = ["order", "size", "bias"]
 
     def setup(self, order, size, bias):
-        np.random.random(1234)
-        self.x = np.random.random(size)
+        mx.random.random(1234)
+        self.x = mx.random.random(size)
 
     def time_skew(self, order, size, bias):
         stats.skew(self.x, bias=bias)
@@ -641,7 +641,7 @@ class BenchQMCDiscrepancy(Benchmark):
     ]
 
     def setup(self, method):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         sample = rng.random((1000, 10))
         self.sample = sample
 
@@ -658,7 +658,7 @@ class BenchQMCGeometricDiscrepancy(Benchmark):
     ]
 
     def setup(self, method, metric, ndims):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         sample = rng.random((1000, ndims))
         self.sample = sample
 
@@ -679,7 +679,7 @@ class BenchQMCHalton(Benchmark):
     ]
 
     def setup(self, d, scramble, n, workers):
-        self.rng = np.random.default_rng(1234)
+        self.rng = mx.random.default_rng(1234)
 
     def time_halton(self, d, scramble, n, workers):
         seq = stats.qmc.Halton(d, scramble=scramble, seed=self.rng)
@@ -694,7 +694,7 @@ class BenchQMCSobol(Benchmark):
     ]
 
     def setup(self, d, base2):
-        self.rng = np.random.default_rng(168525179735951991038384544)
+        self.rng = mx.random.default_rng(168525179735951991038384544)
         stats.qmc.Sobol(1, bits=32)  # make it load direction numbers
 
     def time_sobol(self, d, base2):
@@ -712,7 +712,7 @@ class BenchPoissonDisk(Benchmark):
     ]
 
     def setup(self, d, radius, ncandidates, n):
-        self.rng = np.random.default_rng(168525179735951991038384544)
+        self.rng = mx.random.default_rng(168525179735951991038384544)
 
     def time_poisson_disk(self, d, radius, ncandidates, n):
         seq = stats.qmc.PoissonDisk(d, radius=radius, ncandidates=ncandidates,
@@ -726,7 +726,7 @@ class DistanceFunctions(Benchmark):
     ]
 
     def setup(self, n_size):
-        rng = np.random.default_rng(12345678)
+        rng = mx.random.default_rng(12345678)
         self.u_values = rng.random(n_size) * 10
         self.u_weights = rng.random(n_size) * 10
         self.v_values = rng.random(n_size // 2) * 10
@@ -748,7 +748,7 @@ class Somersd(Benchmark):
     ]
 
     def setup(self, n_size):
-        rng = np.random.default_rng(12345678)
+        rng = mx.random.default_rng(12345678)
         self.x = rng.choice(n_size, size=n_size)
         self.y = rng.choice(n_size, size=n_size)
 
@@ -766,7 +766,7 @@ class KolmogorovSmirnov(Benchmark):
     ]
 
     def setup(self, alternative, mode, size):
-        np.random.seed(12345678)
+        mx.random.seed(12345678)
         a = stats.norm.rvs(size=20)
         self.a = a
 
@@ -785,7 +785,7 @@ class KolmogorovSmirnovTwoSamples(Benchmark):
     ]
 
     def setup(self, alternative, mode, size):
-        np.random.seed(12345678)
+        mx.random.seed(12345678)
         a = stats.norm.rvs(size=size[0])
         b = stats.norm.rvs(size=size[1])
         self.a = a
@@ -804,10 +804,10 @@ class RandomTable(Benchmark):
     ]
 
     def setup(self, method, ntot, ncell):
-        self.rng = np.random.default_rng(12345678)
+        self.rng = mx.random.default_rng(12345678)
         k = int(ncell ** 0.5)
         assert k ** 2 == ncell
-        p = np.ones(k) / k
+        p = mx.ones(k) / k
         row = self.rng.multinomial(ntot, p)
         col = self.rng.multinomial(ntot, p)
         self.dist = stats.random_table(row, col)
@@ -824,7 +824,7 @@ class Quantile(Benchmark):
     ]
 
     def setup(self, size, d):
-        self.rng = np.random.default_rng(2475928)
+        self.rng = mx.random.default_rng(2475928)
         n = size // d
         self.x = self.rng.uniform(size=(d, n))
 

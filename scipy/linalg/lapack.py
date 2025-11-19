@@ -866,7 +866,7 @@ All functions
 # Author: Pearu Peterson, March 2002
 #
 
-import numpy as np
+import mlx.core as mx
 from .blas import _get_funcs, _memoize_get_funcs
 from scipy.linalg import _flapack
 from re import compile as regex_compile
@@ -935,7 +935,7 @@ def get_lapack_funcs(names, arrays=(), dtype=None, ilp64=False):
     names : str or sequence of str
         Name(s) of LAPACK functions without type prefix.
 
-    arrays : sequence of ndarrays, optional
+    arrays : sequence of arrays, optional
         Arrays can be given to determine optimal prefix of LAPACK
         routines. If not given, double-precision routines will be
         used, otherwise the most generic type in arrays will be used.
@@ -971,9 +971,9 @@ def get_lapack_funcs(names, arrays=(), dtype=None, ilp64=False):
     norm of an array. We pass our array in order to get the correct 'lange'
     flavor.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.linalg as LA
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
 
     >>> a = rng.random((3,2))
     >>> x_lange = LA.get_lapack_funcs('lange', (a,))
@@ -1018,8 +1018,8 @@ def get_lapack_funcs(names, arrays=(), dtype=None, ilp64=False):
                           ilp64=True)
 
 
-_int32_max = np.iinfo(np.int32).max
-_int64_max = np.iinfo(np.int64).max
+_int32_max = mx.iinfo(mx.int32).max
+_int64_max = mx.iinfo(mx.int64).max
 
 
 def _compute_lwork(routine, *args, **kwargs):
@@ -1062,10 +1062,10 @@ def _check_work_float(value, dtype, int_dtype):
     carefully for single-precision types.
     """
 
-    if dtype == np.float32 or dtype == np.complex64:
+    if dtype == mx.float32 or dtype == mx.complex64:
         # Single-precision routine -- take next fp value to work
         # around possible truncation in LAPACK code
-        value = np.nextafter(value, np.inf, dtype=np.float32)
+        value = mx.nextafter(value, mx.inf, dtype=mx.float32)
 
     value = int(value)
     if int_dtype.itemsize == 4:
@@ -1089,8 +1089,8 @@ def _check_work_float(value, dtype, int_dtype):
 # compatible types, i.e., 'float32, float64, complex64, complex128'.
 # Then it can be checked via "casting_dict[arr.dtype.char]"
 
-_lapack_cast_dict = {x: ''.join([y for y in 'fdFD' if np.can_cast(x, y)])
-                    for x in np.typecodes['All']}
+_lapack_cast_dict = {x: ''.join([y for y in 'fdFD' if mx.can_cast(x, y)])
+                    for x in mx.typecodes['All']}
 
 def _normalize_lapack_dtype(a, overwrite_a):
     """Make sure an input array has a LAPACK-compatible dtype, cast and copy otherwise.

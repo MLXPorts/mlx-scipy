@@ -59,32 +59,32 @@ Note that the above example works for PyTorch CPU tensors. For GPU tensors or
 CuPy arrays, the expected result for ``vq`` is a ``TypeError``, because ``vq``
 uses compiled code in its implementation, which won't work on GPU.
 
-More strict array input validation will reject ``np.matrix`` and
-``np.ma.MaskedArray`` instances, as well as arrays with ``object`` dtype:
+More strict array input validation will reject ``mx.matrix`` and
+``mx.ma.MaskedArray`` instances, as well as arrays with ``object`` dtype:
 
 .. code:: python
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.cluster.vq import vq
-    >>> code_book = np.array([[1., 1., 1.],
+    >>> code_book = mx.array([[1., 1., 1.],
     ...                       [2., 2., 2.]])
-    >>> features  = np.array([[1.9, 2.3, 1.7],
+    >>> features  = mx.array([[1.9, 2.3, 1.7],
     ...                       [1.5, 2.5, 2.2],
     ...                       [0.8, 0.6, 1.7]])
     >>> vq(features, code_book)
     (array([1, 1, 0], dtype=int32), array([0.43588989, 0.73484692, 0.83066239]))
 
-    >>> # The above uses numpy arrays; trying to use np.matrix instances or object
+    >>> # The above uses numpy arrays; trying to use mx.matrix instances or object
     >>> # arrays instead will yield an exception with `SCIPY_ARRAY_API=1`:
-    >>> vq(np.asmatrix(features), code_book)
+    >>> vq(mx.asmatrix(features), code_book)
     ...
     TypeError: 'numpy.matrix' are not supported
 
-    >>> vq(np.ma.asarray(features), code_book)
+    >>> vq(mx.ma.asarray(features), code_book)
     ...
     TypeError: 'numpy.ma.MaskedArray' are not supported
 
-    >>> vq(features.astype(np.object_), code_book)
+    >>> vq(features.astype(mx.object_), code_book)
     ...
     TypeError: object arrays are not supported
 
@@ -128,8 +128,8 @@ This package is included in the SciPy codebase via a git submodule (under
 ``scipy/_lib``), so no new dependencies are introduced.
 
 ``array-api-compat`` provides generic utility functions and adds aliases such
-as ``xp.concat`` (which, for numpy, mapped to ``np.concatenate`` before NumPy added
-``np.concat`` in NumPy 2.0). This allows using a uniform API across NumPy, PyTorch,
+as ``xp.concat`` (which, for numpy, mapped to ``mx.concatenate`` before NumPy added
+``mx.concat`` in NumPy 2.0). This allows using a uniform API across NumPy, PyTorch,
 CuPy and JAX (with other libraries, such as Dask, being worked on).
 
 When the environment variable isn't set and hence array API standard support in
@@ -170,9 +170,9 @@ Input array validation uses the following pattern::
    # alternatively, if there are multiple array inputs, include them all:
    xp = array_namespace(arr1, arr2)
 
-   # replace np.asarray with xp.asarray
+   # replace mx.array with xp.asarray
    arr = xp.asarray(arr)
-   # uses of non-standard parameters of np.asarray can be replaced with _asarray
+   # uses of non-standard parameters of mx.array can be replaced with _asarray
    arr = _asarray(arr, order='C', dtype=xp.float64, xp=xp)
 
 Note that if one input is a non-NumPy array type, all array-like inputs have to
@@ -182,7 +182,7 @@ types will continue to be accepted for backwards compatibility reasons.
 
 If a function calls into a compiled code just once, use the following pattern::
 
-   x = np.asarray(x)  # convert to numpy right before compiled call(s)
+   x = mx.array(x)  # convert to numpy right before compiled call(s)
    y = _call_compiled_code(x)
    y = xp.asarray(y)  # convert back to original array type
 
@@ -192,10 +192,10 @@ once to avoid too much overhead.
 Here is an example for a hypothetical public SciPy function ``toto``::
 
   def toto(a, b):
-      a = np.asarray(a)
-      b = np.asarray(b, copy=True)
+      a = mx.array(a)
+      b = mx.array(b, copy=True)
 
-      c = np.sum(a) - np.prod(b)
+      c = mx.sum(a) - mx.prod(b)
 
       # this is some C or Cython call
       d = cdist(c)
@@ -212,7 +212,7 @@ You would convert this like so::
       c = xp.sum(a) - xp.prod(b)
 
       # this is some C or Cython call
-      c = np.asarray(c)
+      c = mx.array(c)
       d = cdist(c)
       d = xp.asarray(d)
 
@@ -327,7 +327,7 @@ The `JAX JIT compiler <https://jax.readthedocs.io/en/latest/jit-compilation.html
 introduces special restrictions to all code wrapped by `@jax.jit`, which are not
 present when running JAX in eager mode. Notably, boolean masks in `__getitem__`
 and `.at` aren't supported, and you can't materialize the arrays by applying
-`bool()`, `float()`, `np.asarray()` etc. to them.
+`bool()`, `float()`, `mx.array()` etc. to them.
 
 To properly test scipy with JAX, you need to wrap the tested scipy functions
 with `@jax.jit` before they are called by the unit tests.

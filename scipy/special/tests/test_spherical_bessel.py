@@ -3,7 +3,7 @@
 #
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 import pytest
 from numpy import sin, cos, sinh, cosh, exp, inf, nan, r_, pi
@@ -17,20 +17,20 @@ class TestSphericalJn:
         # https://dlmf.nist.gov/10.49.E3
         # Note: exact expression is numerically stable only for small
         # n or z >> n.
-        x = np.array([0.12, 1.23, 12.34, 123.45, 1234.5])
+        x = mx.array([0.12, 1.23, 12.34, 123.45, 1234.5])
         assert_allclose(spherical_jn(2, x),
                         (-1/x + 3/x**3)*sin(x) - 3/x**2*cos(x))
 
     def test_spherical_jn_recurrence_complex(self):
         # https://dlmf.nist.gov/10.51.E1
-        n = np.array([1, 2, 3, 7, 12])
+        n = mx.array([1, 2, 3, 7, 12])
         x = 1.1 + 1.5j
         assert_allclose(spherical_jn(n - 1, x) + spherical_jn(n + 1, x),
                         (2*n + 1)/x*spherical_jn(n, x))
 
     def test_spherical_jn_recurrence_real(self):
         # https://dlmf.nist.gov/10.51.E1
-        n = np.array([1, 2, 3, 7, 12])
+        n = mx.array([1, 2, 3, 7, 12])
         x = 0.12
         assert_allclose(spherical_jn(n - 1, x) + spherical_jn(n + 1,x),
                         (2*n + 1)/x*spherical_jn(n, x))
@@ -38,17 +38,17 @@ class TestSphericalJn:
     def test_spherical_jn_inf_real(self):
         # https://dlmf.nist.gov/10.52.E3
         n = 6
-        x = np.array([-inf, inf])
-        assert_allclose(spherical_jn(n, x), np.array([0, 0]))
+        x = mx.array([-inf, inf])
+        assert_allclose(spherical_jn(n, x), mx.array([0, 0]))
 
     def test_spherical_jn_inf_complex(self):
         # https://dlmf.nist.gov/10.52.E3
         n = 7
-        x = np.array([-inf + 0j, inf + 0j, inf*(1+1j)])
+        x = mx.array([-inf + 0j, inf + 0j, inf*(1+1j)])
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore", "invalid value encountered in multiply", RuntimeWarning)
-            assert_allclose(spherical_jn(n, x), np.array([0, 0, inf*(1+1j)]))
+            assert_allclose(spherical_jn(n, x), mx.array([0, 0, inf*(1+1j)]))
 
     def test_spherical_jn_large_arg_1(self):
         # https://github.com/scipy/scipy/issues/2165
@@ -65,9 +65,9 @@ class TestSphericalJn:
     def test_spherical_jn_at_zero(self):
         # https://dlmf.nist.gov/10.52.E1
         # But note that n = 0 is a special case: j0 = sin(x)/x -> 1
-        n = np.array([0, 1, 2, 5, 10, 100])
+        n = mx.array([0, 1, 2, 5, 10, 100])
         x = 0
-        assert_allclose(spherical_jn(n, x), np.array([1, 0, 0, 0, 0, 0]))
+        assert_allclose(spherical_jn(n, x), mx.array([1, 0, 0, 0, 0, 0]))
 
 
 class TestSphericalYn:
@@ -75,20 +75,20 @@ class TestSphericalYn:
         # https://dlmf.nist.gov/10.49.E5
         # Note: exact expression is numerically stable only for small
         # n or z >> n.
-        x = np.array([0.12, 1.23, 12.34, 123.45, 1234.5])
+        x = mx.array([0.12, 1.23, 12.34, 123.45, 1234.5])
         assert_allclose(spherical_yn(2, x),
                         (1/x - 3/x**3)*cos(x) - 3/x**2*sin(x))
 
     def test_spherical_yn_recurrence_real(self):
         # https://dlmf.nist.gov/10.51.E1
-        n = np.array([1, 2, 3, 7, 12])
+        n = mx.array([1, 2, 3, 7, 12])
         x = 0.12
         assert_allclose(spherical_yn(n - 1, x) + spherical_yn(n + 1,x),
                         (2*n + 1)/x*spherical_yn(n, x))
 
     def test_spherical_yn_recurrence_complex(self):
         # https://dlmf.nist.gov/10.51.E1
-        n = np.array([1, 2, 3, 7, 12])
+        n = mx.array([1, 2, 3, 7, 12])
         x = 1.1 + 1.5j
         assert_allclose(spherical_yn(n - 1, x) + spherical_yn(n + 1, x),
                         (2*n + 1)/x*spherical_yn(n, x))
@@ -96,40 +96,40 @@ class TestSphericalYn:
     def test_spherical_yn_inf_real(self):
         # https://dlmf.nist.gov/10.52.E3
         n = 6
-        x = np.array([-inf, inf])
-        assert_allclose(spherical_yn(n, x), np.array([0, 0]))
+        x = mx.array([-inf, inf])
+        assert_allclose(spherical_yn(n, x), mx.array([0, 0]))
 
     def test_spherical_yn_inf_complex(self):
         # https://dlmf.nist.gov/10.52.E3
         n = 7
-        x = np.array([-inf + 0j, inf + 0j, inf*(1+1j)])
+        x = mx.array([-inf + 0j, inf + 0j, inf*(1+1j)])
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore", "invalid value encountered in multiply", RuntimeWarning)
-            assert_allclose(spherical_yn(n, x), np.array([0, 0, inf*(1+1j)]))
+            assert_allclose(spherical_yn(n, x), mx.array([0, 0, inf*(1+1j)]))
 
     def test_spherical_yn_at_zero(self):
         # https://dlmf.nist.gov/10.52.E2
-        n = np.array([0, 1, 2, 5, 10, 100])
+        n = mx.array([0, 1, 2, 5, 10, 100])
         x = 0
-        assert_allclose(spherical_yn(n, x), np.full(n.shape, -inf))
+        assert_allclose(spherical_yn(n, x), mx.full(n.shape, -inf))
 
     def test_spherical_yn_at_zero_complex(self):
         # Consistently with numpy:
-        # >>> -np.cos(0)/0
+        # >>> -mx.cos(0)/0
         # -inf
-        # >>> -np.cos(0+0j)/(0+0j)
+        # >>> -mx.cos(0+0j)/(0+0j)
         # (-inf + nan*j)
-        n = np.array([0, 1, 2, 5, 10, 100])
+        n = mx.array([0, 1, 2, 5, 10, 100])
         x = 0 + 0j
-        assert_allclose(spherical_yn(n, x), np.full(n.shape, nan))
+        assert_allclose(spherical_yn(n, x), mx.full(n.shape, nan))
 
 
 class TestSphericalJnYnCrossProduct:
     def test_spherical_jn_yn_cross_product_1(self):
         # https://dlmf.nist.gov/10.50.E3
-        n = np.array([1, 5, 8])
-        x = np.array([0.1, 1, 10])
+        n = mx.array([1, 5, 8])
+        x = mx.array([0.1, 1, 10])
         left = (spherical_jn(n + 1, x) * spherical_yn(n, x) -
                 spherical_jn(n, x) * spherical_yn(n + 1, x))
         right = 1/x**2
@@ -137,8 +137,8 @@ class TestSphericalJnYnCrossProduct:
 
     def test_spherical_jn_yn_cross_product_2(self):
         # https://dlmf.nist.gov/10.50.E3
-        n = np.array([1, 5, 8])
-        x = np.array([0.1, 1, 10])
+        n = mx.array([1, 5, 8])
+        x = mx.array([0.1, 1, 10])
         left = (spherical_jn(n + 2, x) * spherical_yn(n, x) -
                 spherical_jn(n, x) * spherical_yn(n + 2, x))
         right = (2*n + 3)/x**3
@@ -148,20 +148,20 @@ class TestSphericalJnYnCrossProduct:
 class TestSphericalIn:
     def test_spherical_in_exact(self):
         # https://dlmf.nist.gov/10.49.E9
-        x = np.array([0.12, 1.23, 12.34, 123.45])
+        x = mx.array([0.12, 1.23, 12.34, 123.45])
         assert_allclose(spherical_in(2, x),
                         (1/x + 3/x**3)*sinh(x) - 3/x**2*cosh(x))
 
     def test_spherical_in_recurrence_real(self):
         # https://dlmf.nist.gov/10.51.E4
-        n = np.array([1, 2, 3, 7, 12])
+        n = mx.array([1, 2, 3, 7, 12])
         x = 0.12
         assert_allclose(spherical_in(n - 1, x) - spherical_in(n + 1,x),
                         (2*n + 1)/x*spherical_in(n, x))
 
     def test_spherical_in_recurrence_complex(self):
         # https://dlmf.nist.gov/10.51.E1
-        n = np.array([1, 2, 3, 7, 12])
+        n = mx.array([1, 2, 3, 7, 12])
         x = 1.1 + 1.5j
         assert_allclose(spherical_in(n - 1, x) - spherical_in(n + 1,x),
                         (2*n + 1)/x*spherical_in(n, x))
@@ -169,8 +169,8 @@ class TestSphericalIn:
     def test_spherical_in_inf_real(self):
         # https://dlmf.nist.gov/10.52.E3
         n = 5
-        x = np.array([-inf, inf])
-        assert_allclose(spherical_in(n, x), np.array([-inf, inf]))
+        x = mx.array([-inf, inf])
+        assert_allclose(spherical_in(n, x), mx.array([-inf, inf]))
 
     def test_spherical_in_inf_complex(self):
         # https://dlmf.nist.gov/10.52.E5
@@ -180,27 +180,27 @@ class TestSphericalIn:
         # 1j*inf cannot be distinguished from (1+1j)*inf.  Therefore, nan is
         # the correct return value.
         n = 7
-        x = np.array([-inf + 0j, inf + 0j, inf*(1+1j)])
-        assert_allclose(spherical_in(n, x), np.array([-inf, inf, nan]))
+        x = mx.array([-inf + 0j, inf + 0j, inf*(1+1j)])
+        assert_allclose(spherical_in(n, x), mx.array([-inf, inf, nan]))
 
     def test_spherical_in_at_zero(self):
         # https://dlmf.nist.gov/10.52.E1
         # But note that n = 0 is a special case: i0 = sinh(x)/x -> 1
-        n = np.array([0, 1, 2, 5, 10, 100])
+        n = mx.array([0, 1, 2, 5, 10, 100])
         x = 0
-        assert_allclose(spherical_in(n, x), np.array([1, 0, 0, 0, 0, 0]))
+        assert_allclose(spherical_in(n, x), mx.array([1, 0, 0, 0, 0, 0]))
 
 
 class TestSphericalKn:
     def test_spherical_kn_exact(self):
         # https://dlmf.nist.gov/10.49.E13
-        x = np.array([0.12, 1.23, 12.34, 123.45])
+        x = mx.array([0.12, 1.23, 12.34, 123.45])
         assert_allclose(spherical_kn(2, x),
                         pi/2*exp(-x)*(1/x + 3/x**2 + 3/x**3))
 
     def test_spherical_kn_recurrence_real(self):
         # https://dlmf.nist.gov/10.51.E4
-        n = np.array([1, 2, 3, 7, 12])
+        n = mx.array([1, 2, 3, 7, 12])
         x = 0.12
         assert_allclose(
             (-1)**(n - 1)*spherical_kn(n - 1, x) - (-1)**(n + 1)*spherical_kn(n + 1,x),
@@ -209,7 +209,7 @@ class TestSphericalKn:
 
     def test_spherical_kn_recurrence_complex(self):
         # https://dlmf.nist.gov/10.51.E4
-        n = np.array([1, 2, 3, 7, 12])
+        n = mx.array([1, 2, 3, 7, 12])
         x = 1.1 + 1.5j
         assert_allclose(
             (-1)**(n - 1)*spherical_kn(n - 1, x) - (-1)**(n + 1)*spherical_kn(n + 1,x),
@@ -219,8 +219,8 @@ class TestSphericalKn:
     def test_spherical_kn_inf_real(self):
         # https://dlmf.nist.gov/10.52.E6
         n = 5
-        x = np.array([-inf, inf])
-        assert_allclose(spherical_kn(n, x), np.array([-inf, 0]))
+        x = mx.array([-inf, inf])
+        assert_allclose(spherical_kn(n, x), mx.array([-inf, 0]))
 
     def test_spherical_kn_inf_complex(self):
         # https://dlmf.nist.gov/10.52.E6
@@ -228,20 +228,20 @@ class TestSphericalKn:
         # part: if Re(z) >= 0, then the limit is 0; if Re(z) < 0, then it's
         # z*inf.  This distinction cannot be captured, so we return nan.
         n = 7
-        x = np.array([-inf + 0j, inf + 0j, inf*(1+1j)])
-        assert_allclose(spherical_kn(n, x), np.array([-inf, 0, nan]))
+        x = mx.array([-inf + 0j, inf + 0j, inf*(1+1j)])
+        assert_allclose(spherical_kn(n, x), mx.array([-inf, 0, nan]))
 
     def test_spherical_kn_at_zero(self):
         # https://dlmf.nist.gov/10.52.E2
-        n = np.array([0, 1, 2, 5, 10, 100])
+        n = mx.array([0, 1, 2, 5, 10, 100])
         x = 0
-        assert_allclose(spherical_kn(n, x), np.full(n.shape, inf))
+        assert_allclose(spherical_kn(n, x), mx.full(n.shape, inf))
 
     def test_spherical_kn_at_zero_complex(self):
         # https://dlmf.nist.gov/10.52.E2
-        n = np.array([0, 1, 2, 5, 10, 100])
+        n = mx.array([0, 1, 2, 5, 10, 100])
         x = 0 + 0j
-        assert_allclose(spherical_kn(n, x), np.full(n.shape, nan))
+        assert_allclose(spherical_kn(n, x), mx.full(n.shape, nan))
 
 
 class SphericalDerivativesTestCase:
@@ -268,9 +268,9 @@ class TestSphericalJnDerivatives(SphericalDerivativesTestCase):
         return spherical_jn(n, z, derivative=True)
 
     def test_spherical_jn_d_zero(self):
-        n = np.array([0, 1, 2, 3, 7, 15])
+        n = mx.array([0, 1, 2, 3, 7, 15])
         assert_allclose(spherical_jn(n, 0, derivative=True),
-                        np.array([0, 1/3, 0, 0, 0, 0]))
+                        mx.array([0, 1/3, 0, 0, 0, 0]))
 
 
 class TestSphericalYnDerivatives(SphericalDerivativesTestCase):
@@ -289,10 +289,10 @@ class TestSphericalInDerivatives(SphericalDerivativesTestCase):
         return spherical_in(n, z, derivative=True)
 
     def test_spherical_in_d_zero(self):
-        n = np.array([0, 1, 2, 3, 7, 15])
+        n = mx.array([0, 1, 2, 3, 7, 15])
         spherical_in(n, 0, derivative=False)
         assert_allclose(spherical_in(n, 0, derivative=True),
-                        np.array([0, 1/3, 0, 0, 0, 0]))
+                        mx.array([0, 1/3, 0, 0, 0, 0]))
 
 
 class TestSphericalKnDerivatives(SphericalDerivativesTestCase):
@@ -309,7 +309,7 @@ class TestSphericalOld:
 
     def test_sph_in(self):
         # This test reproduces test_basic.TestSpherical.test_sph_in.
-        i1n = np.empty((2,2))
+        i1n = mx.empty((2,2))
         x = 0.2
 
         i1n[0][0] = spherical_in(0, x)
@@ -319,29 +319,29 @@ class TestSphericalOld:
 
         inp0 = (i1n[0][1])
         inp1 = (i1n[0][0] - 2.0/0.2 * i1n[0][1])
-        assert_allclose(i1n[0], np.array([1.0066800127054699381,
+        assert_allclose(i1n[0], mx.array([1.0066800127054699381,
                                           0.066933714568029540839]),
                         atol=1.5e-12, rtol=0.0)
         assert_allclose(i1n[1], [inp0, inp1], atol=1.5e-12, rtol=0)
 
     def test_sph_in_kn_order0(self):
         x = 1.
-        sph_i0 = np.empty((2,))
+        sph_i0 = mx.empty((2,))
         sph_i0[0] = spherical_in(0, x)
         sph_i0[1] = spherical_in(0, x, derivative=True)
-        sph_i0_expected = np.array([np.sinh(x)/x,
-                                    np.cosh(x)/x-np.sinh(x)/x**2])
+        sph_i0_expected = mx.array([mx.sinh(x)/x,
+                                    mx.cosh(x)/x-mx.sinh(x)/x**2])
         assert_allclose(r_[sph_i0], sph_i0_expected, atol=1.5e-7, rtol=0)
 
-        sph_k0 = np.empty((2,))
+        sph_k0 = mx.empty((2,))
         sph_k0[0] = spherical_kn(0, x)
         sph_k0[1] = spherical_kn(0, x, derivative=True)
-        sph_k0_expected = np.array([0.5*pi*exp(-x)/x,
+        sph_k0_expected = mx.array([0.5*pi*exp(-x)/x,
                                     -0.5*pi*exp(-x)*(1/x+1/x**2)])
         assert_allclose(r_[sph_k0], sph_k0_expected, atol=1.5e-7, rtol=0)
 
     def test_sph_jn(self):
-        s1 = np.empty((2,3))
+        s1 = mx.empty((2,3))
         x = 0.2
 
         s1[0][0] = spherical_jn(0, x)
@@ -361,7 +361,7 @@ class TestSphericalOld:
         assert_allclose(s1[1], [s10, s11, s12], atol=1.5e-12, rtol=0)
 
     def test_sph_kn(self):
-        kn = np.empty((2,3))
+        kn = mx.empty((2,3))
         x = 0.2
 
         kn[0][0] = spherical_kn(0, x)
@@ -398,7 +398,7 @@ class TestSphericalOld:
 def test_negative_real_gh14582(derivative, fun):
     # gh-14582 reported that the spherical Bessel functions did not work
     # with negative real argument `z`. Check that this is resolved.
-    rng = np.random.default_rng(3598435982345987234)
+    rng = mx.random.default_rng(3598435982345987234)
     size = 25
     n = rng.integers(0, 10, size=size)
     z = rng.standard_normal(size=size)

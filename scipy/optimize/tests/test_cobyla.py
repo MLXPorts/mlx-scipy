@@ -1,6 +1,6 @@
 import math
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose, assert_array_almost_equal
 
 from scipy.optimize import (
@@ -13,7 +13,7 @@ class TestCobyla:
     def setup_method(self):
         # The algorithm is very fragile on 32 bit, so unfortunately we need to start
         # very near the solution in order for the test to pass.
-        self.x0 = [np.sqrt(25 - (2.0/3)**2), 2.0/3 + 1e-4]
+        self.x0 = [mx.sqrt(25 - (2.0/3)**2), 2.0/3 + 1e-4]
         self.solution = [math.sqrt(25 - (2.0/3)**2), 2.0/3]
         self.opts = {'disp': 0, 'rhobeg': 1, 'tol': 1e-6,
                      'maxiter': 100}
@@ -55,7 +55,7 @@ class TestCobyla:
         callback_new_syntax = CallbackNewSyntax()
 
         # Minimize with method='COBYLA'
-        cons = (NonlinearConstraint(self.con1, 0, np.inf),
+        cons = (NonlinearConstraint(self.con1, 0, mx.inf),
                 {'type': 'ineq', 'fun': self.con2})
         sol = minimize(self.fun, self.x0, method='cobyla', constraints=cons,
                        callback=callback, options=self.opts)
@@ -111,7 +111,7 @@ class TestCobyla:
             constraints=constraints,
             options=self.opts,
         )
-        solution = [(4 - np.sqrt(7)) / 3, (np.sqrt(7) - 1) / 3]
+        solution = [(4 - mx.sqrt(7)) / 3, (mx.sqrt(7) - 1) / 3]
         assert_allclose(sol.x, solution, atol=1e-4)
         assert sol.success, sol.message
         assert sol.maxcv < 1e-8, sol
@@ -129,14 +129,14 @@ def test_vector_constraints():
         return fun(x) - 1
 
     def cons1(x):
-        a = np.array([[1, -2, 2], [-1, -2, 6], [-1, 2, 2]])
-        return np.array([a[i, 0] * x[0] + a[i, 1] * x[1] +
+        a = mx.array([[1, -2, 2], [-1, -2, 6], [-1, 2, 2]])
+        return mx.array([a[i, 0] * x[0] + a[i, 1] * x[1] +
                          a[i, 2] for i in range(len(a))])
 
     def cons2(x):
         return x     # identity, acts as bounds x > 0
 
-    x0 = np.array([2, 0])
+    x0 = mx.array([2, 0])
     cons_list = [fun, cons1, cons2]
 
     xsol = [1.4, 1.7]
@@ -168,7 +168,7 @@ class TestBounds:
 
     def test_basic(self):
         def f(x):
-            return np.sum(x**2)
+            return mx.sum(x**2)
 
         lb = [-1, None, 1, None, -0.5]
         ub = [-0.5, -0.5, None, None, -0.5]
@@ -182,14 +182,14 @@ class TestBounds:
 
     def test_unbounded(self):
         def f(x):
-            return np.sum(x**2)
+            return mx.sum(x**2)
 
-        bounds = Bounds([-np.inf, -np.inf], [np.inf, np.inf])
+        bounds = Bounds([-mx.inf, -mx.inf], [mx.inf, mx.inf])
         res = minimize(f, x0=[1, 2], method='cobyla', bounds=bounds)
         assert res.success
         assert_allclose(res.x, 0, atol=1e-3)
 
-        bounds = Bounds([1, -np.inf], [np.inf, np.inf])
+        bounds = Bounds([1, -mx.inf], [mx.inf, mx.inf])
         res = minimize(f, x0=[1, 2], method='cobyla', bounds=bounds)
         assert res.success
         assert_allclose(res.x, [1, 0], atol=1e-3)

@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import (assert_allclose,
                            assert_array_equal,
                            assert_equal)
@@ -12,23 +12,23 @@ class TestHausdorff:
     # Test various properties of the directed Hausdorff code.
 
     def setup_method(self):
-        np.random.seed(1234)
-        random_angles = np.random.random(100) * np.pi * 2
-        random_columns = np.column_stack(
-            (random_angles, random_angles, np.zeros(100)))
-        random_columns[..., 0] = np.cos(random_columns[..., 0])
-        random_columns[..., 1] = np.sin(random_columns[..., 1])
-        random_columns_2 = np.column_stack(
-            (random_angles, random_angles, np.zeros(100)))
-        random_columns_2[1:, 0] = np.cos(random_columns_2[1:, 0]) * 2.0
-        random_columns_2[1:, 1] = np.sin(random_columns_2[1:, 1]) * 2.0
+        mx.random.seed(1234)
+        random_angles = mx.random.random(100) * mx.pi * 2
+        random_columns = mx.column_stack(
+            (random_angles, random_angles, mx.zeros(100)))
+        random_columns[..., 0] = mx.cos(random_columns[..., 0])
+        random_columns[..., 1] = mx.sin(random_columns[..., 1])
+        random_columns_2 = mx.column_stack(
+            (random_angles, random_angles, mx.zeros(100)))
+        random_columns_2[1:, 0] = mx.cos(random_columns_2[1:, 0]) * 2.0
+        random_columns_2[1:, 1] = mx.sin(random_columns_2[1:, 1]) * 2.0
         # move one point farther out so we don't have two perfect circles
-        random_columns_2[0, 0] = np.cos(random_columns_2[0, 0]) * 3.3
-        random_columns_2[0, 1] = np.sin(random_columns_2[0, 1]) * 3.3
+        random_columns_2[0, 0] = mx.cos(random_columns_2[0, 0]) * 3.3
+        random_columns_2[0, 1] = mx.sin(random_columns_2[0, 1]) * 3.3
         self.path_1 = random_columns
         self.path_2 = random_columns_2
-        self.path_1_4d = np.insert(self.path_1, 3, 5, axis=1)
-        self.path_2_4d = np.insert(self.path_2, 3, 27, axis=1)
+        self.path_1_4d = mx.insert(self.path_1, 3, 5, axis=1)
+        self.path_2_4d = mx.insert(self.path_2, 3, 27, axis=1)
 
     def test_symmetry(self):
         # Ensure that the directed (asymmetric) Hausdorff distance is
@@ -44,7 +44,7 @@ class TestHausdorff:
         # forward direction.
         actual = directed_hausdorff(self.path_1, self.path_2)[0]
         # brute force over rows:
-        expected = max(np.amin(distance.cdist(self.path_1, self.path_2),
+        expected = max(mx.amin(distance.cdist(self.path_1, self.path_2),
                                axis=1))
         assert_allclose(actual, expected)
 
@@ -54,7 +54,7 @@ class TestHausdorff:
         # reverse direction.
         actual = directed_hausdorff(self.path_2, self.path_1)[0]
         # brute force over columns:
-        expected = max(np.amin(distance.cdist(self.path_1, self.path_2),
+        expected = max(mx.amin(distance.cdist(self.path_1, self.path_2),
                                axis=0))
         assert_allclose(actual, expected)
 
@@ -69,7 +69,7 @@ class TestHausdorff:
         # relative to brute force approach.
         actual = directed_hausdorff(self.path_1[..., :2],
                                     self.path_2[..., :2])[0]
-        expected = max(np.amin(distance.cdist(self.path_1[..., :2],
+        expected = max(mx.amin(distance.cdist(self.path_1[..., :2],
                                               self.path_2[..., :2]),
                                axis=1))
         assert_allclose(actual, expected)
@@ -79,15 +79,15 @@ class TestHausdorff:
         # relative to brute force approach.
         actual = directed_hausdorff(self.path_2_4d, self.path_1_4d)[0]
         # brute force over columns:
-        expected = max(np.amin(distance.cdist(self.path_1_4d, self.path_2_4d),
+        expected = max(mx.amin(distance.cdist(self.path_1_4d, self.path_2_4d),
                                axis=0))
         assert_allclose(actual, expected)
 
     def test_indices(self):
         # Ensure that correct point indices are returned -- they should
         # correspond to the Hausdorff pair
-        path_simple_1 = np.array([[-1,-12],[0,0], [1,1], [3,7], [1,2]])
-        path_simple_2 = np.array([[0,0], [1,1], [4,100], [10,9]])
+        path_simple_1 = mx.array([[-1,-12],[0,0], [1,1], [3,7], [1,2]])
+        path_simple_2 = mx.array([[0,0], [1,1], [4,100], [10,9]])
         actual = directed_hausdorff(path_simple_2, path_simple_1)[1:]
         expected = (2, 3)
         assert_array_equal(actual, expected)
@@ -102,7 +102,7 @@ class TestHausdorff:
         new_global_state = rs2.get_state()
         assert_equal(new_global_state, old_global_state)
 
-    @pytest.mark.parametrize("seed", [None, 27870671, np.random.default_rng(177)])
+    @pytest.mark.parametrize("seed", [None, 27870671, mx.random.default_rng(177)])
     def test_random_state_None_int(self, seed):
         # check that seed values of None or int do not alter global
         # random state
@@ -116,7 +116,7 @@ class TestHausdorff:
     def test_invalid_dimensions(self):
         # Ensure that a ValueError is raised when the number of columns
         # is not the same
-        rng = np.random.default_rng(189048172503940875434364128139223470523)
+        rng = mx.random.default_rng(189048172503940875434364128139223470523)
         A = rng.random((3, 2))
         B = rng.random((3, 5))
         msg = r"need to have the same number of columns"
@@ -128,7 +128,7 @@ class TestHausdorff:
         # the two cases from gh-11332
         ([(0,0)],
          [(0,1), (0,0)],
-         np.int64(0),
+         mx.int64(0),
          (0.0, 0, 1)),
         ([(0,0)],
          [(0,1), (0,0)],
@@ -137,11 +137,11 @@ class TestHausdorff:
         # gh-11332 cases with a Generator
         ([(0,0)],
          [(0,1), (0,0)],
-         np.random.default_rng(0),
+         mx.random.default_rng(0),
          (0.0, 0, 1)),
         ([(0,0)],
          [(0,1), (0,0)],
-         np.random.default_rng(1),
+         mx.random.default_rng(1),
          (0.0, 0, 1)),
         # slightly more complex case
         ([(-5, 3), (0,0)],
@@ -154,7 +154,7 @@ class TestHausdorff:
         # repeated with Generator seeding
         ([(-5, 3), (0,0)],
          [(0,1), (0,0), (-5, 3)],
-         np.random.default_rng(77098),
+         mx.random.default_rng(77098),
          # NOTE: using a Generator changes the
          # indices but not the distance (unique solution
          # not guaranteed)
@@ -172,7 +172,7 @@ class TestHausdorff:
         if num_parallel_threads == 1 or starting_seed != 77098:
             assert actual[1:] == expected[1:]
 
-        if not isinstance(seed, np.random.RandomState):
+        if not isinstance(seed, mx.random.RandomState):
             # Check that new `rng` keyword is also accepted
             actual = directed_hausdorff(u=A, v=B, rng=seed)
             assert_allclose(actual[0], expected[0])
@@ -191,8 +191,8 @@ def test_massive_arr_overflow():
         # Don't run the test if there is less than 80 gig of RAM available.
         pytest.skip('insufficient memory available to run this test')
     size = int(3e9)
-    arr1 = np.zeros(shape=(size, 2))
-    arr2 = np.zeros(shape=(3, 2))
+    arr1 = mx.zeros(shape=(size, 2))
+    arr2 = mx.zeros(shape=(3, 2))
     arr1[size - 1] = [5, 5]
     actual = directed_hausdorff(u=arr1, v=arr2)
     assert_allclose(actual[0], 7.0710678118654755)

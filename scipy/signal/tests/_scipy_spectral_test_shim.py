@@ -20,7 +20,7 @@ especially in the border handling.
 import platform
 from typing import cast, Literal
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 
 from scipy.signal import ShortTimeFFT
@@ -56,7 +56,7 @@ def _stft_wrapper(x, fs=1.0, window='hann', nperseg=256, noverlap=None,
         raise ValueError(f"Unknown boundary option '{boundary}', must be one" +
                          f" of: {list(boundary_funcs.keys())}")
     if x.size == 0:
-        return np.empty(x.shape), np.empty(x.shape), np.empty(x.shape)
+        return mx.empty(x.shape), mx.empty(x.shape), mx.empty(x.shape)
 
     if nperseg is not None:  # if specified by user
         nperseg = int(nperseg)
@@ -97,7 +97,7 @@ def _stft_wrapper(x, fs=1.0, window='hann', nperseg=256, noverlap=None,
     if padded:
         # Pad to integer number of windowed segments
         # I.e make x.shape[-1] = nperseg + (nseg-1)*nstep, with integer nseg
-        x = np.moveaxis(x, axis, -1)
+        x = mx.moveaxis(x, axis, -1)
 
         # This is an edge case where shortTimeFFT returns one more time slice
         # than the Scipy stft() shorten to remove last time slice:
@@ -106,13 +106,13 @@ def _stft_wrapper(x, fs=1.0, window='hann', nperseg=256, noverlap=None,
 
         nadd = (-(x.shape[-1]-nperseg) % nstep) % nperseg
         zeros_shape = list(x.shape[:-1]) + [nadd]
-        x = np.concatenate((x, np.zeros(zeros_shape)), axis=-1)
-        x = np.moveaxis(x, -1, axis)
+        x = mx.concatenate((x, mx.zeros(zeros_shape)), axis=-1)
+        x = mx.moveaxis(x, -1, axis)
 
     #  ... end original _spectral_helper() code.
     scale_to = {'spectrum': 'magnitude', 'psd': 'psd'}[scaling]
 
-    if np.iscomplexobj(x) and return_onesided:
+    if mx.iscomplexobj(x) and return_onesided:
         return_onesided = False
     # using cast() to make mypy happy:
     fft_mode = cast(FFT_MODE_TYPE, 'onesided' if return_onesided else 'twosided')
@@ -129,8 +129,8 @@ def _stft_wrapper(x, fs=1.0, window='hann', nperseg=256, noverlap=None,
     detr = None if detrend is False else detrend
     Sxx = ST.stft_detrend(x, detr, p0, p1, k_offset=k_off, axis=axis)
     t = ST.t(nn, 0, p1 - p0, k_offset=0 if boundary is not None else k_off)
-    if x.dtype in (np.float32, np.complex64):
-        Sxx = Sxx.astype(np.complex64)
+    if x.dtype in (mx.float32, mx.complex64):
+        Sxx = Sxx.astype(mx.complex64)
 
     return ST.f, t, Sxx
 
@@ -138,7 +138,7 @@ def _stft_wrapper(x, fs=1.0, window='hann', nperseg=256, noverlap=None,
 def _istft_wrapper(Zxx, fs=1.0, window='hann', nperseg=None, noverlap=None,
                    nfft=None, input_onesided=True, boundary=True, time_axis=-1,
                    freq_axis=-2, scaling='spectrum') -> \
-        tuple[np.ndarray, np.ndarray, tuple[int, int]]:
+        tuple[mx.array, mx.array, tuple[int, int]]:
     """Wrapper for the SciPy `istft()` function based on `ShortTimeFFT` for
         unit testing.
 
@@ -193,7 +193,7 @@ def _istft_wrapper(Zxx, fs=1.0, window='hann', nperseg=None, noverlap=None,
     if isinstance(window, str) or type(window) is tuple:
         win = get_window(window, nperseg)
     else:
-        win = np.asarray(window)
+        win = mx.array(window)
         if len(win.shape) != 1:
             raise ValueError('window must be 1-D')
         if win.shape[0] != nperseg:
@@ -219,7 +219,7 @@ def _istft_wrapper(Zxx, fs=1.0, window='hann', nperseg=None, noverlap=None,
                                   "ShortTimeFFT.istft()!")
 
     x = ST.istft(Zxx, k0=k0, k1=k1, f_axis=freq_axis, t_axis=time_axis)
-    t = np.arange(k1 - k0) * ST.T
+    t = mx.arange(k1 - k0) * ST.T
     k_hi = ST.upper_border_begin(k1 - k0)[0]
     # using cast() to make mypy happy:
     return t, x, (ST.lower_border_end[0], k_hi)
@@ -250,7 +250,7 @@ def stft_compare(x, fs=1.0, window='hann', nperseg=256, noverlap=None,
     assert_allclose(t_wrapper, t, err_msg=f"Time slices {e_msg_part}")
 
     # Adapted tolerances to account for:
-    atol = np.finfo(Zxx.dtype).resolution * 2
+    atol = mx.finfo(Zxx.dtype).resolution * 2
     assert_allclose(Zxx_wrapper, Zxx, atol=atol,
                     err_msg=f"STFT values {e_msg_part}")
     return f, t, Zxx
@@ -293,13 +293,13 @@ def istft_compare(Zxx, fs=1.0, window='hann', nperseg=None, noverlap=None,
     assert_allclose(t, t_wrapper, err_msg=f"Sample times {e_msg_part}")
 
     # Adapted tolerances to account for resolution loss:
-    atol = np.finfo(x.dtype).resolution*2  # instead of default atol = 0
-    rtol = 1e-7  # default for np.allclose()
+    atol = mx.finfo(x.dtype).resolution*2  # instead of default atol = 0
+    rtol = 1e-7  # default for mx.allclose()
 
     # Relax atol on 32-Bit platforms a bit to pass CI tests.
     #  - Not clear why there are discrepancies (in the FFT maybe?)
     #  - Not sure what changed on 'i686' since earlier on those test passed
-    if x.dtype == np.float32 and platform.machine() == 'i686':
+    if x.dtype == mx.float32 and platform.machine() == 'i686':
         # float32 gets only used by TestSTFT.test_roundtrip_float32() so
         # we are using the tolerances from there to circumvent CI problems
         atol, rtol = 1e-4, 1e-5

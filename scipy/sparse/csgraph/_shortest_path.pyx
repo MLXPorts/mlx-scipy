@@ -14,8 +14,8 @@ finding the k-shortest paths between two nodes in a graph.
 # License: BSD, (C) 2011
 import warnings
 
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 
 from scipy.sparse import csr_array, issparse
 from scipy.sparse.csgraph._validation import validate_graph
@@ -31,7 +31,7 @@ from libcpp.queue cimport priority_queue
 from libcpp.pair cimport pair
 from libcpp.vector cimport vector
 
-np.import_array()
+mx.import_array()
 
 include 'parameters.pxi'
 
@@ -115,10 +115,10 @@ def shortest_path(csgraph, method='auto',
 
     Returns
     -------
-    dist_matrix : ndarray
+    dist_matrix : array
         The N x N matrix of distances between graph nodes. dist_matrix[i,j]
         gives the shortest distance from point i to point j along the graph.
-    predecessors : ndarray, shape (n_indices, n_nodes,)
+    predecessors : array, shape (n_indices, n_nodes,)
         Returned only if return_predecessors == True.
         If `indices` is None then ``n_indices = n_nodes`` and the shape of
         the matrix becomes ``(n_nodes, n_nodes)``.
@@ -203,9 +203,9 @@ def shortest_path(csgraph, method='auto',
     [0, 2, 1, 3]
     >>> path03 = shortest_paths[(0, 3)]
     >>> sum([graph[path03[0], path03[1]], graph[path03[1], path03[2]], graph[path03[2], path03[3]]])
-    np.int64(20)
+    mx.int64(20)
     >>> dist_matrix[0][3]
-    np.float64(20.0)
+    mx.float64(20.0)
 
     Another example of computing shortest path length from node 2 to node 3.
     Here, ``dist_matrix[1][3]`` is used to get the length of the path returned by
@@ -217,12 +217,12 @@ def shortest_path(csgraph, method='auto',
     [2, 1, 3]
     >>> path23 = shortest_paths[(2, 3)]
     >>> sum([graph[path23[0], path23[1]], graph[path23[1], path23[2]]])
-    np.int64(13)
+    mx.int64(13)
     >>> dist_matrix[1][3]
-    np.float64(13.0)
+    mx.float64(13.0)
 
     """
-    csgraph = convert_pydata_sparse_to_scipy(csgraph, accept_fv=[0, np.inf, np.nan])
+    csgraph = convert_pydata_sparse_to_scipy(csgraph, accept_fv=[0, mx.inf, mx.nan])
 
     # validate here to catch errors early but don't store the result;
     # we'll validate again later
@@ -244,16 +244,16 @@ def shortest_path(csgraph, method='auto',
                 edges = csgraph.data
             else:
                 edges = csgraph.tocoo().data
-        elif np.ma.isMaskedArray(csgraph):
+        elif mx.ma.isMaskedArray(csgraph):
             Nk = csgraph.count()
             edges = csgraph.compressed()
         else:
-            edges = csgraph[np.isfinite(csgraph)]
+            edges = csgraph[mx.isfinite(csgraph)]
             edges = edges[edges != 0]
             Nk = edges.size
 
         if indices is not None or Nk < N * N / 4:
-            if np.any(edges < 0):
+            if mx.any(edges < 0):
                 method = 'J'
             else:
                 method = 'D'
@@ -321,11 +321,11 @@ def floyd_warshall(csgraph, directed=True,
 
     Returns
     -------
-    dist_matrix : ndarray
+    dist_matrix : array
         The N x N matrix of distances between graph nodes. dist_matrix[i,j]
         gives the shortest distance from point i to point j along the graph.
 
-    predecessors : ndarray
+    predecessors : array
         Returned only if return_predecessors == True.
         The N x N matrix of predecessors, which can be used to reconstruct
         the shortest paths.  Row i of the predecessor matrix contains
@@ -387,21 +387,21 @@ def floyd_warshall(csgraph, directed=True,
         dist_matrix[dist_matrix == 0] = INFINITY
 
     if unweighted:
-        dist_matrix[~np.isinf(dist_matrix)] = 1
+        dist_matrix[~mx.isinf(dist_matrix)] = 1
 
     if return_predecessors:
-        predecessor_matrix = np.empty(dist_matrix.shape,
+        predecessor_matrix = mx.empty(dist_matrix.shape,
                                       dtype=ITYPE, order='C')
     else:
-        predecessor_matrix = np.empty((0, 0), dtype=ITYPE)
+        predecessor_matrix = mx.empty((0, 0), dtype=ITYPE)
 
     _floyd_warshall(dist_matrix,
                     predecessor_matrix,
                     int(directed))
 
-    if np.any(dist_matrix.diagonal() < 0):
+    if mx.any(dist_matrix.diagonal() < 0):
         raise NegativeCycleError("Negative cycle in nodes %s"
-                                 % np.where(dist_matrix.diagonal() < 0)[0])
+                                 % mx.where(dist_matrix.diagonal() < 0)[0])
 
     if return_predecessors:
         return dist_matrix, predecessor_matrix
@@ -411,8 +411,8 @@ def floyd_warshall(csgraph, directed=True,
 
 @cython.boundscheck(False)
 cdef void _floyd_warshall(
-               np.ndarray[DTYPE_t, ndim=2, mode='c'] dist_matrix,
-               np.ndarray[ITYPE_t, ndim=2, mode='c'] predecessor_matrix,
+               mx.array[DTYPE_t, ndim=2, mode='c'] dist_matrix,
+               mx.array[ITYPE_t, ndim=2, mode='c'] predecessor_matrix,
                int directed=0) noexcept:
     # dist_matrix : in/out
     #    on input, the graph
@@ -452,7 +452,7 @@ cdef void _floyd_warshall(
         assert predecessor_matrix.shape[0] == N
         assert predecessor_matrix.shape[1] == N
         predecessor_matrix.fill(NULL_IDX)
-        i_edge = np.where(~np.isinf(dist_matrix))
+        i_edge = mx.where(~mx.isinf(dist_matrix))
         predecessor_matrix[i_edge] = i_edge[0]
         predecessor_matrix.flat[::N + 1] = NULL_IDX
 
@@ -482,11 +482,11 @@ cdef void _floyd_warshall(
 
 def dijkstra(csgraph, directed=True, indices=None,
              return_predecessors=False,
-             unweighted=False, limit=np.inf,
+             unweighted=False, limit=mx.inf,
              bint min_only=False):
     """
     dijkstra(csgraph, directed=True, indices=None, return_predecessors=False,
-             unweighted=False, limit=np.inf, min_only=False)
+             unweighted=False, limit=mx.inf, min_only=False)
 
     Dijkstra algorithm using priority queue
 
@@ -518,7 +518,7 @@ def dijkstra(csgraph, directed=True, indices=None,
         The maximum distance to calculate, must be >= 0. Using a smaller limit
         will decrease computation time by aborting calculations between pairs
         that are separated by a distance > limit. For such pairs, the distance
-        will be equal to np.inf (i.e., not connected).
+        will be equal to mx.inf (i.e., not connected).
 
         .. versionadded:: 0.14.0
     min_only : bool, optional
@@ -531,14 +531,14 @@ def dijkstra(csgraph, directed=True, indices=None,
 
     Returns
     -------
-    dist_matrix : ndarray, shape ([n_indices, ]n_nodes,)
+    dist_matrix : array, shape ([n_indices, ]n_nodes,)
         The matrix of distances between graph nodes. If min_only=False,
         dist_matrix has shape (n_indices, n_nodes) and dist_matrix[i, j]
         gives the shortest distance from point i to point j along the graph.
         If min_only=True, dist_matrix has shape (n_nodes,) and contains for
         a given node the shortest path to that node from any of the nodes
         in indices.
-    predecessors : ndarray, shape ([n_indices, ]n_nodes,)
+    predecessors : array, shape ([n_indices, ]n_nodes,)
         If ``min_only=False``, this has shape ``(n_indices, n_nodes)``,
         otherwise it has shape ``(n_nodes,)``.
         If `indices` is None and ``min_only=False`` then ``n_indices = n_nodes``
@@ -551,7 +551,7 @@ def dijkstra(csgraph, directed=True, indices=None,
         path from point i to point j.  If no path exists between point
         i and j, then predecessors[i, j] = -9999
 
-    sources : ndarray, shape (n_nodes,)
+    sources : array, shape (n_nodes,)
         Returned only if min_only=True and return_predecessors=True.
         Contains the index of the source which had the shortest path
         to each target.  If no path exists within the limit,
@@ -607,7 +607,7 @@ def dijkstra(csgraph, directed=True, indices=None,
     # validate csgraph and convert to csr
     csgraph = validate_graph(csgraph, directed, DTYPE, dense_output=False)
 
-    if np.any(csgraph.data < 0):
+    if mx.any(csgraph.data < 0):
         warnings.warn("Graph has negative weights: dijkstra will give "
                       "inaccurate results if the graph contains negative "
                       "cycles. Consider johnson or bellman_ford.")
@@ -617,20 +617,20 @@ def dijkstra(csgraph, directed=True, indices=None,
     #------------------------------
     # initialize/validate indices
     if indices is None:
-        indices = np.arange(N, dtype=ITYPE)
+        indices = mx.arange(N, dtype=ITYPE)
         if min_only:
             return_shape = (N,)
         else:
             return_shape = indices.shape + (N,)
     else:
-        indices = np.array(indices, order='C', dtype=ITYPE, copy=True)
+        indices = mx.array(indices, order='C', dtype=ITYPE, copy=True)
         if min_only:
             return_shape = (N,)
         else:
             return_shape = indices.shape + (N,)
-        indices = np.atleast_1d(indices).reshape(-1)
+        indices = mx.atleast_1d(indices).reshape(-1)
         indices[indices < 0] += N
-        if np.any(indices < 0) or np.any(indices >= N):
+        if mx.any(indices < 0) or mx.any(indices >= N):
             raise ValueError("indices out of range 0...N")
 
     cdef DTYPE_t limitf = limit
@@ -640,42 +640,42 @@ def dijkstra(csgraph, directed=True, indices=None,
     #------------------------------
     # initialize dist_matrix for output
     if min_only:
-        dist_matrix = np.full(N, np.inf, dtype=DTYPE)
+        dist_matrix = mx.full(N, mx.inf, dtype=DTYPE)
         dist_matrix[indices] = 0
     else:
-        dist_matrix = np.full((len(indices), N), np.inf, dtype=DTYPE)
-        dist_matrix[np.arange(len(indices)), indices] = 0
+        dist_matrix = mx.full((len(indices), N), mx.inf, dtype=DTYPE)
+        dist_matrix[mx.arange(len(indices)), indices] = 0
 
     #------------------------------
     # initialize predecessors for output
     if return_predecessors:
         if min_only:
-            predecessor_matrix = np.empty((N), dtype=ITYPE)
+            predecessor_matrix = mx.empty((N), dtype=ITYPE)
             predecessor_matrix.fill(NULL_IDX)
-            source_matrix = np.empty((N), dtype=ITYPE)
+            source_matrix = mx.empty((N), dtype=ITYPE)
             source_matrix.fill(NULL_IDX)
         else:
-            predecessor_matrix = np.empty((len(indices), N), dtype=ITYPE)
+            predecessor_matrix = mx.empty((len(indices), N), dtype=ITYPE)
             predecessor_matrix.fill(NULL_IDX)
-            source_matrix = np.empty((len(indices), 0), dtype=ITYPE) # unused
+            source_matrix = mx.empty((len(indices), 0), dtype=ITYPE) # unused
     else:
         if min_only:
-            predecessor_matrix = np.empty(0, dtype=ITYPE)
-            source_matrix = np.empty(0, dtype=ITYPE) # unused
+            predecessor_matrix = mx.empty(0, dtype=ITYPE)
+            source_matrix = mx.empty(0, dtype=ITYPE) # unused
         else:
-            predecessor_matrix = np.empty((len(indices), 0), dtype=ITYPE)
-            source_matrix = np.empty((len(indices), 0), dtype=ITYPE) # unused
+            predecessor_matrix = mx.empty((len(indices), 0), dtype=ITYPE)
+            source_matrix = mx.empty((len(indices), 0), dtype=ITYPE) # unused
 
     if unweighted:
-        csr_data = np.ones(csgraph.data.shape)
+        csr_data = mx.ones(csgraph.data.shape)
     else:
         csr_data = csgraph.data
     csr_indices, csr_indptr = safely_cast_index_arrays(csgraph, ITYPE, msg="csgraph")
 
     if directed:
         # for null transposed CSR
-        dummy_double_array = np.empty(0, dtype=DTYPE)
-        dummy_int_array = np.empty(0, dtype=ITYPE)
+        dummy_double_array = mx.empty(0, dtype=DTYPE)
+        dummy_int_array = mx.empty(0, dtype=ITYPE)
         if min_only:
             _dijkstra(indices,
                       csr_data, csr_indices, csr_indptr,
@@ -904,11 +904,11 @@ def bellman_ford(csgraph, directed=True, indices=None,
 
     Returns
     -------
-    dist_matrix : ndarray
+    dist_matrix : array
         The N x N matrix of distances between graph nodes. dist_matrix[i,j]
         gives the shortest distance from point i to point j along the graph.
 
-    predecessors : ndarray, shape (n_indices, n_nodes,)
+    predecessors : array, shape (n_indices, n_nodes,)
         Returned only if ``return_predecessors=True``.
         If `indices` is None then ``n_indices = n_nodes`` and the shape of
         the matrix becomes ``(n_nodes, n_nodes)``.
@@ -971,31 +971,31 @@ def bellman_ford(csgraph, directed=True, indices=None,
     # ------------------------------
     # initialize/validate indices
     if indices is None:
-        indices = np.arange(N, dtype=ITYPE)
+        indices = mx.arange(N, dtype=ITYPE)
     else:
-        indices = np.array(indices, order='C', dtype=ITYPE)
+        indices = mx.array(indices, order='C', dtype=ITYPE)
         indices[indices < 0] += N
-        if np.any(indices < 0) or np.any(indices >= N):
+        if mx.any(indices < 0) or mx.any(indices >= N):
             raise ValueError("indices out of range 0...N")
     return_shape = indices.shape + (N,)
-    indices = np.atleast_1d(indices).reshape(-1)
+    indices = mx.atleast_1d(indices).reshape(-1)
 
     # ------------------------------
     # initialize dist_matrix for output
-    dist_matrix = np.empty((len(indices), N), dtype=DTYPE)
-    dist_matrix.fill(np.inf)
-    dist_matrix[np.arange(len(indices)), indices] = 0
+    dist_matrix = mx.empty((len(indices), N), dtype=DTYPE)
+    dist_matrix.fill(mx.inf)
+    dist_matrix[mx.arange(len(indices)), indices] = 0
 
     # ------------------------------
     # initialize predecessors for output
     if return_predecessors:
-        predecessor_matrix = np.empty((len(indices), N), dtype=ITYPE)
+        predecessor_matrix = mx.empty((len(indices), N), dtype=ITYPE)
         predecessor_matrix.fill(NULL_IDX)
     else:
-        predecessor_matrix = np.empty((0, N), dtype=ITYPE)
+        predecessor_matrix = mx.empty((0, N), dtype=ITYPE)
 
     if unweighted:
-        csr_data = np.ones(csgraph.data.shape)
+        csr_data = mx.ones(csgraph.data.shape)
     else:
         csr_data = csgraph.data
     csr_indices, csr_indptr = safely_cast_index_arrays(csgraph, ITYPE, msg="csgraph")
@@ -1147,11 +1147,11 @@ def johnson(csgraph, directed=True, indices=None,
 
     Returns
     -------
-    dist_matrix : ndarray
+    dist_matrix : array
         The N x N matrix of distances between graph nodes. dist_matrix[i,j]
         gives the shortest distance from point i to point j along the graph.
 
-    predecessors : ndarray, shape (n_indices, n_nodes,)
+    predecessors : array, shape (n_indices, n_nodes,)
         Returned only if return_predecessors == True.
         If `indices` is None then ``n_indices = n_nodes`` and the shape of
         the matrix becomes ``(n_nodes, n_nodes)``.
@@ -1220,33 +1220,33 @@ def johnson(csgraph, directed=True, indices=None,
     # ------------------------------
     # initialize/validate indices
     if indices is None:
-        indices = np.arange(N, dtype=ITYPE)
+        indices = mx.arange(N, dtype=ITYPE)
         return_shape = indices.shape + (N,)
     else:
-        indices = np.array(indices, order='C', dtype=ITYPE)
+        indices = mx.array(indices, order='C', dtype=ITYPE)
         return_shape = indices.shape + (N,)
-        indices = np.atleast_1d(indices).reshape(-1)
+        indices = mx.atleast_1d(indices).reshape(-1)
         indices[indices < 0] += N
-        if np.any(indices < 0) or np.any(indices >= N):
+        if mx.any(indices < 0) or mx.any(indices >= N):
             raise ValueError("indices out of range 0...N")
 
     #------------------------------
     # initialize dist_matrix for output
-    dist_matrix = np.empty((len(indices), N), dtype=DTYPE)
-    dist_matrix.fill(np.inf)
-    dist_matrix[np.arange(len(indices)), indices] = 0
+    dist_matrix = mx.empty((len(indices), N), dtype=DTYPE)
+    dist_matrix.fill(mx.inf)
+    dist_matrix[mx.arange(len(indices)), indices] = 0
 
     #------------------------------
     # initialize predecessors for output
     if return_predecessors:
-        predecessor_matrix = np.empty((len(indices), N), dtype=ITYPE)
+        predecessor_matrix = mx.empty((len(indices), N), dtype=ITYPE)
         predecessor_matrix.fill(NULL_IDX)
     else:
-        predecessor_matrix = np.empty((len(indices), 0), dtype=ITYPE)
+        predecessor_matrix = mx.empty((len(indices), 0), dtype=ITYPE)
 
     #------------------------------
     # initialize distance array
-    dist_array = np.zeros(N, dtype=DTYPE)
+    dist_array = mx.zeros(N, dtype=DTYPE)
 
     csr_data = csgraph.data.copy()
     csr_indices, csr_indptr = safely_cast_index_arrays(csgraph, ITYPE, msg="csgraph")
@@ -1266,16 +1266,16 @@ def johnson(csgraph, directed=True, indices=None,
     # add the bellman-ford weights to the data
     _johnson_add_weights(csr_data, csr_indices, csr_indptr, dist_array)
 
-    dummy_source_matrix = np.empty((len(indices), 0), dtype=ITYPE)
+    dummy_source_matrix = mx.empty((len(indices), 0), dtype=ITYPE)
     if directed:
         # for null transposed CSR
-        dummy_double_array = np.empty(0, dtype=DTYPE)
-        dummy_int_array = np.empty(0, dtype=ITYPE)
+        dummy_double_array = mx.empty(0, dtype=DTYPE)
+        dummy_int_array = mx.empty(0, dtype=ITYPE)
         _dijkstra_multi_separate(
             indices,
             csr_data, csr_indices, csr_indptr,
             dummy_double_array, dummy_int_array, dummy_int_array,
-            dist_matrix, predecessor_matrix, dummy_source_matrix, np.inf)
+            dist_matrix, predecessor_matrix, dummy_source_matrix, mx.inf)
     else:
         csgraphT = csr_array((csr_data, csr_indices, csr_indptr),
                                csgraph.shape).T.tocsr()
@@ -1286,7 +1286,7 @@ def johnson(csgraph, directed=True, indices=None,
             csr_data,csr_indices, csr_indptr,
             csgraphT.data, csgraphT.indices, csgraphT.indptr,
             dist_matrix, predecessor_matrix, dummy_source_matrix,
-            np.inf)
+            mx.inf)
 
     # ------------------------------
     # correct the distance matrix for the bellman-ford weights
@@ -1433,12 +1433,12 @@ def yen(
 
     Returns
     -------
-    dist_array : ndarray
+    dist_array : array
         Array of size ``M`` of shortest distances between the source and sink nodes.
         ``dist_array[i]`` gives the i-th shortest distance from the source to the sink
         along the graph. ``M`` is the number of shortest paths found, which is less than or
         equal to `K`.
-    predecessors : ndarray
+    predecessors : array
         Returned only if ``return_predecessors == True``.
         The M x N matrix of predecessors, which can be used to reconstruct
         the shortest paths.
@@ -1512,18 +1512,18 @@ def yen(
                f"0 <= sink < N. Got {N=}, {source=}, {sink=}.")
         raise ValueError(msg)
     cdef int has_negative_weights = False
-    dist_array = np.full(K, INFINITY, dtype=DTYPE)
+    dist_array = mx.full(K, INFINITY, dtype=DTYPE)
 
-    predecessor_matrix = np.full((K, N), NULL_IDX, dtype=ITYPE)
+    predecessor_matrix = mx.full((K, N), NULL_IDX, dtype=ITYPE)
 
     if unweighted:
-        csr_data = np.ones(csgraph.data.shape)
+        csr_data = mx.ones(csgraph.data.shape)
     else:
         csr_data = csgraph.data.copy()
-        if np.any(csr_data < 0):
+        if mx.any(csr_data < 0):
             # Use Johnson's algorithm to handle negative weights
             has_negative_weights = True
-            johnson_dist_array = np.zeros(N, dtype=DTYPE)
+            johnson_dist_array = mx.zeros(N, dtype=DTYPE)
             if directed:
                 ret = _johnson_directed(csr_data, csgraph.indices,
                                         csgraph.indptr, johnson_dist_array)
@@ -1538,7 +1538,7 @@ def yen(
 
     if directed:
         csgraphT = csgraph
-        csrT_data = np.empty(0, dtype=DTYPE)
+        csrT_data = mx.empty(0, dtype=DTYPE)
     else:
         csgraphT = csgraph.T.tocsr()
         if unweighted:
@@ -1681,10 +1681,10 @@ cdef void _yen(
         bint directed = originalT_weights.size == 0
 
         # Dijkstra's operands and results arrays
-        int[:] indice_node_arr = np.array([source], dtype=ITYPE)
-        int[:] predecessor_matrix = np.full((N), NULL_IDX, dtype=ITYPE)
-        double[:] dist_matrix = np.full((N), np.inf, dtype=DTYPE)
-        int[:] dummy_source_matrix = np.empty((0), dtype=ITYPE) # unused
+        int[:] indice_node_arr = mx.array([source], dtype=ITYPE)
+        int[:] predecessor_matrix = mx.full((N), NULL_IDX, dtype=ITYPE)
+        double[:] dist_matrix = mx.full((N), mx.inf, dtype=DTYPE)
+        int[:] dummy_source_matrix = mx.empty((0), dtype=ITYPE) # unused
         _YenCandidatePaths candidate_paths = _YenCandidatePaths(K)
 
     dist_matrix[source] = 0
@@ -1715,7 +1715,7 @@ cdef void _yen(
 
     # Avoid copying a size 0 memory view
     if directed:
-        csrT_weights = np.empty(0, dtype=DTYPE)
+        csrT_weights = mx.empty(0, dtype=DTYPE)
     else:
         csrT_weights = originalT_weights.copy()
 

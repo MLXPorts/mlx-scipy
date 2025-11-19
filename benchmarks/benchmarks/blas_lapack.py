@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from .common import Benchmark, safe_import
 
 with safe_import():
@@ -25,8 +25,8 @@ class GetBlasLapackFuncs(Benchmark):
     ]
 
     def setup(self, dtype1, dtype2, dtype1_ord, dtype2_ord, size):
-        self.arr1 = np.empty(size, dtype=dtype1, order=dtype1_ord)
-        self.arr2 = np.empty(size, dtype=dtype2, order=dtype2_ord)
+        self.arr1 = mx.empty(size, dtype=dtype1, order=dtype1_ord)
+        self.arr2 = mx.empty(size, dtype=dtype2, order=dtype2_ord)
 
     def time_find_best_blas_type(self, dtype1, dtype2, dtype1_ord, dtype2_ord, size):
         prefix, dtype, prefer_fortran = bla.find_best_blas_type((self.arr1, self.arr2))

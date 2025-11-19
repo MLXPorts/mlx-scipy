@@ -1,5 +1,5 @@
 import warnings
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._array_api import (
     array_namespace,
@@ -23,7 +23,7 @@ def variation(a, axis=0, nan_policy='propagate', ddof=0, *, keepdims=False):
     The coefficient of variation is the standard deviation divided by the
     mean.  This function is equivalent to::
 
-        np.std(x, axis=axis, ddof=ddof) / np.mean(x)
+        mx.std(x, axis=axis, ddof=ddof) / mx.mean(x)
 
     The default for ``ddof`` is 0, but many definitions of the coefficient
     of variation use the square root of the unbiased sample variance
@@ -61,7 +61,7 @@ def variation(a, axis=0, nan_policy='propagate', ddof=0, *, keepdims=False):
 
     Returns
     -------
-    variation : ndarray
+    variation : array
         The calculated variation along the requested axis.
 
     Notes
@@ -86,7 +86,7 @@ def variation(a, axis=0, nan_policy='propagate', ddof=0, *, keepdims=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import variation
     >>> variation([1, 2, 3, 4, 5], ddof=1)
     0.5270462766947299
@@ -94,9 +94,9 @@ def variation(a, axis=0, nan_policy='propagate', ddof=0, *, keepdims=False):
     Compute the variation along a given dimension of an array that contains
     a few ``nan`` values:
 
-    >>> x = np.array([[  10.0, np.nan, 11.0, 19.0, 23.0, 29.0, 98.0],
+    >>> x = mx.array([[  10.0, mx.nan, 11.0, 19.0, 23.0, 29.0, 98.0],
     ...               [  29.0,   30.0, 32.0, 33.0, 35.0, 56.0, 57.0],
-    ...               [np.nan, np.nan, 12.0, 13.0, 16.0, 16.0, 17.0]])
+    ...               [mx.nan, mx.nan, 12.0, 13.0, 16.0, 16.0, 17.0]])
     >>> variation(x, axis=1, ddof=1, nan_policy='omit')
     array([1.05109361, 0.31428986, 0.146483  ])
 
@@ -111,7 +111,7 @@ def variation(a, axis=0, nan_policy='propagate', ddof=0, *, keepdims=False):
 
     n = xp.asarray(_length_nonmasked(a, axis=axis), dtype=a.dtype, device=xp_device(a))
 
-    with (np.errstate(divide='ignore', invalid='ignore'), warnings.catch_warnings()):
+    with (mx.errstate(divide='ignore', invalid='ignore'), warnings.catch_warnings()):
         warnings.simplefilter("ignore")
         mean_a = xp.mean(a, axis=axis)
         std_a = xp.std(a, axis=axis)

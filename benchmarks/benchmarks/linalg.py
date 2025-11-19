@@ -2,7 +2,7 @@ import math
 
 import numpy.linalg as nl
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_
 from numpy.random import rand
 
@@ -111,7 +111,7 @@ class Norm(Benchmark):
     param_names = ['shape', 'contiguous', 'module']
 
     def setup(self, shape, contig, module):
-        a = np.random.randn(*shape)
+        a = mx.random.randn(*shape)
         if contig != 'contig':
             a = a[-1::-1,-1::-1]  # turn into a non-contiguous array
             assert_(not a.flags['CONTIGUOUS'])
@@ -125,9 +125,9 @@ class Norm(Benchmark):
 
     def time_inf_norm(self, size, contig, module):
         if module == 'numpy':
-            nl.norm(self.a, ord=np.inf)
+            nl.norm(self.a, ord=mx.inf)
         else:
-            sl.norm(self.a, ord=np.inf)
+            sl.norm(self.a, ord=mx.inf)
 
     def time_frobenius_norm(self, size, contig, module):
         if module == 'numpy':
@@ -148,7 +148,7 @@ class Lstsq(Benchmark):
 
     param_names = ['dtype', 'size', 'driver']
     params = [
-        [np.float64, np.complex128],
+        [mx.float64, mx.complex128],
         [10, 100, 1000],
         ['gelss', 'gelsy', 'gelsd', 'numpy'],
     ]
@@ -158,12 +158,12 @@ class Lstsq(Benchmark):
             # skip: slow, and not useful to benchmark numpy
             raise NotImplementedError()
 
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         n = math.ceil(2./3. * size)
         k = math.ceil(1./2. * size)
         m = size
 
-        if dtype is np.complex128:
+        if dtype is mx.complex128:
             A = ((10 * rng.random((m,k)) - 5) +
                  1j*(10 * rng.random((m,k)) - 5))
             temp = ((10 * rng.random((k,n)) - 5) +
@@ -180,8 +180,8 @@ class Lstsq(Benchmark):
 
     def time_lstsq(self, dtype, size, lapack_driver):
         if lapack_driver == 'numpy':
-            np.linalg.lstsq(self.A, self.b,
-                            rcond=np.finfo(self.A.dtype).eps * 100)
+            mx.linalg.lstsq(self.A, self.b,
+                            rcond=mx.finfo(self.A.dtype).eps * 100)
         else:
             sl.lstsq(self.A, self.b, cond=None, overwrite_a=False,
                      overwrite_b=False, check_finite=False,
@@ -198,10 +198,10 @@ class SpecialMatrices(Benchmark):
     params = [[4, 128]]
 
     def setup(self, size):
-        self.x = np.arange(1, size + 1).astype(float)
-        self.small_blocks = [np.ones([2, 2])] * (size//2)
-        self.big_blocks = [np.ones([size//2, size//2]),
-                           np.ones([size//2, size//2])]
+        self.x = mx.arange(1, size + 1).astype(float)
+        self.small_blocks = [mx.ones([2, 2])] * (size//2)
+        self.big_blocks = [mx.ones([size//2, size//2]),
+                           mx.ones([size//2, size//2])]
 
     def time_block_diag_small(self, size):
         sl.block_diag(*self.small_blocks)
@@ -248,7 +248,7 @@ class SpecialMatrices(Benchmark):
 
 class GetFuncs(Benchmark):
     def setup(self):
-        self.x = np.eye(1)
+        self.x = mx.eye(1)
 
     def time_get_blas_funcs(self):
         sl.blas.get_blas_funcs('gemm', dtype=float)

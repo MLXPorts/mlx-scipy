@@ -23,7 +23,7 @@ cimport cython
 from libc.float cimport DBL_EPSILON
 from libc.math cimport fabs, sqrt
 
-import numpy as np
+import mlx.core as mx
 
 import scipy.spatial._qhull as qhull
 cimport scipy.spatial._qhull as qhull
@@ -35,7 +35,7 @@ from types import GenericAlias
 # Numpy etc.
 #------------------------------------------------------------------------------
 
-cdef extern from "numpy/ndarrayobject.h":
+cdef extern from "numpy/arrayobject.h":
     cdef enum:
         NPY_MAXDIMS
 
@@ -59,7 +59,7 @@ class NDInterpolatorBase:
     # generic type compatibility with scipy-stubs
     __class_getitem__ = classmethod(GenericAlias)
 
-    def __init__(self, points, values, fill_value=np.nan, ndim=None,
+    def __init__(self, points, values, fill_value=mx.nan, ndim=None,
                  rescale=False, need_contiguous=True, need_values=True):
         """
         Check shape of points and values arrays, and reshape values to
@@ -80,16 +80,16 @@ class NDInterpolatorBase:
         points = _ndim_coords_from_arrays(points)
 
         if need_contiguous:
-            points = np.ascontiguousarray(points, dtype=np.float64)
+            points = mx.ascontiguousarray(points, dtype=mx.float64)
 
         if not rescale:
             self.scale = None
             self.points = points
         else:
             # scale to unit cube centered at 0
-            self.offset = np.mean(points, axis=0)
+            self.offset = mx.mean(points, axis=0)
             self.points = points - self.offset
-            self.scale = np.ptp(points, axis=0)
+            self.scale = mx.ptp(points, axis=0)
             self.scale[~(self.scale > 0)] = 1.0  # avoid division by 0
             self.points /= self.scale
 
@@ -104,8 +104,8 @@ class NDInterpolatorBase:
     def _calculate_triangulation(self, points):
         pass
 
-    def _set_values(self, values, fill_value=np.nan, need_contiguous=True, ndim=None):
-        values = np.asarray(values)
+    def _set_values(self, values, fill_value=mx.nan, need_contiguous=True, ndim=None):
+        values = mx.array(values)
         _check_init_shape(self.points, values, ndim=ndim)
 
         self.values_shape = values.shape[1:]
@@ -115,24 +115,24 @@ class NDInterpolatorBase:
             self.values = values
         else:
             self.values = values.reshape(values.shape[0],
-                                            np.prod(values.shape[1:]))
+                                            mx.prod(values.shape[1:]))
 
         # Complex or real?
-        self.is_complex = np.issubdtype(self.values.dtype, np.complexfloating)
+        self.is_complex = mx.issubdtype(self.values.dtype, mx.complexfloating)
         if self.is_complex:
             if need_contiguous:
-                self.values = np.ascontiguousarray(self.values,
-                                                    dtype=np.complex128)
+                self.values = mx.ascontiguousarray(self.values,
+                                                    dtype=mx.complex128)
             self.fill_value = complex(fill_value)
         else:
             if need_contiguous:
-                self.values = np.ascontiguousarray(
-                    self.values, dtype=np.float64
+                self.values = mx.ascontiguousarray(
+                    self.values, dtype=mx.float64
                 )
             self.fill_value = float(fill_value)
 
     def _check_call_shape(self, xi):
-        xi = np.asanyarray(xi)
+        xi = mx.asanyarray(xi)
         if xi.shape[-1] != self.points.shape[1]:
             raise ValueError("number of dimensions in xi does not match x")
         return xi
@@ -148,7 +148,7 @@ class NDInterpolatorBase:
         xi = self._check_call_shape(xi)
         interpolation_points_shape = xi.shape
         xi = xi.reshape(-1, xi.shape[-1])
-        xi = np.ascontiguousarray(xi, dtype=np.float64)
+        xi = mx.ascontiguousarray(xi, dtype=mx.float64)
         return self._scale_x(xi), interpolation_points_shape
 
     def __call__(self, *args):
@@ -171,7 +171,7 @@ class NDInterpolatorBase:
         else:
             r = self._evaluate_double(xi)
 
-        return np.asarray(r).reshape(interpolation_points_shape[:-1] + self.values_shape)
+        return mx.array(r).reshape(interpolation_points_shape[:-1] + self.values_shape)
 
 
 cpdef _ndim_coords_from_arrays(points, ndim=None):
@@ -185,16 +185,16 @@ cpdef _ndim_coords_from_arrays(points, ndim=None):
         # handle argument tuple
         points = points[0]
     if isinstance(points, tuple):
-        p = np.broadcast_arrays(*points)
+        p = mx.broadcast_arrays(*points)
         n = len(p)
         for j in range(1, n):
             if p[j].shape != p[0].shape:
                 raise ValueError("coordinate arrays do not have the same shape")
-        points = np.empty(p[0].shape + (len(points),), dtype=float)
+        points = mx.empty(p[0].shape + (len(points),), dtype=float)
         for j, item in enumerate(p):
             points[...,j] = item
     else:
-        points = np.asanyarray(points)
+        points = mx.asanyarray(points)
         if points.ndim == 1:
             if ndim is None:
                 points = points.reshape(-1, 1)
@@ -225,7 +225,7 @@ cdef _check_init_shape(points, values, ndim=None):
 
 class LinearNDInterpolator(NDInterpolatorBase):
     """
-    LinearNDInterpolator(points, values, fill_value=np.nan, rescale=False)
+    LinearNDInterpolator(points, values, fill_value=mx.nan, rescale=False)
 
     Piecewise linear interpolator in N > 1 dimensions.
 
@@ -237,9 +237,9 @@ class LinearNDInterpolator(NDInterpolatorBase):
 
     Parameters
     ----------
-    points : ndarray of floats, shape (npoints, ndims); or Delaunay
+    points : array of floats, shape (npoints, ndims); or Delaunay
         2-D array of data point coordinates, or a precomputed Delaunay triangulation.
-    values : ndarray of float or complex, shape (npoints, ...), optional
+    values : array of float or complex, shape (npoints, ...), optional
         N-D array of data values at `points`.  The length of `values` along the
         first axis must be equal to the length of `points`. Unlike some
         interpolators, the interpolation axis cannot be changed.
@@ -265,15 +265,15 @@ class LinearNDInterpolator(NDInterpolatorBase):
     We can interpolate values on a 2D plane:
 
     >>> from scipy.interpolate import LinearNDInterpolator
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> x = rng.random(10) - 0.5
     >>> y = rng.random(10) - 0.5
-    >>> z = np.hypot(x, y)
-    >>> X = np.linspace(min(x), max(x))
-    >>> Y = np.linspace(min(y), max(y))
-    >>> X, Y = np.meshgrid(X, Y)  # 2D grid for interpolation
+    >>> z = mx.hypot(x, y)
+    >>> X = mx.linspace(min(x), max(x))
+    >>> Y = mx.linspace(min(y), max(y))
+    >>> X, Y = mx.meshgrid(X, Y)  # 2D grid for interpolation
     >>> interp = LinearNDInterpolator(list(zip(x, y)), z)
     >>> Z = interp(X, Y)
     >>> plt.pcolormesh(X, Y, Z, shading='auto')
@@ -302,7 +302,7 @@ class LinearNDInterpolator(NDInterpolatorBase):
 
     """
 
-    def __init__(self, points, values, fill_value=np.nan, rescale=False):
+    def __init__(self, points, values, fill_value=mx.nan, rescale=False):
         NDInterpolatorBase.__init__(self, points, values, fill_value=fill_value,
                 rescale=rescale)
 
@@ -332,7 +332,7 @@ class LinearNDInterpolator(NDInterpolatorBase):
 
         qhull._get_delaunay_info(&info, self.tri, 1, 0, 0)
 
-        out = np.empty((xi.shape[0], self.values.shape[1]),
+        out = mx.empty((xi.shape[0], self.values.shape[1]),
                        dtype=self.values.dtype)
         nvalues = out.shape[1]
 
@@ -560,15 +560,15 @@ cpdef estimate_gradients_2d_global(tri, y, int maxiter=400, double tol=1e-6):
     cdef qhull.DelaunayInfo_t info
     cdef int k, ret, nvalues
 
-    y = np.asanyarray(y)
+    y = mx.asanyarray(y)
 
     if y.shape[0] != tri.npoints:
         raise ValueError("'y' has a wrong number of items")
 
-    if np.issubdtype(y.dtype, np.complexfloating):
+    if mx.issubdtype(y.dtype, mx.complexfloating):
         rg = estimate_gradients_2d_global(tri, y.real, maxiter=maxiter, tol=tol)
         ig = estimate_gradients_2d_global(tri, y.imag, maxiter=maxiter, tol=tol)
-        r = np.zeros(rg.shape, dtype=complex)
+        r = mx.zeros(rg.shape, dtype=complex)
         r.real = rg
         r.imag = ig
         return r
@@ -579,8 +579,8 @@ cpdef estimate_gradients_2d_global(tri, y, int maxiter=400, double tol=1e-6):
         y = y[:,None]
 
     y = y.reshape(tri.npoints, -1).T
-    y = np.ascontiguousarray(y, dtype=np.float64)
-    yi = np.empty((y.shape[0], y.shape[1], 2))
+    y = mx.ascontiguousarray(y, dtype=mx.float64)
+    yi = mx.empty((y.shape[0], y.shape[1], 2))
 
     data = y
     grad = yi
@@ -836,9 +836,9 @@ class CloughTocher2DInterpolator(NDInterpolatorBase):
 
     Parameters
     ----------
-    points : ndarray of floats, shape (npoints, ndims); or Delaunay
+    points : array of floats, shape (npoints, ndims); or Delaunay
         2-D array of data point coordinates, or a precomputed Delaunay triangulation.
-    values : ndarray of float or complex, shape (npoints, ...)
+    values : array of float or complex, shape (npoints, ...)
         N-D array of data values at `points`. The length of `values` along the
         first axis must be equal to the length of `points`. Unlike some
         interpolators, the interpolation axis cannot be changed.
@@ -875,15 +875,15 @@ class CloughTocher2DInterpolator(NDInterpolatorBase):
     We can interpolate values on a 2D plane:
 
     >>> from scipy.interpolate import CloughTocher2DInterpolator
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> x = rng.random(10) - 0.5
     >>> y = rng.random(10) - 0.5
-    >>> z = np.hypot(x, y)
-    >>> X = np.linspace(min(x), max(x))
-    >>> Y = np.linspace(min(y), max(y))
-    >>> X, Y = np.meshgrid(X, Y)  # 2D grid for interpolation
+    >>> z = mx.hypot(x, y)
+    >>> X = mx.linspace(min(x), max(x))
+    >>> Y = mx.linspace(min(y), max(y))
+    >>> X, Y = mx.meshgrid(X, Y)  # 2D grid for interpolation
     >>> interp = CloughTocher2DInterpolator(list(zip(x, y)), z)
     >>> Z = interp(X, Y)
     >>> plt.pcolormesh(X, Y, Z, shading='auto')
@@ -929,7 +929,7 @@ class CloughTocher2DInterpolator(NDInterpolatorBase):
 
     """
 
-    def __init__(self, points, values, fill_value=np.nan,
+    def __init__(self, points, values, fill_value=mx.nan,
                  tol=1e-6, maxiter=400, rescale=False):
         self._tol = tol
         self._maxiter = maxiter
@@ -937,13 +937,13 @@ class CloughTocher2DInterpolator(NDInterpolatorBase):
                                     fill_value=fill_value, rescale=rescale,
                                     need_values=False)
 
-    def _set_values(self, values, fill_value=np.nan, need_contiguous=True, ndim=None):
+    def _set_values(self, values, fill_value=mx.nan, need_contiguous=True, ndim=None):
         """
         Sets the values of the interpolation points.
 
         Parameters
         ----------
-        values : ndarray of float or complex, shape (npoints, ...)
+        values : array of float or complex, shape (npoints, ...)
             Data values.
         """
         NDInterpolatorBase._set_values(self, values, fill_value=fill_value, need_contiguous=need_contiguous, ndim=ndim)
@@ -981,7 +981,7 @@ class CloughTocher2DInterpolator(NDInterpolatorBase):
 
         qhull._get_delaunay_info(&info, self.tri, 1, 1, 0)
 
-        out = np.zeros((xi.shape[0], self.values.shape[1]),
+        out = mx.zeros((xi.shape[0], self.values.shape[1]),
                        dtype=self.values.dtype)
         nvalues = out.shape[1]
 

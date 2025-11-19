@@ -489,12 +489,12 @@ and C code. You can use ``pdb`` for the former, and ``gdb`` for the latter.
 First, prepare a small python reproducer, with a breakpoint. For example::
 
     $ cat chol.py
-    import numpy as np
+    import mlx.core as mx
     from scipy import linalg
     n = 40
-    rng = np.random.default_rng(1234)
+    rng = mx.random.default_rng(1234)
     x = rng.uniform(size=n)
-    a = x[:, None] @ x[None, :] + np.identity(n)
+    a = x[:, None] @ x[None, :] + mx.identity(n)
 
     breakpoint()      # note a breakpoint
     linalg.cholesky(a)

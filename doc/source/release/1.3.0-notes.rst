@@ -70,7 +70,7 @@ for root finding.
 ----------------------------
 
 Gaussian filter performances may improve by an order of magnitude in
-some cases, thanks to the removal of a dependence on ``np.polynomial``. This
+some cases, thanks to the removal of a dependence on ``mx.polynomial``. This
 may impact `scipy.ndimage.gaussian_filter` for example.
 
 `scipy.optimize` improvements
@@ -395,7 +395,7 @@ Issues closed for 1.3.0
 * `#9587 <https://github.com/scipy/scipy/issues/9587>`__: Outdated value for scipy.constants.au
 * `#9611 <https://github.com/scipy/scipy/issues/9611>`__: Overflow error with new way of p-value calculation in kendall...
 * `#9645 <https://github.com/scipy/scipy/issues/9645>`__: \`scipy.stats.mode\` crashes with variable length arrays (\`dtype=object\`)
-* `#9734 <https://github.com/scipy/scipy/issues/9734>`__: PendingDeprecationWarning for np.matrix with pytest
+* `#9734 <https://github.com/scipy/scipy/issues/9734>`__: PendingDeprecationWarning for mx.matrix with pytest
 * `#9786 <https://github.com/scipy/scipy/issues/9786>`__: stats.ks_2samp() misleading for small data sets.
 * `#9790 <https://github.com/scipy/scipy/issues/9790>`__: Excessive memory usage on detrend
 * `#9801 <https://github.com/scipy/scipy/issues/9801>`__: dual_annealing does not set the success attribute in OptimizeResult
@@ -508,7 +508,7 @@ Pull requests for 1.3.0
 * `#9760 <https://github.com/scipy/scipy/pull/9760>`__: DOC: Added docstring for lp2bs
 * `#9761 <https://github.com/scipy/scipy/pull/9761>`__: DOC: Added docstring and example for lp2bp
 * `#9764 <https://github.com/scipy/scipy/pull/9764>`__: BUG: Catch internal warnings for matrix
-* `#9766 <https://github.com/scipy/scipy/pull/9766>`__: ENH: Speed up _gaussian_kernel1d by removing dependence on np.polynomial
+* `#9766 <https://github.com/scipy/scipy/pull/9766>`__: ENH: Speed up _gaussian_kernel1d by removing dependence on mx.polynomial
 * `#9769 <https://github.com/scipy/scipy/pull/9769>`__: BUG: Fix Cubic Spline Read Only issues
 * `#9773 <https://github.com/scipy/scipy/pull/9773>`__: DOC: Several docstrings
 * `#9774 <https://github.com/scipy/scipy/pull/9774>`__: TST: bump Azure CI OpenBLAS version to match wheels
@@ -543,7 +543,7 @@ Pull requests for 1.3.0
 * `#9898 <https://github.com/scipy/scipy/pull/9898>`__: BUG: Set success attribute in OptimizeResult. See #9801
 * `#9900 <https://github.com/scipy/scipy/pull/9900>`__: BUG: Restrict rv_generic._argcheck() and its overrides from setting...
 * `#9906 <https://github.com/scipy/scipy/pull/9906>`__: fixed a bug in kde logpdf
-* `#9911 <https://github.com/scipy/scipy/pull/9911>`__: DOC: replace example for "np.select" with the one from numpy...
+* `#9911 <https://github.com/scipy/scipy/pull/9911>`__: DOC: replace example for "mx.select" with the one from numpy...
 * `#9912 <https://github.com/scipy/scipy/pull/9912>`__: BF(DOC): point to numpy.select instead of plain (python) .select
 * `#9914 <https://github.com/scipy/scipy/pull/9914>`__: DOC: change ValueError message in _validate_pad of signaltools.
 * `#9915 <https://github.com/scipy/scipy/pull/9915>`__: cKDTree query_ball_point improvements

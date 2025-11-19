@@ -1,6 +1,6 @@
 """ Test functions involving 64bit or 32bit indexing """
 import pytest
-import numpy as np
+import mlx.core as mx
 from scipy.sparse import (
     bsr_array, coo_array, csc_array, csr_array, dia_array,
     bsr_matrix, coo_matrix, csc_matrix, csr_matrix, dia_matrix,
@@ -113,11 +113,11 @@ class Test64BitArray(RunAll64Bit):
 
     @pytest.mark.parametrize('cls,method_name', cases_64bit("sparray"))
     def test_resiliency_all_32(self, cls, method_name):
-        self._check_resiliency(cls, method_name, fixed_dtype=np.int32)
+        self._check_resiliency(cls, method_name, fixed_dtype=mx.int32)
 
     @pytest.mark.parametrize('cls,method_name', cases_64bit("sparray"))
     def test_resiliency_all_64(self, cls, method_name):
-        self._check_resiliency(cls, method_name, fixed_dtype=np.int64)
+        self._check_resiliency(cls, method_name, fixed_dtype=mx.int64)
 
     @pytest.mark.fail_slow(2)
     @pytest.mark.parametrize('cls,method_name', cases_64bit("sparray"))
@@ -142,11 +142,11 @@ class Test64BitMatrixSameAsArray(RunAll64Bit):
 
     @pytest.mark.parametrize('cls,method_name', cases_64bit("spmatrix"))
     def test_resiliency_all_32(self, cls, method_name):
-        self._check_resiliency(cls, method_name, fixed_dtype=np.int32)
+        self._check_resiliency(cls, method_name, fixed_dtype=mx.int32)
 
     @pytest.mark.parametrize('cls,method_name', cases_64bit("spmatrix"))
     def test_resiliency_all_64(self, cls, method_name):
-        self._check_resiliency(cls, method_name, fixed_dtype=np.int64)
+        self._check_resiliency(cls, method_name, fixed_dtype=mx.int64)
 
     @pytest.mark.fail_slow(2)
     @pytest.mark.parametrize('cls,method_name', cases_64bit("spmatrix"))
@@ -165,11 +165,11 @@ class Test64BitArrayExtra(RunAll64Bit):
 
     @pytest.mark.parametrize('cls,method_name', cases_64bit("sparray-extra"))
     def test_resiliency_all_32(self, cls, method_name):
-        self._check_resiliency(cls, method_name, fixed_dtype=np.int32)
+        self._check_resiliency(cls, method_name, fixed_dtype=mx.int32)
 
     @pytest.mark.parametrize('cls,method_name', cases_64bit("sparray-extra"))
     def test_resiliency_all_64(self, cls, method_name):
-        self._check_resiliency(cls, method_name, fixed_dtype=np.int64)
+        self._check_resiliency(cls, method_name, fixed_dtype=mx.int64)
 
     @pytest.mark.fail_slow(2)
     @pytest.mark.parametrize('cls,method_name', cases_64bit("sparray-extra"))
@@ -195,11 +195,11 @@ class Test64BitMatrixExtra(RunAll64Bit):
 
     @pytest.mark.parametrize('cls,method_name', cases_64bit("spmatrix-extra"))
     def test_resiliency_all_32(self, cls, method_name):
-        self._check_resiliency(cls, method_name, fixed_dtype=np.int32)
+        self._check_resiliency(cls, method_name, fixed_dtype=mx.int32)
 
     @pytest.mark.parametrize('cls,method_name', cases_64bit("spmatrix-extra"))
     def test_resiliency_all_64(self, cls, method_name):
-        self._check_resiliency(cls, method_name, fixed_dtype=np.int64)
+        self._check_resiliency(cls, method_name, fixed_dtype=mx.int64)
 
     @pytest.mark.fail_slow(2)
     @pytest.mark.parametrize('cls,method_name', cases_64bit("spmatrix-extra"))
@@ -217,7 +217,7 @@ class Test64BitTools:
     ]
 
     def _compare_index_dtype(self, m, dtype):
-        dtype = np.dtype(dtype)
+        dtype = mx.dtype(dtype)
         if m.format in ['csc', 'csr', 'bsr']:
             return (m.indices.dtype == dtype) and (m.indptr.dtype == dtype)
         elif m.format == 'coo':
@@ -232,10 +232,10 @@ class Test64BitTools:
 
         @with_64bit_maxval_limit(maxval_limit=10)
         def check(mat_cls):
-            m = mat_cls(np.random.rand(10, 1))
-            assert self._compare_index_dtype(m, np.int32)
-            m = mat_cls(np.random.rand(11, 1))
-            assert self._compare_index_dtype(m, np.int64)
+            m = mat_cls(mx.random.rand(10, 1))
+            assert self._compare_index_dtype(m, mx.int32)
+            m = mat_cls(mx.random.rand(11, 1))
+            assert self._compare_index_dtype(m, mx.int64)
 
         for mat_cls in self.MAT_CLASSES:
             check(mat_cls)
@@ -248,9 +248,9 @@ class Test64BitTools:
             seen_32 = False
             seen_64 = False
             for k in range(100):
-                m = mat_cls(np.random.rand(9, 9))
-                seen_32 = seen_32 or self._compare_index_dtype(m, np.int32)
-                seen_64 = seen_64 or self._compare_index_dtype(m, np.int64)
+                m = mat_cls(mx.random.rand(9, 9))
+                seen_32 = seen_32 or self._compare_index_dtype(m, mx.int32)
+                seen_64 = seen_64 or self._compare_index_dtype(m, mx.int64)
                 if seen_32 and seen_64:
                     break
             else:
@@ -265,7 +265,7 @@ class Test64BitTools:
         # that can fail on 32-bit systems when using 64-bit indices,
         # due to use of functions that only work with intp-size indices.
 
-        @with_64bit_maxval_limit(fixed_dtype=np.int64, downcast_maxval=1)
+        @with_64bit_maxval_limit(fixed_dtype=mx.int64, downcast_maxval=1)
         def check_limited(csc_container, csr_container, coo_container):
             # These involve indices larger than `downcast_maxval`
             a = csc_container([[1, 2], [3, 4], [5, 6]])
@@ -281,7 +281,7 @@ class Test64BitTools:
             a.has_canonical_format = False
             pytest.raises(AssertionError, a.sum_duplicates)
 
-        @with_64bit_maxval_limit(fixed_dtype=np.int64)
+        @with_64bit_maxval_limit(fixed_dtype=mx.int64)
         def check_unlimited(csc_container, csr_container, coo_container):
             # These involve indices smaller than `downcast_maxval`
             a = csc_container([[1, 2], [3, 4], [5, 6]])

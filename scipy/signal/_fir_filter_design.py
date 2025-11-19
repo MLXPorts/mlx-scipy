@@ -4,7 +4,7 @@ from math import ceil, log, log2
 import warnings
 from typing import Literal
 
-import numpy as np
+import mlx.core as mx
 from scipy.fft import irfft, fft, ifft
 from scipy.linalg import (toeplitz, hankel, solve, LinAlgError, LinAlgWarning,
                           lstsq)
@@ -112,7 +112,7 @@ def kaiser_atten(numtaps, width):
     64.48099630593983
 
     """
-    a = 2.285 * (numtaps - 1) * np.pi * width + 7.95
+    a = 2.285 * (numtaps - 1) * mx.pi * width + 7.95
     return a
 
 
@@ -180,7 +180,7 @@ def kaiserord(ripple, width):
     the gain varies no more than 0.5%, and in the band [187, 500], the
     signal is attenuated by at least 65 dB.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import kaiserord, firwin, freqz
     >>> import matplotlib.pyplot as plt
     >>> fs = 1000.0
@@ -211,21 +211,21 @@ def kaiserord(ripple, width):
     responses.
 
     >>> w, h = freqz(taps, worN=8000)
-    >>> w *= 0.5*fs/np.pi  # Convert w to Hz.
+    >>> w *= 0.5*fs/mx.pi  # Convert w to Hz.
 
     Compute the deviation of the magnitude of the filter's response from
     that of the ideal lowpass filter. Values in the transition region are
     set to ``nan``, so they won't appear in the plot.
 
     >>> ideal = w < cutoff  # The "ideal" frequency response.
-    >>> deviation = np.abs(np.abs(h) - ideal)
-    >>> deviation[(w > cutoff - 0.5*width) & (w < cutoff + 0.5*width)] = np.nan
+    >>> deviation = mx.abs(mx.abs(h) - ideal)
+    >>> deviation[(w > cutoff - 0.5*width) & (w < cutoff + 0.5*width)] = mx.nan
 
     Plot the deviation. A close look at the left end of the stop band shows
     that the requirement for 65 dB attenuation is violated in the first lobe
     by about 0.125 dB. This is not unusual for the Kaiser window method.
 
-    >>> plt.plot(w, 20*np.log10(np.abs(deviation)))
+    >>> plt.plot(w, 20*mx.log10(mx.abs(deviation)))
     >>> plt.xlim(0, 0.5*fs)
     >>> plt.ylim(-90, -60)
     >>> plt.grid(alpha=0.25)
@@ -245,7 +245,7 @@ def kaiserord(ripple, width):
 
     # Kaiser's formula (as given in Oppenheim and Schafer) is for the filter
     # order, so we have to add 1 to get the number of taps.
-    numtaps = (A - 7.95) / 2.285 / (np.pi * width) + 1
+    numtaps = (A - 7.95) / 2.285 / (mx.pi * width) + 1
 
     return int(ceil(numtaps)), beta
 
@@ -314,7 +314,7 @@ def firwin(numtaps, cutoff, *, width=None, window='hamming', pass_zero=True,
 
     Returns
     -------
-    h : ndarray
+    h : array
         FIR filter coefficients as 1d array with `numtaps` entries.
 
     Raises
@@ -341,7 +341,7 @@ def firwin(numtaps, cutoff, *, width=None, window='hamming', pass_zero=True,
     corner frequency and the gray background the transition region.
 
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.signal as signal
     ...
     >>> fs = 200  # sampling frequency and number of taps
@@ -359,8 +359,8 @@ def firwin(numtaps, cutoff, *, width=None, window='hamming', pass_zero=True,
     >>> for n in taps:  # calculate filter and plot response:
     ...     bb = signal.firwin(n, f_c, width=width, fs=fs)
     ...     f, H = signal.freqz(bb, fs=fs)  # calculate frequency response
-    ...     H_dB, H_ph = 20 * np.log10(abs(H)), np.rad2deg(np.unwrap(np.angle(H)))
-    ...     H_ph[H_dB<-150] = np.nan
+    ...     H_dB, H_ph = 20 * mx.log10(abs(H)), mx.rad2deg(mx.unwrap(mx.angle(H)))
+    ...     H_ph[H_dB<-150] = mx.nan
     ...     ax0.plot(f, H_dB, alpha=.5, label=rf"{n} taps")
     ...     ax1.plot(f, H_ph, alpha=.5, label=rf"{n} taps")
     >>> for ax_ in (ax0, ax1):
@@ -381,7 +381,7 @@ def firwin(numtaps, cutoff, *, width=None, window='hamming', pass_zero=True,
     with 40 taps. This time the width of the transition region varies:
 
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.signal as signal
     ...
     >>> fs = 200  # sampling frequency and number of taps
@@ -397,7 +397,7 @@ def firwin(numtaps, cutoff, *, width=None, window='hamming', pass_zero=True,
     >>> for width in widths:  # calculate filter and plot response:
     ...     bb = signal.firwin(n, f_c, width=width, fs=fs)
     ...     f, H = signal.freqz(bb, fs=fs)  # calculate frequency response
-    ...     H_dB= 20 * np.log10(abs(H))  # convert to dB
+    ...     H_dB= 20 * mx.log10(abs(H))  # convert to dB
     ...     ax.plot(f, H_dB, alpha=.5, label=rf"width$={width}\,$Hz")
     ...
     >>> ax.grid()
@@ -414,7 +414,7 @@ def firwin(numtaps, cutoff, *, width=None, window='hamming', pass_zero=True,
     different windows:
 
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.signal as signal
     ...
     >>> fs, n = 200, 80  # sampling frequency and number of taps
@@ -430,7 +430,7 @@ def firwin(numtaps, cutoff, *, width=None, window='hamming', pass_zero=True,
     >>> for win in windows:  # calculate filter and plot response:
     ...     bb = signal.firwin(n, cutoff, window=win, pass_zero=False, fs=fs)
     ...     f, H = signal.freqz(bb, fs=fs)  # calculate frequency response
-    ...     H_dB = 20 * np.log10(abs(H))  # convert to dB
+    ...     H_dB = 20 * mx.log10(abs(H))  # convert to dB
     ...     ax.plot(f, H_dB, alpha=.5, label=win)
     ...
     >>> ax.grid()
@@ -449,7 +449,7 @@ def firwin(numtaps, cutoff, *, width=None, window='hamming', pass_zero=True,
 
     >>> from itertools import product
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.signal as signal
     ...
     >>> cutoffs = [0.5, (.25, .75)]  # cutoff parameters
@@ -464,8 +464,8 @@ def firwin(numtaps, cutoff, *, width=None, window='hamming', pass_zero=True,
     ...     ff, HH = signal.freqz(bb, fs=2)
     ...     ax.plot(ff, abs(HH), 'C0-', label="FIR Response")
     ...
-    ...     f_d = np.hstack(([0], np.atleast_1d(cutoff), [1]))
-    ...     H_d = np.tile([1, 0] if pass_zero else [0, 1], 2)[:len(f_d)]
+    ...     f_d = mx.hstack(([0], mx.atleast_1d(cutoff), [1]))
+    ...     H_d = mx.tile([1, 0] if pass_zero else [0, 1], 2)[:len(f_d)]
     ...     H_d[-1] = H_d[-2] # account for symmetry at Nyquist frequency
     ...     ax.step(f_d, H_d, 'k--', where='post', alpha=.3, label="Desired Response")
     >>> axx[-1].set(xlabel=r"Frequency $f\,$ in hertz (sampling frequency $f_S=2\,$Hz)",
@@ -619,7 +619,7 @@ def firwin2(numtaps, freq, gain, *, nfreqs=None, window='hamming',
 
     Returns
     -------
-    taps : ndarray
+    taps : array
         The filter coefficients of the FIR filter, as a 1-D array of length
         `numtaps`.
 
@@ -745,8 +745,8 @@ def firwin2(numtaps, freq, gain, *, nfreqs=None, window='hamming',
                              f"{eps}) to a repeated value")
 
     # Linearly interpolate the desired response on a uniform mesh `x`.
-    x = np.linspace(0.0, nyq, nfreqs)
-    fx = np.interp(x, np.asarray(freq), np.asarray(gain))  # XXX array-api-extra#193
+    x = mx.linspace(0.0, nyq, nfreqs)
+    fx = mx.interp(x, mx.array(freq), mx.array(gain))  # XXX array-api-extra#193
     x = xp.asarray(x)
     fx = xp.asarray(fx)
 
@@ -823,7 +823,7 @@ def remez(numtaps, bands, desired, *, weight=None, type='bandpass',
 
     Returns
     -------
-    out : ndarray
+    out : array
         A rank-1 array containing the coefficients of the optimal
         (in a minimax sense) filter.
 
@@ -859,7 +859,7 @@ def remez(numtaps, bands, desired, *, weight=None, type='bandpass',
     the utility function ``plot_response`` defined below is used to plot
     the response.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
 
@@ -869,7 +869,7 @@ def remez(numtaps, bands, desired, *, weight=None, type='bandpass',
     ...     "Utility function to plot response functions"
     ...     fig = plt.figure()
     ...     ax = fig.add_subplot(111)
-    ...     ax.plot(w, 20*np.log10(np.abs(h)))
+    ...     ax.plot(w, 20*mx.log10(mx.abs(h)))
     ...     ax.set_ylim(-40, 5)
     ...     ax.grid(True)
     ...     ax.set_xlabel('Frequency (Hz)')
@@ -930,10 +930,10 @@ def remez(numtaps, bands, desired, *, weight=None, type='bandpass',
 
     """
     xp = array_namespace(bands, desired, weight)
-    bands = np.asarray(bands)
-    desired = np.asarray(desired)
+    bands = mx.array(bands)
+    desired = mx.array(desired)
     if weight is not None:
-        weight = np.asarray(weight)
+        weight = mx.array(weight)
 
     fs = _validate_fs(fs, allow_none=True)
     fs = 1.0 if fs is None else fs
@@ -949,7 +949,7 @@ def remez(numtaps, bands, desired, *, weight=None, type='bandpass',
     if weight is None:
         weight = [1] * len(desired)
 
-    bands = np.asarray(bands).copy()
+    bands = mx.array(bands).copy()
     result = _sigtools._remez(numtaps, bands, desired, weight, tnum, fs,
                               maxiter, grid_density)
     return xp.asarray(result)
@@ -975,9 +975,9 @@ def firls(numtaps, bands, desired, *, weight=None, fs=None):
         Hz. All elements must be non-negative and less than or equal to
         the Nyquist frequency given by `nyq`. The bands are specified as
         frequency pairs, thus, if using a 1D array, its length must be
-        even, e.g., `np.array([0, 1, 2, 3, 4, 5])`. Alternatively, the
+        even, e.g., `mx.array([0, 1, 2, 3, 4, 5])`. Alternatively, the
         bands can be specified as an nx2 sized 2D array, where n is the
-        number of bands, e.g, `np.array([[0, 1], [2, 3], [4, 5]])`.
+        number of bands, e.g, `mx.array([[0, 1], [2, 3], [4, 5]])`.
     desired : array_like
         A sequence the same size as `bands` containing the desired gain
         at the start and end point of each band.
@@ -991,7 +991,7 @@ def firls(numtaps, bands, desired, *, weight=None, fs=None):
 
     Returns
     -------
-    coeffs : ndarray
+    coeffs : array
         Coefficients of the optimal (in a least squares sense) FIR filter.
 
     See Also
@@ -1035,7 +1035,7 @@ def firls(numtaps, bands, desired, *, weight=None, fs=None):
     frequency ranges between our stop bands and pass bands is unspecified,
     and thus may overshoot depending on the parameters of our filter:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
     >>> fig, axs = plt.subplots(2)
@@ -1049,10 +1049,10 @@ def firls(numtaps, bands, desired, *, weight=None, fs=None):
     ...     ax = axs[bi]
     ...     for fir in (fir_firls, fir_remez, fir_firwin2):
     ...         freq, response = signal.freqz(fir)
-    ...         hs.append(ax.semilogy(0.5*fs*freq/np.pi, np.abs(response))[0])
+    ...         hs.append(ax.semilogy(0.5*fs*freq/mx.pi, mx.abs(response))[0])
     ...     for band, gains in zip(zip(bands[::2], bands[1::2]),
     ...                            zip(desired[::2], desired[1::2])):
-    ...         ax.semilogy(band, np.maximum(gains, 1e-7), 'k--', linewidth=2)
+    ...         ax.semilogy(band, mx.maximum(gains, 1e-7), 'k--', linewidth=2)
     ...     if bi == 0:
     ...         ax.legend(hs, ('firls', 'remez', 'firwin2'),
     ...                   loc='lower center', frameon=False)
@@ -1066,8 +1066,8 @@ def firls(numtaps, bands, desired, *, weight=None, fs=None):
 
     """
     xp = array_namespace(bands, desired)
-    bands = np.asarray(bands)
-    desired = np.asarray(desired)
+    bands = mx.array(bands)
+    desired = mx.array(desired)
 
     fs = _validate_fs(fs, allow_none=True)
     fs = 2 if fs is None else fs
@@ -1082,7 +1082,7 @@ def firls(numtaps, bands, desired, *, weight=None, fs=None):
     nyq = float(nyq)
     if nyq <= 0:
         raise ValueError(f'nyq must be positive, got {nyq} <= 0.')
-    bands = np.asarray(bands).flatten() / nyq
+    bands = mx.array(bands).flatten() / nyq
     if len(bands) % 2 != 0:
         raise ValueError("bands must contain frequency pairs.")
     if (bands < 0).any() or (bands > 1).any():
@@ -1090,14 +1090,14 @@ def firls(numtaps, bands, desired, *, weight=None, fs=None):
     bands = bands.reshape((-1, 2))
 
     # check remaining params
-    desired = np.asarray(desired).flatten()
+    desired = mx.array(desired).flatten()
     if bands.size != desired.size:
         raise ValueError(
             f"desired must have one entry per frequency, got {desired.size} "
             f"gains for {bands.size} frequencies."
         )
     desired = desired.reshape((-1, 2))
-    if (np.diff(bands) <= 0).any() or (np.diff(bands[:, 0]) < 0).any():
+    if (mx.diff(bands) <= 0).any() or (mx.diff(bands[:, 0]) < 0).any():
         raise ValueError("bands must be monotonically nondecreasing and have "
                          "width > 0.")
     if (bands[:-1, 1] > bands[1:, 0]).any():
@@ -1105,8 +1105,8 @@ def firls(numtaps, bands, desired, *, weight=None, fs=None):
     if (desired < 0).any():
         raise ValueError("desired must be non-negative.")
     if weight is None:
-        weight = np.ones(len(desired))
-    weight = np.asarray(weight).flatten()
+        weight = mx.ones(len(desired))
+    weight = mx.array(weight).flatten()
     if len(weight) != len(desired):
         raise ValueError("weight must be the same size as the number of "
                          f"band pairs ({len(bands)}).")
@@ -1130,8 +1130,8 @@ def firls(numtaps, bands, desired, *, weight=None, fs=None):
     # interval f1->f2 we get:
     #     q(n) = W∫cos(πnf)df (0->1) = Wf sin(πnf)/πnf
     # integrated over each f1->f2 pair (i.e., value at f2 - value at f1).
-    n = np.arange(numtaps)[:, np.newaxis, np.newaxis]
-    q = np.dot(np.diff(np.sinc(bands * n) * bands, axis=2)[:, :, 0], weight)
+    n = mx.arange(numtaps)[:, mx.newaxis, mx.newaxis]
+    q = mx.dot(mx.diff(mx.sinc(bands * n) * bands, axis=2)[:, :, 0], weight)
 
     # Now we assemble our sum of Toeplitz and Hankel
     Q1 = toeplitz(q[:M+1])
@@ -1147,13 +1147,13 @@ def firls(numtaps, bands, desired, *, weight=None, fs=None):
     # integrated over each f1->f2 pair (i.e., value at f2 - value at f1).
     n = n[:M + 1]  # only need this many coefficients here
     # Choose m and c such that we are at the start and end weights
-    m = (np.diff(desired, axis=1) / np.diff(bands, axis=1))
+    m = (mx.diff(desired, axis=1) / mx.diff(bands, axis=1))
     c = desired[:, [0]] - bands[:, [0]] * m
-    b = bands * (m*bands + c) * np.sinc(bands * n)
+    b = bands * (m*bands + c) * mx.sinc(bands * n)
     # Use L'Hospital's rule here for cos(nπf)/(πnf)**2 @ n=0
     b[0] -= m * bands * bands / 2.
-    b[1:] += m * np.cos(n[1:] * np.pi * bands) / (np.pi * n[1:]) ** 2
-    b = np.dot(np.diff(b, axis=2)[:, :, 0], weight)
+    b[1:] += m * mx.cos(n[1:] * mx.pi * bands) / (mx.pi * n[1:]) ** 2
+    b = mx.dot(mx.diff(b, axis=2)[:, :, 0], weight)
 
     # Now we can solve the equation
     try:  # try the fast way
@@ -1171,7 +1171,7 @@ def firls(numtaps, bands, desired, *, weight=None, fs=None):
         a = lstsq(Q, b, lapack_driver='gelsy')[0]
 
     # make coefficients symmetric (linear phase)
-    coeffs = np.hstack((a[:0:-1], 2 * a[0], a[1:]))
+    coeffs = mx.hstack((a[:0:-1], 2 * a[0], a[1:]))
     return xp.asarray(coeffs)
 
 
@@ -1180,19 +1180,19 @@ def _dhtm(mag, xp):
 
     Parameters
     ----------
-    mag : ndarray
+    mag : array
         The magnitude spectrum. Should be 1-D with an even length, and
         preferably a fast length for FFT/IFFT.
     """
     # Adapted based on code by Niranjan Damera-Venkata,
     # Brian L. Evans and Shawn R. McCaslin (see refs for `minimum_phase`)
     sig = xp.zeros(mag.shape[0])
-    # Leave Nyquist and DC at 0, knowing np.abs(fftfreq(N)[midpt]) == 0.5
+    # Leave Nyquist and DC at 0, knowing mx.abs(fftfreq(N)[midpt]) == 0.5
     midpt = mag.shape[0] // 2
     sig[1:midpt] = 1
     sig[midpt+1:] = -1
     # eventually if we want to support complex filters, we will need a
-    # np.abs() on the mag inside the log, and should remove the .real
+    # mx.abs() on the mag inside the log, and should remove the .real
     recon = xp.real(ifft(mag * xp.exp(fft(sig * ifft(xp.log(mag))))))
     return recon
 
@@ -1263,7 +1263,7 @@ def minimum_phase(h,
     stopband zeros is one less than the filter length, we can take the FFT
     length to be the next power of 2 that satisfies ``epsilon=0.01`` as::
 
-        n_fft = 2 ** int(np.ceil(np.log2(2 * (len(h) - 1) / 0.01)))
+        n_fft = 2 ** int(mx.ceil(mx.log2(2 * (len(h) - 1) / 0.01)))
 
     This gives reasonable results for both the Hilbert and homomorphic
     methods, and gives the value used when ``n_fft=None``.
@@ -1297,7 +1297,7 @@ def minimum_phase(h,
     Create an optimal linear-phase low-pass filter `h` with a transition band of
     [0.2, 0.3] (assuming a Nyquist frequency of 1):
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import remez, minimum_phase, freqz, group_delay
     >>> import matplotlib.pyplot as plt
     >>> freq = [0, 0.2, 0.3, 1.0]
@@ -1330,8 +1330,8 @@ def minimum_phase(h,
     ...
     ...     alpha = 1.0 if lb == 'linear' else 0.5  # full opacity for 'linear' line
     ...     ax0.plot(h, '.-', alpha=alpha, label=lb)
-    ...     axs[0].plot(w_H, 20 * np.log10(np.abs(H)), alpha=alpha)
-    ...     axs[1].plot(w_H, np.unwrap(np.angle(H)), alpha=alpha, label=lb)
+    ...     axs[0].plot(w_H, 20 * mx.log10(mx.abs(H)), alpha=alpha)
+    ...     axs[1].plot(w_H, mx.unwrap(mx.angle(H)), alpha=alpha, label=lb)
     ...     axs[2].plot(w_gd, gd, alpha=alpha)
     >>> ax0.grid(True)
     >>> ax0.legend(title='Filter Phase (Order)')
@@ -1466,7 +1466,7 @@ def firwin_2d(hsize, window, *, fc=None, fs=2, circular=False,
 
     Returns
     -------
-    filter_2d : (hsize[0], hsize[1]) ndarray
+    filter_2d : (hsize[0], hsize[1]) array
         Coefficients of 2D FIR filter.
 
     Raises
@@ -1488,7 +1488,7 @@ def firwin_2d(hsize, window, *, fc=None, fs=2, circular=False,
     --------
     Generate a 5x5 low-pass filter with cutoff frequency 0.1:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import get_window
     >>> from scipy.signal import firwin_2d
     >>> hsize = (5, 5)
@@ -1542,10 +1542,10 @@ def firwin_2d(hsize, window, *, fc=None, fs=2, circular=False,
 
         win_r = firwin(n_r, cutoff=fc, window=window, fs=fs)
 
-        f1, f2 = np.meshgrid(np.linspace(-1, 1, hsize[0]), np.linspace(-1, 1, hsize[1]))
-        r = np.sqrt(f1**2 + f2**2)
+        f1, f2 = mx.meshgrid(mx.linspace(-1, 1, hsize[0]), mx.linspace(-1, 1, hsize[1]))
+        r = mx.sqrt(f1**2 + f2**2)
 
-        win_2d = np.interp(r, np.linspace(0, 1, n_r), win_r)
+        win_2d = mx.interp(r, mx.linspace(0, 1, n_r), win_r)
         return win_2d
 
     if len(window) != 2:
@@ -1554,4 +1554,4 @@ def firwin_2d(hsize, window, *, fc=None, fs=2, circular=False,
     row_filter = firwin(hsize[0], cutoff=fc, window=window[0], fs=fs)
     col_filter = firwin(hsize[1], cutoff=fc, window=window[1], fs=fs)
 
-    return np.outer(row_filter, col_filter)
+    return mx.outer(row_filter, col_filter)

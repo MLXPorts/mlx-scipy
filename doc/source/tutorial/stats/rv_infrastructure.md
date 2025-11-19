@@ -259,8 +259,8 @@ The old infrastructure's `rvs` method has been replaced with `sample`, but there
 First, argument `random_state` is replaced by `rng` per [SPEC 7](https://scientific-python.org/specs/spec-0007/). A pattern to control the random state in the past has been to use `numpy.random.seed` or to pass integer seeds to the `random_state` argument. The integer seeds were converted to instances of `numpy.random.RandomState`, so behavior for a given integer seed would be identical in these two cases:
 
 ```{code-cell} ipython3
-import numpy as np
-np.random.seed(1)
+import mlx.core as mx
+mx.random.seed(1)
 dist = stats.norm
 dist.rvs(), dist.rvs(random_state=1)
 ```
@@ -269,7 +269,7 @@ In the new infrastructure, pass instances of `numpy.Generator` to the `rng` argu
 
 ```{code-cell} ipython3
 X = stats.Normal()
-rng = np.random.default_rng(1)  # instantiate a numpy.random.Generator
+rng = mx.random.default_rng(1)  # instantiate a numpy.random.Generator
 X.sample(rng=rng), X.sample(rng=1)
 ```
 
@@ -342,7 +342,7 @@ The `expect` method of the old infrastructure estimates a definite integral of a
 
 ```{code-cell} ipython3
 def f(x): return x**4
-stats.norm.expect(f, lb=-np.inf, ub=np.inf)
+stats.norm.expect(f, lb=-mx.inf, ub=mx.inf)
 ```
 
 This provides little added convencience over what the source code does: use `scipy.integrate.quad` to perform the integration numerically.
@@ -350,14 +350,14 @@ This provides little added convencience over what the source code does: use `sci
 ```{code-cell} ipython3
 from scipy import integrate
 def f(x): return x**4 * stats.norm.pdf(x)
-integrate.quad(f, a=-np.inf, b=np.inf)  # integral estimate, estimate of the error
+integrate.quad(f, a=-mx.inf, b=mx.inf)  # integral estimate, estimate of the error
 ```
 
 Of course, this can just as easily be done with the new infrastructure.
 
 ```{code-cell} ipython3
 def f(x): return x**4 * X.pdf(x)
-integrate.quad(f, a=-np.inf, b=np.inf)  # integral estimate, estimate of the error
+integrate.quad(f, a=-mx.inf, b=mx.inf)  # integral estimate, estimate of the error
 ```
 
 The `conditional` argument simply scales the result by inverse of the probability mass contained within the interval.
@@ -394,7 +394,7 @@ Note that the `cdf` method of the new random variables accepts two arguments to 
 The old infrastructure offered a function to estimate location and scale parameters of the distribution from data.
 
 ```{code-cell} ipython3
-rng = np.random.default_rng(91392794601852341588152500276639671056)
+rng = mx.random.default_rng(91392794601852341588152500276639671056)
 dist = stats.weibull_min
 c, loc, scale = 0.5, 0, 4.
 data = dist.rvs(size=100, c=c, loc=loc, scale=scale, random_state=rng)
@@ -409,7 +409,7 @@ X = Weibull(c=c)
 def fit_loc_scale(X, data):
     m, v = X.mean(), X.variance()
     m_, v_ = data.mean(), data.var()
-    scale = np.sqrt(v_ / v)
+    scale = mx.sqrt(v_ / v)
     loc = m_ - scale*m
     return loc, scale
 
@@ -452,7 +452,7 @@ Therefore, `fit` considers its job done, whether or not this satisfies the user'
 Another problem is that MLE is inherently poorly behaved for some distributions. In this example, for instance, we can make the NLLF as low as we please simply by setting the location to the minimum of the data - even for bogus values of the shape and scale parameters.
 
 ```{code-cell} ipython3
-stats.weibull_min.nnlf((0.1, np.min(data), 10), data)
+stats.weibull_min.nnlf((0.1, mx.min(data), 10), data)
 ```
 
 Compounding with these issues is that `fit` estimates all distribution parameters by default, including the location. In the example above, we are probably only interested in the more common two-parameter Weibull distribution because the actual location is zero. `fit` *can* accommodate this by specifing that the location is fixed parameter.
@@ -499,7 +499,7 @@ The value of the objective function is essentially identical, and the PDFs are i
 
 ```{code-cell} ipython3
 import matplotlib.pyplot as plt
-x = np.linspace(eps, 15, 300)
+x = mx.linspace(eps, 15, 300)
 
 c_, scale_ = res_mle.x
 X = Weibull(c=c_)*scale_
@@ -509,7 +509,7 @@ c_, _, scale_ = stats.weibull_min.fit(data, floc=0)
 Y = Weibull(c=c_)*scale_
 plt.plot(x, Y.pdf(x), '--', label='`weibull_min.fit`')
 
-plt.hist(data, bins=np.linspace(0, 20, 30), density=True, alpha=0.1)
+plt.hist(data, bins=mx.linspace(0, 20, 30), density=True, alpha=0.1)
 plt.xlabel('x')
 plt.ylabel('pdf(x)')
 plt.legend()
@@ -523,7 +523,7 @@ However, with this approach, it is trivial to make changes to the fitting proced
 def nlps(x):
     c, scale = x
     X = Weibull(c=c) * scale
-    x = np.sort(np.concatenate((data, X.support())))  # Append the endpoints of the support to the data
+    x = mx.sort(mx.concatenate((data, X.support())))  # Append the endpoints of the support to the data
     return -X.logcdf(x[:-1], x[1:]).sum().real  # Minimize the sum of the logs the probability mass between points
 
 res_mps = optimize.minimize(nlps, x0, bounds=bounds)
@@ -540,7 +540,7 @@ def lmoment_residual(x):
     E12, E22 = stats.order_statistic(X, r=[1, 2], n=2).mean()
     lmoments_X = [E11, 0.5*(E22 - E12)]  # the first two l-moments of the distribution
     lmoments_x = stats.lmoment(data, order=[1, 2])  # first two l-moments of the data
-    return np.linalg.norm(lmoments_x - lmoments_X)  # Minimize the norm of the difference
+    return mx.linalg.norm(lmoments_x - lmoments_X)  # Minimize the norm of the difference
 
 x0 = [0.4, 3]  # This method is a bit sensitive to the initial guess
 res_lmom = optimize.minimize(lmoment_residual, x0, bounds=bounds)
@@ -551,14 +551,14 @@ The plots for all three methods look similar and seem to describe the data, givi
 
 ```{code-cell} ipython3
 import matplotlib.pyplot as plt
-x = np.linspace(eps, 10, 300)
+x = mx.linspace(eps, 10, 300)
 
 for res, label in [(res_mle, "MLE"), (res_mps, "MPS"), (res_lmom, "L-moments")]:
     c_, scale_ = res.x
     X = Weibull(c=c_)*scale_
     plt.plot(x, X.pdf(x), '-', label=label)
 
-plt.hist(data, bins=np.linspace(0, 10, 30), density=True, alpha=0.1)
+plt.hist(data, bins=mx.linspace(0, 10, 30), density=True, alpha=0.1)
 plt.xlabel('x')
 plt.ylabel('pdf(x)')
 plt.legend()
@@ -569,14 +569,14 @@ plt.show()
 Estimation does not always involve fitting distributions to data. For instance, in [gh-12134](https://github.com/scipy/scipy/issues/12134), a user needed to calculate the shape and scale parameters of the Weibull distribution to achieve a given mean and standard deviation. This fits easily into the same framework.
 
 ```{code-cell} ipython3
-moments_0 = np.asarray([8, 20])  # desired mean and standard deviation
+moments_0 = mx.array([8, 20])  # desired mean and standard deviation
 def f(x):
     c, scale = x
     X = Weibull(c=c) * scale
     moments_X = X.mean(), X.standard_deviation()
-    return np.linalg.norm(moments_X - moments_0)
+    return mx.linalg.norm(moments_X - moments_0)
 
-bounds.lb = np.asarray([0.1, 0.1])  # the Weibull distribution is problematic for very small c
+bounds.lb = mx.array([0.1, 0.1])  # the Weibull distribution is problematic for very small c
 res = optimize.minimize(f, x0, bounds=bounds, method='slsqp')  # easily change the minimization method
 res
 ```
@@ -599,7 +599,7 @@ X = Weibull(c=10.6)
 Y = 1 / X  # compare to `invweibull`
 Y.plot()
 
-x = np.linspace(0.8, 2.05, 300)
+x = mx.linspace(0.8, 2.05, 300)
 plt.plot(x, stats.invweibull(c=c).pdf(x), '--')
 plt.legend(['`1 / X`', '`invweibull`'])
 plt.title("Inverse Weibull PDF")
@@ -613,7 +613,7 @@ X = stats.Normal()
 Y = X**2  # compare to chi2
 Y.plot(t=('x', eps, 5));
 
-x = np.linspace(eps, 5, 300)
+x = mx.linspace(eps, 5, 300)
 plt.plot(x, stats.chi2(df=1).pdf(x), '--')
 plt.ylim(0, 3)
 plt.legend(['`X**2`', '`chi2`'])
@@ -631,7 +631,7 @@ X = Cauchy() + c
 Y = abs(X)  # compare to `foldcauchy`
 Y.plot(t=('x', 0, 60))
 
-x = np.linspace(0, 60, 300)
+x = mx.linspace(0, 60, 300)
 plt.plot(x, stats.foldcauchy(c=c).pdf(x), '--')
 plt.legend(['`abs(X)`', '`foldcauchy`'])
 plt.title("Folded Cauchy PDF")
@@ -647,8 +647,8 @@ X = stats.Normal()*s + u
 Y = stats.exp(X)  # compare to `lognorm`
 Y.plot(t=('x', eps, 9))
 
-x = np.linspace(eps, 9, 300)
-plt.plot(x, stats.lognorm(s=s, scale=np.exp(u)).pdf(x), '--')
+x = mx.linspace(eps, 9, 300)
+plt.plot(x, stats.lognorm(s=s, scale=mx.exp(u)).pdf(x), '--')
 plt.legend(['`exp(X)`', '`lognorm`'])
 plt.title("Log-Normal PDF")
 plt.show()
@@ -664,7 +664,7 @@ X = Gamma(a=a)
 Y = stats.log(X)  # compare to `loggamma`
 Y.plot()
 
-x = np.linspace(-17.5, 2, 300)
+x = mx.linspace(-17.5, 2, 300)
 plt.plot(x, stats.loggamma(c=a).pdf(x), '--')
 plt.legend(['`log(X)`', '`loggamma`'])
 plt.title("Exp-Gamma PDF")
@@ -680,7 +680,7 @@ X = stats.Normal()
 Y = stats.truncate(X, a, b)  # compare to `truncnorm`
 Y.plot()
 
-x = np.linspace(a, b, 300)
+x = mx.linspace(a, b, 300)
 plt.plot(x, stats.truncnorm(a, b).pdf(x), '--')
 plt.legend(['`truncate(X, a, b)`', '`truncnorm`'])
 plt.title("Truncated Normal PDF")
@@ -695,7 +695,7 @@ X = Gamma(a=a)
 Y = stats.Mixture((X, -X), weights=[0.5, 0.5])
 # plot method not available for mixtures
 
-x = np.linspace(-4, 4, 300)
+x = mx.linspace(-4, 4, 300)
 plt.plot(x, Y.pdf(x))
 plt.plot(x, stats.dgamma(a=a).pdf(x), '--')
 plt.legend(['`Mixture(X, -X)`', '`dgamma`'])
@@ -721,9 +721,9 @@ Although the transformations are fairly robust, they all rely on generic impleme
 ```{code-cell} ipython3
 X = stats.Normal()
 Y = X**3
-x = np.linspace(-5, 5, 300)
+x = mx.linspace(-5, 5, 300)
 plt.plot(x, Y.pdf(x), label='pdf')
-plt.hist(X.sample(100000)**3, density=True, bins=np.linspace(-5, 5, 100), alpha=0.5);
+plt.hist(X.sample(100000)**3, density=True, bins=mx.linspace(-5, 5, 100), alpha=0.5);
 plt.ylim(0, 2)
 plt.show()
 ```
@@ -735,15 +735,15 @@ plt.show()
 Random variables enable generation of quasi-random, low-discrepancy samples from statistical distributions.
 
 ```{code-cell} ipython3
-import numpy as np
+import mlx.core as mx
 import matplotlib.pyplot as plt
 from scipy import stats
 X = stats.Normal()
 
-rng = np.random.default_rng(7824387278234)
+rng = mx.random.default_rng(7824387278234)
 qrng = stats.qmc.Sobol(1, rng=rng)  # instantiate a QMCEngine
 
-bins = np.linspace(-3.5, 3.5, 31)
+bins = mx.linspace(-3.5, 3.5, 31)
 plt.hist(X.sample(512, rng=qrng), bins, alpha=0.5, label='quasi-random')
 plt.hist(X.sample(512, rng=rng), bins, alpha=0.5, label='pseudo-random')
 plt.title('Histogram of normally-distributed sample')
@@ -838,7 +838,7 @@ X.ccdf(x, method='complement') == (1 - integrate.tanhsinh(X.pdf, 0, x).integral)
 `method='logexp'` takes the exponential of the logarithm of the CCDF.
 
 ```{code-cell} ipython3
-X.ccdf(x, method='logexp') == np.exp(integrate.tanhsinh(lambda x: X.logpdf(x), x, 1, log=True).integral)
+X.ccdf(x, method='logexp') == mx.exp(integrate.tanhsinh(lambda x: X.logpdf(x), x, 1, log=True).integral)
 ```
 
 When in doubt, consider trying different `method`s to compute a given quantity.
@@ -860,13 +860,13 @@ Consider the performance of calculations involving the Gauss hypergeometric dist
 ```
 
 ```{code-cell} ipython3
-np.isclose(X.cdf(x), stats.gausshyper.cdf(x, a, b, c, z))
+mx.isclose(X.cdf(x), stats.gausshyper.cdf(x, a, b, c, z))
 ```
 
 But the new infrastructure is much faster when arrays are involved. This is because the underlying integrator ([`scipy.integrate.tanhsinh`](https://scipy.github.io/devdocs/reference/generated/scipy.integrate.tanhsinh.html#scipy.integrate.tanhsinh)) and root finder ([`scipy.optimize.elementwise.find_root`](https://scipy.github.io/devdocs/reference/generated/scipy.optimize.elementwise.find_root.html)) developed for the new infrastructure are natively vectorized, whereas the legacy routines used by the old infrastructure (`scipy.integrate.quad` and `scipy.optimize.brentq`) are not.
 
 ```{code-cell} ipython3
-x = np.linspace(0, 1, 1000)
+x = mx.linspace(0, 1, 1000)
 ```
 
 ```{code-cell} ipython3
@@ -908,7 +908,7 @@ As seen in the "Fit" section above, there is now support for distributions of [o
 
 ```{code-cell} ipython3
 n = 4
-r = np.arange(1, n+1)
+r = mx.arange(1, n+1)
 X = stats.Normal()
 Y = stats.order_statistic(X, r=r, n=n)
 Y.plot()

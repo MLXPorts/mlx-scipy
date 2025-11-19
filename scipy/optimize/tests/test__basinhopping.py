@@ -7,7 +7,7 @@ from numpy.testing import (assert_almost_equal, assert_equal, assert_,
                            assert_allclose)
 import pytest
 from pytest import raises as assert_raises
-import numpy as np
+import mlx.core as mx
 from numpy import cos, sin
 
 from scipy.optimize import basinhopping, OptimizeResult
@@ -17,7 +17,7 @@ from scipy.optimize._basinhopping import (
 
 def func1d(x):
     f = cos(14.5 * x - 0.3) + (x + 0.2) * x
-    df = np.array(-14.5 * sin(14.5 * x - 0.3) + 2. * x + 0.2)
+    df = mx.array(-14.5 * sin(14.5 * x - 0.3) + 2. * x + 0.2)
     return f, df
 
 
@@ -28,7 +28,7 @@ def func2d_nograd(x):
 
 def func2d(x):
     f = cos(14.5 * x[0] - 0.3) + (x[1] + 0.2) * x[1] + (x[0] + 0.2) * x[0]
-    df = np.zeros(2)
+    df = mx.zeros(2)
     df[0] = -14.5 * sin(14.5 * x[0] - 0.3) + 2. * x[0] + 0.2
     df[1] = 2. * x[1] + 0.2
     return f, df
@@ -36,7 +36,7 @@ def func2d(x):
 
 def func2d_easyderiv(x):
     f = 2.0*x[0]**2 + 2.0*x[0]*x[1] + 2.0*x[1]**2 - 6.0*x[0]
-    df = np.zeros(2)
+    df = mx.zeros(2)
     df[0] = 4.0*x[0] + 2.0*x[1] - 6.0
     df[1] = 2.0*x[0] + 4.0*x[1]
 
@@ -60,7 +60,7 @@ def myTakeStep2(x):
     to make sure everything still works ok
     """
     s = 0.5
-    x += np.random.uniform(-s, s, np.shape(x))
+    x += mx.random.uniform(-s, s, mx.shape(x))
     return x
 
 
@@ -73,8 +73,8 @@ class MyAcceptTest:
     def __init__(self):
         self.been_called = False
         self.ncalls = 0
-        self.testres = [False, 'force accept', True, np.bool_(True),
-                        np.bool_(False), [], {}, 0, 1]
+        self.testres = [False, 'force accept', True, mx.bool_(True),
+                        mx.bool_(False), [], {}, 0, 1]
 
     def __call__(self, **kwargs):
         self.been_called = True
@@ -111,7 +111,7 @@ class TestBasinHopping:
         Run tests based on the 1-D and 2-D functions described above.
         """
         self.x0 = (1.0, [1.0, 1.0])
-        self.sol = (-0.195, np.array([-0.195, -0.1]))
+        self.sol = (-0.195, mx.array([-0.195, -0.1]))
 
         self.tol = 3  # number of decimal places
 
@@ -317,11 +317,11 @@ class TestBasinHopping:
 
         basinhopping(func2d, [1.0, 1.0], minimizer_kwargs=minimizer_kwargs,
                      niter=10, callback=callback2, rng=10)
-        assert_equal(np.array(f_1), np.array(f_2))
+        assert_equal(mx.array(f_1), mx.array(f_2))
 
     def test_random_gen(self):
-        # check that np.random.Generator can be used (numpy >= 1.17)
-        rng = np.random.default_rng(1)
+        # check that mx.random.Generator can be used (numpy >= 1.17)
+        rng = mx.random.default_rng(1)
 
         minimizer_kwargs = {"method": "L-BFGS-B", "jac": True}
 
@@ -329,7 +329,7 @@ class TestBasinHopping:
                             minimizer_kwargs=minimizer_kwargs,
                             niter=10, rng=rng)
 
-        rng = np.random.default_rng(1)
+        rng = mx.random.default_rng(1)
         res2 = basinhopping(func2d, [1.0, 1.0],
                             minimizer_kwargs=minimizer_kwargs,
                             niter=10, rng=rng)
@@ -347,7 +347,7 @@ class TestBasinHopping:
 @pytest.mark.thread_unsafe(reason="unknown thread safety issue")
 class Test_Storage:
     def setup_method(self):
-        self.x0 = np.array(1)
+        self.x0 = mx.array(1)
         self.f0 = 0
 
         minres = OptimizeResult(success=True)
@@ -389,13 +389,13 @@ class Test_RandomDisplacement:
         # the mean should be 0
         # the variance should be (2*stepsize)**2 / 12
         # note these tests are random, they will fail from time to time
-        rng = np.random.RandomState(0)
-        x0 = np.zeros([self.N])
+        rng = mx.random.RandomState(0)
+        x0 = mx.zeros([self.N])
         displace = RandomDisplacement(stepsize=self.stepsize, rng=rng)
         x = displace(x0)
         v = (2. * self.stepsize) ** 2 / 12
-        assert_almost_equal(np.mean(x), 0., 1)
-        assert_almost_equal(np.var(x), v, 1)
+        assert_almost_equal(mx.mean(x), 0., 1)
+        assert_almost_equal(mx.var(x), v, 1)
 
 
 class Test_Metropolis:
@@ -437,7 +437,7 @@ class Test_Metropolis:
         met = Metropolis(2)
         res_new = OptimizeResult(success=True, fun=0.)
         res_old = OptimizeResult(success=True, fun=2000)
-        with np.errstate(over='raise'):
+        with mx.errstate(over='raise'):
             met.accept_reject(res_new=res_new, res_old=res_old)
 
     def test_gh7799(self):
@@ -453,7 +453,7 @@ class Test_Metropolis:
             func,
             x0,
             30,
-            seed=np.random.RandomState(1234),
+            seed=mx.random.RandomState(1234),
             minimizer_kwargs={'constraints': con}
         )
         assert res.success

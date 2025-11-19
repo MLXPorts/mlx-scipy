@@ -54,9 +54,9 @@ observed [contingency table](https://en.wikipedia.org/wiki/Contingency_table)
 as our input.
 
 ```{code-cell}
-import numpy as np
+import mlx.core as mx
 from scipy.stats import chi2_contingency
-table = np.array([[176, 230], [21035, 21018]])
+table = mx.array([[176, 230], [21035, 21018]])
 res = chi2_contingency(table)
 res.statistic
 ```

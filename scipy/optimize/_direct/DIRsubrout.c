@@ -5,7 +5,7 @@
 
 #include "direct-internal.h"
 #include <math.h>
-// #include "numpy/ndarrayobject.h"
+// #include "numpy/arrayobject.h"
 
 /* Table of constant values */
 

@@ -2,7 +2,7 @@
 import math
 import warnings
 
-import numpy as np
+import mlx.core as mx
 import scipy.linalg
 from ._optimize import (_check_unknown_options, _status_message,
                         OptimizeResult, _prepare_scalar_function,
@@ -22,7 +22,7 @@ def _wrap_function(function, args):
     def function_wrapper(x, *wrapper_args):
         ncalls[0] += 1
         # A copy of x is sent to the user function (gh13740)
-        return function(np.copy(x), *(wrapper_args + args))
+        return function(mx.copy(x), *(wrapper_args + args))
 
     return ncalls, function_wrapper
 
@@ -51,7 +51,7 @@ class BaseQuadraticSubproblem:
         self._hessp = hessp
 
     def __call__(self, p):
-        return self.fun + np.dot(self.jac, p) + 0.5 * np.dot(p, self.hessp(p))
+        return self.fun + mx.dot(self.jac, p) + 0.5 * mx.dot(p, self.hessp(p))
 
     @property
     def fun(self):
@@ -78,7 +78,7 @@ class BaseQuadraticSubproblem:
         if self._hessp is not None:
             return self._hessp(self._x, p)
         else:
-            return np.dot(self.hess, p)
+            return mx.dot(self.hess, p)
 
     @property
     def jac_mag(self):
@@ -93,9 +93,9 @@ class BaseQuadraticSubproblem:
         This is like a line-sphere intersection.
         Return the two values of t, sorted from low to high.
         """
-        a = np.dot(d, d)
-        b = 2 * np.dot(z, d)
-        c = np.dot(z, z) - trust_radius**2
+        a = mx.dot(d, d)
+        b = 2 * mx.dot(z, d)
+        c = mx.dot(z, z) - trust_radius**2
         sqrt_discriminant = math.sqrt(b*b - 4*a*c)
 
         # The following calculation is mathematically
@@ -182,7 +182,7 @@ def _minimize_trust_region(fun, x0, args=(), jac=None, hess=None, hessp=None,
                          'max trust radius')
 
     # force the initial guess into a nice format
-    x0 = np.asarray(x0).flatten()
+    x0 = mx.array(x0).flatten()
 
     # A ScalarFunction representing the problem. This caches calls to fun, jac,
     # hess.
@@ -248,7 +248,7 @@ def _minimize_trust_region(fun, x0, args=(), jac=None, hess=None, hessp=None,
         # has reached the trust region boundary or not.
         try:
             p, hits_boundary = m.solve(trust_radius)
-        except np.linalg.LinAlgError:
+        except mx.linalg.LinAlgError:
             warnflag = 3
             break
 
@@ -280,7 +280,7 @@ def _minimize_trust_region(fun, x0, args=(), jac=None, hess=None, hessp=None,
 
         # append the best guess, call back, increment the iteration count
         if return_all:
-            allvecs.append(np.copy(x))
+            allvecs.append(mx.copy(x))
         k += 1
 
         intermediate_result = OptimizeResult(x=x, fun=m.fun)

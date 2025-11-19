@@ -4,15 +4,15 @@ It presents a saturated design in 1, 2 and 3 dimensions for a
 given discretization.
 """
 import matplotlib.pyplot as plt
-import numpy as np
+import mlx.core as mx
 
 disc = 10
 
-x = np.linspace(0, 1, disc)
-y = np.linspace(0, 1, disc)
-z = np.linspace(0, 1, disc)
+x = mx.linspace(0, 1, disc)
+y = mx.linspace(0, 1, disc)
+z = mx.linspace(0, 1, disc)
 
-xx, yy, zz = np.meshgrid(x, y, z)
+xx, yy, zz = mx.meshgrid(x, y, z)
 
 fig = plt.figure(figsize=(12, 4))
 ax = fig.add_subplot(131)

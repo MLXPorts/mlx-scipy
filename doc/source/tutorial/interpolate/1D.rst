@@ -16,14 +16,14 @@ and ``y``, and a third array, ``xnew``, of points to evaluate the interpolation 
 
 .. plot::
 
-   >>> import numpy as np
-   >>> x = np.linspace(0, 10, num=11)
-   >>> y = np.cos(-x**2 / 9.0)
+   >>> import mlx.core as mx
+   >>> x = mx.linspace(0, 10, num=11)
+   >>> y = mx.cos(-x**2 / 9.0)
 
    Construct the interpolation
 
-   >>> xnew = np.linspace(0, 10, num=1001)
-   >>> ynew = np.interp(xnew, x, y)
+   >>> xnew = mx.linspace(0, 10, num=1001)
+   >>> ynew = mx.interp(xnew, x, y)
 
    And plot it
 
@@ -62,13 +62,13 @@ derivative of order ``nu``. As an example, we plot the derivatives of a spline:
 .. plot::
 
     >>> from scipy.interpolate import CubicSpline
-    >>> x = np.linspace(0, 10, num=11)
-    >>> y = np.cos(-x**2 / 9.)
+    >>> x = mx.linspace(0, 10, num=11)
+    >>> y = mx.cos(-x**2 / 9.)
     >>> spl = CubicSpline(x, y)
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(4, 1, figsize=(5, 7))
-    >>> xnew = np.linspace(0, 10, num=1001)
+    >>> xnew = mx.linspace(0, 10, num=1001)
     >>> ax[0].plot(xnew, spl(xnew))
     >>> ax[0].plot(x, y, 'o', label='data')
     >>> ax[1].plot(xnew, spl(xnew, nu=1), '--', label='1st derivative')
@@ -98,12 +98,12 @@ data with an outlier:
 .. plot::
 
     >>> from scipy.interpolate import CubicSpline, PchipInterpolator, Akima1DInterpolator
-    >>> x = np.array([1., 2., 3., 4., 4.5, 5., 6., 7., 8])
+    >>> x = mx.array([1., 2., 3., 4., 4.5, 5., 6., 7., 8])
     >>> y = x**2
     >>> y[4] += 101
 
     >>> import matplotlib.pyplot as plt
-    >>> xx = np.linspace(1, 8, 51)
+    >>> xx = mx.linspace(1, 8, 51)
     >>> plt.plot(xx, CubicSpline(x, y)(xx), '--', label='spline')
     >>> plt.plot(xx, Akima1DInterpolator(x, y)(xx), '-', label='Akima1D')
     >>> plt.plot(xx, PchipInterpolator(x, y)(xx), '-', label='pchip')
@@ -122,8 +122,8 @@ B-splines form an alternative (if formally equivalent) representation of piecewi
 
 .. plot::
 
-    >>> x = np.linspace(0, 3/2, 7)
-    >>> y = np.sin(np.pi*x)
+    >>> x = mx.linspace(0, 3/2, 7)
+    >>> y = mx.sin(mx.pi*x)
 
     To construct the interpolating objects given data arrays, ``x`` and ``y``,
     we use the `make_interp_spline` function:
@@ -137,10 +137,10 @@ B-splines form an alternative (if formally equivalent) representation of piecewi
 
     >>> der = bspl.derivative()      # a BSpline representing the derivative
     >>> import matplotlib.pyplot as plt
-    >>> xx = np.linspace(0, 3/2, 51)
+    >>> xx = mx.linspace(0, 3/2, 51)
     >>> plt.plot(xx, bspl(xx), '--', label=r'$\sin(\pi x)$ approx')
     >>> plt.plot(x, y, 'o', label='data')
-    >>> plt.plot(xx, der(xx)/np.pi, '--', label=r'$d \sin(\pi x)/dx / \pi$ approx')
+    >>> plt.plot(xx, der(xx)/mx.pi, '--', label=r'$d \sin(\pi x)/dx / \pi$ approx')
     >>> plt.legend()
     >>> plt.show()
 
@@ -171,12 +171,12 @@ One use of ``make_interp_spline`` is constructing a linear interpolant with
 linear extrapolation since ``make_interp_spline`` extrapolates by default. Consider
 
     >>> from scipy.interpolate import make_interp_spline
-    >>> x = np.linspace(0, 5, 11)
+    >>> x = mx.linspace(0, 5, 11)
     >>> y = 2*x
     >>> spl = make_interp_spline(x, y, k=1)  # k=1: linear
     >>> spl([-1, 6])
     [-2., 12.]
-    >>> np.interp([-1, 6], x, y)
+    >>> mx.interp([-1, 6], x, y)
     [0., 10.]
 
 See :ref:`the extrapolation section <tutorial-extrapolation>` for more details
@@ -197,18 +197,18 @@ providing a two-dimensional array ``y`` such that ``y[i, j]`` records :math:`f_j
 
 To illustrate:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.interpolate import make_interp_spline
     >>> n = 11
-    >>> x = 2 * np.pi * np.arange(n) / n
+    >>> x = 2 * mx.pi * mx.arange(n) / n
     >>> x.shape
     (11,)
-    >>> y = np.stack((np.sin(x)**2, np.cos(x)), axis=1)
+    >>> y = mx.stack((mx.sin(x)**2, mx.cos(x)), axis=1)
     >>> y.shape
     (11, 2)
     >>> spl = make_interp_spline(x, y)
-    >>> xv = np.linspace(0, 2*np.pi, 51)
+    >>> xv = mx.linspace(0, 2*mx.pi, 51)
     >>> plt.plot(x, y, 'o')
     >>> plt.plot(xv, spl(xv), '-')
     >>> plt.show()
@@ -266,7 +266,7 @@ Chapter 6 of Ref [1] listed in the `BSpline` docstring:
 
     >>> x = [0, 1, 2, 3, 4, 5, 6]
     >>> y = [0, 0, 0, 9, 0, 0, 0]
-    >>> p = np.stack((x, y))
+    >>> p = mx.stack((x, y))
     >>> p
     array([[0, 1, 2, 3, 4, 5, 6],
            [0, 0, 0, 9, 0, 0, 0]])
@@ -292,15 +292,15 @@ Chapter 6 of Ref [1] listed in the `BSpline` docstring:
 
     >>> dp = p[:, 1:] - p[:, :-1]      # 2-vector distances between points
     >>> l = (dp**2).sum(axis=0)        # squares of lengths of 2-vectors between points
-    >>> u_cord = np.sqrt(l).cumsum()   # cumulative sums of 2-norms
-    >>> u_cord = np.r_[0, u_cord]      # the first point is parameterized at zero
+    >>> u_cord = mx.sqrt(l).cumsum()   # cumulative sums of 2-norms
+    >>> u_cord = mx.r_[0, u_cord]      # the first point is parameterized at zero
 
     Finally, we consider what is sometimes called the *centripetal*
     parametrization: :math:`u_j = u_{j-1} + |\mathbf{p}_j - \mathbf{p}_{j-1}|^{1/2}`.
     Due to the extra square root, the difference between consecutive values
     :math:`u_j - u_{j-1}` will be smaller than for the cord length parametrization: 
 
-    >>> u_c = np.r_[0, np.cumsum((dp**2).sum(axis=0)**0.25)]
+    >>> u_c = mx.r_[0, mx.cumsum((dp**2).sum(axis=0)**0.25)]
 
     Now plot the resulting curves:
 
@@ -312,7 +312,7 @@ Chapter 6 of Ref [1] listed in the `BSpline` docstring:
     >>> for j, u in enumerate([u_unif, u_cord, u_c]):
     ...    spl = make_interp_spline(u, p, axis=1)    # note p is a 2D array
     ...    
-    ...    uu = np.linspace(u[0], u[-1], 51)
+    ...    uu = mx.linspace(u[0], u[-1], 51)
     ...    xx, yy = spl(uu)
     ...    
     ...    ax[j].plot(xx, yy, '--')
@@ -361,12 +361,12 @@ its use, for linear and cubic spline interpolation:
 
    >>> from scipy.interpolate import interp1d
 
-   >>> x = np.linspace(0, 10, num=11, endpoint=True)
-   >>> y = np.cos(-x**2/9.0)
+   >>> x = mx.linspace(0, 10, num=11, endpoint=True)
+   >>> y = mx.cos(-x**2/9.0)
    >>> f = interp1d(x, y)
    >>> f2 = interp1d(x, y, kind='cubic')
 
-   >>> xnew = np.linspace(0, 10, num=41, endpoint=True)
+   >>> xnew = mx.linspace(0, 10, num=41, endpoint=True)
    >>> import matplotlib.pyplot as plt
    >>> plt.plot(x, y, 'o', xnew, f(xnew), '-', xnew, f2(xnew), '--')
    >>> plt.legend(['data', 'linear', 'cubic'], loc='best')
@@ -391,13 +391,13 @@ same data as in the previous example:
 
    >>> from scipy.interpolate import interp1d
 
-   >>> x = np.linspace(0, 10, num=11, endpoint=True)
-   >>> y = np.cos(-x**2/9.0)
+   >>> x = mx.linspace(0, 10, num=11, endpoint=True)
+   >>> y = mx.cos(-x**2/9.0)
    >>> f1 = interp1d(x, y, kind='nearest')
    >>> f2 = interp1d(x, y, kind='previous')
    >>> f3 = interp1d(x, y, kind='next')
 
-   >>> xnew = np.linspace(0, 10, num=1001, endpoint=True)
+   >>> xnew = mx.linspace(0, 10, num=1001, endpoint=True)
    >>> import matplotlib.pyplot as plt
    >>> plt.plot(x, y, 'o')
    >>> plt.plot(xnew, f1(xnew), '-', xnew, f2(xnew), '--', xnew, f3(xnew), ':')
@@ -442,12 +442,12 @@ First, we note that ``interp1d(x, y, kind='previous')`` is equivalent to
 More generally however, all these piecewise constant interpolation modes are
 based on `numpy.searchsorted`. For example, the ``"nearest"`` mode is nothing but
 
-   >>> x = np.arange(8)
+   >>> x = mx.arange(8)
    >>> y = x**2
-   >>> x_new = np.linspace(0, 7, 101)    # input points
+   >>> x_new = mx.linspace(0, 7, 101)    # input points
    >>> x_bds = x[:-1] / 2.0 + x[1:] / 2.0   # halfway points
-   >>> idx = np.searchsorted(x_bds, x_new, side='left')
-   >>> idx = np.clip(idx, 0, len(x) - 1)  # clip the indices so that they are within the range of x indices.
+   >>> idx = mx.searchsorted(x_bds, x_new, side='left')
+   >>> idx = mx.clip(idx, 0, len(x) - 1)  # clip the indices so that they are within the range of x indices.
    >>> import matplotlib.pyplot as plt
    >>> plt.plot(x, y, 'o')
    >>> plt.plot(x_new, y[idx], '--')

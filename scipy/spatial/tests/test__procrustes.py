@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose, assert_equal, assert_almost_equal
 from pytest import raises as assert_raises
 
@@ -9,30 +9,30 @@ class TestProcrustes:
     def setup_method(self):
         """creates inputs"""
         # an L
-        self.data1 = np.array([[1, 3], [1, 2], [1, 1], [2, 1]], 'd')
+        self.data1 = mx.array([[1, 3], [1, 2], [1, 1], [2, 1]], 'd')
 
         # a larger, shifted, mirrored L
-        self.data2 = np.array([[4, -2], [4, -4], [4, -6], [2, -6]], 'd')
+        self.data2 = mx.array([[4, -2], [4, -4], [4, -6], [2, -6]], 'd')
 
         # an L shifted up 1, right 1, and with point 4 shifted an extra .5
         # to the right
         # pointwise distance disparity with data1: 3*(2) + (1 + 1.5^2)
-        self.data3 = np.array([[2, 4], [2, 3], [2, 2], [3, 2.5]], 'd')
+        self.data3 = mx.array([[2, 4], [2, 3], [2, 2], [3, 2.5]], 'd')
 
         # data4, data5 are standardized (trace(A*A') = 1).
         # procrustes should return an identical copy if they are used
         # as the first matrix argument.
-        shiftangle = np.pi / 8
-        self.data4 = np.array([[1, 0], [0, 1], [-1, 0],
-                              [0, -1]], 'd') / np.sqrt(4)
-        self.data5 = np.array([[np.cos(shiftangle), np.sin(shiftangle)],
-                              [np.cos(np.pi / 2 - shiftangle),
-                               np.sin(np.pi / 2 - shiftangle)],
-                              [-np.cos(shiftangle),
-                               -np.sin(shiftangle)],
-                              [-np.cos(np.pi / 2 - shiftangle),
-                               -np.sin(np.pi / 2 - shiftangle)]],
-                              'd') / np.sqrt(4)
+        shiftangle = mx.pi / 8
+        self.data4 = mx.array([[1, 0], [0, 1], [-1, 0],
+                              [0, -1]], 'd') / mx.sqrt(4)
+        self.data5 = mx.array([[mx.cos(shiftangle), mx.sin(shiftangle)],
+                              [mx.cos(mx.pi / 2 - shiftangle),
+                               mx.sin(mx.pi / 2 - shiftangle)],
+                              [-mx.cos(shiftangle),
+                               -mx.sin(shiftangle)],
+                              [-mx.cos(mx.pi / 2 - shiftangle),
+                               -mx.sin(mx.pi / 2 - shiftangle)]],
+                              'd') / mx.sqrt(4)
 
     def test_procrustes(self):
         # tests procrustes' ability to match two matrices.
@@ -60,7 +60,7 @@ class TestProcrustes:
         assert_almost_equal(disp13, disp31)
 
         # try with 3d, 8 pts per
-        rand1 = np.array([[2.61955202, 0.30522265, 0.55515826],
+        rand1 = mx.array([[2.61955202, 0.30522265, 0.55515826],
                          [0.41124708, -0.03966978, -0.31854548],
                          [0.91910318, 1.39451809, -0.15295084],
                          [2.00452023, 0.50150048, 0.29485268],
@@ -69,7 +69,7 @@ class TestProcrustes:
                          [0.65029688, 1.60551637, 0.80013549],
                          [-0.6607528, 0.53644208, 0.17033891]])
 
-        rand3 = np.array([[0.0809969, 0.09731461, -0.173442],
+        rand3 = mx.array([[0.0809969, 0.09731461, -0.173442],
                          [-1.84888465, -0.92589646, -1.29335743],
                          [0.67031855, -1.35957463, 0.41938621],
                          [0.73967209, -0.20230757, 0.52418027],
@@ -83,34 +83,34 @@ class TestProcrustes:
 
     def test_procrustes_shape_mismatch(self):
         assert_raises(ValueError, procrustes,
-                      np.array([[1, 2], [3, 4]]),
-                      np.array([[5, 6, 7], [8, 9, 10]]))
+                      mx.array([[1, 2], [3, 4]]),
+                      mx.array([[5, 6, 7], [8, 9, 10]]))
 
     def test_procrustes_empty_rows_or_cols(self):
-        empty = np.array([[]])
+        empty = mx.array([[]])
         assert_raises(ValueError, procrustes, empty, empty)
 
     def test_procrustes_no_variation(self):
         assert_raises(ValueError, procrustes,
-                      np.array([[42, 42], [42, 42]]),
-                      np.array([[45, 45], [45, 45]]))
+                      mx.array([[42, 42], [42, 42]]),
+                      mx.array([[45, 45], [45, 45]]))
 
     def test_procrustes_bad_number_of_dimensions(self):
         # fewer dimensions in one dataset
         assert_raises(ValueError, procrustes,
-                      np.array([1, 1, 2, 3, 5, 8]),
-                      np.array([[1, 2], [3, 4]]))
+                      mx.array([1, 1, 2, 3, 5, 8]),
+                      mx.array([[1, 2], [3, 4]]))
 
         # fewer dimensions in both datasets
         assert_raises(ValueError, procrustes,
-                      np.array([1, 1, 2, 3, 5, 8]),
-                      np.array([1, 1, 2, 3, 5, 8]))
+                      mx.array([1, 1, 2, 3, 5, 8]),
+                      mx.array([1, 1, 2, 3, 5, 8]))
 
         # zero dimensions
-        assert_raises(ValueError, procrustes, np.array(7), np.array(11))
+        assert_raises(ValueError, procrustes, mx.array(7), mx.array(11))
 
         # extra dimensions
         assert_raises(ValueError, procrustes,
-                      np.array([[[11], [7]]]),
-                      np.array([[[5, 13]]]))
+                      mx.array([[[11], [7]]]),
+                      mx.array([[[5, 13]]]))
 

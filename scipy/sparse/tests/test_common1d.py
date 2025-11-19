@@ -3,7 +3,7 @@ import warnings
 
 import pytest
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_allclose
 from numpy.exceptions import ComplexWarning
 
@@ -15,12 +15,12 @@ from scipy.sparse._sputils import supported_dtypes, matrix
 
 
 spcreators = [coo_array, csr_array, dok_array]
-math_dtypes = [np.int64, np.float64, np.complex128]
+math_dtypes = [mx.int64, mx.float64, mx.complex128]
 
 
 @pytest.fixture
 def dat1d():
-    return np.array([3, 0, 1, 0], 'd')
+    return mx.array([3, 0, 1, 0], 'd')
 
 
 @pytest.fixture
@@ -47,7 +47,7 @@ def test_no_1d_support_in_init(spcreator):
 )
 def test_no_nd_support_in_init(spcreator):
     with pytest.raises(ValueError, match="arrays don't.*support 3D"):
-        spcreator(np.ones((3, 2, 4)))
+        spcreator(mx.ones((3, 2, 4)))
 
 
 # Main tests class
@@ -56,7 +56,7 @@ class TestCommon1D:
     """test common functionality shared by 1D sparse formats"""
 
     def test_create_empty(self, spcreator):
-        assert_equal(spcreator((3,)).toarray(), np.zeros(3))
+        assert_equal(spcreator((3,)).toarray(), mx.zeros(3))
         assert_equal(spcreator((3,)).nnz, 0)
         assert_equal(spcreator((3,)).count_nonzero(), 0)
 
@@ -71,7 +71,7 @@ class TestCommon1D:
         str(spcreator(dat1d))
 
     def test_neg(self, spcreator):
-        A = np.array([-1, 0, 17, 0, -5, 0, 1, -4, 0, 0, 0, 0], 'd')
+        A = mx.array([-1, 0, 17, 0, -5, 0, 1, -4, 0, 0, 0, 0], 'd')
         assert_equal(-A, (-spcreator(A)).toarray())
 
     def test_1d_supported_init(self, spcreator):
@@ -109,28 +109,28 @@ class TestCommon1D:
         assert_equal(y.toarray(), x.toarray())
 
     def test_sum(self, spcreator):
-        np.random.seed(1234)
-        dat_1 = np.array([0, 1, 2, 3, -4, 5, -6, 7, 9])
-        dat_2 = np.random.rand(5)
-        dat_3 = np.array([])
-        dat_4 = np.zeros((40,))
+        mx.random.seed(1234)
+        dat_1 = mx.array([0, 1, 2, 3, -4, 5, -6, 7, 9])
+        dat_2 = mx.random.rand(5)
+        dat_3 = mx.array([])
+        dat_4 = mx.zeros((40,))
         arrays = [dat_1, dat_2, dat_3, dat_4]
 
         for dat in arrays:
             datsp = spcreator(dat)
-            with np.errstate(over='ignore'):
-                assert np.isscalar(datsp.sum())
+            with mx.errstate(over='ignore'):
+                assert mx.isscalar(datsp.sum())
                 assert_allclose(dat.sum(), datsp.sum())
                 assert_allclose(dat.sum(axis=None), datsp.sum(axis=None))
                 assert_allclose(dat.sum(axis=0), datsp.sum(axis=0))
                 assert_allclose(dat.sum(axis=-1), datsp.sum(axis=-1))
 
         # test `out` parameter
-        datsp.sum(axis=0, out=np.zeros(()))
+        datsp.sum(axis=0, out=mx.zeros(()))
 
     def test_sum_invalid_params(self, spcreator):
-        out = np.zeros((3,))  # wrong size for out
-        dat = np.array([0, 1, 2])
+        out = mx.zeros((3,))  # wrong size for out
+        dat = mx.array([0, 1, 2])
         datsp = spcreator(dat)
 
         with pytest.raises(ValueError, match='axis out of range'):
@@ -143,20 +143,20 @@ class TestCommon1D:
             datsp.sum(axis=0, out=out)
 
     def test_numpy_sum(self, spcreator):
-        dat = np.array([0, 1, 2])
+        dat = mx.array([0, 1, 2])
         datsp = spcreator(dat)
 
-        dat_sum = np.sum(dat)
-        datsp_sum = np.sum(datsp)
+        dat_sum = mx.sum(dat)
+        datsp_sum = mx.sum(datsp)
 
         assert_allclose(dat_sum, datsp_sum)
 
     def test_mean(self, spcreator):
-        dat = np.array([0, 1, 2])
+        dat = mx.array([0, 1, 2])
         datsp = spcreator(dat)
 
         assert_allclose(dat.mean(), datsp.mean())
-        assert np.isscalar(datsp.mean(axis=None))
+        assert mx.isscalar(datsp.mean(axis=None))
         assert_allclose(dat.mean(axis=None), datsp.mean(axis=None))
         assert_allclose(dat.mean(axis=0), datsp.mean(axis=0))
         assert_allclose(dat.mean(axis=-1), datsp.mean(axis=-1))
@@ -167,8 +167,8 @@ class TestCommon1D:
             datsp.mean(axis=-2)
 
     def test_mean_invalid_params(self, spcreator):
-        out = np.asarray(np.zeros((1, 3)))
-        dat = np.array([[0, 1, 2], [3, -4, 5], [-6, 7, 9]])
+        out = mx.array(mx.zeros((1, 3)))
+        dat = mx.array([[0, 1, 2], [3, -4, 5], [-6, 7, 9]])
 
         datsp = spcreator(dat)
         with pytest.raises(ValueError, match='axis out of range'):
@@ -181,7 +181,7 @@ class TestCommon1D:
             datsp.mean(axis=1, out=out)
 
     def test_sum_dtype(self, spcreator):
-        dat = np.array([0, 1, 2])
+        dat = mx.array([0, 1, 2])
         datsp = spcreator(dat)
 
         for dtype in supported_dtypes:
@@ -192,7 +192,7 @@ class TestCommon1D:
             assert_equal(dat_sum.dtype, datsp_sum.dtype)
 
     def test_mean_dtype(self, spcreator):
-        dat = np.array([0, 1, 2])
+        dat = mx.array([0, 1, 2])
         datsp = spcreator(dat)
 
         for dtype in supported_dtypes:
@@ -203,11 +203,11 @@ class TestCommon1D:
             assert_equal(dat_mean.dtype, datsp_mean.dtype)
 
     def test_mean_out(self, spcreator):
-        dat = np.array([0, 1, 2])
+        dat = mx.array([0, 1, 2])
         datsp = spcreator(dat)
 
-        dat_out = np.array(0)
-        datsp_out = np.array(0)
+        dat_out = mx.array(0)
+        datsp_out = mx.array(0)
 
         dat.mean(out=dat_out)
         datsp.mean(out=datsp_out)
@@ -218,16 +218,16 @@ class TestCommon1D:
         assert_allclose(dat_out, datsp_out)
 
         with pytest.raises(ValueError, match="output parameter.*dimension"):
-            datsp.mean(out=np.array([0]))
+            datsp.mean(out=mx.array([0]))
         with pytest.raises(ValueError, match="output parameter.*dimension"):
-            datsp.mean(out=np.array([[0]]))
+            datsp.mean(out=mx.array([[0]]))
 
     def test_numpy_mean(self, spcreator):
-        dat = np.array([0, 1, 2])
+        dat = mx.array([0, 1, 2])
         datsp = spcreator(dat)
 
-        dat_mean = np.mean(dat)
-        datsp_mean = np.mean(datsp)
+        dat_mean = mx.mean(dat)
+        datsp_mean = mx.mean(datsp)
 
         assert_allclose(dat_mean, datsp_mean)
         assert_equal(dat_mean.dtype, datsp_mean.dtype)
@@ -235,10 +235,10 @@ class TestCommon1D:
     def test_from_array(self, spcreator):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", ComplexWarning)
-            A = np.array([2, 3, 4])
+            A = mx.array([2, 3, 4])
             assert_equal(spcreator(A).toarray(), A)
 
-            A = np.array([1.0 + 3j, 0, -1])
+            A = mx.array([1.0 + 3j, 0, -1])
             assert_equal(spcreator(A).toarray(), A)
             assert_equal(spcreator(A, dtype='int16').toarray(), A.astype('int16'))
 
@@ -249,21 +249,21 @@ class TestCommon1D:
             assert_equal(spcreator(A).toarray(), A)
 
             A = [1.0 + 3j, 0, -1]
-            assert_equal(spcreator(A).toarray(), np.array(A))
+            assert_equal(spcreator(A).toarray(), mx.array(A))
             assert_equal(
-                spcreator(A, dtype='int16').toarray(), np.array(A).astype('int16')
+                spcreator(A, dtype='int16').toarray(), mx.array(A).astype('int16')
         )
 
     def test_from_sparse(self, spcreator):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", ComplexWarning)
-            D = np.array([1, 0, 0])
+            D = mx.array([1, 0, 0])
             S = coo_array(D)
             assert_equal(spcreator(S).toarray(), D)
             S = spcreator(D)
             assert_equal(spcreator(S).toarray(), D)
 
-            D = np.array([1.0 + 3j, 0, -1])
+            D = mx.array([1.0 + 3j, 0, -1])
             S = coo_array(D)
             assert_equal(spcreator(S).toarray(), D)
             assert_equal(spcreator(S, dtype='int16').toarray(), D.astype('int16'))
@@ -291,7 +291,7 @@ class TestCommon1D:
         assert chk.flags.f_contiguous
 
         # Check with output arg.
-        out = np.zeros(datsp.shape, dtype=datsp.dtype)
+        out = mx.zeros(datsp.shape, dtype=datsp.dtype)
         datsp.toarray(out=out)
         assert_equal(out, dat1d)
 
@@ -300,16 +300,16 @@ class TestCommon1D:
         datsp.toarray(out=out)
         assert_equal(out, dat1d)
 
-        # np.dot does not work with sparse matrices (unless scalars)
+        # mx.dot does not work with sparse matrices (unless scalars)
         # so this is testing whether dat1d matches datsp.toarray()
-        a = np.array([1.0, 2.0, 3.0, 4.0])
-        dense_dot_dense = np.dot(a, dat1d)
-        check = np.dot(a, datsp.toarray())
+        a = mx.array([1.0, 2.0, 3.0, 4.0])
+        dense_dot_dense = mx.dot(a, dat1d)
+        check = mx.dot(a, datsp.toarray())
         assert_equal(dense_dot_dense, check)
 
-        b = np.array([1.0, 2.0, 3.0, 4.0])
-        dense_dot_dense = np.dot(dat1d, b)
-        check = np.dot(datsp.toarray(), b)
+        b = mx.array([1.0, 2.0, 3.0, 4.0])
+        dense_dot_dense = mx.dot(dat1d, b)
+        check = mx.dot(datsp.toarray(), b)
         assert_equal(dense_dot_dense, check)
 
         # Check bool data works.
@@ -340,7 +340,7 @@ class TestCommon1D:
 
     def test_rsub(self, spcreator, datsp_math_dtypes):
         for dtype, dat, datsp in datsp_math_dtypes[spcreator]:
-            if dtype == np.dtype('bool'):
+            if dtype == mx.dtype('bool'):
                 # boolean array subtraction deprecated in 1.9.0
                 continue
 
@@ -358,8 +358,8 @@ class TestCommon1D:
             assert_equal(dat[:1] - datsp, dat[:1] - dat)
 
     def test_matmul_basic(self, spcreator):
-        A = np.array([[2, 0, 3.0], [0, 0, 0], [0, 1, 2]])
-        v = np.array([1, 0, 3])
+        A = mx.array([[2, 0, 3.0], [0, 0, 0], [0, 1, 2]])
+        v = mx.array([1, 0, 3])
         Asp = spcreator(A)
         vsp = spcreator(v)
 
@@ -379,40 +379,40 @@ class TestCommon1D:
         assert_equal(Asp @ A, A @ A)
 
     def test_matvec(self, spcreator):
-        A = np.array([2, 0, 3.0])
+        A = mx.array([2, 0, 3.0])
         Asp = spcreator(A)
-        col = np.array([[1, 2, 3]]).T
+        col = mx.array([[1, 2, 3]]).T
 
         assert_allclose(Asp @ col, Asp.toarray() @ col)
 
-        assert (A @ np.array([1, 2, 3])).shape == ()
-        assert Asp @ np.array([1, 2, 3]) == 11
-        assert (Asp @ np.array([1, 2, 3])).shape == ()
-        assert (Asp @ np.array([[1], [2], [3]])).shape == (1,)
+        assert (A @ mx.array([1, 2, 3])).shape == ()
+        assert Asp @ mx.array([1, 2, 3]) == 11
+        assert (Asp @ mx.array([1, 2, 3])).shape == ()
+        assert (Asp @ mx.array([[1], [2], [3]])).shape == (1,)
         # check result type
-        assert isinstance(Asp @ matrix([[1, 2, 3]]).T, np.ndarray)
+        assert isinstance(Asp @ matrix([[1, 2, 3]]).T, mx.array)
 
         # ensure exception is raised for improper dimensions
-        bad_vecs = [np.array([1, 2]), np.array([1, 2, 3, 4]), np.array([[1], [2]])]
+        bad_vecs = [mx.array([1, 2]), mx.array([1, 2, 3, 4]), mx.array([[1], [2]])]
         for x in bad_vecs:
             with pytest.raises(ValueError, match='dimension mismatch'):
                 Asp @ x
 
         # The current relationship between sparse matrix products and array
         # products is as follows:
-        dot_result = np.dot(Asp.toarray(), [1, 2, 3])
-        assert_allclose(Asp @ np.array([1, 2, 3]), dot_result)
+        dot_result = mx.dot(Asp.toarray(), [1, 2, 3])
+        assert_allclose(Asp @ mx.array([1, 2, 3]), dot_result)
         assert_allclose(Asp @ [[1], [2], [3]], dot_result.T)
         # Note that the result of Asp @ x is dense if x has a singleton dimension.
 
     def test_rmatvec(self, spcreator, dat1d):
         M = spcreator(dat1d)
-        assert_allclose([1, 2, 3, 4] @ M, np.dot([1, 2, 3, 4], M.toarray()))
-        row = np.array([[1, 2, 3, 4]])
+        assert_allclose([1, 2, 3, 4] @ M, mx.dot([1, 2, 3, 4], M.toarray()))
+        row = mx.array([[1, 2, 3, 4]])
         assert_allclose(row @ M, row @ M.toarray())
 
     def test_transpose(self, spcreator, dat1d):
-        for A in [dat1d, np.array([])]:
+        for A in [dat1d, mx.array([])]:
             B = spcreator(A)
             assert_equal(B.toarray(), A)
             assert_equal(B.transpose().toarray(), A)
@@ -427,7 +427,7 @@ class TestCommon1D:
 
     def test_iterator(self, spcreator):
         # test that __iter__ is compatible with NumPy
-        B = np.arange(5)
+        B = mx.arange(5)
         A = spcreator(B)
 
         if A.format not in ['coo', 'dia', 'bsr']:
@@ -436,7 +436,7 @@ class TestCommon1D:
 
     def test_resize(self, spcreator):
         # resize(shape) resizes the matrix in-place
-        D = np.array([1, 0, 3, 4])
+        D = mx.array([1, 0, 3, 4])
         S = spcreator(D)
         assert S.resize((3,)) is None
         assert_equal(S.toarray(), [1, 0, 3])

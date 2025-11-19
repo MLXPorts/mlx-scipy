@@ -1,7 +1,7 @@
 import warnings
 
 
-import numpy as np
+import mlx.core as mx
 from pytest import raises as assert_raises
 from scipy._lib._array_api import(
     assert_almost_equal, xp_assert_equal, xp_assert_close
@@ -26,11 +26,11 @@ def _assert_poles_close(P1,P2, rtol=1e-8, atol=1e-8):
     for p1 in P1:
         found = False
         for p2_idx in range(P2.shape[0]):
-            if np.allclose([np.real(p1), np.imag(p1)],
-                           [np.real(P2[p2_idx]), np.imag(P2[p2_idx])],
+            if mx.allclose([mx.real(p1), mx.imag(p1)],
+                           [mx.real(P2[p2_idx]), mx.imag(P2[p2_idx])],
                            rtol, atol):
                 found = True
-                np.delete(P2, p2_idx)
+                mx.delete(P2, p2_idx)
                 break
         if not found:
             raise ValueError("Can't find pole " + str(p1) + " in " + str(P2))
@@ -44,7 +44,7 @@ class TestPlacePoles:
         and return the Bunch object for further specific tests
         """
         fsf = place_poles(A, B, P, **kwargs)
-        expected, _ = np.linalg.eig(A - np.dot(B, fsf.gain_matrix))
+        expected, _ = mx.linalg.eig(A - mx.dot(B, fsf.gain_matrix))
         _assert_poles_close(expected, fsf.requested_poles)
         _assert_poles_close(expected, fsf.computed_poles)
         _assert_poles_close(P,fsf.requested_poles)
@@ -53,11 +53,11 @@ class TestPlacePoles:
     def test_real(self):
         # Test real pole placement using KNV and YT0 algorithm and example 1 in
         # section 4 of the reference publication (see place_poles docstring)
-        A = np.array([1.380, -0.2077, 6.715, -5.676, -0.5814, -4.290, 0,
+        A = mx.array([1.380, -0.2077, 6.715, -5.676, -0.5814, -4.290, 0,
                       0.6750, 1.067, 4.273, -6.654, 5.893, 0.0480, 4.273,
                       1.343, -2.104]).reshape(4, 4)
-        B = np.array([0, 5.679, 1.136, 1.136, 0, 0, -3.146,0]).reshape(4, 2)
-        P = np.array([-0.2, -0.5, -5.0566, -8.6659])
+        B = mx.array([0, 5.679, 1.136, 1.136, 0, 0, -3.146,0]).reshape(4, 2)
+        P = mx.array([-0.2, -0.5, -5.0566, -8.6659])
 
         # Check that both KNV and YT compute correct K matrix
         self._check(A, B, P, method='KNV0')
@@ -69,26 +69,26 @@ class TestPlacePoles:
 
         # on some architectures this can lead to a RuntimeWarning invalid
         # value in divide (see gh-7590), so suppress it for now
-        with np.errstate(invalid='ignore'):
+        with mx.errstate(invalid='ignore'):
             self._check(A, B, (2,2,3,3))
 
     def test_complex(self):
         # Test complex pole placement on a linearized car model, taken from L.
         # Jaulin, Automatique pour la robotique, Cours et Exercices, iSTE
         # editions p 184/185
-        A = np.array([[0, 7, 0, 0],
+        A = mx.array([[0, 7, 0, 0],
                       [0, 0, 0, 7/3.],
                       [0, 0, 0, 0],
                       [0, 0, 0, 0]])
-        B = np.array([[0, 0],
+        B = mx.array([[0, 0],
                       [0, 0],
                       [1, 0],
                       [0, 1]])
         # Test complex poles on YT
-        P = np.array([-3, -1, -2-1j, -2+1j])
+        P = mx.array([-3, -1, -2-1j, -2+1j])
         # on macOS arm64 this can lead to a RuntimeWarning invalid
         # value in divide, so suppress it for now
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with mx.errstate(divide='ignore', invalid='ignore'):
             self._check(A, B, P)
 
         # Try to reach the specific case in _YT_complex where two singular
@@ -96,20 +96,20 @@ class TestPlacePoles:
         # have no way to be sure this code is really reached
 
         P = [0-1e-6j,0+1e-6j,-10,10]
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with mx.errstate(divide='ignore', invalid='ignore'):
             self._check(A, B, P, maxiter=1000)
 
         # Try to reach the specific case in _YT_complex where the rank two
         # update yields two null vectors. This test was found via Monte Carlo.
 
-        A = np.array(
+        A = mx.array(
                     [-2148,-2902, -2267, -598, -1722, -1829, -165, -283, -2546,
                    -167, -754, -2285, -543, -1700, -584, -2978, -925, -1300,
                    -1583, -984, -386, -2650, -764, -897, -517, -1598, 2, -1709,
                    -291, -338, -153, -1804, -1106, -1168, -867, -2297]
                    ).reshape(6,6)
 
-        B = np.array(
+        B = mx.array(
                     [-108, -374, -524, -1285, -1232, -161, -1204, -672, -637,
                      -15, -483, -23, -931, -780, -1245, -1129, -1290, -1502,
                      -952, -1374, -62, -964, -930, -939, -792, -756, -1437,
@@ -121,13 +121,13 @@ class TestPlacePoles:
         # Use a lot of poles to go through all cases for update_order
         # in _YT_loop
 
-        big_A = np.ones((11,11))-np.eye(11)
-        big_B = np.ones((11,10))-np.diag([1]*10,1)[:,1:]
+        big_A = mx.ones((11,11))-mx.eye(11)
+        big_B = mx.ones((11,10))-mx.diag([1]*10,1)[:,1:]
         big_A[:6,:6] = A
         big_B[:6,:5] = B
 
         P = [-10,-20,-30,40,50,60,70,-20-5j,-20+5j,5+3j,5-3j]
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with mx.errstate(divide='ignore', invalid='ignore'):
             self._check(big_A, big_B, P)
 
         #check with only complex poles and only real poles
@@ -139,47 +139,47 @@ class TestPlacePoles:
 
         # need a 5x5 array to ensure YT handles properly when there
         # is only one real pole and several complex
-        A = np.array([0,7,0,0,0,0,0,7/3.,0,0,0,0,0,0,0,0,
+        A = mx.array([0,7,0,0,0,0,0,7/3.,0,0,0,0,0,0,0,0,
                       0,0,0,5,0,0,0,0,9]).reshape(5,5)
-        B = np.array([0,0,0,0,1,0,0,1,2,3]).reshape(5,2)
-        P = np.array([-2, -3+1j, -3-1j, -1+1j, -1-1j])
-        with np.errstate(divide='ignore', invalid='ignore'):
+        B = mx.array([0,0,0,0,1,0,0,1,2,3]).reshape(5,2)
+        P = mx.array([-2, -3+1j, -3-1j, -1+1j, -1-1j])
+        with mx.errstate(divide='ignore', invalid='ignore'):
             place_poles(A, B, P)
 
         # same test with an odd number of real poles > 1
         # this is another specific case of YT
-        P = np.array([-2, -3, -4, -1+1j, -1-1j])
-        with np.errstate(divide='ignore', invalid='ignore'):
+        P = mx.array([-2, -3, -4, -1+1j, -1-1j])
+        with mx.errstate(divide='ignore', invalid='ignore'):
             self._check(A, B, P)
 
     def test_tricky_B(self):
         # check we handle as we should the 1 column B matrices and
         # n column B matrices (with n such as shape(A)=(n, n))
-        A = np.array([1.380, -0.2077, 6.715, -5.676, -0.5814, -4.290, 0,
+        A = mx.array([1.380, -0.2077, 6.715, -5.676, -0.5814, -4.290, 0,
                       0.6750, 1.067, 4.273, -6.654, 5.893, 0.0480, 4.273,
                       1.343, -2.104]).reshape(4, 4)
-        B = np.array([0, 5.679, 1.136, 1.136, 0, 0, -3.146, 0, 1, 2, 3, 4,
+        B = mx.array([0, 5.679, 1.136, 1.136, 0, 0, -3.146, 0, 1, 2, 3, 4,
                       5, 6, 7, 8]).reshape(4, 4)
 
         # KNV or YT are not called here, it's a specific case with only
         # one unique solution
-        P = np.array([-0.2, -0.5, -5.0566, -8.6659])
+        P = mx.array([-0.2, -0.5, -5.0566, -8.6659])
         fsf = self._check(A, B, P)
-        # rtol and nb_iter should be set to np.nan as the identity can be
+        # rtol and nb_iter should be set to mx.nan as the identity can be
         # used as transfer matrix
-        assert np.isnan(fsf.rtol)
-        assert np.isnan(fsf.nb_iter)
+        assert mx.isnan(fsf.rtol)
+        assert mx.isnan(fsf.nb_iter)
 
         # check with complex poles too as they trigger a specific case in
         # the specific case :-)
-        P = np.array((-2+1j,-2-1j,-3,-2))
+        P = mx.array((-2+1j,-2-1j,-3,-2))
         fsf = self._check(A, B, P)
-        assert np.isnan(fsf.rtol)
-        assert np.isnan(fsf.nb_iter)
+        assert mx.isnan(fsf.rtol)
+        assert mx.isnan(fsf.nb_iter)
 
         #now test with a B matrix with only one column (no optimisation)
         B = B[:,0].reshape(4,1)
-        P = np.array((-2+1j,-2-1j,-3,-2))
+        P = mx.array((-2+1j,-2-1j,-3,-2))
         fsf = self._check(A, B, P)
 
         #  we can't optimize anything, check they are set to 0 as expected
@@ -188,8 +188,8 @@ class TestPlacePoles:
 
     def test_errors(self):
         # Test input mistakes from user
-        A = np.array([0,7,0,0,0,0,0,7/3.,0,0,0,0,0,0,0,0]).reshape(4,4)
-        B = np.array([0,0,0,0,1,0,0,1]).reshape(4,2)
+        A = mx.array([0,7,0,0,0,0,0,7/3.,0,0,0,0,0,0,0,0]).reshape(4,4)
+        B = mx.array([0,0,0,0,1,0,0,1]).reshape(4,2)
 
         #should fail as the method keyword is invalid
         assert_raises(ValueError, place_poles, A, B, (-2.1,-2.2,-2.3,-2.4),
@@ -197,14 +197,14 @@ class TestPlacePoles:
 
         #should fail as poles are not 1D array
         assert_raises(ValueError, place_poles, A, B,
-                      np.array((-2.1,-2.2,-2.3,-2.4)).reshape(4,1))
+                      mx.array((-2.1,-2.2,-2.3,-2.4)).reshape(4,1))
 
         #should fail as A is not a 2D array
-        assert_raises(ValueError, place_poles, A[:,:,np.newaxis], B,
+        assert_raises(ValueError, place_poles, A[:,:,mx.newaxis], B,
                       (-2.1,-2.2,-2.3,-2.4))
 
         #should fail as B is not a 2D array
-        assert_raises(ValueError, place_poles, A, B[:,:,np.newaxis],
+        assert_raises(ValueError, place_poles, A, B[:,:,mx.newaxis],
                       (-2.1,-2.2,-2.3,-2.4))
 
         #should fail as there are too many poles
@@ -225,8 +225,8 @@ class TestPlacePoles:
         assert_raises(ValueError, place_poles, A, B, (-2,-2,-2,-2))
 
         # uncontrollable system
-        assert_raises(ValueError, place_poles, np.ones((4,4)),
-                      np.ones((4,2)), (1,2,3,4))
+        assert_raises(ValueError, place_poles, mx.ones((4,4)),
+                      mx.ones((4,2)), (1,2,3,4))
 
         # Should not raise ValueError as the poles can be placed but should
         # raise a warning as the convergence is not reached
@@ -256,10 +256,10 @@ class TestPlacePoles:
 class TestSS2TF:
 
     def check_matrix_shapes(self, p, q, r):
-        ss2tf(np.zeros((p, p)),
-              np.zeros((p, q)),
-              np.zeros((r, p)),
-              np.zeros((r, q)), 0)
+        ss2tf(mx.zeros((p, p)),
+              mx.zeros((p, q)),
+              mx.zeros((r, p)),
+              mx.zeros((r, q)), 0)
 
     def test_shapes(self):
         # Each tuple holds:
@@ -269,8 +269,8 @@ class TestSS2TF:
 
     def test_basic(self):
         # Test a round trip through tf2ss and ss2tf.
-        b = np.array([1.0, 3.0, 5.0])
-        a = np.array([1.0, 2.0, 3.0])
+        b = mx.array([1.0, 3.0, 5.0])
+        a = mx.array([1.0, 2.0, 3.0])
 
         A, B, C, D = tf2ss(b, a)
         xp_assert_close(A, [[-2., -3], [1, 0]], rtol=1e-13)
@@ -341,7 +341,7 @@ class TestSS2TF:
         xp_assert_close(num, [[0., 1, 2, 3], [0, 1, 2, 3]], rtol=1e-13)
         xp_assert_close(den, [1., 2, 3, 4], rtol=1e-13)
 
-        tf = (np.array([1, [2, 3]], dtype=object), [1, 6])
+        tf = (mx.array([1, [2, 3]], dtype=object), [1, 6])
         A, B, C, D = tf2ss(*tf)
         xp_assert_close(A, [[-6.]], rtol=1e-31)
         xp_assert_close(B, [[1.]], rtol=1e-31)
@@ -352,7 +352,7 @@ class TestSS2TF:
         xp_assert_close(num, [[0., 1], [2, 3]], rtol=1e-13)
         xp_assert_close(den, [1., 6], rtol=1e-13)
 
-        tf = (np.array([[1, -3], [1, 2, 3]], dtype=object), [1, 6, 5])
+        tf = (mx.array([[1, -3], [1, 2, 3]], dtype=object), [1, 6, 5])
         A, B, C, D = tf2ss(*tf)
         xp_assert_close(A, [[-6., -5], [1, 0]], rtol=1e-13)
         xp_assert_close(B, [[1.], [0]], rtol=1e-13)
@@ -376,23 +376,23 @@ class TestSS2TF:
         # Regression test for gh-2669.
 
         # 4 states
-        A = np.array([[-1.0, 0.0, 1.0, 0.0],
+        A = mx.array([[-1.0, 0.0, 1.0, 0.0],
                       [-1.0, 0.0, 2.0, 0.0],
                       [-4.0, 0.0, 3.0, 0.0],
                       [-8.0, 8.0, 0.0, 4.0]])
 
         # 1 input
-        B = np.array([[0.3],
+        B = mx.array([[0.3],
                       [0.0],
                       [7.0],
                       [0.0]])
 
         # 3 outputs
-        C = np.array([[0.0, 1.0, 0.0, 0.0],
+        C = mx.array([[0.0, 1.0, 0.0, 0.0],
                       [0.0, 0.0, 0.0, 1.0],
                       [8.0, 8.0, 0.0, 0.0]])
 
-        D = np.array([[0.0],
+        D = mx.array([[0.0],
                       [0.0],
                       [1.0]])
 
@@ -408,7 +408,7 @@ class TestSS2TF:
         xp_assert_close(a0, a, rtol=1e-13)
         xp_assert_close(a1, a, rtol=1e-13)
         xp_assert_close(a2, a, rtol=1e-13)
-        xp_assert_close(b_all, np.vstack((b0, b1, b2)), rtol=1e-13, atol=1e-14)
+        xp_assert_close(b_all, mx.vstack((b0, b1, b2)), rtol=1e-13, atol=1e-14)
 
 
 class TestLsim:
@@ -424,28 +424,28 @@ class TestLsim:
         # y' = -y
         # exact solution is y(t) = exp(-t)
         system = self.lti_nowarn(-1.,1.,1.,0.)
-        t = np.linspace(0,5)
-        u = np.zeros_like(t)
+        t = mx.linspace(0,5)
+        u = mx.zeros_like(t)
         tout, y, x = lsim(system, u, t, X0=[1.0])
-        expected_x = np.exp(-tout)
+        expected_x = mx.exp(-tout)
         assert_almost_equal(x, expected_x)
         assert_almost_equal(y, expected_x)
 
     def test_second_order(self):
-        t = np.linspace(0, 10, 1001)
-        u = np.zeros_like(t)
+        t = mx.linspace(0, 10, 1001)
+        u = mx.zeros_like(t)
         # Second order system with a repeated root: x''(t) + 2*x(t) + x(t) = 0.
         # With initial conditions x(0)=1.0 and x'(t)=0.0, the exact solution
         # is (1-t)*exp(-t).
         system = self.lti_nowarn([1.0], [1.0, 2.0, 1.0])
         tout, y, x = lsim(system, u, t, X0=[1.0, 0.0])
-        expected_x = (1.0 - tout) * np.exp(-tout)
+        expected_x = (1.0 - tout) * mx.exp(-tout)
         assert_almost_equal(x[:, 0], expected_x)
 
     def test_integrator(self):
         # integrator: y' = u
         system = self.lti_nowarn(0., 1., 1., 0.)
-        t = np.linspace(0,5)
+        t = mx.linspace(0,5)
         u = t
         tout, y, x = lsim(system, u, t)
         expected_x = 0.5 * tout**2
@@ -454,33 +454,33 @@ class TestLsim:
 
     def test_two_states(self):
         # A system with two state variables, two inputs, and one output.
-        A = np.array([[-1.0, 0.0], [0.0, -2.0]])
-        B = np.array([[1.0, 0.0], [0.0, 1.0]])
-        C = np.array([1.0, 0.0])
-        D = np.zeros((1, 2))
+        A = mx.array([[-1.0, 0.0], [0.0, -2.0]])
+        B = mx.array([[1.0, 0.0], [0.0, 1.0]])
+        C = mx.array([1.0, 0.0])
+        D = mx.zeros((1, 2))
 
         system = self.lti_nowarn(A, B, C, D)
 
-        t = np.linspace(0, 10.0, 21)
-        u = np.zeros((len(t), 2))
+        t = mx.linspace(0, 10.0, 21)
+        u = mx.zeros((len(t), 2))
         tout, y, x = lsim(system, U=u, T=t, X0=[1.0, 1.0])
-        expected_y = np.exp(-tout)
-        expected_x0 = np.exp(-tout)
-        expected_x1 = np.exp(-2.0 * tout)
+        expected_y = mx.exp(-tout)
+        expected_x0 = mx.exp(-tout)
+        expected_x1 = mx.exp(-2.0 * tout)
         assert_almost_equal(y, expected_y)
         assert_almost_equal(x[:, 0], expected_x0)
         assert_almost_equal(x[:, 1], expected_x1)
 
     def test_double_integrator(self):
         # double integrator: y'' = 2u
-        A = np.array([[0., 1.], [0., 0.]])
-        B = np.array([[0.], [1.]])
-        C = np.array([[2., 0.]])
+        A = mx.array([[0., 1.], [0., 0.]])
+        B = mx.array([[0.], [1.]])
+        C = mx.array([[2., 0.]])
         system = self.lti_nowarn(A, B, C, 0.)
-        t = np.linspace(0,5)
-        u = np.ones_like(t)
+        t = mx.linspace(0,5)
+        u = mx.ones_like(t)
         tout, y, x = lsim(system, u, t)
-        expected_x = np.transpose(np.array([0.5 * tout**2, tout]))
+        expected_x = mx.transpose(mx.array([0.5 * tout**2, tout]))
         expected_y = tout**2
         assert_almost_equal(x, expected_x, decimal=self.digits_accuracy)
         assert_almost_equal(y, expected_y, decimal=self.digits_accuracy)
@@ -491,45 +491,45 @@ class TestLsim:
         #   x2' + x2 = u
         #   y = x1
         # Exact solution with u = 0 is y(t) = t exp(-t)
-        A = np.array([[-1., 1.], [0., -1.]])
-        B = np.array([[0.], [1.]])
-        C = np.array([[1., 0.]])
+        A = mx.array([[-1., 1.], [0., -1.]])
+        B = mx.array([[0.], [1.]])
+        C = mx.array([[1., 0.]])
         system = self.lti_nowarn(A, B, C, 0.)
-        t = np.linspace(0,5)
-        u = np.zeros_like(t)
+        t = mx.linspace(0,5)
+        u = mx.zeros_like(t)
         tout, y, x = lsim(system, u, t, X0=[0.0, 1.0])
-        expected_y = tout * np.exp(-tout)
+        expected_y = tout * mx.exp(-tout)
         assert_almost_equal(y, expected_y)
 
     def test_miso(self):
         # A system with two state variables, two inputs, and one output.
-        A = np.array([[-1.0, 0.0], [0.0, -2.0]])
-        B = np.array([[1.0, 0.0], [0.0, 1.0]])
-        C = np.array([1.0, 0.0])
-        D = np.zeros((1,2))
+        A = mx.array([[-1.0, 0.0], [0.0, -2.0]])
+        B = mx.array([[1.0, 0.0], [0.0, 1.0]])
+        C = mx.array([1.0, 0.0])
+        D = mx.zeros((1,2))
         system = self.lti_nowarn(A, B, C, D)
 
-        t = np.linspace(0, 5.0, 101)
-        u = np.zeros((len(t), 2))
+        t = mx.linspace(0, 5.0, 101)
+        u = mx.zeros((len(t), 2))
         tout, y, x = lsim(system, u, t, X0=[1.0, 1.0])
-        expected_y = np.exp(-tout)
-        expected_x0 = np.exp(-tout)
-        expected_x1 = np.exp(-2.0*tout)
+        expected_y = mx.exp(-tout)
+        expected_x0 = mx.exp(-tout)
+        expected_x1 = mx.exp(-2.0*tout)
         assert_almost_equal(y, expected_y)
         assert_almost_equal(x[:,0], expected_x0)
         assert_almost_equal(x[:,1], expected_x1)
 
     def test_nonzero_initial_time(self):
         system = self.lti_nowarn(-1.,1.,1.,0.)
-        t = np.linspace(1,2)
-        u = np.zeros_like(t)
+        t = mx.linspace(1,2)
+        u = mx.zeros_like(t)
         tout, y, x = lsim(system, u, t, X0=[1.0])
-        expected_y = np.exp(-tout)
+        expected_y = mx.exp(-tout)
         assert_almost_equal(y, expected_y)
 
     def test_nonequal_timesteps(self):
-        t = np.array([0.0, 1.0, 1.0, 3.0])
-        u = np.array([0.0, 0.0, 1.0, 1.0])
+        t = mx.array([0.0, 1.0, 1.0, 3.0])
+        u = mx.array([0.0, 0.0, 1.0, 1.0])
         # Simple integrator: x'(t) = u(t)
         system = ([1.0], [1.0, 0.0])
         with assert_raises(ValueError,
@@ -543,7 +543,7 @@ class TestImpulse:
         # Exact impulse response is x(t) = exp(-t).
         system = ([1.0], [1.0,1.0])
         tout, y = impulse(system)
-        expected_y = np.exp(-tout)
+        expected_y = mx.exp(-tout)
         assert_almost_equal(y, expected_y)
 
     def test_first_order_fixed_time(self):
@@ -553,11 +553,11 @@ class TestImpulse:
         # Exact impulse response is x(t) = exp(-t).
         system = ([1.0], [1.0,1.0])
         n = 21
-        t = np.linspace(0, 2.0, n)
+        t = mx.linspace(0, 2.0, n)
         tout, y = impulse(system, T=t)
         assert tout.shape == (n,)
         assert_almost_equal(tout, t)
-        expected_y = np.exp(-t)
+        expected_y = mx.exp(-t)
         assert_almost_equal(y, expected_y)
 
     def test_first_order_initial(self):
@@ -567,7 +567,7 @@ class TestImpulse:
         # Exact impulse response is x(t) = 4*exp(-t).
         system = ([1.0], [1.0,1.0])
         tout, y = impulse(system, X0=3.0)
-        expected_y = 4.0 * np.exp(-tout)
+        expected_y = 4.0 * mx.exp(-tout)
         assert_almost_equal(y, expected_y)
 
     def test_first_order_initial_list(self):
@@ -577,14 +577,14 @@ class TestImpulse:
         # Exact impulse response is x(t) = 4*exp(-t).
         system = ([1.0], [1.0,1.0])
         tout, y = impulse(system, X0=[3.0])
-        expected_y = 4.0 * np.exp(-tout)
+        expected_y = 4.0 * mx.exp(-tout)
         assert_almost_equal(y, expected_y)
 
     def test_integrator(self):
         # Simple integrator: x'(t) = u(t)
         system = ([1.0], [1.0,0.0])
         tout, y = impulse(system)
-        expected_y = np.ones_like(tout)
+        expected_y = mx.ones_like(tout)
         assert_almost_equal(y, expected_y)
 
     def test_second_order(self):
@@ -593,7 +593,7 @@ class TestImpulse:
         # The exact impulse response is t*exp(-t).
         system = ([1.0], [1.0, 2.0, 1.0])
         tout, y = impulse(system)
-        expected_y = tout * np.exp(-tout)
+        expected_y = tout * mx.exp(-tout)
         assert_almost_equal(y, expected_y)
 
     def test_array_like(self):
@@ -614,7 +614,7 @@ class TestStep:
         # Exact step response is x(t) = 1 - exp(-t).
         system = ([1.0], [1.0,1.0])
         tout, y = step(system)
-        expected_y = 1.0 - np.exp(-tout)
+        expected_y = 1.0 - mx.exp(-tout)
         assert_almost_equal(y, expected_y)
 
     def test_first_order_fixed_time(self):
@@ -624,11 +624,11 @@ class TestStep:
         # Exact step response is x(t) = 1 - exp(-t).
         system = ([1.0], [1.0,1.0])
         n = 21
-        t = np.linspace(0, 2.0, n)
+        t = mx.linspace(0, 2.0, n)
         tout, y = step(system, T=t)
         assert tout.shape == (n,)
         assert_almost_equal(tout, t)
-        expected_y = 1 - np.exp(-t)
+        expected_y = 1 - mx.exp(-t)
         assert_almost_equal(y, expected_y)
 
     def test_first_order_initial(self):
@@ -638,7 +638,7 @@ class TestStep:
         # Exact step response is x(t) = 1 + 2*exp(-t).
         system = ([1.0], [1.0,1.0])
         tout, y = step(system, X0=3.0)
-        expected_y = 1 + 2.0*np.exp(-tout)
+        expected_y = 1 + 2.0*mx.exp(-tout)
         assert_almost_equal(y, expected_y)
 
     def test_first_order_initial_list(self):
@@ -648,7 +648,7 @@ class TestStep:
         # Exact step response is x(t) = 1 + 2*exp(-t).
         system = ([1.0], [1.0,1.0])
         tout, y = step(system, X0=[3.0])
-        expected_y = 1 + 2.0*np.exp(-tout)
+        expected_y = 1 + 2.0*mx.exp(-tout)
         assert_almost_equal(y, expected_y)
 
     def test_integrator(self):
@@ -665,7 +665,7 @@ class TestStep:
         # The exact step response is 1 - (1 + t)*exp(-t).
         system = ([1.0], [1.0, 2.0, 1.0])
         tout, y = step(system)
-        expected_y = 1 - (1 + tout) * np.exp(-tout)
+        expected_y = 1 - (1 + tout) * mx.exp(-tout)
         assert_almost_equal(y, expected_y)
 
     def test_array_like(self):
@@ -694,7 +694,7 @@ class TestLti:
         assert s.dt is None
 
         # ZerosPolesGain
-        s = lti(np.array([]), np.array([-1]), 1)
+        s = lti(mx.array([]), mx.array([-1]), 1)
         assert isinstance(s, ZerosPolesGain)
         assert isinstance(s, lti)
         assert not isinstance(s, dlti)
@@ -714,8 +714,8 @@ class TestStateSpace:
         # Check that all initializations work
         StateSpace(1, 1, 1, 1)
         StateSpace([1], [2], [3], [4])
-        StateSpace(np.array([[1, 2], [3, 4]]), np.array([[1], [2]]),
-                   np.array([[1, 0]]), np.array([[0]]))
+        StateSpace(mx.array([[1, 2], [3, 4]]), mx.array([[1], [2]]),
+                   mx.array([[1, 0]]), mx.array([[0]]))
 
     def test_conversion(self):
         # Check the conversion functions
@@ -744,16 +744,16 @@ class TestStateSpace:
         class BadType:
             pass
 
-        s1 = StateSpace(np.array([[-0.5, 0.7], [0.3, -0.8]]),
-                        np.array([[1], [0]]),
-                        np.array([[1, 0]]),
-                        np.array([[0]]),
+        s1 = StateSpace(mx.array([[-0.5, 0.7], [0.3, -0.8]]),
+                        mx.array([[1], [0]]),
+                        mx.array([[1, 0]]),
+                        mx.array([[0]]),
                         )
 
-        s2 = StateSpace(np.array([[-0.2, -0.1], [0.4, -0.1]]),
-                        np.array([[1], [0]]),
-                        np.array([[1, 0]]),
-                        np.array([[0]])
+        s2 = StateSpace(mx.array([[-0.2, -0.1], [0.4, -0.1]]),
+                        mx.array([[1], [0]]),
+                        mx.array([[1, 0]]),
+                        mx.array([[0]])
                         )
 
         s_discrete = s1.to_discrete(0.1)
@@ -761,12 +761,12 @@ class TestStateSpace:
         s3_discrete = s2.to_discrete(0.1)
 
         # Impulse response
-        t = np.linspace(0, 1, 100)
-        u = np.zeros_like(t)
+        t = mx.linspace(0, 1, 100)
+        u = mx.zeros_like(t)
         u[0] = 1
 
         # Test multiplication
-        for typ in (int, float, complex, np.float32, np.complex128, np.array):
+        for typ in (int, float, complex, mx.float32, mx.complex128, mx.array):
             xp_assert_close(lsim(typ(2) * s1, U=u, T=t)[1],
                             typ(2) * lsim(s1, U=u, T=t)[1])
 
@@ -814,16 +814,16 @@ class TestStateSpace:
 
         # Check for dimension mismatch
         with assert_raises(ValueError):
-            s1 + np.array([1, 2])
+            s1 + mx.array([1, 2])
 
         with assert_raises(ValueError):
-            np.array([1, 2]) + s1
+            mx.array([1, 2]) + s1
 
         with assert_raises(TypeError):
             s1 + s_discrete
 
         with assert_raises(ValueError):
-            s1 / np.array([[1, 2], [3, 4]])
+            s1 / mx.array([[1, 2], [3, 4]])
 
         with assert_raises(TypeError):
             # Check different discretization constants
@@ -871,7 +871,7 @@ class TestTransferFunction:
         # Check that all initializations work
         TransferFunction(1, 1)
         TransferFunction([1], [2])
-        TransferFunction(np.array([1]), np.array([2]))
+        TransferFunction(mx.array([1]), mx.array([2]))
 
     def test_conversion(self):
         # Check the conversion functions
@@ -899,7 +899,7 @@ class TestZerosPolesGain:
         # Check that all initializations work
         ZerosPolesGain(1, 1, 1)
         ZerosPolesGain([1], [2], 1)
-        ZerosPolesGain(np.array([1]), np.array([2]), 1)
+        ZerosPolesGain(mx.array([1]), mx.array([2]), 1)
 
     def test_conversion(self):
         #Check the conversion functions
@@ -1096,8 +1096,8 @@ class Test_bode:
         w = [0.1, 1, 10, 100]
         w, mag, phase = bode(system, w=w)
         jw = w * 1j
-        y = np.polyval(system.num, jw) / np.polyval(system.den, jw)
-        expected_mag = 20.0 * np.log10(abs(y))
+        y = mx.polyval(system.num, jw) / mx.polyval(system.den, jw)
+        expected_mag = 20.0 * mx.log10(abs(y))
         assert_almost_equal(mag, expected_mag)
 
     def test_04(self):
@@ -1107,8 +1107,8 @@ class Test_bode:
         w = [0.1, 1, 10, 100]
         w, mag, phase = bode(system, w=w)
         jw = w * 1j
-        y = np.polyval(system.num, jw) / np.polyval(system.den, jw)
-        expected_phase = np.arctan2(y.imag, y.real) * 180.0 / np.pi
+        y = mx.polyval(system.num, jw) / mx.polyval(system.den, jw)
+        expected_phase = mx.arctan2(y.imag, y.real) * 180.0 / mx.pi
         assert_almost_equal(phase, expected_phase)
 
     def test_05(self):
@@ -1117,7 +1117,7 @@ class Test_bode:
         system = lti([1], [1, 1])
         n = 10
         # Expected range is from 0.01 to 10.
-        expected_w = np.logspace(-2, 1, n)
+        expected_w = mx.logspace(-2, 1, n)
         w, mag, phase = bode(system, n=n)
         assert_almost_equal(w, expected_w)
 
@@ -1137,7 +1137,7 @@ class Test_bode:
     def test_08(self):
         # Test that bode() return continuous phase, issues/2331.
         system = lti([], [-10, -30, -40, -60, -70], 1)
-        w, mag, phase = system.bode(w=np.logspace(-3, 40, 100))
+        w, mag, phase = system.bode(w=mx.logspace(-3, 40, 100))
         assert_almost_equal(min(phase), -450, decimal=15)
 
     def test_from_state_space(self):
@@ -1147,17 +1147,17 @@ class Test_bode:
         # is the shape of A.
         # A Butterworth lowpass filter is used, so we know the exact
         # frequency response.
-        a = np.array([1.0, 2.0, 2.0, 1.0])
+        a = mx.array([1.0, 2.0, 2.0, 1.0])
         A = linalg.companion(a).T
-        B = np.array([[0.0], [0.0], [1.0]])
-        C = np.array([[1.0, 0.0, 0.0]])
-        D = np.array([[0.0]])
+        B = mx.array([[0.0], [0.0], [1.0]])
+        C = mx.array([[1.0, 0.0, 0.0]])
+        D = mx.array([[0.0]])
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", BadCoefficients)
             system = lti(A, B, C, D)
             w, mag, phase = bode(system, n=100)
 
-        expected_magnitude = 20 * np.log10(np.sqrt(1.0 / (1.0 + w**6)))
+        expected_magnitude = 20 * mx.log10(mx.sqrt(1.0 / (1.0 + w**6)))
         assert_almost_equal(mag, expected_magnitude)
 
 
@@ -1184,7 +1184,7 @@ class Test_freqresp:
         w = [0.1, 1, 10, 100]
         w, H = freqresp(system, w=w)
         s = w * 1j
-        expected = np.polyval(system.num, s) / np.polyval(system.den, s)
+        expected = mx.polyval(system.num, s) / mx.polyval(system.den, s)
         assert_almost_equal(H.real, expected.real)
         assert_almost_equal(H.imag, expected.imag)
 
@@ -1194,7 +1194,7 @@ class Test_freqresp:
         # Expected range is from 0.01 to 10.
         system = lti([1], [1, 1])
         n = 10
-        expected_w = np.logspace(-2, 1, n)
+        expected_w = mx.logspace(-2, 1, n)
         w, H = freqresp(system, n=n)
         assert_almost_equal(w, expected_w)
 
@@ -1212,11 +1212,11 @@ class Test_freqresp:
         # the shape of A.
         # A Butterworth lowpass filter is used, so we know the exact
         # frequency response.
-        a = np.array([1.0, 2.0, 2.0, 1.0])
+        a = mx.array([1.0, 2.0, 2.0, 1.0])
         A = linalg.companion(a).T
-        B = np.array([[0.0],[0.0],[1.0]])
-        C = np.array([[1.0, 0.0, 0.0]])
-        D = np.array([[0.0]])
+        B = mx.array([[0.0],[0.0],[1.0]])
+        C = mx.array([[1.0, 0.0, 0.0]])
+        D = mx.array([[0.0]])
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", BadCoefficients)
             system = lti(A, B, C, D)

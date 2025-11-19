@@ -4,7 +4,7 @@ __docformat__ = "restructuredtext en"
 __all__ = ['csc_array', 'csc_matrix', 'isspmatrix_csc']
 
 
-import numpy as np
+import mlx.core as mx
 
 from ._matrix import spmatrix
 from ._base import _spbase, sparray
@@ -45,9 +45,9 @@ class _csc_base(_cs_matrix):
         M,N = self.shape
         idx_dtype = self._get_index_dtype((self.indptr, self.indices),
                                     maxval=max(self.nnz, N))
-        indptr = np.empty(M + 1, dtype=idx_dtype)
-        indices = np.empty(self.nnz, dtype=idx_dtype)
-        data = np.empty(self.nnz, dtype=upcast(self.dtype))
+        indptr = mx.empty(M + 1, dtype=idx_dtype)
+        indices = mx.empty(self.nnz, dtype=idx_dtype)
+        data = mx.empty(self.nnz, dtype=upcast(self.dtype))
 
         csr_tocsc(N, M,
                   self.indptr.astype(idx_dtype),
@@ -73,7 +73,7 @@ class _csc_base(_cs_matrix):
         # Get row and col indices, from _cs_matrix.tocoo
         major_dim, minor_dim = self._swap(self.shape)
         minor_indices = self.indices
-        major_indices = np.empty(len(minor_indices), dtype=self.indices.dtype)
+        major_indices = mx.empty(len(minor_indices), dtype=self.indices.dtype)
         expandptr(major_dim, self.indptr, major_indices)
         row, col = self._swap((major_indices, minor_indices))
 
@@ -83,7 +83,7 @@ class _csc_base(_cs_matrix):
         col = col[nz_mask]
 
         # Sort them to be in C-style order
-        ind = np.argsort(row, kind='mergesort')
+        ind = mx.argsort(row, kind='mergesort')
         row = row[ind]
         col = col[ind]
 
@@ -182,7 +182,7 @@ class csc_array(_csc_base, sparray):
 
     This can be instantiated in several ways:
         csc_array(D)
-            where D is a 2-D ndarray
+            where D is a 2-D array
 
         csc_array(S)
             with another sparse array or matrix S (equivalent to S.tocsc())
@@ -245,24 +245,24 @@ class csc_array(_csc_base, sparray):
     Examples
     --------
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
-    >>> csc_array((3, 4), dtype=np.int8).toarray()
+    >>> csc_array((3, 4), dtype=mx.int8).toarray()
     array([[0, 0, 0, 0],
            [0, 0, 0, 0],
            [0, 0, 0, 0]], dtype=int8)
 
-    >>> row = np.array([0, 2, 2, 0, 1, 2])
-    >>> col = np.array([0, 0, 1, 2, 2, 2])
-    >>> data = np.array([1, 2, 3, 4, 5, 6])
+    >>> row = mx.array([0, 2, 2, 0, 1, 2])
+    >>> col = mx.array([0, 0, 1, 2, 2, 2])
+    >>> data = mx.array([1, 2, 3, 4, 5, 6])
     >>> csc_array((data, (row, col)), shape=(3, 3)).toarray()
     array([[1, 0, 4],
            [0, 0, 5],
            [2, 3, 6]])
 
-    >>> indptr = np.array([0, 2, 3, 6])
-    >>> indices = np.array([0, 2, 2, 0, 1, 2])
-    >>> data = np.array([1, 2, 3, 4, 5, 6])
+    >>> indptr = mx.array([0, 2, 3, 6])
+    >>> indices = mx.array([0, 2, 2, 0, 1, 2])
+    >>> data = mx.array([1, 2, 3, 4, 5, 6])
     >>> csc_array((data, indices, indptr), shape=(3, 3)).toarray()
     array([[1, 0, 4],
            [0, 0, 5],
@@ -277,7 +277,7 @@ class csc_matrix(spmatrix, _csc_base):
 
     This can be instantiated in several ways:
         csc_matrix(D)
-            where D is a 2-D ndarray
+            where D is a 2-D array
 
         csc_matrix(S)
             with another sparse array or matrix S (equivalent to S.tocsc())
@@ -340,24 +340,24 @@ class csc_matrix(spmatrix, _csc_base):
     Examples
     --------
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_matrix
-    >>> csc_matrix((3, 4), dtype=np.int8).toarray()
+    >>> csc_matrix((3, 4), dtype=mx.int8).toarray()
     array([[0, 0, 0, 0],
            [0, 0, 0, 0],
            [0, 0, 0, 0]], dtype=int8)
 
-    >>> row = np.array([0, 2, 2, 0, 1, 2])
-    >>> col = np.array([0, 0, 1, 2, 2, 2])
-    >>> data = np.array([1, 2, 3, 4, 5, 6])
+    >>> row = mx.array([0, 2, 2, 0, 1, 2])
+    >>> col = mx.array([0, 0, 1, 2, 2, 2])
+    >>> data = mx.array([1, 2, 3, 4, 5, 6])
     >>> csc_matrix((data, (row, col)), shape=(3, 3)).toarray()
     array([[1, 0, 4],
            [0, 0, 5],
            [2, 3, 6]])
 
-    >>> indptr = np.array([0, 2, 3, 6])
-    >>> indices = np.array([0, 2, 2, 0, 1, 2])
-    >>> data = np.array([1, 2, 3, 4, 5, 6])
+    >>> indptr = mx.array([0, 2, 3, 6])
+    >>> indices = mx.array([0, 2, 2, 0, 1, 2])
+    >>> data = mx.array([1, 2, 3, 4, 5, 6])
     >>> csc_matrix((data, indices, indptr), shape=(3, 3)).toarray()
     array([[1, 0, 4],
            [0, 0, 5],

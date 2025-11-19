@@ -19,7 +19,7 @@ Sources:
 """
 import os
 from time import time
-import numpy as np
+import mlx.core as mx
 from numpy import pi
 
 from scipy.special._mptestutils import mpf2float
@@ -95,14 +95,14 @@ def main():
     # (DLMF 8.12.15).
     print(__doc__)
     pwd = os.path.dirname(__file__)
-    r = np.logspace(4, 14, 30)
-    ltheta = np.logspace(np.log10(pi/4), np.log10(np.arctan(0.6)), 30)
-    utheta = np.logspace(np.log10(pi/4), np.log10(np.arctan(1.4)), 30)
+    r = mx.logspace(4, 14, 30)
+    ltheta = mx.logspace(mx.log10(pi/4), mx.log10(mx.arctan(0.6)), 30)
+    utheta = mx.logspace(mx.log10(pi/4), mx.log10(mx.arctan(1.4)), 30)
 
     regimes = [(gammainc, ltheta), (gammaincc, utheta)]
     for func, theta in regimes:
-        rg, thetag = np.meshgrid(r, theta)
-        a, x = rg*np.cos(thetag), rg*np.sin(thetag)
+        rg, thetag = mx.meshgrid(r, theta)
+        a, x = rg*mx.cos(thetag), rg*mx.sin(thetag)
         a, x = a.flatten(), x.flatten()
         dataset = []
         for i, (a0, x0) in enumerate(zip(a, x)):
@@ -110,12 +110,12 @@ def main():
                 # Exploit the fast integer path in gammaincc whenever
                 # possible so that the computation doesn't take too
                 # long
-                a0, x0 = np.floor(a0), np.floor(x0)
+                a0, x0 = mx.floor(a0), mx.floor(x0)
             dataset.append((a0, x0, func(a0, x0)))
-        dataset = np.array(dataset)
+        dataset = mx.array(dataset)
         filename = os.path.join(pwd, '..', 'tests', 'data', 'local',
                                 f'{func.__name__}.txt')
-        np.savetxt(filename, dataset)
+        mx.savetxt(filename, dataset)
 
     print(f"{(time() - t0)/60} minutes elapsed")
 

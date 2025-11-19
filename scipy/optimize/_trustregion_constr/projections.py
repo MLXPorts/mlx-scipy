@@ -10,7 +10,7 @@ try:
 except ImportError:
     import warnings
     sksparse_available = False
-import numpy as np
+import mlx.core as mx
 from warnings import warn, catch_warnings
 
 __all__ = [
@@ -37,18 +37,18 @@ def orthogonality(A, g):
             SIAM Journal on Scientific Computing 23.4 (2001): 1376-1395.
     """
     # Compute vector norms
-    norm_g = np.linalg.norm(g)
+    norm_g = mx.linalg.norm(g)
     # Compute Froebnius norm of the matrix A
     if issparse(A):
         norm_A = scipy.sparse.linalg.norm(A, ord='fro')
     else:
-        norm_A = np.linalg.norm(A, ord='fro')
+        norm_A = mx.linalg.norm(A, ord='fro')
 
     # Check if norms are zero
     if norm_g == 0 or norm_A == 0:
         return 0
 
-    norm_A_g = np.linalg.norm(A.dot(g))
+    norm_A_g = mx.linalg.norm(A.dot(g))
     # Orthogonality measure
     orth = norm_A_g / (norm_A*norm_g)
     return orth
@@ -118,7 +118,7 @@ def augmented_system_projections(A, m, n, orth_tol, max_refin, tol):
     def null_space(x):
         # v = [x]
         #     [0]
-        v = np.hstack([x, np.zeros(m)])
+        v = mx.hstack([x, mx.zeros(m)])
         # lu_sol = [ z ]
         #          [aux]
         lu_sol = solve(v)
@@ -152,7 +152,7 @@ def augmented_system_projections(A, m, n, orth_tol, max_refin, tol):
     def least_squares(x):
         # v = [x]
         #     [0]
-        v = np.hstack([x, np.zeros(m)])
+        v = mx.hstack([x, mx.zeros(m)])
         # lu_sol = [aux]
         #          [ z ]
         lu_sol = solve(v)
@@ -166,7 +166,7 @@ def augmented_system_projections(A, m, n, orth_tol, max_refin, tol):
     def row_space(x):
         # v = [0]
         #     [x]
-        v = np.hstack([np.zeros(n), x])
+        v = mx.hstack([mx.zeros(n), x])
         # lu_sol = [ z ]
         #          [aux]
         lu_sol = solve(v)
@@ -182,7 +182,7 @@ def qr_factorization_projections(A, m, n, orth_tol, max_refin, tol):
     # QRFactorization
     Q, R, P = scipy.linalg.qr(A.T, pivoting=True, mode='economic')
 
-    if np.linalg.norm(R[-1, :], np.inf) < tol:
+    if mx.linalg.norm(R[-1, :], mx.inf) < tol:
         warn('Singular Jacobian matrix. Using SVD decomposition to ' +
              'perform the factorizations.',
              stacklevel=3)
@@ -196,7 +196,7 @@ def qr_factorization_projections(A, m, n, orth_tol, max_refin, tol):
         # v = P inv(R) Q.T x
         aux1 = Q.T.dot(x)
         aux2 = scipy.linalg.solve_triangular(R, aux1, lower=False)
-        v = np.zeros(m)
+        v = mx.zeros(m)
         v[P] = aux2
         z = x - A.T.dot(v)
 
@@ -221,7 +221,7 @@ def qr_factorization_projections(A, m, n, orth_tol, max_refin, tol):
         # z = P inv(R) Q.T x
         aux1 = Q.T.dot(x)
         aux2 = scipy.linalg.solve_triangular(R, aux1, lower=False)
-        z = np.zeros(m)
+        z = mx.zeros(m)
         z[P] = aux2
         return z
 
@@ -297,7 +297,7 @@ def projections(A, method=None, orth_tol=1e-12, max_refin=3, tol=1e-15):
 
     Parameters
     ----------
-    A : sparse array (or ndarray), shape (m, n)
+    A : sparse array (or array), shape (m, n)
         Matrix ``A`` used in the projection.
     method : string, optional
         Method used for compute the given linear
@@ -366,7 +366,7 @@ def projections(A, method=None, orth_tol=1e-12, max_refin=3, tol=1e-15):
         programming problems arising in optimization."
         SIAM Journal on Scientific Computing 23.4 (2001): 1376-1395.
     """
-    m, n = np.shape(A)
+    m, n = mx.shape(A)
 
     # The factorization of an empty matrix
     # only works for the sparse representation.

@@ -35,7 +35,7 @@ parameters for the Gamma function then it should look like this::
       Real or complex valued argument
 
 When documenting the returns section, the type of the returned value
-should be ``scalar or ndarray`` since ufuncs return scalars when given
+should be ``scalar or array`` since ufuncs return scalars when given
 scalars as arguments. Also keep in mind that providing a ``name`` for
 the return value is optional, and indeed is often not helpful for
 special functions. So for the Gamma function we might have something
@@ -43,5 +43,5 @@ like this::
 
   Returns
   -------
-  scalar or ndarray
+  scalar or array
       Values of the Gamma function

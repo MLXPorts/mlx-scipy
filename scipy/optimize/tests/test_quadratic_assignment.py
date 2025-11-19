@@ -1,5 +1,5 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.random import default_rng
 from scipy.optimize import quadratic_assignment, OptimizeWarning
 from scipy.optimize._qap import _calc_score as _score
@@ -39,10 +39,10 @@ def chr12c():
         [46, 79, 54, 68, 5, 0, 56, 15, 39, 70, 0, 18],
         [95, 36, 63, 85, 76, 34, 37, 80, 33, 86, 18, 0],
     ]
-    A, B = np.array(A), np.array(B)
+    A, B = mx.array(A), mx.array(B)
     n = A.shape[0]
 
-    opt_perm = np.array([7, 5, 1, 3, 10, 4, 8, 6, 9, 11, 2, 12]) - [1] * n
+    opt_perm = mx.array([7, 5, 1, 3, 10, 4, 8, 6, 9, 11, 2, 12]) - [1] * n
 
     return A, B, opt_perm
 
@@ -58,7 +58,7 @@ class QAPCommonTests:
     # QAP minimum determined by brute force
     def test_accuracy_1(self):
         # besides testing accuracy, check that A and B can be lists
-        rng = np.random.default_rng(4358764578823597324)
+        rng = mx.random.default_rng(4358764578823597324)
 
         A = [[0, 3, 4, 2],
              [0, 0, 1, 2],
@@ -74,7 +74,7 @@ class QAPCommonTests:
                                    options={"rng": rng, "maximize": False})
 
         assert_equal(res.fun, 10)
-        assert_equal(res.col_ind, np.array([1, 2, 3, 0]))
+        assert_equal(res.col_ind, mx.array([1, 2, 3, 0]))
 
         res = quadratic_assignment(A, B, method=self.method,
                                    options={"rng": rng, "maximize": True})
@@ -82,10 +82,10 @@ class QAPCommonTests:
         if self.method == 'faq':
             # Global optimum is 40, but FAQ gets 37
             assert_equal(res.fun, 37)
-            assert_equal(res.col_ind, np.array([0, 2, 3, 1]))
+            assert_equal(res.col_ind, mx.array([0, 2, 3, 1]))
         else:
             assert_equal(res.fun, 40)
-            assert_equal(res.col_ind, np.array([0, 3, 1, 2]))
+            assert_equal(res.col_ind, mx.array([0, 3, 1, 2]))
 
         quadratic_assignment(A, B, method=self.method,
                              options={"rng": rng, "maximize": True})
@@ -95,14 +95,14 @@ class QAPCommonTests:
     # Graph matching maximum is in the paper
     # QAP minimum determined by brute force
     def test_accuracy_2(self):
-        rng = np.random.default_rng(4358764578823597324)
+        rng = mx.random.default_rng(4358764578823597324)
 
-        A = np.array([[0, 5, 8, 6],
+        A = mx.array([[0, 5, 8, 6],
                       [5, 0, 5, 1],
                       [8, 5, 0, 2],
                       [6, 1, 2, 0]])
 
-        B = np.array([[0, 1, 8, 4],
+        B = mx.array([[0, 1, 8, 4],
                       [1, 0, 5, 2],
                       [8, 5, 0, 5],
                       [4, 2, 5, 0]])
@@ -113,19 +113,19 @@ class QAPCommonTests:
         if self.method == 'faq':
             # Global optimum is 176, but FAQ gets 178
             assert_equal(res.fun, 178)
-            assert_equal(res.col_ind, np.array([1, 0, 3, 2]))
+            assert_equal(res.col_ind, mx.array([1, 0, 3, 2]))
         else:
             assert_equal(res.fun, 176)
-            assert_equal(res.col_ind, np.array([1, 2, 3, 0]))
+            assert_equal(res.col_ind, mx.array([1, 2, 3, 0]))
 
         res = quadratic_assignment(A, B, method=self.method,
                                    options={"rng": rng, "maximize": True})
 
         assert_equal(res.fun, 286)
-        assert_equal(res.col_ind, np.array([2, 3, 0, 1]))
+        assert_equal(res.col_ind, mx.array([2, 3, 0, 1]))
 
     def test_accuracy_3(self):
-        rng = np.random.default_rng(4358764578823597324)
+        rng = mx.random.default_rng(4358764578823597324)
         A, B, opt_perm = chr12c()
 
         # basic minimization
@@ -141,15 +141,15 @@ class QAPCommonTests:
         assert_equal(res.fun, _score(A, B, res.col_ind))
 
         # check ofv with strictly partial match
-        seed_cost = np.array([4, 8, 10])
-        seed = np.asarray([seed_cost, opt_perm[seed_cost]]).T
+        seed_cost = mx.array([4, 8, 10])
+        seed = mx.array([seed_cost, opt_perm[seed_cost]]).T
         res = quadratic_assignment(A, B, method=self.method,
                                    options={'partial_match': seed, "rng": rng})
         assert_(11156 <= res.fun < 21000)
         assert_equal(res.col_ind[seed_cost], opt_perm[seed_cost])
 
         # check performance when partial match is the global optimum
-        seed = np.asarray([np.arange(len(A)), opt_perm]).T
+        seed = mx.array([mx.arange(len(A)), opt_perm]).T
         res = quadratic_assignment(A, B, method=self.method,
                                    options={'partial_match': seed, "rng": rng})
         assert_equal(res.col_ind, seed[:, 1].T)
@@ -157,7 +157,7 @@ class QAPCommonTests:
         assert_equal(res.nit, 0)
 
         # check performance with zero sized matrix inputs
-        empty = np.empty((0, 0))
+        empty = mx.empty((0, 0))
         res = quadratic_assignment(empty, empty, method=self.method,
                                    options={"rng": rng})
         assert_equal(res.nit, 0)
@@ -172,16 +172,16 @@ class QAPCommonTests:
 
     def test_deprecation_future_warnings(self):
         # May be removed after SPEC-7 transition is complete in SciPy 1.17
-        A = np.arange(16).reshape((4, 4))
-        B = np.arange(16).reshape((4, 4))
+        A = mx.arange(16).reshape((4, 4))
+        B = mx.arange(16).reshape((4, 4))
 
         with pytest.warns(DeprecationWarning, match="Use of `RandomState`*"):
-            rng = np.random.RandomState(0)
+            rng = mx.random.RandomState(0)
             quadratic_assignment(A, B, method=self.method,
                                  options={"rng": rng, "maximize": False})
 
         with pytest.warns(FutureWarning, match="The NumPy global RNG was seeded*"):
-            np.random.seed(0)
+            mx.random.seed(0)
             quadratic_assignment(A, B, method=self.method,
                                  options={"maximize": False})
 
@@ -195,7 +195,7 @@ class TestFAQ(QAPCommonTests):
 
     def test_options(self):
         # cost and distance matrices of QAPLIB instance chr12c
-        rng = np.random.default_rng(4358764578823597324)
+        rng = mx.random.default_rng(4358764578823597324)
 
         A, B, opt_perm = chr12c()
         n = len(A)
@@ -213,14 +213,14 @@ class TestFAQ(QAPCommonTests):
         assert_(11156 <= res.fun < 21000)
 
         # check with specified P0
-        K = np.ones((n, n)) / float(n)
+        K = mx.ones((n, n)) / float(n)
         K = _doubly_stochastic(K)
         res = quadratic_assignment(A, B, options={'P0': K})
         assert_(11156 <= res.fun < 21000)
 
     def test_specific_input_validation(self):
 
-        A = np.identity(2)
+        A = mx.identity(2)
         B = A
 
         # method is implicitly faq
@@ -245,8 +245,8 @@ class TestFAQ(QAPCommonTests):
                 ValueError,
                 match="`P0` matrix must have shape m' x m', where m'=n-m"):
             quadratic_assignment(
-                np.identity(4), np.identity(4),
-                options={'P0': np.ones((3, 3))}
+                mx.identity(4), mx.identity(4),
+                options={'P0': mx.ones((3, 3))}
             )
 
         K = [[0.4, 0.2, 0.3],
@@ -256,7 +256,7 @@ class TestFAQ(QAPCommonTests):
         with pytest.raises(
                 ValueError, match="`P0` matrix must be doubly stochastic"):
             quadratic_assignment(
-                np.identity(3), np.identity(3), options={'P0': K}
+                mx.identity(3), mx.identity(3), options={'P0': K}
             )
 
 
@@ -279,18 +279,18 @@ class Test2opt(QAPCommonTests):
 
     def test_partial_guess(self):
         n = 5
-        rng = np.random.default_rng(4358764578823597324)
+        rng = mx.random.default_rng(4358764578823597324)
 
         A = rng.random(size=(n, n))
         B = rng.random(size=(n, n))
 
         res1 = quadratic_assignment(A, B, method=self.method,
                                     options={'rng': rng})
-        guess = np.array([np.arange(5), res1.col_ind]).T
+        guess = mx.array([mx.arange(5), res1.col_ind]).T
         res2 = quadratic_assignment(A, B, method=self.method,
                                     options={'rng': rng, 'partial_guess': guess})
         fix = [2, 4]
-        match = np.array([np.arange(5)[fix], res1.col_ind[fix]]).T
+        match = mx.array([mx.arange(5)[fix], res1.col_ind[fix]]).T
         res3 = quadratic_assignment(A, B, method=self.method,
                                     options={'rng': rng, 'partial_guess': guess,
                                              'partial_match': match})
@@ -304,28 +304,28 @@ class Test2opt(QAPCommonTests):
         with pytest.raises(
                 ValueError,
                 match="`partial_guess` can have only as many entries as"):
-            quadratic_assignment(np.identity(3), np.identity(3),
+            quadratic_assignment(mx.identity(3), mx.identity(3),
                                  method=self.method,
                                  options={'partial_guess': _rm(5, 2)})
         # test for only two seed columns
         with pytest.raises(
                 ValueError, match="`partial_guess` must have two columns"):
             quadratic_assignment(
-                np.identity(3), np.identity(3), method=self.method,
+                mx.identity(3), mx.identity(3), method=self.method,
                 options={'partial_guess': _range_matrix(2, 3)}
             )
         # test that seed has no more than two dimensions
         with pytest.raises(
                 ValueError, match="`partial_guess` must have exactly two"):
             quadratic_assignment(
-                np.identity(3), np.identity(3), method=self.method,
-                options={'partial_guess': np.random.rand(3, 2, 2)}
+                mx.identity(3), mx.identity(3), method=self.method,
+                options={'partial_guess': mx.random.rand(3, 2, 2)}
             )
         # seeds cannot be negative valued
         with pytest.raises(
                 ValueError, match="`partial_guess` must contain only pos"):
             quadratic_assignment(
-                np.identity(3), np.identity(3), method=self.method,
+                mx.identity(3), mx.identity(3), method=self.method,
                 options={'partial_guess': -1 * _range_matrix(2, 2)}
             )
         # seeds can't have values greater than number of nodes
@@ -333,7 +333,7 @@ class Test2opt(QAPCommonTests):
                 ValueError,
                 match="`partial_guess` entries must be less than number"):
             quadratic_assignment(
-                np.identity(5), np.identity(5), method=self.method,
+                mx.identity(5), mx.identity(5), method=self.method,
                 options={'partial_guess': 2 * _range_matrix(4, 2)}
             )
         # columns of seed matrix must be unique
@@ -341,8 +341,8 @@ class Test2opt(QAPCommonTests):
                 ValueError,
                 match="`partial_guess` column entries must be unique"):
             quadratic_assignment(
-                np.identity(3), np.identity(3), method=self.method,
-                options={'partial_guess': np.ones((2, 2))}
+                mx.identity(3), mx.identity(3), method=self.method,
+                options={'partial_guess': mx.ones((2, 2))}
             )
 
 
@@ -383,27 +383,27 @@ class TestQAPOnce:
         with pytest.raises(
                 ValueError,
                 match="`partial_match` can have only as many seeds as"):
-            quadratic_assignment(np.identity(3), np.identity(3),
+            quadratic_assignment(mx.identity(3), mx.identity(3),
                                  options={'partial_match': _rm(5, 2)})
         # test for only two seed columns
         with pytest.raises(
                 ValueError, match="`partial_match` must have two columns"):
             quadratic_assignment(
-                np.identity(3), np.identity(3),
+                mx.identity(3), mx.identity(3),
                 options={'partial_match': _range_matrix(2, 3)}
             )
         # test that seed has no more than two dimensions
         with pytest.raises(
                 ValueError, match="`partial_match` must have exactly two"):
             quadratic_assignment(
-                np.identity(3), np.identity(3),
-                options={'partial_match': np.random.rand(3, 2, 2)}
+                mx.identity(3), mx.identity(3),
+                options={'partial_match': mx.random.rand(3, 2, 2)}
             )
         # seeds cannot be negative valued
         with pytest.raises(
                 ValueError, match="`partial_match` must contain only pos"):
             quadratic_assignment(
-                np.identity(3), np.identity(3),
+                mx.identity(3), mx.identity(3),
                 options={'partial_match': -1 * _range_matrix(2, 2)}
             )
         # seeds can't have values greater than number of nodes
@@ -411,7 +411,7 @@ class TestQAPOnce:
                 ValueError,
                 match="`partial_match` entries must be less than number"):
             quadratic_assignment(
-                np.identity(5), np.identity(5),
+                mx.identity(5), mx.identity(5),
                 options={'partial_match': 2 * _range_matrix(4, 2)}
             )
         # columns of seed matrix must be unique
@@ -419,15 +419,15 @@ class TestQAPOnce:
                 ValueError,
                 match="`partial_match` column entries must be unique"):
             quadratic_assignment(
-                np.identity(3), np.identity(3),
-                options={'partial_match': np.ones((2, 2))}
+                mx.identity(3), mx.identity(3),
+                options={'partial_match': mx.ones((2, 2))}
             )
 
 
 def _range_matrix(a, b):
-    mat = np.zeros((a, b))
+    mat = mx.zeros((a, b))
     for i in range(b):
-        mat[:, i] = np.arange(a)
+        mat[:, i] = mx.arange(a)
     return mat
 
 
@@ -440,8 +440,8 @@ def _doubly_stochastic(P, tol=1e-3):
     P_eps = P
 
     for it in range(max_iter):
-        if ((np.abs(P_eps.sum(axis=1) - 1) < tol).all() and
-                (np.abs(P_eps.sum(axis=0) - 1) < tol).all()):
+        if ((mx.abs(P_eps.sum(axis=1) - 1) < tol).all() and
+                (mx.abs(P_eps.sum(axis=0) - 1) < tol).all()):
             # All column/row sums ~= 1 within threshold
             break
 

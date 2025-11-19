@@ -381,7 +381,7 @@ pick_pade_structure_s(float* Am, const Py_ssize_t size_n, int* m, int* s)
     // Initialize the first n part of work_arr
     for (i = 0; i < n; i++) { work_arr[i] = 1.0; }
 
-    // absA = np.abs(Am[0, :n, :n])
+    // absA = mx.abs(Am[0, :n, :n])
     for (i = 0; i < n; i++)
     {
         for (j = 0; j < n; j++)
@@ -602,7 +602,7 @@ pick_pade_structure_d(double* Am, const Py_ssize_t size_n, int* m, int* s)
     // Initialize the first n part of work_arr
     for (i = 0; i < n; i++) { work_arr[i] = 1.0; }
 
-    // absA = np.abs(Am[0, :n, :n])
+    // absA = mx.abs(Am[0, :n, :n])
     for (i = 0; i < n; i++)
     {
         for (j = 0; j < n; j++)
@@ -825,7 +825,7 @@ pick_pade_structure_c(EXPM_C* Am, const Py_ssize_t size_n, int* m, int* s)
     // Initialize the first n part of work_arr
     for (i = 0; i < n; i++) { work_arr[i] = 1.0; }
 
-    // absA = np.abs(Am[0, :n, :n])
+    // absA = mx.abs(Am[0, :n, :n])
     for (i = 0; i < n; i++)
     {
         for (j = 0; j < n; j++)
@@ -1055,7 +1055,7 @@ pick_pade_structure_z(EXPM_Z* Am, const Py_ssize_t size_n, int* m, int* s)
     // Initialize the first n part of work_arr
     for (i = 0; i < n; i++) { work_arr[i] = 1.0; }
 
-    // absA = np.abs(Am[0, :n, :n])
+    // absA = mx.abs(Am[0, :n, :n])
     for (i = 0; i < n; i++)
     {
         for (j = 0; j < n; j++)

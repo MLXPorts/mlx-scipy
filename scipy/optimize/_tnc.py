@@ -187,7 +187,7 @@ def fmin_tnc(func, x0, fprime=None, args=(), approx_grad=0,
 
     Returns
     -------
-    x : ndarray
+    x : array
         The solution.
     nfeval : int
         The number of function evaluations.
@@ -295,7 +295,7 @@ def _minimize_tnc(fun, x0, args=(), jac=None, bounds=None,
 
     Options
     -------
-    eps : float or ndarray
+    eps : float or array
         If `jac is None` the absolute step size used for numerical
         approximation of the jacobian via forward differences.
     scale : list of floats

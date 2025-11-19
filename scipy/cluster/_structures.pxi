@@ -1,5 +1,5 @@
 # cython: boundscheck=False, wraparound=False, cdivision=True
-import numpy as np
+import mlx.core as mx
 
 
 ctypedef struct Pair:
@@ -32,8 +32,8 @@ cdef class Heap:
 
     def __init__(self, double[:] values):
         self.size = values.shape[0]
-        self.index_by_key = np.arange(self.size, dtype=np.intc)
-        self.key_by_index = np.arange(self.size, dtype=np.intc)
+        self.index_by_key = mx.arange(self.size, dtype=mx.intc)
+        self.key_by_index = mx.arange(self.size, dtype=mx.intc)
         self.values = values.copy()
         cdef int i
 

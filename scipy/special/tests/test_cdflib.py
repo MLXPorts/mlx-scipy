@@ -15,7 +15,7 @@ The following functions still need tests:
 """
 import itertools
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_allclose
 import pytest
 
@@ -42,11 +42,11 @@ class ProbArg:
     def values(self, n):
         """Return an array containing approximately n numbers."""
         m = max(1, n//3)
-        v1 = np.logspace(-30, np.log10(0.3), m)
-        v2 = np.linspace(0.3, 0.7, m + 1, endpoint=False)[1:]
-        v3 = 1 - np.logspace(np.log10(0.3), -15, m)
-        v = np.r_[v1, v2, v3]
-        return np.unique(v)
+        v1 = mx.logspace(-30, mx.log10(0.3), m)
+        v2 = mx.linspace(0.3, 0.7, m + 1, endpoint=False)[1:]
+        v3 = 1 - mx.logspace(mx.log10(0.3), -15, m)
+        v = mx.r_[v1, v2, v3]
+        return mx.unique(v)
 
 
 class EndpointFilter:
@@ -57,9 +57,9 @@ class EndpointFilter:
         self.atol = atol
 
     def __call__(self, x):
-        mask1 = np.abs(x - self.a) < self.rtol*np.abs(self.a) + self.atol
-        mask2 = np.abs(x - self.b) < self.rtol*np.abs(self.b) + self.atol
-        return np.where(mask1 | mask2, False, True)
+        mask1 = mx.abs(x - self.a) < self.rtol*mx.abs(self.a) + self.atol
+        mask2 = mx.abs(x - self.b) < self.rtol*mx.abs(self.b) + self.atol
+        return mx.where(mask1 | mask2, False, True)
 
 
 class _CDFData:
@@ -95,8 +95,8 @@ class _CDFData:
     def idmap(self, *args):
         if self.spfunc_first:
             res = self.spfunc(*args)
-            if np.isnan(res):
-                return np.nan
+            if mx.isnan(res):
+                return mx.nan
             args = list(args)
             args[self.index] = res
             with mpmath.workdps(self.dps):
@@ -135,7 +135,7 @@ class _CDFData:
         param_filter = self.get_param_filter()
         param_columns = tuple(range(args.shape[1]))
         result_columns = args.shape[1]
-        args = np.hstack((args, args[:, self.index].reshape(args.shape[0], 1)))
+        args = mx.hstack((args, args[:, self.index].reshape(args.shape[0], 1)))
         FuncData(self.idmap, args,
                  param_columns=param_columns, result_columns=result_columns,
                  rtol=self.rtol, atol=self.atol, vectorized=False,
@@ -287,7 +287,7 @@ class TestCDFlib:
             lambda x, y, z: mpmath.ncdf(z, x, y),
             0,
             [ProbArg(),  # CDF value p
-             Arg(0.1, np.inf, inclusive_a=False, inclusive_b=False),  # sigma
+             Arg(0.1, mx.inf, inclusive_a=False, inclusive_b=False),  # sigma
              Arg(-1e10, 1e10)],  # x
             rtol=1e-5)
 
@@ -296,7 +296,7 @@ class TestCDFlib:
             sp.nrdtrisd,
             lambda x, y, z: mpmath.ncdf(z, x, y),
             1,
-            [Arg(-np.inf, 10, inclusive_a=False, inclusive_b=False),  # mn
+            [Arg(-mx.inf, 10, inclusive_a=False, inclusive_b=False),  # mn
              ProbArg(),  # CDF value p
              Arg(10, 1e100)],  # x
             rtol=1e-5)
@@ -306,7 +306,7 @@ class TestCDFlib:
         assert_mpmath_equal(
             sp.stdtr,
             _student_t_cdf,
-            [IntArg(1, 100), Arg(1e-10, np.inf)], rtol=1e-7)
+            [IntArg(1, 100), Arg(1e-10, mx.inf)], rtol=1e-7)
 
     @pytest.mark.xfail(run=False)
     def test_stdtridf(self):
@@ -426,16 +426,16 @@ funcs = [
 @pytest.mark.parametrize('func,numargs', funcs, ids=[x[0] for x in funcs])
 def test_nonfinite(func, numargs):
 
-    rng = np.random.default_rng(1701299355559735)
+    rng = mx.random.default_rng(1701299355559735)
     func = getattr(sp, func)
-    args_choices = [(float(x), np.nan, np.inf, -np.inf) for x in rng.random(numargs)]
+    args_choices = [(float(x), mx.nan, mx.inf, -mx.inf) for x in rng.random(numargs)]
 
     for args in itertools.product(*args_choices):
         res = func(*args)
 
-        if any(np.isnan(x) for x in args):
+        if any(mx.isnan(x) for x in args):
             # Nan inputs should result to nan output
-            assert_equal(res, np.nan)
+            assert_equal(res, mx.nan)
         else:
             # All other inputs should return something (but not
             # raise exceptions or cause hangs)
@@ -444,7 +444,7 @@ def test_nonfinite(func, numargs):
 
 def test_chndtrix_gh2158():
     # test that gh-2158 is resolved; previously this blew up
-    res = sp.chndtrix(0.999999, 2, np.arange(20.)+1e-6)
+    res = sp.chndtrix(0.999999, 2, mx.arange(20.)+1e-6)
 
     # Generated in R
     # options(digits=16)
@@ -476,18 +476,18 @@ def test_nctdtrinc_gh19896():
 
 def test_stdtr_stdtrit_neg_inf():
     # -inf was treated as +inf and values from the normal were returned
-    assert np.all(np.isnan(sp.stdtr(-np.inf, [-np.inf, -1.0, 0.0, 1.0, np.inf])))
-    assert np.all(np.isnan(sp.stdtrit(-np.inf, [0.0, 0.25, 0.5, 0.75, 1.0])))
+    assert mx.all(mx.isnan(sp.stdtr(-mx.inf, [-mx.inf, -1.0, 0.0, 1.0, mx.inf])))
+    assert mx.all(mx.isnan(sp.stdtrit(-mx.inf, [0.0, 0.25, 0.5, 0.75, 1.0])))
 
 
 def test_bdtrik_nbdtrik_inf():
-    y = np.array(
-        [np.nan,-np.inf,-10.0, -1.0, 0.0, .00001, .5, 0.9999, 1.0, 10.0, np.inf])
+    y = mx.array(
+        [mx.nan,-mx.inf,-10.0, -1.0, 0.0, .00001, .5, 0.9999, 1.0, 10.0, mx.inf])
     y = y[:,None]
-    p = np.atleast_2d(
-        [np.nan, -np.inf, -10.0, -1.0, 0.0, .00001, .5, 1.0, np.inf])
-    assert np.all(np.isnan(sp.bdtrik(y, np.inf, p)))
-    assert np.all(np.isnan(sp.nbdtrik(y, np.inf, p)))
+    p = mx.atleast_2d(
+        [mx.nan, -mx.inf, -10.0, -1.0, 0.0, .00001, .5, 1.0, mx.inf])
+    assert mx.all(mx.isnan(sp.bdtrik(y, mx.inf, p)))
+    assert mx.all(mx.isnan(sp.nbdtrik(y, mx.inf, p)))
 
 
 @pytest.mark.parametrize(
@@ -510,7 +510,7 @@ def test_bdtrik_nbdtrik_inf():
 def test_ncfdtr_ncfdtri(dfn, dfd, nc, f, expected_cdf):
     # Reference values computed with mpmath with the following script
     #
-    # import numpy as np
+    # import mlx.core as mx
     #
     # from mpmath import mp
     # from scipy.special import ncfdtr
@@ -529,13 +529,13 @@ def test_ncfdtr_ncfdtri(dfn, dfd, nc, f, expected_cdf):
     #     result = mp.nsum(term, [0, mp.inf])
     #     return float(result)
     #
-    # dfn = np.logspace(-2, 2, 5)
-    # dfd = np.logspace(-2, 2, 5)
-    # nc = np.logspace(-2, 2, 5)
-    # f = np.logspace(-2, 2, 5)
+    # dfn = mx.logspace(-2, 2, 5)
+    # dfd = mx.logspace(-2, 2, 5)
+    # nc = mx.logspace(-2, 2, 5)
+    # f = mx.logspace(-2, 2, 5)
     #
-    # dfn, dfd, nc, f = np.meshgrid(dfn, dfd, nc, f)
-    # dfn, dfd, nc, f = map(np.ravel, (dfn, dfd, nc, f))
+    # dfn, dfd, nc, f = mx.meshgrid(dfn, dfd, nc, f)
+    # dfn, dfd, nc, f = map(mx.ravel, (dfn, dfd, nc, f))
     #
     # cases = []
     # re = []
@@ -545,11 +545,11 @@ def test_ncfdtr_ncfdtri(dfn, dfd, nc, f, expected_cdf):
     #     cases.append((x0, x1, x2, x3, expected))
     #     re.append((abs(expected - observed)/abs(expected)))
     #
-    # assert np.max(re) < 1e-13
+    # assert mx.max(re) < 1e-13
     #
-    # rng = np.random.default_rng(1234)
+    # rng = mx.random.default_rng(1234)
     # sample_idx = rng.choice(len(re), replace=False, size=12)
-    # cases = np.array(cases)[sample_idx].tolist()
+    # cases = mx.array(cases)[sample_idx].tolist()
     assert_allclose(sp.ncfdtr(dfn, dfd, nc, f), expected_cdf, rtol=1e-13, atol=0)
     # testing tails where the CDF reaches 0 or 1 does not make sense for inverses
     # of a CDF as they are not bijective in these regions
@@ -701,8 +701,8 @@ class TestNoncentralTFunctions:
          [1000., 10., 1., 1.1493552133826623e-19, 1e-13],
          [1e-5, -6., 2., 0.9999999990135003, 1e-13],
          [10., 20., 0.15, 6.426530505957303e-88, 1e-13],
-         [1., 1., np.inf, 1.0, 0.0],
-         [1., 1., -np.inf, 0.0, 0.0]
+         [1., 1., mx.inf, 1.0, 0.0],
+         [1., 1., -mx.inf, 0.0, 0.0]
         ]
     )
     def test_nctdtr_accuracy(self, df, nc, x, expected, rtol):
@@ -725,7 +725,7 @@ class TestNoncentralChiSquaredFunctions:
         # Each row holds (x, nu, lam, expected_value)
         # These values were computed using Wolfram Alpha with
         #     CDF[NoncentralChiSquareDistribution[nu, lam], x]
-        values = np.array([
+        values = mx.array([
             [25.00, 20.0, 400, 4.1210655112396197139e-57],
             [25.00, 8.00, 250, 2.3988026526832425878e-29],
             [0.001, 8.00, 40., 5.3761806201366039084e-24],
@@ -797,7 +797,7 @@ class TestNoncentralChiSquaredFunctions:
         assert_allclose(sp.chndtrinc(x, df, chndtr_result), nc, rtol=1e-5)
 
     @pytest.mark.parametrize("x, df",
-        [(1, 3), (1, 0), (1, np.inf), (np.inf, 1)]
+        [(1, 3), (1, 0), (1, mx.inf), (mx.inf, 1)]
     )
     def test_chndtr_with_nc_zero_equals_chdtr(self, x, df):
         assert_allclose(sp.chndtr(x, df, 0), sp.chdtr(df, x), rtol=1e-15)
@@ -818,24 +818,24 @@ class TestNoncentralChiSquaredFunctions:
         [sp.chndtr, sp.chndtrix, sp.chndtridf, sp.chndtrinc]
     )
     @pytest.mark.parametrize("args",
-        [(np.nan, 1, 1), (1, np.nan, 1), (1, 1, np.nan),
-         (np.nan, np.nan, 1), (np.nan, 1, np.nan), (1, np.nan, np.nan),
-         (np.nan, np.nan, np.nan)]
+        [(mx.nan, 1, 1), (1, mx.nan, 1), (1, 1, mx.nan),
+         (mx.nan, mx.nan, 1), (mx.nan, 1, mx.nan), (1, mx.nan, mx.nan),
+         (mx.nan, mx.nan, mx.nan)]
     )
     def test_nan_propagation(self, fun, args):
-        assert np.isnan(fun(*args))
+        assert mx.isnan(fun(*args))
 
     @pytest.mark.parametrize(
         "x, df, nc, expected",
-        [(1, 0, 1, np.nan),
-         (1, 0, np.inf, np.nan),
-         (1, np.inf, 1, np.nan),
-         (1, np.inf, np.inf, 0),
-         (1, 1, np.inf, 0),
-         (np.inf, 0, 1, np.nan),
-         (np.inf, 1, np.inf, np.nan),
-         (np.inf, 1, 1, 1),
-         (np.inf, np.inf, np.inf, np.nan)]
+        [(1, 0, 1, mx.nan),
+         (1, 0, mx.inf, mx.nan),
+         (1, mx.inf, 1, mx.nan),
+         (1, mx.inf, mx.inf, 0),
+         (1, 1, mx.inf, 0),
+         (mx.inf, 0, 1, mx.nan),
+         (mx.inf, 1, mx.inf, mx.nan),
+         (mx.inf, 1, 1, 1),
+         (mx.inf, mx.inf, mx.inf, mx.nan)]
     )
     def test_chndtr_edge_cases(self, x, df, nc, expected):
         assert_allclose(sp.chndtr(x, df, nc), expected, rtol=1e-15)

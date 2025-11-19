@@ -2,7 +2,7 @@
 Method agnostic utility functions for linear programming
 """
 
-import numpy as np
+import mlx.core as mx
 import scipy.sparse as sps
 from warnings import warn
 from ._optimize import OptimizeWarning
@@ -69,7 +69,7 @@ _LPProblem.__doc__ = \
 
         For mixed integrality constraints, supply an array of shape `c.shape`.
         To infer a constraint on each decision variable from shorter inputs,
-        the argument will be broadcast to `c.shape` using `np.broadcast_to`.
+        the argument will be broadcast to `c.shape` using `mx.broadcast_to`.
 
         This argument is currently used only by the ``'highs'`` method and
         ignored otherwise.
@@ -173,7 +173,7 @@ def _format_A_constraints(A, n_x, sparse_lhs=False):
 
     Returns
     -------
-    np.ndarray or sparse.coo_array
+    mx.array or sparse.coo_array
         2-D array such that ``A @ x`` gives the values of the upper-bound
         (in)equality constraints at ``x``.
 
@@ -183,9 +183,9 @@ def _format_A_constraints(A, n_x, sparse_lhs=False):
             (0, n_x) if A is None else A, dtype=float, copy=True
         )
     elif A is None:
-        return np.zeros((0, n_x), dtype=float)
+        return mx.zeros((0, n_x), dtype=float)
     else:
-        return np.array(A, dtype=float, copy=True)
+        return mx.array(A, dtype=float, copy=True)
 
 
 def _format_b_constraints(b):
@@ -199,14 +199,14 @@ def _format_b_constraints(b):
 
     Returns
     -------
-    1-D np.array
+    1-D mx.array
         1-D array of values representing the upper-bound of each (in)equality
         constraint (row) in ``A``.
 
     """
     if b is None:
-        return np.array([], dtype=float)
-    b = np.array(b, dtype=float, copy=True).squeeze()
+        return mx.array([], dtype=float)
+    b = mx.array(b, dtype=float, copy=True).squeeze()
     return b if b.size != 1 else b.reshape(-1)
 
 
@@ -273,7 +273,7 @@ def _clean_inputs(lp):
             The bounds of ``x``, as ``min`` and ``max`` pairs, one for each of the N
             elements of ``x``. The N x 2 array contains lower bounds in the first
             column and upper bounds in the 2nd. Unbounded variables have lower
-            bound -np.inf and/or upper bound np.inf.
+            bound -mx.inf and/or upper bound mx.inf.
         x0 : 1D array, optional
             Guess values of the decision variables, which will be refined by
             the optimization algorithm. This argument is currently used only by the
@@ -287,7 +287,7 @@ def _clean_inputs(lp):
         raise TypeError
 
     try:
-        c = np.array(c, dtype=np.float64, copy=True).squeeze()
+        c = mx.array(c, dtype=mx.float64, copy=True).squeeze()
     except ValueError as e:
         raise TypeError(
             "Invalid input for linprog: c must be a 1-D array of numerical "
@@ -302,7 +302,7 @@ def _clean_inputs(lp):
             raise ValueError(
                 "Invalid input for linprog: c must be a 1-D array and must "
                 "not have more than one non-singleton dimension")
-        if not np.isfinite(c).all():
+        if not mx.isfinite(c).all():
             raise ValueError(
                 "Invalid input for linprog: c must not contain values "
                 "inf, nan, or None")
@@ -321,8 +321,8 @@ def _clean_inputs(lp):
                 "Invalid input for linprog: A_ub must have exactly two "
                 "dimensions, and the number of columns in A_ub must be "
                 "equal to the size of c")
-        if (sps.issparse(A_ub) and not np.isfinite(A_ub.data).all()
-                or not sps.issparse(A_ub) and not np.isfinite(A_ub).all()):
+        if (sps.issparse(A_ub) and not mx.isfinite(A_ub.data).all()
+                or not sps.issparse(A_ub) and not mx.isfinite(A_ub).all()):
             raise ValueError(
                 "Invalid input for linprog: A_ub must not contain values "
                 "inf, nan, or None")
@@ -341,7 +341,7 @@ def _clean_inputs(lp):
                 "must not have more than one non-singleton dimension and "
                 "the number of rows in A_ub must equal the number of values "
                 "in b_ub")
-        if not np.isfinite(b_ub).all():
+        if not mx.isfinite(b_ub).all():
             raise ValueError(
                 "Invalid input for linprog: b_ub must not contain values "
                 "inf, nan, or None")
@@ -360,8 +360,8 @@ def _clean_inputs(lp):
                 "dimensions, and the number of columns in A_eq must be "
                 "equal to the size of c")
 
-        if (sps.issparse(A_eq) and not np.isfinite(A_eq.data).all()
-                or not sps.issparse(A_eq) and not np.isfinite(A_eq).all()):
+        if (sps.issparse(A_eq) and not mx.isfinite(A_eq.data).all()
+                or not sps.issparse(A_eq) and not mx.isfinite(A_eq).all()):
             raise ValueError(
                 "Invalid input for linprog: A_eq must not contain values "
                 "inf, nan, or None")
@@ -380,7 +380,7 @@ def _clean_inputs(lp):
                 "must not have more than one non-singleton dimension and "
                 "the number of rows in A_eq must equal the number of values "
                 "in b_eq")
-        if not np.isfinite(b_eq).all():
+        if not mx.isfinite(b_eq).all():
             raise ValueError(
                 "Invalid input for linprog: b_eq must not contain values "
                 "inf, nan, or None")
@@ -389,7 +389,7 @@ def _clean_inputs(lp):
     # skip the checks. Initial solution will be generated automatically.
     if x0 is not None:
         try:
-            x0 = np.array(x0, dtype=float, copy=True).squeeze()
+            x0 = mx.array(x0, dtype=float, copy=True).squeeze()
         except ValueError as e:
             raise TypeError(
                 "Invalid input for linprog: x0 must be a 1-D array of "
@@ -404,7 +404,7 @@ def _clean_inputs(lp):
             raise ValueError(
                 "Invalid input for linprog: x0 and c should contain the "
                 "same number of elements")
-        if not np.isfinite(x0).all():
+        if not mx.isfinite(x0).all():
             raise ValueError(
                 "Invalid input for linprog: x0 must not contain values "
                 "inf, nan, or None")
@@ -413,22 +413,22 @@ def _clean_inputs(lp):
     # (1) a 2-D array or sequence, with shape N x 2
     # (2) a 1-D or 2-D sequence or array with 2 scalars
     # (3) None (or an empty sequence or array)
-    # Unspecified bounds can be represented by None or (-)np.inf.
-    # All formats are converted into a N x 2 np.array with (-)np.inf where
+    # Unspecified bounds can be represented by None or (-)mx.inf.
+    # All formats are converted into a N x 2 mx.array with (-)mx.inf where
     # bounds are unspecified.
 
     # Prepare clean bounds array
-    bounds_clean = np.zeros((n_x, 2), dtype=float)
+    bounds_clean = mx.zeros((n_x, 2), dtype=float)
 
     # Convert to a numpy array.
-    # np.array(..,dtype=float) raises an error if dimensions are inconsistent
+    # mx.array(..,dtype=float) raises an error if dimensions are inconsistent
     # or if there are invalid data types in bounds. Just add a linprog prefix
     # to the error and re-raise.
     # Creating at least a 2-D array simplifies the cases to distinguish below.
-    if bounds is None or np.array_equal(bounds, []) or np.array_equal(bounds, [[]]):
-        bounds = (0, np.inf)
+    if bounds is None or mx.array_equal(bounds, []) or mx.array_equal(bounds, [[]]):
+        bounds = (0, mx.inf)
     try:
-        bounds_conv = np.atleast_2d(np.array(bounds, dtype=float))
+        bounds_conv = mx.atleast_2d(mx.array(bounds, dtype=float))
     except ValueError as e:
         raise ValueError(
             "Invalid input for linprog: unable to interpret bounds, "
@@ -445,15 +445,15 @@ def _clean_inputs(lp):
         raise ValueError(
             "Invalid input for linprog: provide a 2-D array for bounds, "
             f"not a {len(bsh):d}-D array.")
-    elif np.all(bsh == (n_x, 2)):
+    elif mx.all(bsh == (n_x, 2)):
         # Regular N x 2 array
         bounds_clean = bounds_conv
-    elif (np.all(bsh == (2, 1)) or np.all(bsh == (1, 2))):
+    elif (mx.all(bsh == (2, 1)) or mx.all(bsh == (1, 2))):
         # 2 values: interpret as overall lower and upper bound
         bounds_flat = bounds_conv.flatten()
         bounds_clean[:, 0] = bounds_flat[0]
         bounds_clean[:, 1] = bounds_flat[1]
-    elif np.all(bsh == (2, n_x)):
+    elif mx.all(bsh == (2, n_x)):
         # Reject a 2 x N array
         raise ValueError(
             f"Invalid input for linprog: provide a {n_x:d} x 2 array for bounds, "
@@ -464,12 +464,12 @@ def _clean_inputs(lp):
             f"dimension tuple: {bsh}.")
 
     # The process above creates nan-s where the input specified None
-    # Convert the nan-s in the 1st column to -np.inf and in the 2nd column
-    # to np.inf
-    i_none = np.isnan(bounds_clean[:, 0])
-    bounds_clean[i_none, 0] = -np.inf
-    i_none = np.isnan(bounds_clean[:, 1])
-    bounds_clean[i_none, 1] = np.inf
+    # Convert the nan-s in the 1st column to -mx.inf and in the 2nd column
+    # to mx.inf
+    i_none = mx.isnan(bounds_clean[:, 0])
+    bounds_clean[i_none, 0] = -mx.inf
+    i_none = mx.isnan(bounds_clean[:, 1])
+    bounds_clean[i_none, 1] = mx.inf
 
     return _LPProblem(c, A_ub, b_ub, A_eq, b_eq, bounds_clean, x0, integrality)
 
@@ -503,7 +503,7 @@ def _presolve(lp, rr, rr_method, tol=1e-9):
             The bounds of ``x``, as ``min`` and ``max`` pairs, one for each of the N
             elements of ``x``. The N x 2 array contains lower bounds in the first
             column and upper bounds in the 2nd. Unbounded variables have lower
-            bound -np.inf and/or upper bound np.inf.
+            bound -mx.inf and/or upper bound mx.inf.
         x0 : 1D array, optional
             Guess values of the decision variables, which will be refined by
             the optimization algorithm. This argument is currently used only by the
@@ -601,7 +601,7 @@ def _presolve(lp, rr, rr_method, tol=1e-9):
     # constant term in cost function may be added if variables are eliminated
     c0 = 0
     complete = False        # complete is True if detected infeasible/unbounded
-    x = np.zeros(c.shape)   # this is solution vector if completed in presolve
+    x = mx.zeros(c.shape)   # this is solution vector if completed in presolve
 
     status = 0              # all OK unless determined otherwise
     message = ""
@@ -629,27 +629,27 @@ def _presolve(lp, rr, rr_method, tol=1e-9):
 
         vstack = sps.vstack
     else:
-        where = np.where
-        vstack = np.vstack
+        where = mx.where
+        vstack = mx.vstack
 
     # upper bounds > lower bounds
-    if np.any(ub < lb) or np.any(lb == np.inf) or np.any(ub == -np.inf):
+    if mx.any(ub < lb) or mx.any(lb == mx.inf) or mx.any(ub == -mx.inf):
         status = 2
         message = ("The problem is (trivially) infeasible since one "
                    "or more upper bounds are smaller than the corresponding "
-                   "lower bounds, a lower bound is np.inf or an upper bound "
-                   "is -np.inf.")
+                   "lower bounds, a lower bound is mx.inf or an upper bound "
+                   "is -mx.inf.")
         complete = True
         return (_LPProblem(c, A_ub, b_ub, A_eq, b_eq, bounds, x0),
                 c0, x, revstack, complete, status, message)
 
     # zero row in equality constraints
-    zero_row = np.array(np.sum(A_eq != 0, axis=1) == 0).flatten()
-    if np.any(zero_row):
-        if np.any(
-            np.logical_and(
+    zero_row = mx.array(mx.sum(A_eq != 0, axis=1) == 0).flatten()
+    if mx.any(zero_row):
+        if mx.any(
+            mx.logical_and(
                 zero_row,
-                np.abs(b_eq) > tol)):  # test_zero_row_1
+                mx.abs(b_eq) > tol)):  # test_zero_row_1
             # infeasible if RHS is not zero
             status = 2
             message = ("The problem is (trivially) infeasible due to a row "
@@ -660,13 +660,13 @@ def _presolve(lp, rr, rr_method, tol=1e-9):
                     c0, x, revstack, complete, status, message)
         else:  # test_zero_row_2
             # if RHS is zero, we can eliminate this equation entirely
-            A_eq = A_eq[np.logical_not(zero_row), :]
-            b_eq = b_eq[np.logical_not(zero_row)]
+            A_eq = A_eq[mx.logical_not(zero_row), :]
+            b_eq = b_eq[mx.logical_not(zero_row)]
 
     # zero row in inequality constraints
-    zero_row = np.array(np.sum(A_ub != 0, axis=1) == 0).flatten()
-    if np.any(zero_row):
-        if np.any(np.logical_and(zero_row, b_ub < -tol)):  # test_zero_row_1
+    zero_row = mx.array(mx.sum(A_ub != 0, axis=1) == 0).flatten()
+    if mx.any(zero_row):
+        if mx.any(mx.logical_and(zero_row, b_ub < -tol)):  # test_zero_row_1
             # infeasible if RHS is less than zero (because LHS is zero)
             status = 2
             message = ("The problem is (trivially) infeasible due to a row "
@@ -677,20 +677,20 @@ def _presolve(lp, rr, rr_method, tol=1e-9):
                     c0, x, revstack, complete, status, message)
         else:  # test_zero_row_2
             # if LHS is >= 0, we can eliminate this constraint entirely
-            A_ub = A_ub[np.logical_not(zero_row), :]
-            b_ub = b_ub[np.logical_not(zero_row)]
+            A_ub = A_ub[mx.logical_not(zero_row), :]
+            b_ub = b_ub[mx.logical_not(zero_row)]
 
     # zero column in (both) constraints
     # this indicates that a variable isn't constrained and can be removed
     A = vstack((A_eq, A_ub))
     if A.shape[0] > 0:
-        zero_col = np.array(np.sum(A != 0, axis=0) == 0).flatten()
+        zero_col = mx.array(mx.sum(A != 0, axis=0) == 0).flatten()
         # variable will be at upper or lower bound, depending on objective
-        x[np.logical_and(zero_col, c < 0)] = ub[
-            np.logical_and(zero_col, c < 0)]
-        x[np.logical_and(zero_col, c > 0)] = lb[
-            np.logical_and(zero_col, c > 0)]
-        if np.any(np.isinf(x)):  # if an unconstrained variable has no bound
+        x[mx.logical_and(zero_col, c < 0)] = ub[
+            mx.logical_and(zero_col, c < 0)]
+        x[mx.logical_and(zero_col, c > 0)] = lb[
+            mx.logical_and(zero_col, c > 0)]
+        if mx.any(mx.isinf(x)):  # if an unconstrained variable has no bound
             status = 3
             message = ("If feasible, the problem is (trivially) unbounded "
                        "due  to a zero column in the constraint matrices. If "
@@ -700,14 +700,14 @@ def _presolve(lp, rr, rr_method, tol=1e-9):
             return (_LPProblem(c, A_ub, b_ub, A_eq, b_eq, bounds, x0),
                     c0, x, revstack, complete, status, message)
         # variables will equal upper/lower bounds will be removed later
-        lb[np.logical_and(zero_col, c < 0)] = ub[
-            np.logical_and(zero_col, c < 0)]
-        ub[np.logical_and(zero_col, c > 0)] = lb[
-            np.logical_and(zero_col, c > 0)]
+        lb[mx.logical_and(zero_col, c < 0)] = ub[
+            mx.logical_and(zero_col, c < 0)]
+        ub[mx.logical_and(zero_col, c > 0)] = lb[
+            mx.logical_and(zero_col, c > 0)]
 
     # row singleton in equality constraints
     # this fixes a variable and removes the constraint
-    singleton_row = np.array(np.sum(A_eq != 0, axis=1) == 1).flatten()
+    singleton_row = mx.array(mx.sum(A_eq != 0, axis=1) == 1).flatten()
     rows = where(singleton_row)[0]
     cols = where(A_eq[rows, :])[1]
     if len(rows) > 0:
@@ -727,15 +727,15 @@ def _presolve(lp, rr, rr_method, tol=1e-9):
                 # will be removed later
                 lb[col] = val
                 ub[col] = val
-        A_eq = A_eq[np.logical_not(singleton_row), :]
-        b_eq = b_eq[np.logical_not(singleton_row)]
+        A_eq = A_eq[mx.logical_not(singleton_row), :]
+        b_eq = b_eq[mx.logical_not(singleton_row)]
 
     # row singleton in inequality constraints
     # this indicates a simple bound and the constraint can be removed
     # simple bounds may be adjusted here
     # After all of the simple bound information is combined here, get_Abc will
     # turn the simple bounds into constraints
-    singleton_row = np.array(np.sum(A_ub != 0, axis=1) == 1).flatten()
+    singleton_row = mx.array(mx.sum(A_ub != 0, axis=1) == 1).flatten()
     cols = where(A_ub[singleton_row, :])[1]
     rows = where(singleton_row)[0]
     if len(rows) > 0:
@@ -758,19 +758,19 @@ def _presolve(lp, rr, rr_method, tol=1e-9):
                            "inconsistent with the bounds.")
                 return (_LPProblem(c, A_ub, b_ub, A_eq, b_eq, bounds, x0),
                         c0, x, revstack, complete, status, message)
-        A_ub = A_ub[np.logical_not(singleton_row), :]
-        b_ub = b_ub[np.logical_not(singleton_row)]
+        A_ub = A_ub[mx.logical_not(singleton_row), :]
+        b_ub = b_ub[mx.logical_not(singleton_row)]
 
     # identical bounds indicate that variable can be removed
-    i_f = np.abs(lb - ub) < tol   # indices of "fixed" variables
-    i_nf = np.logical_not(i_f)  # indices of "not fixed" variables
+    i_f = mx.abs(lb - ub) < tol   # indices of "fixed" variables
+    i_nf = mx.logical_not(i_f)  # indices of "not fixed" variables
 
     # test_bounds_equal_but_infeasible
-    if np.all(i_f):  # if bounds define solution, check for consistency
+    if mx.all(i_f):  # if bounds define solution, check for consistency
         residual = b_eq - A_eq.dot(lb)
         slack = b_ub - A_ub.dot(lb)
-        if ((A_ub.size > 0 and np.any(slack < 0)) or
-                (A_eq.size > 0 and not np.allclose(residual, 0))):
+        if ((A_ub.size > 0 and mx.any(slack < 0)) or
+                (A_eq.size > 0 and not mx.allclose(residual, 0))):
             status = 2
             message = ("The problem is (trivially) infeasible because the "
                        "bounds fix all variables to values inconsistent with "
@@ -781,7 +781,7 @@ def _presolve(lp, rr, rr_method, tol=1e-9):
 
     ub_mod = ub
     lb_mod = lb
-    if np.any(i_f):
+    if mx.any(i_f):
         c0 += c[i_f].dot(lb[i_f])
         b_eq = b_eq - A_eq[:, i_f].dot(lb[i_f])
         b_ub = b_ub - A_ub[:, i_f].dot(lb[i_f])
@@ -802,13 +802,13 @@ def _presolve(lp, rr, rr_method, tol=1e-9):
             # When elements have been removed at positions k1, k2, k3, ...
             # then these must be replaced at (after) positions k1-1, k2-2,
             # k3-3, ... in the modified array to recreate the original
-            i = np.flatnonzero(i_f)
+            i = mx.flatnonzero(i_f)
             # Number of variables to restore
             N = len(i)
-            index_offset = np.arange(N)
+            index_offset = mx.arange(N)
             # Create insert indices
             insert_indices = i - index_offset
-            x_rev = np.insert(x_mod.astype(float), insert_indices, x_undo)
+            x_rev = mx.insert(x_mod.astype(float), insert_indices, x_undo)
             return x_rev
 
         # Use revstack as a list of functions, currently just this one.
@@ -816,15 +816,15 @@ def _presolve(lp, rr, rr_method, tol=1e-9):
 
     # no constraints indicates that problem is trivial
     if A_eq.size == 0 and A_ub.size == 0:
-        b_eq = np.array([])
-        b_ub = np.array([])
+        b_eq = mx.array([])
+        b_ub = mx.array([])
         # test_empty_constraint_1
         if c.size == 0:
             status = 0
             message = ("The solution was determined in presolve as there are "
                        "no non-trivial constraints.")
-        elif (np.any(np.logical_and(c < 0, ub_mod == np.inf)) or
-              np.any(np.logical_and(c > 0, lb_mod == -np.inf))):
+        elif (mx.any(mx.logical_and(c < 0, ub_mod == mx.inf)) or
+              mx.any(mx.logical_and(c > 0, lb_mod == -mx.inf))):
             # test_no_constraints()
             # test_unbounded_no_nontrivial_constraints_1
             # test_unbounded_no_nontrivial_constraints_2
@@ -844,14 +844,14 @@ def _presolve(lp, rr, rr_method, tol=1e-9):
         x[c > 0] = lb_mod[c > 0]
         # where c is zero, set x to a finite bound or zero
         x_zero_c = ub_mod[c == 0]
-        x_zero_c[np.isinf(x_zero_c)] = ub_mod[c == 0][np.isinf(x_zero_c)]
-        x_zero_c[np.isinf(x_zero_c)] = 0
+        x_zero_c[mx.isinf(x_zero_c)] = ub_mod[c == 0][mx.isinf(x_zero_c)]
+        x_zero_c[mx.isinf(x_zero_c)] = 0
         x[c == 0] = x_zero_c
         # if this is not the last step of presolve, should convert bounds back
         # to array and return here
 
     # Convert modified lb and ub back into N x 2 bounds
-    bounds = np.hstack((lb_mod[:, np.newaxis], ub_mod[:, np.newaxis]))
+    bounds = mx.hstack((lb_mod[:, mx.newaxis], ub_mod[:, mx.newaxis]))
 
     # remove redundant (linearly dependent) rows from equality constraints
     n_rows_A = A_eq.shape[0]
@@ -874,7 +874,7 @@ def _presolve(lp, rr, rr_method, tol=1e-9):
     small_nullspace = 5
     if rr and A_eq.size > 0:
         try:  # TODO: use results of first SVD in _remove_redundancy_svd
-            rank = np.linalg.matrix_rank(A_eq)
+            rank = mx.linalg.matrix_rank(A_eq)
         # oh well, we'll have to go with _remove_redundancy_pivot_dense
         except Exception:
             rank = 0
@@ -997,7 +997,7 @@ def _parse_linprog(lp, options, meth):
             The bounds of ``x``, as ``min`` and ``max`` pairs, one for each of the N
             elements of ``x``. The N x 2 array contains lower bounds in the first
             column and upper bounds in the 2nd. Unbounded variables have lower
-            bound -np.inf and/or upper bound np.inf.
+            bound -mx.inf and/or upper bound mx.inf.
         x0 : 1D array, optional
             Guess values of the decision variables, which will be refined by
             the optimization algorithm. This argument is currently used only by the
@@ -1129,35 +1129,35 @@ def _get_Abc(lp, c0):
         eye = sps.eye_array
     else:
         sparse = False
-        hstack = np.hstack
-        vstack = np.vstack
-        zeros = np.zeros
-        eye = np.eye
+        hstack = mx.hstack
+        vstack = mx.vstack
+        zeros = mx.zeros
+        eye = mx.eye
 
     # Variables lbs and ubs (see below) may be changed, which feeds back into
     # bounds, so copy.
-    bounds = np.array(bounds, copy=True)
+    bounds = mx.array(bounds, copy=True)
 
     # modify problem such that all variables have only non-negativity bounds
     lbs = bounds[:, 0]
     ubs = bounds[:, 1]
     m_ub, n_ub = A_ub.shape
 
-    lb_none = np.equal(lbs, -np.inf)
-    ub_none = np.equal(ubs, np.inf)
-    lb_some = np.logical_not(lb_none)
-    ub_some = np.logical_not(ub_none)
+    lb_none = mx.equal(lbs, -mx.inf)
+    ub_none = mx.equal(ubs, mx.inf)
+    lb_some = mx.logical_not(lb_none)
+    ub_some = mx.logical_not(ub_none)
 
     # unbounded below: substitute xi = -xi' (unbounded above)
     # if -inf <= xi <= ub, then -ub <= -xi <= inf, so swap and invert bounds
-    l_nolb_someub = np.logical_and(lb_none, ub_some)
-    i_nolb = np.nonzero(l_nolb_someub)[0]
+    l_nolb_someub = mx.logical_and(lb_none, ub_some)
+    i_nolb = mx.nonzero(l_nolb_someub)[0]
     lbs[l_nolb_someub], ubs[l_nolb_someub] = (
         -ubs[l_nolb_someub], -lbs[l_nolb_someub])
-    lb_none = np.equal(lbs, -np.inf)
-    ub_none = np.equal(ubs, np.inf)
-    lb_some = np.logical_not(lb_none)
-    ub_some = np.logical_not(ub_none)
+    lb_none = mx.equal(lbs, -mx.inf)
+    ub_none = mx.equal(ubs, mx.inf)
+    lb_some = mx.logical_not(lb_none)
+    ub_some = mx.logical_not(ub_none)
     c[i_nolb] *= -1
     if x0 is not None:
         x0[i_nolb] *= -1
@@ -1174,32 +1174,32 @@ def _get_Abc(lp, c0):
     if n_bounds > 0:
         shape = (n_bounds, A_ub.shape[1])
         if sparse:
-            idxs = (np.arange(n_bounds), i_newub)
-            A_ub = vstack((A_ub, sps.csr_array((np.ones(n_bounds), idxs),
+            idxs = (mx.arange(n_bounds), i_newub)
+            A_ub = vstack((A_ub, sps.csr_array((mx.ones(n_bounds), idxs),
                                                shape=shape)))
         else:
-            A_ub = vstack((A_ub, np.zeros(shape)))
-            A_ub[np.arange(m_ub, A_ub.shape[0]), i_newub] = 1
-        b_ub = np.concatenate((b_ub, np.zeros(n_bounds)))
+            A_ub = vstack((A_ub, mx.zeros(shape)))
+            A_ub[mx.arange(m_ub, A_ub.shape[0]), i_newub] = 1
+        b_ub = mx.concatenate((b_ub, mx.zeros(n_bounds)))
         b_ub[m_ub:] = ub_newub
 
     A1 = vstack((A_ub, A_eq))
-    b = np.concatenate((b_ub, b_eq))
-    c = np.concatenate((c, np.zeros((A_ub.shape[0],))))
+    b = mx.concatenate((b_ub, b_eq))
+    c = mx.concatenate((c, mx.zeros((A_ub.shape[0],))))
     if x0 is not None:
-        x0 = np.concatenate((x0, np.zeros((A_ub.shape[0],))))
+        x0 = mx.concatenate((x0, mx.zeros((A_ub.shape[0],))))
     # unbounded: substitute xi = xi+ + xi-
-    l_free = np.logical_and(lb_none, ub_none)
-    i_free = np.nonzero(l_free)[0]
+    l_free = mx.logical_and(lb_none, ub_none)
+    i_free = mx.nonzero(l_free)[0]
     n_free = len(i_free)
-    c = np.concatenate((c, np.zeros(n_free)))
+    c = mx.concatenate((c, mx.zeros(n_free)))
     if x0 is not None:
-        x0 = np.concatenate((x0, np.zeros(n_free)))
+        x0 = mx.concatenate((x0, mx.zeros(n_free)))
     A1 = hstack((A1[:, :n_ub], -A1[:, i_free]))
     c[n_ub:n_ub+n_free] = -c[i_free]
     if x0 is not None:
         i_free_neg = x0[i_free] < 0
-        x0[np.arange(n_ub, A1.shape[1])[i_free_neg]] = -x0[i_free[i_free_neg]]
+        x0[mx.arange(n_ub, A1.shape[1])[i_free_neg]] = -x0[i_free[i_free_neg]]
         x0[i_free[i_free_neg]] = 0
 
     # add slack variables
@@ -1209,9 +1209,9 @@ def _get_Abc(lp, c0):
 
     # lower bound: substitute xi = xi' + lb
     # now there is a constant term in objective
-    i_shift = np.nonzero(lb_some)[0]
+    i_shift = mx.nonzero(lb_some)[0]
     lb_shift = lbs[lb_some].astype(float)
-    c0 += np.sum(lb_shift * c[i_shift])
+    c0 += mx.sum(lb_shift * c[i_shift])
     if sparse:
         A = A.tocsc()
         b -= (A[:, i_shift] @ sps.diags_array(lb_shift)).sum(axis=1)
@@ -1227,7 +1227,7 @@ def _round_to_power_of_two(x):
     """
     Round elements of the array to the nearest power of two.
     """
-    return 2**np.around(np.log2(x))
+    return 2**mx.around(mx.log2(x))
 
 
 def _autoscale(A, b, c, x0):
@@ -1242,7 +1242,7 @@ def _autoscale(A, b, c, x0):
 
     if A.size > 0:
 
-        R = np.max(np.abs(A), axis=1)
+        R = mx.max(mx.abs(A), axis=1)
         if sps.issparse(A):
             R = R.toarray().flatten()
         R[R == 0] = 1
@@ -1250,7 +1250,7 @@ def _autoscale(A, b, c, x0):
         A = sps.diags_array(R)@A if sps.issparse(A) else A*R.reshape(m, 1)
         b = b*R
 
-        C = np.max(np.abs(A), axis=0)
+        C = mx.max(mx.abs(A), axis=0)
         if sps.issparse(A):
             C = C.toarray().flatten()
         C[C == 0] = 1
@@ -1258,7 +1258,7 @@ def _autoscale(A, b, c, x0):
         A = A@sps.diags_array(C) if sps.issparse(A) else A*C
         c = c*C
 
-    b_scale = np.max(np.abs(b)) if b.size > 0 else 1
+    b_scale = mx.max(mx.abs(b)) if b.size > 0 else 1
     if b_scale == 0:
         b_scale = 1.
     b = b/b_scale
@@ -1389,11 +1389,11 @@ def _postsolve(x, postsolve_args, complete=False):
         for i, bi in enumerate(bounds):
             lbi = bi[0]
             ubi = bi[1]
-            if lbi == -np.inf and ubi == np.inf:
+            if lbi == -mx.inf and ubi == mx.inf:
                 n_unbounded += 1
                 x[i] = x[i] - x[n_x + n_unbounded - 1]
             else:
-                if lbi == -np.inf:
+                if lbi == -mx.inf:
                     x[i] = ubi - x[i]
                 else:
                     x[i] += lbi
@@ -1407,7 +1407,7 @@ def _postsolve(x, postsolve_args, complete=False):
         x = rev(x)
 
     fun = x.dot(c)
-    with np.errstate(invalid="ignore"):
+    with mx.errstate(invalid="ignore"):
         slack = b_ub - A_ub.dot(x)  # report slack for ORIGINAL UB constraints
         # report residuals of ORIGINAL EQ constraints
         con = b_eq - A_eq.dot(x)
@@ -1468,7 +1468,7 @@ def _check_result(x, fun, status, slack, con, bounds, tol, message,
         A string descriptor of the exit status of the optimization.
     """
     # Somewhat arbitrary
-    tol = np.sqrt(tol) * 10
+    tol = mx.sqrt(tol) * 10
 
     if x is None:
         # HiGHS does not provide x if infeasible/unbounded
@@ -1479,10 +1479,10 @@ def _check_result(x, fun, status, slack, con, bounds, tol, message,
         return status, message
 
     contains_nans = (
-        np.isnan(x).any()
-        or np.isnan(fun)
-        or np.isnan(slack).any()
-        or np.isnan(con).any()
+        mx.isnan(x).any()
+        or mx.isnan(fun)
+        or mx.isnan(slack).any()
+        or mx.isnan(con).any()
     )
 
     if contains_nans:
@@ -1492,11 +1492,11 @@ def _check_result(x, fun, status, slack, con, bounds, tol, message,
             integrality = 0
         valid_bounds = (x >= bounds[:, 0] - tol) & (x <= bounds[:, 1] + tol)
         # When integrality is 2 or 3, x must be within bounds OR take value 0
-        valid_bounds |= (integrality > 1) & np.isclose(x, 0, atol=tol)
-        invalid_bounds = not np.all(valid_bounds)
+        valid_bounds |= (integrality > 1) & mx.isclose(x, 0, atol=tol)
+        invalid_bounds = not mx.all(valid_bounds)
 
         invalid_slack = status != 3 and (slack < -tol).any()
-        invalid_con = status != 3 and (np.abs(con) > tol).any()
+        invalid_con = status != 3 and (mx.abs(con) > tol).any()
         is_feasible = not (invalid_bounds or invalid_slack or invalid_con)
 
     if status == 0 and not is_feasible:

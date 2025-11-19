@@ -9,7 +9,7 @@ strings (e.g. '(3I4)', '(10I3)', etc...)
 import re
 import threading
 
-import numpy as np
+import mlx.core as mx
 
 
 __all__ = ["BadFortranFormat", "FortranFormatParser", "IntFormat", "ExpFormat"]
@@ -30,7 +30,7 @@ class BadFortranFormat(SyntaxError):
 
 
 def number_digits(n):
-    return int(np.floor(np.log10(np.abs(n))) + 1)
+    return int(mx.floor(mx.log10(mx.abs(n))) + 1)
 
 
 class IntFormat:
@@ -119,15 +119,15 @@ class ExpFormat:
         # len of one number in exp format: sign + 1|0 + "." +
         # number of digit for fractional part + 'E' + sign of exponent +
         # len of exponent
-        finfo = np.finfo(n.dtype)
+        finfo = mx.finfo(n.dtype)
         # Number of digits for fractional part
         n_prec = finfo.precision + 1
         # Number of digits for exponential part
-        n_exp = number_digits(np.max(np.abs([finfo.maxexp, finfo.minexp])))
+        n_exp = number_digits(mx.max(mx.abs([finfo.maxexp, finfo.minexp])))
         width = 1 + 1 + n_prec + 1 + n_exp + 1
         if n < 0:
             width += 1
-        repeat = int(np.floor(80 / width))
+        repeat = int(mx.floor(80 / width))
         return cls(width, n_prec, min, repeat=repeat)
 
     def __init__(self, width, significand, min=None, repeat=None):

@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from .common import Benchmark, safe_import
 import os
 
@@ -42,9 +42,9 @@ class QuadraticAssignment(Benchmark):
 
     def setup(self, method, qap_prob):
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        datafile = np.load(os.path.join(dir_path, "qapdata/qap_probs.npz"),
+        datafile = mx.load(os.path.join(dir_path, "qapdata/qap_probs.npz"),
                            allow_pickle=True)
-        slnfile = np.load(os.path.join(dir_path, "qapdata/qap_sols.npz"),
+        slnfile = mx.load(os.path.join(dir_path, "qapdata/qap_sols.npz"),
                           allow_pickle=True)
         self.A = datafile[qap_prob][0]
         self.B = datafile[qap_prob][1]

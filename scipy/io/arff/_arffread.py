@@ -2,7 +2,7 @@
 import re
 import datetime
 
-import numpy as np
+import mlx.core as mx
 
 import csv
 import ctypes
@@ -81,7 +81,7 @@ class Attribute:
     def __init__(self, name):
         self.name = name
         self.range = None
-        self.dtype = np.object_
+        self.dtype = mx.object_
 
     @classmethod
     def parse_attribute(cls, name, attr_string):
@@ -112,7 +112,7 @@ class NominalAttribute(Attribute):
         super().__init__(name)
         self.values = values
         self.range = values
-        self.dtype = (np.bytes_, max(len(i) for i in values))
+        self.dtype = (mx.bytes_, max(len(i) for i in values))
 
     @staticmethod
     def _get_nom_val(atrv):
@@ -184,7 +184,7 @@ class NumericAttribute(Attribute):
     def __init__(self, name):
         super().__init__(name)
         self.type_name = 'numeric'
-        self.dtype = np.float64
+        self.dtype = mx.float64
 
     @classmethod
     def parse_attribute(cls, name, attr_string):
@@ -231,14 +231,14 @@ class NumericAttribute(Attribute):
         nan
         """
         if '?' in data_str:
-            return np.nan
+            return mx.nan
         else:
             return float(data_str)
 
     def _basic_stats(self, data):
         nbfac = data.size * 1. / (data.size - 1)
-        return (np.nanmin(data), np.nanmax(data),
-                np.mean(data), np.std(data) * nbfac)
+        return (mx.nanmin(data), mx.nanmax(data),
+                mx.mean(data), mx.std(data) * nbfac)
 
 
 class StringAttribute(Attribute):
@@ -273,7 +273,7 @@ class DateAttribute(Attribute):
         self.datetime_unit = datetime_unit
         self.type_name = 'date'
         self.range = date_format
-        self.dtype = np.datetime64(0, self.datetime_unit)
+        self.dtype = mx.datetime64(0, self.datetime_unit)
 
     @staticmethod
     def _get_date_format(atrv):
@@ -338,10 +338,10 @@ class DateAttribute(Attribute):
         """
         date_str = data_str.strip().strip("'").strip('"')
         if date_str == '?':
-            return np.datetime64('NaT', self.datetime_unit)
+            return mx.datetime64('NaT', self.datetime_unit)
         else:
             dt = datetime.datetime.strptime(date_str, self.date_format)
-            return np.datetime64(dt).astype(
+            return mx.datetime64(dt).astype(
                 f"datetime64[{self.datetime_unit}]")
 
     def __str__(self):
@@ -353,7 +353,7 @@ class RelationalAttribute(Attribute):
     def __init__(self, name):
         super().__init__(name)
         self.type_name = 'relational'
-        self.dtype = np.object_
+        self.dtype = mx.object_
         self.attributes = []
         self.dialect = None
 
@@ -388,7 +388,7 @@ class RelationalAttribute(Attribute):
             row_tuples.append(tuple(
                 [self.attributes[i].parse_data(row[i]) for i in elems]))
 
-        return np.array(row_tuples,
+        return mx.array(row_tuples,
                         [(a.name, a.dtype) for a in self.attributes])
 
     def __str__(self):
@@ -880,6 +880,6 @@ def _loadarff(ofile):
 
     a = list(generator(ofile))
     # No error should happen here: it is a bug otherwise
-    data = np.array(a, [(a.name, a.dtype) for a in attr])
+    data = mx.array(a, [(a.name, a.dtype) for a in attr])
     return data, meta
 

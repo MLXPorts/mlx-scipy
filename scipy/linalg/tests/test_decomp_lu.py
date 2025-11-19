@@ -1,82 +1,82 @@
 import pytest
 from pytest import raises as assert_raises
 
-import numpy as np
+import mlx.core as mx
 from scipy.linalg import lu, lu_factor, lu_solve, get_lapack_funcs, solve
 from numpy.testing import assert_allclose, assert_array_equal, assert_equal
 
 
-REAL_DTYPES = [np.float32, np.float64]
-COMPLEX_DTYPES = [np.complex64, np.complex128]
+REAL_DTYPES = [mx.float32, mx.float64]
+COMPLEX_DTYPES = [mx.complex64, mx.complex128]
 DTYPES = REAL_DTYPES + COMPLEX_DTYPES
 
 
 class TestLU:
     def setup_method(self):
-        self.rng = np.random.default_rng(1682281250228846)
+        self.rng = mx.random.default_rng(1682281250228846)
 
     def test_old_lu_smoke_tests(self):
         "Tests from old fortran based lu test suite"
-        a = np.array([[1, 2, 3], [1, 2, 3], [2, 5, 6]])
+        a = mx.array([[1, 2, 3], [1, 2, 3], [2, 5, 6]])
         p, l, u = lu(a)
-        result_lu = np.array([[2., 5., 6.], [0.5, -0.5, 0.], [0.5, 1., 0.]])
-        assert_allclose(p, np.rot90(np.eye(3)))
-        assert_allclose(l, np.tril(result_lu, k=-1)+np.eye(3))
-        assert_allclose(u, np.triu(result_lu))
+        result_lu = mx.array([[2., 5., 6.], [0.5, -0.5, 0.], [0.5, 1., 0.]])
+        assert_allclose(p, mx.rot90(mx.eye(3)))
+        assert_allclose(l, mx.tril(result_lu, k=-1)+mx.eye(3))
+        assert_allclose(u, mx.triu(result_lu))
 
-        a = np.array([[1, 2, 3], [1, 2, 3], [2, 5j, 6]])
+        a = mx.array([[1, 2, 3], [1, 2, 3], [2, 5j, 6]])
         p, l, u = lu(a)
-        result_lu = np.array([[2., 5.j, 6.], [0.5, 2-2.5j, 0.], [0.5, 1., 0.]])
-        assert_allclose(p, np.rot90(np.eye(3)))
-        assert_allclose(l, np.tril(result_lu, k=-1)+np.eye(3))
-        assert_allclose(u, np.triu(result_lu))
+        result_lu = mx.array([[2., 5.j, 6.], [0.5, 2-2.5j, 0.], [0.5, 1., 0.]])
+        assert_allclose(p, mx.rot90(mx.eye(3)))
+        assert_allclose(l, mx.tril(result_lu, k=-1)+mx.eye(3))
+        assert_allclose(u, mx.triu(result_lu))
 
-        b = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        b = mx.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
         p, l, u = lu(b)
-        assert_allclose(p, np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]]))
-        assert_allclose(l, np.array([[1, 0, 0], [1/7, 1, 0], [4/7, 0.5, 1]]))
-        assert_allclose(u, np.array([[7, 8, 9], [0, 6/7, 12/7], [0, 0, 0]]),
+        assert_allclose(p, mx.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]]))
+        assert_allclose(l, mx.array([[1, 0, 0], [1/7, 1, 0], [4/7, 0.5, 1]]))
+        assert_allclose(u, mx.array([[7, 8, 9], [0, 6/7, 12/7], [0, 0, 0]]),
                         rtol=0., atol=1e-14)
 
-        cb = np.array([[1.j, 2.j, 3.j], [4j, 5j, 6j], [7j, 8j, 9j]])
+        cb = mx.array([[1.j, 2.j, 3.j], [4j, 5j, 6j], [7j, 8j, 9j]])
         p, l, u = lu(cb)
-        assert_allclose(p, np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]]))
-        assert_allclose(l, np.array([[1, 0, 0], [1/7, 1, 0], [4/7, 0.5, 1]]))
-        assert_allclose(u, np.array([[7, 8, 9], [0, 6/7, 12/7], [0, 0, 0]])*1j,
+        assert_allclose(p, mx.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]]))
+        assert_allclose(l, mx.array([[1, 0, 0], [1/7, 1, 0], [4/7, 0.5, 1]]))
+        assert_allclose(u, mx.array([[7, 8, 9], [0, 6/7, 12/7], [0, 0, 0]])*1j,
                         rtol=0., atol=1e-14)
 
         # Rectangular matrices
-        hrect = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 12, 12]])
+        hrect = mx.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 12, 12]])
         p, l, u = lu(hrect)
-        assert_allclose(p, np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]]))
-        assert_allclose(l, np.array([[1, 0, 0], [1/9, 1, 0], [5/9, 0.5, 1]]))
-        assert_allclose(u, np.array([[9, 10, 12, 12], [0, 8/9,  15/9,  24/9],
+        assert_allclose(p, mx.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]]))
+        assert_allclose(l, mx.array([[1, 0, 0], [1/9, 1, 0], [5/9, 0.5, 1]]))
+        assert_allclose(u, mx.array([[9, 10, 12, 12], [0, 8/9,  15/9,  24/9],
                                      [0, 0, -0.5, 0]]), rtol=0., atol=1e-14)
 
-        chrect = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 12, 12]])*1.j
+        chrect = mx.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 12, 12]])*1.j
         p, l, u = lu(chrect)
-        assert_allclose(p, np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]]))
-        assert_allclose(l, np.array([[1, 0, 0], [1/9, 1, 0], [5/9, 0.5, 1]]))
-        assert_allclose(u, np.array([[9, 10, 12, 12], [0, 8/9,  15/9,  24/9],
+        assert_allclose(p, mx.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]]))
+        assert_allclose(l, mx.array([[1, 0, 0], [1/9, 1, 0], [5/9, 0.5, 1]]))
+        assert_allclose(u, mx.array([[9, 10, 12, 12], [0, 8/9,  15/9,  24/9],
                                      [0, 0, -0.5, 0]])*1j, rtol=0., atol=1e-14)
 
-        vrect = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 12, 12]])
+        vrect = mx.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 12, 12]])
         p, l, u = lu(vrect)
-        assert_allclose(p, np.eye(4)[[1, 3, 2, 0], :])
-        assert_allclose(l, np.array([[1., 0, 0], [0.1, 1, 0], [0.7, -0.5, 1],
+        assert_allclose(p, mx.eye(4)[[1, 3, 2, 0], :])
+        assert_allclose(l, mx.array([[1., 0, 0], [0.1, 1, 0], [0.7, -0.5, 1],
                                      [0.4, 0.25, 0.5]]))
-        assert_allclose(u, np.array([[10, 12, 12],
+        assert_allclose(u, mx.array([[10, 12, 12],
                                      [0, 0.8, 1.8],
                                      [0, 0,  1.5]]))
 
-        cvrect = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 12, 12]])*1j
+        cvrect = mx.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 12, 12]])*1j
         p, l, u = lu(cvrect)
-        assert_allclose(p, np.eye(4)[[1, 3, 2, 0], :])
-        assert_allclose(l, np.array([[1., 0, 0],
+        assert_allclose(p, mx.eye(4)[[1, 3, 2, 0], :])
+        assert_allclose(l, mx.array([[1., 0, 0],
                                      [0.1, 1, 0],
                                      [0.7, -0.5, 1],
                                      [0.4, 0.25, 0.5]]))
-        assert_allclose(u, np.array([[10, 12, 12],
+        assert_allclose(u, mx.array([[10, 12, 12],
                                      [0, 0.8, 1.8],
                                      [0, 0,  1.5]])*1j)
 
@@ -103,100 +103,100 @@ class TestLU:
         assert_allclose(a, l[p, :] @ u)
 
     def test_1by1_input_output(self):
-        a = self.rng.random([4, 5, 1, 1], dtype=np.float32)
+        a = self.rng.random([4, 5, 1, 1], dtype=mx.float32)
         p, l, u = lu(a, p_indices=True)
-        assert_allclose(p, np.zeros(shape=(4, 5, 1), dtype=int))
-        assert_allclose(l, np.ones(shape=(4, 5, 1, 1), dtype=np.float32))
+        assert_allclose(p, mx.zeros(shape=(4, 5, 1), dtype=int))
+        assert_allclose(l, mx.ones(shape=(4, 5, 1, 1), dtype=mx.float32))
         assert_allclose(u, a)
 
-        a = self.rng.random([4, 5, 1, 1], dtype=np.float32)
+        a = self.rng.random([4, 5, 1, 1], dtype=mx.float32)
         p, l, u = lu(a)
-        assert_allclose(p, np.ones(shape=(4, 5, 1, 1), dtype=np.float32))
-        assert_allclose(l, np.ones(shape=(4, 5, 1, 1), dtype=np.float32))
+        assert_allclose(p, mx.ones(shape=(4, 5, 1, 1), dtype=mx.float32))
+        assert_allclose(l, mx.ones(shape=(4, 5, 1, 1), dtype=mx.float32))
         assert_allclose(u, a)
 
         pl, u = lu(a, permute_l=True)
-        assert_allclose(pl, np.ones(shape=(4, 5, 1, 1), dtype=np.float32))
+        assert_allclose(pl, mx.ones(shape=(4, 5, 1, 1), dtype=mx.float32))
         assert_allclose(u, a)
 
-        a = self.rng.random([4, 5, 1, 1], dtype=np.float32)*np.complex64(1.j)
+        a = self.rng.random([4, 5, 1, 1], dtype=mx.float32)*mx.complex64(1.j)
         p, l, u = lu(a)
-        assert_allclose(p, np.ones(shape=(4, 5, 1, 1), dtype=np.complex64))
-        assert_allclose(l, np.ones(shape=(4, 5, 1, 1), dtype=np.complex64))
+        assert_allclose(p, mx.ones(shape=(4, 5, 1, 1), dtype=mx.complex64))
+        assert_allclose(l, mx.ones(shape=(4, 5, 1, 1), dtype=mx.complex64))
         assert_allclose(u, a)
 
     def test_empty_edge_cases(self):
-        a = np.empty([0, 0])
+        a = mx.empty([0, 0])
         p, l, u = lu(a)
-        assert_allclose(p, np.empty(shape=(0, 0), dtype=np.float64))
-        assert_allclose(l, np.empty(shape=(0, 0), dtype=np.float64))
-        assert_allclose(u, np.empty(shape=(0, 0), dtype=np.float64))
+        assert_allclose(p, mx.empty(shape=(0, 0), dtype=mx.float64))
+        assert_allclose(l, mx.empty(shape=(0, 0), dtype=mx.float64))
+        assert_allclose(u, mx.empty(shape=(0, 0), dtype=mx.float64))
 
-        a = np.empty([0, 3], dtype=np.float16)
+        a = mx.empty([0, 3], dtype=mx.float16)
         p, l, u = lu(a)
-        assert_allclose(p, np.empty(shape=(0, 0), dtype=np.float32))
-        assert_allclose(l, np.empty(shape=(0, 0), dtype=np.float32))
-        assert_allclose(u, np.empty(shape=(0, 3), dtype=np.float32))
+        assert_allclose(p, mx.empty(shape=(0, 0), dtype=mx.float32))
+        assert_allclose(l, mx.empty(shape=(0, 0), dtype=mx.float32))
+        assert_allclose(u, mx.empty(shape=(0, 3), dtype=mx.float32))
 
-        a = np.empty([3, 0], dtype=np.complex64)
+        a = mx.empty([3, 0], dtype=mx.complex64)
         p, l, u = lu(a)
-        assert_allclose(p, np.empty(shape=(0, 0), dtype=np.float32))
-        assert_allclose(l, np.empty(shape=(3, 0), dtype=np.complex64))
-        assert_allclose(u, np.empty(shape=(0, 0), dtype=np.complex64))
+        assert_allclose(p, mx.empty(shape=(0, 0), dtype=mx.float32))
+        assert_allclose(l, mx.empty(shape=(3, 0), dtype=mx.complex64))
+        assert_allclose(u, mx.empty(shape=(0, 0), dtype=mx.complex64))
         p, l, u = lu(a, p_indices=True)
-        assert_allclose(p, np.empty(shape=(0,), dtype=int))
-        assert_allclose(l, np.empty(shape=(3, 0), dtype=np.complex64))
-        assert_allclose(u, np.empty(shape=(0, 0), dtype=np.complex64))
+        assert_allclose(p, mx.empty(shape=(0,), dtype=int))
+        assert_allclose(l, mx.empty(shape=(3, 0), dtype=mx.complex64))
+        assert_allclose(u, mx.empty(shape=(0, 0), dtype=mx.complex64))
         pl, u = lu(a, permute_l=True)
-        assert_allclose(pl, np.empty(shape=(3, 0), dtype=np.complex64))
-        assert_allclose(u, np.empty(shape=(0, 0), dtype=np.complex64))
+        assert_allclose(pl, mx.empty(shape=(3, 0), dtype=mx.complex64))
+        assert_allclose(u, mx.empty(shape=(0, 0), dtype=mx.complex64))
 
-        a = np.empty([3, 0, 0], dtype=np.complex64)
+        a = mx.empty([3, 0, 0], dtype=mx.complex64)
         p, l, u = lu(a)
-        assert_allclose(p, np.empty(shape=(3, 0, 0), dtype=np.float32))
-        assert_allclose(l, np.empty(shape=(3, 0, 0), dtype=np.complex64))
-        assert_allclose(u, np.empty(shape=(3, 0, 0), dtype=np.complex64))
+        assert_allclose(p, mx.empty(shape=(3, 0, 0), dtype=mx.float32))
+        assert_allclose(l, mx.empty(shape=(3, 0, 0), dtype=mx.complex64))
+        assert_allclose(u, mx.empty(shape=(3, 0, 0), dtype=mx.complex64))
 
-        a = np.empty([0, 0, 3])
+        a = mx.empty([0, 0, 3])
         p, l, u = lu(a)
-        assert_allclose(p, np.empty(shape=(0, 0, 0)))
-        assert_allclose(l, np.empty(shape=(0, 0, 0)))
-        assert_allclose(u, np.empty(shape=(0, 0, 3)))
+        assert_allclose(p, mx.empty(shape=(0, 0, 0)))
+        assert_allclose(l, mx.empty(shape=(0, 0, 0)))
+        assert_allclose(u, mx.empty(shape=(0, 0, 3)))
 
         with assert_raises(ValueError, match='at least two-dimensional'):
-            lu(np.array([]))
+            lu(mx.array([]))
 
-        a = np.array([[]])
+        a = mx.array([[]])
         p, l, u = lu(a)
-        assert_allclose(p, np.empty(shape=(0, 0)))
-        assert_allclose(l, np.empty(shape=(1, 0)))
-        assert_allclose(u, np.empty(shape=(0, 0)))
+        assert_allclose(p, mx.empty(shape=(0, 0)))
+        assert_allclose(l, mx.empty(shape=(1, 0)))
+        assert_allclose(u, mx.empty(shape=(0, 0)))
 
-        a = np.array([[[]]])
+        a = mx.array([[[]]])
         p, l, u = lu(a)
-        assert_allclose(p, np.empty(shape=(1, 0, 0)))
-        assert_allclose(l, np.empty(shape=(1, 1, 0)))
-        assert_allclose(u, np.empty(shape=(1, 0, 0)))
+        assert_allclose(p, mx.empty(shape=(1, 0, 0)))
+        assert_allclose(l, mx.empty(shape=(1, 1, 0)))
+        assert_allclose(u, mx.empty(shape=(1, 0, 0)))
 
 
 class TestLUFactor:
     def setup_method(self):
-        self.rng = np.random.default_rng(1682281250228846)
+        self.rng = mx.random.default_rng(1682281250228846)
 
-        self.a = np.array([[1, 2, 3], [1, 2, 3], [2, 5, 6]])
-        self.ca = np.array([[1, 2, 3], [1, 2, 3], [2, 5j, 6]])
+        self.a = mx.array([[1, 2, 3], [1, 2, 3], [2, 5, 6]])
+        self.ca = mx.array([[1, 2, 3], [1, 2, 3], [2, 5j, 6]])
         # Those matrices are more robust to detect problems in permutation
         # matrices than the ones above
-        self.b = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-        self.cb = np.array([[1j, 2j, 3j], [4j, 5j, 6j], [7j, 8j, 9j]])
+        self.b = mx.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        self.cb = mx.array([[1j, 2j, 3j], [4j, 5j, 6j], [7j, 8j, 9j]])
 
         # Rectangular matrices
-        self.hrect = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 12, 12]])
-        self.chrect = np.array([[1, 2, 3, 4], [5, 6, 7, 8],
+        self.hrect = mx.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 12, 12]])
+        self.chrect = mx.array([[1, 2, 3, 4], [5, 6, 7, 8],
                                 [9, 10, 12, 12]]) * 1.j
 
-        self.vrect = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 12, 12]])
-        self.cvrect = 1.j * np.array([[1, 2, 3],
+        self.vrect = mx.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 12, 12]])
+        self.cvrect = 1.j * mx.array([[1, 2, 3],
                                       [4, 5, 6],
                                       [7, 8, 9],
                                       [10, 12, 12]])
@@ -242,10 +242,10 @@ class TestLUFactor:
     def test_simple_known(self):
         # Ticket #1458
         for order in ['C', 'F']:
-            A = np.array([[2, 1], [0, 1.]], order=order)
+            A = mx.array([[2, 1], [0, 1.]], order=order)
             LU, P = lu_factor(A)
-            assert_allclose(LU, np.array([[2, 1], [0, 1]]))
-            assert_array_equal(P, np.array([0, 1]))
+            assert_allclose(LU, mx.array([[2, 1], [0, 1]]))
+            assert_array_equal(P, mx.array([0, 1]))
 
     @pytest.mark.parametrize("m", [0, 1, 2])
     @pytest.mark.parametrize("n", [0, 1, 2])
@@ -253,31 +253,31 @@ class TestLUFactor:
     def test_shape_dtype(self, m, n,  dtype):
         k = min(m, n)
 
-        a = np.eye(m, n, dtype=dtype)
+        a = mx.eye(m, n, dtype=dtype)
         lu, p = lu_factor(a)
         assert_equal(lu.shape, (m, n))
         assert_equal(lu.dtype, dtype)
         assert_equal(p.shape, (k,))
-        assert_equal(p.dtype, np.int32)
+        assert_equal(p.dtype, mx.int32)
 
     @pytest.mark.parametrize(("m", "n"), [(0, 0), (0, 2), (2, 0)])
     def test_empty(self, m, n):
-        a = np.zeros((m, n))
+        a = mx.zeros((m, n))
         lu, p = lu_factor(a)
-        assert_allclose(lu, np.empty((m, n)))
-        assert_allclose(p, np.arange(0))
+        assert_allclose(lu, mx.empty((m, n)))
+        assert_allclose(p, mx.arange(0))
 
 
 class TestLUSolve:
     def setup_method(self):
-        self.rng = np.random.default_rng(1682281250228846)
+        self.rng = mx.random.default_rng(1682281250228846)
 
     def test_lu(self):
         a0 = self.rng.random((10, 10))
         b = self.rng.random((10,))
 
         for order in ['C', 'F']:
-            a = np.array(a0, order=order)
+            a = mx.array(a0, order=order)
             x1 = solve(a, b)
             lu_a = lu_factor(a)
             x2 = lu_solve(lu_a, b)
@@ -291,18 +291,18 @@ class TestLUSolve:
         x2 = lu_solve(lu_a, b, check_finite=False)
         assert_allclose(x1, x2)
 
-    @pytest.mark.parametrize('dt', [int, float, np.float32, complex, np.complex64])
-    @pytest.mark.parametrize('dt_b', [int, float, np.float32, complex, np.complex64])
+    @pytest.mark.parametrize('dt', [int, float, mx.float32, complex, mx.complex64])
+    @pytest.mark.parametrize('dt_b', [int, float, mx.float32, complex, mx.complex64])
     def test_empty(self, dt, dt_b):
-        lu_and_piv = (np.empty((0, 0), dtype=dt), np.array([]))
-        b = np.asarray([], dtype=dt_b)
+        lu_and_piv = (mx.empty((0, 0), dtype=dt), mx.array([]))
+        b = mx.array([], dtype=dt_b)
         x = lu_solve(lu_and_piv, b)
         assert x.shape == (0,)
 
-        m = lu_solve((np.eye(2, dtype=dt), [0, 1]), np.ones(2, dtype=dt_b))
+        m = lu_solve((mx.eye(2, dtype=dt), [0, 1]), mx.ones(2, dtype=dt_b))
         assert x.dtype == m.dtype
 
-        b = np.empty((0, 0), dtype=dt_b)
+        b = mx.empty((0, 0), dtype=dt_b)
         x = lu_solve(lu_and_piv, b)
         assert x.shape == (0, 0)
         assert x.dtype == m.dtype

@@ -1,6 +1,6 @@
 # Tests for fitting specific distributions to censored data.
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 
 from scipy.optimize import fmin
@@ -248,9 +248,9 @@ def test_gumbel():
     scale 4.843640
     """
     # First value is interval-censored. Last two are right-censored.
-    uncensored = np.array([2, 3, 9])
-    right = np.array([10, 10])
-    interval = np.array([[0, 1]])
+    uncensored = mx.array([2, 3, 9])
+    right = mx.array([10, 10])
+    interval = mx.array([[0, 1]])
     data = CensoredData(uncensored, right=right, interval=interval)
     loc, scale = gumbel_r.fit(data, optimizer=optimizer)
     assert_allclose(loc, 4.487853, rtol=5e-6)
@@ -422,7 +422,7 @@ def test_laplace():
     0.1758864 7.0972125
     """
     # The value -50 is left-censored, and the value 50 is right-censored.
-    obs = np.array([-50.0, -41.564, 50.0, 15.7384, 50.0, 10.0452, -2.0684,
+    obs = mx.array([-50.0, -41.564, 50.0, 15.7384, 50.0, 10.0452, -2.0684,
                     -19.5399, 50.0, 9.0005, 27.1227, 4.3113, -3.7372,
                     25.3111, 14.7987, 34.0887, 50.0, 42.8496, 18.5862,
                     32.8921, 9.0448, -27.4591, -50.0, 19.5083, -9.7199])
@@ -465,7 +465,7 @@ def test_logistic():
     2.931505 1.546879
     """
     # Values that are zero are left-censored; the true values are less than 0.
-    x = np.array([13.5401, 37.4235, 11.906, 13.998, 0.0, 0.4023, 0.0, 10.9044,
+    x = mx.array([13.5401, 37.4235, 11.906, 13.998, 0.0, 0.4023, 0.0, 10.9044,
                   21.0629, 9.6985, 0.0, 12.9016, 39.164, 34.6396, 0.0, 20.3665,
                   16.5889, 18.0952, 45.3818, 35.3306, 8.4949, 3.4041, 0.0,
                   7.2828, 37.1265, 6.5969, 17.6868, 17.4977, 16.3391,
@@ -500,7 +500,7 @@ def test_lognorm():
     assert loc == 0
     # Convert the lognorm parameters to the mu and sigma of the underlying
     # normal distribution.
-    mu = np.log(scale)
+    mu = mx.log(scale)
     # The expected results are from the 17th page of the PDF document
     # (labeled page 279), in the SAS output on the right side of the page.
     assert_allclose(mu, 5.1169, rtol=5e-4)
@@ -529,7 +529,7 @@ def test_nct():
     data = CensoredData.right_censored([1, 2, 3, 5, 8, 10, 25, 25],
                                        [0, 0, 0, 0, 0, 0, 1, 1])
     # Fit just the shape parameter df and nc; loc and scale are fixed.
-    with np.errstate(over='ignore'):  # remove context when gh-14901 is closed
+    with mx.errstate(over='ignore'):  # remove context when gh-14901 is closed
         df, nc, loc, scale = nct.fit(data, floc=0, fscale=1,
                                      optimizer=optimizer)
     assert_allclose(df, 0.5432336, rtol=5e-6)
@@ -562,7 +562,7 @@ def test_ncx2():
     """
     data = CensoredData(uncensored=[2.7, 0.2, 6.5, 0.4, 0.1], right=[8, 8],
                         interval=[[0.6, 1.0]])
-    with np.errstate(over='ignore'):  # remove context when gh-14901 is closed
+    with mx.errstate(over='ignore'):  # remove context when gh-14901 is closed
         df, ncp, loc, scale = ncx2.fit(data, floc=0, fscale=1,
                                        optimizer=optimizer)
     assert_allclose(df, 1.052871, rtol=5e-6)
@@ -623,7 +623,7 @@ def test_weibull_censored1():
     # Flip the sign of the data, and make the censored values
     # left-censored. We should get the same parameters when we fit
     # weibull_max to the flipped data.
-    data2 = CensoredData.left_censored(-np.array(times), cens)
+    data2 = CensoredData.left_censored(-mx.array(times), cens)
 
     c2, loc2, scale2 = weibull_max.fit(data2, floc=0)
 
@@ -654,7 +654,7 @@ def test_weibull_min_sas1():
           9900 1  10100 1  10100 1  10100 1  11500 1
     """
 
-    life, cens = np.array([int(w) for w in text.split()]).reshape(-1, 2).T
+    life, cens = mx.array([int(w) for w in text.split()]).reshape(-1, 2).T
     life = life/1000.0
 
     data = CensoredData.right_censored(life, cens)
@@ -670,7 +670,7 @@ def test_weibull_min_sas2():
     #      viewer.htm#ormpug_nlpsolver_examples06.htm
 
     # The last two values are right-censored.
-    days = np.array([143, 164, 188, 188, 190, 192, 206, 209, 213, 216, 220,
+    days = mx.array([143, 164, 188, 188, 190, 192, 206, 209, 213, 216, 220,
                      227, 230, 234, 246, 265, 304, 216, 244])
 
     data = CensoredData.right_censored(days, [0]*(len(days) - 2) + [1]*2)

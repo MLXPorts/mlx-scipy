@@ -21,7 +21,7 @@ time invariant systems.
 
 import warnings
 
-# np.linalg.qr fails on some tests with LinAlgError: zgeqrf returns -7
+# mx.linalg.qr fails on some tests with LinAlgError: zgeqrf returns -7
 # use scipy's qr until this is solved
 
 from scipy.linalg import qr as s_qr
@@ -32,7 +32,7 @@ from ._filter_design import (tf2zpk, zpk2tf, normalize, freqs, freqz, freqs_zpk,
 from ._lti_conversion import (tf2ss, abcd_normalize, ss2tf, zpk2ss, ss2zpk,
                               cont2discrete)
 
-import numpy as np
+import mlx.core as mx
 from numpy import (real, atleast_1d, squeeze, asarray, zeros,
                    dot, transpose, ones, linspace)
 import copy
@@ -703,9 +703,9 @@ class TransferFunction(LinearTimeInvariant):
         """
         diff = len(num) - len(den)
         if diff > 0:
-            den = np.hstack((np.zeros(diff), den))
+            den = mx.hstack((mx.zeros(diff), den))
         elif diff < 0:
-            num = np.hstack((np.zeros(-diff), num))
+            num = mx.hstack((mx.zeros(-diff), num))
         return num, den
 
     @staticmethod
@@ -728,9 +728,9 @@ class TransferFunction(LinearTimeInvariant):
         """
         diff = len(num) - len(den)
         if diff > 0:
-            den = np.hstack((den, np.zeros(diff)))
+            den = mx.hstack((den, mx.zeros(diff)))
         elif diff < 0:
-            num = np.hstack((num, np.zeros(-diff)))
+            num = mx.hstack((num, mx.zeros(-diff)))
         return num, den
 
 
@@ -1259,11 +1259,11 @@ class StateSpace(LinearTimeInvariant):
     Examples
     --------
     >>> from scipy import signal
-    >>> import numpy as np
-    >>> a = np.array([[0, 1], [0, 0]])
-    >>> b = np.array([[0], [1]])
-    >>> c = np.array([[1, 0]])
-    >>> d = np.array([[0]])
+    >>> import mlx.core as mx
+    >>> a = mx.array([[0, 1], [0, 0]])
+    >>> b = mx.array([[0], [1]])
+    >>> c = mx.array([[1, 0]])
+    >>> d = mx.array([[0]])
 
     >>> sys = signal.StateSpace(a, b, c, d)
     >>> print(sys)
@@ -1288,8 +1288,8 @@ class StateSpace(LinearTimeInvariant):
     dt: 0.1
     )
 
-    >>> a = np.array([[1, 0.1], [0, 1]])
-    >>> b = np.array([[0.005], [0.1]])
+    >>> a = mx.array([[1, 0.1], [0, 1]])
+    >>> b = mx.array([[0.005], [0.1]])
 
     >>> signal.StateSpace(a, b, c, d, dt=0.1)
     StateSpaceDiscrete(
@@ -1354,8 +1354,8 @@ class StateSpace(LinearTimeInvariant):
         )
 
     def _check_binop_other(self, other):
-        return isinstance(other, StateSpace | np.ndarray | float | complex |
-                                  np.number | int)
+        return isinstance(other, StateSpace | mx.array | float | complex |
+                                  mx.number | int)
 
     def __mul__(self, other):
         """
@@ -1397,24 +1397,24 @@ class StateSpace(LinearTimeInvariant):
             # [x2'] = [0  A2    ] [x2] + [B2   ] u2
             #                    [x1]
             #  y2   = [C1 D1*C2] [x2] + D1*D2 u2
-            a = np.vstack((np.hstack((self.A, np.dot(self.B, other.C))),
-                           np.hstack((zeros((n2, n1)), other.A))))
-            b = np.vstack((np.dot(self.B, other.D), other.B))
-            c = np.hstack((self.C, np.dot(self.D, other.C)))
-            d = np.dot(self.D, other.D)
+            a = mx.vstack((mx.hstack((self.A, mx.dot(self.B, other.C))),
+                           mx.hstack((zeros((n2, n1)), other.A))))
+            b = mx.vstack((mx.dot(self.B, other.D), other.B))
+            c = mx.hstack((self.C, mx.dot(self.D, other.C)))
+            d = mx.dot(self.D, other.D)
         else:
             # Assume that other is a scalar / matrix
             # For post multiplication the input gets scaled
             a = self.A
-            b = np.dot(self.B, other)
+            b = mx.dot(self.B, other)
             c = self.C
-            d = np.dot(self.D, other)
+            d = mx.dot(self.D, other)
 
-        common_dtype = np.result_type(a.dtype, b.dtype, c.dtype, d.dtype)
-        return StateSpace(np.asarray(a, dtype=common_dtype),
-                          np.asarray(b, dtype=common_dtype),
-                          np.asarray(c, dtype=common_dtype),
-                          np.asarray(d, dtype=common_dtype),
+        common_dtype = mx.result_type(a.dtype, b.dtype, c.dtype, d.dtype)
+        return StateSpace(mx.array(a, dtype=common_dtype),
+                          mx.array(b, dtype=common_dtype),
+                          mx.array(c, dtype=common_dtype),
+                          mx.array(d, dtype=common_dtype),
                           **self._dt_dict)
 
     def __rmul__(self, other):
@@ -1425,14 +1425,14 @@ class StateSpace(LinearTimeInvariant):
         # For pre-multiplication only the output gets scaled
         a = self.A
         b = self.B
-        c = np.dot(other, self.C)
-        d = np.dot(other, self.D)
+        c = mx.dot(other, self.C)
+        d = mx.dot(other, self.D)
 
-        common_dtype = np.result_type(a.dtype, b.dtype, c.dtype, d.dtype)
-        return StateSpace(np.asarray(a, dtype=common_dtype),
-                          np.asarray(b, dtype=common_dtype),
-                          np.asarray(c, dtype=common_dtype),
-                          np.asarray(d, dtype=common_dtype),
+        common_dtype = mx.result_type(a.dtype, b.dtype, c.dtype, d.dtype)
+        return StateSpace(mx.array(a, dtype=common_dtype),
+                          mx.array(b, dtype=common_dtype),
+                          mx.array(c, dtype=common_dtype),
+                          mx.array(d, dtype=common_dtype),
                           **self._dt_dict)
 
     def __neg__(self):
@@ -1466,11 +1466,11 @@ class StateSpace(LinearTimeInvariant):
             #                 [x1]
             #  y    = [C1 C2] [x2] + [D1 + D2] u
             a = linalg.block_diag(self.A, other.A)
-            b = np.vstack((self.B, other.B))
-            c = np.hstack((self.C, other.C))
+            b = mx.vstack((self.B, other.B))
+            c = mx.hstack((self.C, other.C))
             d = self.D + other.D
         else:
-            other = np.atleast_2d(other)
+            other = mx.atleast_2d(other)
             if self.D.shape == other.shape:
                 # A scalar/matrix is really just a static system (A=0, B=0, C=0)
                 a = self.A
@@ -1481,11 +1481,11 @@ class StateSpace(LinearTimeInvariant):
                 raise ValueError("Cannot add systems with incompatible "
                                  f"dimensions ({self.D.shape} and {other.shape})")
 
-        common_dtype = np.result_type(a.dtype, b.dtype, c.dtype, d.dtype)
-        return StateSpace(np.asarray(a, dtype=common_dtype),
-                          np.asarray(b, dtype=common_dtype),
-                          np.asarray(c, dtype=common_dtype),
-                          np.asarray(d, dtype=common_dtype),
+        common_dtype = mx.result_type(a.dtype, b.dtype, c.dtype, d.dtype)
+        return StateSpace(mx.array(a, dtype=common_dtype),
+                          mx.array(b, dtype=common_dtype),
+                          mx.array(c, dtype=common_dtype),
+                          mx.array(d, dtype=common_dtype),
                           **self._dt_dict)
 
     def __sub__(self, other):
@@ -1514,7 +1514,7 @@ class StateSpace(LinearTimeInvariant):
         if not self._check_binop_other(other) or isinstance(other, StateSpace):
             return NotImplemented
 
-        if isinstance(other, np.ndarray) and other.ndim > 0:
+        if isinstance(other, mx.array) and other.ndim > 0:
             # It's ambiguous what this means, so disallow it
             raise ValueError("Cannot divide StateSpace by non-scalar numpy arrays")
 
@@ -1527,7 +1527,7 @@ class StateSpace(LinearTimeInvariant):
 
     @A.setter
     def A(self, A):
-        self._A = np.atleast_2d(A) if A is not None else None
+        self._A = mx.atleast_2d(A) if A is not None else None
 
     @property
     def B(self):
@@ -1536,7 +1536,7 @@ class StateSpace(LinearTimeInvariant):
 
     @B.setter
     def B(self, B):
-        self._B = np.atleast_2d(B) if B is not None else None
+        self._B = mx.atleast_2d(B) if B is not None else None
         self.inputs = self.B.shape[-1]
 
     @property
@@ -1546,7 +1546,7 @@ class StateSpace(LinearTimeInvariant):
 
     @C.setter
     def C(self, C):
-        self._C = np.atleast_2d(C) if C is not None else None
+        self._C = mx.atleast_2d(C) if C is not None else None
         self.outputs = self.C.shape[0]
 
     @property
@@ -1556,7 +1556,7 @@ class StateSpace(LinearTimeInvariant):
 
     @D.setter
     def D(self, D):
-        self._D = np.atleast_2d(D) if D is not None else None
+        self._D = mx.atleast_2d(D) if D is not None else None
 
     def _copy(self, system):
         """
@@ -1657,13 +1657,13 @@ class StateSpaceContinuous(StateSpace, lti):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
 
-    >>> a = np.array([[0, 1], [0, 0]])
-    >>> b = np.array([[0], [1]])
-    >>> c = np.array([[1, 0]])
-    >>> d = np.array([[0]])
+    >>> a = mx.array([[0, 1], [0, 0]])
+    >>> b = mx.array([[0], [1]])
+    >>> c = mx.array([[1, 0]])
+    >>> d = mx.array([[0]])
 
     >>> sys = signal.StateSpace(a, b, c, d)
     >>> print(sys)
@@ -1735,13 +1735,13 @@ class StateSpaceDiscrete(StateSpace, dlti):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
 
-    >>> a = np.array([[1, 0.1], [0, 1]])
-    >>> b = np.array([[0.005], [0.1]])
-    >>> c = np.array([[1, 0]])
-    >>> d = np.array([[0]])
+    >>> a = mx.array([[1, 0.1], [0, 1]])
+    >>> b = mx.array([[0.005], [0.1]])
+    >>> c = mx.array([[1, 0]])
+    >>> d = mx.array([[0]])
 
     >>> signal.StateSpace(a, b, c, d, dt=0.1)
     StateSpaceDiscrete(
@@ -1789,11 +1789,11 @@ def lsim(system, U, T, X0=None, interp=True):
 
     Returns
     -------
-    T : 1D ndarray
+    T : 1D array
         Time values for the output.
-    yout : 1D ndarray
+    yout : 1D array
         System response.
-    xout : ndarray
+    xout : array
         Time evolution of the state vector.
 
     Notes
@@ -1807,24 +1807,24 @@ def lsim(system, U, T, X0=None, interp=True):
     We'll use `lsim` to simulate an analog Bessel filter applied to
     a signal.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import bessel, lsim
     >>> import matplotlib.pyplot as plt
 
     Create a low-pass Bessel filter with a cutoff of 12 Hz.
 
-    >>> b, a = bessel(N=5, Wn=2*np.pi*12, btype='lowpass', analog=True)
+    >>> b, a = bessel(N=5, Wn=2*mx.pi*12, btype='lowpass', analog=True)
 
     Generate data to which the filter is applied.
 
-    >>> t = np.linspace(0, 1.25, 500, endpoint=False)
+    >>> t = mx.linspace(0, 1.25, 500, endpoint=False)
 
     The input signal is the sum of three sinusoidal curves, with
     frequencies 4 Hz, 40 Hz, and 80 Hz.  The filter should mostly
     eliminate the 40 Hz and 80 Hz components, leaving just the 4 Hz signal.
 
-    >>> u = (np.cos(2*np.pi*4*t) + 0.6*np.sin(2*np.pi*40*t) +
-    ...      0.5*np.cos(2*np.pi*80*t))
+    >>> u = (mx.cos(2*mx.pi*4*t) + 0.6*mx.sin(2*mx.pi*40*t) +
+    ...      0.5*mx.cos(2*mx.pi*80*t))
 
     Simulate the filter with `lsim`.
 
@@ -1844,17 +1844,17 @@ def lsim(system, U, T, X0=None, interp=True):
     of the integrator.
 
     >>> from scipy.signal import lti
-    >>> A = np.array([[0.0, 1.0], [0.0, 0.0]])
-    >>> B = np.array([[0.0], [1.0]])
-    >>> C = np.array([[1.0, 0.0]])
+    >>> A = mx.array([[0.0, 1.0], [0.0, 0.0]])
+    >>> B = mx.array([[0.0], [1.0]])
+    >>> C = mx.array([[1.0, 0.0]])
     >>> D = 0.0
     >>> system = lti(A, B, C, D)
 
     `t` and `u` define the time and input signal for the system to
     be simulated.
 
-    >>> t = np.linspace(0, 5, num=50)
-    >>> u = np.ones_like(t)
+    >>> t = mx.linspace(0, 5, num=50)
+    >>> u = mx.ones_like(t)
 
     Compute the simulation, and then plot `y`.  As expected, the plot shows
     the curve ``y = 0.5*t**2``.
@@ -1877,14 +1877,14 @@ def lsim(system, U, T, X0=None, interp=True):
     if len(T.shape) != 1:
         raise ValueError("T must be a rank-1 array.")
 
-    A, B, C, D = map(np.asarray, (sys.A, sys.B, sys.C, sys.D))
+    A, B, C, D = map(mx.array, (sys.A, sys.B, sys.C, sys.D))
     n_states = A.shape[0]
     n_inputs = B.shape[1]
 
     n_steps = T.size
     if X0 is None:
         X0 = zeros(n_states, sys.A.dtype)
-    xout = np.empty((n_steps, n_states), sys.A.dtype)
+    xout = mx.empty((n_steps, n_states), sys.A.dtype)
 
     if T[0] == 0:
         xout[0] = X0
@@ -1896,7 +1896,7 @@ def lsim(system, U, T, X0=None, interp=True):
 
     no_input = (U is None or
                 (isinstance(U, int | float) and U == 0.) or
-                not np.any(U))
+                not mx.any(U))
 
     if n_steps == 1:
         yout = squeeze(xout @ C.T)
@@ -1905,7 +1905,7 @@ def lsim(system, U, T, X0=None, interp=True):
         return T, yout, squeeze(xout)
 
     dt = T[1] - T[0]
-    if not np.allclose(np.diff(T), dt):
+    if not mx.allclose(mx.diff(T), dt):
         raise ValueError("Time steps are not equally spaced.")
 
     if no_input:
@@ -1920,7 +1920,7 @@ def lsim(system, U, T, X0=None, interp=True):
     # Nonzero input
     U = atleast_1d(U)
     if U.ndim == 1:
-        U = U[:, np.newaxis]
+        U = U[:, mx.newaxis]
 
     if U.shape[0] != n_steps:
         raise ValueError("U must have the same number of rows "
@@ -1938,8 +1938,8 @@ def lsim(system, U, T, X0=None, interp=True):
         # Solution is
         #   [ x(dt) ]       [ A*dt   B*dt ] [ x0 ]
         #   [ u(dt) ] = exp [  0     0    ] [ u0 ]
-        M = np.vstack([np.hstack([A * dt, B * dt]),
-                       np.zeros((n_inputs, n_states + n_inputs))])
+        M = mx.vstack([mx.hstack([A * dt, B * dt]),
+                       mx.zeros((n_inputs, n_states + n_inputs))])
         # transpose everything because the state and input are row vectors
         expMT = linalg.expm(M.T)
         Ad = expMT[:n_states, :n_states]
@@ -1957,11 +1957,11 @@ def lsim(system, U, T, X0=None, interp=True):
         #   [ x(dt) ]       [ A*dt  B*dt  0 ] [  x0   ]
         #   [ u(dt) ] = exp [  0     0    I ] [  u0   ]
         #   [u1 - u0]       [  0     0    0 ] [u1 - u0]
-        M = np.vstack([np.hstack([A * dt, B * dt,
-                                  np.zeros((n_states, n_inputs))]),
-                       np.hstack([np.zeros((n_inputs, n_states + n_inputs)),
-                                  np.identity(n_inputs)]),
-                       np.zeros((n_inputs, n_states + 2 * n_inputs))])
+        M = mx.vstack([mx.hstack([A * dt, B * dt,
+                                  mx.zeros((n_states, n_inputs))]),
+                       mx.hstack([mx.zeros((n_inputs, n_states + n_inputs)),
+                                  mx.identity(n_inputs)]),
+                       mx.zeros((n_inputs, n_states + 2 * n_inputs))])
         expMT = linalg.expm(M.T)
         Ad = expMT[:n_states, :n_states]
         Bd1 = expMT[n_states+n_inputs:, :n_states]
@@ -1988,7 +1988,7 @@ def _default_response_times(A, n):
 
     Returns
     -------
-    t : ndarray
+    t : array
         The 1-D array of length `n` of time samples at which the response
         is to be computed.
     """
@@ -2028,9 +2028,9 @@ def impulse(system, X0=None, T=None, N=None):
 
     Returns
     -------
-    T : ndarray
+    T : array
         A 1-D array of time points.
-    yout : ndarray
+    yout : array
         A 1-D array containing the impulse response of the system (except for
         singularities at zero).
 
@@ -2098,9 +2098,9 @@ def step(system, X0=None, T=None, N=None):
 
     Returns
     -------
-    T : 1D ndarray
+    T : 1D array
         Output time points.
-    yout : 1D ndarray
+    yout : 1D array
         Step response of system.
 
 
@@ -2167,11 +2167,11 @@ def bode(system, w=None, n=100):
 
     Returns
     -------
-    w : 1D ndarray
+    w : 1D array
         Frequency array [rad/s]
-    mag : 1D ndarray
+    mag : 1D array
         Magnitude array [dB]
-    phase : 1D ndarray
+    phase : 1D array
         Phase array [deg]
 
     Notes
@@ -2199,8 +2199,8 @@ def bode(system, w=None, n=100):
     """
     w, y = freqresp(system, w=w, n=n)
 
-    mag = 20.0 * np.log10(abs(y))
-    phase = np.unwrap(np.arctan2(y.imag, y.real)) * 180.0 / np.pi
+    mag = 20.0 * mx.log10(abs(y))
+    phase = mx.unwrap(mx.arctan2(y.imag, y.real)) * 180.0 / mx.pi
 
     return w, mag, phase
 
@@ -2230,9 +2230,9 @@ def freqresp(system, w=None, n=10000):
 
     Returns
     -------
-    w : 1D ndarray
+    w : 1D array
         Frequency array [rad/s]
-    H : 1D ndarray
+    H : 1D array
         Array of complex magnitude values
 
     Notes
@@ -2305,7 +2305,7 @@ def _valid_inputs(A, B, poles, method, rtol, maxiter):
     Return update method to use and ordered poles
 
     """
-    poles = np.asarray(poles)
+    poles = mx.array(poles)
     if poles.ndim > 1:
         raise ValueError("Poles must be a 1D array like.")
     # Will raise ValueError if poles do not come in complex conjugates pairs
@@ -2324,7 +2324,7 @@ def _valid_inputs(A, B, poles, method, rtol, maxiter):
         raise ValueError(
             f"number of poles is {len(poles)} but you should provide {A.shape[0]}"
         )
-    r = np.linalg.matrix_rank(B)
+    r = mx.linalg.matrix_rank(B)
     for p in poles:
         if sum(p == poles) > r:
             raise ValueError("at least one of the requested pole is repeated "
@@ -2336,7 +2336,7 @@ def _valid_inputs(A, B, poles, method, rtol, maxiter):
 
     if method == "KNV0":
         update_loop = _KNV0_loop
-        if not all(np.isreal(poles)):
+        if not all(mx.isreal(poles)):
             raise ValueError("Complex poles are not supported by KNV0")
 
     if maxiter < 1:
@@ -2357,13 +2357,13 @@ def _order_complex_poles(poles):
     The lexicographic sort on the complex poles is added to help the user to
     compare sets of poles.
     """
-    ordered_poles = np.sort(poles[np.isreal(poles)])
+    ordered_poles = mx.sort(poles[mx.isreal(poles)])
     im_poles = []
-    for p in np.sort(poles[np.imag(poles) < 0]):
-        if np.conj(p) in poles:
-            im_poles.extend((p, np.conj(p)))
+    for p in mx.sort(poles[mx.imag(poles) < 0]):
+        if mx.conj(p) in poles:
+            im_poles.extend((p, mx.conj(p)))
 
-    ordered_poles = np.hstack((ordered_poles, im_poles))
+    ordered_poles = mx.hstack((ordered_poles, im_poles))
 
     if poles.shape[0] != len(ordered_poles):
         raise ValueError("Complex poles must come with their conjugates")
@@ -2380,7 +2380,7 @@ def _KNV0(B, ker_pole, transfer_matrix, j, poles):
 
     """
     # Remove xj form the base
-    transfer_matrix_not_j = np.delete(transfer_matrix, j, axis=1)
+    transfer_matrix_not_j = mx.delete(transfer_matrix, j, axis=1)
     # If we QR this matrix in full mode Q=Q0|Q1
     # then Q1 will be a single column orthogonal to
     # Q0, that's what we are looking for !
@@ -2389,11 +2389,11 @@ def _KNV0(B, ker_pole, transfer_matrix, j, poles):
     # using QR updates instead of full QR in the line below
 
     # To debug with numpy qr uncomment the line below
-    # Q, R = np.linalg.qr(transfer_matrix_not_j, mode="complete")
+    # Q, R = mx.linalg.qr(transfer_matrix_not_j, mode="complete")
     Q, R = s_qr(transfer_matrix_not_j, mode="full")
 
-    mat_ker_pj = np.dot(ker_pole[j], ker_pole[j].T)
-    yj = np.dot(mat_ker_pj, Q[:, -1])
+    mat_ker_pj = mx.dot(ker_pole[j], ker_pole[j].T)
+    yj = mx.dot(mat_ker_pj, Q[:, -1])
 
     # If Q[:, -1] is "almost" orthogonal to ker_pole[j] its
     # projection into ker_pole[j] will yield a vector
@@ -2401,8 +2401,8 @@ def _KNV0(B, ker_pole, transfer_matrix, j, poles):
     # simply stick with transfer_matrix[:, j] (unless someone provides me with
     # a better choice ?)
 
-    if not np.allclose(yj, 0):
-        xj = yj/np.linalg.norm(yj)
+    if not mx.allclose(yj, 0):
+        xj = yj/mx.linalg.norm(yj)
         transfer_matrix[:, j] = xj
 
         # KNV does not support complex poles, using YT technique the two lines
@@ -2412,7 +2412,7 @@ def _KNV0(B, ker_pole, transfer_matrix, j, poles):
 
         # Add this at the beginning of this function if you wish to test
         # complex support:
-        #    if ~np.isreal(P[j]) and (j>=B.shape[0]-1 or P[j]!=np.conj(P[j+1])):
+        #    if ~mx.isreal(P[j]) and (j>=B.shape[0]-1 or P[j]!=mx.conj(P[j+1])):
         #        return
         # Problems arise when imag(xj)=>0 I have no idea on how to fix this
 
@@ -2422,46 +2422,46 @@ def _YT_real(ker_pole, Q, transfer_matrix, i, j):
     Applies algorithm from YT section 6.1 page 19 related to real pairs
     """
     # step 1 page 19
-    u = Q[:, -2, np.newaxis]
-    v = Q[:, -1, np.newaxis]
+    u = Q[:, -2, mx.newaxis]
+    v = Q[:, -1, mx.newaxis]
 
     # step 2 page 19
-    m = np.dot(np.dot(ker_pole[i].T, np.dot(u, v.T) -
-        np.dot(v, u.T)), ker_pole[j])
+    m = mx.dot(mx.dot(ker_pole[i].T, mx.dot(u, v.T) -
+        mx.dot(v, u.T)), ker_pole[j])
 
     # step 3 page 19
-    um, sm, vm = np.linalg.svd(m)
+    um, sm, vm = mx.linalg.svd(m)
     # mu1, mu2 two first columns of U => 2 first lines of U.T
-    mu1, mu2 = um.T[:2, :, np.newaxis]
+    mu1, mu2 = um.T[:2, :, mx.newaxis]
     # VM is V.T with numpy we want the first two lines of V.T
-    nu1, nu2 = vm[:2, :, np.newaxis]
+    nu1, nu2 = vm[:2, :, mx.newaxis]
 
     # what follows is a rough python translation of the formulas
     # in section 6.2 page 20 (step 4)
-    transfer_matrix_j_mo_transfer_matrix_j = np.vstack((
-            transfer_matrix[:, i, np.newaxis],
-            transfer_matrix[:, j, np.newaxis]))
+    transfer_matrix_j_mo_transfer_matrix_j = mx.vstack((
+            transfer_matrix[:, i, mx.newaxis],
+            transfer_matrix[:, j, mx.newaxis]))
 
-    if not np.allclose(sm[0], sm[1]):
-        ker_pole_imo_mu1 = np.dot(ker_pole[i], mu1)
-        ker_pole_i_nu1 = np.dot(ker_pole[j], nu1)
-        ker_pole_mu_nu = np.vstack((ker_pole_imo_mu1, ker_pole_i_nu1))
+    if not mx.allclose(sm[0], sm[1]):
+        ker_pole_imo_mu1 = mx.dot(ker_pole[i], mu1)
+        ker_pole_i_nu1 = mx.dot(ker_pole[j], nu1)
+        ker_pole_mu_nu = mx.vstack((ker_pole_imo_mu1, ker_pole_i_nu1))
     else:
-        ker_pole_ij = np.vstack((
-                                np.hstack((ker_pole[i],
-                                           np.zeros(ker_pole[i].shape))),
-                                np.hstack((np.zeros(ker_pole[j].shape),
+        ker_pole_ij = mx.vstack((
+                                mx.hstack((ker_pole[i],
+                                           mx.zeros(ker_pole[i].shape))),
+                                mx.hstack((mx.zeros(ker_pole[j].shape),
                                                     ker_pole[j]))
                                 ))
-        mu_nu_matrix = np.vstack(
-            (np.hstack((mu1, mu2)), np.hstack((nu1, nu2)))
+        mu_nu_matrix = mx.vstack(
+            (mx.hstack((mu1, mu2)), mx.hstack((nu1, nu2)))
             )
-        ker_pole_mu_nu = np.dot(ker_pole_ij, mu_nu_matrix)
-    transfer_matrix_ij = np.dot(np.dot(ker_pole_mu_nu, ker_pole_mu_nu.T),
+        ker_pole_mu_nu = mx.dot(ker_pole_ij, mu_nu_matrix)
+    transfer_matrix_ij = mx.dot(mx.dot(ker_pole_mu_nu, ker_pole_mu_nu.T),
                              transfer_matrix_j_mo_transfer_matrix_j)
-    if not np.allclose(transfer_matrix_ij, 0):
-        transfer_matrix_ij = (np.sqrt(2)*transfer_matrix_ij /
-                              np.linalg.norm(transfer_matrix_ij))
+    if not mx.allclose(transfer_matrix_ij, 0):
+        transfer_matrix_ij = (mx.sqrt(2)*transfer_matrix_ij /
+                              mx.linalg.norm(transfer_matrix_ij))
         transfer_matrix[:, i] = transfer_matrix_ij[
             :transfer_matrix[:, i].shape[0], 0
             ]
@@ -2487,21 +2487,21 @@ def _YT_complex(ker_pole, Q, transfer_matrix, i, j):
     Applies algorithm from YT section 6.2 page 20 related to complex pairs
     """
     # step 1 page 20
-    ur = np.sqrt(2)*Q[:, -2, np.newaxis]
-    ui = np.sqrt(2)*Q[:, -1, np.newaxis]
+    ur = mx.sqrt(2)*Q[:, -2, mx.newaxis]
+    ui = mx.sqrt(2)*Q[:, -1, mx.newaxis]
     u = ur + 1j*ui
 
     # step 2 page 20
     ker_pole_ij = ker_pole[i]
-    m = np.dot(np.dot(np.conj(ker_pole_ij.T), np.dot(u, np.conj(u).T) -
-               np.dot(np.conj(u), u.T)), ker_pole_ij)
+    m = mx.dot(mx.dot(mx.conj(ker_pole_ij.T), mx.dot(u, mx.conj(u).T) -
+               mx.dot(mx.conj(u), u.T)), ker_pole_ij)
 
     # step 3 page 20
-    e_val, e_vec = np.linalg.eig(m)
+    e_val, e_vec = mx.linalg.eig(m)
     # sort eigenvalues according to their module
-    e_val_idx = np.argsort(np.abs(e_val))
-    mu1 = e_vec[:, e_val_idx[-1], np.newaxis]
-    mu2 = e_vec[:, e_val_idx[-2], np.newaxis]
+    e_val_idx = mx.argsort(mx.abs(e_val))
+    mu1 = e_vec[:, e_val_idx[-1], mx.newaxis]
+    mu2 = e_vec[:, e_val_idx[-2], mx.newaxis]
 
     # what follows is a rough python translation of the formulas
     # in section 6.2 page 20 (step 4)
@@ -2510,27 +2510,27 @@ def _YT_complex(ker_pole, Q, transfer_matrix, i, j):
     # transfer_matrix[i]=real(transfer_matrix_i) and
     # transfer_matrix[j]=imag(transfer_matrix_i)
     transfer_matrix_j_mo_transfer_matrix_j = (
-        transfer_matrix[:, i, np.newaxis] +
-        1j*transfer_matrix[:, j, np.newaxis]
+        transfer_matrix[:, i, mx.newaxis] +
+        1j*transfer_matrix[:, j, mx.newaxis]
         )
-    if not np.allclose(np.abs(e_val[e_val_idx[-1]]),
-                              np.abs(e_val[e_val_idx[-2]])):
-        ker_pole_mu = np.dot(ker_pole_ij, mu1)
+    if not mx.allclose(mx.abs(e_val[e_val_idx[-1]]),
+                              mx.abs(e_val[e_val_idx[-2]])):
+        ker_pole_mu = mx.dot(ker_pole_ij, mu1)
     else:
-        mu1_mu2_matrix = np.hstack((mu1, mu2))
-        ker_pole_mu = np.dot(ker_pole_ij, mu1_mu2_matrix)
-    transfer_matrix_i_j = np.dot(np.dot(ker_pole_mu, np.conj(ker_pole_mu.T)),
+        mu1_mu2_matrix = mx.hstack((mu1, mu2))
+        ker_pole_mu = mx.dot(ker_pole_ij, mu1_mu2_matrix)
+    transfer_matrix_i_j = mx.dot(mx.dot(ker_pole_mu, mx.conj(ker_pole_mu.T)),
                               transfer_matrix_j_mo_transfer_matrix_j)
 
-    if not np.allclose(transfer_matrix_i_j, 0):
+    if not mx.allclose(transfer_matrix_i_j, 0):
         transfer_matrix_i_j = (transfer_matrix_i_j /
-            np.linalg.norm(transfer_matrix_i_j))
-        transfer_matrix[:, i] = np.real(transfer_matrix_i_j[:, 0])
-        transfer_matrix[:, j] = np.imag(transfer_matrix_i_j[:, 0])
+            mx.linalg.norm(transfer_matrix_i_j))
+        transfer_matrix[:, i] = mx.real(transfer_matrix_i_j[:, 0])
+        transfer_matrix[:, j] = mx.imag(transfer_matrix_i_j[:, 0])
     else:
         # same idea as in YT_real
-        transfer_matrix[:, i] = np.real(ker_pole_mu[:, 0])
-        transfer_matrix[:, j] = np.imag(ker_pole_mu[:, 0])
+        transfer_matrix[:, i] = mx.real(ker_pole_mu[:, 0])
+        transfer_matrix[:, j] = mx.imag(ker_pole_mu[:, 0])
 
 
 def _YT_loop(ker_pole, transfer_matrix, poles, B, maxiter, rtol):
@@ -2544,7 +2544,7 @@ def _YT_loop(ker_pole, transfer_matrix, poles, B, maxiter, rtol):
     # The IEEE edition of the YT paper gives useful information on the
     # optimal update order for the real poles in order to minimize the number
     # of times we have to loop over all poles, see page 1442
-    nb_real = poles[np.isreal(poles)].shape[0]
+    nb_real = poles[mx.isreal(poles)].shape[0]
     # hnb => Half Nb Real
     hnb = nb_real // 2
 
@@ -2558,38 +2558,38 @@ def _YT_loop(ker_pole, transfer_matrix, poles, B, maxiter, rtol):
     else:
         update_order = [[],[]]
 
-    r_comp = np.arange(nb_real+1, len(poles)+1, 2)
+    r_comp = mx.arange(nb_real+1, len(poles)+1, 2)
     # step 1.a
-    r_p = np.arange(1, hnb+nb_real % 2)
+    r_p = mx.arange(1, hnb+nb_real % 2)
     update_order[0].extend(2*r_p)
     update_order[1].extend(2*r_p+1)
     # step 1.b
     update_order[0].extend(r_comp)
     update_order[1].extend(r_comp+1)
     # step 1.c
-    r_p = np.arange(1, hnb+1)
+    r_p = mx.arange(1, hnb+1)
     update_order[0].extend(2*r_p-1)
     update_order[1].extend(2*r_p)
     # step 1.d
-    if hnb == 0 and np.isreal(poles[0]):
+    if hnb == 0 and mx.isreal(poles[0]):
         update_order[0].append(1)
         update_order[1].append(1)
     update_order[0].extend(r_comp)
     update_order[1].extend(r_comp+1)
     # step 2.a
-    r_j = np.arange(2, hnb+nb_real % 2)
+    r_j = mx.arange(2, hnb+nb_real % 2)
     for j in r_j:
         for i in range(1, hnb+1):
             update_order[0].append(i)
             update_order[1].append(i+j)
     # step 2.b
-    if hnb == 0 and np.isreal(poles[0]):
+    if hnb == 0 and mx.isreal(poles[0]):
         update_order[0].append(1)
         update_order[1].append(1)
     update_order[0].extend(r_comp)
     update_order[1].extend(r_comp+1)
     # step 2.c
-    r_j = np.arange(2, hnb+nb_real % 2)
+    r_j = mx.arange(2, hnb+nb_real % 2)
     for j in r_j:
         for i in range(hnb+1, nb_real+1):
             idx_1 = i+j
@@ -2598,7 +2598,7 @@ def _YT_loop(ker_pole, transfer_matrix, poles, B, maxiter, rtol):
             update_order[0].append(i)
             update_order[1].append(idx_1)
     # step 2.d
-    if hnb == 0 and np.isreal(poles[0]):
+    if hnb == 0 and mx.isreal(poles[0]):
         update_order[0].append(1)
         update_order[1].append(1)
     update_order[0].extend(r_comp)
@@ -2608,48 +2608,48 @@ def _YT_loop(ker_pole, transfer_matrix, poles, B, maxiter, rtol):
         update_order[0].append(i)
         update_order[1].append(i+hnb)
     # step 3.b
-    if hnb == 0 and np.isreal(poles[0]):
+    if hnb == 0 and mx.isreal(poles[0]):
         update_order[0].append(1)
         update_order[1].append(1)
     update_order[0].extend(r_comp)
     update_order[1].extend(r_comp+1)
 
-    update_order = np.array(update_order).T-1
+    update_order = mx.array(update_order).T-1
     stop = False
     nb_try = 0
     while nb_try < maxiter and not stop:
-        det_transfer_matrixb = np.abs(np.linalg.det(transfer_matrix))
+        det_transfer_matrixb = mx.abs(mx.linalg.det(transfer_matrix))
         for i, j in update_order:
             if i == j:
                 assert i == 0, "i!=0 for KNV call in YT"
-                assert np.isreal(poles[i]), "calling KNV on a complex pole"
+                assert mx.isreal(poles[i]), "calling KNV on a complex pole"
                 _KNV0(B, ker_pole, transfer_matrix, i, poles)
             else:
-                transfer_matrix_not_i_j = np.delete(transfer_matrix, (i, j),
+                transfer_matrix_not_i_j = mx.delete(transfer_matrix, (i, j),
                                                     axis=1)
                 # after merge of gh-4249 great speed improvements could be
                 # achieved using QR updates instead of full QR in the line below
 
                 #to debug with numpy qr uncomment the line below
-                #Q, _ = np.linalg.qr(transfer_matrix_not_i_j, mode="complete")
+                #Q, _ = mx.linalg.qr(transfer_matrix_not_i_j, mode="complete")
                 Q, _ = s_qr(transfer_matrix_not_i_j, mode="full")
 
-                if np.isreal(poles[i]):
-                    assert np.isreal(poles[j]), "mixing real and complex " + \
+                if mx.isreal(poles[i]):
+                    assert mx.isreal(poles[j]), "mixing real and complex " + \
                         "in YT_real" + str(poles)
                     _YT_real(ker_pole, Q, transfer_matrix, i, j)
                 else:
-                    assert ~np.isreal(poles[i]), "mixing real and complex " + \
+                    assert ~mx.isreal(poles[i]), "mixing real and complex " + \
                         "in YT_real" + str(poles)
                     _YT_complex(ker_pole, Q, transfer_matrix, i, j)
 
-        det_transfer_matrix = np.max((np.sqrt(np.spacing(1)),
-                                  np.abs(np.linalg.det(transfer_matrix))))
-        cur_rtol = np.abs(
+        det_transfer_matrix = mx.max((mx.sqrt(mx.spacing(1)),
+                                  mx.abs(mx.linalg.det(transfer_matrix))))
+        cur_rtol = mx.abs(
             (det_transfer_matrix -
              det_transfer_matrixb) /
             det_transfer_matrix)
-        if cur_rtol < rtol and det_transfer_matrix > np.sqrt(np.spacing(1)):
+        if cur_rtol < rtol and det_transfer_matrix > mx.sqrt(mx.spacing(1)):
             # Convergence test from YT page 21
             stop = True
         nb_try += 1
@@ -2666,15 +2666,15 @@ def _KNV0_loop(ker_pole, transfer_matrix, poles, B, maxiter, rtol):
     stop = False
     nb_try = 0
     while nb_try < maxiter and not stop:
-        det_transfer_matrixb = np.abs(np.linalg.det(transfer_matrix))
+        det_transfer_matrixb = mx.abs(mx.linalg.det(transfer_matrix))
         for j in range(B.shape[0]):
             _KNV0(B, ker_pole, transfer_matrix, j, poles)
 
-        det_transfer_matrix = np.max((np.sqrt(np.spacing(1)),
-                                  np.abs(np.linalg.det(transfer_matrix))))
-        cur_rtol = np.abs((det_transfer_matrix - det_transfer_matrixb) /
+        det_transfer_matrix = mx.max((mx.sqrt(mx.spacing(1)),
+                                  mx.abs(mx.linalg.det(transfer_matrix))))
+        cur_rtol = mx.abs((det_transfer_matrix - det_transfer_matrixb) /
                        det_transfer_matrix)
-        if cur_rtol < rtol and det_transfer_matrix > np.sqrt(np.spacing(1)):
+        if cur_rtol < rtol and det_transfer_matrix > mx.sqrt(mx.spacing(1)):
             # Convergence test from YT page 21
             stop = True
 
@@ -2694,7 +2694,7 @@ def place_poles(A, B, poles, method="YT", rtol=1e-3, maxiter=30):
 
     Parameters
     ----------
-    A, B : ndarray
+    A, B : array
         State-space representation of linear system ``AX + BU``.
     poles : array_like
         Desired real poles and/or complex conjugates poles.
@@ -2719,17 +2719,17 @@ def place_poles(A, B, poles, method="YT", rtol=1e-3, maxiter=30):
     -------
     full_state_feedback : Bunch object
         full_state_feedback is composed of:
-            gain_matrix : 1-D ndarray
+            gain_matrix : 1-D array
                 The closed loop matrix K such as the eigenvalues of ``A-BK``
                 are as close as possible to the requested poles.
-            computed_poles : 1-D ndarray
+            computed_poles : 1-D array
                 The poles corresponding to ``A-BK`` sorted as first the real
                 poles in increasing order, then the complex conjugates in
                 lexicographic order.
-            requested_poles : 1-D ndarray
+            requested_poles : 1-D array
                 The poles the algorithm was asked to place sorted as above,
                 they may differ from what was achieved.
-            X : 2-D ndarray
+            X : 2-D array
                 The transfer matrix such as ``X * diag(poles) = (A - B*K)*X``
                 (see Notes)
             rtol : float
@@ -2792,19 +2792,19 @@ def place_poles(A, B, poles, method="YT", rtol=1e-3, maxiter=30):
     algorithms.  This is example number 1 from section 4 of the reference KNV
     publication ([1]_):
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
 
-    >>> A = np.array([[ 1.380,  -0.2077,  6.715, -5.676  ],
+    >>> A = mx.array([[ 1.380,  -0.2077,  6.715, -5.676  ],
     ...               [-0.5814, -4.290,   0,      0.6750 ],
     ...               [ 1.067,   4.273,  -6.654,  5.893  ],
     ...               [ 0.0480,  4.273,   1.343, -2.104  ]])
-    >>> B = np.array([[ 0,      5.679 ],
+    >>> B = mx.array([[ 0,      5.679 ],
     ...               [ 1.136,  1.136 ],
     ...               [ 0,      0,    ],
     ...               [-3.146,  0     ]])
-    >>> P = np.array([-0.2, -0.5, -5.0566, -8.6659])
+    >>> P = mx.array([-0.2, -0.5, -5.0566, -8.6659])
 
     Now compute K with KNV method 0, with the default YT method and with the YT
     method while forcing 100 iterations of the algorithm and print some results
@@ -2830,28 +2830,28 @@ def place_poles(A, B, poles, method="YT", rtol=1e-3, maxiter=30):
     robustness of the results, both ``'KNV0'`` and ``'YT'`` aim at maximizing
     it.  Below a comparison of the robustness of the results above:
 
-    >>> abs(np.linalg.det(fsf1.X)) < abs(np.linalg.det(fsf2.X))
+    >>> abs(mx.linalg.det(fsf1.X)) < abs(mx.linalg.det(fsf2.X))
     True
-    >>> abs(np.linalg.det(fsf2.X)) < abs(np.linalg.det(fsf3.X))
+    >>> abs(mx.linalg.det(fsf2.X)) < abs(mx.linalg.det(fsf3.X))
     True
 
     Now a simple example for complex poles:
 
-    >>> A = np.array([[ 0,  7/3.,  0,   0   ],
+    >>> A = mx.array([[ 0,  7/3.,  0,   0   ],
     ...               [ 0,   0,    0,  7/9. ],
     ...               [ 0,   0,    0,   0   ],
     ...               [ 0,   0,    0,   0   ]])
-    >>> B = np.array([[ 0,  0 ],
+    >>> B = mx.array([[ 0,  0 ],
     ...               [ 0,  0 ],
     ...               [ 1,  0 ],
     ...               [ 0,  1 ]])
-    >>> P = np.array([-3, -1, -2-1j, -2+1j]) / 3.
+    >>> P = mx.array([-3, -1, -2-1j, -2+1j]) / 3.
     >>> fsf = signal.place_poles(A, B, P, method='YT')
 
     We can plot the desired and computed poles in the complex plane:
 
-    >>> t = np.linspace(0, 2*np.pi, 401)
-    >>> plt.plot(np.cos(t), np.sin(t), 'k--')  # unit circle
+    >>> t = mx.linspace(0, 2*mx.pi, 401)
+    >>> plt.plot(mx.cos(t), mx.sin(t), 'k--')  # unit circle
     >>> plt.plot(fsf.requested_poles.real, fsf.requested_poles.imag,
     ...          'wo', label='Desired')
     >>> plt.plot(fsf.computed_poles.real, fsf.computed_poles.imag, 'bx',
@@ -2872,9 +2872,9 @@ def place_poles(A, B, poles, method="YT", rtol=1e-3, maxiter=30):
 
     # Step A: QR decomposition of B page 1132 KN
     # to debug with numpy qr uncomment the line below
-    # u, z = np.linalg.qr(B, mode="complete")
+    # u, z = mx.linalg.qr(B, mode="complete")
     u, z = s_qr(B, mode="full")
-    rankB = np.linalg.matrix_rank(B)
+    rankB = mx.linalg.matrix_rank(B)
     u0 = u[:, :rankB]
     u1 = u[:, rankB:]
     z = z[:rankB, :]
@@ -2900,21 +2900,21 @@ def place_poles(A, B, poles, method="YT", rtol=1e-3, maxiter=30):
         #
         # e.g solving the first one in R gives the solution
         # for the second one in C
-        diag_poles = np.zeros(A.shape)
+        diag_poles = mx.zeros(A.shape)
         idx = 0
         while idx < poles.shape[0]:
             p = poles[idx]
-            diag_poles[idx, idx] = np.real(p)
-            if ~np.isreal(p):
-                diag_poles[idx, idx+1] = -np.imag(p)
-                diag_poles[idx+1, idx+1] = np.real(p)
-                diag_poles[idx+1, idx] = np.imag(p)
+            diag_poles[idx, idx] = mx.real(p)
+            if ~mx.isreal(p):
+                diag_poles[idx, idx+1] = -mx.imag(p)
+                diag_poles[idx+1, idx+1] = mx.real(p)
+                diag_poles[idx+1, idx] = mx.imag(p)
                 idx += 1  # skip next one
             idx += 1
-        gain_matrix = np.linalg.lstsq(B, diag_poles-A, rcond=-1)[0]
-        transfer_matrix = np.eye(A.shape[0])
-        cur_rtol = np.nan
-        nb_iter = np.nan
+        gain_matrix = mx.linalg.lstsq(B, diag_poles-A, rcond=-1)[0]
+        transfer_matrix = mx.eye(A.shape[0])
+        cur_rtol = mx.nan
+        nb_iter = mx.nan
     else:
         # step A (p1144 KNV) and beginning of step F: decompose
         # dot(U1.T, A-P[i]*I).T and build our set of transfer_matrix vectors
@@ -2929,7 +2929,7 @@ def place_poles(A, B, poles, method="YT", rtol=1e-3, maxiter=30):
             if skip_conjugate:
                 skip_conjugate = False
                 continue
-            pole_space_j = np.dot(u1.T, A-poles[j]*np.eye(B.shape[0])).T
+            pole_space_j = mx.dot(u1.T, A-poles[j]*mx.eye(B.shape[0])).T
 
             # after QR Q=Q0|Q1
             # only Q0 is used to reconstruct  the qr'ed (dot Q, R) matrix.
@@ -2938,7 +2938,7 @@ def place_poles(A, B, poles, method="YT", rtol=1e-3, maxiter=30):
             # in R are not computed
 
             # To debug with numpy qr uncomment the line below
-            # Q, _ = np.linalg.qr(pole_space_j, mode="complete")
+            # Q, _ = mx.linalg.qr(pole_space_j, mode="complete")
             Q, _ = s_qr(pole_space_j, mode="full")
 
             ker_pole_j = Q[:, pole_space_j.shape[1]:]
@@ -2959,12 +2959,12 @@ def place_poles(A, B, poles, method="YT", rtol=1e-3, maxiter=30):
             # ker_pole_j has a zero the other one(s) when
             # ker_pole_j.shape[1]>1) for sure won't have a zero there.
 
-            transfer_matrix_j = np.sum(ker_pole_j, axis=1)[:, np.newaxis]
+            transfer_matrix_j = mx.sum(ker_pole_j, axis=1)[:, mx.newaxis]
             transfer_matrix_j = (transfer_matrix_j /
-                                 np.linalg.norm(transfer_matrix_j))
-            if ~np.isreal(poles[j]):  # complex pole
-                transfer_matrix_j = np.hstack([np.real(transfer_matrix_j),
-                                               np.imag(transfer_matrix_j)])
+                                 mx.linalg.norm(transfer_matrix_j))
+            if ~mx.isreal(poles[j]):  # complex pole
+                transfer_matrix_j = mx.hstack([mx.real(transfer_matrix_j),
+                                               mx.imag(transfer_matrix_j)])
                 ker_pole.extend([ker_pole_j, ker_pole_j])
 
                 # Skip next pole as it is the conjugate
@@ -2975,7 +2975,7 @@ def place_poles(A, B, poles, method="YT", rtol=1e-3, maxiter=30):
             if j == 0:
                 transfer_matrix = transfer_matrix_j
             else:
-                transfer_matrix = np.hstack((transfer_matrix, transfer_matrix_j))
+                transfer_matrix = mx.hstack((transfer_matrix, transfer_matrix_j))
 
         if rankB > 1:  # otherwise there is nothing we can optimize
             stop, cur_rtol, nb_iter = update_loop(ker_pole, transfer_matrix,
@@ -2995,7 +2995,7 @@ def place_poles(A, B, poles, method="YT", rtol=1e-3, maxiter=30):
         transfer_matrix = transfer_matrix.astype(complex)
         idx = 0
         while idx < poles.shape[0]-1:
-            if ~np.isreal(poles[idx]):
+            if ~mx.isreal(poles[idx]):
                 rel = transfer_matrix[:, idx].copy()
                 img = transfer_matrix[:, idx+1]
                 # rel will be an array referencing a column of transfer_matrix
@@ -3007,10 +3007,10 @@ def place_poles(A, B, poles, method="YT", rtol=1e-3, maxiter=30):
             idx += 1
 
         try:
-            m = np.linalg.solve(transfer_matrix.T, np.dot(np.diag(poles),
+            m = mx.linalg.solve(transfer_matrix.T, mx.dot(mx.diag(poles),
                                                           transfer_matrix.T)).T
-            gain_matrix = np.linalg.solve(z, np.dot(u0.T, m-A))
-        except np.linalg.LinAlgError as e:
+            gain_matrix = mx.linalg.solve(z, mx.dot(u0.T, m-A))
+        except mx.linalg.LinAlgError as e:
             raise ValueError("The poles you've chosen can't be placed. "
                              "Check the controllability matrix and try "
                              "another set of poles") from e
@@ -3018,12 +3018,12 @@ def place_poles(A, B, poles, method="YT", rtol=1e-3, maxiter=30):
     # Beware: Kautsky solves A+BK but the usual form is A-BK
     gain_matrix = -gain_matrix
     # K still contains complex with ~=0j imaginary parts, get rid of them
-    gain_matrix = np.real(gain_matrix)
+    gain_matrix = mx.real(gain_matrix)
 
     full_state_feedback = Bunch()
     full_state_feedback.gain_matrix = gain_matrix
     full_state_feedback.computed_poles = _order_complex_poles(
-        np.linalg.eig(A - np.dot(B, gain_matrix))[0]
+        mx.linalg.eig(A - mx.dot(B, gain_matrix))[0]
         )
     full_state_feedback.requested_poles = poles
     full_state_feedback.X = transfer_matrix
@@ -3066,11 +3066,11 @@ def dlsim(system, u, t=None, x0=None):
 
     Returns
     -------
-    tout : ndarray
+    tout : array
         Time values for the output, as a 1-D array.
-    yout : ndarray
+    yout : array
         System response, as a 1-D array.
-    xout : ndarray, optional
+    xout : array, optional
         Time-evolution of the state-vector.  Only generated if the input is a
         `StateSpace` system.
 
@@ -3083,11 +3083,11 @@ def dlsim(system, u, t=None, x0=None):
     A simple integrator transfer function with a discrete time step of 1.0
     could be implemented as:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> tf = ([1.0,], [1.0, -1.0], 1.0)
     >>> t_in = [0.0, 1.0, 2.0, 3.0]
-    >>> u = np.asarray([0.0, 0.0, 1.0, 1.0])
+    >>> u = mx.array([0.0, 0.0, 1.0, 1.0])
     >>> t_out, y = signal.dlsim(tf, u, t=t_in)
     >>> y.T
     array([[ 0.,  0.,  0.,  1.]])
@@ -3104,48 +3104,48 @@ def dlsim(system, u, t=None, x0=None):
     is_ss_input = isinstance(system, StateSpace)
     system = system._as_ss()
 
-    u = np.atleast_1d(u)
+    u = mx.atleast_1d(u)
 
     if u.ndim == 1:
-        u = np.atleast_2d(u).T
+        u = mx.atleast_2d(u).T
 
     if t is None:
         out_samples = len(u)
         stoptime = (out_samples - 1) * system.dt
     else:
         stoptime = t[-1]
-        out_samples = int(np.floor(stoptime / system.dt)) + 1
+        out_samples = int(mx.floor(stoptime / system.dt)) + 1
 
     # Pre-build output arrays
-    xout = np.zeros((out_samples, system.A.shape[0]))
-    yout = np.zeros((out_samples, system.C.shape[0]))
-    tout = np.linspace(0.0, stoptime, num=out_samples)
+    xout = mx.zeros((out_samples, system.A.shape[0]))
+    yout = mx.zeros((out_samples, system.C.shape[0]))
+    tout = mx.linspace(0.0, stoptime, num=out_samples)
 
     # Check initial condition
     if x0 is None:
-        xout[0, :] = np.zeros((system.A.shape[1],))
+        xout[0, :] = mx.zeros((system.A.shape[1],))
     else:
-        xout[0, :] = np.asarray(x0)
+        xout[0, :] = mx.array(x0)
 
     # Pre-interpolate inputs into the desired time steps
     if t is None:
         u_dt = u
     else:
         if len(u.shape) == 1:
-            u = u[:, np.newaxis]
+            u = u[:, mx.newaxis]
 
         u_dt = make_interp_spline(t, u, k=1)(tout)
 
     # Simulate the system
     for i in range(0, out_samples - 1):
-        xout[i+1, :] = (np.dot(system.A, xout[i, :]) +
-                        np.dot(system.B, u_dt[i, :]))
-        yout[i, :] = (np.dot(system.C, xout[i, :]) +
-                      np.dot(system.D, u_dt[i, :]))
+        xout[i+1, :] = (mx.dot(system.A, xout[i, :]) +
+                        mx.dot(system.B, u_dt[i, :]))
+        yout[i, :] = (mx.dot(system.C, xout[i, :]) +
+                      mx.dot(system.D, u_dt[i, :]))
 
     # Last point
-    yout[out_samples-1, :] = (np.dot(system.C, xout[out_samples-1, :]) +
-                              np.dot(system.D, u_dt[out_samples-1, :]))
+    yout[out_samples-1, :] = (mx.dot(system.C, xout[out_samples-1, :]) +
+                              mx.dot(system.D, u_dt[out_samples-1, :]))
 
     if is_ss_input:
         return tout, yout, xout
@@ -3181,9 +3181,9 @@ def dimpulse(system, x0=None, t=None, n=None):
 
     Returns
     -------
-    tout : ndarray
+    tout : array
         Time values for the output, as a 1-D array.
-    yout : tuple of ndarray
+    yout : tuple of array
         Impulse response of system.  Each element of the tuple represents
         the output of the system based on an impulse in each input.
 
@@ -3193,7 +3193,7 @@ def dimpulse(system, x0=None, t=None, n=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
     ...
@@ -3202,7 +3202,7 @@ def dimpulse(system, x0=None, t=None, n=None):
     >>> t, y = signal.dimpulse((bb, aa, dt), n=25)
     ...
     >>> fig0, ax0 = plt.subplots()
-    >>> ax0.step(t, np.squeeze(y), '.-', where='post')
+    >>> ax0.step(t, mx.squeeze(y), '.-', where='post')
     >>> ax0.set_title(r"Impulse Response of a $3^\text{rd}$ Order Butterworth Filter")
     >>> ax0.set(xlabel='Sample number', ylabel='Amplitude')
     >>> ax0.grid()
@@ -3224,14 +3224,14 @@ def dimpulse(system, x0=None, t=None, n=None):
     # If time is not specified, use the number of samples
     # and system dt
     if t is None:
-        t = np.linspace(0, n * system.dt, n, endpoint=False)
+        t = mx.linspace(0, n * system.dt, n, endpoint=False)
     else:
-        t = np.asarray(t)
+        t = mx.array(t)
 
     # For each input, implement a step change
     yout = None
     for i in range(0, system.inputs):
-        u = np.zeros((t.shape[0], system.inputs))
+        u = mx.zeros((t.shape[0], system.inputs))
         u[0, i] = 1.0
 
         one_output = dlsim(system, u, t=t, x0=x0)
@@ -3274,9 +3274,9 @@ def dstep(system, x0=None, t=None, n=None):
 
     Returns
     -------
-    tout : ndarray
+    tout : array
         Output time points, as a 1-D array.
-    yout : tuple of ndarray
+    yout : tuple of array
         Step response of system.  Each element of the tuple represents
         the output of the system based on a step response to each input.
 
@@ -3289,7 +3289,7 @@ def dstep(system, x0=None, t=None, n=None):
     The following example illustrates how to create a digital Butterworth filer and
     plot its step response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
     ...
@@ -3298,9 +3298,9 @@ def dstep(system, x0=None, t=None, n=None):
     >>> t, y = signal.dstep((bb, aa, dt), n=25)
     ...
     >>> fig0, ax0 = plt.subplots()
-    >>> ax0.step(t, np.squeeze(y), '.-', where='post')
+    >>> ax0.step(t, mx.squeeze(y), '.-', where='post')
     >>> ax0.set_title(r"Step Response of a $3^\text{rd}$ Order Butterworth Filter")
-    >>> ax0.set(xlabel='Sample number', ylabel='Amplitude', ylim=(0, 1.1*np.max(y)))
+    >>> ax0.set(xlabel='Sample number', ylabel='Amplitude', ylim=(0, 1.1*mx.max(y)))
     >>> ax0.grid()
     >>> plt.show()
     """
@@ -3320,15 +3320,15 @@ def dstep(system, x0=None, t=None, n=None):
     # If time is not specified, use the number of samples
     # and system dt
     if t is None:
-        t = np.linspace(0, n * system.dt, n, endpoint=False)
+        t = mx.linspace(0, n * system.dt, n, endpoint=False)
     else:
-        t = np.asarray(t)
+        t = mx.array(t)
 
     # For each input, implement a step change
     yout = None
     for i in range(0, system.inputs):
-        u = np.zeros((t.shape[0], system.inputs))
-        u[:, i] = np.ones((t.shape[0],))
+        u = mx.zeros((t.shape[0], system.inputs))
+        u[:, i] = mx.ones((t.shape[0],))
 
         one_output = dlsim(system, u, t=t, x0=x0)
 
@@ -3377,9 +3377,9 @@ def dfreqresp(system, w=None, n=10000, whole=False):
 
     Returns
     -------
-    w : 1D ndarray
+    w : 1D array
         Frequency array [radians/sample]
-    H : 1D ndarray
+    H : 1D array
         Array of complex magnitude values
 
     Notes
@@ -3478,13 +3478,13 @@ def dbode(system, w=None, n=100):
 
     Returns
     -------
-    w : 1D ndarray
-        Array of frequencies normalized to the Nyquist frequency being ``np.pi/dt``
+    w : 1D array
+        Array of frequencies normalized to the Nyquist frequency being ``mx.pi/dt``
         with ``dt`` being the sampling interval of the `system` parameter.
         The unit is rad/s assuming ``dt`` is in seconds.
-    mag : 1D ndarray
+    mag : 1D array
         Magnitude array in dB
-    phase : 1D ndarray
+    phase : 1D array
         Phase array in degrees
 
     Notes
@@ -3506,7 +3506,7 @@ def dbode(system, w=None, n=100):
     Butterworth lowpass filter with a corner frequency of 100 Hz:
 
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     ...
     >>> T = 1e-4  # sampling interval in s
@@ -3514,7 +3514,7 @@ def dbode(system, w=None, n=100):
     >>> bb, aa = signal.butter(o, f_c, 'lowpass', fs=1/T)
     ...
     >>> w, mag, phase = signal.dbode((bb, aa, T))
-    >>> w /= 2*np.pi  # convert unit of frequency into Hertz
+    >>> w /= 2*mx.pi  # convert unit of frequency into Hertz
     ...
     >>> fg, (ax0, ax1) = plt.subplots(2, 1, sharex='all', figsize=(5, 4),
     ...                               tight_layout=True)
@@ -3540,7 +3540,7 @@ def dbode(system, w=None, n=100):
     else:
         dt = system[-1]
 
-    mag = 20.0 * np.log10(abs(y))
-    phase = np.rad2deg(np.unwrap(np.angle(y)))
+    mag = 20.0 * mx.log10(abs(y))
+    phase = mx.rad2deg(mx.unwrap(mx.angle(y)))
 
     return w / dt, mag, phase

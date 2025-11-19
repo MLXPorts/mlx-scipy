@@ -29,7 +29,7 @@ Issues closed for 1.5.4
 
 * `#12763 <https://github.com/scipy/scipy/issues/12763>`__: ndimage.fourier_ellipsoid segmentation fault
 * `#12789 <https://github.com/scipy/scipy/issues/12789>`__: TestConvolve2d.test_large_array failing on Windows ILP64 CI job
-* `#12857 <https://github.com/scipy/scipy/issues/12857>`__: sparse A[0,:] = ndarray is ok, A[:,0] = ndarray ValueError from...
+* `#12857 <https://github.com/scipy/scipy/issues/12857>`__: sparse A[0,:] = array is ok, A[:,0] = array ValueError from...
 * `#12860 <https://github.com/scipy/scipy/issues/12860>`__: BUG: Build failure with Xcode 12
 * `#12935 <https://github.com/scipy/scipy/issues/12935>`__: Failure to build with Python 3.9.0 on macOS
 * `#12966 <https://github.com/scipy/scipy/issues/12966>`__: MAINT: lint_diff.py on some backport PRs

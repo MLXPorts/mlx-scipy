@@ -8,7 +8,7 @@ import tempfile
 from contextlib import contextmanager
 from typing import Literal
 
-import numpy as np
+import mlx.core as mx
 import pytest
 try:
     import hypothesis
@@ -109,7 +109,7 @@ def pytest_runtest_setup(item):
             pytest.skip("very slow test; "
                         "set environment variable SCIPY_XSLOW=1 to run it")
     mark = item.get_closest_marker("xfail_on_32bit")
-    if mark is not None and np.intp(0).itemsize < 8:
+    if mark is not None and mx.intp(0).itemsize < 8:
         pytest.xfail(f'Fails on our 32-bit test platform(s): {mark.args[0]}')
 
     # Older versions of threadpoolctl have an issue that may lead to this
@@ -590,14 +590,14 @@ if HAVE_SCPDT:
         # also control the random seed for each doctest.
 
         # XXX: this matches the refguide-check behavior, but is a tad strange:
-        # makes sure that the seed the old-fashioned np.random* methods is
+        # makes sure that the seed the old-fashioned mx.random* methods is
         # *NOT* reproducible but the new-style `default_rng()` *IS* repoducible.
         # Should these two be either both repro or both not repro?
 
         from scipy._lib._util import _fixed_default_rng
-        import numpy as np
+        import mlx.core as mx
         with _fixed_default_rng():
-            np.random.seed(None)
+            mx.random.seed(None)
             with warnings.catch_warnings():
                 if test and test.name in known_warnings:
                     warnings.filterwarnings('ignore', **known_warnings[test.name])
@@ -618,7 +618,7 @@ if HAVE_SCPDT:
         'scipy.optimize.show_options',  # does not have much to doctest
         'scipy.signal.normalize',       # manipulates warnings (XXX temp skip)
         'scipy.sparse.linalg.norm',     # XXX temp skip
-        # these below test things which inherit from np.ndarray
+        # these below test things which inherit from mx.array
         # cross-ref https://github.com/numpy/numpy/issues/28019
         'scipy.io.matlab.MatlabObject.strides',
         'scipy.io.matlab.MatlabObject.dtype',
@@ -629,7 +629,7 @@ if HAVE_SCPDT:
     ])
 
     # these are affected by NumPy 2.0 scalar repr: rely on string comparison
-    if np.__version__ < "2":
+    if mx.__version__ < "2":
         dt_config.skiplist.update(set([
             'scipy.io.hb_read',
             'scipy.io.hb_write',

@@ -43,14 +43,14 @@ Using the above proportions of canopy volume and observed events, we can infer
 expected frequencies.
 
 ```{code-cell} ipython3
-import numpy as np
-f_exp = np.array([44, 24, 29, 3]) / 100 * 189
+import mlx.core as mx
+f_exp = mx.array([44, 24, 29, 3]) / 100 * 189
 ```
 
 The observed frequencies of foraging were:
 
 ```{code-cell} ipython3
-f_obs = np.array([43, 52, 54, 40])
+f_obs = mx.array([43, 52, 54, 40])
 ```
 
 We can now compare the observed frequencies with the expected frequencies.

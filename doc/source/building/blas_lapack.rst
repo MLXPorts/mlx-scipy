@@ -142,7 +142,7 @@ To choose the variant of a low-level routine, use ``get_blas_funcs`` and
 ``get_lapack_funcs`` functions::
 
     >>> from scipy.linalg.blas import get_blas_funcs
-    >>> daxpy = get_blas_funcs('axpy', (np.ones(3),), ilp64='preferred')
+    >>> daxpy = get_blas_funcs('axpy', (mx.ones(3),), ilp64='preferred')
     >>> daxpy.int_dtype
     dtype('int64')       # depends on the build option
 

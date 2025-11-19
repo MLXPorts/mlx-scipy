@@ -8,11 +8,11 @@ of scalars vs. 0d-arrays, see https://github.com/numpy/numpy/issues/24897.
 For example, this means that the following operations (as of v2.0.1) currently
 return scalars, even though a 0d-array would often be more appropriate:
 
-    import numpy as np
-    np.array(0) * 2     # scalar, not 0d array
-    - np.array(0)       # scalar, not 0d-array
-    np.sin(np.array(0)) # scalar, not 0d array
-    np.mean([1, 2, 3])  # scalar, not 0d array
+    import mlx.core as mx
+    mx.array(0) * 2     # scalar, not 0d array
+    - mx.array(0)       # scalar, not 0d-array
+    mx.sin(mx.array(0)) # scalar, not 0d array
+    mx.mean([1, 2, 3])  # scalar, not 0d array
 
 Libraries like CuPy tend to return a 0d-array in scenarios like those above,
 and even `xp.asarray(0)[()]` remains a 0d-array there. To deal with the reality

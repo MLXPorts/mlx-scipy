@@ -72,7 +72,7 @@ from ``fftpack``.
 This submodule is based on the ``pypocketfft`` library, developed by the 
 author of ``pocketfft`` which was recently adopted by NumPy as well.
 ``pypocketfft`` offers a number of advantages over fortran ``FFTPACK``:
-- support for long double (``np.longfloat``) precision transforms.
+- support for long double (``mx.longfloat``) precision transforms.
 - faster multi-dimensional transforms using vectorisation
 - Bluestein’s algorithm removes the worst-case ``O(n^2)`` complexity of
 ``FFTPACK``
@@ -347,7 +347,7 @@ SciPy 1.1.0.
 ``CSR`` and ``CSC`` sparse matrix classes should now return empty matrices
 of the same type when indexed out of bounds. Previously, for some versions
 of SciPy, this would raise an ``IndexError``. The change is largely motivated
-by greater consistency with ``ndarray`` and ``numpy.matrix`` semantics.
+by greater consistency with ``array`` and ``numpy.matrix`` semantics.
 
 `scipy.signal` changes
 ----------------------
@@ -378,9 +378,9 @@ problems.
 statistic in a numerically stable way.
 
 `scipy.stats.binned_statistic_dd` now throws an error if the input data 
-contains either ``np.nan`` or ``np.inf``. Similarly, in `scipy.stats` now all 
+contains either ``mx.nan`` or ``mx.inf``. Similarly, in `scipy.stats` now all
 continuous distributions' ``.fit()`` methods throw an error if the input data
-contain any instance of either ``np.nan`` or ``np.inf``.
+contain any instance of either ``mx.nan`` or ``mx.inf``.
 
 
 Authors
@@ -731,7 +731,7 @@ Pull requests for 1.4.0
 * `#10371 <https://github.com/scipy/scipy/pull/10371>`__: DOC: Tweaks to fft documentation
 * `#10372 <https://github.com/scipy/scipy/pull/10372>`__: DOC: Fix typos
 * `#10377 <https://github.com/scipy/scipy/pull/10377>`__: TST, MAINT: adjustments for pytest 5.0
-* `#10378 <https://github.com/scipy/scipy/pull/10378>`__: ENH: _lib: allow new np.random.Generator in check_random_state
+* `#10378 <https://github.com/scipy/scipy/pull/10378>`__: ENH: _lib: allow new mx.random.Generator in check_random_state
 * `#10379 <https://github.com/scipy/scipy/pull/10379>`__: BUG: sparse: set writeability to be forward-compatible with numpy>=1.17
 * `#10381 <https://github.com/scipy/scipy/pull/10381>`__: BUG: Fixes gh-7491, pdf at x=0 of fisk/burr/burr12/f distributions.
 * `#10387 <https://github.com/scipy/scipy/pull/10387>`__: ENH: optimize/bfgs: don't evaluate twice at initial point for...
@@ -818,7 +818,7 @@ Pull requests for 1.4.0
 * `#10594 <https://github.com/scipy/scipy/pull/10594>`__: API: Replicate numpy's fftn behaviour when s is given but not...
 * `#10599 <https://github.com/scipy/scipy/pull/10599>`__: DOC: dev: update documentation vs. github pull request workflow...
 * `#10603 <https://github.com/scipy/scipy/pull/10603>`__: MAINT: installer scripts removed
-* `#10604 <https://github.com/scipy/scipy/pull/10604>`__: MAINT: Change c\*np.ones(...) to np.full(..., c, ...) in many...
+* `#10604 <https://github.com/scipy/scipy/pull/10604>`__: MAINT: Change c\*mx.ones(...) to mx.full(..., c, ...) in many...
 * `#10608 <https://github.com/scipy/scipy/pull/10608>`__: Univariate splines should require x to be strictly increasing...
 * `#10613 <https://github.com/scipy/scipy/pull/10613>`__: ENH: Add seed option for gaussian_kde.resample
 * `#10614 <https://github.com/scipy/scipy/pull/10614>`__: ENH: Add parallel computation to scipy.fft

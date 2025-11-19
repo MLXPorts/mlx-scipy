@@ -1,7 +1,7 @@
 import math
 import pytest
 
-import numpy as np
+import mlx.core as mx
 
 import scipy._lib._elementwise_iterative_method as eim
 import scipy._lib.array_api_extra as xpx
@@ -20,7 +20,7 @@ class TestDerivative:
     def f(self, x):
         return special.ndtr(x)
 
-    @pytest.mark.parametrize('x', [0.6, np.linspace(-0.05, 1.05, 10)])
+    @pytest.mark.parametrize('x', [0.6, mx.linspace(-0.05, 1.05, 10)])
     def test_basic(self, x, xp):
         # Invert distribution CDF and compare against distribution `ppf`
         default_dtype = xp.asarray(1.).dtype
@@ -46,11 +46,11 @@ class TestDerivative:
     def test_vectorization(self, order, shape, xp):
         # Test for correct functionality, output shapes, and dtypes for various
         # input shapes.
-        x = np.linspace(-0.05, 1.05, 12).reshape(shape) if shape else 0.6
-        n = np.size(x)
+        x = mx.linspace(-0.05, 1.05, 12).reshape(shape) if shape else 0.6
+        n = mx.size(x)
         state = {}
 
-        @np.vectorize
+        @mx.vectorize
         def _derivative_single(x):
             return derivative(self.f, x, order=order)
 
@@ -78,15 +78,15 @@ class TestDerivative:
         ref_success = [bool(ref.success) for ref in refs]
         xp_assert_equal(xp.reshape(res.success, (-1,)), xp.asarray(ref_success))
 
-        ref_flag = [np.int32(ref.status) for ref in refs]
+        ref_flag = [mx.int32(ref.status) for ref in refs]
         xp_assert_equal(xp.reshape(res.status, (-1,)), xp.asarray(ref_flag))
 
-        ref_nfev = [np.int32(ref.nfev) for ref in refs]
+        ref_nfev = [mx.int32(ref.nfev) for ref in refs]
         xp_assert_equal(xp.reshape(res.nfev, (-1,)), xp.asarray(ref_nfev))
         if is_numpy(xp):  # can't expect other backends to be exactly the same
             assert xp.max(res.nfev) == state['feval']
 
-        ref_nit = [np.int32(ref.nit) for ref in refs]
+        ref_nit = [mx.int32(ref.nit) for ref in refs]
         xp_assert_equal(xp.reshape(res.nit, (-1,)), xp.asarray(ref_nit))
         if is_numpy(xp):  # can't expect other backends to be exactly the same
             assert xp.max(res.nit) == state['nit']
@@ -94,7 +94,7 @@ class TestDerivative:
     def test_flags(self, xp):
         # Test cases that should produce different status flags; show that all
         # can be produced simultaneously.
-        rng = np.random.default_rng(5651219684984213)
+        rng = mx.random.default_rng(5651219684984213)
         def f(xs, js):
             f.nit += 1
             funcs = [lambda x: x - 2.5,  # converges
@@ -118,7 +118,7 @@ class TestDerivative:
 
     def test_flags_preserve_shape(self, xp):
         # Same test as above but using `preserve_shape` option to simplify.
-        rng = np.random.default_rng(5651219684984213)
+        rng = mx.random.default_rng(5651219684984213)
         def f(x):
             out = [x - 2.5,  # converges
                    xp.exp(x)*rng.random(),  # error increases
@@ -196,12 +196,12 @@ class TestDerivative:
         # This is a similar test for one-sided difference
         kwargs = dict(order=2, maxiter=1, step_direction=1)
         res = derivative(f, x, initial_step=1, step_factor=2, **kwargs)
-        ref = derivative(f, x, initial_step=1/np.sqrt(2), step_factor=0.5, **kwargs)
+        ref = derivative(f, x, initial_step=1/mx.sqrt(2), step_factor=0.5, **kwargs)
         xp_assert_close(res.df, ref.df, rtol=5e-15)
 
         kwargs['step_direction'] = -1
         res = derivative(f, x, initial_step=1, step_factor=2, **kwargs)
-        ref = derivative(f, x, initial_step=1/np.sqrt(2), step_factor=0.5, **kwargs)
+        ref = derivative(f, x, initial_step=1/mx.sqrt(2), step_factor=0.5, **kwargs)
         xp_assert_close(res.df, ref.df, rtol=5e-15)
 
     def test_step_direction(self, xp):
@@ -428,7 +428,7 @@ class TestDerivative:
     @pytest.mark.xfail
     @pytest.mark.parametrize("case", (  # function, evaluation point
         (lambda x: (x - 1) ** 3, 1),
-        (lambda x: np.where(x > 1, (x - 1) ** 5, (x - 1) ** 3), 1)
+        (lambda x: mx.where(x > 1, (x - 1) ** 5, (x - 1) ** 3), 1)
     ))
     def test_saddle_gh18811(self, case, xp):
         # With default settings, `derivative` will not always converge when
@@ -436,7 +436,7 @@ class TestDerivative:
         # (tight) `atol` alleviates the problem. See discussion in gh-18811.
         atol = 1e-16
         res = derivative(*case, step_direction=[-1, 0, 1], atol=atol)
-        assert np.all(res.success)
+        assert mx.all(res.success)
         xp_assert_close(res.df, 0, atol=atol)
 
 
@@ -483,7 +483,7 @@ class TestJacobian(JacobianHessianTest):
 
     def df1(z):
         x, y = z
-        return [[2 * x * y, x ** 2], [np.full_like(x, 5), np.cos(y)]]
+        return [[2 * x * y, x ** 2], [mx.full_like(x, 5), mx.cos(y)]]
 
     f1.mn = 2, 2  # type: ignore[attr-defined]
     f1.ref = df1  # type: ignore[attr-defined]
@@ -494,8 +494,8 @@ class TestJacobian(JacobianHessianTest):
 
     def df2(z):
         r, phi = z
-        return [[np.cos(phi), -r * np.sin(phi)],
-                [np.sin(phi), r * np.cos(phi)]]
+        return [[mx.cos(phi), -r * mx.sin(phi)],
+                [mx.sin(phi), r * mx.cos(phi)]]
 
     f2.mn = 2, 2  # type: ignore[attr-defined]
     f2.ref = df2  # type: ignore[attr-defined]
@@ -507,11 +507,11 @@ class TestJacobian(JacobianHessianTest):
 
     def df3(z):
         r, phi, th = z
-        return [[np.sin(phi) * np.cos(th), r * np.cos(phi) * np.cos(th),
-                 -r * np.sin(phi) * np.sin(th)],
-                [np.sin(phi) * np.sin(th), r * np.cos(phi) * np.sin(th),
-                 r * np.sin(phi) * np.cos(th)],
-                [np.cos(phi), -r * np.sin(phi), np.zeros_like(r)]]
+        return [[mx.sin(phi) * mx.cos(th), r * mx.cos(phi) * mx.cos(th),
+                 -r * mx.sin(phi) * mx.sin(th)],
+                [mx.sin(phi) * mx.sin(th), r * mx.cos(phi) * mx.sin(th),
+                 r * mx.sin(phi) * mx.cos(th)],
+                [mx.cos(phi), -r * mx.sin(phi), mx.zeros_like(r)]]
 
     f3.mn = 3, 3  # type: ignore[attr-defined]
     f3.ref = df3  # type: ignore[attr-defined]
@@ -522,11 +522,11 @@ class TestJacobian(JacobianHessianTest):
 
     def df4(x):
         x1, x2, x3 = x
-        one = np.ones_like(x1)
+        one = mx.ones_like(x1)
         return [[one, 0 * one, 0 * one],
                 [0 * one, 0 * one, 5 * one],
                 [0 * one, 8 * x2, -2 * one],
-                [x3 * np.cos(x1), 0 * one, np.sin(x1)]]
+                [x3 * mx.cos(x1), 0 * one, mx.sin(x1)]]
 
     f4.mn = 3, 4  # type: ignore[attr-defined]
     f4.ref = df4  # type: ignore[attr-defined]
@@ -537,9 +537,9 @@ class TestJacobian(JacobianHessianTest):
 
     def df5(x):
         x1, x2, x3 = x
-        one = np.ones_like(x1)
+        one = mx.ones_like(x1)
         return [[0 * one, 5 * one, 0 * one],
-                [8 * x1, -2 * x3 * np.cos(x2 * x3), -2 * x2 * np.cos(x2 * x3)],
+                [8 * x1, -2 * x3 * mx.cos(x2 * x3), -2 * x2 * mx.cos(x2 * x3)],
                 [0 * one, x3, x2]]
 
     f5.mn = 3, 3  # type: ignore[attr-defined]
@@ -555,12 +555,12 @@ class TestJacobian(JacobianHessianTest):
     def test_examples(self, dtype, size, func, xp):
         atol = 1e-10 if dtype == 'float64' else 1.99e-3
         dtype = getattr(xp, dtype)
-        rng = np.random.default_rng(458912319542)
+        rng = mx.random.default_rng(458912319542)
         m, n = func.mn
         x = rng.random(size=(m,) + size)
         res = jacobian(lambda x: func(x , xp), xp.asarray(x, dtype=dtype))
         # convert list of arrays to single array before converting to xp array
-        ref = xp.asarray(np.asarray(func.ref(x)), dtype=dtype)
+        ref = xp.asarray(mx.array(func.ref(x)), dtype=dtype)
         xp_assert_close(res.df, ref, atol=atol)
 
     def test_attrs(self, xp):
@@ -603,7 +603,7 @@ class TestJacobian(JacobianHessianTest):
     def test_step_direction_size(self, xp):
         # Check that `step_direction` and `initial_step` can be used to ensure that
         # the usable domain of a function is respected.
-        rng = np.random.default_rng(23892589425245)
+        rng = mx.random.default_rng(23892589425245)
         b = rng.random(3)
         eps = 1e-7  # torch needs wiggle room?
 
@@ -630,7 +630,7 @@ class TestHessian(JacobianHessianTest):
 
     @pytest.mark.parametrize('shape', [(), (4,), (2, 4)])
     def test_example(self, shape, xp):
-        rng = np.random.default_rng(458912319542)
+        rng = mx.random.default_rng(458912319542)
         m = 3
         x = xp.asarray(rng.random((m,) + shape), dtype=xp.float64)
         res = hessian(optimize.rosen, x)
@@ -646,10 +646,10 @@ class TestHessian(JacobianHessianTest):
         # # Removed symmetry enforcement; consider adding back in as a feature
         # # check symmetry
         # for key in ['ddf', 'error', 'nfev', 'success', 'status']:
-        #     assert_equal(res[key], np.swapaxes(res[key], 0, 1))
+        #     assert_equal(res[key], mx.swapaxes(res[key], 0, 1))
 
     def test_float32(self, xp):
-        rng = np.random.default_rng(458912319542)
+        rng = mx.random.default_rng(458912319542)
         x = xp.asarray(rng.random(3), dtype=xp.float32)
         res = hessian(optimize.rosen, x)
         ref = optimize.rosen_hess(x)
@@ -679,7 +679,7 @@ class TestHessian(JacobianHessianTest):
 
         # Removed symmetry enforcement; consider adding back in as a feature
         # assert_equal(res.nfev, res.nfev.T)  # check symmetry
-        # assert np.unique(res.nfev).size == 3
+        # assert mx.unique(res.nfev).size == 3
 
 
     @pytest.mark.skip_xp_backends(np_only=True,

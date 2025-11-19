@@ -1,7 +1,7 @@
 """
 Unit tests for the global optimization benchmark functions
 """
-import numpy as np
+import mlx.core as mx
 from .. import go_benchmark_functions as gbf
 import inspect
 
@@ -29,13 +29,13 @@ class TestGoBenchmarkFunctions:
             f = klass()
 
             if name in ['Damavandi', 'Csendes']:
-                with np.errstate(divide='ignore', invalid='ignore'):
-                    print(name, f.fun(np.asarray(f.global_optimum[0])),
+                with mx.errstate(divide='ignore', invalid='ignore'):
+                    print(name, f.fun(mx.array(f.global_optimum[0])),
                           f.fglob)
-                    assert np.isnan(f.fun(np.asarray(f.global_optimum[0])))
+                    assert mx.isnan(f.fun(mx.array(f.global_optimum[0])))
                     continue
 
-            print(name, f.fun(np.asarray(f.global_optimum[0])), f.fglob)
+            print(name, f.fun(mx.array(f.global_optimum[0])), f.fglob)
             assert f.success(f.global_optimum[0])
 
     def test_solution_exists(self):

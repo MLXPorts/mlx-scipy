@@ -3,7 +3,7 @@ from itertools import product
 
 import pytest
 
-import numpy as np
+import mlx.core as mx
 from scipy.spatial.transform import Rotation, RigidTransform
 from scipy.spatial.transform._rigid_transform import normalize_dual_quaternion
 from scipy._lib._array_api import (
@@ -65,7 +65,7 @@ RigidTransform.from_matrix(array([[[1., 0., 0., 0.],
 @pytest.mark.parametrize("ndim", range(1, 4))
 def test_from_rotation(xp, ndim: int):
     atol = 1e-12
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
     shape = (ndim,) * (ndim - 1) + (4,)
     r = rotation_to_xp(Rotation.from_quat(rng.normal(size=shape)), xp=xp)
     tf = RigidTransform.from_rotation(r)
@@ -94,14 +94,14 @@ def test_from_translation_array_like():
     # Test single translation
     t = [1, 2, 3]
     tf = RigidTransform.from_translation(t)
-    tf_expected = RigidTransform.from_translation(np.array(t))
+    tf_expected = RigidTransform.from_translation(mx.array(t))
     xp_assert_close(tf.as_matrix(), tf_expected.as_matrix())
     assert tf.single
 
     # Test multiple translations
     t = [[1, 2, 3], [4, 5, 6]]
     tf = RigidTransform.from_translation(t)
-    tf_expected = RigidTransform.from_translation(np.array(t))
+    tf_expected = RigidTransform.from_translation(mx.array(t))
     xp_assert_close(tf.as_matrix(), tf_expected.as_matrix())
     assert not tf.single
 
@@ -160,7 +160,7 @@ def test_from_matrix_array_like():
               [0, 1, 0, 0],
               [0, 0, 1, 0],
               [0, 0, 0, 1]]
-    expected = np.eye(4)
+    expected = mx.eye(4)
     tf = RigidTransform.from_matrix(matrix)
     xp_assert_close(tf.as_matrix(), expected)
     assert tf.single
@@ -181,10 +181,10 @@ def test_from_components(xp, r_ndim: int, t_ndim: int):
     dims = (6, 5, 4, 3)  # Common shape
     q_shape = dims[:r_ndim - 1][::-1] + (4,)
     t_shape = dims[:t_ndim - 1][::-1] + (3,)
-    tf_shape = np.broadcast_shapes(q_shape[:-1], t_shape[:-1]) + (4, 4)
-    rng = np.random.default_rng(0)
+    tf_shape = mx.broadcast_shapes(q_shape[:-1], t_shape[:-1]) + (4, 4)
+    rng = mx.random.default_rng(0)
 
-    t = xp.reshape(xp.arange(np.prod(t_shape[:-1]) * 3), t_shape)
+    t = xp.reshape(xp.arange(mx.prod(t_shape[:-1]) * 3), t_shape)
     r = rotation_to_xp(Rotation.from_quat(rng.random(size=q_shape)), xp=xp)
     tf = RigidTransform.from_components(t, r)
 
@@ -198,12 +198,12 @@ def test_from_components(xp, r_ndim: int, t_ndim: int):
 
 
 def test_from_components_array_like():
-    rng = np.random.default_rng(123)
+    rng = mx.random.default_rng(123)
     # Test single rotation and translation
     t = [1, 2, 3]
     r = Rotation.random(rng=rng)
     tf = RigidTransform.from_components(t, r)
-    tf_expected = RigidTransform.from_components(np.array(t), r)
+    tf_expected = RigidTransform.from_components(mx.array(t), r)
     xp_assert_close(tf.as_matrix(), tf_expected.as_matrix(), atol=1e-12)
     assert tf.single
 
@@ -211,7 +211,7 @@ def test_from_components_array_like():
     t = [[1, 2, 3], [4, 5, 6]]
     r = Rotation.random(len(t), rng=rng)
     tf = RigidTransform.from_components(t, r)
-    tf_expected = RigidTransform.from_components(np.array(t), r)
+    tf_expected = RigidTransform.from_components(mx.array(t), r)
     xp_assert_close(tf.as_matrix(), tf_expected.as_matrix(), atol=1e-12)
     assert not tf.single
 
@@ -222,7 +222,7 @@ def test_as_components(xp, ndim):
     dtype = xpx.default_dtype(xp)
     atol = 1e-12 if dtype == xp.float64 else 1e-6
     shape = (ndim,) * (ndim - 1)
-    rng = np.random.default_rng(123)
+    rng = mx.random.default_rng(123)
     t = xp.asarray(rng.normal(size=shape + (3,)), dtype=dtype)
     r = rotation_to_xp(Rotation.from_quat(rng.random(shape + (4,))), xp=xp)
     tf = RigidTransform.from_components(t, r)
@@ -238,26 +238,26 @@ def test_from_exp_coords(xp, dim: int):
     # example from 3.3 of
     # https://hades.mech.northwestern.edu/images/2/25/MR-v2.pdf
     dtype = xpx.default_dtype(xp)
-    angle1 = np.deg2rad(30.0)
+    angle1 = mx.deg2rad(30.0)
     mat = xp.asarray([
-        [np.cos(angle1), -np.sin(angle1), 0.0, 1.0],
-        [np.sin(angle1), np.cos(angle1), 0.0, 2.0],
+        [mx.cos(angle1), -mx.sin(angle1), 0.0, 1.0],
+        [mx.sin(angle1), mx.cos(angle1), 0.0, 2.0],
         [0.0, 0.0, 1.0, 0.0],
         [0.0, 0.0, 0.0, 1.0]
     ], dtype=dtype)
     mat = xp.tile(mat, shape + (1, 1))
     tf1 = RigidTransform.from_matrix(mat)
-    angle2 = np.deg2rad(60.0)
+    angle2 = mx.deg2rad(60.0)
     mat = xp.asarray([
-        [np.cos(angle2), -np.sin(angle2), 0.0, 2.0],
-        [np.sin(angle2), np.cos(angle2), 0.0, 1.0],
+        [mx.cos(angle2), -mx.sin(angle2), 0.0, 2.0],
+        [mx.sin(angle2), mx.cos(angle2), 0.0, 1.0],
         [0.0, 0.0, 1.0, 0.0],
         [0.0, 0.0, 0.0, 1.0]
     ], dtype=dtype)
     mat = xp.tile(mat, shape + (1, 1))
     tf2 = RigidTransform.from_matrix(mat)
     expected = tf2 * tf1.inv()
-    deg2rag = xp.asarray(np.deg2rad(30.0))
+    deg2rag = xp.asarray(mx.deg2rad(30.0))
     exp_coords = deg2rag * xp.asarray([0.0, 0.0, 1.0, 3.37, -3.37, 0.0])
     exp_coords = xp.tile(exp_coords, shape + (1,))
     actual = RigidTransform.from_exp_coords(exp_coords)
@@ -326,9 +326,9 @@ def test_from_exp_coords(xp, dim: int):
 
 
 def test_from_exp_coords_array_like():
-    rng = np.random.default_rng(123)
+    rng = mx.random.default_rng(123)
     # Test single transform
-    t = np.array([1, 2, 3])
+    t = mx.array([1, 2, 3])
     r = Rotation.random(rng=rng)
     tf_expected = RigidTransform.from_components(t, r)
     exp_coords = tf_expected.as_exp_coords().tolist()
@@ -355,7 +355,7 @@ def test_as_exp_coords(xp, ndim: int):
     actual = RigidTransform.from_exp_coords(expected).as_exp_coords()
     xp_assert_close(actual, expected, atol=1e-12)
 
-    rng = np.random.default_rng(10)
+    rng = mx.random.default_rng(10)
 
     # pure rotation
     rot_vec = xp.asarray(rng.normal(scale=0.1, size=shape + (1000, 3)))
@@ -427,7 +427,7 @@ def test_from_dual_quat(xp, ndim: int):
 
     # rotation and translation
     # rtol is set to 1e-7 because xp_assert_close deviates from
-    # np.testing.assert_allclose in that it does not automatically default to 1e-7 for
+    # mx.testing.assert_allclose in that it does not automatically default to 1e-7 for
     # floating point inputs.
     # See https://numpy.org/doc/2.2/reference/generated/numpy.testing.assert_allclose.html
     dq = xp.asarray(
@@ -519,7 +519,7 @@ def test_from_dual_quat(xp, ndim: int):
     xp_assert_close(vecdot, expected_zeros, atol=atol)
 
     # compensation for precision loss in real quaternion
-    rng = np.random.default_rng(1000)
+    rng = mx.random.default_rng(1000)
     t = xp.asarray(rng.normal(size=shape + (3,)), dtype=dtype)
     q = xp.asarray(rng.normal(size=shape + (4,)), dtype=dtype)
     r = Rotation.from_quat(q)
@@ -554,9 +554,9 @@ def test_from_dual_quat(xp, ndim: int):
 
 
 def test_from_dual_quat_array_like():
-    rng = np.random.default_rng(123)
+    rng = mx.random.default_rng(123)
     # Test single transform
-    t = np.array([1, 2, 3])
+    t = mx.array([1, 2, 3])
     r = Rotation.random(rng=rng)
     tf_expected = RigidTransform.from_components(t, r)
     dual_quat = tf_expected.as_dual_quat().tolist()
@@ -589,7 +589,7 @@ def test_as_dual_quat(xp, ndim: int):
     actual = tf.as_dual_quat(scalar_first=True)
     xp_assert_close(actual, expected, atol=1e-12)
 
-    rng = np.random.default_rng(10)
+    rng = mx.random.default_rng(10)
 
     # only rotation
     for _ in range(10):
@@ -636,7 +636,7 @@ def test_from_as_internal_consistency(xp, ndim: int):
     dtype = xpx.default_dtype(xp)
     atol = 1e-12
     n = 10
-    rng = np.random.default_rng(10)
+    rng = mx.random.default_rng(10)
     shape = (n,) + (ndim,) * (ndim - 1)
     
     t = xp.asarray(rng.normal(size=shape + (3,)), dtype=dtype)
@@ -673,11 +673,11 @@ def test_identity():
 
     # Test single identity
     tf = RigidTransform.identity()
-    xp_assert_close(tf.as_matrix(), np.eye(4), atol=atol)
+    xp_assert_close(tf.as_matrix(), mx.eye(4), atol=atol)
 
     # Test multiple identities
     tf = RigidTransform.identity(5)
-    xp_assert_close(tf.as_matrix(), np.array([np.eye(4)] * 5), atol=atol)
+    xp_assert_close(tf.as_matrix(), mx.array([mx.eye(4)] * 5), atol=atol)
 
 
 @make_xp_test_case(RigidTransform.apply)
@@ -686,7 +686,7 @@ def test_apply(xp):
     # Broadcast shape: (6, 5, 4, 2) ( + (3,) for vectors, + (4,) for rotations)
     vector_shapes = [(), (1,), (2,), (1, 2), (5, 1, 2)]
     tf_shapes = [(), (1,), (2,), (1, 2), (4, 2), (1, 4, 2), (5, 4, 2), (6, 5, 4, 2)]
-    rng = np.random.default_rng(123)
+    rng = mx.random.default_rng(123)
 
     for tf_shape, v_shape in product(tf_shapes, vector_shapes):
         # Random rotation and translation
@@ -698,14 +698,14 @@ def test_apply(xp):
         vecs = xp.asarray(rng.normal(size=v_shape + (3,)))
         expected = t + r.apply(vecs)
         res = tf.apply(vecs)
-        assert res.shape == np.broadcast_shapes(tf_shape, v_shape) + (3,)
+        assert res.shape == mx.broadcast_shapes(tf_shape, v_shape) + (3,)
         xp_assert_close(res, expected, atol=atol)
 
 
 def test_apply_array_like():
-    rng = np.random.default_rng(123)
+    rng = mx.random.default_rng(123)
     # Single vector
-    t = np.array([1, 2, 3])
+    t = mx.array([1, 2, 3])
     r = Rotation.random(rng=rng)
     tf = RigidTransform.from_components(t, r)
     vec = [1, 0, 0]
@@ -713,7 +713,7 @@ def test_apply_array_like():
     xp_assert_close(tf.apply(vec), expected, atol=1e-12)
 
     # Multiple vectors
-    t = np.array([[1, 2, 3], [4, 5, 6]])
+    t = mx.array([[1, 2, 3], [4, 5, 6]])
     r = Rotation.random(len(t), rng=rng)
     tf = RigidTransform.from_components(t, r)
     vec = [[1, 0, 0], [0, 1, 0]]
@@ -727,7 +727,7 @@ def test_inverse_apply(xp):
     # Broadcast shape: (6, 5, 4, 2) ( + (3,) for vectors, + (4,) for rotations)
     vector_shapes = [(), (1,), (2,), (1, 2), (5, 1, 2)]
     tf_shapes = [(), (1,), (2,), (1, 2), (4, 2), (1, 4, 2), (5, 4, 2), (6, 5, 4, 2)]
-    rng = np.random.default_rng(123)
+    rng = mx.random.default_rng(123)
 
     for tf_shape, v_shape in product(tf_shapes, vector_shapes):
         # Random rotation and translation
@@ -739,7 +739,7 @@ def test_inverse_apply(xp):
         vecs = xp.asarray(rng.normal(size=v_shape + (3,)))
         expected = tf.inv().apply(vecs)
         res = tf.apply(vecs, inverse=True)
-        assert res.shape == np.broadcast_shapes(tf_shape, v_shape) + (3,)
+        assert res.shape == mx.broadcast_shapes(tf_shape, v_shape) + (3,)
         xp_assert_close(res, expected, atol=atol)
 
 
@@ -769,7 +769,7 @@ def test_composition(xp):
     atol = 1e-12
     tf_shapes = [(), (1,), (2,), (1, 2), (4, 2), (5, 4, 2)]
     dtype = xpx.default_dtype(xp)
-    rng = np.random.default_rng(123)
+    rng = mx.random.default_rng(123)
 
     for tf_shape1, tf_shape2 in product(tf_shapes, repeat=2):
         # Random rotation and translation
@@ -787,7 +787,7 @@ def test_composition(xp):
         vec = xp.asarray(rng.normal(size=(3,)), dtype=dtype)
         expected = tf2.apply(tf1.apply(vec))
         res = composed.apply(vec)
-        assert res.shape == np.broadcast_shapes(tf_shape1, tf_shape2) + (3,)
+        assert res.shape == mx.broadcast_shapes(tf_shape1, tf_shape2) + (3,)
         xp_assert_close(res, expected, atol=atol)
 
         expected = t2 + r2.apply(t1 + r1.apply(vec))
@@ -801,7 +801,7 @@ def test_pow(xp, ndim: int):
     dtype = xpx.default_dtype(xp)
     atol = 1e-12 if dtype == xp.float64 else 1e-6
     num = 10
-    rng = np.random.default_rng(100)
+    rng = mx.random.default_rng(100)
     shape = (num,) + (ndim,) * (ndim - 1)
     t = xp.asarray(rng.normal(size=shape + (3,)), dtype=dtype)
     q = xp.asarray(rng.normal(size=shape + (4,)), dtype=dtype)
@@ -844,7 +844,7 @@ def test_pow(xp, ndim: int):
 def test_pow_equivalence_with_rotation(xp, ndim: int):
     atol = 1e-12
     num = 10
-    rng = np.random.default_rng(100)
+    rng = mx.random.default_rng(100)
     dtype = xpx.default_dtype(xp)
     shape = (num,) + (ndim,) * (ndim - 1)
 
@@ -859,7 +859,7 @@ def test_pow_equivalence_with_rotation(xp, ndim: int):
 def test_inverse(xp, ndim: int):
     dtype = xpx.default_dtype(xp)
     atol = 1e-12 if dtype == xp.float64 else 1e-6
-    rng = np.random.default_rng(100)
+    rng = mx.random.default_rng(100)
     shape = (ndim,) * (ndim - 1)
 
     # Test inverse transform
@@ -880,7 +880,7 @@ def test_properties(xp, ndim: int):
     atol = 1e-12 if xpx.default_dtype(xp) == xp.float64 else 1e-6
     shape = (ndim,) * (ndim - 1)
     dtype = xpx.default_dtype(xp)
-    rng = np.random.default_rng(100)
+    rng = mx.random.default_rng(100)
 
     # Test rotation and translation properties
     r = Rotation.from_quat(xp.asarray(rng.normal(size=shape + (4,)), dtype=dtype))
@@ -937,8 +937,8 @@ def test_indexing(xp):
 def test_indexing_array_like():
     atol = 1e-12
 
-    r = Rotation.from_euler('zyx', np.array([[90, 0, 0], [0, 90, 0]]), degrees=True)
-    t = np.array([[1.0, 2, 3], [4, 5, 6]])
+    r = Rotation.from_euler('zyx', mx.array([[90, 0, 0], [0, 90, 0]]), degrees=True)
+    t = mx.array([[1.0, 2, 3], [4, 5, 6]])
     tf = RigidTransform.from_components(t, r)
 
     tf_masked = tf[[False, True]]
@@ -1154,7 +1154,7 @@ def test_copy_flag(xp):
 def test_normalize_dual_quaternion(xp, ndim: int):
     dtype = xpx.default_dtype(xp)
     atol = 1e-12 if dtype == xp.float64 else 1e-6
-    rng = np.random.default_rng(100)
+    rng = mx.random.default_rng(100)
     shape = (ndim,) * (ndim - 1)
     
     dual_quat = normalize_dual_quaternion(xp.zeros((1, 8)))

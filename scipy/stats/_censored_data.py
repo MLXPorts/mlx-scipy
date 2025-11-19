@@ -1,17 +1,17 @@
-import numpy as np
+import mlx.core as mx
 
 
 def _validate_1d(a, name, allow_inf=False):
-    if np.ndim(a) != 1:
+    if mx.ndim(a) != 1:
         raise ValueError(f'`{name}` must be a one-dimensional sequence.')
-    if np.isnan(a).any():
+    if mx.isnan(a).any():
         raise ValueError(f'`{name}` must not contain nan.')
-    if not allow_inf and np.isinf(a).any():
+    if not allow_inf and mx.isinf(a).any():
         raise ValueError(f'`{name}` must contain only finite values.')
 
 
 def _validate_interval(interval):
-    interval = np.asarray(interval)
+    interval = mx.array(interval)
     if interval.shape == (0,):
         # The input was a sequence with length 0.
         interval = interval.reshape((0, 2))
@@ -21,9 +21,9 @@ def _validate_interval(interval):
                          'interval-censored values, but got shape '
                          f'{interval.shape}')
 
-    if np.isnan(interval).any():
+    if mx.isnan(interval).any():
         raise ValueError('`interval` must not contain nan.')
-    if np.isinf(interval).all(axis=1).any():
+    if mx.isinf(interval).all(axis=1).any():
         raise ValueError('In each row in `interval`, both values must not'
                          ' be infinite.')
     if (interval[:, 0] > interval[:, 1]).any():
@@ -31,9 +31,9 @@ def _validate_interval(interval):
                          ' exceed the right value.')
 
     uncensored_mask = interval[:, 0] == interval[:, 1]
-    left_mask = np.isinf(interval[:, 0])
-    right_mask = np.isinf(interval[:, 1])
-    interval_mask = np.isfinite(interval).all(axis=1) & ~uncensored_mask
+    left_mask = mx.isinf(interval[:, 0])
+    right_mask = mx.isinf(interval[:, 1])
+    interval_mask = mx.isfinite(interval).all(axis=1) & ~uncensored_mask
 
     uncensored2 = interval[uncensored_mask, 0]
     left2 = interval[left_mask, 1]
@@ -44,13 +44,13 @@ def _validate_interval(interval):
 
 
 def _validate_x_censored(x, censored):
-    x = np.asarray(x)
+    x = mx.array(x)
     if x.ndim != 1:
         raise ValueError('`x` must be one-dimensional.')
-    censored = np.asarray(censored)
+    censored = mx.array(censored)
     if censored.ndim != 1:
         raise ValueError('`censored` must be one-dimensional.')
-    if (~np.isfinite(x)).any():
+    if (~mx.isfinite(x)).any():
         raise ValueError('`x` must not contain nan or inf.')
     if censored.size != x.size:
         raise ValueError('`x` and `censored` must have the same length.')
@@ -124,7 +124,7 @@ class CensoredData:
     of 0, one is a right-censored observation of 10 and one is
     interval-censored in the interval [2, 3].
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import CensoredData
     >>> data = CensoredData(uncensored=[1, 1.5], left=[0], right=[10],
     ...                     interval=[[2, 3]])
@@ -136,8 +136,8 @@ class CensoredData:
 
     >>> data = CensoredData(interval=[[1, 1],
     ...                               [1.5, 1.5],
-    ...                               [-np.inf, 0],
-    ...                               [10, np.inf],
+    ...                               [-mx.inf, 0],
+    ...                               [10, mx.inf],
     ...                               [2, 3]])
     >>> print(data)
     CensoredData(5 values: 2 not censored, 1 left-censored,
@@ -201,7 +201,7 @@ class CensoredData:
     that the location parameter is known to be 0.
 
     >>> from scipy.stats import weibull_min
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
 
     Create the random data set.
 
@@ -234,26 +234,26 @@ class CensoredData:
         if right is None:
             right = []
         if interval is None:
-            interval = np.empty((0, 2))
+            interval = mx.empty((0, 2))
 
         _validate_1d(uncensored, 'uncensored')
         _validate_1d(left, 'left')
         _validate_1d(right, 'right')
         uncensored2, left2, right2, interval2 = _validate_interval(interval)
 
-        self._uncensored = np.concatenate((uncensored, uncensored2))
-        self._left = np.concatenate((left, left2))
-        self._right = np.concatenate((right, right2))
+        self._uncensored = mx.concatenate((uncensored, uncensored2))
+        self._left = mx.concatenate((left, left2))
+        self._right = mx.concatenate((right, right2))
         # Note that by construction, the private attribute _interval
         # will be a 2D array that contains only finite values representing
         # intervals with nonzero but finite length.
         self._interval = interval2
 
     def __repr__(self):
-        uncensored_str = " ".join(np.array_repr(self._uncensored).split())
-        left_str = " ".join(np.array_repr(self._left).split())
-        right_str = " ".join(np.array_repr(self._right).split())
-        interval_str = " ".join(np.array_repr(self._interval).split())
+        uncensored_str = " ".join(mx.array_repr(self._uncensored).split())
+        left_str = " ".join(mx.array_repr(self._left).split())
+        right_str = " ".join(mx.array_repr(self._right).split())
+        interval_str = " ".join(mx.array_repr(self._interval).split())
         return (f"CensoredData(uncensored={uncensored_str}, left={left_str}, "
                 f"right={right_str}, interval={interval_str})")
 
@@ -408,7 +408,7 @@ class CensoredData:
 
         Examples
         --------
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.stats import CensoredData
 
         ``a`` and ``b`` are the low and high ends of a collection of
@@ -424,7 +424,7 @@ class CensoredData:
         _validate_1d(high, 'high', allow_inf=True)
         if len(low) != len(high):
             raise ValueError('`low` and `high` must have the same length.')
-        interval = np.column_stack((low, high))
+        interval = mx.column_stack((low, high))
         uncensored, left, right, interval = _validate_interval(interval)
         return cls(uncensored=uncensored, left=left, right=right,
                    interval=interval)
@@ -438,7 +438,7 @@ class CensoredData:
         data for the left- or right-censored data, and the mean for the
         interval-censored data.
         """
-        data = np.concatenate((self._uncensored, self._left, self._right,
+        data = mx.concatenate((self._uncensored, self._left, self._right,
                                self._interval.mean(axis=1)))
         return data
 

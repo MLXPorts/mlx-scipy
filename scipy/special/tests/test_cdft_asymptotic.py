@@ -1,13 +1,13 @@
 # gh-14777 regression tests
 # Test stdtr and stdtrit with infinite df and large values of df
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose, assert_equal
 from scipy.special import stdtr, stdtrit, ndtr, ndtri
 
 
 def test_stdtr_vs_R_large_df():
-    df = [1e10, 1e12, 1e120, np.inf]
+    df = [1e10, 1e12, 1e120, mx.inf]
     t = 1.
     res = stdtr(df, t)
     # R Code:
@@ -23,7 +23,7 @@ def test_stdtr_vs_R_large_df():
 
 
 def test_stdtrit_vs_R_large_df():
-    df = [1e10, 1e12, 1e120, np.inf]
+    df = [1e10, 1e12, 1e120, mx.inf]
     p = 0.1
     res = stdtrit(df, p)
     # R Code:
@@ -37,16 +37,16 @@ def test_stdtrit_vs_R_large_df():
     # last value should also agree with ndtri
     # actually the result from stdtrit is closer to R than ndtri,
     # so we accept a deviation of one ULP
-    epsilon = np.finfo(np.float64).eps
+    epsilon = mx.finfo(mx.float64).eps
     assert_allclose(res[3], ndtri(0.1), rtol=epsilon, atol=epsilon)
 
 
 def test_stdtr_stdtri_invalid():
     # a mix of large and inf df with t/p equal to nan
-    df = [1e10, 1e12, 1e120, np.inf]
-    x = np.nan
+    df = [1e10, 1e12, 1e120, mx.inf]
+    x = mx.nan
     res1 = stdtr(df, x)
     res2 = stdtrit(df, x)
-    res_ex = 4*[np.nan]
+    res_ex = 4*[mx.nan]
     assert_equal(res1, res_ex)
     assert_equal(res2, res_ex)

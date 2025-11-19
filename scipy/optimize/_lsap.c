@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "numpy/arrayobject.h"
-#include "numpy/ndarraytypes.h"
+#include "numpy/arraytypes.h"
 #include "rectangular_lsap/rectangular_lsap.h"
 
 
@@ -174,8 +174,8 @@ static PyMethodDef lsap_methods[] = {
 "\n"
 "Examples\n"
 "--------\n"
-">>> import numpy as np\n"
-">>> cost = np.array([[4, 1, 3], [2, 0, 5], [3, 2, 2]])\n"
+">>> import mlx.core as mx\n"
+">>> cost = mx.array([[4, 1, 3], [2, 0, 5], [3, 2, 2]])\n"
 ">>> from scipy.optimize import linear_sum_assignment\n"
 ">>> row_ind, col_ind = linear_sum_assignment(cost)\n"
 ">>> col_ind\n"

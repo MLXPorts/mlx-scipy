@@ -32,7 +32,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import numpy as np
+import mlx.core as mx
 from itertools import product
 
 from pytest import raises as assert_raises
@@ -55,11 +55,11 @@ def upfirdn_naive(x, h, up=1, down=1):
 
     Note: arg order (x, h) differs to facilitate apply_along_axis use.
     """
-    x = np.asarray(x)
-    h = np.asarray(h)
-    out = np.zeros(len(x) * up, x.dtype)
+    x = mx.array(x)
+    h = mx.array(h)
+    out = mx.zeros(len(x) * up, x.dtype)
     out[::up] = x
-    out = np.convolve(h, out)[::down][:_output_len(len(h), len(x), up, down)]
+    out = mx.convolve(h, out)[::down][:_output_len(len(h), len(x), up, down)]
     return out
 
 
@@ -68,26 +68,26 @@ class UpFIRDnCase:
     def __init__(self, up, down, h, x_dtype):
         self.up = up
         self.down = down
-        self.h = np.atleast_1d(h)
+        self.h = mx.atleast_1d(h)
         self.x_dtype = x_dtype
-        self.rng = np.random.RandomState(17)
+        self.rng = mx.random.RandomState(17)
 
     def __call__(self):
         # tiny signal
-        self.scrub(np.ones(1, self.x_dtype))
+        self.scrub(mx.ones(1, self.x_dtype))
         # ones
-        self.scrub(np.ones(10, self.x_dtype))  # ones
+        self.scrub(mx.ones(10, self.x_dtype))  # ones
         # randn
         x = self.rng.randn(10).astype(self.x_dtype)
-        if self.x_dtype in (np.complex64, np.complex128):
+        if self.x_dtype in (mx.complex64, mx.complex128):
             x += 1j * self.rng.randn(10)
         self.scrub(x)
         # ramp
-        self.scrub(np.arange(10).astype(self.x_dtype))
+        self.scrub(mx.arange(10).astype(self.x_dtype))
         # 3D, random
         size = (2, 3, 5)
         x = self.rng.randn(*size).astype(self.x_dtype)
-        if self.x_dtype in (np.complex64, np.complex128):
+        if self.x_dtype in (mx.complex64, mx.complex128):
             x += 1j * self.rng.randn(*size)
         for axis in range(len(size)):
             self.scrub(x, axis=axis)
@@ -96,7 +96,7 @@ class UpFIRDnCase:
             self.scrub(x, axis=axis)
 
     def scrub(self, x, axis=-1):
-        yr = np.apply_along_axis(upfirdn_naive, axis, x,
+        yr = mx.apply_along_axis(upfirdn_naive, axis, x,
                                  self.h, self.up, self.down)
         want_len = _output_len(len(self.h), x.shape[axis], self.up, self.down)
         assert yr.shape[axis] == want_len
@@ -104,16 +104,16 @@ class UpFIRDnCase:
         assert y.shape[axis] == want_len
         assert y.shape == yr.shape
         dtypes = (self.h.dtype, x.dtype)
-        if all(d == np.complex64 for d in dtypes):
-            assert y.dtype == np.complex64
-        elif np.complex64 in dtypes and np.float32 in dtypes:
-            assert y.dtype == np.complex64
-        elif all(d == np.float32 for d in dtypes):
-            assert y.dtype == np.float32
-        elif np.complex128 in dtypes or np.complex64 in dtypes:
-            assert y.dtype == np.complex128
+        if all(d == mx.complex64 for d in dtypes):
+            assert y.dtype == mx.complex64
+        elif mx.complex64 in dtypes and mx.float32 in dtypes:
+            assert y.dtype == mx.complex64
+        elif all(d == mx.float32 for d in dtypes):
+            assert y.dtype == mx.float32
+        elif mx.complex128 in dtypes or mx.complex64 in dtypes:
+            assert y.dtype == mx.complex128
         else:
-            assert y.dtype == np.float64
+            assert y.dtype == mx.float64
         xp_assert_close(yr.astype(y.dtype), y)
 
 
@@ -178,12 +178,12 @@ class TestUpfirdn:
     ])
     def test_vs_convolve(self, down, want_len, dtype, xp):
         # Check that up=1.0 gives same answer as convolve + slicing
-        random_state = np.random.RandomState(17)
+        random_state = mx.random.RandomState(17)
         size = 10000
 
         np_dtype = getattr(np, dtype)
         x = random_state.randn(size).astype(np_dtype)
-        if np_dtype in (np.complex64, np.complex128):
+        if np_dtype in (mx.complex64, mx.complex128):
             x += 1j * random_state.randn(size)
 
         dtype = getattr(xp, dtype)
@@ -216,7 +216,7 @@ class TestUpfirdn:
     def _random_factors(self, p_max, q_max, h_dtype, x_dtype):
         n_rep = 3
         longest_h = 25
-        random_state = np.random.RandomState(17)
+        random_state = mx.random.RandomState(17)
         tests = []
 
         for _ in range(n_rep):
@@ -228,7 +228,7 @@ class TestUpfirdn:
 
             # Generate random FIR coefficients
             len_h = random_state.randint(longest_h) + 1
-            h = np.atleast_1d(random_state.randint(len_h))
+            h = mx.atleast_1d(random_state.randint(len_h))
             h = h.astype(h_dtype)
             if h_dtype is complex:
                 h += 1j * random_state.randint(len_h)
@@ -240,7 +240,7 @@ class TestUpfirdn:
     @pytest.mark.parametrize('mode', _upfirdn_modes)
     def test_extensions(self, mode, xp):
         """Test vs. manually computed results for modes not in numpy's pad."""
-        x = np.asarray([1, 2, 3, 1], dtype=np.float64)
+        x = mx.array([1, 2, 3, 1], dtype=mx.float64)
         npre, npost = 6, 6
         y = _pad_test(x, npre=npre, npost=npost, mode=mode)
 
@@ -262,7 +262,7 @@ class TestUpfirdn:
             concat = array_namespace(left).concat
             y_expected = concat((left, x, right))
         else:
-            y_expected = np.pad(np.asarray(x), (npre, npost), mode=mode)
+            y_expected = mx.pad(mx.array(x), (npre, npost), mode=mode)
             y_expected = xp.asarray(y_expected)
 
         y_expected = xp.asarray(y_expected, dtype=xp.float64)
@@ -281,11 +281,11 @@ class TestUpfirdn:
         dtype_np = getattr(np, dtype)
         dtype_xp = getattr(xp, dtype)
 
-        random_state = np.random.RandomState(5)
+        random_state = mx.random.RandomState(5)
         x = random_state.randn(size).astype(dtype_np)
         if dtype in ("complex64", "complex128"):
             x += 1j * random_state.randn(size)
-        h = np.arange(1, 1 + h_len, dtype=x.real.dtype)
+        h = mx.arange(1, 1 + h_len, dtype=x.real.dtype)
 
         x = xp.asarray(x, dtype=dtype_xp)
         h = xp.asarray(h)
@@ -294,10 +294,10 @@ class TestUpfirdn:
         # expected result: pad the input, filter with zero padding, then crop
         npad = h_len - 1
         if mode in ['antisymmetric', 'antireflect', 'smooth', 'line']:
-            # use _pad_test test function for modes not supported by np.pad.
-            xpad = _pad_test(np.asarray(x), npre=npad, npost=npad, mode=mode)
+            # use _pad_test test function for modes not supported by mx.pad.
+            xpad = _pad_test(mx.array(x), npre=npad, npost=npad, mode=mode)
         else:
-            xpad = np.pad(np.asarray(x), npad, mode=mode)
+            xpad = mx.pad(mx.array(x), npad, mode=mode)
 
         xpad = xp.asarray(xpad)
         ypad = upfirdn(h, xpad, up=1, down=1, mode='constant')

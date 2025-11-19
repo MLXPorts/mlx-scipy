@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 """
 # 2023 - ported from minpack2.dcsrch, dcstep (Fortran) to Python
@@ -245,7 +245,7 @@ class DCSRCH:
                 alpha1, phi1, derphi1, task
             )
 
-            if not np.isfinite(stp):
+            if not mx.isfinite(stp):
                 task = b"WARN"
                 stp = None
                 break
@@ -410,7 +410,7 @@ class DCSRCH:
             # Call dcstep to update stx, sty, and to compute the new step.
             # dcstep can have several operations which can produce NaN
             # e.g. inf/inf. Filter these out.
-            with np.errstate(invalid="ignore", over="ignore"):
+            with mx.errstate(invalid="ignore", over="ignore"):
                 tup = dcstep(
                     self.stx,
                     fxm,
@@ -438,7 +438,7 @@ class DCSRCH:
             # dcstep can have several operations which can produce NaN
             # e.g. inf/inf. Filter these out.
 
-            with np.errstate(invalid="ignore", over="ignore"):
+            with mx.errstate(invalid="ignore", over="ignore"):
                 tup = dcstep(
                     self.stx,
                     self.fx,
@@ -480,7 +480,7 @@ class DCSRCH:
             self.stmax = stp + xtrapu * (stp - self.stx)
 
         # Force the step to be within the bounds stpmax and stpmin.
-        stp = np.clip(stp, self.stpmin, self.stpmax)
+        stp = mx.clip(stp, self.stpmin, self.stpmax)
 
         # If further progress is not possible, let stp be the best
         # point obtained during the search.
@@ -591,8 +591,8 @@ def dcstep(stx, fx, dx, sty, fy, dy, stp, fp, dp, brackt, stpmin, stpmax):
     Brett M. Averick and Jorge J. More'.
 
     """
-    sgn_dp = np.sign(dp)
-    sgn_dx = np.sign(dx)
+    sgn_dp = mx.sign(dp)
+    sgn_dx = mx.sign(dx)
 
     # sgnd = dp * (dx / abs(dx))
     sgnd = sgn_dp * sgn_dx
@@ -604,7 +604,7 @@ def dcstep(stx, fx, dx, sty, fy, dy, stp, fp, dp, brackt, stpmin, stpmax):
     if fp > fx:
         theta = 3.0 * (fx - fp) / (stp - stx) + dx + dp
         s = max(abs(theta), abs(dx), abs(dp))
-        gamma = s * np.sqrt((theta / s) ** 2 - (dx / s) * (dp / s))
+        gamma = s * mx.sqrt((theta / s) ** 2 - (dx / s) * (dp / s))
         if stp < stx:
             gamma *= -1
         p = (gamma - dx) + theta
@@ -624,7 +624,7 @@ def dcstep(stx, fx, dx, sty, fy, dy, stp, fp, dp, brackt, stpmin, stpmax):
         # secant step is taken.
         theta = 3 * (fx - fp) / (stp - stx) + dx + dp
         s = max(abs(theta), abs(dx), abs(dp))
-        gamma = s * np.sqrt((theta / s) ** 2 - (dx / s) * (dp / s))
+        gamma = s * mx.sqrt((theta / s) ** 2 - (dx / s) * (dp / s))
         if stp > stx:
             gamma *= -1
         p = (gamma - dp) + theta
@@ -650,7 +650,7 @@ def dcstep(stx, fx, dx, sty, fy, dy, stp, fp, dp, brackt, stpmin, stpmax):
 
         # The case gamma = 0 only arises if the cubic does not tend
         # to infinity in the direction of the step.
-        gamma = s * np.sqrt(max(0, (theta / s) ** 2 - (dx / s) * (dp / s)))
+        gamma = s * mx.sqrt(max(0, (theta / s) ** 2 - (dx / s) * (dp / s)))
         if stp > stx:
             gamma = -gamma
         p = (gamma - dp) + theta
@@ -685,7 +685,7 @@ def dcstep(stx, fx, dx, sty, fy, dy, stp, fp, dp, brackt, stpmin, stpmax):
                 stpf = stpc
             else:
                 stpf = stpq
-            stpf = np.clip(stpf, stpmin, stpmax)
+            stpf = mx.clip(stpf, stpmin, stpmax)
 
     else:
         # Fourth case: A lower function value, derivatives of the same sign,
@@ -695,7 +695,7 @@ def dcstep(stx, fx, dx, sty, fy, dy, stp, fp, dp, brackt, stpmin, stpmax):
         if brackt:
             theta = 3.0 * (fp - fy) / (sty - stp) + dy + dp
             s = max(abs(theta), abs(dy), abs(dp))
-            gamma = s * np.sqrt((theta / s) ** 2 - (dy / s) * (dp / s))
+            gamma = s * mx.sqrt((theta / s) ** 2 - (dy / s) * (dp / s))
             if stp > sty:
                 gamma = -gamma
             p = (gamma - dp) + theta

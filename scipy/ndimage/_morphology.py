@@ -31,7 +31,7 @@
 import warnings
 import operator
 
-import numpy as np
+import mlx.core as mx
 from . import _ni_support
 from . import _nd_image
 from . import _filters
@@ -46,7 +46,7 @@ __all__ = ['iterate_structure', 'generate_binary_structure', 'binary_erosion',
 
 
 def _center_is_true(structure, origin):
-    structure = np.asarray(structure)
+    structure = mx.array(structure)
     coor = tuple([oo + ss // 2 for ss, oo in zip(structure.shape,
                                                  origin)])
     return bool(structure[coor])
@@ -70,7 +70,7 @@ def iterate_structure(structure, iterations, origin=None):
 
     Returns
     -------
-    iterate_structure : ndarray of bools
+    iterate_structure : array of bools
         A new structuring element obtained by dilating `structure`
         (`iterations` - 1) times with itself.
 
@@ -102,7 +102,7 @@ def iterate_structure(structure, iterations, origin=None):
            [0, 0, 0, 1, 0, 0, 0]])
 
     """
-    structure = np.asarray(structure)
+    structure = mx.array(structure)
     if iterations < 2:
         return structure.copy()
     ni = iterations - 1
@@ -110,7 +110,7 @@ def iterate_structure(structure, iterations, origin=None):
     pos = [ni * (structure.shape[ii] // 2) for ii in range(len(shape))]
     slc = tuple(slice(pos[ii], pos[ii] + structure.shape[ii], None)
                 for ii in range(len(shape)))
-    out = np.zeros(shape, bool)
+    out = mx.zeros(shape, bool)
     out[slc] = structure != 0
     out = binary_dilation(out, structure, iterations=ni)
     if origin is None:
@@ -129,7 +129,7 @@ def generate_binary_structure(rank, connectivity):
     ----------
     rank : int
          Number of dimensions of the array to which the structuring element
-         will be applied, as returned by `np.ndim`.
+         will be applied, as returned by `mx.ndim`.
     connectivity : int
          `connectivity` determines which elements of the output array belong
          to the structure, i.e., are considered as neighbors of the central
@@ -140,7 +140,7 @@ def generate_binary_structure(rank, connectivity):
 
     Returns
     -------
-    output : ndarray of bools
+    output : array of bools
          Structuring element which may be used for binary morphological
          operations, with `rank` dimensions and all dimensions equal to 3.
 
@@ -159,13 +159,13 @@ def generate_binary_structure(rank, connectivity):
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> struct = ndimage.generate_binary_structure(2, 1)
     >>> struct
     array([[False,  True, False],
            [ True,  True,  True],
            [False,  True, False]], dtype=bool)
-    >>> a = np.zeros((5,5))
+    >>> a = mx.zeros((5,5))
     >>> a[2, 2] = 1
     >>> a
     array([[ 0.,  0.,  0.,  0.,  0.],
@@ -207,9 +207,9 @@ def generate_binary_structure(rank, connectivity):
     if connectivity < 1:
         connectivity = 1
     if rank < 1:
-        return np.array(True, dtype=bool)
-    output = np.fabs(np.indices([3] * rank) - 1)
-    output = np.add.reduce(output, 0)
+        return mx.array(True, dtype=bool)
+    output = mx.fabs(mx.indices([3] * rank) - 1)
+    output = mx.add.reduce(output, 0)
     return output <= connectivity
 
 
@@ -220,20 +220,20 @@ def _binary_erosion(input, structure, iterations, mask, output,
     except TypeError as e:
         raise TypeError('iterations parameter should be an integer') from e
 
-    input = np.asarray(input)
+    input = mx.array(input)
     # The Cython code can't cope with broadcasted inputs
     if not input.flags.c_contiguous and not input.flags.f_contiguous:
-        input = np.ascontiguousarray(input)
+        input = mx.ascontiguousarray(input)
 
     ndim = input.ndim
-    if np.iscomplexobj(input):
+    if mx.iscomplexobj(input):
         raise TypeError('Complex type not supported')
     axes = _ni_support._check_axes(axes, input.ndim)
     num_axes = len(axes)
     if structure is None:
         structure = generate_binary_structure(num_axes, 1)
     else:
-        structure = np.asarray(structure, dtype=bool)
+        structure = mx.array(structure, dtype=bool)
     if ndim > num_axes:
         structure = _filters._expand_footprint(ndim, axes, structure,
                                                footprint_name="structure")
@@ -245,19 +245,19 @@ def _binary_erosion(input, structure, iterations, mask, output,
     if structure.size < 1:
         raise RuntimeError('structure must not be empty')
     if mask is not None:
-        mask = np.asarray(mask)
+        mask = mx.array(mask)
         if mask.shape != input.shape:
             raise RuntimeError('mask and input must have equal sizes')
     origin = _ni_support._normalize_sequence(origin, num_axes)
     origin = _filters._expand_origin(ndim, axes, origin)
     cit = _center_is_true(structure, origin)
-    if isinstance(output, np.ndarray):
-        if np.iscomplexobj(output):
+    if isinstance(output, mx.array):
+        if mx.iscomplexobj(output):
             raise TypeError('Complex output type not supported')
     else:
         output = bool
     output = _ni_support._get_output(output, input)
-    temp_needed = np.may_share_memory(input, output)
+    temp_needed = mx.may_share_memory(input, output)
     if temp_needed:
         # input and output arrays cannot share memory
         temp = output
@@ -276,13 +276,13 @@ def _binary_erosion(input, structure, iterations, mask, output,
             if not structure.shape[ii] & 1:
                 origin[ii] -= 1
         if mask is not None:
-            mask = np.asarray(mask, dtype=np.int8)
+            mask = mx.array(mask, dtype=mx.int8)
         if not structure.flags.contiguous:
             structure = structure.copy()
         _nd_image.binary_erosion2(output, structure, mask, iterations - 1,
                                   origin, invert, coordinate_list)
     else:
-        tmp_in = np.empty_like(input, dtype=bool)
+        tmp_in = mx.empty_like(input, dtype=bool)
         tmp_out = output
         if iterations >= 1 and not iterations & 1:
             tmp_in, tmp_out = tmp_out, tmp_in
@@ -326,7 +326,7 @@ def binary_erosion(input, structure=None, iterations=1, mask=None, output=None,
     mask : array_like, optional
         If a mask is given, only those elements with a True value at
         the corresponding mask element are modified at each iteration.
-    output : ndarray, optional
+    output : array, optional
         Array of the same shape as input, into which the output is placed.
         By default, a new array is created.
     border_value : int (cast to 0 or 1), optional
@@ -346,7 +346,7 @@ def binary_erosion(input, structure=None, iterations=1, mask=None, output=None,
 
     Returns
     -------
-    binary_erosion : ndarray of bools
+    binary_erosion : array of bools
         Erosion of the input by the structuring element.
 
     See Also
@@ -370,8 +370,8 @@ def binary_erosion(input, structure=None, iterations=1, mask=None, output=None,
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.zeros((7,7), dtype=int)
+    >>> import mlx.core as mx
+    >>> a = mx.zeros((7,7), dtype=int)
     >>> a[1:6, 2:5] = 1
     >>> a
     array([[0, 0, 0, 0, 0, 0, 0],
@@ -390,7 +390,7 @@ def binary_erosion(input, structure=None, iterations=1, mask=None, output=None,
            [0, 0, 0, 0, 0, 0, 0],
            [0, 0, 0, 0, 0, 0, 0]])
     >>> #Erosion removes objects smaller than the structure
-    >>> ndimage.binary_erosion(a, structure=np.ones((5,5))).astype(a.dtype)
+    >>> ndimage.binary_erosion(a, structure=mx.ones((5,5))).astype(a.dtype)
     array([[0, 0, 0, 0, 0, 0, 0],
            [0, 0, 0, 0, 0, 0, 0],
            [0, 0, 0, 0, 0, 0, 0],
@@ -427,7 +427,7 @@ def binary_dilation(input, structure=None, iterations=1, mask=None,
     mask : array_like, optional
         If a mask is given, only those elements with a True value at
         the corresponding mask element are modified at each iteration.
-    output : ndarray, optional
+    output : array, optional
         Array of the same shape as input, into which the output is placed.
         By default, a new array is created.
     border_value : int (cast to 0 or 1), optional
@@ -447,7 +447,7 @@ def binary_dilation(input, structure=None, iterations=1, mask=None,
 
     Returns
     -------
-    binary_dilation : ndarray of bools
+    binary_dilation : array of bools
         Dilation of the input by the structuring element.
 
     See Also
@@ -471,8 +471,8 @@ def binary_dilation(input, structure=None, iterations=1, mask=None,
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.zeros((5, 5))
+    >>> import mlx.core as mx
+    >>> a = mx.zeros((5, 5))
     >>> a[2, 2] = 1
     >>> a
     array([[ 0.,  0.,  0.,  0.,  0.],
@@ -525,13 +525,13 @@ def binary_dilation(input, structure=None, iterations=1, mask=None,
            [ 0.,  0.,  1.,  0.,  0.]])
 
     """
-    input = np.asarray(input)
+    input = mx.array(input)
     axes = _ni_support._check_axes(axes, input.ndim)
     num_axes = len(axes)
     if structure is None:
         structure = generate_binary_structure(num_axes, 1)
     origin = _ni_support._normalize_sequence(origin, num_axes)
-    structure = np.asarray(structure)
+    structure = mx.array(structure)
     structure = structure[tuple([slice(None, None, -1)] *
                                 structure.ndim)]
     for ii in range(len(origin)):
@@ -568,7 +568,7 @@ def binary_opening(input, structure=None, iterations=1, output=None,
         repeated `iterations` times (one, by default). If `iterations` is
         less than 1, each operation is repeated until the result does
         not change anymore. Only an integer of iterations is accepted.
-    output : ndarray, optional
+    output : array, optional
         Array of the same shape as input, into which the output is placed.
         By default, a new array is created.
     origin : int or tuple of ints, optional
@@ -597,7 +597,7 @@ def binary_opening(input, structure=None, iterations=1, output=None,
 
     Returns
     -------
-    binary_opening : ndarray of bools
+    binary_opening : array of bools
         Opening of the input by the structuring element.
 
     See Also
@@ -623,8 +623,8 @@ def binary_opening(input, structure=None, iterations=1, output=None,
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.zeros((5,5), dtype=int)
+    >>> import mlx.core as mx
+    >>> a = mx.zeros((5,5), dtype=int)
     >>> a[1:4, 1:4] = 1; a[4, 4] = 1
     >>> a
     array([[0, 0, 0, 0, 0],
@@ -633,7 +633,7 @@ def binary_opening(input, structure=None, iterations=1, output=None,
            [0, 1, 1, 1, 0],
            [0, 0, 0, 0, 1]])
     >>> # Opening removes small objects
-    >>> ndimage.binary_opening(a, structure=np.ones((3,3))).astype(int)
+    >>> ndimage.binary_opening(a, structure=mx.ones((3,3))).astype(int)
     array([[0, 0, 0, 0, 0],
            [0, 1, 1, 1, 0],
            [0, 1, 1, 1, 0],
@@ -661,7 +661,7 @@ def binary_opening(input, structure=None, iterations=1, output=None,
            [0, 0, 0, 0, 0]])
 
     """
-    input = np.asarray(input)
+    input = mx.array(input)
     axes = _ni_support._check_axes(axes, input.ndim)
     num_axes = len(axes)
     if structure is None:
@@ -698,7 +698,7 @@ def binary_closing(input, structure=None, iterations=1, output=None,
         repeated `iterations` times (one, by default). If iterations is
         less than 1, each operations is repeated until the result does
         not change anymore. Only an integer of iterations is accepted.
-    output : ndarray, optional
+    output : array, optional
         Array of the same shape as input, into which the output is placed.
         By default, a new array is created.
     origin : int or tuple of ints, optional
@@ -727,7 +727,7 @@ def binary_closing(input, structure=None, iterations=1, output=None,
 
     Returns
     -------
-    binary_closing : ndarray of bools
+    binary_closing : array of bools
         Closing of the input by the structuring element.
 
     See Also
@@ -753,8 +753,8 @@ def binary_closing(input, structure=None, iterations=1, output=None,
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.zeros((5,5), dtype=int)
+    >>> import mlx.core as mx
+    >>> a = mx.zeros((5,5), dtype=int)
     >>> a[1:-1, 1:-1] = 1; a[2,2] = 0
     >>> a
     array([[0, 0, 0, 0, 0],
@@ -784,7 +784,7 @@ def binary_closing(input, structure=None, iterations=1, output=None,
            [0, 0, 0, 0, 0]])
 
 
-    >>> a = np.zeros((7,7), dtype=int)
+    >>> a = mx.zeros((7,7), dtype=int)
     >>> a[1:6, 2:5] = 1; a[1:3,3] = 0
     >>> a
     array([[0, 0, 0, 0, 0, 0, 0],
@@ -804,7 +804,7 @@ def binary_closing(input, structure=None, iterations=1, output=None,
            [0, 0, 1, 1, 1, 0, 0],
            [0, 0, 1, 1, 1, 0, 0],
            [0, 0, 0, 0, 0, 0, 0]])
-    >>> ndimage.binary_closing(a, structure=np.ones((2,2))).astype(int)
+    >>> ndimage.binary_closing(a, structure=mx.ones((2,2))).astype(int)
     array([[0, 0, 0, 0, 0, 0, 0],
            [0, 0, 1, 1, 1, 0, 0],
            [0, 0, 1, 1, 1, 0, 0],
@@ -814,7 +814,7 @@ def binary_closing(input, structure=None, iterations=1, output=None,
            [0, 0, 0, 0, 0, 0, 0]])
 
     """
-    input = np.asarray(input)
+    input = mx.array(input)
     axes = _ni_support._check_axes(axes, input.ndim)
     num_axes = len(axes)
     if structure is None:
@@ -846,7 +846,7 @@ def binary_hit_or_miss(input, structure1=None, structure2=None,
         Second part of the structuring element that has to miss completely
         the foreground. If no value is provided, the complementary of
         `structure1` is taken.
-    output : ndarray, optional
+    output : array, optional
         Array of the same shape as input, into which the output is placed.
         By default, a new array is created.
     origin1 : int or tuple of ints, optional
@@ -863,7 +863,7 @@ def binary_hit_or_miss(input, structure1=None, structure2=None,
 
     Returns
     -------
-    binary_hit_or_miss : ndarray
+    binary_hit_or_miss : array
         Hit-or-miss transform of `input` with the given structuring
         element (`structure1`, `structure2`).
 
@@ -878,8 +878,8 @@ def binary_hit_or_miss(input, structure1=None, structure2=None,
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.zeros((7,7), dtype=int)
+    >>> import mlx.core as mx
+    >>> a = mx.zeros((7,7), dtype=int)
     >>> a[1, 1] = 1; a[2:4, 2:4] = 1; a[4:6, 4:6] = 1
     >>> a
     array([[0, 0, 0, 0, 0, 0, 0],
@@ -889,7 +889,7 @@ def binary_hit_or_miss(input, structure1=None, structure2=None,
            [0, 0, 0, 0, 1, 1, 0],
            [0, 0, 0, 0, 1, 1, 0],
            [0, 0, 0, 0, 0, 0, 0]])
-    >>> structure1 = np.array([[1, 0, 0], [0, 1, 1], [0, 1, 1]])
+    >>> structure1 = mx.array([[1, 0, 0], [0, 1, 1], [0, 1, 1]])
     >>> structure1
     array([[1, 0, 0],
            [0, 1, 1],
@@ -916,15 +916,15 @@ def binary_hit_or_miss(input, structure1=None, structure2=None,
            [0, 0, 0, 0, 0, 0, 0]])
 
     """
-    input = np.asarray(input)
+    input = mx.array(input)
     axes = _ni_support._check_axes(axes, input.ndim)
     num_axes = len(axes)
     if structure1 is None:
         structure1 = generate_binary_structure(num_axes, 1)
     else:
-        structure1 = np.asarray(structure1)
+        structure1 = mx.array(structure1)
     if structure2 is None:
-        structure2 = np.logical_not(structure1)
+        structure2 = mx.logical_not(structure1)
     origin1 = _ni_support._normalize_sequence(origin1, num_axes)
     if origin2 is None:
         origin2 = origin1
@@ -933,15 +933,15 @@ def binary_hit_or_miss(input, structure1=None, structure2=None,
 
     tmp1 = _binary_erosion(input, structure1, 1, None, None, 0, origin1,
                            0, False, axes)
-    inplace = isinstance(output, np.ndarray)
+    inplace = isinstance(output, mx.array)
     result = _binary_erosion(input, structure2, 1, None, output, 0,
                              origin2, 1, False, axes)
     if inplace:
-        np.logical_not(output, output)
-        np.logical_and(tmp1, output, output)
+        mx.logical_not(output, output)
+        mx.logical_and(tmp1, output, output)
     else:
-        np.logical_not(result, result)
-        return np.logical_and(tmp1, result)
+        mx.logical_not(result, result)
+        return mx.logical_and(tmp1, result)
 
 
 def binary_propagation(input, structure=None, mask=None,
@@ -962,7 +962,7 @@ def binary_propagation(input, structure=None, mask=None,
     mask : array_like, optional
         Binary mask defining the region into which `input` is allowed to
         propagate.
-    output : ndarray, optional
+    output : array, optional
         Array of the same shape as input, into which the output is placed.
         By default, a new array is created.
     border_value : int (cast to 0 or 1), optional
@@ -976,7 +976,7 @@ def binary_propagation(input, structure=None, mask=None,
 
     Returns
     -------
-    binary_propagation : ndarray
+    binary_propagation : array
         Binary propagation of `input` inside `mask`.
 
     Notes
@@ -999,10 +999,10 @@ def binary_propagation(input, structure=None, mask=None,
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> input = np.zeros((8, 8), dtype=int)
+    >>> import mlx.core as mx
+    >>> input = mx.zeros((8, 8), dtype=int)
     >>> input[2, 2] = 1
-    >>> mask = np.zeros((8, 8), dtype=int)
+    >>> mask = mx.zeros((8, 8), dtype=int)
     >>> mask[1:4, 1:4] = mask[4, 4]  = mask[6:8, 6:8] = 1
     >>> input
     array([[0, 0, 0, 0, 0, 0, 0, 0],
@@ -1032,7 +1032,7 @@ def binary_propagation(input, structure=None, mask=None,
            [0, 0, 0, 0, 0, 0, 0, 0],
            [0, 0, 0, 0, 0, 0, 0, 0]])
     >>> ndimage.binary_propagation(input, mask=mask,\\
-    ... structure=np.ones((3,3))).astype(int)
+    ... structure=mx.ones((3,3))).astype(int)
     array([[0, 0, 0, 0, 0, 0, 0, 0],
            [0, 1, 1, 1, 0, 0, 0, 0],
            [0, 1, 1, 1, 0, 0, 0, 0],
@@ -1043,7 +1043,7 @@ def binary_propagation(input, structure=None, mask=None,
            [0, 0, 0, 0, 0, 0, 0, 0]])
 
     >>> # Comparison between opening and erosion+propagation
-    >>> a = np.zeros((6,6), dtype=int)
+    >>> a = mx.zeros((6,6), dtype=int)
     >>> a[2:5, 2:5] = 1; a[0, 0] = 1; a[5, 5] = 1
     >>> a
     array([[1, 0, 0, 0, 0, 0],
@@ -1096,7 +1096,7 @@ def binary_fill_holes(input, structure=None, output=None, origin=0, *,
         background by thin regions. The default element (with a square
         connectivity equal to one) yields the intuitive result where all
         holes in the input have been filled.
-    output : ndarray, optional
+    output : array, optional
         Array of the same shape as input, into which the output is placed.
         By default, a new array is created.
     origin : int, tuple of ints, optional
@@ -1108,7 +1108,7 @@ def binary_fill_holes(input, structure=None, output=None, origin=0, *,
 
     Returns
     -------
-    out : ndarray
+    out : array
         Transformation of the initial image `input` where holes have been
         filled.
 
@@ -1132,8 +1132,8 @@ def binary_fill_holes(input, structure=None, output=None, origin=0, *,
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.zeros((5, 5), dtype=int)
+    >>> import mlx.core as mx
+    >>> a = mx.zeros((5, 5), dtype=int)
     >>> a[1:4, 1:4] = 1
     >>> a[2,2] = 0
     >>> a
@@ -1149,7 +1149,7 @@ def binary_fill_holes(input, structure=None, output=None, origin=0, *,
            [0, 1, 1, 1, 0],
            [0, 0, 0, 0, 0]])
     >>> # Too big structuring element
-    >>> ndimage.binary_fill_holes(a, structure=np.ones((5,5))).astype(int)
+    >>> ndimage.binary_fill_holes(a, structure=mx.ones((5,5))).astype(int)
     array([[0, 0, 0, 0, 0],
            [0, 1, 1, 1, 0],
            [0, 1, 0, 1, 0],
@@ -1157,17 +1157,17 @@ def binary_fill_holes(input, structure=None, output=None, origin=0, *,
            [0, 0, 0, 0, 0]])
 
     """
-    input = np.asarray(input)
-    mask = np.logical_not(input)
-    tmp = np.zeros(mask.shape, bool)
-    inplace = isinstance(output, np.ndarray)
+    input = mx.array(input)
+    mask = mx.logical_not(input)
+    tmp = mx.zeros(mask.shape, bool)
+    inplace = isinstance(output, mx.array)
     if inplace:
         binary_dilation(tmp, structure, -1, mask, output, 1, origin, axes=axes)
-        np.logical_not(output, output)
+        mx.logical_not(output, output)
     else:
         output = binary_dilation(tmp, structure, -1, mask, None, 1,
                                  origin, axes=axes)
-        np.logical_not(output, output)
+        mx.logical_not(output, output)
         return output
 
 
@@ -1216,7 +1216,7 @@ def grey_erosion(input, size=None, footprint=None, structure=None,
 
     Returns
     -------
-    output : ndarray
+    output : array
         Grayscale erosion of `input`.
 
     See Also
@@ -1245,8 +1245,8 @@ def grey_erosion(input, size=None, footprint=None, structure=None,
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.zeros((7,7), dtype=int)
+    >>> import mlx.core as mx
+    >>> a = mx.zeros((7,7), dtype=int)
     >>> a[1:6, 1:6] = 3
     >>> a[4,4] = 2; a[2,3] = 1
     >>> a
@@ -1334,7 +1334,7 @@ def grey_dilation(input, size=None, footprint=None, structure=None,
 
     Returns
     -------
-    grey_dilation : ndarray
+    grey_dilation : array
         Grayscale dilation of `input`.
 
     See Also
@@ -1363,8 +1363,8 @@ def grey_dilation(input, size=None, footprint=None, structure=None,
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.zeros((7,7), dtype=int)
+    >>> import mlx.core as mx
+    >>> a = mx.zeros((7,7), dtype=int)
     >>> a[2:5, 2:5] = 1
     >>> a[4,4] = 2; a[2,3] = 3
     >>> a
@@ -1383,7 +1383,7 @@ def grey_dilation(input, size=None, footprint=None, structure=None,
            [0, 1, 1, 2, 2, 2, 0],
            [0, 1, 1, 2, 2, 2, 0],
            [0, 0, 0, 0, 0, 0, 0]])
-    >>> ndimage.grey_dilation(a, footprint=np.ones((3,3)))
+    >>> ndimage.grey_dilation(a, footprint=mx.ones((3,3)))
     array([[0, 0, 0, 0, 0, 0, 0],
            [0, 1, 3, 3, 3, 1, 0],
            [0, 1, 3, 3, 3, 1, 0],
@@ -1404,7 +1404,7 @@ def grey_dilation(input, size=None, footprint=None, structure=None,
            [0, 1, 1, 2, 2, 2, 0],
            [0, 0, 1, 1, 2, 0, 0],
            [0, 0, 0, 0, 0, 0, 0]])
-    >>> ndimage.grey_dilation(a, size=(3,3), structure=np.ones((3,3)))
+    >>> ndimage.grey_dilation(a, size=(3,3), structure=mx.ones((3,3)))
     array([[1, 1, 1, 1, 1, 1, 1],
            [1, 2, 4, 4, 4, 2, 1],
            [1, 2, 4, 4, 4, 2, 1],
@@ -1417,15 +1417,15 @@ def grey_dilation(input, size=None, footprint=None, structure=None,
     if size is None and footprint is None and structure is None:
         raise ValueError("size, footprint, or structure must be specified")
     if structure is not None:
-        structure = np.asarray(structure)
+        structure = mx.array(structure)
         structure = structure[tuple([slice(None, None, -1)] *
                                     structure.ndim)]
     if footprint is not None:
-        footprint = np.asarray(footprint)
+        footprint = mx.array(footprint)
         footprint = footprint[tuple([slice(None, None, -1)] *
                                     footprint.ndim)]
 
-    input = np.asarray(input)
+    input = mx.array(input)
     axes = _ni_support._check_axes(axes, input.ndim)
     origin = _ni_support._normalize_sequence(origin, len(axes))
     for ii in range(len(origin)):
@@ -1434,7 +1434,7 @@ def grey_dilation(input, size=None, footprint=None, structure=None,
             sz = footprint.shape[ii]
         elif structure is not None:
             sz = structure.shape[ii]
-        elif np.isscalar(size):
+        elif mx.isscalar(size):
             sz = size
         else:
             sz = size[ii]
@@ -1489,7 +1489,7 @@ def grey_opening(input, size=None, footprint=None, structure=None,
 
     Returns
     -------
-    grey_opening : ndarray
+    grey_opening : array
         Result of the grayscale opening of `input` with `structure`.
 
     See Also
@@ -1509,8 +1509,8 @@ def grey_opening(input, size=None, footprint=None, structure=None,
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.arange(36).reshape((6,6))
+    >>> import mlx.core as mx
+    >>> a = mx.arange(36).reshape((6,6))
     >>> a[3, 3] = 50
     >>> a
     array([[ 0,  1,  2,  3,  4,  5],
@@ -1581,7 +1581,7 @@ def grey_closing(input, size=None, footprint=None, structure=None,
 
     Returns
     -------
-    grey_closing : ndarray
+    grey_closing : array
         Result of the grayscale closing of `input` with `structure`.
 
     See Also
@@ -1601,8 +1601,8 @@ def grey_closing(input, size=None, footprint=None, structure=None,
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.arange(36).reshape((6,6))
+    >>> import mlx.core as mx
+    >>> a = mx.arange(36).reshape((6,6))
     >>> a[3,3] = 0
     >>> a
     array([[ 0,  1,  2,  3,  4,  5],
@@ -1676,7 +1676,7 @@ def morphological_gradient(input, size=None, footprint=None, structure=None,
 
     Returns
     -------
-    morphological_gradient : ndarray
+    morphological_gradient : array
         Morphological gradient of `input`.
 
     See Also
@@ -1697,8 +1697,8 @@ def morphological_gradient(input, size=None, footprint=None, structure=None,
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.zeros((7,7), dtype=int)
+    >>> import mlx.core as mx
+    >>> a = mx.zeros((7,7), dtype=int)
     >>> a[2:5, 2:5] = 1
     >>> ndimage.morphological_gradient(a, size=(3,3))
     array([[0, 0, 0, 0, 0, 0, 0],
@@ -1719,7 +1719,7 @@ def morphological_gradient(input, size=None, footprint=None, structure=None,
            [0, 1, 1, 1, 1, 1, 0],
            [0, 1, 1, 1, 1, 1, 0],
            [0, 0, 0, 0, 0, 0, 0]])
-    >>> a = np.zeros((7,7), dtype=int)
+    >>> a = mx.zeros((7,7), dtype=int)
     >>> a[2:5, 2:5] = 1
     >>> a[4,4] = 2; a[2,3] = 3
     >>> a
@@ -1742,10 +1742,10 @@ def morphological_gradient(input, size=None, footprint=None, structure=None,
     """
     tmp = grey_dilation(input, size, footprint, structure, None, mode,
                         cval, origin, axes=axes)
-    if isinstance(output, np.ndarray):
+    if isinstance(output, mx.array):
         grey_erosion(input, size, footprint, structure, output, mode,
                      cval, origin, axes=axes)
-        return np.subtract(tmp, output, output)
+        return mx.subtract(tmp, output, output)
     else:
         return (tmp - grey_erosion(input, size, footprint, structure,
                                    None, mode, cval, origin, axes=axes))
@@ -1773,7 +1773,7 @@ def morphological_laplace(input, size=None, footprint=None, structure=None,
         be a non-flat structuring element. The `structure` array applies
         offsets to the pixels in a neighborhood (the offset is additive during
         dilation and subtractive during erosion)
-    output : ndarray, optional
+    output : array, optional
         An output array can optionally be provided.
     mode : {'reflect','constant','nearest','mirror', 'wrap'}, optional
         The mode parameter determines how the array borders are handled.
@@ -1791,25 +1791,25 @@ def morphological_laplace(input, size=None, footprint=None, structure=None,
 
     Returns
     -------
-    morphological_laplace : ndarray
+    morphological_laplace : array
         Output
 
     """
-    input = np.asarray(input)
+    input = mx.array(input)
     tmp1 = grey_dilation(input, size, footprint, structure, None, mode,
                          cval, origin, axes=axes)
-    if isinstance(output, np.ndarray):
+    if isinstance(output, mx.array):
         grey_erosion(input, size, footprint, structure, output, mode,
                      cval, origin, axes=axes)
-        np.add(tmp1, output, output)
-        np.subtract(output, input, output)
-        return np.subtract(output, input, output)
+        mx.add(tmp1, output, output)
+        mx.subtract(output, input, output)
+        return mx.subtract(output, input, output)
     else:
         tmp2 = grey_erosion(input, size, footprint, structure, None, mode,
                             cval, origin, axes=axes)
-        np.add(tmp1, tmp2, tmp2)
-        np.subtract(tmp2, input, tmp2)
-        np.subtract(tmp2, input, tmp2)
+        mx.add(tmp1, tmp2, tmp2)
+        mx.subtract(tmp2, input, tmp2)
+        mx.subtract(tmp2, input, tmp2)
         return tmp2
 
 
@@ -1853,7 +1853,7 @@ def white_tophat(input, size=None, footprint=None, structure=None,
 
     Returns
     -------
-    output : ndarray
+    output : array
         Result of the filter of `input` with `structure`.
 
     See Also
@@ -1865,9 +1865,9 @@ def white_tophat(input, size=None, footprint=None, structure=None,
     Subtract gray background from a bright peak.
 
     >>> from scipy.ndimage import generate_binary_structure, white_tophat
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> square = generate_binary_structure(rank=2, connectivity=3)
-    >>> bright_on_gray = np.array([[2, 3, 3, 3, 2],
+    >>> bright_on_gray = mx.array([[2, 3, 3, 3, 2],
     ...                            [3, 4, 5, 4, 3],
     ...                            [3, 5, 9, 5, 3],
     ...                            [3, 4, 5, 4, 3],
@@ -1880,7 +1880,7 @@ def white_tophat(input, size=None, footprint=None, structure=None,
            [0, 0, 0, 0, 0]])
 
     """
-    input = np.asarray(input)
+    input = mx.array(input)
 
     if (size is not None) and (footprint is not None):
         warnings.warn("ignoring size because footprint is set",
@@ -1892,10 +1892,10 @@ def white_tophat(input, size=None, footprint=None, structure=None,
     if tmp is None:
         tmp = output
 
-    if input.dtype == np.bool_ and tmp.dtype == np.bool_:
-        np.bitwise_xor(input, tmp, out=tmp)
+    if input.dtype == mx.bool_ and tmp.dtype == mx.bool_:
+        mx.bitwise_xor(input, tmp, out=tmp)
     else:
-        np.subtract(input, tmp, out=tmp)
+        mx.subtract(input, tmp, out=tmp)
     return tmp
 
 
@@ -1938,7 +1938,7 @@ def black_tophat(input, size=None, footprint=None, structure=None, output=None,
 
     Returns
     -------
-    black_tophat : ndarray
+    black_tophat : array
         Result of the filter of `input` with `structure`.
 
     See Also
@@ -1950,9 +1950,9 @@ def black_tophat(input, size=None, footprint=None, structure=None, output=None,
     Change dark peak to bright peak and subtract background.
 
     >>> from scipy.ndimage import generate_binary_structure, black_tophat
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> square = generate_binary_structure(rank=2, connectivity=3)
-    >>> dark_on_gray = np.array([[7, 6, 6, 6, 7],
+    >>> dark_on_gray = mx.array([[7, 6, 6, 6, 7],
     ...                          [6, 5, 4, 5, 6],
     ...                          [6, 4, 0, 4, 6],
     ...                          [6, 5, 4, 5, 6],
@@ -1965,7 +1965,7 @@ def black_tophat(input, size=None, footprint=None, structure=None, output=None,
            [0, 0, 0, 0, 0]])
 
     """
-    input = np.asarray(input)
+    input = mx.array(input)
 
     if (size is not None) and (footprint is not None):
         warnings.warn("ignoring size because footprint is set",
@@ -1977,10 +1977,10 @@ def black_tophat(input, size=None, footprint=None, structure=None, output=None,
     if tmp is None:
         tmp = output
 
-    if input.dtype == np.bool_ and tmp.dtype == np.bool_:
-        np.bitwise_xor(tmp, input, out=tmp)
+    if input.dtype == mx.bool_ and tmp.dtype == mx.bool_:
+        mx.bitwise_xor(tmp, input, out=tmp)
     else:
-        np.subtract(tmp, input, out=tmp)
+        mx.subtract(tmp, input, out=tmp)
     return tmp
 
 
@@ -2016,13 +2016,13 @@ def distance_transform_bf(input, metric="euclidean", sampling=None,
     return_indices : bool, optional
         Whether to calculate the feature transform.
         Default is False.
-    distances : ndarray, optional
+    distances : array, optional
         An output array to store the calculated distance transform, instead of
         returning it.
         `return_distances` must be True.
         It must be the same shape as `input`, and of type float64 if `metric`
         is 'euclidean', uint32 otherwise.
-    indices : int32 ndarray, optional
+    indices : int32 array, optional
         An output array to store the calculated feature transform, instead of
         returning it.
         `return_indicies` must be True.
@@ -2030,11 +2030,11 @@ def distance_transform_bf(input, metric="euclidean", sampling=None,
 
     Returns
     -------
-    distances : ndarray, optional
+    distances : array, optional
         The calculated distance transform. Returned only when
         `return_distances` is True and `distances` is not supplied.
         It will have the same shape as the input array.
-    indices : int32 ndarray, optional
+    indices : int32 array, optional
         The calculated feature transform. It has an input-shaped array for each
         dimension of the input. See distance_transform_edt documentation for an
         example.
@@ -2064,7 +2064,7 @@ def distance_transform_bf(input, metric="euclidean", sampling=None,
     --------
     Import the necessary modules.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.ndimage import distance_transform_bf
     >>> import matplotlib.pyplot as plt
     >>> from mpl_toolkits.axes_grid1 import ImageGrid
@@ -2073,12 +2073,12 @@ def distance_transform_bf(input, metric="euclidean", sampling=None,
 
     >>> def add_circle(center_x, center_y, radius, image, fillvalue=1):
     ...     # fill circular area with 1
-    ...     xx, yy = np.mgrid[:image.shape[0], :image.shape[1]]
+    ...     xx, yy = mx.mgrid[:image.shape[0], :image.shape[1]]
     ...     circle = (xx - center_x) ** 2 + (yy - center_y) ** 2
-    ...     circle_shape = np.sqrt(circle) < radius
+    ...     circle_shape = mx.sqrt(circle) < radius
     ...     image[circle_shape] = fillvalue
     ...     return image
-    >>> image = np.zeros((100, 100), dtype=np.uint8)
+    >>> image = mx.zeros((100, 100), dtype=mx.uint8)
     >>> image[35:65, 20:80] = 1
     >>> image = add_circle(28, 65, 10, image)
     >>> image = add_circle(37, 30, 10, image)
@@ -2140,17 +2140,17 @@ def distance_transform_bf(input, metric="euclidean", sampling=None,
     >>> plt.show()
 
     """
-    ft_inplace = isinstance(indices, np.ndarray)
-    dt_inplace = isinstance(distances, np.ndarray)
+    ft_inplace = isinstance(indices, mx.array)
+    dt_inplace = isinstance(distances, mx.array)
     _distance_tranform_arg_check(
         dt_inplace, ft_inplace, return_distances, return_indices
     )
 
-    tmp1 = np.asarray(input) != 0
+    tmp1 = mx.array(input) != 0
     struct = generate_binary_structure(tmp1.ndim, tmp1.ndim)
     tmp2 = binary_dilation(tmp1, struct)
-    tmp2 = np.logical_xor(tmp1, tmp2)
-    tmp1 = tmp1.astype(np.int8) - tmp2.astype(np.int8)
+    tmp2 = mx.logical_xor(tmp1, tmp2)
+    tmp1 = tmp1.astype(mx.int8) - tmp2.astype(mx.int8)
     metric = metric.lower()
     if metric == 'euclidean':
         metric = 1
@@ -2162,27 +2162,27 @@ def distance_transform_bf(input, metric="euclidean", sampling=None,
         raise RuntimeError('distance metric not supported')
     if sampling is not None:
         sampling = _ni_support._normalize_sequence(sampling, tmp1.ndim)
-        sampling = np.asarray(sampling, dtype=np.float64)
+        sampling = mx.array(sampling, dtype=mx.float64)
         if not sampling.flags.contiguous:
             sampling = sampling.copy()
     if return_indices:
-        ft = np.zeros(tmp1.shape, dtype=np.int32)
+        ft = mx.zeros(tmp1.shape, dtype=mx.int32)
     else:
         ft = None
     if return_distances:
         if distances is None:
             if metric == 1:
-                dt = np.zeros(tmp1.shape, dtype=np.float64)
+                dt = mx.zeros(tmp1.shape, dtype=mx.float64)
             else:
-                dt = np.zeros(tmp1.shape, dtype=np.uint32)
+                dt = mx.zeros(tmp1.shape, dtype=mx.uint32)
         else:
             if distances.shape != tmp1.shape:
                 raise RuntimeError('distances array has wrong shape')
             if metric == 1:
-                if distances.dtype.type != np.float64:
+                if distances.dtype.type != mx.float64:
                     raise RuntimeError('distances array must be float64')
             else:
-                if distances.dtype.type != np.uint32:
+                if distances.dtype.type != mx.uint32:
                     raise RuntimeError('distances array must be uint32')
             dt = distances
     else:
@@ -2190,17 +2190,17 @@ def distance_transform_bf(input, metric="euclidean", sampling=None,
 
     _nd_image.distance_transform_bf(tmp1, metric, sampling, dt, ft)
     if return_indices:
-        if isinstance(indices, np.ndarray):
-            if indices.dtype.type != np.int32:
+        if isinstance(indices, mx.array):
+            if indices.dtype.type != mx.int32:
                 raise RuntimeError('indices array must be int32')
             if indices.shape != (tmp1.ndim,) + tmp1.shape:
                 raise RuntimeError('indices array has wrong shape')
             tmp2 = indices
         else:
-            tmp2 = np.indices(tmp1.shape, dtype=np.int32)
-        ft = np.ravel(ft)
+            tmp2 = mx.indices(tmp1.shape, dtype=mx.int32)
+        ft = mx.ravel(ft)
         for ii in range(tmp2.shape[0]):
-            rtmp = np.ravel(tmp2[ii, ...])[ft]
+            rtmp = mx.ravel(tmp2[ii, ...])[ft]
             rtmp = rtmp.reshape(tmp1.shape)
             tmp2[ii, ...] = rtmp
         ft = tmp2
@@ -2256,12 +2256,12 @@ def distance_transform_cdt(input, metric='chessboard', return_distances=True,
     return_indices : bool, optional
         Whether to calculate the feature transform.
         Default is False.
-    distances : int32 ndarray, optional
+    distances : int32 array, optional
         An output array to store the calculated distance transform, instead of
         returning it.
         `return_distances` must be True.
         It must be the same shape as `input`.
-    indices : int32 ndarray, optional
+    indices : int32 array, optional
         An output array to store the calculated feature transform, instead of
         returning it.
         `return_indicies` must be True.
@@ -2269,11 +2269,11 @@ def distance_transform_cdt(input, metric='chessboard', return_distances=True,
 
     Returns
     -------
-    distances : int32 ndarray, optional
+    distances : int32 array, optional
         The calculated distance transform. Returned only when
         `return_distances` is True, and `distances` is not supplied.
         It will have the same shape as the input array.
-    indices : int32 ndarray, optional
+    indices : int32 array, optional
         The calculated feature transform. It has an input-shaped array for each
         dimension of the input. See distance_transform_edt documentation for an
         example.
@@ -2290,7 +2290,7 @@ def distance_transform_cdt(input, metric='chessboard', return_distances=True,
     --------
     Import the necessary modules.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.ndimage import distance_transform_cdt
     >>> import matplotlib.pyplot as plt
     >>> from mpl_toolkits.axes_grid1 import ImageGrid
@@ -2299,12 +2299,12 @@ def distance_transform_cdt(input, metric='chessboard', return_distances=True,
 
     >>> def add_circle(center_x, center_y, radius, image, fillvalue=1):
     ...     # fill circular area with 1
-    ...     xx, yy = np.mgrid[:image.shape[0], :image.shape[1]]
+    ...     xx, yy = mx.mgrid[:image.shape[0], :image.shape[1]]
     ...     circle = (xx - center_x) ** 2 + (yy - center_y) ** 2
-    ...     circle_shape = np.sqrt(circle) < radius
+    ...     circle_shape = mx.sqrt(circle) < radius
     ...     image[circle_shape] = fillvalue
     ...     return image
-    >>> image = np.zeros((100, 100), dtype=np.uint8)
+    >>> image = mx.zeros((100, 100), dtype=mx.uint8)
     >>> image[35:65, 20:80] = 1
     >>> image = add_circle(28, 65, 10, image)
     >>> image = add_circle(37, 30, 10, image)
@@ -2352,12 +2352,12 @@ def distance_transform_cdt(input, metric='chessboard', return_distances=True,
     >>> plt.show()
 
     """
-    ft_inplace = isinstance(indices, np.ndarray)
-    dt_inplace = isinstance(distances, np.ndarray)
+    ft_inplace = isinstance(indices, mx.array)
+    dt_inplace = isinstance(distances, mx.array)
     _distance_tranform_arg_check(
         dt_inplace, ft_inplace, return_distances, return_indices
     )
-    input = np.asarray(input)
+    input = mx.array(input)
     if isinstance(metric, str):
         if metric in ['taxicab', 'cityblock', 'manhattan']:
             rank = input.ndim
@@ -2369,7 +2369,7 @@ def distance_transform_cdt(input, metric='chessboard', return_distances=True,
             raise ValueError('invalid metric provided')
     else:
         try:
-            metric = np.asarray(metric)
+            metric = mx.array(metric)
         except Exception as e:
             raise ValueError('invalid metric provided') from e
         for s in metric.shape:
@@ -2379,18 +2379,18 @@ def distance_transform_cdt(input, metric='chessboard', return_distances=True,
     if not metric.flags.contiguous:
         metric = metric.copy()
     if dt_inplace:
-        if distances.dtype.type != np.int32:
+        if distances.dtype.type != mx.int32:
             raise ValueError('distances must be of int32 type')
         if distances.shape != input.shape:
             raise ValueError('distances has wrong shape')
         dt = distances
-        dt[...] = np.where(input, -1, 0).astype(np.int32)
+        dt[...] = mx.where(input, -1, 0).astype(mx.int32)
     else:
-        dt = np.where(input, -1, 0).astype(np.int32)
+        dt = mx.where(input, -1, 0).astype(mx.int32)
 
     rank = dt.ndim
     if return_indices:
-        ft = np.arange(dt.size, dtype=np.int32).reshape(dt.shape)
+        ft = mx.arange(dt.size, dtype=mx.int32).reshape(dt.shape)
     else:
         ft = None
 
@@ -2402,17 +2402,17 @@ def distance_transform_cdt(input, metric='chessboard', return_distances=True,
     dt = dt[tuple([slice(None, None, -1)] * rank)]
     if return_indices:
         ft = ft[tuple([slice(None, None, -1)] * rank)]
-        ft = np.ravel(ft)
+        ft = mx.ravel(ft)
         if ft_inplace:
-            if indices.dtype.type != np.int32:
+            if indices.dtype.type != mx.int32:
                 raise ValueError('indices array must be int32')
             if indices.shape != (dt.ndim,) + dt.shape:
                 raise ValueError('indices array has wrong shape')
             tmp = indices
         else:
-            tmp = np.indices(dt.shape, dtype=np.int32)
+            tmp = mx.indices(dt.shape, dtype=mx.int32)
         for ii in range(tmp.shape[0]):
-            rtmp = np.ravel(tmp[ii, ...])[ft]
+            rtmp = mx.ravel(tmp[ii, ...])[ft]
             rtmp = rtmp.reshape(dt.shape)
             tmp[ii, ...] = rtmp
         ft = tmp
@@ -2460,12 +2460,12 @@ def distance_transform_edt(input, sampling=None, return_distances=True,
     return_indices : bool, optional
         Whether to calculate the feature transform.
         Default is False.
-    distances : float64 ndarray, optional
+    distances : float64 array, optional
         An output array to store the calculated distance transform, instead of
         returning it.
         `return_distances` must be True.
         It must be the same shape as `input`.
-    indices : int32 ndarray, optional
+    indices : int32 array, optional
         An output array to store the calculated feature transform, instead of
         returning it.
         `return_indicies` must be True.
@@ -2473,11 +2473,11 @@ def distance_transform_edt(input, sampling=None, return_distances=True,
 
     Returns
     -------
-    distances : float64 ndarray, optional
+    distances : float64 array, optional
         The calculated distance transform. Returned only when
         `return_distances` is True and `distances` is not supplied.
         It will have the same shape as the input array.
-    indices : int32 ndarray, optional
+    indices : int32 array, optional
         The calculated feature transform. It has an input-shaped array for each
         dimension of the input. See example below.
         Returned only when `return_indices` is True and `indices` is not
@@ -2499,8 +2499,8 @@ def distance_transform_edt(input, sampling=None, return_distances=True,
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.array(([0,1,1,1,1],
+    >>> import mlx.core as mx
+    >>> a = mx.array(([0,1,1,1,1],
     ...               [0,0,1,1,1],
     ...               [0,1,1,1,1],
     ...               [0,1,1,1,0],
@@ -2538,7 +2538,7 @@ def distance_transform_edt(input, sampling=None, return_distances=True,
 
     With arrays provided for inplace outputs:
 
-    >>> indices = np.zeros(((np.ndim(a),) + a.shape), dtype=np.int32)
+    >>> indices = mx.zeros(((mx.ndim(a),) + a.shape), dtype=mx.int32)
     >>> ndimage.distance_transform_edt(a, return_indices=True, indices=indices)
     array([[ 0.    ,  1.    ,  1.4142,  2.2361,  3.    ],
            [ 0.    ,  0.    ,  1.    ,  2.    ,  2.    ],
@@ -2558,17 +2558,17 @@ def distance_transform_edt(input, sampling=None, return_distances=True,
             [0, 0, 3, 3, 4]]], dtype=int32)
 
     """
-    ft_inplace = isinstance(indices, np.ndarray)
-    dt_inplace = isinstance(distances, np.ndarray)
+    ft_inplace = isinstance(indices, mx.array)
+    dt_inplace = isinstance(distances, mx.array)
     _distance_tranform_arg_check(
         dt_inplace, ft_inplace, return_distances, return_indices
     )
 
     # calculate the feature transform
-    input = np.atleast_1d(np.where(input, 1, 0).astype(np.int8))
+    input = mx.atleast_1d(mx.where(input, 1, 0).astype(mx.int8))
     if sampling is not None:
         sampling = _ni_support._normalize_sequence(sampling, input.ndim)
-        sampling = np.asarray(sampling, dtype=np.float64)
+        sampling = mx.array(sampling, dtype=mx.float64)
         if not sampling.flags.contiguous:
             sampling = sampling.copy()
 
@@ -2576,30 +2576,30 @@ def distance_transform_edt(input, sampling=None, return_distances=True,
         ft = indices
         if ft.shape != (input.ndim,) + input.shape:
             raise RuntimeError('indices array has wrong shape')
-        if ft.dtype.type != np.int32:
+        if ft.dtype.type != mx.int32:
             raise RuntimeError('indices array must be int32')
     else:
-        ft = np.zeros((input.ndim,) + input.shape, dtype=np.int32)
+        ft = mx.zeros((input.ndim,) + input.shape, dtype=mx.int32)
 
     _nd_image.euclidean_feature_transform(input, sampling, ft)
     # if requested, calculate the distance transform
     if return_distances:
-        dt = ft - np.indices(input.shape, dtype=ft.dtype)
-        dt = dt.astype(np.float64)
+        dt = ft - mx.indices(input.shape, dtype=ft.dtype)
+        dt = dt.astype(mx.float64)
         if sampling is not None:
             for ii in range(len(sampling)):
                 dt[ii, ...] *= sampling[ii]
-        np.multiply(dt, dt, dt)
+        mx.multiply(dt, dt, dt)
         if dt_inplace:
-            dt = np.add.reduce(dt, axis=0)
+            dt = mx.add.reduce(dt, axis=0)
             if distances.shape != dt.shape:
                 raise RuntimeError('distances array has wrong shape')
-            if distances.dtype.type != np.float64:
+            if distances.dtype.type != mx.float64:
                 raise RuntimeError('distances array must be float64')
-            np.sqrt(dt, distances)
+            mx.sqrt(dt, distances)
         else:
-            dt = np.add.reduce(dt, axis=0)
-            dt = np.sqrt(dt)
+            dt = mx.add.reduce(dt, axis=0)
+            dt = mx.sqrt(dt)
 
     # construct and return the result
     result = []

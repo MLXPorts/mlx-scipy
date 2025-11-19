@@ -1,5 +1,5 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 from scipy.optimize import minimize, NonlinearConstraint, rosen, rosen_der
 
 
@@ -13,7 +13,7 @@ def test_gh21193():
     def identity(x):
         return x[0]
     def identity_jac(x):
-        a = np.zeros(len(x))
+        a = mx.zeros(len(x))
         a[0] = 1
         return a
     constraint1 = NonlinearConstraint(identity, 0, 0, identity_jac)

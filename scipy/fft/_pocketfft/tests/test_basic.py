@@ -11,7 +11,7 @@ from scipy.fft._pocketfft import (ifft, fft, fftn, ifftn,
 
 from numpy import (arange, array, asarray, zeros, dot, exp, pi,
                    swapaxes, cdouble)
-import numpy as np
+import mlx.core as mx
 import numpy.fft
 from numpy.random import rand
 
@@ -38,7 +38,7 @@ SMALL_PRIME_SIZES = [
 def _assert_close_in_norm(x, y, rtol, size, rdt):
     # helper function for testing
     err_msg = f"size: {size}  rdt: {rdt}"
-    assert_array_less(np.linalg.norm(x - y), rtol*np.linalg.norm(x), err_msg)
+    assert_array_less(mx.linalg.norm(x - y), rtol*mx.linalg.norm(x), err_msg)
 
 
 def random(size):
@@ -99,7 +99,7 @@ def direct_irdft(x, n):
     for i in range(n//2+1):
         x1[i] = x[i]
         if i > 0 and 2*i < n:
-            x1[n-i] = np.conj(x[i])
+            x1[n-i] = mx.conj(x[i])
     return direct_idft(x1).real
 
 
@@ -111,20 +111,20 @@ class _TestFFTBase:
     def setup_method(self):
         self.cdt = None
         self.rdt = None
-        np.random.seed(1234)
+        mx.random.seed(1234)
 
     def test_definition(self):
-        x = np.array([1,2,3,4+1j,1,2,3,4+2j], dtype=self.cdt)
+        x = mx.array([1,2,3,4+1j,1,2,3,4+2j], dtype=self.cdt)
         y = fft(x)
         assert_equal(y.dtype, self.cdt)
         y1 = direct_dft(x)
         assert_array_almost_equal(y,y1)
-        x = np.array([1,2,3,4+0j,5], dtype=self.cdt)
+        x = mx.array([1,2,3,4+0j,5], dtype=self.cdt)
         assert_array_almost_equal(fft(x),direct_dft(x))
 
     def test_n_argument_real(self):
-        x1 = np.array([1,2,3,4], dtype=self.rdt)
-        x2 = np.array([1,2,3,4], dtype=self.rdt)
+        x1 = mx.array([1,2,3,4], dtype=self.rdt)
+        x2 = mx.array([1,2,3,4], dtype=self.rdt)
         y = fft([x1,x2],n=4)
         assert_equal(y.dtype, self.cdt)
         assert_equal(y.shape,(2,4))
@@ -132,8 +132,8 @@ class _TestFFTBase:
         assert_array_almost_equal(y[1],direct_dft(x2))
 
     def _test_n_argument_complex(self):
-        x1 = np.array([1,2,3,4+1j], dtype=self.cdt)
-        x2 = np.array([1,2,3,4+1j], dtype=self.cdt)
+        x1 = mx.array([1,2,3,4+1j], dtype=self.cdt)
+        x2 = mx.array([1,2,3,4+1j], dtype=self.cdt)
         y = fft([x1,x2],n=4)
         assert_equal(y.dtype, self.cdt)
         assert_equal(y.shape,(2,4))
@@ -143,7 +143,7 @@ class _TestFFTBase:
     def test_djbfft(self):
         for i in range(2,14):
             n = 2**i
-            x = np.arange(n)
+            x = mx.arange(n)
             y = fft(x.astype(complex))
             y2 = numpy.fft.fft(x)
             assert_array_almost_equal(y,y2)
@@ -157,70 +157,70 @@ class _TestFFTBase:
 
 class TestLongDoubleFFT(_TestFFTBase):
     def setup_method(self):
-        self.cdt = np.clongdouble
-        self.rdt = np.longdouble
+        self.cdt = mx.clongdouble
+        self.rdt = mx.longdouble
 
 
 class TestDoubleFFT(_TestFFTBase):
     def setup_method(self):
-        self.cdt = np.cdouble
-        self.rdt = np.float64
+        self.cdt = mx.cdouble
+        self.rdt = mx.float64
 
 
 class TestSingleFFT(_TestFFTBase):
     def setup_method(self):
-        self.cdt = np.complex64
-        self.rdt = np.float32
+        self.cdt = mx.complex64
+        self.rdt = mx.float32
 
 
 class TestFloat16FFT:
 
     def test_1_argument_real(self):
-        x1 = np.array([1, 2, 3, 4], dtype=np.float16)
+        x1 = mx.array([1, 2, 3, 4], dtype=mx.float16)
         y = fft(x1, n=4)
-        assert_equal(y.dtype, np.complex64)
+        assert_equal(y.dtype, mx.complex64)
         assert_equal(y.shape, (4, ))
-        assert_array_almost_equal(y, direct_dft(x1.astype(np.float32)))
+        assert_array_almost_equal(y, direct_dft(x1.astype(mx.float32)))
 
     def test_n_argument_real(self):
-        x1 = np.array([1, 2, 3, 4], dtype=np.float16)
-        x2 = np.array([1, 2, 3, 4], dtype=np.float16)
+        x1 = mx.array([1, 2, 3, 4], dtype=mx.float16)
+        x2 = mx.array([1, 2, 3, 4], dtype=mx.float16)
         y = fft([x1, x2], n=4)
-        assert_equal(y.dtype, np.complex64)
+        assert_equal(y.dtype, mx.complex64)
         assert_equal(y.shape, (2, 4))
-        assert_array_almost_equal(y[0], direct_dft(x1.astype(np.float32)))
-        assert_array_almost_equal(y[1], direct_dft(x2.astype(np.float32)))
+        assert_array_almost_equal(y[0], direct_dft(x1.astype(mx.float32)))
+        assert_array_almost_equal(y[1], direct_dft(x2.astype(mx.float32)))
 
 
 class _TestIFFTBase:
     def setup_method(self):
-        np.random.seed(1234)
+        mx.random.seed(1234)
 
     def test_definition(self):
-        x = np.array([1,2,3,4+1j,1,2,3,4+2j], self.cdt)
+        x = mx.array([1,2,3,4+1j,1,2,3,4+2j], self.cdt)
         y = ifft(x)
         y1 = direct_idft(x)
         assert_equal(y.dtype, self.cdt)
         assert_array_almost_equal(y,y1)
 
-        x = np.array([1,2,3,4+0j,5], self.cdt)
+        x = mx.array([1,2,3,4+0j,5], self.cdt)
         assert_array_almost_equal(ifft(x),direct_idft(x))
 
     def test_definition_real(self):
-        x = np.array([1,2,3,4,1,2,3,4], self.rdt)
+        x = mx.array([1,2,3,4,1,2,3,4], self.rdt)
         y = ifft(x)
         assert_equal(y.dtype, self.cdt)
         y1 = direct_idft(x)
         assert_array_almost_equal(y,y1)
 
-        x = np.array([1,2,3,4,5], dtype=self.rdt)
+        x = mx.array([1,2,3,4,5], dtype=self.rdt)
         assert_equal(y.dtype, self.cdt)
         assert_array_almost_equal(ifft(x),direct_idft(x))
 
     def test_djbfft(self):
         for i in range(2,14):
             n = 2**i
-            x = np.arange(n)
+            x = mx.arange(n)
             y = ifft(x.astype(self.cdt))
             y2 = numpy.fft.ifft(x.astype(self.cdt))
             assert_allclose(y,y2, rtol=self.rtol, atol=self.atol)
@@ -251,14 +251,14 @@ class _TestIFFTBase:
     def test_size_accuracy(self):
         # Sanity check for the accuracy for prime and non-prime sized inputs
         for size in LARGE_COMPOSITE_SIZES + LARGE_PRIME_SIZES:
-            np.random.seed(1234)
-            x = np.random.rand(size).astype(self.rdt)
+            mx.random.seed(1234)
+            x = mx.random.rand(size).astype(self.rdt)
             y = ifft(fft(x))
             _assert_close_in_norm(x, y, self.rtol, size, self.rdt)
             y = fft(ifft(x))
             _assert_close_in_norm(x, y, self.rtol, size, self.rdt)
 
-            x = (x + 1j*np.random.rand(size)).astype(self.cdt)
+            x = (x + 1j*mx.random.rand(size)).astype(self.cdt)
             y = ifft(fft(x))
             _assert_close_in_norm(x, y, self.rtol, size, self.rdt)
             y = fft(ifft(x))
@@ -269,39 +269,39 @@ class _TestIFFTBase:
         assert_raises(ValueError, ifft, [[1,1],[2,2]], -5)
 
 
-@pytest.mark.skipif(np.longdouble is np.float64,
+@pytest.mark.skipif(mx.longdouble is mx.float64,
                     reason="Long double is aliased to double")
 class TestLongDoubleIFFT(_TestIFFTBase):
     def setup_method(self):
-        self.cdt = np.clongdouble
-        self.rdt = np.longdouble
+        self.cdt = mx.clongdouble
+        self.rdt = mx.longdouble
         self.rtol = 1e-10
         self.atol = 1e-10
 
 
 class TestDoubleIFFT(_TestIFFTBase):
     def setup_method(self):
-        self.cdt = np.complex128
-        self.rdt = np.float64
+        self.cdt = mx.complex128
+        self.rdt = mx.float64
         self.rtol = 1e-10
         self.atol = 1e-10
 
 
 class TestSingleIFFT(_TestIFFTBase):
     def setup_method(self):
-        self.cdt = np.complex64
-        self.rdt = np.float32
+        self.cdt = mx.complex64
+        self.rdt = mx.float32
         self.rtol = 1e-5
         self.atol = 1e-4
 
 
 class _TestRFFTBase:
     def setup_method(self):
-        np.random.seed(1234)
+        mx.random.seed(1234)
 
     def test_definition(self):
         for t in [[1, 2, 3, 4, 1, 2, 3, 4], [1, 2, 3, 4, 1, 2, 3, 4, 5]]:
-            x = np.array(t, dtype=self.rdt)
+            x = mx.array(t, dtype=self.rdt)
             y = rfft(x)
             y1 = direct_rdft(x)
             assert_array_almost_equal(y,y1)
@@ -310,8 +310,8 @@ class _TestRFFTBase:
     def test_djbfft(self):
         for i in range(2,14):
             n = 2**i
-            x = np.arange(n)
-            y1 = np.fft.rfft(x)
+            x = mx.arange(n)
+            y1 = mx.fft.rfft(x)
             y = rfft(x)
             assert_array_almost_equal(y,y1)
 
@@ -320,14 +320,14 @@ class _TestRFFTBase:
         assert_raises(ValueError, rfft, [[1,1],[2,2]], -5)
 
     def test_complex_input(self):
-        x = np.zeros(10, dtype=self.cdt)
+        x = mx.zeros(10, dtype=self.cdt)
         with assert_raises(TypeError, match="x must be a real sequence"):
             rfft(x)
 
     # See gh-5790
     class MockSeries:
         def __init__(self, data):
-            self.data = np.asarray(data)
+            self.data = mx.array(data)
 
         def __getattr__(self, item):
             try:
@@ -336,8 +336,8 @@ class _TestRFFTBase:
                 raise AttributeError("'MockSeries' object "
                                       f"has no attribute '{item}'") from e
 
-    def test_non_ndarray_with_dtype(self):
-        x = np.array([1., 2., 3., 4., 5.])
+    def test_non_array_with_dtype(self):
+        x = mx.array([1., 2., 3., 4., 5.])
         xs = _TestRFFTBase.MockSeries(x)
 
         expected = [1, 2, 3, 4, 5]
@@ -347,29 +347,29 @@ class _TestRFFTBase:
         assert_equal(x, expected)
         assert_equal(xs.data, expected)
 
-@pytest.mark.skipif(np.longdouble is np.float64,
+@pytest.mark.skipif(mx.longdouble is mx.float64,
                     reason="Long double is aliased to double")
 class TestRFFTLongDouble(_TestRFFTBase):
     def setup_method(self):
-        self.cdt = np.clongdouble
-        self.rdt = np.longdouble
+        self.cdt = mx.clongdouble
+        self.rdt = mx.longdouble
 
 
 class TestRFFTDouble(_TestRFFTBase):
     def setup_method(self):
-        self.cdt = np.complex128
-        self.rdt = np.float64
+        self.cdt = mx.complex128
+        self.rdt = mx.float64
 
 
 class TestRFFTSingle(_TestRFFTBase):
     def setup_method(self):
-        self.cdt = np.complex64
-        self.rdt = np.float32
+        self.cdt = mx.complex64
+        self.rdt = mx.float32
 
 
 class _TestIRFFTBase:
     def setup_method(self):
-        np.random.seed(1234)
+        mx.random.seed(1234)
 
     def test_definition(self):
         x1 = [1,2+3j,4+1j,1+2j,3+4j]
@@ -379,7 +379,7 @@ class _TestIRFFTBase:
         x2 = x2_1[:5]
 
         def _test(x, xr):
-            y = irfft(np.array(x, dtype=self.cdt), n=len(xr))
+            y = irfft(mx.array(x, dtype=self.cdt), n=len(xr))
             y1 = direct_irdft(x, len(xr))
             assert_equal(y.dtype, self.rdt)
             assert_array_almost_equal(y,y1, decimal=self.ndec)
@@ -391,11 +391,11 @@ class _TestIRFFTBase:
     def test_djbfft(self):
         for i in range(2,14):
             n = 2**i
-            x = np.arange(-1, n, 2) + 1j * np.arange(0, n+1, 2)
+            x = mx.arange(-1, n, 2) + 1j * mx.arange(0, n+1, 2)
             x[0] = 0
             if n % 2 == 0:
-                x[-1] = np.real(x[-1])
-            y1 = np.fft.irfft(x)
+                x[-1] = mx.real(x[-1])
+            y1 = mx.fft.irfft(x)
             y = irfft(x)
             assert_array_almost_equal(y,y1)
 
@@ -411,14 +411,14 @@ class _TestIRFFTBase:
 
     def test_size_accuracy(self):
         # Sanity check for the accuracy for prime and non-prime sized inputs
-        if self.rdt == np.float32:
+        if self.rdt == mx.float32:
             rtol = 1e-5
-        elif self.rdt == np.float64:
+        elif self.rdt == mx.float64:
             rtol = 1e-10
 
         for size in LARGE_COMPOSITE_SIZES + LARGE_PRIME_SIZES:
-            np.random.seed(1234)
-            x = np.random.rand(size).astype(self.rdt)
+            mx.random.seed(1234)
+            x = mx.random.rand(size).astype(self.rdt)
             y = irfft(rfft(x), len(x))
             _assert_close_in_norm(x, y, rtol, size, self.rdt)
             y = rfft(irfft(x, 2 * len(x) - 1))
@@ -432,97 +432,97 @@ class _TestIRFFTBase:
 # self.ndec is bogus; we should have a assert_array_approx_equal for number of
 # significant digits
 
-@pytest.mark.skipif(np.longdouble is np.float64,
+@pytest.mark.skipif(mx.longdouble is mx.float64,
                     reason="Long double is aliased to double")
 class TestIRFFTLongDouble(_TestIRFFTBase):
     def setup_method(self):
-        self.cdt = np.complex128
-        self.rdt = np.float64
+        self.cdt = mx.complex128
+        self.rdt = mx.float64
         self.ndec = 14
 
 
 class TestIRFFTDouble(_TestIRFFTBase):
     def setup_method(self):
-        self.cdt = np.complex128
-        self.rdt = np.float64
+        self.cdt = mx.complex128
+        self.rdt = mx.float64
         self.ndec = 14
 
 
 class TestIRFFTSingle(_TestIRFFTBase):
     def setup_method(self):
-        self.cdt = np.complex64
-        self.rdt = np.float32
+        self.cdt = mx.complex64
+        self.rdt = mx.float32
         self.ndec = 5
 
 
 class TestFftnSingle:
     def setup_method(self):
-        np.random.seed(1234)
+        mx.random.seed(1234)
 
     def test_definition(self):
         x = [[1, 2, 3],
              [4, 5, 6],
              [7, 8, 9]]
-        y = fftn(np.array(x, np.float32))
-        assert_(y.dtype == np.complex64,
+        y = fftn(mx.array(x, mx.float32))
+        assert_(y.dtype == mx.complex64,
                 msg="double precision output with single precision")
 
-        y_r = np.array(fftn(x), np.complex64)
+        y_r = mx.array(fftn(x), mx.complex64)
         assert_array_almost_equal_nulp(y, y_r)
 
     @pytest.mark.parametrize('size', SMALL_COMPOSITE_SIZES + SMALL_PRIME_SIZES)
     def test_size_accuracy_small(self, size):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         x = rng.random((size, size)) + 1j * rng.random((size, size))
-        y1 = fftn(x.real.astype(np.float32))
-        y2 = fftn(x.real.astype(np.float64)).astype(np.complex64)
+        y1 = fftn(x.real.astype(mx.float32))
+        y2 = fftn(x.real.astype(mx.float64)).astype(mx.complex64)
 
-        assert_equal(y1.dtype, np.complex64)
+        assert_equal(y1.dtype, mx.complex64)
         assert_array_almost_equal_nulp(y1, y2, 2000)
 
     @pytest.mark.parametrize('size', LARGE_COMPOSITE_SIZES + LARGE_PRIME_SIZES)
     def test_size_accuracy_large(self, size):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         x = rng.random((size, 3)) + 1j * rng.random((size, 3))
-        y1 = fftn(x.real.astype(np.float32))
-        y2 = fftn(x.real.astype(np.float64)).astype(np.complex64)
+        y1 = fftn(x.real.astype(mx.float32))
+        y2 = fftn(x.real.astype(mx.float64)).astype(mx.complex64)
 
-        assert_equal(y1.dtype, np.complex64)
+        assert_equal(y1.dtype, mx.complex64)
         assert_array_almost_equal_nulp(y1, y2, 2000)
 
     def test_definition_float16(self):
         x = [[1, 2, 3],
              [4, 5, 6],
              [7, 8, 9]]
-        y = fftn(np.array(x, np.float16))
-        assert_equal(y.dtype, np.complex64)
-        y_r = np.array(fftn(x), np.complex64)
+        y = fftn(mx.array(x, mx.float16))
+        assert_equal(y.dtype, mx.complex64)
+        y_r = mx.array(fftn(x), mx.complex64)
         assert_array_almost_equal_nulp(y, y_r)
 
     @pytest.mark.parametrize('size', SMALL_COMPOSITE_SIZES + SMALL_PRIME_SIZES)
     def test_float16_input_small(self, size):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         x = rng.random((size, size)) + 1j*rng.random((size, size))
-        y1 = fftn(x.real.astype(np.float16))
-        y2 = fftn(x.real.astype(np.float64)).astype(np.complex64)
+        y1 = fftn(x.real.astype(mx.float16))
+        y2 = fftn(x.real.astype(mx.float64)).astype(mx.complex64)
 
-        assert_equal(y1.dtype, np.complex64)
+        assert_equal(y1.dtype, mx.complex64)
         assert_array_almost_equal_nulp(y1, y2, 5e5)
 
     @pytest.mark.parametrize('size', LARGE_COMPOSITE_SIZES + LARGE_PRIME_SIZES)
     def test_float16_input_large(self, size):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         x = rng.random((size, 3)) + 1j*rng.random((size, 3))
-        y1 = fftn(x.real.astype(np.float16))
-        y2 = fftn(x.real.astype(np.float64)).astype(np.complex64)
+        y1 = fftn(x.real.astype(mx.float16))
+        y2 = fftn(x.real.astype(mx.float64)).astype(mx.complex64)
 
-        assert_equal(y1.dtype, np.complex64)
+        assert_equal(y1.dtype, mx.complex64)
         assert_array_almost_equal_nulp(y1, y2, 2e6)
 
 
 class TestFftn:
     def setup_method(self):
-        np.random.seed(1234)
+        mx.random.seed(1234)
 
     def test_definition(self):
         x = [[1, 2, 3],
@@ -752,14 +752,14 @@ class TestIfftn:
     cdtype = None
 
     def setup_method(self):
-        np.random.seed(1234)
+        mx.random.seed(1234)
 
     @pytest.mark.parametrize('dtype,cdtype,maxnlp',
-                             [(np.float64, np.complex128, 2000),
-                              (np.float32, np.complex64, 3500)])
+                             [(mx.float64, mx.complex128, 2000),
+                              (mx.float32, mx.complex64, 3500)])
     def test_definition(self, dtype, cdtype, maxnlp):
-        rng = np.random.default_rng(1234)
-        x = np.array([[1, 2, 3],
+        rng = mx.random.default_rng(1234)
+        x = mx.array([[1, 2, 3],
                       [4, 5, 6],
                       [7, 8, 9]], dtype=dtype)
         y = ifftn(x)
@@ -775,7 +775,7 @@ class TestIfftn:
     @pytest.mark.parametrize('maxnlp', [2000, 3500])
     @pytest.mark.parametrize('size', [1, 2, 51, 32, 64, 92])
     def test_random_complex(self, maxnlp, size):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         x = rng.random([size, size]) + 1j * rng.random([size, size])
         assert_array_almost_equal_nulp(ifftn(fftn(x)), x, maxnlp)
         assert_array_almost_equal_nulp(fftn(ifftn(x)), x, maxnlp)
@@ -800,14 +800,14 @@ class TestRfftn:
     cdtype = None
 
     def setup_method(self):
-        np.random.seed(1234)
+        mx.random.seed(1234)
 
     @pytest.mark.parametrize('dtype,cdtype,maxnlp',
-                             [(np.float64, np.complex128, 2000),
-                              (np.float32, np.complex64, 3500)])
+                             [(mx.float64, mx.complex128, 2000),
+                              (mx.float32, mx.complex64, 3500)])
     def test_definition(self, dtype, cdtype, maxnlp):
-        rng = np.random.default_rng(1234)
-        x = np.array([[1, 2, 3],
+        rng = mx.random.default_rng(1234)
+        x = mx.array([[1, 2, 3],
                       [4, 5, 6],
                       [7, 8, 9]], dtype=dtype)
         y = rfftn(x)
@@ -822,7 +822,7 @@ class TestRfftn:
 
     @pytest.mark.parametrize('size', [1, 2, 51, 32, 64, 92])
     def test_random(self, size):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         x = rng.random([size, size])
         assert_allclose(irfftn(rfftn(x), x.shape), x, atol=1e-10)
 
@@ -846,7 +846,7 @@ class TestRfftn:
 
     def test_complex_input(self):
         with assert_raises(TypeError, match="x must be a real sequence"):
-            rfftn(np.zeros(10, dtype=np.complex64))
+            rfftn(mx.zeros(10, dtype=mx.complex64))
 
 
 class FakeArray:
@@ -867,8 +867,8 @@ class FakeArray2:
 class TestOverwrite:
     """Check input overwrite behavior of the FFT functions."""
 
-    real_dtypes = [np.float32, np.float64, np.longdouble]
-    dtypes = real_dtypes + [np.complex64, np.complex128, np.clongdouble]
+    real_dtypes = [mx.float32, mx.float64, mx.longdouble]
+    dtypes = real_dtypes + [mx.complex64, mx.complex128, mx.clongdouble]
     fftsizes = [8, 16, 32]
 
     def _check(self, x, routine, fftsize, axis, overwrite_x, should_overwrite):
@@ -883,11 +883,11 @@ class TestOverwrite:
 
     def _check_1d(self, routine, dtype, shape, axis, overwritable_dtypes,
                   fftsize, overwrite_x):
-        np.random.seed(1234)
-        if np.issubdtype(dtype, np.complexfloating):
-            data = np.random.randn(*shape) + 1j*np.random.randn(*shape)
+        mx.random.seed(1234)
+        if mx.issubdtype(dtype, mx.complexfloating):
+            data = mx.random.randn(*shape) + 1j*mx.random.randn(*shape)
         else:
-            data = np.random.randn(*shape)
+            data = mx.random.randn(*shape)
         data = data.astype(dtype)
 
         should_overwrite = (overwrite_x
@@ -904,7 +904,7 @@ class TestOverwrite:
                                             ((16, 2), 0),
                                             ((2, 16), 1)])
     def test_fft_ifft(self, dtype, fftsize, overwrite_x, shape, axes):
-        overwritable = (np.clongdouble, np.complex128, np.complex64)
+        overwritable = (mx.clongdouble, mx.complex128, mx.complex64)
         self._check_1d(fft, dtype, shape, axes, overwritable,
                        fftsize, overwrite_x)
         self._check_1d(ifft, dtype, shape, axes, overwritable,
@@ -925,11 +925,11 @@ class TestOverwrite:
 
     def _check_nd_one(self, routine, dtype, shape, axes, overwritable_dtypes,
                       overwrite_x):
-        np.random.seed(1234)
-        if np.issubdtype(dtype, np.complexfloating):
-            data = np.random.randn(*shape) + 1j*np.random.randn(*shape)
+        mx.random.seed(1234)
+        if mx.issubdtype(dtype, mx.complexfloating):
+            data = mx.random.randn(*shape) + 1j*mx.random.randn(*shape)
         else:
-            data = np.random.randn(*shape)
+            data = mx.random.randn(*shape)
         data = data.astype(dtype)
 
         def fftshape_iter(shp):
@@ -944,12 +944,12 @@ class TestOverwrite:
             if axes is None:
                 return shape
             else:
-                return tuple(np.take(shape, axes))
+                return tuple(mx.take(shape, axes))
 
         def should_overwrite(data, shape, axes):
             s = part_shape(data.shape, axes)
             return (overwrite_x and
-                    np.prod(shape) <= np.prod(s)
+                    mx.prod(shape) <= mx.prod(s)
                     and dtype in overwritable_dtypes)
 
         for fftshape in fftshape_iter(part_shape(shape, axes)):
@@ -979,7 +979,7 @@ class TestOverwrite:
                                             ((8, 16, 2), None),
                                             ((8, 16, 2), (0, 1, 2))])
     def test_fftn_ifftn(self, dtype, overwrite_x, shape, axes):
-        overwritable = (np.clongdouble, np.complex128, np.complex64)
+        overwritable = (mx.clongdouble, mx.complex128, mx.complex64)
         self._check_nd_one(fftn, dtype, shape, axes, overwritable,
                            overwrite_x)
         self._check_nd_one(ifftn, dtype, shape, axes, overwritable,
@@ -989,7 +989,7 @@ class TestOverwrite:
 @pytest.mark.parametrize('func', [fft, ifft, fftn, ifftn,
                                  rfft, irfft, rfftn, irfftn])
 def test_invalid_norm(func):
-    x = np.arange(10, dtype=float)
+    x = mx.arange(10, dtype=float)
     with assert_raises(ValueError,
                        match='Invalid norm value \'o\', should be'
                              ' "backward", "ortho" or "forward"'):
@@ -999,13 +999,13 @@ def test_invalid_norm(func):
 @pytest.mark.parametrize('func', [fft, ifft, fftn, ifftn,
                                    irfft, irfftn, hfft, hfftn])
 def test_swapped_byte_order_complex(func):
-    rng = np.random.RandomState(1234)
+    rng = mx.random.RandomState(1234)
     x = rng.rand(10) + 1j * rng.rand(10)
     assert_allclose(func(swap_byteorder(x)), func(x))
 
 
 @pytest.mark.parametrize('func', [ihfft, ihfftn, rfft, rfftn])
 def test_swapped_byte_order_real(func):
-    rng = np.random.RandomState(1234)
+    rng = mx.random.RandomState(1234)
     x = rng.rand(10)
     assert_allclose(func(swap_byteorder(x)), func(x))

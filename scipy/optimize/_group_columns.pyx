@@ -5,11 +5,11 @@ estimation. Used by ._numdiff.group_columns.
 
 cimport cython
 
-import numpy as np
+import mlx.core as mx
 
-cimport numpy as np
+cimport mlx.core as mx
 
-np.import_array()
+mx.import_array()
 
 
 @cython.boundscheck(False)
@@ -17,12 +17,12 @@ np.import_array()
 def group_dense(int m, int n, const int[:, :] A):
     cdef const int [:, :] B = A.T  # Transposed view for convenience.
 
-    cdef int [:] groups = np.full(n, -1, dtype=np.int32)
+    cdef int [:] groups = mx.full(n, -1, dtype=mx.int32)
     cdef int current_group = 0
 
     cdef int i, j, k
 
-    union = np.empty(m, dtype=np.int32)
+    union = mx.empty(m, dtype=mx.int32)
     cdef int [:] union_v = union
 
     # Loop through all the columns.
@@ -63,12 +63,12 @@ def group_dense(int m, int n, const int[:, :] A):
 
 @cython.wraparound(False)
 def group_sparse(int m, int n, const int[:] indices, const int[:] indptr):
-    cdef int [:] groups = np.full(n, -1, dtype=np.int32)
+    cdef int [:] groups = mx.full(n, -1, dtype=mx.int32)
     cdef int current_group = 0
 
     cdef int i, j, k
 
-    union = np.empty(m, dtype=np.int32)
+    union = mx.empty(m, dtype=mx.int32)
     cdef int [:] union_v = union
 
     for i in range(n):

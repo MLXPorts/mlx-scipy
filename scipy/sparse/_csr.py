@@ -4,7 +4,7 @@ __docformat__ = "restructuredtext en"
 
 __all__ = ['csr_array', 'csr_matrix', 'isspmatrix_csr']
 
-import numpy as np
+import mlx.core as mx
 
 from ._matrix import spmatrix
 from ._base import _spbase, sparray
@@ -76,9 +76,9 @@ class _csr_base(_cs_matrix):
         M, N = self.shape
         idx_dtype = self._get_index_dtype((self.indptr, self.indices),
                                     maxval=max(self.nnz, M))
-        indptr = np.empty(N + 1, dtype=idx_dtype)
-        indices = np.empty(self.nnz, dtype=idx_dtype)
-        data = np.empty(self.nnz, dtype=upcast(self.dtype))
+        indptr = mx.empty(N + 1, dtype=idx_dtype)
+        indices = mx.empty(self.nnz, dtype=idx_dtype)
+        data = mx.empty(self.nnz, dtype=upcast(self.dtype))
 
         csr_tocsc(M, N,
                   self.indptr.astype(idx_dtype),
@@ -116,9 +116,9 @@ class _csr_base(_cs_matrix):
 
             idx_dtype = self._get_index_dtype((self.indptr, self.indices),
                                         maxval=max(N//C, blks))
-            indptr = np.empty(M//R+1, dtype=idx_dtype)
-            indices = np.empty(blks, dtype=idx_dtype)
-            data = np.zeros((blks,R,C), dtype=self.dtype)
+            indptr = mx.empty(M//R+1, dtype=idx_dtype)
+            indices = mx.empty(blks, dtype=idx_dtype)
+            data = mx.zeros((blks,R,C), dtype=self.dtype)
 
             csr_tobsr(M, N, R, C,
                       self.indptr.astype(idx_dtype),
@@ -153,7 +153,7 @@ class _csr_base(_cs_matrix):
                 yield zero
             return
 
-        indptr = np.zeros(2, dtype=self.indptr.dtype)
+        indptr = mx.zeros(2, dtype=self.indptr.dtype)
         # return 1d (sparray) or 2drow (spmatrix)
         shape = self.shape[1:] if isinstance(self, sparray) else (1, self.shape[1])
         i0 = 0
@@ -201,7 +201,7 @@ class _csr_base(_cs_matrix):
                               dtype=self.dtype, copy=False)
 
     def _get_int(self, idx):
-        spot = np.flatnonzero(self.indices == idx)
+        spot = mx.flatnonzero(self.indices == idx)
         if spot.size:
             return self.data[spot[0]]
         return self.data.dtype.type(0)
@@ -216,14 +216,14 @@ class _csr_base(_cs_matrix):
 
     def _get_array(self, idx):
         idx_dtype = self._get_index_dtype(self.indices)
-        idx = np.asarray(idx, dtype=idx_dtype)
+        idx = mx.array(idx, dtype=idx_dtype)
         if idx.size == 0:
             return self.__class__([], dtype=self.dtype)
 
         M, N = 1, self.shape[0]
-        row = np.zeros_like(idx, dtype=idx_dtype)
-        col = np.asarray(idx, dtype=idx_dtype)
-        val = np.empty(row.size, dtype=self.dtype)
+        row = mx.zeros_like(idx, dtype=idx_dtype)
+        col = mx.array(idx, dtype=idx_dtype)
+        val = mx.empty(row.size, dtype=self.dtype)
         csr_sample_values(M, N, self.indptr, self.indices, self.data,
                           row.size, row, col, val)
 
@@ -256,13 +256,13 @@ class _csr_base(_cs_matrix):
 
         row_indices = (row_indices[ind] - start) // stride
         row_data = row_data[ind]
-        row_indptr = np.array([0, len(row_indices)])
+        row_indptr = mx.array([0, len(row_indices)])
 
         if stride < 0:
             row_data = row_data[::-1]
             row_indices = abs(row_indices[::-1])
 
-        shape = (1, max(0, int(np.ceil(float(stop - start) / stride))))
+        shape = (1, max(0, int(mx.ceil(float(stop - start) / stride))))
         return self.__class__((row_data, row_indices, row_indptr), shape=shape,
                               dtype=self.dtype, copy=False)
 
@@ -282,7 +282,7 @@ class _csr_base(_cs_matrix):
 
     def _get_arrayXslice(self, row, col):
         if col.step not in (1, None):
-            col = np.arange(*col.indices(self.shape[1]))
+            col = mx.arange(*col.indices(self.shape[1]))
             return self._get_arrayXarray(row, col)
         return self._major_index_fancy(row)._get_submatrix(minor=col)
 
@@ -290,8 +290,8 @@ class _csr_base(_cs_matrix):
         self._set_many(0, idx, x)
 
     def _set_array(self, idx, x):
-        x = np.broadcast_to(x, idx.shape)
-        self._set_many(np.zeros_like(idx), idx, x)
+        x = mx.broadcast_to(x, idx.shape)
+        self._set_many(mx.zeros_like(idx), idx, x)
 
 
 def isspmatrix_csr(x):
@@ -327,7 +327,7 @@ class csr_array(_csr_base, sparray):
 
     This can be instantiated in several ways:
         csr_array(D)
-            where D is a 2-D ndarray
+            where D is a 2-D array
 
         csr_array(S)
             with another sparse array or matrix S (equivalent to S.tocsr())
@@ -389,24 +389,24 @@ class csr_array(_csr_base, sparray):
     Examples
     --------
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csr_array
-    >>> csr_array((3, 4), dtype=np.int8).toarray()
+    >>> csr_array((3, 4), dtype=mx.int8).toarray()
     array([[0, 0, 0, 0],
            [0, 0, 0, 0],
            [0, 0, 0, 0]], dtype=int8)
 
-    >>> row = np.array([0, 0, 1, 2, 2, 2])
-    >>> col = np.array([0, 2, 2, 0, 1, 2])
-    >>> data = np.array([1, 2, 3, 4, 5, 6])
+    >>> row = mx.array([0, 0, 1, 2, 2, 2])
+    >>> col = mx.array([0, 2, 2, 0, 1, 2])
+    >>> data = mx.array([1, 2, 3, 4, 5, 6])
     >>> csr_array((data, (row, col)), shape=(3, 3)).toarray()
     array([[1, 0, 2],
            [0, 0, 3],
            [4, 5, 6]])
 
-    >>> indptr = np.array([0, 2, 3, 6])
-    >>> indices = np.array([0, 2, 2, 0, 1, 2])
-    >>> data = np.array([1, 2, 3, 4, 5, 6])
+    >>> indptr = mx.array([0, 2, 3, 6])
+    >>> indices = mx.array([0, 2, 2, 0, 1, 2])
+    >>> data = mx.array([1, 2, 3, 4, 5, 6])
     >>> csr_array((data, indices, indptr), shape=(3, 3)).toarray()
     array([[1, 0, 2],
            [0, 0, 3],
@@ -414,9 +414,9 @@ class csr_array(_csr_base, sparray):
 
     Duplicate entries are summed together:
 
-    >>> row = np.array([0, 1, 2, 0])
-    >>> col = np.array([0, 1, 1, 0])
-    >>> data = np.array([1, 2, 4, 8])
+    >>> row = mx.array([0, 1, 2, 0])
+    >>> col = mx.array([0, 1, 1, 0])
+    >>> data = mx.array([1, 2, 4, 8])
     >>> csr_array((data, (row, col)), shape=(3, 3)).toarray()
     array([[9, 0, 0],
            [0, 2, 0],
@@ -450,7 +450,7 @@ class csr_matrix(spmatrix, _csr_base):
 
     This can be instantiated in several ways:
         csr_matrix(D)
-            where D is a 2-D ndarray
+            where D is a 2-D array
 
         csr_matrix(S)
             with another sparse array or matrix S (equivalent to S.tocsr())
@@ -512,24 +512,24 @@ class csr_matrix(spmatrix, _csr_base):
     Examples
     --------
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csr_matrix
-    >>> csr_matrix((3, 4), dtype=np.int8).toarray()
+    >>> csr_matrix((3, 4), dtype=mx.int8).toarray()
     array([[0, 0, 0, 0],
            [0, 0, 0, 0],
            [0, 0, 0, 0]], dtype=int8)
 
-    >>> row = np.array([0, 0, 1, 2, 2, 2])
-    >>> col = np.array([0, 2, 2, 0, 1, 2])
-    >>> data = np.array([1, 2, 3, 4, 5, 6])
+    >>> row = mx.array([0, 0, 1, 2, 2, 2])
+    >>> col = mx.array([0, 2, 2, 0, 1, 2])
+    >>> data = mx.array([1, 2, 3, 4, 5, 6])
     >>> csr_matrix((data, (row, col)), shape=(3, 3)).toarray()
     array([[1, 0, 2],
            [0, 0, 3],
            [4, 5, 6]])
 
-    >>> indptr = np.array([0, 2, 3, 6])
-    >>> indices = np.array([0, 2, 2, 0, 1, 2])
-    >>> data = np.array([1, 2, 3, 4, 5, 6])
+    >>> indptr = mx.array([0, 2, 3, 6])
+    >>> indices = mx.array([0, 2, 2, 0, 1, 2])
+    >>> data = mx.array([1, 2, 3, 4, 5, 6])
     >>> csr_matrix((data, indices, indptr), shape=(3, 3)).toarray()
     array([[1, 0, 2],
            [0, 0, 3],
@@ -537,9 +537,9 @@ class csr_matrix(spmatrix, _csr_base):
 
     Duplicate entries are summed together:
 
-    >>> row = np.array([0, 1, 2, 0])
-    >>> col = np.array([0, 1, 1, 0])
-    >>> data = np.array([1, 2, 4, 8])
+    >>> row = mx.array([0, 1, 2, 0])
+    >>> col = mx.array([0, 1, 1, 0])
+    >>> data = mx.array([1, 2, 4, 8])
     >>> csr_matrix((data, (row, col)), shape=(3, 3)).toarray()
     array([[9, 0, 0],
            [0, 2, 0],

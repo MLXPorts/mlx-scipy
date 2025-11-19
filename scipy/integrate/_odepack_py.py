@@ -2,7 +2,7 @@
 
 __all__ = ['odeint', 'ODEintWarning']
 
-import numpy as np
+import mlx.core as mx
 from . import _odepack
 from copy import copy
 import warnings
@@ -151,7 +151,7 @@ def odeint(func, y0, t, args=(), Dfun=None, col_deriv=0, full_output=0,
         ``ewt = rtol * abs(y) + atol``.
         rtol and atol can be either vectors the same length as y or scalars.
         Defaults to 1.49012e-8.
-    tcrit : ndarray, optional
+    tcrit : array, optional
         Vector of critical points (e.g., singularities) where integration
         care should be taken.
     h0 : float, (0: solver-determined), optional
@@ -196,10 +196,10 @@ def odeint(func, y0, t, args=(), Dfun=None, col_deriv=0, full_output=0,
     Let `y` be the vector [`theta`, `omega`]. We implement this system
     in Python as:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> def pend(y, t, b, c):
     ...     theta, omega = y
-    ...     dydt = [omega, -b*omega - c*np.sin(theta)]
+    ...     dydt = [omega, -b*omega - c*mx.sin(theta)]
     ...     return dydt
     ...
 
@@ -212,12 +212,12 @@ def odeint(func, y0, t, args=(), Dfun=None, col_deriv=0, full_output=0,
     with `theta(0)` = `pi` - 0.1, and is initially at rest, so
     `omega(0)` = 0.  Then the vector of initial conditions is
 
-    >>> y0 = [np.pi - 0.1, 0.0]
+    >>> y0 = [mx.pi - 0.1, 0.0]
 
     We will generate a solution at 101 evenly spaced samples in the interval
     0 <= `t` <= 10.  So our array of times is:
 
-    >>> t = np.linspace(0, 10, 101)
+    >>> t = mx.linspace(0, 10, 101)
 
     Call `odeint` to generate the solution. To pass the parameters
     `b` and `c` to `pend`, we give them to `odeint` using the `args`
@@ -244,7 +244,7 @@ def odeint(func, y0, t, args=(), Dfun=None, col_deriv=0, full_output=0,
     if mu is None:
         mu = -1  # changed to zero inside function call
 
-    dt = np.diff(t)
+    dt = mx.diff(t)
     if not ((dt >= 0).all() or (dt <= 0).all()):
         raise ValueError("The values in t must be monotonically increasing "
                          "or monotonically decreasing; repeated values are "

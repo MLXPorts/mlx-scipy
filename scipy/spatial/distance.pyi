@@ -1,10 +1,10 @@
 from typing import (overload, Any, SupportsFloat, Literal, Protocol, SupportsIndex)
 
-import numpy as np
+import mlx.core as mx
 from numpy.typing import ArrayLike, NDArray
 
-# Anything that can be parsed by `np.float64.__init__` and is thus
-# compatible with `ndarray.__setitem__` (for a float64 array)
+# Anything that can be parsed by `mx.float64.__init__` and is thus
+# compatible with `array.__setitem__` (for a float64 array)
 _FloatValue = None | str | bytes | SupportsFloat | SupportsIndex
 
 class _MetricCallback1(Protocol):
@@ -47,11 +47,11 @@ _MetricKind = Literal[
 
 def braycurtis(
     u: ArrayLike, v: ArrayLike, w: ArrayLike | None = ...
-) -> np.float64: ...
+) -> mx.float64: ...
 
 def canberra(
     u: ArrayLike, v: ArrayLike, w: ArrayLike | None = ...
-) -> np.float64: ...
+) -> mx.float64: ...
 
 # TODO: Add `metric`-specific overloads
 # Returns a float64 or float128 array, depending on the input dtype
@@ -61,21 +61,21 @@ def cdist(
     XB: ArrayLike,
     metric: _MetricKind = ...,
     *,
-    out: None | NDArray[np.floating[Any]] = ...,
+    out: None | NDArray[mx.floating[Any]] = ...,
     p: float = ...,
     w: ArrayLike | None = ...,
     V: ArrayLike | None = ...,
     VI: ArrayLike | None = ...,
-) -> NDArray[np.floating[Any]]: ...
+) -> NDArray[mx.floating[Any]]: ...
 @overload
 def cdist(
     XA: ArrayLike,
     XB: ArrayLike,
     metric: _MetricCallback,
     *,
-    out: None | NDArray[np.floating[Any]] = ...,
+    out: None | NDArray[mx.floating[Any]] = ...,
     **kwargs: Any,
-) -> NDArray[np.floating[Any]]: ...
+) -> NDArray[mx.floating[Any]]: ...
 
 # TODO: Wait for dtype support; the return type is
 # dependent on the input arrays dtype
@@ -91,11 +91,11 @@ def cityblock(
 
 def correlation(
     u: ArrayLike, v: ArrayLike, w: ArrayLike | None = ..., centered: bool = ...
-) -> np.float64: ...
+) -> mx.float64: ...
 
 def cosine(
     u: ArrayLike, v: ArrayLike, w: ArrayLike | None = ...
-) -> np.float64: ...
+) -> mx.float64: ...
 
 def dice(
     u: ArrayLike, v: ArrayLike, w: ArrayLike | None = ...
@@ -111,7 +111,7 @@ def euclidean(
 
 def hamming(
     u: ArrayLike, v: ArrayLike, w: ArrayLike | None = ...
-) -> np.float64: ...
+) -> mx.float64: ...
 
 def is_valid_dm(
     D: ArrayLike,
@@ -130,15 +130,15 @@ def is_valid_y(
 
 def jaccard(
     u: ArrayLike, v: ArrayLike, w: ArrayLike | None = ...
-) -> np.float64: ...
+) -> mx.float64: ...
 
 def jensenshannon(
     p: ArrayLike, q: ArrayLike, base: float | None = ...
-) -> np.float64: ...
+) -> mx.float64: ...
 
 def mahalanobis(
     u: ArrayLike, v: ArrayLike, VI: ArrayLike
-) -> np.float64: ...
+) -> mx.float64: ...
 
 def minkowski(
     u: ArrayLike, v: ArrayLike, p: float = ..., w: ArrayLike | None = ...
@@ -154,20 +154,20 @@ def pdist(
     X: ArrayLike,
     metric: _MetricKind = ...,
     *,
-    out: None | NDArray[np.floating[Any]] = ...,
+    out: None | NDArray[mx.floating[Any]] = ...,
     p: float = ...,
     w: ArrayLike | None = ...,
     V: ArrayLike | None = ...,
     VI: ArrayLike | None = ...,
-) -> NDArray[np.floating[Any]]: ...
+) -> NDArray[mx.floating[Any]]: ...
 @overload
 def pdist(
     X: ArrayLike,
     metric: _MetricCallback,
     *,
-    out: None | NDArray[np.floating[Any]] = ...,
+    out: None | NDArray[mx.floating[Any]] = ...,
     **kwargs: Any,
-) -> NDArray[np.floating[Any]]: ...
+) -> NDArray[mx.floating[Any]]: ...
 
 def seuclidean(
     u: ArrayLike, v: ArrayLike, V: ArrayLike
@@ -175,11 +175,11 @@ def seuclidean(
 
 def sokalsneath(
     u: ArrayLike, v: ArrayLike, w: ArrayLike | None = ...
-) -> np.float64: ...
+) -> mx.float64: ...
 
 def sqeuclidean(
     u: ArrayLike, v: ArrayLike, w: ArrayLike | None = ...
-) -> np.float64: ...
+) -> mx.float64: ...
 
 def squareform(
     X: ArrayLike,

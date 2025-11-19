@@ -1,7 +1,7 @@
 """Tests for parabolic cylinder functions.
 
 """
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose, assert_equal
 import scipy.special as sc
 
@@ -21,4 +21,4 @@ def test_pbwa_nan():
     # implementation is accurate.
     pts = [(-6, -6), (-6, 6), (6, -6), (6, 6)]
     for p in pts:
-        assert_equal(sc.pbwa(*p), (np.nan, np.nan))
+        assert_equal(sc.pbwa(*p), (mx.nan, mx.nan))

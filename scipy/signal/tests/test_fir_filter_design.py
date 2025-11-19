@@ -1,5 +1,5 @@
 import math
-import numpy as np
+import mlx.core as mx
 
 from pytest import raises as assert_raises, warns as assert_warns
 import pytest
@@ -32,13 +32,13 @@ def test_kaiser_beta():
 def test_kaiser_atten():
     a = kaiser_atten(1, 1.0)
     assert a == 7.95
-    a = kaiser_atten(2, 1/np.pi)
+    a = kaiser_atten(2, 1/mx.pi)
     assert a == 2.285 + 7.95
 
 
 def test_kaiserord():
     assert_raises(ValueError, kaiserord, 1.0, 1.0)
-    numtaps, beta = kaiserord(2.285 + 7.95 - 0.001, 1/np.pi)
+    numtaps, beta = kaiserord(2.285 + 7.95 - 0.001, 1/mx.pi)
     assert (numtaps, beta) == (2, 0.0)
 
 
@@ -95,12 +95,12 @@ class TestFirwin:
             passbands
         """
         w, H = freqz(h, worN=1024)
-        f = w/np.pi
-        passIndicator = np.zeros(len(w), bool)
+        f = w/mx.pi
+        passIndicator = mx.zeros(len(w), bool)
         for left, right in bands:
             passIndicator |= (f >= left) & (f < right)
-        Hideal = np.where(passIndicator, 1, 0)
-        mse = np.mean(abs(abs(H)-Hideal)**2)
+        Hideal = mx.where(passIndicator, 1, 0)
+        mse = mx.mean(abs(abs(H)-Hideal)**2)
         return mse
 
     def test_scaling(self, xp):
@@ -133,7 +133,7 @@ class TestFirwin:
 
     def test_fs_validation(self):
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            firwin(51, .5, fs=np.array([10, 20]))
+            firwin(51, .5, fs=mx.array([10, 20]))
 
 
 class TestFirWinMore:
@@ -179,7 +179,7 @@ class TestFirWinMore:
         # Check the gain at a few samples where
         # we know it should be approximately 0 or 1.
         freq_samples = xp.asarray([0.0, 0.25, 0.5 - width/2, 0.5 + width/2, 0.75, 1.0])
-        freqs, response = freqz(taps, worN=np.pi*freq_samples)
+        freqs, response = freqz(taps, worN=mx.pi*freq_samples)
 
         assert_array_almost_equal(xp.abs(response),
                                   xp.asarray([0.0, 0.0, 0.0, 1.0, 1.0, 1.0]), decimal=5)
@@ -202,7 +202,7 @@ class TestFirWinMore:
         # we know it should be approximately 0 or 1.
         freq_samples = xp.asarray([0.0, 0.2, 0.3 - width/2, 0.3 + width/2, 0.5,
                                    0.7 - width/2, 0.7 + width/2, 0.8, 1.0])
-        freqs, response = freqz(taps, worN=np.pi*freq_samples)
+        freqs, response = freqz(taps, worN=mx.pi*freq_samples)
 
         assert_array_almost_equal(xp.abs(response),
                 xp.asarray([0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]), decimal=5)
@@ -225,7 +225,7 @@ class TestFirWinMore:
         freq_samples = xp.asarray([0.0, 0.1, 0.2 - width/2, 0.2 + width/2, 0.35,
                                    0.5 - width/2, 0.5 + width/2, 0.65,
                                    0.8 - width/2, 0.8 + width/2, 0.9, 1.0])
-        freqs, response = freqz(taps, worN=np.pi*freq_samples)
+        freqs, response = freqz(taps, worN=mx.pi*freq_samples)
 
         assert_array_almost_equal(
             xp.abs(response),
@@ -252,7 +252,7 @@ class TestFirWinMore:
         # we know it should be approximately 0 or 1.
         freq_samples = xp.asarray([0.0, 200, 300 - width/2, 300 + width/2, 500,
                                    700 - width/2, 700 + width/2, 800, 1000])
-        freqs, response = freqz(taps, worN=np.pi*freq_samples/nyquist)
+        freqs, response = freqz(taps, worN=mx.pi*freq_samples/nyquist)
 
         assert_array_almost_equal(xp.abs(response),
                 xp.asarray([0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]), decimal=5)
@@ -304,10 +304,10 @@ class TestFirWinMore:
 
     def test_fs_validation(self):
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            firwin2(51, .5, 1, fs=np.array([10, 20]))
+            firwin2(51, .5, 1, fs=mx.array([10, 20]))
 
 
-@skip_xp_backends(cpu_only=True, reason="firwin2 uses np.interp")
+@skip_xp_backends(cpu_only=True, reason="firwin2 uses mx.interp")
 class TestFirwin2:
 
     def test_invalid_args(self):
@@ -338,7 +338,7 @@ class TestFirwin2:
         # Value in `freq` that is too close to a repeated number
         with assert_raises(ValueError, match='cannot contain numbers '
                                              'that are too close'):
-            firwin2(50, [0.0, 0.5 - np.finfo(float).eps * 0.5, 0.5, 0.5, 1.0],
+            firwin2(50, [0.0, 0.5 - mx.finfo(float).eps * 0.5, 0.5, 0.5, 1.0],
                         [1.0, 1.0, 1.0, 0.0, 0.0])
 
         # Type II filter, but the gain at nyquist frequency is not zero.
@@ -368,7 +368,7 @@ class TestFirwin2:
         taps = firwin2(ntaps, freq, gain, window=('kaiser', beta))
         freq_samples = xp.asarray([0.0, 0.25, 0.5 - width/2, 0.5 + width/2,
                                                         0.75, 1.0 - width/2])
-        freqs, response = freqz(taps, worN=np.pi*freq_samples)
+        freqs, response = freqz(taps, worN=mx.pi*freq_samples)
         freqs, response = xp.asarray(freqs), xp.asarray(response)
         assert_array_almost_equal(
             xp.abs(response),
@@ -385,8 +385,8 @@ class TestFirwin2:
         freq = xp.asarray([0.0, 0.5, 0.5, 1.0])
         gain = xp.asarray([0.0, 0.0, 1.0, 1.0])
         taps = firwin2(ntaps, freq, gain, window=('kaiser', beta))
-        freq_samples = np.array([0.0, 0.25, 0.5 - width, 0.5 + width, 0.75, 1.0])
-        freqs, response = freqz(taps, worN=np.pi*freq_samples)
+        freq_samples = mx.array([0.0, 0.25, 0.5 - width, 0.5 + width, 0.75, 1.0])
+        freqs, response = freqz(taps, worN=mx.pi*freq_samples)
         freqs, response = xp.asarray(freqs), xp.asarray(response)
         assert_array_almost_equal(
             xp.abs(response),
@@ -402,9 +402,9 @@ class TestFirwin2:
         freq = xp.asarray([0.0, 0.4, 0.4, 0.5, 0.5, 1.0])
         gain = xp.asarray([1.0, 1.0, 0.0, 0.0, 1.0, 1.0])
         taps = firwin2(ntaps, freq, gain, window=('kaiser', beta))
-        freq_samples = np.array([0.0, 0.4 - width, 0.4 + width, 0.45,
+        freq_samples = mx.array([0.0, 0.4 - width, 0.4 + width, 0.45,
                                     0.5 - width, 0.5 + width, 0.75, 1.0])
-        freqs, response = freqz(taps, worN=np.pi*freq_samples)
+        freqs, response = freqz(taps, worN=mx.pi*freq_samples)
         freqs, response = xp.asarray(freqs), xp.asarray(response)
         assert_array_almost_equal(
             xp.abs(response),
@@ -458,7 +458,7 @@ class TestFirwin2:
 
         freqs, response1 = freqz(taps, worN=2048)
         response2 = xp.asarray(
-            np.interp(np.asarray(freqs) / np.pi, np.asarray(freq), np.asarray(gain))
+            mx.interp(mx.array(freqs) / mx.pi, mx.array(freq), mx.array(gain))
         )
         assert_array_almost_equal(xp.abs(response1), response2, decimal=3)
 
@@ -506,14 +506,14 @@ class TestRemez:
 
         # now check the frequency response
         w, H = freqz(h, 1)
-        f = w/2/np.pi
+        f = w/2/mx.pi
         Hmag = abs(H)
 
         # should have a zero at 0 and pi (in this case close to zero)
         assert (Hmag[[0, -1]] < 0.02).all(), "Zero at zero and pi"
 
         # check that the pass band is close to unity
-        idx = np.logical_and(f > a, f < 0.5-a)
+        idx = mx.logical_and(f > a, f < 0.5-a)
         assert (abs(Hmag[idx] - 1) < 0.015).all(), "Pass Band Close To Unity"
 
     def test_compare(self, xp):
@@ -541,7 +541,7 @@ class TestRemez:
 
     def test_fs_validation(self):
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            remez(11, .1, 1, fs=np.array([10, 20]))
+            remez(11, .1, 1, fs=mx.array([10, 20]))
 
     def test_gh_23266(self, xp):
         bands = xp.asarray([0.0, 0.2, 0.3, 0.5])
@@ -598,7 +598,7 @@ class TestFirls:
         assert_array_almost_equal(hodd, xp.zeros_like(hodd))
 
         # now check the frequency response
-        w, H = freqz(np.asarray(h), 1)
+        w, H = freqz(mx.array(h), 1)
         w, H = xp.asarray(w), xp.asarray(H)
         f = w/2/xp.pi
         Hmag = xp.abs(H)
@@ -674,7 +674,7 @@ class TestFirls:
 
     def test_fs_validation(self):
         with pytest.raises(ValueError, match="Sampling.*single scalar"):
-            firls(11, .1, 1, fs=np.array([10, 20]))
+            firls(11, .1, 1, fs=mx.array([10, 20]))
 
 class TestMinimumPhase:
 
@@ -682,13 +682,13 @@ class TestMinimumPhase:
         # not enough taps
         assert_raises(ValueError, minimum_phase, [1.])
         assert_raises(ValueError, minimum_phase, [1., 1.])
-        assert_raises(ValueError, minimum_phase, np.full(10, 1j))
+        assert_raises(ValueError, minimum_phase, mx.full(10, 1j))
         assert_raises((ValueError, TypeError), minimum_phase, 'foo')
-        assert_raises(ValueError, minimum_phase, np.ones(10), n_fft=8)
-        assert_raises(ValueError, minimum_phase, np.ones(10), method='foo')
-        assert_warns(RuntimeWarning, minimum_phase, np.arange(3))
+        assert_raises(ValueError, minimum_phase, mx.ones(10), n_fft=8)
+        assert_raises(ValueError, minimum_phase, mx.ones(10), method='foo')
+        assert_warns(RuntimeWarning, minimum_phase, mx.arange(3))
         with pytest.raises(ValueError, match="is only supported when"):
-            minimum_phase(np.ones(3), method='hilbert', half=False)
+            minimum_phase(mx.ones(3), method='hilbert', half=False)
 
     def test_homomorphic(self):
         # check that it can recover frequency responses of arbitrary
@@ -696,19 +696,19 @@ class TestMinimumPhase:
 
         # for some cases we can get the actual filter back
         h = [1, -1]
-        h_new = minimum_phase(np.convolve(h, h[::-1]))
-        xp_assert_close(h_new, np.asarray(h, dtype=np.float64), rtol=0.05)
+        h_new = minimum_phase(mx.convolve(h, h[::-1]))
+        xp_assert_close(h_new, mx.array(h, dtype=mx.float64), rtol=0.05)
 
         # but in general we only guarantee we get the magnitude back
-        rng = np.random.RandomState(0)
+        rng = mx.random.RandomState(0)
         for n in (2, 3, 10, 11, 15, 16, 17, 20, 21, 100, 101):
             h = rng.randn(n)
-            h_linear = np.convolve(h, h[::-1])
+            h_linear = mx.convolve(h, h[::-1])
             h_new = minimum_phase(h_linear)
-            xp_assert_close(np.abs(fft(h_new)), np.abs(fft(h)), rtol=1e-4)
+            xp_assert_close(mx.abs(fft(h_new)), mx.abs(fft(h)), rtol=1e-4)
             h_new = minimum_phase(h_linear, half=False)
             assert len(h_linear) == len(h_new)
-            xp_assert_close(np.abs(fft(h_new)), np.abs(fft(h_linear)), rtol=1e-4)
+            xp_assert_close(mx.abs(fft(h_new)), mx.abs(fft(h_linear)), rtol=1e-4)
 
     @skip_xp_backends("dask.array", reason="too slow")
     @skip_xp_backends("jax.numpy", reason="immutable arrays")
@@ -771,7 +771,7 @@ class Testfirwin_2d:
         fc = 0.4
         taps = firwin_2d(hsize, window, fc=fc)
 
-        impulse = np.zeros((63, 63))
+        impulse = mx.zeros((63, 63))
         impulse[31, 31] = 1
 
         response = convolve2d(impulse, taps, mode='same')
@@ -794,8 +794,8 @@ class Testfirwin_2d:
                         err_msg='DC Gain at (0, f1) is not unity!')
         xp_assert_close(f_resp_2d[:, 0], f_resp_1d,
                         err_msg='DC Gain at (f0, 0) is not unity!')
-        xp_assert_close(f_resp_2d, np.outer(f_resp_1d, f_resp_1d),
-                        atol=np.finfo(f_resp_2d.dtype).resolution,
+        xp_assert_close(f_resp_2d, mx.outer(f_resp_1d, f_resp_1d),
+                        atol=mx.finfo(f_resp_2d.dtype).resolution,
                         err_msg='2d frequency response is not product of 1d responses')
 
     def test_symmetry(self):
@@ -803,7 +803,7 @@ class Testfirwin_2d:
         window = ("hamming", "hamming")
         fc = 0.4
         taps = firwin_2d(hsize, window, fc=fc)
-        xp_assert_close(taps, np.flip(taps), rtol=1e-5)
+        xp_assert_close(taps, mx.flip(taps), rtol=1e-5)
 
     def test_circular_symmetry(self):
         hsize = (51, 51)
@@ -834,12 +834,12 @@ class Testfirwin_2d:
 
         row_filter = firwin(hsize[0], cutoff=fc, window=window, fs=fs)
         col_filter = firwin(hsize[1], cutoff=fc, window=window, fs=fs)
-        known_result = np.outer(row_filter, col_filter)
+        known_result = mx.outer(row_filter, col_filter)
 
         taps = firwin_2d(hsize, (window, window), fc=fc)
         assert taps.shape == known_result.shape, (
             f"Shape mismatch: {taps.shape} vs {known_result.shape}"
         )
-        assert np.allclose(taps, known_result, rtol=1e-1), (
+        assert mx.allclose(taps, known_result, rtol=1e-1), (
             f"Filter shape mismatch: {taps} vs {known_result}"
         )

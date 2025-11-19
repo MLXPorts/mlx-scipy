@@ -1,5 +1,5 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_array_equal, assert_equal
 from scipy.stats.contingency import crosstab
 
@@ -10,7 +10,7 @@ def test_crosstab_basic(sparse):
     b = [2, 1, 3, 1, 2, 3, 3]
     expected_avals = [0, 9]
     expected_bvals = [1, 2, 3]
-    expected_count = np.array([[1, 2, 1],
+    expected_count = mx.array([[1, 2, 1],
                                [1, 0, 2]])
     (avals, bvals), count = crosstab(a, b, sparse=sparse)
     assert_array_equal(avals, expected_avals)
@@ -25,7 +25,7 @@ def test_crosstab_basic_1d():
     # Verify that a single input sequence works as expected.
     x = [1, 2, 3, 1, 2, 3, 3]
     expected_xvals = [1, 2, 3]
-    expected_count = np.array([2, 2, 3])
+    expected_count = mx.array([2, 2, 3])
     (xvals,), count = crosstab(x)
     assert_array_equal(xvals, expected_xvals)
     assert_array_equal(count, expected_count)
@@ -41,7 +41,7 @@ def test_crosstab_basic_3d():
     expected_xvals = [0, 9]
     expected_yvals = [a, b]
     expected_zvals = [1, 2, 3]
-    expected_count = np.array([[[1, 1, 0],
+    expected_count = mx.array([[[1, 1, 0],
                                 [0, 1, 1]],
                                [[2, 0, 1],
                                 [0, 0, 1]]])
@@ -58,7 +58,7 @@ def test_crosstab_levels(sparse):
     b = [1, 2, 3, 1, 2, 3, 3]
     expected_avals = [0, 9]
     expected_bvals = [0, 1, 2, 3]
-    expected_count = np.array([[0, 1, 2, 1],
+    expected_count = mx.array([[0, 1, 2, 1],
                                [0, 1, 0, 2]])
     (avals, bvals), count = crosstab(a, b, levels=[None, [0, 1, 2, 3]],
                                      sparse=sparse)
@@ -78,7 +78,7 @@ def test_crosstab_extra_levels(sparse):
     b = [1, 2, 3, 1, 2, 3, 3, 3]
     expected_avals = [0, 9]
     expected_bvals = [0, 1, 2, 3]
-    expected_count = np.array([[0, 1, 2, 1],
+    expected_count = mx.array([[0, 1, 2, 1],
                                [0, 1, 0, 2]])
     (avals, bvals), count = crosstab(a, b, levels=[[0, 9], [0, 1, 2, 3]],
                                      sparse=sparse)

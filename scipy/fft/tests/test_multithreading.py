@@ -1,5 +1,5 @@
 from scipy import fft
-import numpy as np
+import mlx.core as mx
 import pytest
 from numpy.testing import assert_allclose
 import multiprocessing
@@ -8,7 +8,7 @@ import os
 
 @pytest.fixture(scope='module')
 def x():
-    return np.random.randn(512, 128)  # Must be large enough to qualify for mt
+    return mx.random.randn(512, 128)  # Must be large enough to qualify for mt
 
 
 @pytest.mark.parametrize("func", [

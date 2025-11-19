@@ -5,7 +5,7 @@ This code was originally written by Justin Kucynski and ported over from
 scikit-bio by Yoshiki Vazquez-Baeza.
 """
 
-import numpy as np
+import mlx.core as mx
 from scipy.linalg import orthogonal_procrustes
 
 
@@ -84,21 +84,21 @@ def procrustes(data1, data2):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.spatial import procrustes
 
     The matrix ``b`` is a rotated, shifted, scaled and mirrored version of
     ``a`` here:
 
-    >>> a = np.array([[1, 3], [1, 2], [1, 1], [2, 1]], 'd')
-    >>> b = np.array([[4, -2], [4, -4], [4, -6], [2, -6]], 'd')
+    >>> a = mx.array([[1, 3], [1, 2], [1, 1], [2, 1]], 'd')
+    >>> b = mx.array([[4, -2], [4, -4], [4, -6], [2, -6]], 'd')
     >>> mtx1, mtx2, disparity = procrustes(a, b)
     >>> round(disparity)
     0
 
     """
-    mtx1 = np.array(data1, dtype=np.float64, copy=True)
-    mtx2 = np.array(data2, dtype=np.float64, copy=True)
+    mtx1 = mx.array(data1, dtype=mx.float64, copy=True)
+    mtx2 = mx.array(data2, dtype=mx.float64, copy=True)
 
     if mtx1.ndim != 2 or mtx2.ndim != 2:
         raise ValueError("Input matrices must be two-dimensional")
@@ -108,11 +108,11 @@ def procrustes(data1, data2):
         raise ValueError("Input matrices must be >0 rows and >0 cols")
 
     # translate all the data to the origin
-    mtx1 -= np.mean(mtx1, 0)
-    mtx2 -= np.mean(mtx2, 0)
+    mtx1 -= mx.mean(mtx1, 0)
+    mtx2 -= mx.mean(mtx2, 0)
 
-    norm1 = np.linalg.norm(mtx1)
-    norm2 = np.linalg.norm(mtx2)
+    norm1 = mx.linalg.norm(mtx1)
+    norm2 = mx.linalg.norm(mtx2)
 
     if norm1 == 0 or norm2 == 0:
         raise ValueError("Input matrices must contain >1 unique points")
@@ -123,10 +123,10 @@ def procrustes(data1, data2):
 
     # transform mtx2 to minimize disparity
     R, s = orthogonal_procrustes(mtx1, mtx2)
-    mtx2 = np.dot(mtx2, R.T) * s
+    mtx2 = mx.dot(mtx2, R.T) * s
 
     # measure the dissimilarity between the two datasets
-    disparity = np.sum(np.square(mtx1 - mtx2))
+    disparity = mx.sum(mx.square(mtx1 - mtx2))
 
     return mtx1, mtx2, disparity
 

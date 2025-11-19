@@ -1,5 +1,5 @@
 import warnings
-import numpy as np
+import mlx.core as mx
 from scipy.sparse.linalg._interface import LinearOperator
 from .utils import make_system
 from scipy.linalg import get_lapack_funcs
@@ -27,14 +27,14 @@ def bicg(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=No
 
     Parameters
     ----------
-    A : {sparse array, ndarray, LinearOperator}
+    A : {sparse array, array, LinearOperator}
         The real or complex N-by-N matrix of the linear system.
         Alternatively, `A` can be a linear operator which can
         produce ``Ax`` and ``A^T x`` using, e.g.,
         ``scipy.sparse.linalg.LinearOperator``.
-    b : ndarray
+    b : array
         Right hand side of the linear system. Has shape (N,) or (N,1).
-    x0 : ndarray
+    x0 : array
         Starting guess for the solution.
     rtol, atol : float, optional
         Parameters for the convergence test. For convergence,
@@ -43,7 +43,7 @@ def bicg(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=No
     maxiter : integer
         Maximum number of iterations.  Iteration will stop after maxiter
         steps even if the specified tolerance has not been achieved.
-    M : {sparse array, ndarray, LinearOperator}
+    M : {sparse array, array, LinearOperator}
         Preconditioner for `A`. It should approximate the
         inverse of `A` (see Notes). Effective preconditioning dramatically improves the
         rate of convergence, which implies that fewer iterations are needed
@@ -54,7 +54,7 @@ def bicg(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=No
 
     Returns
     -------
-    x : ndarray
+    x : array
         The converged solution.
     info : integer
         Provides convergence information:
@@ -76,19 +76,19 @@ def bicg(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=No
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import bicg
     >>> A = csc_array([[3, 2, 0], [1, -1, 0], [0, 5, 1.]])
-    >>> b = np.array([2., 4., -1.])
+    >>> b = mx.array([2., 4., -1.])
     >>> x, exitCode = bicg(A, b, atol=1e-5)
     >>> print(exitCode)  # 0 indicates successful convergence
     0
-    >>> np.allclose(A.dot(x), b)
+    >>> mx.allclose(A.dot(x), b)
     True
     """
     A, M, x, b = make_system(A, M, x0, b)
-    bnrm2 = np.linalg.norm(b)
+    bnrm2 = mx.linalg.norm(b)
 
     atol, _ = _get_atol_rtol('bicg', bnrm2, atol, rtol)
 
@@ -96,7 +96,7 @@ def bicg(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=No
         return b, 0
 
     n = len(b)
-    dotprod = np.vdot if np.iscomplexobj(x) else np.dot
+    dotprod = mx.vdot if mx.iscomplexobj(x) else mx.dot
 
     if maxiter is None:
         maxiter = n*10
@@ -104,7 +104,7 @@ def bicg(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=No
     matvec, rmatvec = A.matvec, A.rmatvec
     psolve, rpsolve = M.matvec, M.rmatvec
 
-    rhotol = np.finfo(x.dtype.char).eps**2
+    rhotol = mx.finfo(x.dtype.char).eps**2
 
     # Dummy values to initialize vars, silence linter warnings
     rho_prev, p, ptilde = None, None, None
@@ -113,7 +113,7 @@ def bicg(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=No
     rtilde = r.copy()
 
     for iteration in range(maxiter):
-        if np.linalg.norm(r) < atol:  # Are we done?
+        if mx.linalg.norm(r) < atol:  # Are we done?
             return x, 0
 
         z = psolve(r)
@@ -121,7 +121,7 @@ def bicg(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=No
         # order matters in this dot product
         rho_cur = dotprod(rtilde, z)
 
-        if np.abs(rho_cur) < rhotol:  # Breakdown case
+        if mx.abs(rho_cur) < rhotol:  # Breakdown case
             return x, -10
 
         if iteration > 0:
@@ -162,14 +162,14 @@ def bicgstab(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
 
     Parameters
     ----------
-    A : {sparse array, ndarray, LinearOperator}
+    A : {sparse array, array, LinearOperator}
         The real or complex N-by-N matrix of the linear system.
         Alternatively, `A` can be a linear operator which can
         produce ``Ax`` and ``A^T x`` using, e.g.,
         ``scipy.sparse.linalg.LinearOperator``.
-    b : ndarray
+    b : array
         Right hand side of the linear system. Has shape (N,) or (N,1).
-    x0 : ndarray
+    x0 : array
         Starting guess for the solution.
     rtol, atol : float, optional
         Parameters for the convergence test. For convergence,
@@ -178,7 +178,7 @@ def bicgstab(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
     maxiter : integer
         Maximum number of iterations.  Iteration will stop after maxiter
         steps even if the specified tolerance has not been achieved.
-    M : {sparse array, ndarray, LinearOperator}
+    M : {sparse array, array, LinearOperator}
         Preconditioner for `A`. It should approximate the
         inverse of `A` (see Notes). Effective preconditioning dramatically improves the
         rate of convergence, which implies that fewer iterations are needed
@@ -189,7 +189,7 @@ def bicgstab(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
 
     Returns
     -------
-    x : ndarray
+    x : array
         The converged solution.
     info : integer
         Provides convergence information:
@@ -211,23 +211,23 @@ def bicgstab(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import bicgstab
-    >>> R = np.array([[4, 2, 0, 1],
+    >>> R = mx.array([[4, 2, 0, 1],
     ...               [3, 0, 0, 2],
     ...               [0, 1, 1, 1],
     ...               [0, 2, 1, 0]])
     >>> A = csc_array(R)
-    >>> b = np.array([-1, -0.5, -1, 2])
+    >>> b = mx.array([-1, -0.5, -1, 2])
     >>> x, exit_code = bicgstab(A, b, atol=1e-5)
     >>> print(exit_code)  # 0 indicates successful convergence
     0
-    >>> np.allclose(A.dot(x), b)
+    >>> mx.allclose(A.dot(x), b)
     True
     """
     A, M, x, b = make_system(A, M, x0, b)
-    bnrm2 = np.linalg.norm(b)
+    bnrm2 = mx.linalg.norm(b)
 
     atol, _ = _get_atol_rtol('bicgstab', bnrm2, atol, rtol)
 
@@ -236,7 +236,7 @@ def bicgstab(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
 
     n = len(b)
 
-    dotprod = np.vdot if np.iscomplexobj(x) else np.dot
+    dotprod = mx.vdot if mx.iscomplexobj(x) else mx.dot
 
     if maxiter is None:
         maxiter = n*10
@@ -246,7 +246,7 @@ def bicgstab(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
 
     # These values make no sense but coming from original Fortran code
     # sqrt might have been meant instead.
-    rhotol = np.finfo(x.dtype.char).eps**2
+    rhotol = mx.finfo(x.dtype.char).eps**2
     omegatol = rhotol
 
     # Dummy values to initialize vars, silence linter warnings
@@ -256,15 +256,15 @@ def bicgstab(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
     rtilde = r.copy()
 
     for iteration in range(maxiter):
-        if np.linalg.norm(r) < atol:  # Are we done?
+        if mx.linalg.norm(r) < atol:  # Are we done?
             return x, 0
 
         rho = dotprod(rtilde, r)
-        if np.abs(rho) < rhotol:  # rho breakdown
+        if mx.abs(rho) < rhotol:  # rho breakdown
             return x, -10
 
         if iteration > 0:
-            if np.abs(omega) < omegatol:  # omega breakdown
+            if mx.abs(omega) < omegatol:  # omega breakdown
                 return x, -11
 
             beta = (rho / rho_prev) * (alpha / omega)
@@ -272,7 +272,7 @@ def bicgstab(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
             p *= beta
             p += r
         else:  # First spin
-            s = np.empty_like(r)
+            s = mx.empty_like(r)
             p = r.copy()
 
         phat = psolve(p)
@@ -284,7 +284,7 @@ def bicgstab(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
         r -= alpha*v
         s[:] = r[:]
 
-        if np.linalg.norm(s) < atol:
+        if mx.linalg.norm(s) < atol:
             x += alpha*phat
             return x, 0
 
@@ -311,15 +311,15 @@ def cg(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=None
 
     Parameters
     ----------
-    A : {sparse array, ndarray, LinearOperator}
+    A : {sparse array, array, LinearOperator}
         The real or complex N-by-N matrix of the linear system.
         `A` must represent a hermitian, positive definite matrix.
         Alternatively, `A` can be a linear operator which can
         produce ``Ax`` using, e.g.,
         ``scipy.sparse.linalg.LinearOperator``.
-    b : ndarray
+    b : array
         Right hand side of the linear system. Has shape (N,) or (N,1).
-    x0 : ndarray
+    x0 : array
         Starting guess for the solution.
     rtol, atol : float, optional
         Parameters for the convergence test. For convergence,
@@ -328,7 +328,7 @@ def cg(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=None
     maxiter : integer
         Maximum number of iterations.  Iteration will stop after maxiter
         steps even if the specified tolerance has not been achieved.
-    M : {sparse array, ndarray, LinearOperator}
+    M : {sparse array, array, LinearOperator}
         Preconditioner for `A`. `M` must represent a hermitian, positive definite
         matrix. It should approximate the inverse of `A` (see Notes).
         Effective preconditioning dramatically improves the
@@ -340,7 +340,7 @@ def cg(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=None
 
     Returns
     -------
-    x : ndarray
+    x : array
         The converged solution.
     info : integer
         Provides convergence information:
@@ -361,23 +361,23 @@ def cg(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=None
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import cg
-    >>> P = np.array([[4, 0, 1, 0],
+    >>> P = mx.array([[4, 0, 1, 0],
     ...               [0, 5, 0, 0],
     ...               [1, 0, 3, 2],
     ...               [0, 0, 2, 4]])
     >>> A = csc_array(P)
-    >>> b = np.array([-1, -0.5, -1, 2])
+    >>> b = mx.array([-1, -0.5, -1, 2])
     >>> x, exit_code = cg(A, b, atol=1e-5)
     >>> print(exit_code)    # 0 indicates successful convergence
     0
-    >>> np.allclose(A.dot(x), b)
+    >>> mx.allclose(A.dot(x), b)
     True
     """
     A, M, x, b = make_system(A, M, x0, b)
-    bnrm2 = np.linalg.norm(b)
+    bnrm2 = mx.linalg.norm(b)
 
     atol, _ = _get_atol_rtol('cg', bnrm2, atol, rtol)
 
@@ -389,7 +389,7 @@ def cg(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=None
     if maxiter is None:
         maxiter = n*10
 
-    dotprod = np.vdot if np.iscomplexobj(x) else np.dot
+    dotprod = mx.vdot if mx.iscomplexobj(x) else mx.dot
 
     matvec = A.matvec
     psolve = M.matvec
@@ -399,7 +399,7 @@ def cg(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=None
     rho_prev, p = None, None
 
     for iteration in range(maxiter):
-        if np.linalg.norm(r) < atol:  # Are we done?
+        if mx.linalg.norm(r) < atol:  # Are we done?
             return x, 0
 
         z = psolve(r)
@@ -409,7 +409,7 @@ def cg(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=None
             p *= beta
             p += z
         else:  # First spin
-            p = np.empty_like(r)
+            p = mx.empty_like(r)
             p[:] = z[:]
 
         q = matvec(p)
@@ -432,14 +432,14 @@ def cgs(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=Non
 
     Parameters
     ----------
-    A : {sparse array, ndarray, LinearOperator}
+    A : {sparse array, array, LinearOperator}
         The real-valued N-by-N matrix of the linear system.
         Alternatively, `A` can be a linear operator which can
         produce ``Ax`` using, e.g.,
         ``scipy.sparse.linalg.LinearOperator``.
-    b : ndarray
+    b : array
         Right hand side of the linear system. Has shape (N,) or (N,1).
-    x0 : ndarray
+    x0 : array
         Starting guess for the solution.
     rtol, atol : float, optional
         Parameters for the convergence test. For convergence,
@@ -448,7 +448,7 @@ def cgs(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=Non
     maxiter : integer
         Maximum number of iterations.  Iteration will stop after maxiter
         steps even if the specified tolerance has not been achieved.
-    M : {sparse array, ndarray, LinearOperator}
+    M : {sparse array, array, LinearOperator}
         Preconditioner for ``A``. It should approximate the
         inverse of `A` (see Notes). Effective preconditioning dramatically improves the
         rate of convergence, which implies that fewer iterations are needed
@@ -459,7 +459,7 @@ def cgs(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=Non
 
     Returns
     -------
-    x : ndarray
+    x : array
         The converged solution.
     info : integer
         Provides convergence information:
@@ -481,23 +481,23 @@ def cgs(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=Non
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import cgs
-    >>> R = np.array([[4, 2, 0, 1],
+    >>> R = mx.array([[4, 2, 0, 1],
     ...               [3, 0, 0, 2],
     ...               [0, 1, 1, 1],
     ...               [0, 2, 1, 0]])
     >>> A = csc_array(R)
-    >>> b = np.array([-1, -0.5, -1, 2])
+    >>> b = mx.array([-1, -0.5, -1, 2])
     >>> x, exit_code = cgs(A, b)
     >>> print(exit_code)  # 0 indicates successful convergence
     0
-    >>> np.allclose(A.dot(x), b)
+    >>> mx.allclose(A.dot(x), b)
     True
     """
     A, M, x, b = make_system(A, M, x0, b)
-    bnrm2 = np.linalg.norm(b)
+    bnrm2 = mx.linalg.norm(b)
 
     atol, _ = _get_atol_rtol('cgs', bnrm2, atol, rtol)
 
@@ -506,7 +506,7 @@ def cgs(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=Non
 
     n = len(b)
 
-    dotprod = np.vdot if np.iscomplexobj(x) else np.dot
+    dotprod = mx.vdot if mx.iscomplexobj(x) else mx.dot
 
     if maxiter is None:
         maxiter = n*10
@@ -514,12 +514,12 @@ def cgs(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=Non
     matvec = A.matvec
     psolve = M.matvec
 
-    rhotol = np.finfo(x.dtype.char).eps**2
+    rhotol = mx.finfo(x.dtype.char).eps**2
 
     r = b - matvec(x) if x.any() else b.copy()
 
     rtilde = r.copy()
-    bnorm = np.linalg.norm(b)
+    bnorm = mx.linalg.norm(b)
     if bnorm == 0:
         bnorm = 1
 
@@ -527,12 +527,12 @@ def cgs(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=Non
     rho_prev, p, u, q = None, None, None, None
 
     for iteration in range(maxiter):
-        rnorm = np.linalg.norm(r)
+        rnorm = mx.linalg.norm(r)
         if rnorm < atol:  # Are we done?
             return x, 0
 
         rho_cur = dotprod(rtilde, r)
-        if np.abs(rho_cur) < rhotol:  # Breakdown case
+        if mx.abs(rho_cur) < rhotol:  # Breakdown case
             return x, -10
 
         if iteration > 0:
@@ -551,7 +551,7 @@ def cgs(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None, callback=Non
         else:  # First spin
             p = r.copy()
             u = r.copy()
-            q = np.empty_like(r)
+            q = mx.empty_like(r)
 
         phat = psolve(p)
         vhat = matvec(phat)
@@ -591,14 +591,14 @@ def gmres(A, b, x0=None, *, rtol=1e-5, atol=0., restart=None, maxiter=None, M=No
 
     Parameters
     ----------
-    A : {sparse array, ndarray, LinearOperator}
+    A : {sparse array, array, LinearOperator}
         The real or complex N-by-N matrix of the linear system.
         Alternatively, `A` can be a linear operator which can
         produce ``Ax`` using, e.g.,
         ``scipy.sparse.linalg.LinearOperator``.
-    b : ndarray
+    b : array
         Right hand side of the linear system. Has shape (N,) or (N,1).
-    x0 : ndarray
+    x0 : array
         Starting guess for the solution (a vector of zeros by default).
     atol, rtol : float
         Parameters for the convergence test. For convergence,
@@ -612,7 +612,7 @@ def gmres(A, b, x0=None, *, rtol=1e-5, atol=0., restart=None, maxiter=None, M=No
         Maximum number of iterations (restart cycles).  Iteration will stop
         after maxiter steps even if the specified tolerance has not been
         achieved. See `callback_type`.
-    M : {sparse array, ndarray, LinearOperator}
+    M : {sparse array, array, LinearOperator}
         Inverse of the preconditioner of `A`.  `M` should approximate the
         inverse of `A` and be easy to solve for (see Notes).  Effective
         preconditioning dramatically improves the rate of convergence,
@@ -626,7 +626,7 @@ def gmres(A, b, x0=None, *, rtol=1e-5, atol=0., restart=None, maxiter=None, M=No
         as ``callback(args)``, where ``args`` are selected by `callback_type`.
     callback_type : {'x', 'pr_norm', 'legacy'}, optional
         Callback function argument requested:
-          - ``x``: current iterate (ndarray), called on every restart
+          - ``x``: current iterate (array), called on every restart
           - ``pr_norm``: relative (preconditioned) residual norm (float),
             called on every inner iteration
           - ``legacy`` (default): same as ``pr_norm``, but also changes the
@@ -637,7 +637,7 @@ def gmres(A, b, x0=None, *, rtol=1e-5, atol=0., restart=None, maxiter=None, M=No
 
     Returns
     -------
-    x : ndarray
+    x : array
         The converged solution.
     info : int
         Provides convergence information:
@@ -662,15 +662,15 @@ def gmres(A, b, x0=None, *, rtol=1e-5, atol=0., restart=None, maxiter=None, M=No
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import gmres
     >>> A = csc_array([[3, 2, 0], [1, -1, 0], [0, 5, 1]], dtype=float)
-    >>> b = np.array([2, 4, -1], dtype=float)
+    >>> b = mx.array([2, 4, -1], dtype=float)
     >>> x, exitCode = gmres(A, b, atol=1e-5)
     >>> print(exitCode)            # 0 indicates successful convergence
     0
-    >>> np.allclose(A.dot(x), b)
+    >>> mx.allclose(A.dot(x), b)
     True
     """
     if callback is not None and callback_type is None:
@@ -698,16 +698,16 @@ def gmres(A, b, x0=None, *, rtol=1e-5, atol=0., restart=None, maxiter=None, M=No
     matvec = A.matvec
     psolve = M.matvec
     n = len(b)
-    bnrm2 = np.linalg.norm(b)
+    bnrm2 = mx.linalg.norm(b)
 
     atol, _ = _get_atol_rtol('gmres', bnrm2, atol, rtol)
 
     if bnrm2 == 0:
         return b, 0
 
-    eps = np.finfo(x.dtype.char).eps
+    eps = mx.finfo(x.dtype.char).eps
 
-    dotprod = np.vdot if np.iscomplexobj(x) else np.dot
+    dotprod = mx.vdot if mx.iscomplexobj(x) else mx.dot
 
     if maxiter is None:
         maxiter = n*10
@@ -716,7 +716,7 @@ def gmres(A, b, x0=None, *, rtol=1e-5, atol=0., restart=None, maxiter=None, M=No
         restart = 20
     restart = min(restart, n)
 
-    Mb_nrm2 = np.linalg.norm(psolve(b))
+    Mb_nrm2 = mx.linalg.norm(psolve(b))
 
     # ====================================================
     # =========== Tolerance control from gh-8400 =========
@@ -731,9 +731,9 @@ def gmres(A, b, x0=None, *, rtol=1e-5, atol=0., restart=None, maxiter=None, M=No
     lartg = get_lapack_funcs('lartg', dtype=x.dtype)
 
     # allocate internal variables
-    v = np.empty([restart+1, n], dtype=x.dtype)
-    h = np.zeros([restart, restart+1], dtype=x.dtype)
-    givens = np.zeros([restart, 2], dtype=x.dtype)
+    v = mx.empty([restart+1, n], dtype=x.dtype)
+    h = mx.zeros([restart, restart+1], dtype=x.dtype)
+    givens = mx.zeros([restart, 2], dtype=x.dtype)
 
     # legacy iteration count
     inner_iter = 0
@@ -741,14 +741,14 @@ def gmres(A, b, x0=None, *, rtol=1e-5, atol=0., restart=None, maxiter=None, M=No
     for iteration in range(maxiter):
         if iteration == 0:
             r = b - matvec(x) if x.any() else b.copy()
-            if np.linalg.norm(r) < atol:  # Are we done?
+            if mx.linalg.norm(r) < atol:  # Are we done?
                 return x, 0
 
         v[0, :] = psolve(r)
-        tmp = np.linalg.norm(v[0, :])
+        tmp = mx.linalg.norm(v[0, :])
         v[0, :] *= (1 / tmp)
         # RHS of the Hessenberg problem
-        S = np.zeros(restart+1, dtype=x.dtype)
+        S = mx.zeros(restart+1, dtype=x.dtype)
         S[0] = tmp
 
         breakdown = False
@@ -757,13 +757,13 @@ def gmres(A, b, x0=None, *, rtol=1e-5, atol=0., restart=None, maxiter=None, M=No
             w = psolve(av)
 
             # Modified Gram-Schmidt
-            h0 = np.linalg.norm(w)
+            h0 = mx.linalg.norm(w)
             for k in range(col+1):
                 tmp = dotprod(v[k, :], w)
                 h[col, k] = tmp
                 w -= tmp*v[k, :]
 
-            h1 = np.linalg.norm(w)
+            h1 = mx.linalg.norm(w)
             h[col, col + 1] = h1
             v[col + 1, :] = w[:]
 
@@ -786,9 +786,9 @@ def gmres(A, b, x0=None, *, rtol=1e-5, atol=0., restart=None, maxiter=None, M=No
             h[col, [col, col+1]] = mag, 0
 
             # S[col+1] component is always 0
-            tmp = -np.conjugate(s)*S[col]
+            tmp = -mx.conjugate(s)*S[col]
             S[[col, col + 1]] = [c*S[col], tmp]
-            presid = np.abs(tmp)
+            presid = mx.abs(tmp)
             inner_iter += 1
 
             if callback_type in ('legacy', 'pr_norm'):
@@ -806,7 +806,7 @@ def gmres(A, b, x0=None, *, rtol=1e-5, atol=0., restart=None, maxiter=None, M=No
         if h[col, col] == 0:
             S[col] = 0
 
-        y = np.zeros([col+1], dtype=x.dtype)
+        y = mx.zeros([col+1], dtype=x.dtype)
         y[:] = S[:col+1]
         for k in range(col, 0, -1):
             if y[k] != 0:
@@ -819,7 +819,7 @@ def gmres(A, b, x0=None, *, rtol=1e-5, atol=0., restart=None, maxiter=None, M=No
         x += y @ v[:col+1, :]
 
         r = b - matvec(x)
-        rnorm = np.linalg.norm(r)
+        rnorm = mx.linalg.norm(r)
 
         # Legacy exit
         if callback_type == 'legacy' and inner_iter == maxiter:
@@ -853,14 +853,14 @@ def qmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M1=None, M2=None,
 
     Parameters
     ----------
-    A : {sparse array, ndarray, LinearOperator}
+    A : {sparse array, array, LinearOperator}
         The real-valued N-by-N matrix of the linear system.
         Alternatively, ``A`` can be a linear operator which can
         produce ``Ax`` and ``A^T x`` using, e.g.,
         ``scipy.sparse.linalg.LinearOperator``.
-    b : ndarray
+    b : array
         Right hand side of the linear system. Has shape (N,) or (N,1).
-    x0 : ndarray
+    x0 : array
         Starting guess for the solution.
     atol, rtol : float, optional
         Parameters for the convergence test. For convergence,
@@ -869,9 +869,9 @@ def qmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M1=None, M2=None,
     maxiter : integer
         Maximum number of iterations.  Iteration will stop after maxiter
         steps even if the specified tolerance has not been achieved.
-    M1 : {sparse array, ndarray, LinearOperator}
+    M1 : {sparse array, array, LinearOperator}
         Left preconditioner for A.
-    M2 : {sparse array, ndarray, LinearOperator}
+    M2 : {sparse array, array, LinearOperator}
         Right preconditioner for A. Used together with the left
         preconditioner M1.  The matrix M1@A@M2 should have better
         conditioned than A alone.
@@ -881,7 +881,7 @@ def qmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M1=None, M2=None,
 
     Returns
     -------
-    x : ndarray
+    x : array
         The converged solution.
     info : integer
         Provides convergence information:
@@ -895,20 +895,20 @@ def qmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M1=None, M2=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import qmr
     >>> A = csc_array([[3., 2., 0.], [1., -1., 0.], [0., 5., 1.]])
-    >>> b = np.array([2., 4., -1.])
+    >>> b = mx.array([2., 4., -1.])
     >>> x, exitCode = qmr(A, b, atol=1e-5)
     >>> print(exitCode)            # 0 indicates successful convergence
     0
-    >>> np.allclose(A.dot(x), b)
+    >>> mx.allclose(A.dot(x), b)
     True
     """
     A_ = A
     A, M, x, b = make_system(A, None, x0, b)
-    bnrm2 = np.linalg.norm(b)
+    bnrm2 = mx.linalg.norm(b)
 
     atol, _ = _get_atol_rtol('qmr', bnrm2, atol, rtol)
 
@@ -944,9 +944,9 @@ def qmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M1=None, M2=None,
     if maxiter is None:
         maxiter = n*10
 
-    dotprod = np.vdot if np.iscomplexobj(x) else np.dot
+    dotprod = mx.vdot if mx.iscomplexobj(x) else mx.dot
 
-    rhotol = np.finfo(x.dtype.char).eps
+    rhotol = mx.finfo(x.dtype.char).eps
     betatol = rhotol
     gammatol = rhotol
     deltatol = rhotol
@@ -957,23 +957,23 @@ def qmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M1=None, M2=None,
 
     vtilde = r.copy()
     y = M1.matvec(vtilde)
-    rho = np.linalg.norm(y)
+    rho = mx.linalg.norm(y)
     wtilde = r.copy()
     z = M2.rmatvec(wtilde)
-    xi = np.linalg.norm(z)
+    xi = mx.linalg.norm(z)
     gamma, eta, theta = 1, -1, 0
-    v = np.empty_like(vtilde)
-    w = np.empty_like(wtilde)
+    v = mx.empty_like(vtilde)
+    w = mx.empty_like(wtilde)
 
     # Dummy values to initialize vars, silence linter warnings
     epsilon, q, d, p, s = None, None, None, None, None
 
     for iteration in range(maxiter):
-        if np.linalg.norm(r) < atol:  # Are we done?
+        if mx.linalg.norm(r) < atol:  # Are we done?
             return x, 0
-        if np.abs(rho) < rhotol:  # rho breakdown
+        if mx.abs(rho) < rhotol:  # rho breakdown
             return x, -10
-        if np.abs(xi) < xitol:  # xi breakdown
+        if mx.abs(xi) < xitol:  # xi breakdown
             return x, -15
 
         v[:] = vtilde[:]
@@ -984,7 +984,7 @@ def qmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M1=None, M2=None,
         z *= (1 / xi)
         delta = dotprod(z, y)
 
-        if np.abs(delta) < deltatol:  # delta breakdown
+        if mx.abs(delta) < deltatol:  # delta breakdown
             return x, -13
 
         ytilde = M2.matvec(y)
@@ -1001,11 +1001,11 @@ def qmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M1=None, M2=None,
 
         ptilde = A.matvec(p)
         epsilon = dotprod(q, ptilde)
-        if np.abs(epsilon) < epsilontol:  # epsilon breakdown
+        if mx.abs(epsilon) < epsilontol:  # epsilon breakdown
             return x, -14
 
         beta = epsilon / delta
-        if np.abs(beta) < betatol:  # beta breakdown
+        if mx.abs(beta) < betatol:  # beta breakdown
             return x, -11
 
         vtilde[:] = ptilde[:]
@@ -1013,18 +1013,18 @@ def qmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M1=None, M2=None,
         y = M1.matvec(vtilde)
 
         rho_prev = rho
-        rho = np.linalg.norm(y)
+        rho = mx.linalg.norm(y)
         wtilde[:] = w[:]
         wtilde *= - beta.conj()
         wtilde += A.rmatvec(q)
         z = M2.rmatvec(wtilde)
-        xi = np.linalg.norm(z)
+        xi = mx.linalg.norm(z)
         gamma_prev = gamma
         theta_prev = theta
-        theta = rho / (gamma_prev * np.abs(beta))
-        gamma = 1 / np.sqrt(1 + theta**2)
+        theta = rho / (gamma_prev * mx.abs(beta))
+        gamma = 1 / mx.sqrt(1 + theta**2)
 
-        if np.abs(gamma) < gammatol:  # gamma breakdown
+        if mx.abs(gamma) < gammatol:  # gamma breakdown
             return x, -12
 
         eta *= -(rho_prev / beta) * (gamma / gamma_prev)**2

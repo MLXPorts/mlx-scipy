@@ -1,4 +1,4 @@
-cimport numpy as np
+cimport mlx.core as mx
 
-cpdef object squeeze_element(np.ndarray)
-cpdef np.ndarray chars_to_strings(object)
+cpdef object squeeze_element(mx.array)
+cpdef mx.array chars_to_strings(object)

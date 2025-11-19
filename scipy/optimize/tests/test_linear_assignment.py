@@ -4,7 +4,7 @@
 from numpy.testing import assert_array_equal
 import pytest
 
-import numpy as np
+import mlx.core as mx
 
 from scipy.optimize import linear_sum_assignment
 from scipy.sparse import random_array
@@ -23,38 +23,38 @@ def test_linear_sum_assignment_input_shape():
 def test_linear_sum_assignment_input_object():
     C = [[1, 2, 3], [4, 5, 6]]
     assert_array_equal(linear_sum_assignment(C),
-                       linear_sum_assignment(np.asarray(C)))
+                       linear_sum_assignment(mx.array(C)))
     assert_array_equal(linear_sum_assignment(C),
                        linear_sum_assignment(matrix(C)))
 
 
 def test_linear_sum_assignment_input_bool():
-    I = np.identity(3)
-    assert_array_equal(linear_sum_assignment(I.astype(np.bool_)),
+    I = mx.identity(3)
+    assert_array_equal(linear_sum_assignment(I.astype(mx.bool_)),
                        linear_sum_assignment(I))
 
 
 def test_linear_sum_assignment_input_string():
-    I = np.identity(3)
+    I = mx.identity(3)
     with pytest.raises(TypeError, match="Cannot cast array data"):
         linear_sum_assignment(I.astype(str))
 
 
 def test_linear_sum_assignment_input_nan():
-    I = np.diag([np.nan, 1, 1])
+    I = mx.diag([mx.nan, 1, 1])
     with pytest.raises(ValueError, match="contains invalid numeric entries"):
         linear_sum_assignment(I)
 
 
 def test_linear_sum_assignment_input_neginf():
-    I = np.diag([1, -np.inf, 1])
+    I = mx.diag([1, -mx.inf, 1])
     with pytest.raises(ValueError, match="contains invalid numeric entries"):
         linear_sum_assignment(I)
 
 
 def test_linear_sum_assignment_input_inf():
-    I = np.identity(3)
-    I[:, 0] = np.inf
+    I = mx.identity(3)
+    I[:, 0] = mx.inf
     with pytest.raises(ValueError, match="cost matrix is infeasible"):
         linear_sum_assignment(I)
 
@@ -62,15 +62,15 @@ def test_linear_sum_assignment_input_inf():
 def test_constant_cost_matrix():
     # Fixes #11602
     n = 8
-    C = np.ones((n, n))
+    C = mx.ones((n, n))
     row_ind, col_ind = linear_sum_assignment(C)
-    assert_array_equal(row_ind, np.arange(n))
-    assert_array_equal(col_ind, np.arange(n))
+    assert_array_equal(row_ind, mx.arange(n))
+    assert_array_equal(col_ind, mx.arange(n))
 
 
 @pytest.mark.parametrize('num_rows,num_cols', [(0, 0), (2, 0), (0, 3)])
 def test_linear_sum_assignment_trivial_cost(num_rows, num_cols):
-    C = np.empty(shape=(num_cols, num_rows))
+    C = mx.empty(shape=(num_cols, num_rows))
     row_ind, col_ind = linear_sum_assignment(C)
     assert len(row_ind) == 0
     assert len(col_ind) == 0
@@ -79,7 +79,7 @@ def test_linear_sum_assignment_trivial_cost(num_rows, num_cols):
 @pytest.mark.parametrize('sign,test_case', linear_sum_assignment_test_cases)
 def test_linear_sum_assignment_small_inputs(sign, test_case):
     linear_sum_assignment_assertions(
-        linear_sum_assignment, np.array, sign, test_case)
+        linear_sum_assignment, mx.array, sign, test_case)
 
 
 # Tests that combine scipy.optimize.linear_sum_assignment and
@@ -89,7 +89,7 @@ def test_two_methods_give_same_result_on_many_sparse_inputs():
     # output; only assert that the two methods give the same result.
     # Concretely, the below tests 100 cases of size 100x100, out of which
     # 36 are infeasible.
-    rng = np.random.default_rng(12342309)
+    rng = mx.random.default_rng(12342309)
     for _ in range(100):
         lsa_raises = False
         mwfbm_raises = False
@@ -97,7 +97,7 @@ def test_two_methods_give_same_result_on_many_sparse_inputs():
             data_sampler=lambda size: rng.integers(1, 100, size))
         # In csgraph, zeros correspond to missing edges, so we explicitly
         # replace those with infinities
-        dense = np.full(sparse.shape, np.inf)
+        dense = mx.full(sparse.shape, mx.inf)
         dense[sparse.row, sparse.col] = sparse.data
         sparse = sparse.tocsr()
         try:

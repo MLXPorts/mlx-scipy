@@ -20,25 +20,25 @@ using each method.
 
 .. plot::
 
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> import matplotlib.pyplot as plt
    >>> from scipy.interpolate import RegularGridInterpolator
 
    Suppose we want to interpolate this 2-D function.
 
    >>> def F(u, v):
-   ...     return u * np.cos(u * v) + v * np.sin(u * v)
+   ...     return u * mx.cos(u * v) + v * mx.sin(u * v)
 
    Suppose we only know some data on a regular grid.
 
-   >>> fit_points = [np.linspace(0, 3, 8), np.linspace(0, 3, 11)]
-   >>> values = F(*np.meshgrid(*fit_points, indexing='ij'))
+   >>> fit_points = [mx.linspace(0, 3, 8), mx.linspace(0, 3, 11)]
+   >>> values = F(*mx.meshgrid(*fit_points, indexing='ij'))
 
    Creating test points and true values for evaluations.
 
-   >>> ut, vt = np.meshgrid(np.linspace(0, 3, 80), np.linspace(0, 3, 80), indexing='ij')
+   >>> ut, vt = mx.meshgrid(mx.linspace(0, 3, 80), mx.linspace(0, 3, 80), indexing='ij')
    >>> true_values = F(ut, vt)
-   >>> test_points = np.array([ut.ravel(), vt.ravel()]).T
+   >>> test_points = mx.array([ut.ravel(), vt.ravel()]).T
 
    We can create the interpolator and interpolate test points using each method.
 
@@ -78,7 +78,7 @@ Specifically, these two forms give identical results:
 and
 
     >>> result_interpn = interpn(fit_points, values, test_points)
-    >>> np.allclose(result_rgi, result_interpn, atol=1e-15)
+    >>> mx.allclose(result_rgi, result_interpn, atol=1e-15)
     True
 
 
@@ -86,9 +86,9 @@ For data confined to an (N-1)-dimensional subspace of N-dimensional space, i.e.
 when one of the grid axes has length 1, the extrapolation along this axis is
 controlled by the ``fill_value`` keyword parameter:
 
-    >>> x = np.array([0, 5, 10])
-    >>> y = np.array([0])
-    >>> data = np.array([[0], [5], [10]])
+    >>> x = mx.array([0, 5, 10])
+    >>> y = mx.array([0])
+    >>> data = mx.array([[0], [5], [10]])
     >>> rgi = RegularGridInterpolator((x, y), data,
     ...                               bounds_error=False, fill_value=None)
     >>> rgi([(2, 0), (2, 1), (2, -1)])   # extrapolates the value on the axis
@@ -128,29 +128,29 @@ To illustrate:
     >>> n = 5   # the number of batch components
 
     >>> # make a 3D grid
-    >>> x1 = np.linspace(-np.pi, np.pi, 10)
-    >>> x2 = np.linspace(0.0, np.pi, 15)
-    >>> x3 = np.linspace(0.0, np.pi/2, 20)
+    >>> x1 = mx.linspace(-mx.pi, mx.pi, 10)
+    >>> x2 = mx.linspace(0.0, mx.pi, 15)
+    >>> x3 = mx.linspace(0.0, mx.pi/2, 20)
     >>> points = (x1, x2, x3)
     >>>
     >>> # define a function and sample it on the grid
     >>> def f(x1, x2, x3, n):
-    ...     lst = [np.sin(np.pi*x1/2) * np.exp(x2/2) + x3 + i for i in range(n)]
-    ...     return np.asarray(lst)
+    ...     lst = [mx.sin(mx.pi*x1/2) * mx.exp(x2/2) + x3 + i for i in range(n)]
+    ...     return mx.array(lst)
     >>>
-    >>> X1, X2, X3 = np.meshgrid(x1, x2, x3, indexing="ij")
+    >>> X1, X2, X3 = mx.meshgrid(x1, x2, x3, indexing="ij")
     >>> values = f(X1, X2, X3, n)
     >>> values.shape
     (5, 10, 15, 20)
     >>> 
     >>> # prepare the data and construct the interpolator
-    >>> values = np.moveaxis(values, 0, -1)
+    >>> values = mx.moveaxis(values, 0, -1)
     >>> values.shape
     (10, 15, 20, 5)     # the batch dimension is 5
     >>> rgi = RegularGridInterpolator(points, values)
     >>>
     >>> # Coordinates to compute the interpolation at
-    >>> x = np.asarray([0.2, np.pi/2.1, np.pi/4.1])
+    >>> x = mx.array([0.2, mx.pi/2.1, mx.pi/4.1])
     >>>
     # evaluate
     >>> rgi(x).shape
@@ -178,8 +178,8 @@ a bare-bones example originating from `the Johanness Buchner's
 
     class CartesianGridInterpolator:
         def __init__(self, points, values, method='linear'):
-            self.limits = np.array([[min(x), max(x)] for x in points])
-            self.values = np.asarray(values, dtype=float)
+            self.limits = mx.array([[min(x), max(x)] for x in points])
+            self.values = mx.array(values, dtype=float)
             self.order = {'linear': 1, 'cubic': 3, 'quintic': 5}[method]
 
         def __call__(self, xi):
@@ -191,7 +191,7 @@ a bare-bones example originating from `the Johanness Buchner's
             """
             # transpose the xi array into the ``map_coordinates`` convention
             # which takes coordinates of a point along columns of a 2D array.
-            xi = np.asarray(xi).T
+            xi = mx.array(xi).T
 
             # convert from data coordinates to pixel coordinates
             ns = self.values.shape
@@ -201,13 +201,13 @@ a bare-bones example originating from `the Johanness Buchner's
             # interpolate
             return map_coordinates(self.values, coords, 
                                    order=self.order,
-                                   cval=np.nan)  # fill_value
+                                   cval=mx.nan)  # fill_value
 
 This wrapper can be used as a(n almost) drop-in replacement for the
 `RegularGridInterpolator`:
 
-    >>> x, y = np.arange(5), np.arange(6)
-    >>> xx, yy = np.meshgrid(x, y, indexing='ij')
+    >>> x, y = mx.arange(5), mx.arange(6)
+    >>> xx, yy = mx.meshgrid(x, y, indexing='ij')
     >>> values = xx**3 + yy**3
     >>> rgi = RegularGridInterpolator((x, y), values, method='linear')
     >>> rgi([[1.5, 1.5], [3.5, 2.6]])

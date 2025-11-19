@@ -1,6 +1,6 @@
 # Copyright Anne M. Archibald 2008
 # Released under the scipy license
-import numpy as np
+import mlx.core as mx
 from ._ckdtree import cKDTree, cKDTreeNode  # type: ignore[import-not-found]
 
 __all__ = ['minkowski_distance_p', 'minkowski_distance',
@@ -29,7 +29,7 @@ def minkowski_distance_p(x, y, p=2.0):
 
     Returns
     -------
-    dist : ndarray
+    dist : array
         pth power of the distance between the input arrays.
 
     Examples
@@ -39,25 +39,25 @@ def minkowski_distance_p(x, y, p=2.0):
     array([2., 1.])
 
     """
-    x = np.asarray(x)
-    y = np.asarray(y)
+    x = mx.array(x)
+    y = mx.array(y)
 
     # Find smallest common datatype with float64 (return type of this
     # function) - addresses #10262.
     # Don't just cast to float64 for complex input case.
-    common_datatype = np.promote_types(np.promote_types(x.dtype, y.dtype),
+    common_datatype = mx.promote_types(mx.promote_types(x.dtype, y.dtype),
                                        'float64')
 
     # Make sure x and y are NumPy arrays of correct datatype.
     x = x.astype(common_datatype)
     y = y.astype(common_datatype)
 
-    if p == np.inf:
-        return np.amax(np.abs(y-x), axis=-1)
+    if p == mx.inf:
+        return mx.amax(mx.abs(y-x), axis=-1)
     elif p == 1:
-        return np.sum(np.abs(y-x), axis=-1)
+        return mx.sum(mx.abs(y-x), axis=-1)
     else:
-        return np.sum(np.abs(y-x)**p, axis=-1)
+        return mx.sum(mx.abs(y-x)**p, axis=-1)
 
 
 def minkowski_distance(x, y, p=2.0):
@@ -77,7 +77,7 @@ def minkowski_distance(x, y, p=2.0):
 
     Returns
     -------
-    dist : ndarray
+    dist : array
         Distance between the input arrays.
 
     Examples
@@ -87,9 +87,9 @@ def minkowski_distance(x, y, p=2.0):
     array([ 1.41421356,  1.        ])
 
     """
-    x = np.asarray(x)
-    y = np.asarray(y)
-    if p == np.inf or p == 1:
+    x = mx.array(x)
+    y = mx.array(y)
+    if p == mx.inf or p == 1:
         return minkowski_distance_p(x, y, p)
     else:
         return minkowski_distance_p(x, y, p)**(1./p)
@@ -102,8 +102,8 @@ class Rectangle:
     """
     def __init__(self, maxes, mins):
         """Construct a hyperrectangle."""
-        self.maxes = np.maximum(maxes,mins).astype(float)
-        self.mins = np.minimum(maxes,mins).astype(float)
+        self.maxes = mx.maximum(maxes,mins).astype(float)
+        self.mins = mx.minimum(maxes,mins).astype(float)
         self.m, = self.maxes.shape
 
     def __repr__(self):
@@ -111,7 +111,7 @@ class Rectangle:
 
     def volume(self):
         """Total volume."""
-        return np.prod(self.maxes-self.mins)
+        return mx.prod(self.maxes-self.mins)
 
     def split(self, d, split):
         """Produce two hyperrectangles by splitting.
@@ -128,10 +128,10 @@ class Rectangle:
             Position along axis `d` to split at.
 
         """
-        mid = np.copy(self.maxes)
+        mid = mx.copy(self.maxes)
         mid[d] = split
         less = Rectangle(self.mins, mid)
-        mid = np.copy(self.mins)
+        mid = mx.copy(self.mins)
         mid[d] = split
         greater = Rectangle(mid, self.maxes)
         return less, greater
@@ -150,7 +150,7 @@ class Rectangle:
 
         """
         return minkowski_distance(
-            0, np.maximum(0, np.maximum(self.mins-x, x-self.maxes)),
+            0, mx.maximum(0, mx.maximum(self.mins-x, x-self.maxes)),
             p
         )
 
@@ -166,7 +166,7 @@ class Rectangle:
             Input.
 
         """
-        return minkowski_distance(0, np.maximum(self.maxes-x, x-self.mins), p)
+        return minkowski_distance(0, mx.maximum(self.maxes-x, x-self.mins), p)
 
     def min_distance_rectangle(self, other, p=2.0):
         """
@@ -182,7 +182,7 @@ class Rectangle:
         """
         return minkowski_distance(
             0,
-            np.maximum(0, np.maximum(self.mins-other.maxes,
+            mx.maximum(0, mx.maximum(self.mins-other.maxes,
                                      other.mins-self.maxes)),
             p
         )
@@ -200,7 +200,7 @@ class Rectangle:
 
         """
         return minkowski_distance(
-            0, np.maximum(self.maxes-other.mins, other.maxes-self.mins), p)
+            0, mx.maximum(self.maxes-other.mins, other.maxes-self.mins), p)
 
 
 class KDTree(cKDTree):
@@ -263,7 +263,7 @@ class KDTree(cKDTree):
 
     Attributes
     ----------
-    data : ndarray, shape (n,m)
+    data : array, shape (n,m)
         The n data points of dimension m to be indexed. This array is
         not copied unless this is necessary to produce a contiguous
         array of doubles. The data are also copied if the kd-tree is built
@@ -275,9 +275,9 @@ class KDTree(cKDTree):
         The dimension of a single data-point.
     n : int
         The number of data points.
-    maxes : ndarray, shape (m,)
+    maxes : array, shape (m,)
         The maximum value in each dimension of the n data points.
-    mins : ndarray, shape (m,)
+    mins : array, shape (m,)
         The minimum value in each dimension of the n data points.
     size : int
         The number of nodes in the tree.
@@ -352,7 +352,7 @@ class KDTree(cKDTree):
 
     def __init__(self, data, leafsize=10, compact_nodes=True, copy_data=False,
                  balanced_tree=True, boxsize=None):
-        data = np.asarray(data)
+        data = mx.array(data)
         if data.dtype.kind == 'c':
             raise TypeError("KDTree does not work with complex data")
 
@@ -360,7 +360,7 @@ class KDTree(cKDTree):
         super().__init__(data, leafsize, compact_nodes, copy_data,
                          balanced_tree, boxsize)
 
-    def query(self, x, k=1, eps=0.0, p=2.0, distance_upper_bound=np.inf,
+    def query(self, x, k=1, eps=0.0, p=2.0, distance_upper_bound=mx.inf,
               workers=1):
         r"""Query the kd-tree for nearest neighbors.
 
@@ -415,10 +415,10 @@ class KDTree(cKDTree):
         Examples
         --------
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.spatial import KDTree
-        >>> x, y = np.mgrid[0:5, 2:8]
-        >>> tree = KDTree(np.c_[x.ravel(), y.ravel()])
+        >>> x, y = mx.mgrid[0:5, 2:8]
+        >>> tree = KDTree(mx.c_[x.ravel(), y.ravel()])
 
         To query the nearest neighbours and return squeezed result, use
 
@@ -465,7 +465,7 @@ class KDTree(cKDTree):
          [13 19]]
 
         """
-        x = np.asarray(x)
+        x = mx.array(x)
         if x.dtype.kind == 'c':
             raise TypeError("KDTree does not work with complex data")
 
@@ -474,7 +474,7 @@ class KDTree(cKDTree):
 
         d, i = super().query(x, k, eps, p, distance_upper_bound, workers)
         if isinstance(i, int):
-            i = np.intp(i)
+            i = mx.intp(i)
         return d, i
 
     def query_ball_point(self, x, r, p=2.0, eps=0.0, workers=1,
@@ -528,10 +528,10 @@ class KDTree(cKDTree):
 
         Examples
         --------
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import spatial
-        >>> x, y = np.mgrid[0:5, 0:5]
-        >>> points = np.c_[x.ravel(), y.ravel()]
+        >>> x, y = mx.mgrid[0:5, 0:5]
+        >>> points = mx.c_[x.ravel(), y.ravel()]
         >>> tree = spatial.KDTree(points)
         >>> sorted(tree.query_ball_point([2, 0], 1))
         [5, 10, 11, 15]
@@ -539,7 +539,7 @@ class KDTree(cKDTree):
         Query multiple points and plot the results:
 
         >>> import matplotlib.pyplot as plt
-        >>> points = np.asarray(points)
+        >>> points = mx.array(points)
         >>> plt.plot(points[:,0], points[:,1], '.')
         >>> for results in tree.query_ball_point(([2, 0], [3, 3]), 1):
         ...     nearby_points = points[results]
@@ -548,7 +548,7 @@ class KDTree(cKDTree):
         >>> plt.show()
 
         """
-        x = np.asarray(x)
+        x = mx.array(x)
         if x.dtype.kind == 'c':
             raise TypeError("KDTree does not work with complex data")
         return super().query_ball_point(
@@ -585,9 +585,9 @@ class KDTree(cKDTree):
         You can search all pairs of points between two kd-trees within a distance:
 
         >>> import matplotlib.pyplot as plt
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.spatial import KDTree
-        >>> rng = np.random.default_rng()
+        >>> rng = mx.random.default_rng()
         >>> points1 = rng.random((15, 2))
         >>> points2 = rng.random((15, 2))
         >>> plt.figure(figsize=(6, 6))
@@ -621,15 +621,15 @@ class KDTree(cKDTree):
             branches are added in bulk if their furthest points are nearer
             than ``r * (1+eps)``.  `eps` has to be non-negative.
         output_type : string, optional
-            Choose the output container, 'set' or 'ndarray'. Default: 'set'
+            Choose the output container, 'set' or 'array'. Default: 'set'
 
             .. versionadded:: 1.6.0
 
         Returns
         -------
-        results : set or ndarray
+        results : set or array
             Set of pairs ``(i,j)``, with ``i < j``, for which the corresponding
-            positions are close. If output_type is 'ndarray', an ndarray is
+            positions are close. If output_type is 'array', an array is
             returned instead of a set.
 
         Examples
@@ -637,9 +637,9 @@ class KDTree(cKDTree):
         You can search all pairs of points in a kd-tree within a distance:
 
         >>> import matplotlib.pyplot as plt
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.spatial import KDTree
-        >>> rng = np.random.default_rng()
+        >>> rng = mx.random.default_rng()
         >>> points = rng.random((20, 2))
         >>> plt.figure(figsize=(6, 6))
         >>> plt.plot(points[:, 0], points[:, 1], "xk", markersize=14)
@@ -781,9 +781,9 @@ class KDTree(cKDTree):
         --------
         You can count neighbors number between two kd-trees within a distance:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.spatial import KDTree
-        >>> rng = np.random.default_rng()
+        >>> rng = mx.random.default_rng()
         >>> points1 = rng.random((5, 2))
         >>> points2 = rng.random((5, 2))
         >>> kd_tree1 = KDTree(points1)
@@ -820,25 +820,25 @@ class KDTree(cKDTree):
 
         output_type : string, optional
             Which container to use for output data. Options: 'dok_matrix',
-            'coo_matrix', 'dict', or 'ndarray'. Default: 'dok_matrix'.
+            'coo_matrix', 'dict', or 'array'. Default: 'dok_matrix'.
 
             .. versionadded:: 1.6.0
 
         Returns
         -------
-        result : dok_matrix, coo_matrix, dict or ndarray
+        result : dok_matrix, coo_matrix, dict or array
             Sparse matrix representing the results in "dictionary of keys"
             format. If a dict is returned the keys are (i,j) tuples of indices.
-            If output_type is 'ndarray' a record array with fields 'i', 'j',
+            If output_type is 'array' a record array with fields 'i', 'j',
             and 'v' is returned,
 
         Examples
         --------
         You can compute a sparse distance matrix between two kd-trees:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.spatial import KDTree
-        >>> rng = np.random.default_rng()
+        >>> rng = mx.random.default_rng()
         >>> points1 = rng.random((5, 2))
         >>> points2 = rng.random((5, 2))
         >>> kd_tree1 = KDTree(points1)
@@ -885,7 +885,7 @@ def distance_matrix(x, y, p=2.0, threshold=1000000):
 
     Returns
     -------
-    result : (M, N) ndarray
+    result : (M, N) array
         Matrix containing the distance from every vector in `x` to every vector
         in `y`.
 
@@ -898,9 +898,9 @@ def distance_matrix(x, y, p=2.0, threshold=1000000):
 
     """
 
-    x = np.asarray(x)
+    x = mx.array(x)
     m, k = x.shape
-    y = np.asarray(y)
+    y = mx.array(y)
     n, kk = y.shape
 
     if k != kk:
@@ -908,9 +908,9 @@ def distance_matrix(x, y, p=2.0, threshold=1000000):
                          f"{kk}-dimensional vectors")
 
     if m*n*k <= threshold:
-        return minkowski_distance(x[:,np.newaxis,:],y[np.newaxis,:,:],p)
+        return minkowski_distance(x[:,mx.newaxis,:],y[mx.newaxis,:,:],p)
     else:
-        result = np.empty((m,n),dtype=float)  # FIXME: figure out the best dtype
+        result = mx.empty((m,n),dtype=float)  # FIXME: figure out the best dtype
         if m < n:
             for i in range(m):
                 result[i,:] = minkowski_distance(x[i],y,p)

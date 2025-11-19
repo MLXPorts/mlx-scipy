@@ -35,7 +35,7 @@
 
 """
 
-import numpy as np
+import mlx.core as mx
 from scipy.linalg import norm
 from ._isolve.iterative import _get_atol_rtol
 
@@ -50,12 +50,12 @@ def _funm_multiply_krylov_arnoldi(A, b, bnorm, V, H, m):
     ----------
     A : transposable linear operator
         The operator whose matrix function is of interest.
-    b : ndarray
+    b : array
         The vector b to multiply the f(A) with.
-    V : ndarray
+    V : array
         The n x (m + 1) matrix whose columns determines the basis for
         Krylov subspace Km(A, b).
-    H : ndarray
+    H : array
         A (m + 1) x m upper Hessenberg matrix representing the projection of A
         onto Km(A, b).
     m : int
@@ -71,8 +71,8 @@ def _funm_multiply_krylov_arnoldi(A, b, bnorm, V, H, m):
 
     """
 
-    dotprod = np.vdot if np.iscomplexobj(b) else np.dot
-    norm_tol = np.finfo(b.dtype.char).eps ** 2
+    dotprod = mx.vdot if mx.iscomplexobj(b) else mx.dot
+    norm_tol = mx.finfo(b.dtype.char).eps ** 2
     V[:, 0] = b / bnorm
 
     for k in range(0, m):
@@ -101,12 +101,12 @@ def _funm_multiply_krylov_lanczos(A, b, bnorm, V, H, m):
     ----------
     A : transposable linear operator
         The operator whose matrix function is of interest.
-    b : ndarray
+    b : array
         The vector b to multiply the f(A) with.
-    V : ndarray
+    V : array
         The n x (m + 1) matrix whose columns determines the basis for
         Krylov subspace Km(A, b).
-    H : ndarray
+    H : array
         A (m + 1) x m upper Hessenberg matrix representing the projection of A
         onto Km(A, b).
     m : int
@@ -121,8 +121,8 @@ def _funm_multiply_krylov_lanczos(A, b, bnorm, V, H, m):
         Returns the last valid iteration.
 
     """
-    dotprod = np.vdot if np.iscomplexobj(b) else np.dot
-    norm_tol = np.finfo(b.dtype.char).eps ** 2
+    dotprod = mx.vdot if mx.iscomplexobj(b) else mx.dot
+    norm_tol = mx.finfo(b.dtype.char).eps ** 2
     V[:, 0] = b / bnorm
 
     for k in range(0, m):
@@ -156,12 +156,12 @@ def funm_multiply_krylov(f, A, b, *, assume_a = "general", t = 1.0, atol = 0.0,
     f : callable
         Callable object that computes the matrix function ``F = f(X)``.
 
-    A : {sparse array, ndarray, LinearOperator}
+    A : {sparse array, array, LinearOperator}
         A real or complex N-by-N matrix.
         Alternatively, `A` can be a linear operator which can
         produce ``Ax`` using, e.g., ``scipy.sparse.linalg.LinearOperator``.
 
-    b : ndarray
+    b : array
         A vector to multiply the ``f(tA)`` with.
 
     assume_a : string, optional
@@ -190,7 +190,7 @@ def funm_multiply_krylov(f, A, b, *, assume_a = "general", t = 1.0, atol = 0.0,
 
     Returns
     -------
-    y : ndarray
+    y : array
         The result of ``f(tA) b``.
 
     Notes
@@ -202,12 +202,12 @@ def funm_multiply_krylov(f, A, b, *, assume_a = "general", t = 1.0, atol = 0.0,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csr_array
     >>> from scipy.sparse.linalg import funm_multiply_krylov
     >>> from scipy.linalg import expm, solve
     >>> A = csr_array([[3, 2, 0], [1, -1, 0], [0, 5, 1]], dtype=float)
-    >>> b = np.array([2, 4, -1], dtype=float)
+    >>> b = mx.array([2, 4, -1], dtype=float)
     >>> t = 0.1
 
     Compute ``y = exp(tA) b``.
@@ -236,7 +236,7 @@ def funm_multiply_krylov(f, A, b, *, assume_a = "general", t = 1.0, atol = 0.0,
     Compute :math:`y = f(tA) b`, where  :math:`f(X) = X^{-1}(e^{X} - I)`. This is
     known as the "phi function" from the exponential integrator literature.
 
-    >>> phim_1 = lambda X : solve(X, expm(X) - np.eye(X.shape[0]))
+    >>> phim_1 = lambda X : solve(X, expm(X) - mx.eye(X.shape[0]))
     >>> y = funm_multiply_krylov(phim_1, A, b, t = t)
     >>> y
     array([ 2.76984306 , 3.92769192 , -0.03111392])
@@ -296,15 +296,15 @@ def funm_multiply_krylov(f, A, b, *, assume_a = "general", t = 1.0, atol = 0.0,
     atol, _ = _get_atol_rtol("funm_multiply_krylov", bnorm, atol, rtol)
 
     if bnorm == 0:
-        y = np.array(b)
+        y = mx.array(b)
         return y
 
     # Preallocate the maximum memory space.
     # Using the column major order here since we work with
     # each individual column separately.
-    internal_type = np.common_type(A, b)
-    V = np.zeros((n, m + 1), dtype = internal_type, order = 'F')
-    H = np.zeros((mmax + 1, mmax), dtype = internal_type, order = 'F')
+    internal_type = mx.common_type(A, b)
+    V = mx.zeros((n, m + 1), dtype = internal_type, order = 'F')
+    H = mx.zeros((mmax + 1, mmax), dtype = internal_type, order = 'F')
 
     restart = 1
 

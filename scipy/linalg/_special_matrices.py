@@ -1,7 +1,7 @@
 import math
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy.lib.stride_tricks import as_strided
 from scipy._lib._util import _apply_over_batch
 from scipy._lib._array_api import array_namespace, xp_capabilities, xp_size
@@ -44,7 +44,7 @@ def toeplitz(c, r=None):
 
     Returns
     -------
-    A : (len(c), len(r)) ndarray
+    A : (len(c), len(r)) array
         The Toeplitz matrix. Dtype is the same as ``(c[0] + r[0]).dtype``.
 
     See Also
@@ -72,11 +72,11 @@ def toeplitz(c, r=None):
            [ 4.-1.j,  2.+3.j,  1.+0.j]])
 
     """
-    c = np.atleast_1d(c)
+    c = mx.atleast_1d(c)
     if r is None:
         r = c.conjugate()
     else:
-        r = np.atleast_1d(r)
+        r = mx.atleast_1d(r)
     return _toeplitz(c, r)
 
 
@@ -84,7 +84,7 @@ def toeplitz(c, r=None):
 def _toeplitz(c, r):
     # Form a 1-D array containing a reversed c followed by r[1:] that could be
     # strided to give us toeplitz matrix.
-    vals = np.concatenate((c[::-1], r[1:]))
+    vals = mx.concatenate((c[::-1], r[1:]))
     out_shp = len(c), len(r)
     n = vals.strides[0]
     return as_strided(vals[len(c)-1:], shape=out_shp, strides=(-n, n)).copy()
@@ -106,7 +106,7 @@ def circulant(c):
 
     Returns
     -------
-    A : (..., N, N) ndarray
+    A : (..., N, N) array
         A circulant matrix whose first column is given by `c`.  For batch input, each
         slice of shape ``(N, N)`` along the last two dimensions of the output
         corresponds with a slice of shape ``(N,)`` along the last dimension of the
@@ -139,12 +139,12 @@ def circulant(c):
             [5, 4, 6],
             [6, 5, 4]]])
     """
-    c = np.atleast_1d(c)
+    c = mx.atleast_1d(c)
     batch_shape, N = c.shape[:-1], c.shape[-1]
     # Need to use `prod(batch_shape)` instead of `-1` in case array has zero size
     c = c.reshape(math.prod(batch_shape), N) if batch_shape else c
     # Form an extended array that could be strided to give circulant version
-    c_ext = np.concatenate((c[..., ::-1], c[..., :0:-1]), axis=-1).ravel()
+    c_ext = mx.concatenate((c[..., ::-1], c[..., :0:-1]), axis=-1).ravel()
     L = c.shape[-1]
     n = c_ext.strides[-1]
     if c.ndim == 1:
@@ -183,7 +183,7 @@ def hankel(c, r=None):
 
     Returns
     -------
-    A : (len(c), len(r)) ndarray
+    A : (len(c), len(r)) array
         The Hankel matrix. Dtype is the same as ``(c[0] + r[0]).dtype``.
 
     See Also
@@ -205,11 +205,11 @@ def hankel(c, r=None):
            [4, 7, 7, 8, 9]])
 
     """
-    c = np.asarray(c)
+    c = mx.array(c)
     if r is None:
-        r = np.zeros_like(c)
+        r = mx.zeros_like(c)
     else:
-        r = np.asarray(r)
+        r = mx.array(r)
 
     if c.ndim > 1 or r.ndim > 1:
         msg = ("Beginning in SciPy 1.19, multidimensional input will be treated as a "
@@ -220,7 +220,7 @@ def hankel(c, r=None):
 
     # Form a 1-D array of values to be used in the matrix, containing `c`
     # followed by r[1:].
-    vals = np.concatenate((c, r[1:]))
+    vals = mx.concatenate((c, r[1:]))
     # Stride on concatenated array to get hankel matrix
     out_shp = len(c), len(r)
     n = vals.strides[0]
@@ -243,7 +243,7 @@ def hadamard(n, dtype=int):
 
     Returns
     -------
-    H : (n, n) ndarray
+    H : (n, n) array
         The Hadamard matrix.
 
     Notes
@@ -275,11 +275,11 @@ def hadamard(n, dtype=int):
         raise ValueError("n must be an positive integer, and n must be "
                          "a power of 2")
 
-    H = np.array([[1]], dtype=dtype)
+    H = mx.array([[1]], dtype=dtype)
 
     # Sylvester's construction
     for i in range(0, lg2):
-        H = np.vstack((np.hstack((H, H)), np.hstack((H, -H))))
+        H = mx.vstack((mx.hstack((H, H)), mx.hstack((H, -H))))
 
     return H
 
@@ -308,7 +308,7 @@ def leslie(f, s):
 
     Returns
     -------
-    L : (N, N) ndarray
+    L : (N, N) array
         The array is zero except for the first row,
         which is `f`, and the first sub-diagonal, which is `s`.
         The data-type of the array will be the data-type of
@@ -341,8 +341,8 @@ def leslie(f, s):
            [ 0. ,  0. ,  0.7,  0. ]])
 
     """
-    f = np.atleast_1d(f)
-    s = np.atleast_1d(s)
+    f = mx.atleast_1d(f)
+    s = mx.atleast_1d(s)
 
     if f.shape[-1] != s.shape[-1] + 1:
         raise ValueError("Incorrect lengths for f and s. The length of s along "
@@ -352,7 +352,7 @@ def leslie(f, s):
 
     n = f.shape[-1]
     tmp = f[0] + s[0]
-    a = np.zeros((n, n), dtype=tmp.dtype)
+    a = mx.zeros((n, n), dtype=tmp.dtype)
     a[0] = f
     a[list(range(1, n)), list(range(0, n - 1))] = s
     return a
@@ -383,7 +383,7 @@ def block_diag(*arrs):
 
     Returns
     -------
-    D : ndarray
+    D : array
         Array with `A`, `B`, `C`, ... on the diagonal of the last two
         dimensions. `D` has the same dtype as the result type of the
         inputs.
@@ -399,14 +399,14 @@ def block_diag(*arrs):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import block_diag
     >>> A = [[1, 0],
     ...      [0, 1]]
     >>> B = [[3, 4, 5],
     ...      [6, 7, 8]]
     >>> C = [[7]]
-    >>> P = np.zeros((2, 0), dtype='int32')
+    >>> P = mx.zeros((2, 0), dtype='int32')
     >>> block_diag(A, B, C)
     array([[1, 0, 0, 0, 0, 0],
            [0, 1, 0, 0, 0, 0],
@@ -435,7 +435,7 @@ def block_diag(*arrs):
     arrs = [xpx.atleast_nd(xp.asarray(a), ndim=2) for a in arrs]
 
     batch_shapes = [a.shape[:-2] for a in arrs]
-    batch_shape = np.broadcast_shapes(*batch_shapes)
+    batch_shape = mx.broadcast_shapes(*batch_shapes)
     arrs = [xp.broadcast_to(a, batch_shape + a.shape[-2:]) for a in arrs]
     out_dtype = xp.result_type(*arrs)
     block_shapes = [a.shape[-2:] for a in arrs]
@@ -472,7 +472,7 @@ def companion(a):
 
     Returns
     -------
-    c : (..., N-1, N-1) ndarray
+    c : (..., N-1, N-1) array
         For 1-D input, the first row of `c` is ``-a[1:]/a[0]``, and the first
         sub-diagonal is all ones.  The data-type of the array is the same
         as the data-type of ``1.0*a[0]``.
@@ -503,20 +503,20 @@ def companion(a):
            [  0.,   1.,   0.]])
 
     """
-    a = np.atleast_1d(a)
+    a = mx.atleast_1d(a)
     n = a.shape[-1]
 
     if n < 2:
         raise ValueError("The length of `a` along the last axis must be at least 2.")
 
-    if np.any(a[..., 0] == 0):
+    if mx.any(a[..., 0] == 0):
         raise ValueError("The first coefficient(s) of `a` (i.e. elements "
                          "of `a[..., 0]`) must not be zero.")
 
     first_row = -a[..., 1:] / (1.0 * a[..., 0:1])
-    c = np.zeros(a.shape[:-1] + (n - 1, n - 1), dtype=first_row.dtype)
+    c = mx.zeros(a.shape[:-1] + (n - 1, n - 1), dtype=first_row.dtype)
     c[..., 0, :] = first_row
-    c[..., np.arange(1, n - 1), np.arange(0, n - 2)] = 1
+    c[..., mx.arange(1, n - 1), mx.arange(0, n - 2)] = 1
     return c
 
 
@@ -532,14 +532,14 @@ def helmert(n, full=False):
     n : int
         The size of the array to create.
     full : bool, optional
-        If True the (n, n) ndarray will be returned.
+        If True the (n, n) array will be returned.
         Otherwise the submatrix that does not include the first
         row will be returned.
         Default: False.
 
     Returns
     -------
-    M : ndarray
+    M : array
         The Helmert matrix.
         The shape is (n, n) or (n-1, n) depending on the `full` argument.
 
@@ -554,11 +554,11 @@ def helmert(n, full=False):
            [ 0.2236068 ,  0.2236068 ,  0.2236068 ,  0.2236068 , -0.89442719]])
 
     """
-    H = np.tril(np.ones((n, n)), -1) - np.diag(np.arange(n))
-    d = np.arange(n) * np.arange(1, n+1)
+    H = mx.tril(mx.ones((n, n)), -1) - mx.diag(mx.arange(n))
+    d = mx.arange(n) * mx.arange(1, n+1)
     H[0] = 1
     d[0] = n
-    H_full = H / np.sqrt(d)[:, np.newaxis]
+    H_full = H / mx.sqrt(d)[:, mx.newaxis]
     if full:
         return H_full
     else:
@@ -578,7 +578,7 @@ def hilbert(n):
 
     Returns
     -------
-    h : (n, n) ndarray
+    h : (n, n) array
         The Hilbert matrix.
 
     See Also
@@ -598,7 +598,7 @@ def hilbert(n):
            [ 0.33333333,  0.25      ,  0.2       ]])
 
     """
-    values = 1.0 / (1.0 + np.arange(2 * n - 1))
+    values = 1.0 / (1.0 + mx.arange(2 * n - 1))
     h = hankel(values[:n], r=values[n - 1:])
     return h
 
@@ -617,18 +617,18 @@ def invhilbert(n, exact=False):
     n : int
         The order of the Hilbert matrix.
     exact : bool, optional
-        If False, the data type of the array that is returned is np.float64,
+        If False, the data type of the array that is returned is mx.float64,
         and the array is an approximation of the inverse.
         If True, the array is the exact integer inverse array. To represent
         the exact inverse when n > 14, the returned array is an object array
         of long integers. For n <= 14, the exact inverse is returned as an
-        array with data type np.int64.
+        array with data type mx.int64.
 
     Returns
     -------
-    invh : (n, n) ndarray
-        The data type of the array is np.float64 if `exact` is False.
-        If `exact` is True, the data type is either np.int64 (for n <= 14)
+    invh : (n, n) array
+        The data type of the array is mx.float64 if `exact` is False.
+        If `exact` is True, the data type is either mx.int64 (for n <= 14)
         or object (for n > 14). In the latter case, the objects in the
         array will be long integers.
 
@@ -664,10 +664,10 @@ def invhilbert(n, exact=False):
         if n > 14:
             dtype = object
         else:
-            dtype = np.int64
+            dtype = mx.int64
     else:
-        dtype = np.float64
-    invh = np.empty((n, n), dtype=dtype)
+        dtype = mx.float64
+    invh = mx.empty((n, n), dtype=dtype)
     for i in range(n):
         for j in range(0, i + 1):
             s = i + j
@@ -705,7 +705,7 @@ def pascal(n, kind='symmetric', exact=True):
 
     Returns
     -------
-    p : (n, n) ndarray
+    p : (n, n) array
         The Pascal matrix.
 
     See Also
@@ -746,22 +746,22 @@ def pascal(n, kind='symmetric', exact=True):
 
     if exact:
         if n >= 35:
-            L_n = np.empty((n, n), dtype=object)
+            L_n = mx.empty((n, n), dtype=object)
             L_n.fill(0)
         else:
-            L_n = np.zeros((n, n), dtype=np.uint64)
+            L_n = mx.zeros((n, n), dtype=mx.uint64)
         for i in range(n):
             for j in range(i + 1):
                 L_n[i, j] = comb(i, j, exact=True)
     else:
-        L_n = comb(*np.ogrid[:n, :n])
+        L_n = comb(*mx.ogrid[:n, :n])
 
     if kind == 'lower':
         p = L_n
     elif kind == 'upper':
         p = L_n.T
     else:
-        p = np.dot(L_n, L_n.T)
+        p = mx.dot(L_n, L_n.T)
 
     return p
 
@@ -791,7 +791,7 @@ def invpascal(n, kind='symmetric', exact=True):
 
     Returns
     -------
-    invp : (n, n) ndarray
+    invp : (n, n) array
         The inverse of the Pascal matrix.
 
     See Also
@@ -848,10 +848,10 @@ def invpascal(n, kind='symmetric', exact=True):
             if n > 34:
                 dt = object
             else:
-                dt = np.int64
+                dt = mx.int64
         else:
-            dt = np.float64
-        invp = np.empty((n, n), dtype=dt)
+            dt = mx.float64
+        invp = mx.empty((n, n), dtype=dt)
         for i in range(n):
             for j in range(0, i + 1):
                 v = 0
@@ -865,13 +865,13 @@ def invpascal(n, kind='symmetric', exact=True):
         # For the 'lower' and 'upper' cases, we computer the inverse by
         # changing the sign of every other diagonal of the pascal matrix.
         invp = pascal(n, kind=kind, exact=exact)
-        if invp.dtype == np.uint64:
-            # This cast from np.uint64 to int64 OK, because if `kind` is not
+        if invp.dtype == mx.uint64:
+            # This cast from mx.uint64 to int64 OK, because if `kind` is not
             # "symmetric", the values in invp are all much less than 2**63.
-            invp = invp.view(np.int64)
+            invp = invp.view(mx.int64)
 
         # The toeplitz matrix has alternating bands of 1 and -1.
-        invp *= toeplitz((-1)**np.arange(n)).astype(invp.dtype)
+        invp *= toeplitz((-1)**mx.arange(n)).astype(invp.dtype)
 
     return invp
 
@@ -897,7 +897,7 @@ def dft(n, scale=None):
 
     Returns
     -------
-    m : (n, n) ndarray
+    m : (n, n) array
         The DFT matrix.
 
     Notes
@@ -914,9 +914,9 @@ def dft(n, scale=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import dft
-    >>> np.set_printoptions(precision=2, suppress=True)  # for compact output
+    >>> mx.set_printoptions(precision=2, suppress=True)  # for compact output
     >>> m = dft(5)
     >>> m
     array([[ 1.  +0.j  ,  1.  +0.j  ,  1.  +0.j  ,  1.  +0.j  ,  1.  +0.j  ],
@@ -924,7 +924,7 @@ def dft(n, scale=None):
            [ 1.  +0.j  , -0.81-0.59j,  0.31+0.95j,  0.31-0.95j, -0.81+0.59j],
            [ 1.  +0.j  , -0.81+0.59j,  0.31-0.95j,  0.31+0.95j, -0.81-0.59j],
            [ 1.  +0.j  ,  0.31+0.95j, -0.81+0.59j, -0.81-0.59j,  0.31-0.95j]])
-    >>> x = np.array([1, 2, 3, 0, 3])
+    >>> x = mx.array([1, 2, 3, 0, 3])
     >>> m @ x  # Compute the DFT of x
     array([ 9.  +0.j  ,  0.12-0.81j, -2.12+3.44j, -2.12-3.44j,  0.12+0.81j])
 
@@ -938,8 +938,8 @@ def dft(n, scale=None):
         raise ValueError("scale must be None, 'sqrtn', or 'n'; "
                          f"{scale!r} is not valid.")
 
-    omegas = np.exp(-2j * np.pi * np.arange(n) / n).reshape(-1, 1)
-    m = omegas ** np.arange(n)
+    omegas = mx.exp(-2j * mx.pi * mx.arange(n) / n).reshape(-1, 1)
+    m = omegas ** mx.arange(n)
     if scale == 'sqrtn':
         m /= math.sqrt(n)
     elif scale == 'n':
@@ -952,7 +952,7 @@ def fiedler(a):
     """Returns a symmetric Fiedler matrix
 
     Given an sequence of numbers `a`, Fiedler matrices have the structure
-    ``F[i, j] = np.abs(a[i] - a[j])``, and hence zero diagonals and nonnegative
+    ``F[i, j] = mx.abs(a[i] - a[j])``, and hence zero diagonals and nonnegative
     entries. A Fiedler matrix has a dominant positive eigenvalue and other
     eigenvalues are negative. Although not valid generally, for certain inputs,
     the inverse and the determinant can be derived explicitly as given in [1]_.
@@ -969,7 +969,7 @@ def fiedler(a):
 
     Returns
     -------
-    F : (..., n, n) ndarray
+    F : (..., n, n) array
         Fiedler matrix. For batch input, each slice of shape ``(n, n)``
         along the last two dimensions of the output corresponds with a
         slice of shape ``(n,)`` along the last dimension of the input.
@@ -990,7 +990,7 @@ def fiedler(a):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import det, inv, fiedler
     >>> a = [1, 4, 12, 45, 77]
     >>> n = len(a)
@@ -1007,7 +1007,7 @@ def fiedler(a):
     and the corners.
 
     >>> Ai = inv(A)
-    >>> Ai[np.abs(Ai) < 1e-12] = 0.  # cleanup the numerical noise for display
+    >>> Ai[mx.abs(Ai) < 1e-12] = 0.  # cleanup the numerical noise for display
     >>> Ai
     array([[-0.16008772,  0.16666667,  0.        ,  0.        ,  0.00657895],
            [ 0.16666667, -0.22916667,  0.0625    ,  0.        ,  0.        ],
@@ -1016,7 +1016,7 @@ def fiedler(a):
            [ 0.00657895,  0.        ,  0.        ,  0.015625  , -0.00904605]])
     >>> det(A)
     15409151.999999998
-    >>> (-1)**(n-1) * 2**(n-2) * np.diff(a).prod() * (a[-1] - a[0])
+    >>> (-1)**(n-1) * 2**(n-2) * mx.diff(a).prod() * (a[-1] - a[0])
     15409152
 
     """
@@ -1052,7 +1052,7 @@ def fiedler_companion(a):
 
     Returns
     -------
-    c : (..., N-1, N-1) ndarray
+    c : (..., N-1, N-1) array
         Resulting companion matrix. For batch input, each slice of shape
         ``(N-1, N-1)`` along the last two dimensions of the output corresponds
         with a slice of shape ``(N,)`` along the last dimension of the input.
@@ -1078,9 +1078,9 @@ def fiedler_companion(a):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import fiedler_companion, eigvals
-    >>> p = np.poly(np.arange(1, 9, 2))  # [1., -16., 86., -176., 105.]
+    >>> p = mx.poly(mx.arange(1, 9, 2))  # [1., -16., 86., -176., 105.]
     >>> fc = fiedler_companion(p)
     >>> fc
     array([[  16.,  -86.,    1.,    0.],
@@ -1091,22 +1091,22 @@ def fiedler_companion(a):
     array([7.+0.j, 5.+0.j, 3.+0.j, 1.+0.j])
 
     """
-    a = np.atleast_1d(a)
+    a = mx.atleast_1d(a)
 
     if a.ndim > 1:
-        return np.apply_along_axis(fiedler_companion, -1, a)
+        return mx.apply_along_axis(fiedler_companion, -1, a)
 
     if a.size <= 2:
         if a.size == 2:
-            return np.array([[-(a/a[0])[-1]]])
-        return np.array([], dtype=a.dtype)
+            return mx.array([[-(a/a[0])[-1]]])
+        return mx.array([], dtype=a.dtype)
 
     if a[0] == 0.:
         raise ValueError('Leading coefficient is zero.')
 
     a = a/a[0]
     n = a.size - 1
-    c = np.zeros((n, n), dtype=a.dtype)
+    c = mx.zeros((n, n), dtype=a.dtype)
     # subdiagonals
     c[range(3, n, 2), range(1, n-2, 2)] = 1.
     c[range(2, n, 2), range(1, n-1, 2)] = -a[3::2]
@@ -1145,7 +1145,7 @@ def convolution_matrix(a, n, mode='full'):
 
     Returns
     -------
-    A : (..., k, n) ndarray
+    A : (..., k, n) array
         The convolution matrix whose row count `k` depends on `mode`::
 
             =======  =========================
@@ -1235,7 +1235,7 @@ def convolution_matrix(a, n, mode='full'):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import convolution_matrix
     >>> A = convolution_matrix([-1, 4, -2], 5, mode='same')
     >>> A
@@ -1247,14 +1247,14 @@ def convolution_matrix(a, n, mode='full'):
 
     Compare multiplication by `A` with the use of `numpy.convolve`.
 
-    >>> x = np.array([1, 2, 0, -3, 0.5])
+    >>> x = mx.array([1, 2, 0, -3, 0.5])
     >>> A @ x
     array([  2. ,   6. ,  -1. , -12.5,   8. ])
 
     Verify that ``A @ x`` produced the same result as applying the
     convolution function.
 
-    >>> np.convolve([-1, 4, -2], x, mode='same')
+    >>> mx.convolve([-1, 4, -2], x, mode='same')
     array([  2. ,   6. ,  -1. , -12.5,   8. ])
 
     For comparison to the case ``mode='same'`` shown above, here are the
@@ -1278,7 +1278,7 @@ def convolution_matrix(a, n, mode='full'):
     if n <= 0:
         raise ValueError('n must be a positive integer.')
 
-    a = np.asarray(a)
+    a = mx.array(a)
 
     if a.size == 0:
         raise ValueError('len(a) must be at least 1.')
@@ -1288,11 +1288,11 @@ def convolution_matrix(a, n, mode='full'):
             "'mode' argument must be one of ('full', 'valid', 'same')")
 
     if a.ndim > 1:
-        return np.apply_along_axis(lambda a: convolution_matrix(a, n, mode), -1, a)
+        return mx.apply_along_axis(lambda a: convolution_matrix(a, n, mode), -1, a)
 
     # create zero padded versions of the array
-    az = np.pad(a, (0, n-1), 'constant')
-    raz = np.pad(a[::-1], (0, n-1), 'constant')
+    az = mx.pad(a, (0, n-1), 'constant')
+    raz = mx.pad(a[::-1], (0, n-1), 'constant')
 
     if mode == 'same':
         trim = min(n, len(a)) - 1

@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_allclose
 from scipy.special import boxcox, boxcox1p, inv_boxcox, inv_boxcox1p
 import pytest
@@ -7,11 +7,11 @@ import pytest
 # There are more tests of boxcox and boxcox1p in test_mpmath.py.
 
 def test_boxcox_basic():
-    x = np.array([0.5, 1, 2, 4])
+    x = mx.array([0.5, 1, 2, 4])
 
     # lambda = 0  =>  y = log(x)
     y = boxcox(x, 0)
-    assert_allclose(y, np.log(x), atol=1.5e-7, rtol=0)
+    assert_allclose(y, mx.log(x), atol=1.5e-7, rtol=0)
 
     # lambda = 1  =>  y = x - 1
     y = boxcox(x, 1)
@@ -22,7 +22,7 @@ def test_boxcox_basic():
     assert_allclose(y, 0.5*(x**2 - 1), atol=1.5e-7, rtol=0)
 
     # x = 0 and lambda > 0  =>  y = -1 / lambda
-    lam = np.array([0.5, 1, 2])
+    lam = mx.array([0.5, 1, 2])
     y = boxcox(0, lam)
     assert_allclose(y, -1.0 / lam, atol=1.5e-7, rtol=0)
 
@@ -30,27 +30,27 @@ def test_boxcox_underflow():
     x = 1 + 1e-15
     lmbda = 1e-306
     y = boxcox(x, lmbda)
-    assert_allclose(y, np.log(x), rtol=1e-14)
+    assert_allclose(y, mx.log(x), rtol=1e-14)
 
 
 def test_boxcox_nonfinite():
     # x < 0  =>  y = nan
-    x = np.array([-1, -1, -0.5])
+    x = mx.array([-1, -1, -0.5])
     y = boxcox(x, [0.5, 2.0, -1.5])
-    assert_equal(y, np.array([np.nan, np.nan, np.nan]))
+    assert_equal(y, mx.array([mx.nan, mx.nan, mx.nan]))
 
     # x = 0 and lambda <= 0  =>  y = -inf
     x = 0
     y = boxcox(x, [-2.5, 0])
-    assert_equal(y, np.array([-np.inf, -np.inf]))
+    assert_equal(y, mx.array([-mx.inf, -mx.inf]))
 
 
 def test_boxcox1p_basic():
-    x = np.array([-0.25, -1e-20, 0, 1e-20, 0.25, 1, 3])
+    x = mx.array([-0.25, -1e-20, 0, 1e-20, 0.25, 1, 3])
 
     # lambda = 0  =>  y = log(1+x)
     y = boxcox1p(x, 0)
-    assert_allclose(y, np.log1p(x), atol=1.5e-7, rtol=0)
+    assert_allclose(y, mx.log1p(x), atol=1.5e-7, rtol=0)
 
     # lambda = 1  =>  y = x
     y = boxcox1p(x, 1)
@@ -61,39 +61,39 @@ def test_boxcox1p_basic():
     assert_allclose(y, 0.5*x*(2 + x), atol=1.5e-7, rtol=0)
 
     # x = -1 and lambda > 0  =>  y = -1 / lambda
-    lam = np.array([0.5, 1, 2])
+    lam = mx.array([0.5, 1, 2])
     y = boxcox1p(-1, lam)
     assert_allclose(y, -1.0 / lam, atol=1.5e-7, rtol=0)
 
 
 def test_boxcox1p_underflow():
-    x = np.array([1e-15, 1e-306])
-    lmbda = np.array([1e-306, 1e-18])
+    x = mx.array([1e-15, 1e-306])
+    lmbda = mx.array([1e-306, 1e-18])
     y = boxcox1p(x, lmbda)
-    assert_allclose(y, np.log1p(x), rtol=1e-14)
+    assert_allclose(y, mx.log1p(x), rtol=1e-14)
 
 
 def test_boxcox1p_nonfinite():
     # x < -1  =>  y = nan
-    x = np.array([-2, -2, -1.5])
+    x = mx.array([-2, -2, -1.5])
     y = boxcox1p(x, [0.5, 2.0, -1.5])
-    assert_equal(y, np.array([np.nan, np.nan, np.nan]))
+    assert_equal(y, mx.array([mx.nan, mx.nan, mx.nan]))
 
     # x = -1 and lambda <= 0  =>  y = -inf
     x = -1
     y = boxcox1p(x, [-2.5, 0])
-    assert_equal(y, np.array([-np.inf, -np.inf]))
+    assert_equal(y, mx.array([-mx.inf, -mx.inf]))
 
 
 def test_inv_boxcox():
-    x = np.array([0., 1., 2.])
-    lam = np.array([0., 1., 2.])
+    x = mx.array([0., 1., 2.])
+    lam = mx.array([0., 1., 2.])
     y = boxcox(x, lam)
     x2 = inv_boxcox(y, lam)
     assert_allclose(x, x2, atol=1.5e-7, rtol=0)
 
-    x = np.array([0., 1., 2.])
-    lam = np.array([0., 1., 2.])
+    x = mx.array([0., 1., 2.])
+    lam = mx.array([0., 1., 2.])
     y = boxcox1p(x, lam)
     x2 = inv_boxcox1p(y, lam)
     assert_allclose(x, x2, atol=1.5e-7, rtol=0)
@@ -114,12 +114,12 @@ def test_inv_boxcox1p_underflow():
 def test_boxcox_premature_overflow(x, lmb):
     # test boxcox & inv_boxcox
     y = boxcox(x, lmb)
-    assert np.isfinite(y)
+    assert mx.isfinite(y)
     x_inv = inv_boxcox(y, lmb)
     assert_allclose(x, x_inv)
 
     # test boxcox1p & inv_boxcox1p
     y1p = boxcox1p(x-1, lmb)
-    assert np.isfinite(y1p)
+    assert mx.isfinite(y1p)
     x1p_inv = inv_boxcox1p(y1p, lmb)
     assert_allclose(x-1, x1p_inv)

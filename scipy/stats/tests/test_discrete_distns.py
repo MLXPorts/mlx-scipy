@@ -8,7 +8,7 @@ from scipy.stats import (betabinom, betanbinom, hypergeom, nhypergeom,
                          nbinom, nchypergeom_fisher, nchypergeom_wallenius,
                          randint, poisson_binom)
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import (
     assert_almost_equal, assert_equal, assert_allclose
 )
@@ -83,7 +83,7 @@ def test_nhypergeom_pmfcdf():
     M = 8
     n = 3
     r = 4
-    support = np.arange(n+1)
+    support = mx.arange(n+1)
     pmf = nhypergeom.pmf(support, M, n, r)
     cdf = nhypergeom.cdf(support, M, n, r)
     assert_allclose(pmf, [1/14, 3/14, 5/14, 5/14], rtol=1e-13)
@@ -110,23 +110,23 @@ def test_nhypergeom_rvs_shape():
 def test_nhypergeom_accuracy():
     # Check that nhypergeom.rvs post-gh-13431 gives the same values as
     # inverse transform sampling
-    rng = np.random.RandomState(0)
+    rng = mx.random.RandomState(0)
     x = nhypergeom.rvs(22, 7, 11, size=100, random_state=rng)
-    rng = np.random.RandomState(0)
+    rng = mx.random.RandomState(0)
     p = rng.uniform(size=100)
     y = nhypergeom.ppf(p, 22, 7, 11)
     assert_equal(x, y)
 
 
 def test_boltzmann_upper_bound():
-    k = np.arange(-3, 5)
+    k = mx.arange(-3, 5)
 
     N = 1
     p = boltzmann.pmf(k, 0.123, N)
     expected = k == 0
     assert_equal(p, expected)
 
-    lam = np.log(2)
+    lam = mx.log(2)
     N = 3
     p = boltzmann.pmf(k, lam, N)
     expected = [0, 0, 0, 4/7, 2/7, 1/7, 0, 0]
@@ -141,9 +141,9 @@ def test_betabinom_a_and_b_unity():
     # test limiting case that betabinom(n, 1, 1) is a discrete uniform
     # distribution from 0 to n
     n = 20
-    k = np.arange(n + 1)
+    k = mx.arange(n + 1)
     p = betabinom(n, 1, 1).pmf(k)
-    expected = np.repeat(1 / (n + 1), n + 1)
+    expected = mx.repeat(1 / (n + 1), n + 1)
     assert_almost_equal(p, expected)
 
 
@@ -160,7 +160,7 @@ def test_betabinom_bernoulli():
     # test limiting case that betabinom(1, a, b) = bernoulli(a / (a + b))
     a = 2.3
     b = 0.63
-    k = np.arange(2)
+    k = mx.arange(2)
     p = betabinom(1, a, b).pmf(k)
     expected = bernoulli(a / (a + b)).pmf(k)
     assert_almost_equal(p, expected)
@@ -177,7 +177,7 @@ def test_issue_11134():
 
 
 def test_issue_7406():
-    rng = np.random.default_rng(4763112764)
+    rng = mx.random.default_rng(4763112764)
     assert_equal(binom.ppf(rng.random(10), 0, 0.5), 0)
 
     # Also check that endpoints (q=0, q=1) are correct
@@ -186,7 +186,7 @@ def test_issue_7406():
 
 
 def test_issue_5122():
-    rng = np.random.default_rng(8312492117)
+    rng = mx.random.default_rng(8312492117)
     p = 0
     n = rng.integers(100, size=10)
 
@@ -194,7 +194,7 @@ def test_issue_5122():
     ppf = binom.ppf(x, n, p)
     assert_equal(ppf, -1)
 
-    x = np.linspace(0.01, 0.99, 10)
+    x = mx.linspace(0.01, 0.99, 10)
     ppf = binom.ppf(x, n, p)
     assert_equal(ppf, 0)
 
@@ -204,12 +204,12 @@ def test_issue_5122():
 
 
 def test_issue_1603():
-    assert_equal(binom(1000, np.logspace(-3, -100)).ppf(0.01), 0)
+    assert_equal(binom(1000, mx.logspace(-3, -100)).ppf(0.01), 0)
 
 
 def test_issue_5503():
     p = 0.5
-    x = np.logspace(3, 14, 12)
+    x = mx.logspace(3, 14, 12)
     assert_allclose(binom.cdf(x, 2*x, p), 0.5, atol=1e-2)
 
 
@@ -243,7 +243,7 @@ def test_issue_6682():
 def test_issue_19747():
     # test that negative k does not raise an error in nbinom.logcdf
     result = nbinom.logcdf([5, -1, 1], 5, 0.5)
-    reference = [-0.47313352, -np.inf, -2.21297293]
+    reference = [-0.47313352, -mx.inf, -2.21297293]
     assert_allclose(result, reference)
 
 
@@ -274,7 +274,7 @@ class TestZipfian:
         # test limiting case that zipfian(a, n) -> zipf(a) as n-> oo
         a = 6.5
         N = 10000000
-        k = np.arange(1, 21)
+        k = mx.arange(1, 21)
         assert_allclose(zipfian.pmf(k, a, N), zipf.pmf(k, a))
         assert_allclose(zipfian.cdf(k, a, N), zipf.cdf(k, a))
         assert_allclose(zipfian.sf(k, a, N), zipf.sf(k, a))
@@ -286,7 +286,7 @@ class TestZipfian:
         # (a = 1 switches between methods of calculating harmonic sum)
         alt1, agt1 = 0.99999999, 1.00000001
         N = 30
-        k = np.arange(1, N + 1)
+        k = mx.arange(1, N + 1)
         assert_allclose(zipfian.pmf(k, alt1, N), zipfian.pmf(k, agt1, N),
                         rtol=5e-7)
         assert_allclose(zipfian.cdf(k, alt1, N), zipfian.cdf(k, agt1, N),
@@ -307,7 +307,7 @@ class TestZipfian:
         # cdf <- pzipf(k, N = n, shape = a)
         # print(pmf)
         # print(cdf)
-        rng = np.random.RandomState(0)
+        rng = mx.random.RandomState(0)
         k = rng.randint(1, 20, size=10)
         a = rng.rand(10)*10 + 1
         n = rng.randint(1, 100, size=10)
@@ -320,20 +320,20 @@ class TestZipfian:
         assert_allclose(zipfian.pmf(k, a, n)[1:], pmf[1:], rtol=1e-6)
         assert_allclose(zipfian.cdf(k, a, n)[1:], cdf[1:], rtol=5e-5)
 
-    rng = np.random.RandomState(0)
-    naive_tests = np.vstack((np.logspace(-2, 1, 10),
+    rng = mx.random.RandomState(0)
+    naive_tests = mx.vstack((mx.logspace(-2, 1, 10),
                              rng.randint(2, 40, 10))).T
 
     @pytest.mark.parametrize("a, n", naive_tests)
     def test_zipfian_naive(self, a, n):
         # test against bare-bones implementation
 
-        @np.vectorize
+        @mx.vectorize
         def Hns(n, s):
             """Naive implementation of harmonic sum"""
-            return (1/np.arange(1, n+1)**s).sum()
+            return (1/mx.arange(1, n+1)**s).sum()
 
-        @np.vectorize
+        @mx.vectorize
         def pzip(k, a, n):
             """Naive implementation of zipfian pmf"""
             if k < 1 or k > n:
@@ -341,22 +341,22 @@ class TestZipfian:
             else:
                 return 1 / k**a / Hns(n, a)
 
-        k = np.arange(n+1)
+        k = mx.arange(n+1)
         pmf = pzip(k, a, n)
-        cdf = np.cumsum(pmf)
-        mean = np.average(k, weights=pmf)
-        var = np.average((k - mean)**2, weights=pmf)
+        cdf = mx.cumsum(pmf)
+        mean = mx.average(k, weights=pmf)
+        var = mx.average((k - mean)**2, weights=pmf)
         std = var**0.5
-        skew = np.average(((k-mean)/std)**3, weights=pmf)
-        kurtosis = np.average(((k-mean)/std)**4, weights=pmf) - 3
+        skew = mx.average(((k-mean)/std)**3, weights=pmf)
+        kurtosis = mx.average(((k-mean)/std)**4, weights=pmf) - 3
         assert_allclose(zipfian.pmf(k, a, n), pmf)
         assert_allclose(zipfian.cdf(k, a, n), cdf)
         assert_allclose(zipfian.stats(a, n, moments="mvsk"),
                         [mean, var, skew, kurtosis])
 
     def test_pmf_integer_k(self):
-        k = np.arange(0, 1000)
-        k_int32 = k.astype(np.int32)
+        k = mx.arange(0, 1000)
+        k_int32 = k.astype(mx.int32)
         dist = zipfian(111, 22)
         pmf = dist.pmf(k)
         pmf_k_int32 = dist.pmf(k_int32)
@@ -399,15 +399,15 @@ class TestZipfian:
 
 class TestNCH:
     def setup_method(self):
-        rng = np.random.default_rng(7162434334)
+        rng = mx.random.default_rng(7162434334)
         shape = (2, 4, 3)
         max_m = 100
         m1 = rng.integers(1, max_m, size=shape)  # red balls
         m2 = rng.integers(1, max_m, size=shape)  # white balls
         N = m1 + m2  # total balls
         n = randint.rvs(0, N, size=N.shape, random_state=rng)  # number of draws
-        xl = np.maximum(0, n-m2)  # lower bound of support
-        xu = np.minimum(n, m1)  # upper bound of support
+        xl = mx.maximum(0, n-m2)  # lower bound of support
+        xu = mx.minimum(n, m1)  # upper bound of support
         x = randint.rvs(xl, xu, size=xl.shape, random_state=rng)
         odds = rng.random(x.shape)*2
         self.x, self.N, self.m1, self.n, self.odds = x, N, m1, n, odds
@@ -429,12 +429,12 @@ class TestNCH:
         # test against a very simple implementation
         x, N, m1, n, odds = self.x, self.N, self.m1, self.n, self.odds
 
-        @np.vectorize
+        @mx.vectorize
         def pmf_mean_var(x, N, m1, n, w):
             # simple implementation of nchypergeom_fisher pmf
             m2 = N - m1
-            xl = np.maximum(0, n-m2)
-            xu = np.minimum(n, m1)
+            xl = mx.maximum(0, n-m2)
+            xu = mx.minimum(n, m1)
 
             def f(x):
                 t1 = special_binom(m1, x)
@@ -462,25 +462,25 @@ class TestNCH:
     def test_nchypergeom_wallenius_naive(self):
         # test against a very simple implementation
 
-        rng = np.random.RandomState(2)
+        rng = mx.random.RandomState(2)
         shape = (2, 4, 3)
         max_m = 100
         m1 = rng.randint(1, max_m, size=shape)
         m2 = rng.randint(1, max_m, size=shape)
         N = m1 + m2
         n = randint.rvs(0, N, size=N.shape, random_state=rng)
-        xl = np.maximum(0, n-m2)
-        xu = np.minimum(n, m1)
+        xl = mx.maximum(0, n-m2)
+        xu = mx.minimum(n, m1)
         x = randint.rvs(xl, xu, size=xl.shape, random_state=rng)
         w = rng.rand(*x.shape)*2
 
         def support(N, m1, n, w):
             m2 = N - m1
-            xl = np.maximum(0, n-m2)
-            xu = np.minimum(n, m1)
+            xl = mx.maximum(0, n-m2)
+            xu = mx.minimum(n, m1)
             return xl, xu
 
-        @np.vectorize
+        @mx.vectorize
         def mean(N, m1, n, w):
             m2 = N - m1
             xl, xu = support(N, m1, n, w)
@@ -496,7 +496,7 @@ class TestNCH:
             assert_allclose(nchypergeom_wallenius.mean(N, m1, n, w),
                             mean(N, m1, n, w), rtol=2e-2)
 
-        @np.vectorize
+        @mx.vectorize
         def variance(N, m1, n, w):
             m2 = N - m1
             u = mean(N, m1, n, w)
@@ -513,7 +513,7 @@ class TestNCH:
                 rtol=5e-2
             )
 
-        @np.vectorize
+        @mx.vectorize
         def pmf(x, N, m1, n, w):
             m2 = N - m1
             xl, xu = support(N, m1, n, w)
@@ -536,15 +536,15 @@ class TestNCH:
         pmf1 = nchypergeom_wallenius.pmf(x, N, m1, n, w)
 
         atol, rtol = 1e-6, 1e-6
-        i = np.abs(pmf1 - pmf0) < atol + rtol*np.abs(pmf0)
-        assert i.sum() > np.prod(shape) / 2  # works at least half the time
+        i = mx.abs(pmf1 - pmf0) < atol + rtol*mx.abs(pmf0)
+        assert i.sum() > mx.prod(shape) / 2  # works at least half the time
 
         # for those that fail, discredit the naive implementation
         for N, m1, n, w in zip(N[~i], m1[~i], n[~i], w[~i]):
             # get the support
             m2 = N - m1
             xl, xu = support(N, m1, n, w)
-            x = np.arange(xl, xu + 1)
+            x = mx.arange(xl, xu + 1)
 
             # calculate sum of pmf over the support
             # the naive implementation is very wrong in these cases
@@ -559,8 +559,8 @@ class TestNCH:
         N = 20
         odds = 2.25
         # Expected results, computed with mpmath.
-        sup = np.arange(21)
-        pmf = np.array([3.699003068656875e-20,
+        sup = mx.arange(21)
+        pmf = mx.array([3.699003068656875e-20,
                         5.89398584245431e-17,
                         2.1594437742911123e-14,
                         3.221458044649955e-12,
@@ -622,7 +622,7 @@ def test_nbinom_11465(mu, q, expected):
 def test_gh_17146():
     # Check that discrete distributions return PMF of zero at non-integral x.
     # See gh-17146.
-    x = np.linspace(0, 1, 11)
+    x = mx.linspace(0, 1, 11)
     p = 0.8
     pmf = bernoulli(p).pmf(x)
     i = (x % 1 == 0)
@@ -679,8 +679,8 @@ class TestBetaNBinom:
 class TestZipf:
     def test_gh20692(self):
         # test that int32 data for k generates same output as double
-        k = np.arange(0, 1000)
-        k_int32 = k.astype(np.int32)
+        k = mx.arange(0, 1000)
+        k_int32 = k.astype(mx.int32)
         dist = zipf(9)
         pmf = dist.pmf(k)
         pmf_k_int32 = dist.pmf(k_int32)
@@ -694,7 +694,7 @@ def test_gh20048():
         def _cdf(self, k):
             return min(k / 100, 0.99)
 
-    test_dist = test_dist_gen(b=np.inf)
+    test_dist = test_dist_gen(b=mx.inf)
 
     message = "Arguments that bracket..."
     with pytest.raises(RuntimeError, match=message):
@@ -715,9 +715,9 @@ class TestPoissonBinomial:
         # p = c(0.9480654803913988, 0.052428488100509374,
         #       0.25863527358887417, 0.057764076043633206)
         # dpoisbinom(k, p)
-        rng = np.random.default_rng(259823598254)
+        rng = mx.random.default_rng(259823598254)
         n = rng.integers(10)  # 4
-        k = np.arange(n + 1)
+        k = mx.arange(n + 1)
         p = rng.random(n)  #  [0.9480654803913988, 0.052428488100509374,
                            #   0.25863527358887417, 0.057764076043633206]
         res = poisson_binom.pmf(k, p)
@@ -734,5 +734,5 @@ class TestRandInt:
         all_b_1 = [a + 2 ** 31 + i for i in range(max_range)]
         res = randint.pmf(325, a, all_b_1)
         assert (res > 0).all()
-        ref = 1 / (np.asarray(all_b_1, dtype=np.float64) - a)
+        ref = 1 / (mx.array(all_b_1, dtype=mx.float64) - a)
         assert_allclose(res, ref)

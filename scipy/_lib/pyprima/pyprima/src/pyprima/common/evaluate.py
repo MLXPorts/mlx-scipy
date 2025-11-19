@@ -8,7 +8,7 @@ Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 Python translation by Nickolai Belakovski.
 '''
 
-import numpy as np
+import mlx.core as mx
 from .consts import FUNCMAX, CONSTRMAX, REALMAX, DEBUGGING
 from .linalg import matprod, primasum
 
@@ -20,8 +20,8 @@ def moderatex(x):
     This function moderates a decision variable. It replaces NaN by 0 and Inf/-Inf by
     REALMAX/-REALMAX.
     '''
-    x[np.isnan(x)] = 0
-    x = np.clip(x, -REALMAX, REALMAX)
+    x[mx.isnan(x)] = 0
+    x = mx.clip(x, -REALMAX, REALMAX)
     return x
 
 def moderatef(f):
@@ -29,10 +29,10 @@ def moderatef(f):
     This function moderates the function value of a MINIMIZATION problem. It replaces
     NaN and any value above FUNCMAX by FUNCMAX.
     """
-    f = FUNCMAX if np.isnan(f) else f
-    f = np.clip(f, -REALMAX, FUNCMAX)
+    f = FUNCMAX if mx.isnan(f) else f
+    f = mx.clip(f, -REALMAX, FUNCMAX)
     # We may moderate huge negative function values as follows, but we decide not to.
-    # f = np.clip(f, -FUNCMAX, FUNCMAX)
+    # f = mx.clip(f, -FUNCMAX, FUNCMAX)
     return f
 
 
@@ -42,8 +42,8 @@ def moderatec(c):
     to be NONNEGATIVE. It replaces any value below -CONSTRMAX by -CONSTRMAX, and any
     NaN or value above CONSTRMAX by CONSTRMAX.
     """
-    np.nan_to_num(c, copy=False, nan=CONSTRMAX)
-    c = np.clip(c, -CONSTRMAX, CONSTRMAX)
+    mx.nan_to_num(c, copy=False, nan=CONSTRMAX)
+    c = mx.clip(c, -CONSTRMAX, CONSTRMAX)
     return c
 
 
@@ -61,21 +61,21 @@ def evaluate(calcfc, x, m_nlcon, amat, bvec):
         # X should not contain NaN if the initial X does not contain NaN and the
         # subroutines generating # trust-region/geometry steps work properly so that
         # they never produce a step containing NaN/Inf.
-        assert not any(np.isnan(x))
+        assert not any(mx.isnan(x))
 
     #====================#
     # Calculation starts #
     #====================#
 
-    constr = np.zeros(m_lcon + m_nlcon)
+    constr = mx.zeros(m_lcon + m_nlcon)
     if amat is not None:
         constr[:m_lcon] = matprod(x, amat.T) - bvec
 
-    if any(np.isnan(x)):
+    if any(mx.isnan(x)):
         # Although this should not happen unless there is a bug, we include this case
         # for robustness.
         f = primasum(x)
-        constr = np.ones(m_nlcon) * f
+        constr = mx.ones(m_nlcon) * f
     else:
         f, constr[m_lcon:] = calcfc(moderatex(x))
 
@@ -93,7 +93,7 @@ def evaluate(calcfc, x, m_nlcon, amat, bvec):
     if DEBUGGING:
         # With X not containing NaN, and with the moderated extreme barrier, F cannot
         # be NaN/+Inf, and CONSTR cannot be NaN/-Inf.
-        assert not (np.isnan(f) or np.isposinf(f))
-        assert not any(np.isnan(constr) | np.isposinf(constr))
+        assert not (mx.isnan(f) or mx.isposinf(f))
+        assert not any(mx.isnan(constr) | mx.isposinf(constr))
 
     return f, constr

@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._util import _asarray_validated, _apply_over_batch
 from scipy.linalg import block_diag, LinAlgError
@@ -70,16 +70,16 @@ def cossin(X, p=None, q=None, separate=False,
 
     Returns
     -------
-    u : ndarray
+    u : array
         When ``compute_u=True``, contains the block diagonal orthogonal/unitary
         matrix consisting of the blocks ``U1`` (``p`` x ``p``) and ``U2``
         (``m-p`` x ``m-p``) orthogonal/unitary matrices. If ``separate=True``,
         this contains the tuple of ``(U1, U2)``.
-    cs : ndarray
+    cs : array
         The cosine-sine factor with the structure described above.
          If ``separate=True``, this contains the ``theta`` array containing the
          angles in radians.
-    vh : ndarray
+    vh : array
         When ``compute_vh=True`, contains the block diagonal orthogonal/unitary
         matrix consisting of the blocks ``V1H`` (``q`` x ``q``) and ``V2H``
         (``m-q`` x ``m-q``) orthogonal/unitary matrices. If ``separate=True``,
@@ -92,12 +92,12 @@ def cossin(X, p=None, q=None, separate=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import cossin
     >>> from scipy.stats import unitary_group
     >>> x = unitary_group.rvs(4)
     >>> u, cs, vdh = cossin(x, p=2, q=2)
-    >>> np.allclose(x, u @ cs @ vdh)
+    >>> mx.allclose(x, u @ cs @ vdh)
     True
 
     Same can be entered via subblocks without the need of ``p`` and ``q``. Also
@@ -107,7 +107,7 @@ def cossin(X, p=None, q=None, separate=False,
     ...                      compute_u=False)
     >>> print(ue)
     []
-    >>> np.allclose(x, u @ cs @ vdh)
+    >>> mx.allclose(x, u @ cs @ vdh)
     True
 
     """
@@ -116,7 +116,7 @@ def cossin(X, p=None, q=None, separate=False,
         p = 1 if p is None else int(p)
         q = 1 if q is None else int(q)
         X = _asarray_validated(X, check_finite=True)
-        if not np.equal(*X.shape[-2:]):
+        if not mx.equal(*X.shape[-2:]):
             raise ValueError("Cosine Sine decomposition only supports square"
                              f" matrices, got {X.shape[-2:]}")
         m = X.shape[-2]
@@ -134,7 +134,7 @@ def cossin(X, p=None, q=None, separate=False,
         if len(X) != 4:
             raise ValueError("When p and q are None, exactly four arrays"
                              f" should be in X, got {len(X)}")
-        x11, x12, x21, x22 = (np.atleast_2d(x) for x in X)
+        x11, x12, x21, x22 = (mx.atleast_2d(x) for x in X)
 
     return _cossin(x11, x12, x21, x22, separate=separate, swap_sign=swap_sign,
                    compute_u=compute_u, compute_vh=compute_vh)
@@ -166,7 +166,7 @@ def _cossin(x11, x12, x21, x22, separate, swap_sign, compute_u, compute_vh):
 
     m = p + mmp
 
-    cplx = any([np.iscomplexobj(x) for x in [x11, x12, x21, x22]])
+    cplx = any([mx.iscomplexobj(x) for x in [x11, x12, x21, x22]])
     driver = "uncsd" if cplx else "orcsd"
     csd, csd_lwork = get_lapack_funcs([driver, driver + "_lwork"],
                                       [x11, x12, x21, x22])
@@ -195,15 +195,15 @@ def _cossin(x11, x12, x21, x22, separate, swap_sign, compute_u, compute_vh):
     VDH = block_diag(v1h, v2h)
 
     # Construct the middle factor CS
-    c = np.diag(np.cos(theta))
-    s = np.diag(np.sin(theta))
+    c = mx.diag(mx.cos(theta))
+    s = mx.diag(mx.sin(theta))
     r = min(p, q, m - p, m - q)
     n11 = min(p, q) - r
     n12 = min(p, m - q) - r
     n21 = min(m - p, q) - r
     n22 = min(m - p, m - q) - r
-    Id = np.eye(np.max([n11, n12, n21, n22, r]), dtype=theta.dtype)
-    CS = np.zeros((m, m), dtype=theta.dtype)
+    Id = mx.eye(mx.max([n11, n12, n21, n22, r]), dtype=theta.dtype)
+    CS = mx.zeros((m, m), dtype=theta.dtype)
 
     CS[:n11, :n11] = Id[:n11, :n11]
 

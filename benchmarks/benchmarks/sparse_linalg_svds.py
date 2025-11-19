@@ -1,6 +1,6 @@
 import os
 import warnings
-import numpy as np
+import mlx.core as mx
 from .common import Benchmark, safe_import
 from asv_runner.benchmarks.mark import SkipNotImplemented
 
@@ -44,17 +44,17 @@ class BenchSVDS(Benchmark):
         dir_path = os.path.dirname(os.path.realpath(__file__))
         datafile = os.path.join(dir_path, "svds_benchmark_files",
                                 "svds_benchmark_files.npz")
-        self.matrices = np.load(datafile, allow_pickle=True)
+        self.matrices = mx.load(datafile, allow_pickle=True)
 
     def setup(self, k, problem, solver):
         self.A = self.matrices[problem][()]
         _, s, _ = svd(self.A.toarray(), full_matrices=False)
-        self.top_singular_values = np.flip(s[:int(k/2)])
-        self.tol = k * np.max(self.A.shape) * np.finfo(float).eps
-        self.rng = np.random.default_rng(98360967947894649386)
+        self.top_singular_values = mx.flip(s[:int(k/2)])
+        self.tol = k * mx.max(self.A.shape) * mx.finfo(float).eps
+        self.rng = mx.random.default_rng(98360967947894649386)
 
     def time_svds(self, k, problem, solver):
-        # The 'svd' solver find all ``m = np.min(self.A.shape) >> k``
+        # The 'svd' solver find all ``m = mx.min(self.A.shape) >> k``
         # singular pairs but may still be expected to outperform
         # the sparse solvers benchmarked here if m is small enough.
         # It is commonly thus used as a baseline for comparisons.
@@ -66,7 +66,7 @@ class BenchSVDS(Benchmark):
                 # parameters `maxiter` and `tol` are tuned for fair comparison
                 _, s, _ = svds(self.A, k=k, solver=solver, random_state=self.rng,
                                maxiter = 200, tol=1e-6)
-            accuracy = np.sum(np.abs(1 - s[int(k/2):] / self.top_singular_values))
+            accuracy = mx.sum(mx.abs(1 - s[int(k/2):] / self.top_singular_values))
             # ensure that we are benchmarking a consistent outcome;
             # (e.g. if the code wasn't able to find a solution accurately
             # enough the timing of the benchmark would become useless).

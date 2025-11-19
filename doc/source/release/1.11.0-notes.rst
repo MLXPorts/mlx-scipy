@@ -507,7 +507,7 @@ Issues closed for 1.11.0
 * `#13974 <https://github.com/scipy/scipy/issues/13974>`__: BUG: optimize.shgo: not using options
 * `#14059 <https://github.com/scipy/scipy/issues/14059>`__: Bound on absolute tolerance 'xtol' in 'optimize/zeros.py' is...
 * `#14262 <https://github.com/scipy/scipy/issues/14262>`__: cython_blas does not use const in signatures
-* `#14414 <https://github.com/scipy/scipy/issues/14414>`__: brentq does converge and not raise an error for np.nan functions
+* `#14414 <https://github.com/scipy/scipy/issues/14414>`__: brentq does converge and not raise an error for mx.nan functions
 * `#14486 <https://github.com/scipy/scipy/issues/14486>`__: One bug, one mistake and one refactorization proposal for the...
 * `#14519 <https://github.com/scipy/scipy/issues/14519>`__: scipy/stats/tests/test_continuous_basic.py::test_cont_basic[500-200-ncf-arg74] test fails with IntegrationWarning
 * `#14525 <https://github.com/scipy/scipy/issues/14525>`__: scipy.signal.bspline does not work for integer types
@@ -1064,7 +1064,7 @@ Pull requests for 1.11.0
 * `#18353 <https://github.com/scipy/scipy/pull/18353>`__: Migrate ruff.toml configuration to lint.toml
 * `#18355 <https://github.com/scipy/scipy/pull/18355>`__: ENH: allow dividing LinearOperator by number
 * `#18357 <https://github.com/scipy/scipy/pull/18357>`__: MAINT: clearer error in \`LinearOperator \* spmatrix\`
-* `#18358 <https://github.com/scipy/scipy/pull/18358>`__: ENH:MAINT:linalg:lu Cythonized and ndarray support added
+* `#18358 <https://github.com/scipy/scipy/pull/18358>`__: ENH:MAINT:linalg:lu Cythonized and array support added
 * `#18359 <https://github.com/scipy/scipy/pull/18359>`__: MAINT: Fix broken link in setup.py
 * `#18360 <https://github.com/scipy/scipy/pull/18360>`__: DOC: improve neg. binomial function examples in \`special\`
 * `#18362 <https://github.com/scipy/scipy/pull/18362>`__: MAINT: Add noexcept function declaration to \`_cythonized_array_utils.pxd\`

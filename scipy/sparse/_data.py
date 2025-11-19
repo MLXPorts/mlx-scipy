@@ -7,7 +7,7 @@
 """
 
 import math
-import numpy as np
+import mlx.core as mx
 
 from ._base import _spbase, sparray, _ufuncs_with_fixed_point_at_zero
 from ._sputils import isscalarlike, validateaxis
@@ -38,7 +38,7 @@ class _data_matrix(_spbase):
         return self._with_data(abs(self._deduped_data()))
 
     def __round__(self, ndigits=0):
-        return self._with_data(np.around(self._deduped_data(), decimals=ndigits))
+        return self._with_data(mx.around(self._deduped_data(), decimals=ndigits))
 
     def _real(self):
         return self._with_data(self.data.real)
@@ -67,7 +67,7 @@ class _data_matrix(_spbase):
             return NotImplemented
 
     def astype(self, dtype, casting='unsafe', copy=True):
-        dtype = np.dtype(dtype)
+        dtype = mx.dtype(dtype)
         if self.dtype != dtype:
             matrix = self._with_data(
                 self.data.astype(dtype, casting=casting, copy=True),
@@ -82,7 +82,7 @@ class _data_matrix(_spbase):
     astype.__doc__ = _spbase.astype.__doc__
 
     def conjugate(self, copy=True):
-        if np.issubdtype(self.dtype, np.complexfloating):
+        if mx.issubdtype(self.dtype, mx.complexfloating):
             return self._with_data(self.data.conjugate(), copy=copy)
         elif copy:
             return self.copy()
@@ -104,7 +104,7 @@ class _data_matrix(_spbase):
         ----------
         n : scalar
             n is a non-zero scalar (nonzero avoids dense ones creation)
-            If zero power is desired, special case it to use `np.ones`
+            If zero power is desired, special case it to use `mx.ones`
 
         dtype : If dtype is not specified, the current dtype will be preserved.
 
@@ -112,14 +112,14 @@ class _data_matrix(_spbase):
         ------
         NotImplementedError : if n is a zero scalar
             If zero power is desired, special case it to use
-            ``np.ones(A.shape, dtype=A.dtype)``
+            ``mx.ones(A.shape, dtype=A.dtype)``
         """
         if not isscalarlike(n):
             raise NotImplementedError("input is not scalar")
         if not n:
             raise NotImplementedError(
                 "zero power is not supported as it would densify the matrix.\n"
-                "Use `np.ones(A.shape, dtype=A.dtype)` for this case."
+                "Use `mx.ones(A.shape, dtype=A.dtype)` for this case."
             )
 
         data = self._deduped_data()
@@ -182,12 +182,12 @@ class _minmax_mixin:
 
         major_index, value = mat._minor_reduce(min_or_max)
         if not explicit:
-            not_full = np.diff(mat.indptr)[major_index] < N
+            not_full = mx.diff(mat.indptr)[major_index] < N
             value[not_full] = min_or_max(value[not_full], 0)
 
         mask = value != 0
-        major_index = np.compress(mask, major_index).astype(idx_dtype, copy=False)
-        value = np.compress(mask, value)
+        major_index = mx.compress(mask, major_index).astype(idx_dtype, copy=False)
+        value = mx.compress(mask, value)
 
         if isinstance(self, sparray):
             coords = (major_index,)
@@ -196,12 +196,12 @@ class _minmax_mixin:
 
         if axis == 0:
             return self._coo_container(
-                (value, (np.zeros(len(value), dtype=idx_dtype), major_index)),
+                (value, (mx.zeros(len(value), dtype=idx_dtype), major_index)),
                 dtype=self.dtype, shape=(1, M)
             )
         else:
             return self._coo_container(
-                (value, (major_index, np.zeros(len(value), dtype=idx_dtype))),
+                (value, (major_index, mx.zeros(len(value), dtype=idx_dtype))),
                 dtype=self.dtype, shape=(M, 1)
             )
 
@@ -238,9 +238,9 @@ class _minmax_mixin:
         mat.sum_duplicates()
 
         ret_size, line_size = mat._swap(mat.shape)
-        ret = np.zeros(ret_size, dtype=int)
+        ret = mx.zeros(ret_size, dtype=int)
 
-        nz_lines, = np.nonzero(np.diff(mat.indptr))
+        nz_lines, = mx.nonzero(mx.diff(mat.indptr))
         for i in nz_lines:
             p, q = mat.indptr[i:i + 2]
             data = mat.data[p:q]
@@ -270,14 +270,14 @@ class _minmax_mixin:
 
     def _argminmax(self, axis, out, argminmax, compare, explicit):
         if out is not None:
-            minmax = "argmin" if argminmax == np.argmin else "argmax"
+            minmax = "argmin" if argminmax == mx.argmin else "argmax"
             raise ValueError(f"Sparse {minmax} does not support an 'out' parameter.")
 
         axis = validateaxis(axis, ndim=self.ndim)
 
         if axis is not None:
             if any(self.shape[i] == 0 for i in axis):
-                minmax = "argmin" if argminmax == np.argmin else "argmax"
+                minmax = "argmin" if argminmax == mx.argmin else "argmax"
                 raise ValueError(f"Cannot apply {minmax} along a zero-sized dimension.")
 
             if self.ndim == 2:
@@ -286,12 +286,12 @@ class _minmax_mixin:
             return self._argminmax_axis_nd(axis, argminmax, compare, explicit)
 
         if 0 in self.shape:
-            minmax = "argmin" if argminmax == np.argmin else "argmax"
+            minmax = "argmin" if argminmax == mx.argmin else "argmax"
             raise ValueError(f"Cannot apply {minmax} to an empty matrix.")
 
         if self.nnz == 0:
             if explicit:
-                minmax = "argmin" if argminmax == np.argmin else "argmax"
+                minmax = "argmin" if argminmax == mx.argmin else "argmax"
                 raise ValueError(f"Cannot apply {minmax} to zero matrix "
                                  "when explicit=True.")
             return 0
@@ -370,7 +370,7 @@ class _minmax_mixin:
         numpy.max : NumPy's implementation of 'max'
 
         """
-        return self._min_or_max(axis, out, np.maximum, explicit)
+        return self._min_or_max(axis, out, mx.maximum, explicit)
 
     def min(self, axis=None, out=None, *, explicit=False):
         """Return the minimum of the array/matrix or maximum along an axis.
@@ -410,7 +410,7 @@ class _minmax_mixin:
         numpy.min : NumPy's implementation of 'min'
 
         """
-        return self._min_or_max(axis, out, np.minimum, explicit)
+        return self._min_or_max(axis, out, mx.minimum, explicit)
 
     def nanmax(self, axis=None, out=None, *, explicit=False):
         """Return the maximum, ignoring any Nans, along an axis.
@@ -456,7 +456,7 @@ class _minmax_mixin:
         numpy.nanmax : NumPy's implementation of 'nanmax'.
 
         """
-        return self._min_or_max(axis, out, np.fmax, explicit)
+        return self._min_or_max(axis, out, mx.fmax, explicit)
 
     def nanmin(self, axis=None, out=None, *, explicit=False):
         """Return the minimum, ignoring any Nans, along an axis.
@@ -502,7 +502,7 @@ class _minmax_mixin:
         numpy.nanmin : NumPy's implementation of 'nanmin'.
 
         """
-        return self._min_or_max(axis, out, np.fmin, explicit)
+        return self._min_or_max(axis, out, mx.fmin, explicit)
 
     def argmax(self, axis=None, out=None, *, explicit=False):
         """Return indices of maximum elements along an axis.
@@ -534,7 +534,7 @@ class _minmax_mixin:
         ind : numpy.matrix or int
             Indices of maximum elements. If matrix, its size along `axis` is 1.
         """
-        return self._argminmax(axis, out, np.argmax, np.greater, explicit)
+        return self._argminmax(axis, out, mx.argmax, mx.greater, explicit)
 
     def argmin(self, axis=None, out=None, *, explicit=False):
         """Return indices of minimum elements along an axis.
@@ -566,4 +566,4 @@ class _minmax_mixin:
          ind : numpy.matrix or int
             Indices of minimum elements. If matrix, its size along `axis` is 1.
         """
-        return self._argminmax(axis, out, np.argmin, np.less, explicit)
+        return self._argminmax(axis, out, mx.argmin, mx.less, explicit)

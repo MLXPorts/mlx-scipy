@@ -31,7 +31,7 @@
 from collections.abc import Iterable
 import operator
 import warnings
-import numpy as np
+import mlx.core as mx
 
 
 def _extend_mode_to_code(mode, is_filter=False):
@@ -65,7 +65,7 @@ def _normalize_sequence(input, rank):
     check if its length is equal to the length of array.
     """
     is_str = isinstance(input, str)
-    if not is_str and np.iterable(input):
+    if not is_str and mx.iterable(input):
         normalized = list(input)
         if len(normalized) != rank:
             err = "sequence argument must have length equal to input rank"
@@ -80,26 +80,26 @@ def _get_output(output, input, shape=None, complex_output=False):
         shape = input.shape
     if output is None:
         if not complex_output:
-            output = np.zeros(shape, dtype=input.dtype.name)
+            output = mx.zeros(shape, dtype=input.dtype.name)
         else:
-            complex_type = np.promote_types(input.dtype, np.complex64)
-            output = np.zeros(shape, dtype=complex_type)
-    elif isinstance(output, type | np.dtype):
-        # Classes (like `np.float32`) and dtypes are interpreted as dtype
-        if complex_output and np.dtype(output).kind != 'c':
+            complex_type = mx.promote_types(input.dtype, mx.complex64)
+            output = mx.zeros(shape, dtype=complex_type)
+    elif isinstance(output, type | mx.dtype):
+        # Classes (like `mx.float32`) and dtypes are interpreted as dtype
+        if complex_output and mx.dtype(output).kind != 'c':
             warnings.warn("promoting specified output dtype to complex", stacklevel=3)
-            output = np.promote_types(output, np.complex64)
-        output = np.zeros(shape, dtype=output)
+            output = mx.promote_types(output, mx.complex64)
+        output = mx.zeros(shape, dtype=output)
     elif isinstance(output, str):
-        output = np.dtype(output)
+        output = mx.dtype(output)
         if complex_output and output.kind != 'c':
             raise RuntimeError("output must have complex dtype")
-        elif not issubclass(output.type, np.number):
+        elif not issubclass(output.type, mx.number):
             raise RuntimeError("output must have numeric dtype")
-        output = np.zeros(shape, dtype=output)
+        output = mx.zeros(shape, dtype=output)
     else:
         # output was supplied as an array
-        output = np.asarray(output)
+        output = mx.array(output)
         if output.shape != shape:
             raise RuntimeError("output shape not correct")
         elif complex_output and output.dtype.kind != 'c':
@@ -110,7 +110,7 @@ def _get_output(output, input, shape=None, complex_output=False):
 def _check_axes(axes, ndim):
     if axes is None:
         return tuple(range(ndim))
-    elif np.isscalar(axes):
+    elif mx.isscalar(axes):
         axes = (operator.index(axes),)
     elif isinstance(axes, Iterable):
         for ax in axes:
@@ -128,12 +128,12 @@ def _check_axes(axes, ndim):
 def _skip_if_dtype(arg):
     """'array or dtype' polymorphism.
 
-    Return None for np.int8, dtype('float32') or 'f' etc
-           arg for np.empty(3) etc
+    Return None for mx.int8, dtype('float32') or 'f' etc
+           arg for mx.empty(3) etc
     """
     if isinstance(arg, str):
         return None
     if type(arg) is type:
-        return None if issubclass(arg, np.generic) else arg
+        return None if issubclass(arg, mx.generic) else arg
     else:
-        return None if isinstance(arg, np.dtype) else arg
+        return None if isinstance(arg, mx.dtype) else arg

@@ -1,6 +1,6 @@
 import builtins
 from warnings import catch_warnings, simplefilter
-import numpy as np
+import mlx.core as mx
 from operator import index
 from collections import namedtuple
 
@@ -78,7 +78,7 @@ def binned_statistic(x, values, statistic='mean',
         The values of the selected statistic in each bin.
     bin_edges : array of dtype float
         Return the bin edges ``(length(statistic)+1)``.
-    binnumber: 1-D ndarray of ints
+    binnumber: 1-D array of ints
         Indices of the bins (corresponding to `bin_edges`) in which each value
         of `x` belongs.  Same length as `values`.  A binnumber of `i` means the
         corresponding value is between (bin_edges[i-1], bin_edges[i]).
@@ -98,7 +98,7 @@ def binned_statistic(x, values, statistic='mean',
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
     >>> import matplotlib.pyplot as plt
 
@@ -121,7 +121,7 @@ def binned_statistic(x, values, statistic='mean',
            [8. , 9. ]]), bin_edges=array([1., 4., 7.]),
            binnumber=array([1, 1, 1, 2, 2]))
 
-    >>> stats.binned_statistic([1, 2, 1, 2, 4], np.arange(5), statistic='mean',
+    >>> stats.binned_statistic([1, 2, 1, 2, 4], mx.arange(5), statistic='mean',
     ...                        bins=3)
     BinnedStatisticResult(statistic=array([1., 2., 4.]),
             bin_edges=array([1., 2., 3., 4.]),
@@ -131,7 +131,7 @@ def binned_statistic(x, values, statistic='mean',
     as a function of wind speed, and then determine how fast our boat is for
     certain wind speeds:
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> windspeed = 8 * rng.random(500)
     >>> boatspeed = .3 * windspeed**.5 + .2 * rng.random(500)
     >>> bin_means, bin_edges, binnumber = stats.binned_statistic(windspeed,
@@ -152,7 +152,7 @@ def binned_statistic(x, values, statistic='mean',
     mean per bin, on top of a regular histogram and the probability
     distribution function:
 
-    >>> x = np.linspace(0, 5, num=500)
+    >>> x = mx.linspace(0, 5, num=500)
     >>> x_pdf = stats.maxwell.pdf(x)
     >>> samples = stats.maxwell.rvs(size=10000)
 
@@ -178,7 +178,7 @@ def binned_statistic(x, values, statistic='mean',
         N = 1
 
     if N != 1:
-        bins = [np.asarray(bins, float)]
+        bins = [mx.array(bins, float)]
 
     if range is not None:
         if len(range) == 2:
@@ -261,7 +261,7 @@ def binned_statistic_2d(x, y, values, statistic='mean',
         'False' (default): the returned `binnumber` is a shape (N,) array of
         linearized bin indices.
         'True': the returned `binnumber` is 'unraveled' into a shape (2,N)
-        ndarray, where each row gives the bin numbers in the corresponding
+        array, where each row gives the bin numbers in the corresponding
         dimension.
         See the `binnumber` returned value, and the `Examples` section.
 
@@ -269,13 +269,13 @@ def binned_statistic_2d(x, y, values, statistic='mean',
 
     Returns
     -------
-    statistic : (nx, ny) ndarray
+    statistic : (nx, ny) array
         The values of the selected statistic in each two-dimensional bin.
-    x_edge : (nx + 1) ndarray
+    x_edge : (nx + 1) array
         The bin edges along the first dimension.
-    y_edge : (ny + 1) ndarray
+    y_edge : (ny + 1) array
         The bin edges along the second dimension.
-    binnumber : (N,) array of ints or (2,N) ndarray of ints
+    binnumber : (N,) array of ints or (2,N) array of ints
         This assigns to each element of `sample` an integer that represents the
         bin in which this observation falls.  The representation depends on the
         `expand_binnumbers` argument.  See `Notes` for details.
@@ -302,7 +302,7 @@ def binned_statistic_2d(x, y, values, statistic='mean',
     Note that the returned linearized bin indices are used for an array with
     extra bins on the outer binedges to capture values outside of the defined
     bin bounds.
-    If 'True': The returned `binnumber` is a shape (2,N) ndarray where
+    If 'True': The returned `binnumber` is a shape (2,N) array where
     each row indicates bin placements for each dimension respectively.  In each
     dimension, a binnumber of `i` means the corresponding value is between
     (D_edge[i-1], D_edge[i]), where 'D' is either 'x' or 'y'.
@@ -344,14 +344,14 @@ def binned_statistic_2d(x, y, values, statistic='mean',
 
     """
 
-    # This code is based on np.histogram2d
+    # This code is based on mx.histogram2d
     try:
         N = len(bins)
     except TypeError:
         N = 1
 
     if N != 1 and N != 2:
-        xedges = yedges = np.asarray(bins, float)
+        xedges = yedges = mx.array(bins, float)
         bins = [xedges, yedges]
 
     medians, edges, binnumbers = binned_statistic_dd(
@@ -367,13 +367,13 @@ BinnedStatisticddResult = namedtuple('BinnedStatisticddResult',
 
 
 def _bincount(x, weights):
-    if np.iscomplexobj(weights):
-        a = np.bincount(x, np.real(weights))
-        b = np.bincount(x, np.imag(weights))
+    if mx.iscomplexobj(weights):
+        a = mx.bincount(x, mx.real(weights))
+        b = mx.bincount(x, mx.imag(weights))
         z = a + b*1j
 
     else:
-        z = np.bincount(x, weights)
+        z = mx.bincount(x, weights)
     return z
 
 
@@ -439,7 +439,7 @@ def binned_statistic_dd(sample, values, statistic='mean',
         'False' (default): the returned `binnumber` is a shape (N,) array of
         linearized bin indices.
         'True': the returned `binnumber` is 'unraveled' into a shape (D,N)
-        ndarray, where each row gives the bin numbers in the corresponding
+        array, where each row gives the bin numbers in the corresponding
         dimension.
         See the `binnumber` returned value, and the `Examples` section of
         `binned_statistic_2d`.
@@ -453,12 +453,12 @@ def binned_statistic_dd(sample, values, statistic='mean',
 
     Returns
     -------
-    statistic : ndarray, shape(nx1, nx2, nx3,...)
+    statistic : array, shape(nx1, nx2, nx3,...)
         The values of the selected statistic in each two-dimensional bin.
-    bin_edges : list of ndarrays
+    bin_edges : list of arrays
         A list of D arrays describing the (nxi + 1) bin edges for each
         dimension.
-    binnumber : (N,) array of ints or (D,N) ndarray of ints
+    binnumber : (N,) array of ints or (D,N) array of ints
         This assigns to each element of `sample` an integer that represents the
         bin in which this observation falls.  The representation depends on the
         `expand_binnumbers` argument.  See `Notes` for details.
@@ -482,7 +482,7 @@ def binned_statistic_dd(sample, values, statistic='mean',
     `expand_binnumbers` argument. If 'False' (default): The returned
     `binnumber` is a shape (N,) array of linearized indices mapping each
     element of `sample` to its corresponding bin (using row-major ordering).
-    If 'True': The returned `binnumber` is a shape (D,N) ndarray where
+    If 'True': The returned `binnumber` is a shape (D,N) array where
     each row indicates bin placements for each dimension respectively.  In each
     dimension, a binnumber of `i` means the corresponding value is between
     (bin_edges[D][i-1], bin_edges[D][i]), for each dimension 'D'.
@@ -491,7 +491,7 @@ def binned_statistic_dd(sample, values, statistic='mean',
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
     >>> import matplotlib.pyplot as plt
     >>> from mpl_toolkits.mplot3d import Axes3D
@@ -500,8 +500,8 @@ def binned_statistic_dd(sample, values, statistic='mean',
     `binned_statistic_dd` can handle arrays of higher dimension `D`. But a plot
     of dimension `D+1` is required.
 
-    >>> mu = np.array([0., 1.])
-    >>> sigma = np.array([[1., -0.5],[-0.5, 1.5]])
+    >>> mu = mx.array([0., 1.])
+    >>> sigma = mx.array([[1., -0.5],[-0.5, 1.5]])
     >>> multinormal = stats.multivariate_normal(mu, sigma)
     >>> data = multinormal.rvs(size=600, random_state=235412)
     >>> data.shape
@@ -510,9 +510,9 @@ def binned_statistic_dd(sample, values, statistic='mean',
     Create bins and count how many arrays fall in each bin:
 
     >>> N = 60
-    >>> x = np.linspace(-3, 3, N)
-    >>> y = np.linspace(-3, 4, N)
-    >>> ret = stats.binned_statistic_dd(data, np.arange(600), bins=[x, y],
+    >>> x = mx.linspace(-3, 3, N)
+    >>> y = mx.linspace(-3, 4, N)
+    >>> ret = stats.binned_statistic_dd(data, mx.arange(600), bins=[x, y],
     ...                                 statistic='count')
     >>> bincounts = ret.statistic
 
@@ -520,7 +520,7 @@ def binned_statistic_dd(sample, values, statistic='mean',
 
     >>> dx = x[1] - x[0]
     >>> dy = y[1] - y[0]
-    >>> x, y = np.meshgrid(x[:-1]+dx/2, y[:-1]+dy/2)
+    >>> x, y = mx.meshgrid(x[:-1]+dx/2, y[:-1]+dy/2)
     >>> z = 0
 
     >>> bincounts = bincounts.ravel()
@@ -529,12 +529,12 @@ def binned_statistic_dd(sample, values, statistic='mean',
 
     >>> fig = plt.figure()
     >>> ax = fig.add_subplot(111, projection='3d')
-    >>> with np.errstate(divide='ignore'):   # silence random axes3d warning
+    >>> with mx.errstate(divide='ignore'):   # silence random axes3d warning
     ...     ax.bar3d(x, y, z, dx, dy, bincounts)
 
     Reuse bin numbers and bin edges with new values:
 
-    >>> ret2 = stats.binned_statistic_dd(data, -np.arange(600),
+    >>> ret2 = stats.binned_statistic_dd(data, -mx.arange(600),
     ...                                  binned_statistic_result=ret,
     ...                                  statistic='mean')
     """
@@ -550,25 +550,25 @@ def binned_statistic_dd(sample, values, statistic='mean',
     # If bins was an integer-like object, now it is an actual Python int.
 
     # NOTE: for _bin_edges(), see e.g. gh-11365
-    if isinstance(bins, int) and not np.isfinite(sample).all():
+    if isinstance(bins, int) and not mx.isfinite(sample).all():
         raise ValueError(f'{sample!r} contains non-finite values.')
 
     # `Ndim` is the number of dimensions (e.g. `2` for `binned_statistic_2d`)
     # `Dlen` is the length of elements along each dimension.
-    # This code is based on np.histogramdd
+    # This code is based on mx.histogramdd
     try:
         # `sample` is an ND-array.
         Dlen, Ndim = sample.shape
     except (AttributeError, ValueError):
         # `sample` is a sequence of 1D arrays.
-        sample = np.atleast_2d(sample).T
+        sample = mx.atleast_2d(sample).T
         Dlen, Ndim = sample.shape
 
     # Store initial shape of `values` to preserve it in the output
-    values = np.asarray(values)
+    values = mx.array(values)
     input_shape = list(values.shape)
     # Make sure that `values` is 2D to iterate over rows
-    values = np.atleast_2d(values)
+    values = mx.atleast_2d(values)
     Vdim, Vlen = values.shape
 
     # Make sure `values` match `sample`
@@ -589,99 +589,99 @@ def binned_statistic_dd(sample, values, statistic='mean',
         binnumbers = _bin_numbers(sample, nbin, edges, dedges)
     else:
         edges = binned_statistic_result.bin_edges
-        nbin = np.array([len(edges[i]) + 1 for i in builtins.range(Ndim)])
+        nbin = mx.array([len(edges[i]) + 1 for i in builtins.range(Ndim)])
         # +1 for outlier bins
-        dedges = [np.diff(edges[i]) for i in builtins.range(Ndim)]
+        dedges = [mx.diff(edges[i]) for i in builtins.range(Ndim)]
         binnumbers = binned_statistic_result.binnumber
 
     # Avoid overflow with double precision. Complex `values` -> `complex128`.
-    result_type = np.result_type(values, np.float64)
-    result = np.empty([Vdim, nbin.prod()], dtype=result_type)
+    result_type = mx.result_type(values, mx.float64)
+    result = mx.empty([Vdim, nbin.prod()], dtype=result_type)
 
-    if statistic in {'mean', np.mean}:
-        result.fill(np.nan)
+    if statistic in {'mean', mx.mean}:
+        result.fill(mx.nan)
         flatcount = _bincount(binnumbers, None)
         a = flatcount.nonzero()
         for vv in builtins.range(Vdim):
             flatsum = _bincount(binnumbers, values[vv])
             result[vv, a] = flatsum[a] / flatcount[a]
-    elif statistic in {'std', np.std}:
-        result.fill(np.nan)
+    elif statistic in {'std', mx.std}:
+        result.fill(mx.nan)
         flatcount = _bincount(binnumbers, None)
         a = flatcount.nonzero()
         for vv in builtins.range(Vdim):
             flatsum = _bincount(binnumbers, values[vv])
             delta = values[vv] - flatsum[binnumbers] / flatcount[binnumbers]
-            std = np.sqrt(
-                _bincount(binnumbers, delta*np.conj(delta))[a] / flatcount[a]
+            std = mx.sqrt(
+                _bincount(binnumbers, delta*mx.conj(delta))[a] / flatcount[a]
             )
             result[vv, a] = std
-        result = np.real(result)
+        result = mx.real(result)
     elif statistic == 'count':
-        result = np.empty([Vdim, nbin.prod()], dtype=np.float64)
+        result = mx.empty([Vdim, nbin.prod()], dtype=mx.float64)
         result.fill(0)
         flatcount = _bincount(binnumbers, None)
-        a = np.arange(len(flatcount))
-        result[:, a] = flatcount[np.newaxis, :]
-    elif statistic in {'sum', np.sum}:
+        a = mx.arange(len(flatcount))
+        result[:, a] = flatcount[mx.newaxis, :]
+    elif statistic in {'sum', mx.sum}:
         result.fill(0)
         for vv in builtins.range(Vdim):
             flatsum = _bincount(binnumbers, values[vv])
-            a = np.arange(len(flatsum))
+            a = mx.arange(len(flatsum))
             result[vv, a] = flatsum
-    elif statistic in {'median', np.median}:
-        result.fill(np.nan)
+    elif statistic in {'median', mx.median}:
+        result.fill(mx.nan)
         for vv in builtins.range(Vdim):
-            i = np.lexsort((values[vv], binnumbers))
-            _, j, counts = np.unique(binnumbers[i],
+            i = mx.lexsort((values[vv], binnumbers))
+            _, j, counts = mx.unique(binnumbers[i],
                                      return_index=True, return_counts=True)
             mid = j + (counts - 1) / 2
-            mid_a = values[vv, i][np.floor(mid).astype(int)]
-            mid_b = values[vv, i][np.ceil(mid).astype(int)]
+            mid_a = values[vv, i][mx.floor(mid).astype(int)]
+            mid_b = values[vv, i][mx.ceil(mid).astype(int)]
             medians = (mid_a + mid_b) / 2
             result[vv, binnumbers[i][j]] = medians
-    elif statistic in {'min', np.min}:
-        result.fill(np.nan)
+    elif statistic in {'min', mx.min}:
+        result.fill(mx.nan)
         for vv in builtins.range(Vdim):
-            i = np.argsort(values[vv])[::-1]  # Reversed so the min is last
+            i = mx.argsort(values[vv])[::-1]  # Reversed so the min is last
             result[vv, binnumbers[i]] = values[vv, i]
-    elif statistic in {'max', np.max}:
-        result.fill(np.nan)
+    elif statistic in {'max', mx.max}:
+        result.fill(mx.nan)
         for vv in builtins.range(Vdim):
-            i = np.argsort(values[vv])
+            i = mx.argsort(values[vv])
             result[vv, binnumbers[i]] = values[vv, i]
     elif callable(statistic):
-        with np.errstate(invalid='ignore'), catch_warnings():
+        with mx.errstate(invalid='ignore'), catch_warnings():
             simplefilter("ignore", RuntimeWarning)
             try:
                 null = statistic([])
             except Exception:
-                null = np.nan
-        if np.iscomplexobj(null):
-            result = result.astype(np.complex128)
+                null = mx.nan
+        if mx.iscomplexobj(null):
+            result = result.astype(mx.complex128)
         result.fill(null)
         try:
             _calc_binned_statistic(
                 Vdim, binnumbers, result, values, statistic
             )
         except ValueError:
-            result = result.astype(np.complex128)
+            result = result.astype(mx.complex128)
             _calc_binned_statistic(
                 Vdim, binnumbers, result, values, statistic
             )
 
     # Shape into a proper matrix
-    result = result.reshape(np.append(Vdim, nbin))
+    result = result.reshape(mx.append(Vdim, nbin))
 
     # Remove outliers (indices 0 and -1 for each bin-dimension).
     core = tuple([slice(None)] + Ndim * [slice(1, -1)])
     result = result[core]
 
-    # Unravel binnumbers into an ndarray, each row the bins for each dimension
+    # Unravel binnumbers into an array, each row the bins for each dimension
     if expand_binnumbers and Ndim > 1:
-        binnumbers = np.asarray(np.unravel_index(binnumbers, nbin))
+        binnumbers = mx.array(mx.unravel_index(binnumbers, nbin))
 
-    if np.any(result.shape[1:] != nbin - 2):
+    if mx.any(result.shape[1:] != nbin - 2):
         raise RuntimeError('Internal Shape Error')
 
     # Reshape to have output (`result`) match input (`values`) shape
@@ -691,13 +691,13 @@ def binned_statistic_dd(sample, values, statistic='mean',
 
 
 def _calc_binned_statistic(Vdim, bin_numbers, result, values, stat_func):
-    unique_bin_numbers = np.unique(bin_numbers)
+    unique_bin_numbers = mx.unique(bin_numbers)
     for vv in builtins.range(Vdim):
         bin_map = _create_binned_data(bin_numbers, unique_bin_numbers,
                                       values, vv)
         for i in unique_bin_numbers:
-            stat = stat_func(np.array(bin_map[i]))
-            if np.iscomplexobj(stat) and not np.iscomplexobj(result):
+            stat = stat_func(mx.array(bin_map[i]))
+            if mx.iscomplexobj(stat) and not mx.iscomplexobj(result):
                 raise ValueError("The statistic function returns complex ")
             result[vv, i] = stat
 
@@ -720,21 +720,21 @@ def _bin_edges(sample, bins=None, range=None):
     """
     Dlen, Ndim = sample.shape
 
-    nbin = np.empty(Ndim, int)    # Number of bins in each dimension
+    nbin = mx.empty(Ndim, int)    # Number of bins in each dimension
     edges = Ndim * [None]         # Bin edges for each dim (will be 2D array)
     dedges = Ndim * [None]        # Spacing between edges (will be 2D array)
 
     # Select range for each dimension
     # Used only if number of bins is given.
     if range is None:
-        smin = np.atleast_1d(np.array(sample.min(axis=0), float))
-        smax = np.atleast_1d(np.array(sample.max(axis=0), float))
+        smin = mx.atleast_1d(mx.array(sample.min(axis=0), float))
+        smax = mx.atleast_1d(mx.array(sample.max(axis=0), float))
     else:
         if len(range) != Ndim:
             raise ValueError(
                 f"range given for {len(range)} dimensions; {Ndim} required")
-        smin = np.empty(Ndim)
-        smax = np.empty(Ndim)
+        smin = mx.empty(Ndim)
+        smax = mx.empty(Ndim)
         for i in builtins.range(Ndim):
             if range[i][1] < range[i][0]:
                 raise ValueError(
@@ -749,21 +749,21 @@ def _bin_edges(sample, bins=None, range=None):
             smax[i] = smax[i] + .5
 
     # Preserve sample floating point precision in bin edges
-    edges_dtype = (sample.dtype if np.issubdtype(sample.dtype, np.floating)
+    edges_dtype = (sample.dtype if mx.issubdtype(sample.dtype, mx.floating)
                    else float)
 
     # Create edge arrays
     for i in builtins.range(Ndim):
-        if np.isscalar(bins[i]):
+        if mx.isscalar(bins[i]):
             nbin[i] = bins[i] + 2  # +2 for outlier bins
-            edges[i] = np.linspace(smin[i], smax[i], nbin[i] - 1,
+            edges[i] = mx.linspace(smin[i], smax[i], nbin[i] - 1,
                                    dtype=edges_dtype)
         else:
-            edges[i] = np.asarray(bins[i], edges_dtype)
+            edges[i] = mx.array(bins[i], edges_dtype)
             nbin[i] = len(edges[i]) + 1  # +1 for outlier bins
-        dedges[i] = np.diff(edges[i])
+        dedges[i] = mx.diff(edges[i])
 
-    nbin = np.asarray(nbin)
+    nbin = mx.array(nbin)
 
     return nbin, edges, dedges
 
@@ -774,7 +774,7 @@ def _bin_numbers(sample, nbin, edges, dedges):
     Dlen, Ndim = sample.shape
 
     sampBin = [
-        np.digitize(sample[:, i], edges[i])
+        mx.digitize(sample[:, i], edges[i])
         for i in range(Ndim)
     ]
 
@@ -786,15 +786,15 @@ def _bin_numbers(sample, nbin, edges, dedges):
         dedges_min = dedges[i].min()
         if dedges_min == 0:
             raise ValueError('The smallest edge difference is numerically 0.')
-        decimal = int(-np.log10(dedges_min)) + 6
+        decimal = int(-mx.log10(dedges_min)) + 6
         # Find which points are on the rightmost edge.
-        on_edge = np.where((sample[:, i] >= edges[i][-1]) &
-                           (np.around(sample[:, i], decimal) ==
-                            np.around(edges[i][-1], decimal)))[0]
+        on_edge = mx.where((sample[:, i] >= edges[i][-1]) &
+                           (mx.around(sample[:, i], decimal) ==
+                            mx.around(edges[i][-1], decimal)))[0]
         # Shift these points one bin to the left.
         sampBin[i][on_edge] -= 1
 
     # Compute the sample indices in the flattened statistic matrix.
-    binnumbers = np.ravel_multi_index(sampBin, nbin)
+    binnumbers = mx.ravel_multi_index(sampBin, nbin)
 
     return binnumbers

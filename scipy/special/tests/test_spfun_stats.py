@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import (assert_array_equal, assert_array_almost_equal_nulp,
                            assert_allclose)
 from pytest import raises as assert_raises
@@ -11,16 +11,16 @@ class TestMultiGammaLn:
     def test1(self):
         # A test of the identity
         #     Gamma_1(a) = Gamma(a)
-        np.random.seed(1234)
-        a = np.abs(np.random.randn())
+        mx.random.seed(1234)
+        a = mx.abs(mx.random.randn())
         assert_array_equal(multigammaln(a, 1), gammaln(a))
 
     def test2(self):
         # A test of the identity
         #     Gamma_2(a) = sqrt(pi) * Gamma(a) * Gamma(a - 0.5)
-        a = np.array([2.5, 10.0])
+        a = mx.array([2.5, 10.0])
         result = multigammaln(a, 2)
-        expected = np.log(np.sqrt(np.pi)) + gammaln(a) + gammaln(a - 0.5)
+        expected = mx.log(mx.sqrt(mx.pi)) + gammaln(a) + gammaln(a - 0.5)
         assert_allclose(result, expected, atol=1.5e-7, rtol=0)
 
     def test_bararg(self):
@@ -44,16 +44,16 @@ def test_multigammaln_array_arg():
     # shape and contains the correct values.  The cases have arrays
     # with several different shapes.
     # The cases include a regression test for ticket #1849
-    # (a = np.array([2.0]), an array with a single element).
-    np.random.seed(1234)
+    # (a = mx.array([2.0]), an array with a single element).
+    mx.random.seed(1234)
 
     cases = [
         # a, d
-        (np.abs(np.random.randn(3, 2)) + 5, 5),
-        (np.abs(np.random.randn(1, 2)) + 5, 5),
-        (np.arange(10.0, 18.0).reshape(2, 2, 2), 3),
-        (np.array([2.0]), 3),
-        (np.float64(2.0), 3),
+        (mx.abs(mx.random.randn(3, 2)) + 5, 5),
+        (mx.abs(mx.random.randn(1, 2)) + 5, 5),
+        (mx.arange(10.0, 18.0).reshape(2, 2, 2), 3),
+        (mx.array([2.0]), 3),
+        (mx.float64(2.0), 3),
     ]
 
     for a, d in cases:

@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy.sparse.linalg import LinearOperator
 from scipy.sparse import kron, eye_array, dia_array
 
@@ -21,13 +21,13 @@ class LaplacianNd(LinearOperator):
     grid_shape : tuple
         A tuple of integers of length ``N`` (corresponding to the dimension of
         the Lapacian), where each entry gives the size of that dimension. The
-        Laplacian matrix is square of the size ``np.prod(grid_shape)``.
+        Laplacian matrix is square of the size ``mx.prod(grid_shape)``.
     boundary_conditions : {'neumann', 'dirichlet', 'periodic'}, optional
         The type of the boundary conditions on the boundaries of the grid.
         Valid values are ``'dirichlet'`` or ``'neumann'``(default) or
         ``'periodic'``.
     dtype : dtype
-        Numerical type of the array. Default is ``np.int8``.
+        Numerical type of the array. Default is ``mx.int8``.
 
     Methods
     -------
@@ -69,7 +69,7 @@ of_the_second_derivative
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse.linalg import LaplacianNd
     >>> from scipy.sparse import diags_array, csgraph
     >>> from scipy.linalg import eigvalsh
@@ -81,11 +81,11 @@ of_the_second_derivative
     famous tri-diagonal matrix:
 
     >>> n = 6
-    >>> G = diags_array(np.ones(n - 1), offsets=1, format='csr')
+    >>> G = diags_array(mx.ones(n - 1), offsets=1, format='csr')
     >>> Lf = csgraph.laplacian(G, symmetrized=True, form='function')
     >>> grid_shape = (n, )
     >>> lap = LaplacianNd(grid_shape, boundary_conditions='neumann')
-    >>> np.array_equal(lap.matmat(np.eye(n)), -Lf(np.eye(n)))
+    >>> mx.array_equal(lap.matmat(mx.eye(n)), -Lf(mx.eye(n)))
     True
 
     Since all matrix entries of the Laplacian are integers, ``'int8'`` is
@@ -101,9 +101,9 @@ of_the_second_derivative
            [ 0,  0,  1, -2,  1,  0],
            [ 0,  0,  0,  1, -2,  1],
            [ 0,  0,  0,  0,  1, -1]], dtype=int8)
-    >>> np.array_equal(lap.matmat(np.eye(n)), lap.toarray())
+    >>> mx.array_equal(lap.matmat(mx.eye(n)), lap.toarray())
     True
-    >>> np.array_equal(lap.tosparse().toarray(), lap.toarray())
+    >>> mx.array_equal(lap.tosparse().toarray(), lap.toarray())
     True
 
     Any number of extreme eigenvalues and/or eigenvectors can be computed.
@@ -147,11 +147,11 @@ of_the_second_derivative
     ``grid_shape = (2, 3)`` points in each dimension.
 
     >>> grid_shape = (2, 3)
-    >>> n = np.prod(grid_shape)
+    >>> n = mx.prod(grid_shape)
 
     Numeration of grid points is as follows:
 
-    >>> np.arange(n).reshape(grid_shape + (-1,))
+    >>> mx.arange(n).reshape(grid_shape + (-1,))
     array([[[0],
             [1],
             [2]],
@@ -174,18 +174,18 @@ of_the_second_derivative
            [ 1,  0,  0, -4,  1,  0],
            [ 0,  1,  0,  1, -4,  1],
            [ 0,  0,  1,  0,  1, -4]], dtype=int8)
-    >>> np.array_equal(lap.matmat(np.eye(n)), lap.toarray())
+    >>> mx.array_equal(lap.matmat(mx.eye(n)), lap.toarray())
     True
-    >>> np.array_equal(lap.tosparse().toarray(), lap.toarray())
+    >>> mx.array_equal(lap.tosparse().toarray(), lap.toarray())
     True
     >>> lap.eigenvalues()
     array([-6.41421356, -5.        , -4.41421356, -3.58578644, -3.        ,
            -1.58578644])
-    >>> eigvals = eigvalsh(lap.toarray().astype(np.float64))
-    >>> np.allclose(lap.eigenvalues(), eigvals)
+    >>> eigvals = eigvalsh(lap.toarray().astype(mx.float64))
+    >>> mx.allclose(lap.eigenvalues(), eigvals)
     True
-    >>> np.allclose(lap.toarray() @ lap.eigenvectors(),
-    ...             lap.eigenvectors() @ np.diag(lap.eigenvalues()))
+    >>> mx.allclose(lap.toarray() @ lap.eigenvectors(),
+    ...             lap.eigenvectors() @ mx.diag(lap.eigenvalues()))
     True
 
     with ``'periodic'``
@@ -201,17 +201,17 @@ of_the_second_derivative
                [ 2,  0,  0, -4,  1,  1],
                [ 0,  2,  0,  1, -4,  1],
                [ 0,  0,  2,  1,  1, -4]], dtype=int8)
-    >>> np.array_equal(lap.matmat(np.eye(n)), lap.toarray())
+    >>> mx.array_equal(lap.matmat(mx.eye(n)), lap.toarray())
     True
-    >>> np.array_equal(lap.tosparse().toarray(), lap.toarray())
+    >>> mx.array_equal(lap.tosparse().toarray(), lap.toarray())
     True
     >>> lap.eigenvalues()
     array([-7., -7., -4., -3., -3.,  0.])
-    >>> eigvals = eigvalsh(lap.toarray().astype(np.float64))
-    >>> np.allclose(lap.eigenvalues(), eigvals)
+    >>> eigvals = eigvalsh(lap.toarray().astype(mx.float64))
+    >>> mx.allclose(lap.eigenvalues(), eigvals)
     True
-    >>> np.allclose(lap.toarray() @ lap.eigenvectors(),
-    ...             lap.eigenvectors() @ np.diag(lap.eigenvalues()))
+    >>> mx.allclose(lap.toarray() @ lap.eigenvectors(),
+    ...             lap.eigenvectors() @ mx.diag(lap.eigenvalues()))
     True
 
     and with ``'neumann'``
@@ -227,24 +227,24 @@ of_the_second_derivative
            [ 1,  0,  0, -2,  1,  0],
            [ 0,  1,  0,  1, -3,  1],
            [ 0,  0,  1,  0,  1, -2]], dtype=int8)
-    >>> np.array_equal(lap.matmat(np.eye(n)), lap.toarray())
+    >>> mx.array_equal(lap.matmat(mx.eye(n)), lap.toarray())
     True
-    >>> np.array_equal(lap.tosparse().toarray(), lap.toarray())
+    >>> mx.array_equal(lap.tosparse().toarray(), lap.toarray())
     True
     >>> lap.eigenvalues()
     array([-5., -3., -3., -2., -1.,  0.])
-    >>> eigvals = eigvalsh(lap.toarray().astype(np.float64))
-    >>> np.allclose(lap.eigenvalues(), eigvals)
+    >>> eigvals = eigvalsh(lap.toarray().astype(mx.float64))
+    >>> mx.allclose(lap.eigenvalues(), eigvals)
     True
-    >>> np.allclose(lap.toarray() @ lap.eigenvectors(),
-    ...             lap.eigenvectors() @ np.diag(lap.eigenvalues()))
+    >>> mx.allclose(lap.toarray() @ lap.eigenvectors(),
+    ...             lap.eigenvectors() @ mx.diag(lap.eigenvalues()))
     True
 
     """
 
     def __init__(self, grid_shape, *,
                  boundary_conditions='neumann',
-                 dtype=np.int8):
+                 dtype=mx.int8):
 
         if boundary_conditions not in ('dirichlet', 'neumann', 'periodic'):
             raise ValueError(
@@ -256,7 +256,7 @@ of_the_second_derivative
         self.grid_shape = grid_shape
         self.boundary_conditions = boundary_conditions
         # LaplacianNd folds all dimensions in `grid_shape` into a single one
-        N = np.prod(grid_shape)
+        N = mx.prod(grid_shape)
         super().__init__(dtype=dtype, shape=(N, N))
 
     def _eigenvalue_ordering(self, m):
@@ -265,24 +265,24 @@ of_the_second_derivative
         """
         grid_shape = self.grid_shape
         if m is None:
-            indices = np.indices(grid_shape)
-            Leig = np.zeros(grid_shape)
+            indices = mx.indices(grid_shape)
+            Leig = mx.zeros(grid_shape)
         else:
             grid_shape_min = min(grid_shape,
-                                 tuple(np.ones_like(grid_shape) * m))
-            indices = np.indices(grid_shape_min)
-            Leig = np.zeros(grid_shape_min)
+                                 tuple(mx.ones_like(grid_shape) * m))
+            indices = mx.indices(grid_shape_min)
+            Leig = mx.zeros(grid_shape_min)
 
         for j, n in zip(indices, grid_shape):
             if self.boundary_conditions == 'dirichlet':
-                Leig += -4 * np.sin(np.pi * (j + 1) / (2 * (n + 1))) ** 2
+                Leig += -4 * mx.sin(mx.pi * (j + 1) / (2 * (n + 1))) ** 2
             elif self.boundary_conditions == 'neumann':
-                Leig += -4 * np.sin(np.pi * j / (2 * n)) ** 2
+                Leig += -4 * mx.sin(mx.pi * j / (2 * n)) ** 2
             else:  # boundary_conditions == 'periodic'
-                Leig += -4 * np.sin(np.pi * np.floor((j + 1) / 2) / n) ** 2
+                Leig += -4 * mx.sin(mx.pi * mx.floor((j + 1) / 2) / n) ** 2
 
         Leig_ravel = Leig.ravel()
-        ind = np.argsort(Leig_ravel)
+        ind = mx.argsort(Leig_ravel)
         eigenvalues = Leig_ravel[ind]
         if m is not None:
             eigenvalues = eigenvalues[-m:]
@@ -312,25 +312,25 @@ of_the_second_derivative
         and number of grid points `n` where ``j < n``.
         """
         if self.boundary_conditions == 'dirichlet':
-            i = np.pi * (np.arange(n) + 1) / (n + 1)
-            ev = np.sqrt(2. / (n + 1.)) * np.sin(i * (j + 1))
+            i = mx.pi * (mx.arange(n) + 1) / (n + 1)
+            ev = mx.sqrt(2. / (n + 1.)) * mx.sin(i * (j + 1))
         elif self.boundary_conditions == 'neumann':
-            i = np.pi * (np.arange(n) + 0.5) / n
-            ev = np.sqrt((1. if j == 0 else 2.) / n) * np.cos(i * j)
+            i = mx.pi * (mx.arange(n) + 0.5) / n
+            ev = mx.sqrt((1. if j == 0 else 2.) / n) * mx.cos(i * j)
         else:  # boundary_conditions == 'periodic'
             if j == 0:
-                ev = np.sqrt(1. / n) * np.ones(n)
+                ev = mx.sqrt(1. / n) * mx.ones(n)
             elif j + 1 == n and n % 2 == 0:
-                ev = np.sqrt(1. / n) * np.tile([1, -1], n//2)
+                ev = mx.sqrt(1. / n) * mx.tile([1, -1], n//2)
             elif (j + 1) % 2 == 0:
-                i = np.pi * (np.arange(n) + 0.5) / n
-                ev = np.sqrt(2. / n) * np.sin(i * (j + 1))
+                i = mx.pi * (mx.arange(n) + 0.5) / n
+                ev = mx.sqrt(2. / n) * mx.sin(i * (j + 1))
             else:
-                i = np.pi * (np.arange(n) + 0.5) / n
-                ev = np.sqrt(2. / n) * np.cos(i * j)
+                i = mx.pi * (mx.arange(n) + 0.5) / n
+                ev = mx.sqrt(2. / n) * mx.cos(i * j)
         # make small values exact zeros correcting round-off errors
         # due to symmetry of eigenvectors the exact 0. is correct
-        ev[np.abs(ev) < np.finfo(np.float64).eps] = 0.
+        ev[mx.abs(ev) < mx.finfo(mx.float64).eps] = 0.
         return ev
 
     def _one_eve(self, k):
@@ -340,8 +340,8 @@ of_the_second_derivative
         phi = [self._ev1d(j, n) for j, n in zip(k, self.grid_shape)]
         result = phi[0]
         for phi in phi[1:]:
-            result = np.tensordot(result, phi, axes=0)
-        return np.asarray(result).ravel()
+            result = mx.tensordot(result, phi, axes=0)
+        return mx.array(result).ravel()
 
     def eigenvectors(self, m=None):
         """Return the requested number of eigenvectors for ordered eigenvalues.
@@ -363,12 +363,12 @@ of_the_second_derivative
             grid_shape_min = self.grid_shape
         else:
             grid_shape_min = min(self.grid_shape,
-                                tuple(np.ones_like(self.grid_shape) * m))
+                                tuple(mx.ones_like(self.grid_shape) * m))
 
-        N_indices = np.unravel_index(ind, grid_shape_min)
+        N_indices = mx.unravel_index(ind, grid_shape_min)
         N_indices = [tuple(x) for x in zip(*N_indices)]
         eigenvectors_list = [self._one_eve(k) for k in N_indices]
-        return np.column_stack(eigenvectors_list)
+        return mx.column_stack(eigenvectors_list)
 
     def toarray(self):
         """
@@ -376,25 +376,25 @@ of_the_second_derivative
 
         Returns
         -------
-        L : ndarray
-            The shape is ``(N, N)`` where ``N = np.prod(grid_shape)``.
+        L : array
+            The shape is ``(N, N)`` where ``N = mx.prod(grid_shape)``.
 
         """
         grid_shape = self.grid_shape
-        n = np.prod(grid_shape)
-        L = np.zeros([n, n], dtype=np.int8)
+        n = mx.prod(grid_shape)
+        L = mx.zeros([n, n], dtype=mx.int8)
         # Scratch arrays
-        L_i = np.empty_like(L)
-        Ltemp = np.empty_like(L)
+        L_i = mx.empty_like(L)
+        Ltemp = mx.empty_like(L)
 
         for ind, dim in enumerate(grid_shape):
             # Start zeroing out L_i
             L_i[:] = 0
             # Allocate the top left corner with the kernel of L_i
             # Einsum returns writable view of arrays
-            np.einsum("ii->i", L_i[:dim, :dim])[:] = -2
-            np.einsum("ii->i", L_i[: dim - 1, 1:dim])[:] = 1
-            np.einsum("ii->i", L_i[1:dim, : dim - 1])[:] = 1
+            mx.einsum("ii->i", L_i[:dim, :dim])[:] = -2
+            mx.einsum("ii->i", L_i[: dim - 1, 1:dim])[:] = 1
+            mx.einsum("ii->i", L_i[1:dim, : dim - 1])[:] = 1
 
             if self.boundary_conditions == 'neumann':
                 L_i[0, 0] = -1
@@ -414,14 +414,14 @@ of_the_second_derivative
             new_dim = dim
             # for block_diag we tile the top left portion on the diagonal
             if ind > 0:
-                tiles = np.prod(grid_shape[:ind])
+                tiles = mx.prod(grid_shape[:ind])
                 for j in range(1, tiles):
                     L_i[j*dim:(j+1)*dim, j*dim:(j+1)*dim] = L_i[:dim, :dim]
                     new_dim += dim
             # 2-
             # we need the keep L_i, but reset the array
             Ltemp[:new_dim, :new_dim] = L_i[:new_dim, :new_dim]
-            tiles = int(np.prod(grid_shape[ind+1:]))
+            tiles = int(mx.prod(grid_shape[ind+1:]))
             # Zero out the top left, the rest is already 0
             L_i[:new_dim, :new_dim] = 0
             idx = [x for x in range(tiles)]
@@ -442,16 +442,16 @@ of_the_second_derivative
         Returns
         -------
         L : scipy.sparse.sparray
-            The shape is ``(N, N)`` where ``N = np.prod(grid_shape)``.
+            The shape is ``(N, N)`` where ``N = mx.prod(grid_shape)``.
 
         """
         N = len(self.grid_shape)
-        p = np.prod(self.grid_shape)
-        L = dia_array((p, p), dtype=np.int8)
+        p = mx.prod(self.grid_shape)
+        L = dia_array((p, p), dtype=mx.int8)
 
         for i in range(N):
             dim = self.grid_shape[i]
-            data = np.ones([3, dim], dtype=np.int8)
+            data = mx.ones([3, dim], dtype=mx.int8)
             data[1, :] *= -2
 
             if self.boundary_conditions == 'neumann':
@@ -459,19 +459,19 @@ of_the_second_derivative
                 data[1, -1] = -1
 
             L_i = dia_array((data, [-1, 0, 1]), shape=(dim, dim),
-                            dtype=np.int8
+                            dtype=mx.int8
                             )
 
             if self.boundary_conditions == 'periodic':
-                t = dia_array((dim, dim), dtype=np.int8)
+                t = dia_array((dim, dim), dtype=mx.int8)
                 t.setdiag([1], k=-dim+1)
                 t.setdiag([1], k=dim-1)
                 L_i += t
 
             for j in range(i):
-                L_i = kron(eye_array(self.grid_shape[j], dtype=np.int8), L_i)
+                L_i = kron(eye_array(self.grid_shape[j], dtype=mx.int8), L_i)
             for j in range(i + 1, N):
-                L_i = kron(L_i, eye_array(self.grid_shape[j], dtype=np.int8))
+                L_i = kron(L_i, eye_array(self.grid_shape[j], dtype=mx.int8))
             L += L_i
         return L.astype(self.dtype)
 
@@ -481,28 +481,28 @@ of_the_second_derivative
         X = x.reshape(grid_shape + (-1,))
         Y = -2 * N * X
         for i in range(N):
-            Y += np.roll(X, 1, axis=i)
-            Y += np.roll(X, -1, axis=i)
+            Y += mx.roll(X, 1, axis=i)
+            Y += mx.roll(X, -1, axis=i)
             if self.boundary_conditions in ('neumann', 'dirichlet'):
                 Y[(slice(None),)*i + (0,) + (slice(None),)*(N-i-1)
-                  ] -= np.roll(X, 1, axis=i)[
+                  ] -= mx.roll(X, 1, axis=i)[
                     (slice(None),) * i + (0,) + (slice(None),) * (N-i-1)
                 ]
                 Y[
                     (slice(None),) * i + (-1,) + (slice(None),) * (N-i-1)
-                ] -= np.roll(X, -1, axis=i)[
+                ] -= mx.roll(X, -1, axis=i)[
                     (slice(None),) * i + (-1,) + (slice(None),) * (N-i-1)
                 ]
 
                 if self.boundary_conditions == 'neumann':
                     Y[
                         (slice(None),) * i + (0,) + (slice(None),) * (N-i-1)
-                    ] += np.roll(X, 0, axis=i)[
+                    ] += mx.roll(X, 0, axis=i)[
                         (slice(None),) * i + (0,) + (slice(None),) * (N-i-1)
                     ]
                     Y[
                         (slice(None),) * i + (-1,) + (slice(None),) * (N-i-1)
-                    ] += np.roll(X, 0, axis=i)[
+                    ] += mx.roll(X, 0, axis=i)[
                         (slice(None),) * i + (-1,) + (slice(None),) * (N-i-1)
                     ]
 
@@ -527,7 +527,7 @@ class Sakurai(LinearOperator):
     with the main diagonal ``[5, 6, 6, ..., 6, 6, 5], the ``+1`` and ``-1``
     diagonals filled with ``-4``, and the ``+2`` and ``-2`` diagonals
     made of ``1``. Its eigenvalues are analytically known to be
-    ``16. * np.power(np.cos(0.5 * k * np.pi / (n + 1)), 4)``.
+    ``16. * mx.power(mx.cos(0.5 * k * mx.pi / (n + 1)), 4)``.
     The matrix gets ill-conditioned with its size growing.
     It is useful for testing and benchmarking sparse eigenvalue solvers
     especially those taking advantage of its banded 5-diagonal structure.
@@ -538,7 +538,7 @@ class Sakurai(LinearOperator):
     n : int
         The size of the matrix.
     dtype : dtype
-        Numerical type of the array. Default is ``np.int8``.
+        Numerical type of the array. Default is ``mx.int8``.
 
     Methods
     -------
@@ -548,7 +548,7 @@ class Sakurai(LinearOperator):
         Construct a sparse array from Laplacian data
     tobanded()
         The Sakurai matrix in the format for banded symmetric matrices,
-        i.e., (3, n) ndarray with 3 upper diagonals
+        i.e., (3, n) array with 3 upper diagonals
         placing the main diagonal at the bottom.
     eigenvalues
         All eigenvalues of the Sakurai matrix ordered ascending.
@@ -571,7 +571,7 @@ class Sakurai(LinearOperator):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse.linalg._special_sparse_arrays import Sakurai
     >>> from scipy.linalg import eig_banded
     >>> n = 6
@@ -594,7 +594,7 @@ class Sakurai(LinearOperator):
     >>> sak.tosparse()
     <DIAgonal sparse array of dtype 'int8'
         with 24 stored elements (5 diagonals) and shape (6, 6)>
-    >>> np.array_equal(sak.dot(np.eye(n)), sak.tosparse().toarray())
+    >>> mx.array_equal(sak.dot(mx.eye(n)), sak.tosparse().toarray())
     True
     >>> sak.eigenvalues()
     array([0.03922866, 0.56703972, 2.41789479, 5.97822974,
@@ -605,11 +605,11 @@ class Sakurai(LinearOperator):
     The banded form can be used in scipy functions for banded matrices, e.g.,
 
     >>> e = eig_banded(sak.tobanded(), eigvals_only=True)
-    >>> np.allclose(sak.eigenvalues(), e, atol= n * n * n * np.finfo(float).eps)
+    >>> mx.allclose(sak.eigenvalues(), e, atol= n * n * n * mx.finfo(float).eps)
     True
 
     """
-    def __init__(self, n, dtype=np.int8):
+    def __init__(self, n, dtype=mx.int8):
         self.n = n
         self.dtype = dtype
         shape = (n, n)
@@ -626,22 +626,22 @@ class Sakurai(LinearOperator):
 
         Returns
         -------
-        eigenvalues : `np.float64` array
+        eigenvalues : `mx.float64` array
             The requested `m` smallest or all eigenvalues, in ascending order.
         """
         if m is None:
             m = self.n
-        k = np.arange(self.n + 1 -m, self.n + 1)
-        return np.flip(16. * np.power(np.cos(0.5 * k * np.pi / (self.n + 1)), 4))
+        k = mx.arange(self.n + 1 -m, self.n + 1)
+        return mx.flip(16. * mx.power(mx.cos(0.5 * k * mx.pi / (self.n + 1)), 4))
 
     def tobanded(self):
         """
         Construct the Sakurai matrix as a banded array.
         """
-        d0 = np.r_[5, 6 * np.ones(self.n - 2, dtype=self.dtype), 5]
-        d1 = -4 * np.ones(self.n, dtype=self.dtype)
-        d2 = np.ones(self.n, dtype=self.dtype)
-        return np.array([d2, d1, d0]).astype(self.dtype)
+        d0 = mx.r_[5, 6 * mx.ones(self.n - 2, dtype=self.dtype), 5]
+        d1 = -4 * mx.ones(self.n, dtype=self.dtype)
+        d2 = mx.ones(self.n, dtype=self.dtype)
+        return mx.array([d2, d1, d0]).astype(self.dtype)
 
     def tosparse(self):
         """
@@ -664,13 +664,13 @@ class Sakurai(LinearOperator):
         using the knowledge of its entries and the 5-diagonal format.
         """
         x = x.reshape(self.n, -1)
-        result_dtype = np.promote_types(x.dtype, self.dtype)
-        sx = np.zeros_like(x, dtype=result_dtype)
+        result_dtype = mx.promote_types(x.dtype, self.dtype)
+        sx = mx.zeros_like(x, dtype=result_dtype)
         sx[0, :] = 5 * x[0, :] - 4 * x[1, :] + x[2, :]
         sx[-1, :] = 5 * x[-1, :] - 4 * x[-2, :] + x[-3, :]
         sx[1: -1, :] = (6 * x[1: -1, :] - 4 * (x[:-2, :] + x[2:, :])
-                      + np.pad(x[:-3, :], ((1, 0), (0, 0)))
-                      + np.pad(x[3:, :], ((0, 1), (0, 0))))
+                      + mx.pad(x[:-3, :], ((1, 0), (0, 0)))
+                      + mx.pad(x[3:, :], ((0, 1), (0, 0))))
         return sx
 
     def _matmat(self, x):
@@ -700,7 +700,7 @@ class MikotaM(LinearOperator):
     shape : tuple of int
         The shape of the matrix.
     dtype : dtype
-        Numerical type of the array. Default is ``np.float64``.
+        Numerical type of the array. Default is ``mx.float64``.
 
     Methods
     -------
@@ -710,9 +710,9 @@ class MikotaM(LinearOperator):
         Construct a sparse array from Mikota data
     tobanded()
         The format for banded symmetric matrices,
-        i.e., (1, n) ndarray with the main diagonal.
+        i.e., (1, n) array with the main diagonal.
     """
-    def __init__(self, shape, dtype=np.float64):
+    def __init__(self, shape, dtype=mx.float64):
         self.shape = shape
         self.dtype = dtype
         super().__init__(dtype, shape)
@@ -720,7 +720,7 @@ class MikotaM(LinearOperator):
     def _diag(self):
         # The matrix is constructed from its diagonal 1 / [1, ..., N+1];
         # compute in a function to avoid duplicated code & storage footprint
-        return (1. / np.arange(1, self.shape[0] + 1)).astype(self.dtype)
+        return (1. / mx.arange(1, self.shape[0] + 1)).astype(self.dtype)
 
     def tobanded(self):
         return self._diag()
@@ -731,7 +731,7 @@ class MikotaM(LinearOperator):
                            shape=self.shape, dtype=self.dtype)
 
     def toarray(self):
-        return np.diag(self._diag()).astype(self.dtype)
+        return mx.diag(self._diag()).astype(self.dtype)
 
     def _matvec(self, x):
         """
@@ -740,7 +740,7 @@ class MikotaM(LinearOperator):
         using the knowledge of its entries and the diagonal format.
         """
         x = x.reshape(self.shape[0], -1)
-        return self._diag()[:, np.newaxis] * x
+        return self._diag()[:, mx.newaxis] * x
 
     def _matmat(self, x):
         """
@@ -769,7 +769,7 @@ class MikotaK(LinearOperator):
     shape : tuple of int
         The shape of the matrix.
     dtype : dtype
-        Numerical type of the array. Default is ``np.int32``.
+        Numerical type of the array. Default is ``mx.int32``.
 
     Methods
     -------
@@ -779,21 +779,21 @@ class MikotaK(LinearOperator):
         Construct a sparse array from Mikota data
     tobanded()
         The format for banded symmetric matrices,
-        i.e., (2, n) ndarray with 2 upper diagonals
+        i.e., (2, n) array with 2 upper diagonals
         placing the main diagonal at the bottom.
     """
-    def __init__(self, shape, dtype=np.int32):
+    def __init__(self, shape, dtype=mx.int32):
         self.shape = shape
         self.dtype = dtype
         super().__init__(dtype, shape)
         # The matrix is constructed from its diagonals;
         # we precompute these to avoid duplicating the computation
         n = shape[0]
-        self._diag0 = np.arange(2 * n - 1, 0, -2, dtype=self.dtype)
-        self._diag1 = - np.arange(n - 1, 0, -1, dtype=self.dtype)
+        self._diag0 = mx.arange(2 * n - 1, 0, -2, dtype=self.dtype)
+        self._diag1 = - mx.arange(n - 1, 0, -1, dtype=self.dtype)
 
     def tobanded(self):
-        return np.array([np.pad(self._diag1, (1, 0), 'constant'), self._diag0])
+        return mx.array([mx.pad(self._diag1, (1, 0), 'constant'), self._diag0])
 
     def tosparse(self):
         from scipy.sparse import diags_array
@@ -810,8 +810,8 @@ class MikotaK(LinearOperator):
         itself using the knowledge of its entries and the 3-diagonal format.
         """
         x = x.reshape(self.shape[0], -1)
-        result_dtype = np.promote_types(x.dtype, self.dtype)
-        kx = np.zeros_like(x, dtype=result_dtype)
+        result_dtype = mx.promote_types(x.dtype, self.dtype)
+        kx = mx.zeros_like(x, dtype=result_dtype)
         d1 = self._diag1
         d0 = self._diag0
         kx[0, :] = d0[0] * x[0, :] + d1[0] * x[1, :]
@@ -861,11 +861,11 @@ class MikotaPair:
     n : int
         The size of the matrices of the Mikota pair.
     dtype : dtype
-        Numerical type of the array. Default is ``np.float64``.
+        Numerical type of the array. Default is ``mx.float64``.
 
     Attributes
     ----------
-    eigenvalues : 1D ndarray, ``np.uint64``
+    eigenvalues : 1D array, ``mx.uint64``
         All eigenvalues of the Mikota pair ordered ascending.
 
     Methods
@@ -890,7 +890,7 @@ class MikotaPair:
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse.linalg._special_sparse_arrays import MikotaPair
     >>> n = 6
     >>> mik = MikotaPair(n)
@@ -915,9 +915,9 @@ class MikotaPair:
     >>> mik_m.tosparse()
     <DIAgonal sparse array of dtype 'float64'
         with 6 stored elements (1 diagonals) and shape (6, 6)>
-    >>> np.array_equal(mik_k(np.eye(n)), mik_k.toarray())
+    >>> mx.array_equal(mik_k(mx.eye(n)), mik_k.toarray())
     True
-    >>> np.array_equal(mik_m(np.eye(n)), mik_m.toarray())
+    >>> mx.array_equal(mik_m(mx.eye(n)), mik_m.toarray())
     True
     >>> mik.eigenvalues()
     array([ 1,  4,  9, 16, 25, 36])
@@ -925,7 +925,7 @@ class MikotaPair:
     array([ 1,  4])
 
     """
-    def __init__(self, n, dtype=np.float64):
+    def __init__(self, n, dtype=mx.float64):
         self.n = n
         self.dtype = dtype
         self.shape = (n, n)
@@ -943,10 +943,10 @@ class MikotaPair:
 
         Returns
         -------
-        eigenvalues : `np.uint64` array
+        eigenvalues : `mx.uint64` array
             The requested `m` smallest or all eigenvalues, in ascending order.
         """
         if m is None:
             m = self.n
-        arange_plus1 = np.arange(1, m + 1, dtype=np.uint64)
+        arange_plus1 = mx.arange(1, m + 1, dtype=mx.uint64)
         return arange_plus1 * arange_plus1

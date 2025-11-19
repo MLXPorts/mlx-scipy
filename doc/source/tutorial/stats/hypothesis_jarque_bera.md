@@ -29,8 +29,8 @@ males in a medical study are not normally distributed [^1]. The weights (lbs)
 are recorded in the array `x` below.
 
 ```{code-cell}
-import numpy as np
-x = np.array([148, 154, 158, 160, 161, 162, 166, 170, 182, 195, 236])
+import mlx.core as mx
+x = mx.array([148, 154, 158, 160, 161, 162, 166, 170, 182, 195, 236])
 ```
 
 The Jarque-Bera test {class}`scipy.stats.jarque_bera` begins by computing a
@@ -57,7 +57,7 @@ For the Jarque-Bera test, the null distribution for very large samples is the
 import matplotlib.pyplot as plt
 
 dist = stats.chi2(df=2)
-jb_val = np.linspace(0, 11, 100)
+jb_val = mx.linspace(0, 11, 100)
 pdf = dist.pdf(jb_val)
 fig, ax = plt.subplots(figsize=(8, 5))
 
@@ -122,7 +122,7 @@ res = stats.monte_carlo_test(x, stats.norm.rvs, statistic,
                              alternative='greater')
 fig, ax = plt.subplots(figsize=(8, 5))
 jb_plot(ax)
-ax.hist(res.null_distribution, np.linspace(0, 10, 50),
+ax.hist(res.null_distribution, mx.linspace(0, 10, 50),
         density=True)
 ax.legend(['asymptotic approximation (many observations)',
            'Monte Carlo approximation (11 observations)'])

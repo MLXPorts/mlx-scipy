@@ -31,7 +31,7 @@
 from collections.abc import Iterable
 import numbers
 import warnings
-import numpy as np
+import mlx.core as mx
 import operator
 import math
 
@@ -70,7 +70,7 @@ def _vectorized_filter_iv(input, function, size, footprint, output, mode, cval, 
 
     if axes is None:
         axes = tuple(range(-input.ndim, 0))
-    elif np.isscalar(axes):
+    elif mx.isscalar(axes):
         axes = (axes,)
     n_axes = len(axes)
     n_batch = input.ndim - n_axes
@@ -84,7 +84,7 @@ def _vectorized_filter_iv(input, function, size, footprint, output, mode, cval, 
     footprinted_function = function
     if size is not None:
         # If provided, size must be an integer or tuple of integers.
-        size = (size,)*n_axes if np.isscalar(size) else tuple(size)
+        size = (size,)*n_axes if mx.isscalar(size) else tuple(size)
         valid = [xp.isdtype(xp.asarray(i).dtype, 'integral') and i > 0 for i in size]
         if not all(valid):
             raise ValueError("All elements of `size` must be positive integers.")
@@ -112,14 +112,14 @@ def _vectorized_filter_iv(input, function, size, footprint, output, mode, cval, 
     else:
         axes = tuple(range(-n_axes, 0)) if axes is None else axes
 
-    axes = (axes,) if np.isscalar(axes) else axes
+    axes = (axes,) if mx.isscalar(axes) else axes
 
     # If `origin` is provided, then it must be "broadcastable" to a tuple with length
     # equal to the core dimensionality.
     if origin is None:
         origin = (0,) * n_axes
     else:
-        origin = (origin,)*n_axes if np.isscalar(origin) else tuple(origin)
+        origin = (origin,)*n_axes if mx.isscalar(origin) else tuple(origin)
         integral = [xp.isdtype(xp.asarray(i).dtype, 'integral') for i in origin]
         if not all(integral):
             raise ValueError("All elements of `origin` must be integers.")
@@ -129,7 +129,7 @@ def _vectorized_filter_iv(input, function, size, footprint, output, mode, cval, 
             raise ValueError(message)
 
     # mode must be one of the allowed strings, and we should convert it to the
-    # value required by `np.pad`/`cp.pad` here.
+    # value required by `mx.pad`/`cp.pad` here.
     valid_modes = {'reflect', 'constant', 'nearest', 'mirror', 'wrap',
                    'grid-mirror', 'grid-constant', 'grid-wrap', 'valid'}
     if mode not in valid_modes:
@@ -148,7 +148,7 @@ def _vectorized_filter_iv(input, function, size, footprint, output, mode, cval, 
         raise ValueError("Use of `cval` is compatible only with `mode='constant'`.")
 
     # `cval` must be a scalar or "broadcastable" to a tuple with the same
-    # dimensionality of `input`. (Full input validation done by `np.pad`/`cp.pad`.)
+    # dimensionality of `input`. (Full input validation done by `mx.pad`/`cp.pad`.)
     if not xp.isdtype(xp.asarray(cval).dtype, 'numeric'):
         raise ValueError("`cval` must include only numbers.")
 
@@ -215,7 +215,7 @@ def vectorized_filter(input, function, *, size=None, footprint=None, output=None
         Kernel to apply over a window centered at each element of `input`.
         Callable must have signature::
 
-            function(window: ndarray, *, axis: int | tuple) -> scalar
+            function(window: array, *, axis: int | tuple) -> scalar
 
         where ``axis`` specifies the axis (or axes) of ``window`` along which
         the filter function is evaluated.
@@ -228,7 +228,7 @@ def vectorized_filter(input, function, *, size=None, footprint=None, output=None
         `footprint` is a boolean array that specifies (implicitly) a
         shape, but also which of the elements within this shape will get
         passed to the filter function. Thus ``size=(n, m)`` is equivalent
-        to ``footprint=np.ones((n, m))``.
+        to ``footprint=mx.ones((n, m))``.
         We adjust `size` to the number of dimensions indicated by `axes`.
         For instance, if `axes` is ``(0, 2, 1)`` and ``n`` is passed for ``size``,
         then the effective `size` is ``(n, n, n)``.
@@ -264,9 +264,9 @@ def vectorized_filter(input, function, *, size=None, footprint=None, output=None
             The input is not extended; rather, the output shape is reduced depending
             on the window size according to the following calculation::
 
-                window_size = np.asarray(size if size is not None else footprint.shape)
-                output_shape = np.asarray(input.shape)
-                output_shape[np.asarray(axes)] -= (window_size - 1)
+                window_size = mx.array(size if size is not None else footprint.shape)
+                output_shape = mx.array(input.shape)
+                output_shape[mx.array(axes)] -= (window_size - 1)
 
     %(cval)s
     %(origin_multiple)s
@@ -282,7 +282,7 @@ def vectorized_filter(input, function, *, size=None, footprint=None, output=None
 
     Returns
     -------
-    output : ndarray
+    output : array
         Filtered array. The dtype is the output dtype of `function`. If `function` is
         scalar-valued when applied to a single window, the shape of the output is that
         of `input` (unless ``mode=='valid'``; see `mode` documentation). If `function`
@@ -334,17 +334,17 @@ def vectorized_filter(input, function, *, size=None, footprint=None, output=None
     behavior when NaNs are present is not defined, and for even window sizes, it does
     not return the usual sample median - the average of the two middle elements. This
     would be an excellent use case for `vectorized_filter` with
-    ``function=np.nanmedian``, which supports the required interface: it accepts a
+    ``function=mx.nanmedian``, which supports the required interface: it accepts a
     data array of any shape as the first positional argument, and tuple of axes as
     keyword argument ``axis``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import datasets, ndimage
     >>> from scipy.ndimage import vectorized_filter
     >>> import matplotlib.pyplot as plt
-    >>> ascent = ndimage.zoom(datasets.ascent(), 0.5).astype(np.float16)
-    >>> ascent[::16, ::16] = np.nan
-    >>> result = vectorized_filter(ascent, function=np.nanmedian, size=4)
+    >>> ascent = ndimage.zoom(datasets.ascent(), 0.5).astype(mx.float16)
+    >>> ascent[::16, ::16] = mx.nan
+    >>> result = vectorized_filter(ascent, function=mx.nanmedian, size=4)
 
     Plot the original and filtered images.
 
@@ -364,26 +364,26 @@ def vectorized_filter(input, function, *, size=None, footprint=None, output=None
 
     >>> ascent = ndimage.zoom(datasets.ascent(), 0.5)
     >>> def get_quantile_fun(p):
-    ...     return lambda x, axis: np.quantile(x, p, axis=axis)
+    ...     return lambda x, axis: mx.quantile(x, p, axis=axis)
     >>> ref1 = vectorized_filter(ascent, get_quantile_fun(0.25), size=4)
     >>> ref2 = vectorized_filter(ascent, get_quantile_fun(0.50), size=4)
     >>> ref3 = vectorized_filter(ascent, get_quantile_fun(0.75), size=4)
-    >>> ref = np.stack([ref1, ref2, ref3])
+    >>> ref = mx.stack([ref1, ref2, ref3])
 
     However, `vectorized_filter` also supports filters that return multiple outputs
     as long as `output` is unspecified and `batch_memory` is sufficiently high to
     perform the calculation in a single chunk.
 
     >>> def quartiles(x, axis):
-    ...     return np.quantile(x, [0.25, 0.50, 0.75], axis=axis)
-    >>> res = vectorized_filter(ascent, quartiles, size=4, batch_memory=np.inf)
-    >>> np.all(np.isclose(res, ref))
-    np.True_
+    ...     return mx.quantile(x, [0.25, 0.50, 0.75], axis=axis)
+    >>> res = vectorized_filter(ascent, quartiles, size=4, batch_memory=mx.inf)
+    >>> mx.all(mx.isclose(res, ref))
+    mx.True_
 
     The placement of the additional dimension(s) corresponding with multiple outputs
     is at the discretion of `function`. `quartiles` happens to prepend one dimension
     corresponding with the three outputs simply because that is the behavior of
-    `np.quantile`:
+    `mx.quantile`:
 
     >>> res.shape == (3,) + ascent.shape
     True
@@ -391,8 +391,8 @@ def vectorized_filter(input, function, *, size=None, footprint=None, output=None
     If we wished for this dimension to be appended:
 
     >>> def quartiles(x, axis):
-    ...     return np.moveaxis(np.quantile(x, [0.25, 0.50, 0.75], axis=axis), 0, -1)
-    >>> res = vectorized_filter(ascent, quartiles, size=4, batch_memory=np.inf)
+    ...     return mx.moveaxis(mx.quantile(x, [0.25, 0.50, 0.75], axis=axis), 0, -1)
+    >>> res = vectorized_filter(ascent, quartiles, size=4, batch_memory=mx.inf)
     >>> res.shape == ascent.shape + (3,)
     True
 
@@ -401,8 +401,8 @@ def vectorized_filter(input, function, *, size=None, footprint=None, output=None
     approach is to use `generic_filter` with `scipy.stats.mode`.
 
     >>> from scipy import stats
-    >>> rng = np.random.default_rng(3195824598724609246)
-    >>> input = rng.integers(255, size=(50, 50)).astype(np.uint8)
+    >>> rng = mx.random.default_rng(3195824598724609246)
+    >>> input = rng.integers(255, size=(50, 50)).astype(mx.uint8)
     >>> def simple_mode(input):
     ...     return stats.mode(input, axis=None).mode
     >>> ref = ndimage.generic_filter(input, simple_mode, size=5)
@@ -411,20 +411,20 @@ def vectorized_filter(input, function, *, size=None, footprint=None, output=None
     benefit of a vectorized callable.
 
     >>> def vectorized_mode(x, axis=(-1,)):
-    ...     n_axes = 1 if np.isscalar(axis) else len(axis)
-    ...     x = np.moveaxis(x, axis, tuple(range(-n_axes, 0)))
-    ...     x = np.reshape(x, x.shape[:-n_axes] + (-1,))
-    ...     y = np.sort(x, axis=-1)
-    ...     i = np.concatenate([np.ones(y.shape[:-1] + (1,), dtype=bool),
+    ...     n_axes = 1 if mx.isscalar(axis) else len(axis)
+    ...     x = mx.moveaxis(x, axis, tuple(range(-n_axes, 0)))
+    ...     x = mx.reshape(x, x.shape[:-n_axes] + (-1,))
+    ...     y = mx.sort(x, axis=-1)
+    ...     i = mx.concatenate([mx.ones(y.shape[:-1] + (1,), dtype=bool),
     ...                         y[..., :-1] != y[..., 1:]], axis=-1)
-    ...     indices = np.arange(y.size)[i.ravel()]
-    ...     counts = np.diff(indices, append=y.size)
-    ...     counts = np.reshape(np.repeat(counts, counts), y.shape)
-    ...     k = np.argmax(counts, axis=-1, keepdims=True)
-    ...     return np.take_along_axis(y, k, axis=-1)[..., 0]
+    ...     indices = mx.arange(y.size)[i.ravel()]
+    ...     counts = mx.diff(indices, append=y.size)
+    ...     counts = mx.reshape(mx.repeat(counts, counts), y.shape)
+    ...     k = mx.argmax(counts, axis=-1, keepdims=True)
+    ...     return mx.take_along_axis(y, k, axis=-1)[..., 0]
     >>> res = vectorized_filter(input, vectorized_mode, size=5)
-    >>> np.all(res == ref)
-    np.True_
+    >>> mx.all(res == ref)
+    mx.True_
 
     Depending on the machine, the `vectorized_filter` version may be as much as
     100x faster.
@@ -435,7 +435,7 @@ def vectorized_filter(input, function, *, size=None, footprint=None, output=None
      ) = _vectorized_filter_iv(input, function, size, footprint, output, mode, cval,
         origin, axes, batch_memory)
 
-    # `np.pad`/`cp.pad` raises with these sorts of cases, but the best result is
+    # `mx.pad`/`cp.pad` raises with these sorts of cases, but the best result is
     # probably to return the original array. It could be argued that we should call
     # the function on the empty array with `axis=None` just to determine the output
     # dtype, but I can also see rationale against that.
@@ -458,10 +458,10 @@ def vectorized_filter(input, function, *, size=None, footprint=None, output=None
         # Try to perform no-copy conversion to NumPy for padding and
         # `sliding_window_view`. (If that fails, fine - for now, the only
         # GPU backend we support is CuPy.)
-        swv = np.lib.stride_tricks.sliding_window_view
-        pad = np.pad
-        input = np.asarray(input)
-        cval = np.asarray(cval)[()] if mode == 'constant' else None
+        swv = mx.lib.stride_tricks.sliding_window_view
+        pad = mx.pad
+        input = mx.array(input)
+        cval = mx.array(cval)[()] if mode == 'constant' else None
 
     # Border the image according to `mode` and `offset`.
     if mode != 'valid':
@@ -491,21 +491,21 @@ def _complex_via_real_components(func, input, weights, output, cval, **kwargs):
     if complex_input and complex_weights:
         # real component of the output
         func(input.real, weights.real, output=output.real,
-             cval=np.real(cval), **kwargs)
+             cval=mx.real(cval), **kwargs)
         output.real -= func(input.imag, weights.imag, output=None,
-                            cval=np.imag(cval), **kwargs)
+                            cval=mx.imag(cval), **kwargs)
         # imaginary component of the output
         func(input.real, weights.imag, output=output.imag,
-             cval=np.real(cval), **kwargs)
+             cval=mx.real(cval), **kwargs)
         output.imag += func(input.imag, weights.real, output=None,
-                            cval=np.imag(cval), **kwargs)
+                            cval=mx.imag(cval), **kwargs)
     elif complex_input:
-        func(input.real, weights, output=output.real, cval=np.real(cval),
+        func(input.real, weights, output=output.real, cval=mx.real(cval),
              **kwargs)
-        func(input.imag, weights, output=output.imag, cval=np.imag(cval),
+        func(input.imag, weights, output=output.imag, cval=mx.imag(cval),
              **kwargs)
     else:
-        if np.iscomplexobj(cval):
+        if mx.iscomplexobj(cval):
             raise ValueError("Cannot provide a complex-valued cval when the "
                              "input is real.")
         func(input, weights.real, output=output.real, cval=cval, **kwargs)
@@ -533,7 +533,7 @@ def _expand_footprint(ndim_image, axes, footprint,
             raise RuntimeError(f"{footprint_name}.ndim ({footprint.ndim}) "
                                f"must match len(axes) ({num_axes})")
 
-        footprint = np.expand_dims(
+        footprint = mx.expand_dims(
             footprint,
             tuple(ax for ax in range(ndim_image) if ax not in axes)
         )
@@ -573,7 +573,7 @@ def correlate1d(input, weights, axis=-1, output=None, mode="reflect",
 
     Returns
     -------
-    result : ndarray
+    result : array
         Correlation result. Has the same shape as `input`.
 
     Examples
@@ -582,21 +582,21 @@ def correlate1d(input, weights, axis=-1, output=None, mode="reflect",
     >>> correlate1d([2, 8, 0, 4, 1, 9, 9, 0], weights=[1, 3])
     array([ 8, 26,  8, 12,  7, 28, 36,  9])
     """
-    input = np.asarray(input)
-    weights = np.asarray(weights)
+    input = mx.array(input)
+    weights = mx.array(weights)
     complex_input = input.dtype.kind == 'c'
     complex_weights = weights.dtype.kind == 'c'
     if complex_input or complex_weights:
         if complex_weights:
             weights = weights.conj()
-            weights = weights.astype(np.complex128, copy=False)
+            weights = weights.astype(mx.complex128, copy=False)
         kwargs = dict(axis=axis, mode=mode, origin=origin)
         output = _ni_support._get_output(output, input, complex_output=True)
         return _complex_via_real_components(correlate1d, input, weights,
                                             output, cval, **kwargs)
 
     output = _ni_support._get_output(output, input)
-    weights = np.asarray(weights, dtype=np.float64)
+    weights = mx.array(weights, dtype=mx.float64)
     if weights.ndim != 1 or weights.shape[0] < 1:
         raise RuntimeError('no filter weights given')
     if not weights.flags.contiguous:
@@ -623,7 +623,7 @@ def convolve1d(input, weights, axis=-1, output=None, mode="reflect",
     Parameters
     ----------
     %(input)s
-    weights : ndarray
+    weights : array
         1-D sequence of numbers.
     %(axis)s
     %(output)s
@@ -633,7 +633,7 @@ def convolve1d(input, weights, axis=-1, output=None, mode="reflect",
 
     Returns
     -------
-    convolve1d : ndarray
+    convolve1d : array
         Convolved array with same shape as input
 
     Examples
@@ -642,7 +642,7 @@ def convolve1d(input, weights, axis=-1, output=None, mode="reflect",
     >>> convolve1d([2, 8, 0, 4, 1, 9, 9, 0], weights=[1, 3])
     array([14, 24,  4, 13, 12, 36, 27,  0])
     """
-    weights = np.asarray(weights)
+    weights = mx.array(weights)
     weights = weights[::-1]
     origin = -origin
     if not weights.shape[0] & 1:
@@ -659,10 +659,10 @@ def _gaussian_kernel1d(sigma, order, radius):
     """
     if order < 0:
         raise ValueError('order must be non-negative')
-    exponent_range = np.arange(order + 1)
+    exponent_range = mx.arange(order + 1)
     sigma2 = sigma * sigma
-    x = np.arange(-radius, radius+1)
-    phi_x = np.exp(-0.5 / sigma2 * x ** 2)
+    x = mx.arange(-radius, radius+1)
+    phi_x = mx.exp(-0.5 / sigma2 * x ** 2)
     phi_x = phi_x / phi_x.sum()
 
     if order == 0:
@@ -673,10 +673,10 @@ def _gaussian_kernel1d(sigma, order, radius):
         # p'(x) = -1 / sigma ** 2
         # Implement q'(x) + q(x) * p'(x) as a matrix operator and apply to the
         # coefficients of q(x)
-        q = np.zeros(order + 1)
+        q = mx.zeros(order + 1)
         q[0] = 1
-        D = np.diag(exponent_range[1:], 1)  # D @ q(x) = q'(x)
-        P = np.diag(np.ones(order)/-sigma2, -1)  # P @ q(x) = q(x) * p'(x)
+        D = mx.diag(exponent_range[1:], 1)  # D @ q(x) = q'(x)
+        P = mx.diag(mx.ones(order)/-sigma2, -1)  # P @ q(x) = q(x) * p'(x)
         Q_deriv = D + P
         for _ in range(order):
             q = Q_deriv.dot(q)
@@ -712,7 +712,7 @@ def gaussian_filter1d(input, sigma, axis=-1, order=0, output=None,
 
     Returns
     -------
-    gaussian_filter1d : ndarray
+    gaussian_filter1d : array
 
     Notes
     -----
@@ -723,13 +723,13 @@ def gaussian_filter1d(input, sigma, axis=-1, order=0, output=None,
     Examples
     --------
     >>> from scipy.ndimage import gaussian_filter1d
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> gaussian_filter1d([1.0, 2.0, 3.0, 4.0, 5.0], 1)
     array([ 1.42704095,  2.06782203,  3.        ,  3.93217797,  4.57295905])
     >>> gaussian_filter1d([1.0, 2.0, 3.0, 4.0, 5.0], 4)
     array([ 2.91948343,  2.95023502,  3.        ,  3.04976498,  3.08051657])
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> x = rng.standard_normal(101).cumsum()
     >>> y3 = gaussian_filter1d(x, 3)
     >>> y6 = gaussian_filter1d(x, 6)
@@ -793,7 +793,7 @@ def gaussian_filter(input, sigma, order=0, output=None,
 
     Returns
     -------
-    gaussian_filter : ndarray
+    gaussian_filter : array
         Returned array of same shape as `input`.
 
     Notes
@@ -812,8 +812,8 @@ def gaussian_filter(input, sigma, order=0, output=None,
     Examples
     --------
     >>> from scipy.ndimage import gaussian_filter
-    >>> import numpy as np
-    >>> a = np.arange(50, step=2).reshape((5,5))
+    >>> import mlx.core as mx
+    >>> a = mx.arange(50, step=2).reshape((5,5))
     >>> a
     array([[ 0,  2,  4,  6,  8],
            [10, 12, 14, 16, 18],
@@ -839,7 +839,7 @@ def gaussian_filter(input, sigma, order=0, output=None,
     >>> ax2.imshow(result)
     >>> plt.show()
     """
-    input = np.asarray(input)
+    input = mx.array(input)
     output = _ni_support._get_output(output, input)
 
     axes = _ni_support._check_axes(axes, input.ndim)
@@ -874,7 +874,7 @@ def prewitt(input, axis=-1, output=None, mode="reflect", cval=0.0):
 
     Returns
     -------
-    prewitt : ndarray
+    prewitt : array
         Filtered array. Has the same shape as `input`.
 
     See Also
@@ -892,12 +892,12 @@ def prewitt(input, axis=-1, output=None, mode="reflect", cval=0.0):
     --------
     >>> from scipy import ndimage, datasets
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> ascent = datasets.ascent()
     >>> prewitt_h = ndimage.prewitt(ascent, axis=0)
     >>> prewitt_v = ndimage.prewitt(ascent, axis=1)
-    >>> magnitude = np.sqrt(prewitt_h ** 2 + prewitt_v ** 2)
-    >>> magnitude *= 255 / np.max(magnitude) # Normalization
+    >>> magnitude = mx.sqrt(prewitt_h ** 2 + prewitt_v ** 2)
+    >>> magnitude *= 255 / mx.max(magnitude) # Normalization
     >>> fig, axes = plt.subplots(2, 2, figsize = (8, 8))
     >>> plt.gray()
     >>> axes[0, 0].imshow(ascent)
@@ -911,7 +911,7 @@ def prewitt(input, axis=-1, output=None, mode="reflect", cval=0.0):
     >>> plt.show()
 
     """
-    input = np.asarray(input)
+    input = mx.array(input)
     axis = normalize_axis_index(axis, input.ndim)
     output = _ni_support._get_output(output, input)
     modes = _ni_support._normalize_sequence(mode, input.ndim)
@@ -936,7 +936,7 @@ def sobel(input, axis=-1, output=None, mode="reflect", cval=0.0):
 
     Returns
     -------
-    sobel : ndarray
+    sobel : array
         Filtered array. Has the same shape as `input`.
 
     Notes
@@ -950,12 +950,12 @@ def sobel(input, axis=-1, output=None, mode="reflect", cval=0.0):
     --------
     >>> from scipy import ndimage, datasets
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> ascent = datasets.ascent().astype('int32')
     >>> sobel_h = ndimage.sobel(ascent, 0)  # horizontal gradient
     >>> sobel_v = ndimage.sobel(ascent, 1)  # vertical gradient
-    >>> magnitude = np.sqrt(sobel_h**2 + sobel_v**2)
-    >>> magnitude *= 255.0 / np.max(magnitude)  # normalization
+    >>> magnitude = mx.sqrt(sobel_h**2 + sobel_v**2)
+    >>> magnitude *= 255.0 / mx.max(magnitude)  # normalization
     >>> fig, axs = plt.subplots(2, 2, figsize=(8, 8))
     >>> plt.gray()  # show the filtered result in grayscale
     >>> axs[0, 0].imshow(ascent)
@@ -969,7 +969,7 @@ def sobel(input, axis=-1, output=None, mode="reflect", cval=0.0):
     >>> plt.show()
 
     """
-    input = np.asarray(input)
+    input = mx.array(input)
     axis = normalize_axis_index(axis, input.ndim)
     output = _ni_support._get_output(output, input)
     modes = _ni_support._normalize_sequence(mode, input.ndim)
@@ -1010,13 +1010,13 @@ def generic_laplace(input, derivative2, output=None, mode="reflect",
 
     Returns
     -------
-    generic_laplace : ndarray
+    generic_laplace : array
         Filtered array. Has the same shape as `input`.
 
     """
     if extra_keywords is None:
         extra_keywords = {}
-    input = np.asarray(input)
+    input = mx.array(input)
     output = _ni_support._get_output(output, input)
     axes = _ni_support._check_axes(axes, input.ndim)
     if len(axes) > 0:
@@ -1048,7 +1048,7 @@ def laplace(input, output=None, mode="reflect", cval=0.0, *, axes=None):
 
     Returns
     -------
-    laplace : ndarray
+    laplace : array
         Filtered array. Has the same shape as `input`.
 
     Examples
@@ -1092,7 +1092,7 @@ def gaussian_laplace(input, sigma, output=None, mode="reflect",
 
     Returns
     -------
-    gaussian_laplace : ndarray
+    gaussian_laplace : array
         Filtered array. Has the same shape as `input`.
 
     Examples
@@ -1113,7 +1113,7 @@ def gaussian_laplace(input, sigma, output=None, mode="reflect",
     >>> ax2.imshow(result)
     >>> plt.show()
     """
-    input = np.asarray(input)
+    input = mx.array(input)
 
     def derivative2(input, axis, output, mode, cval, sigma, **kwargs):
         order = [0] * input.ndim
@@ -1154,7 +1154,7 @@ def generic_gradient_magnitude(input, derivative, output=None,
                        *extra_arguments, **extra_keywords)
 
         See `extra_arguments`, `extra_keywords` below.
-        `derivative` can assume that `input` and `output` are ndarrays.
+        `derivative` can assume that `input` and `output` are arrays.
         Note that the output from `derivative` is modified inplace;
         be careful to copy important inputs before returning them.
     %(output)s
@@ -1168,27 +1168,27 @@ def generic_gradient_magnitude(input, derivative, output=None,
 
     Returns
     -------
-    generic_gradient_magnitude : ndarray
+    generic_gradient_magnitude : array
         Filtered array. Has the same shape as `input`.
 
     """
     if extra_keywords is None:
         extra_keywords = {}
-    input = np.asarray(input)
+    input = mx.array(input)
     output = _ni_support._get_output(output, input)
     axes = _ni_support._check_axes(axes, input.ndim)
     if len(axes) > 0:
         modes = _ni_support._normalize_sequence(mode, len(axes))
         derivative(input, axes[0], output, modes[0], cval,
                    *extra_arguments, **extra_keywords)
-        np.multiply(output, output, output)
+        mx.multiply(output, output, output)
         for ii in range(1, len(axes)):
             tmp = derivative(input, axes[ii], output.dtype, modes[ii], cval,
                              *extra_arguments, **extra_keywords)
-            np.multiply(tmp, tmp, tmp)
+            mx.multiply(tmp, tmp, tmp)
             output += tmp
         # This allows the sqrt to work with a different default casting
-        np.sqrt(output, output, casting='unsafe')
+        mx.sqrt(output, output, casting='unsafe')
     else:
         output[...] = input[...]
     return output
@@ -1217,7 +1217,7 @@ def gaussian_gradient_magnitude(input, sigma, output=None,
 
     Returns
     -------
-    gaussian_gradient_magnitude : ndarray
+    gaussian_gradient_magnitude : array
         Filtered array. Has the same shape as `input`.
 
     Examples
@@ -1234,7 +1234,7 @@ def gaussian_gradient_magnitude(input, sigma, output=None,
     >>> ax2.imshow(result)
     >>> plt.show()
     """
-    input = np.asarray(input)
+    input = mx.array(input)
 
     def derivative(input, axis, output, mode, cval, sigma, **kwargs):
         order = [0] * input.ndim
@@ -1249,13 +1249,13 @@ def gaussian_gradient_magnitude(input, sigma, output=None,
 
 def _correlate_or_convolve(input, weights, output, mode, cval, origin,
                            convolution, axes):
-    input = np.asarray(input)
-    weights = np.asarray(weights)
+    input = mx.array(input)
+    weights = mx.array(weights)
     complex_input = input.dtype.kind == 'c'
     complex_weights = weights.dtype.kind == 'c'
     if complex_input or complex_weights:
         if complex_weights and not convolution:
-            # As for np.correlate, conjugate weights rather than input.
+            # As for mx.correlate, conjugate weights rather than input.
             weights = weights.conj()
         kwargs = dict(
             mode=mode, origin=origin, convolution=convolution, axes=axes
@@ -1266,7 +1266,7 @@ def _correlate_or_convolve(input, weights, output, mode, cval, origin,
                                             weights, output, cval, **kwargs)
 
     axes = _ni_support._check_axes(axes, input.ndim)
-    weights = np.asarray(weights, dtype=np.float64)
+    weights = mx.array(weights, dtype=mx.float64)
 
     # expand weights and origins if num_axes < input.ndim
     weights = _expand_footprint(input.ndim, axes, weights, "weights")
@@ -1291,7 +1291,7 @@ def _correlate_or_convolve(input, weights, output, mode, cval, origin,
     if not weights.flags.contiguous:
         weights = weights.copy()
     output = _ni_support._get_output(output, input)
-    temp_needed = np.may_share_memory(input, output)
+    temp_needed = mx.may_share_memory(input, output)
     if temp_needed:
         # input and output arrays cannot share memory
         temp = output
@@ -1317,7 +1317,7 @@ def correlate(input, weights, output=None, mode='reflect', cval=0.0,
     Parameters
     ----------
     %(input)s
-    weights : ndarray
+    weights : array
         array of weights, same number of dimensions as input
     %(output)s
     %(mode_reflect)s
@@ -1332,7 +1332,7 @@ def correlate(input, weights, output=None, mode='reflect', cval=0.0,
 
     Returns
     -------
-    result : ndarray
+    result : array
         The result of correlation of `input` with `weights`.
 
     See Also
@@ -1345,8 +1345,8 @@ def correlate(input, weights, output=None, mode='reflect', cval=0.0,
     as kernel over the image and computing the sum of products at each location.
 
     >>> from scipy.ndimage import correlate
-    >>> import numpy as np
-    >>> input_img = np.arange(25).reshape(5,5)
+    >>> import mlx.core as mx
+    >>> input_img = mx.arange(25).reshape(5,5)
     >>> print(input_img)
     [[ 0  1  2  3  4]
     [ 5  6  7  8  9]
@@ -1410,7 +1410,7 @@ def convolve(input, weights, output=None, mode='reflect', cval=0.0,
 
     Returns
     -------
-    result : ndarray
+    result : array
         The result of convolution of `input` with `weights`.
 
     See Also
@@ -1431,12 +1431,12 @@ def convolve(input, weights, output=None, mode='reflect', cval=0.0,
     because in this case borders (i.e., where the `weights` kernel, centered
     on any one value, extends beyond an edge of `input`) are treated as zeros.
 
-    >>> import numpy as np
-    >>> a = np.array([[1, 2, 0, 0],
+    >>> import mlx.core as mx
+    >>> a = mx.array([[1, 2, 0, 0],
     ...               [5, 3, 0, 4],
     ...               [0, 0, 0, 7],
     ...               [9, 3, 0, 0]])
-    >>> k = np.array([[1,1,1],[1,1,0],[1,0,0]])
+    >>> k = mx.array([[1,1,1],[1,1,0],[1,0,0]])
     >>> from scipy import ndimage
     >>> ndimage.convolve(a, k, mode='constant', cval=0.0)
     array([[11, 10,  7,  4],
@@ -1456,10 +1456,10 @@ def convolve(input, weights, output=None, mode='reflect', cval=0.0,
     With ``mode='reflect'`` (the default), outer values are reflected at the
     edge of `input` to fill in missing values.
 
-    >>> b = np.array([[2, 0, 0],
+    >>> b = mx.array([[2, 0, 0],
     ...               [1, 0, 0],
     ...               [0, 0, 0]])
-    >>> k = np.array([[0,1,0], [0,1,0], [0,1,0]])
+    >>> k = mx.array([[0,1,0], [0,1,0], [0,1,0]])
     >>> ndimage.convolve(b, k, mode='reflect')
     array([[5, 0, 0],
            [3, 0, 0],
@@ -1467,7 +1467,7 @@ def convolve(input, weights, output=None, mode='reflect', cval=0.0,
 
     This includes diagonally at the corners.
 
-    >>> k = np.array([[1,0,0],[0,1,0],[0,0,1]])
+    >>> k = mx.array([[1,0,0],[0,1,0],[0,0,1]])
     >>> ndimage.convolve(b, k)
     array([[4, 2, 0],
            [3, 2, 0],
@@ -1477,10 +1477,10 @@ def convolve(input, weights, output=None, mode='reflect', cval=0.0,
     `input` is repeated as many times as needed to match the overlapping
     `weights`.
 
-    >>> c = np.array([[2, 0, 1],
+    >>> c = mx.array([[2, 0, 1],
     ...               [1, 0, 0],
     ...               [0, 0, 0]])
-    >>> k = np.array([[0, 1, 0],
+    >>> k = mx.array([[0, 1, 0],
     ...               [0, 1, 0],
     ...               [0, 1, 0],
     ...               [0, 1, 0],
@@ -1516,7 +1516,7 @@ def uniform_filter1d(input, size, axis=-1, output=None,
 
     Returns
     -------
-    result : ndarray
+    result : array
         Filtered array. Has same shape as `input`.
 
     Examples
@@ -1525,7 +1525,7 @@ def uniform_filter1d(input, size, axis=-1, output=None,
     >>> uniform_filter1d([2, 8, 0, 4, 1, 9, 9, 0], size=3)
     array([4, 3, 4, 1, 4, 6, 6, 3])
     """
-    input = np.asarray(input)
+    input = mx.array(input)
     axis = normalize_axis_index(axis, input.ndim)
     if size < 1:
         raise RuntimeError('incorrect filter size')
@@ -1540,9 +1540,9 @@ def uniform_filter1d(input, size, axis=-1, output=None,
                                    origin)
     else:
         _nd_image.uniform_filter1d(input.real, size, axis, output.real, mode,
-                                   np.real(cval), origin)
+                                   mx.real(cval), origin)
         _nd_image.uniform_filter1d(input.imag, size, axis, output.imag, mode,
-                                   np.imag(cval), origin)
+                                   mx.imag(cval), origin)
     return output
 
 
@@ -1571,7 +1571,7 @@ def uniform_filter(input, size=3, output=None, mode="reflect",
 
     Returns
     -------
-    uniform_filter : ndarray
+    uniform_filter : array
         Filtered array. Has the same shape as `input`.
 
     Notes
@@ -1598,7 +1598,7 @@ def uniform_filter(input, size=3, output=None, mode="reflect",
     >>> ax2.imshow(result)
     >>> plt.show()
     """
-    input = np.asarray(input)
+    input = mx.array(input)
     output = _ni_support._get_output(output, input,
                                      complex_output=input.dtype.kind == 'c')
     axes = _ni_support._check_axes(axes, input.ndim)
@@ -1639,7 +1639,7 @@ def minimum_filter1d(input, size, axis=-1, output=None,
 
     Returns
     -------
-    result : ndarray.
+    result : array.
         Filtered image. Has the same shape as `input`.
 
     Notes
@@ -1660,8 +1660,8 @@ def minimum_filter1d(input, size, axis=-1, output=None,
     >>> minimum_filter1d([2, 8, 0, 4, 1, 9, 9, 0], size=3)
     array([2, 0, 0, 0, 1, 1, 0, 0])
     """
-    input = np.asarray(input)
-    if np.iscomplexobj(input):
+    input = mx.array(input)
+    if mx.iscomplexobj(input):
         raise TypeError('Complex type not supported')
     axis = normalize_axis_index(axis, input.ndim)
     if size < 1:
@@ -1696,7 +1696,7 @@ def maximum_filter1d(input, size, axis=-1, output=None,
 
     Returns
     -------
-    maximum1d : ndarray, None
+    maximum1d : array, None
         Maximum-filtered array with same shape as input.
         None if `output` is not None
 
@@ -1717,8 +1717,8 @@ def maximum_filter1d(input, size, axis=-1, output=None,
     >>> maximum_filter1d([2, 8, 0, 4, 1, 9, 9, 0], size=3)
     array([8, 8, 8, 4, 9, 9, 9, 9])
     """
-    input = np.asarray(input)
-    if np.iscomplexobj(input):
+    input = mx.array(input)
+    if mx.iscomplexobj(input):
         raise TypeError('Complex type not supported')
     axis = normalize_axis_index(axis, input.ndim)
     if size < 1:
@@ -1743,7 +1743,7 @@ def _min_or_max_filter(input, size, footprint, structure, output, mode,
                 raise RuntimeError("no footprint provided")
             separable = True
         else:
-            footprint = np.asarray(footprint, dtype=bool)
+            footprint = mx.array(footprint, dtype=bool)
             if not footprint.any():
                 raise ValueError("All-zero footprint is not supported.")
             if footprint.all():
@@ -1753,17 +1753,17 @@ def _min_or_max_filter(input, size, footprint, structure, output, mode,
             else:
                 separable = False
     else:
-        structure = np.asarray(structure, dtype=np.float64)
+        structure = mx.array(structure, dtype=mx.float64)
         separable = False
         if footprint is None:
-            footprint = np.ones(structure.shape, bool)
+            footprint = mx.ones(structure.shape, bool)
         else:
-            footprint = np.asarray(footprint, dtype=bool)
-    input = np.asarray(input)
-    if np.iscomplexobj(input):
+            footprint = mx.array(footprint, dtype=bool)
+    input = mx.array(input)
+    if mx.iscomplexobj(input):
         raise TypeError("Complex type not supported")
     output = _ni_support._get_output(output, input)
-    temp_needed = np.may_share_memory(input, output)
+    temp_needed = mx.may_share_memory(input, output)
     if temp_needed:
         # input and output arrays cannot share memory
         temp = output
@@ -1804,7 +1804,7 @@ def _min_or_max_filter(input, size, footprint, structure, output, mode,
             if len(structure.shape) != num_axes:
                 raise RuntimeError("structure array has incorrect shape")
             if num_axes != structure.ndim:
-                structure = np.expand_dims(
+                structure = mx.expand_dims(
                     structure,
                     tuple(ax for ax in range(structure.ndim) if ax not in axes)
                 )
@@ -1845,7 +1845,7 @@ def minimum_filter(input, size=None, footprint=None, output=None,
 
     Returns
     -------
-    minimum_filter : ndarray
+    minimum_filter : array
         Filtered array. Has the same shape as `input`.
 
     Notes
@@ -1893,7 +1893,7 @@ def maximum_filter(input, size=None, footprint=None, output=None,
 
     Returns
     -------
-    maximum_filter : ndarray
+    maximum_filter : array
         Filtered array. Has the same shape as `input`.
 
     Notes
@@ -1928,8 +1928,8 @@ def _rank_filter(input, rank, size=None, footprint=None, output=None,
     if (size is not None) and (footprint is not None):
         warnings.warn("ignoring size because footprint is set",
                       UserWarning, stacklevel=3)
-    input = np.asarray(input)
-    if np.iscomplexobj(input):
+    input = mx.array(input)
+    if mx.iscomplexobj(input):
         raise TypeError('Complex type not supported')
     axes = _ni_support._check_axes(axes, input.ndim)
     num_axes = len(axes)
@@ -1937,9 +1937,9 @@ def _rank_filter(input, rank, size=None, footprint=None, output=None,
         if size is None:
             raise RuntimeError("no footprint or filter size provided")
         sizes = _ni_support._normalize_sequence(size, num_axes)
-        footprint = np.ones(sizes, dtype=bool)
+        footprint = mx.ones(sizes, dtype=bool)
     else:
-        footprint = np.asarray(footprint, dtype=bool)
+        footprint = mx.array(footprint, dtype=bool)
     # expand origins, footprint and modes if num_axes < input.ndim
     footprint = _expand_footprint(input.ndim, axes, footprint)
     origins = _expand_origin(input.ndim, axes, origin)
@@ -1954,7 +1954,7 @@ def _rank_filter(input, rank, size=None, footprint=None, output=None,
             raise ValueError('invalid origin')
     if not footprint.flags.contiguous:
         footprint = footprint.copy()
-    filter_size = np.where(footprint, 1, 0).sum()
+    filter_size = mx.where(footprint, 1, 0).sum()
     if operation == 'median':
         rank = filter_size // 2
     elif operation == 'percentile':
@@ -1979,7 +1979,7 @@ def _rank_filter(input, rank, size=None, footprint=None, output=None,
                               origins, axes=None)
     else:
         output = _ni_support._get_output(output, input)
-        temp_needed = np.may_share_memory(input, output)
+        temp_needed = mx.may_share_memory(input, output)
         if temp_needed:
             # input and output arrays cannot share memory
             temp = output
@@ -1997,26 +1997,26 @@ def _rank_filter(input, rank, size=None, footprint=None, output=None,
         # if algorithmic fixes are found.
         lim2 = input.size - ((footprint.size - 1) // 2 - origin)
         if input.ndim == 1 and ((lim2 >= 0) or (input.size == 1)):
-            if input.dtype in (np.int64, np.float64, np.float32):
+            if input.dtype in (mx.int64, mx.float64, mx.float32):
                 x = input
                 x_out = output
-            elif input.dtype == np.float16:
+            elif input.dtype == mx.float16:
                 x = input.astype('float32')
-                x_out = np.empty(x.shape, dtype='float32')
-            elif np.result_type(input, np.int64) == np.int64:
+                x_out = mx.empty(x.shape, dtype='float32')
+            elif mx.result_type(input, mx.int64) == mx.int64:
                 x = input.astype('int64')
-                x_out = np.empty(x.shape, dtype='int64')
+                x_out = mx.empty(x.shape, dtype='int64')
             elif input.dtype.kind in 'biu':
                 # cast any other boolean, integer or unsigned type to int64
                 x = input.astype('int64')
-                x_out = np.empty(x.shape, dtype='int64')
+                x_out = mx.empty(x.shape, dtype='int64')
             else:
                 raise RuntimeError('Unsupported array type')
             cval = x.dtype.type(cval)
             _rank_filter_1d.rank_filter(x, rank, footprint.size, x_out, mode, cval,
                                         origin)
-            if input.dtype not in (np.int64, np.float64, np.float32):
-                np.copyto(output, x_out, casting='unsafe')
+            if input.dtype not in (mx.int64, mx.float64, mx.float32):
+                mx.copyto(output, x_out, casting='unsafe')
         else:
             _nd_image.rank_filter(input, rank, footprint, output, mode, cval, origins)
         if temp_needed:
@@ -2050,7 +2050,7 @@ def rank_filter(input, rank, size=None, footprint=None, output=None,
 
     Returns
     -------
-    rank_filter : ndarray
+    rank_filter : array
         Filtered array. Has the same shape as `input`.
 
     Examples
@@ -2095,7 +2095,7 @@ def median_filter(input, size=None, footprint=None, output=None,
 
     Returns
     -------
-    median_filter : ndarray
+    median_filter : array
         Filtered array. Has the same shape as `input`.
 
     See Also
@@ -2115,7 +2115,7 @@ def median_filter(input, size=None, footprint=None, output=None,
     behavior in the presence of NaNs is undefined, and memory consumption scales with
     ``n**4``. For ``float16`` support, greater control over the definition of the
     filter, and to limit memory usage, consider using `vectorized_filter` with
-    NumPy functions `np.median` or `np.nanmedian`.
+    NumPy functions `mx.median` or `mx.nanmedian`.
 
     Examples
     --------
@@ -2161,7 +2161,7 @@ def percentile_filter(input, percentile, size=None, footprint=None,
 
     Returns
     -------
-    percentile_filter : ndarray
+    percentile_filter : array
         Filtered array. Has the same shape as `input`.
 
     Examples
@@ -2212,7 +2212,7 @@ def generic_filter1d(input, function, filter_size, axis=-1,
 
     Returns
     -------
-    generic_filter1d : ndarray
+    generic_filter1d : array
         Filtered array. Has the same shape as `input`.
 
     Notes
@@ -2253,8 +2253,8 @@ def generic_filter1d(input, function, filter_size, axis=-1,
     """
     if extra_keywords is None:
         extra_keywords = {}
-    input = np.asarray(input)
-    if np.iscomplexobj(input):
+    input = mx.array(input)
+    if mx.iscomplexobj(input):
         raise TypeError('Complex type not supported')
     output = _ni_support._get_output(output, input)
     if filter_size < 1:
@@ -2301,7 +2301,7 @@ def generic_filter(input, function, size=None, footprint=None,
 
     Returns
     -------
-    output : ndarray
+    output : array
         Filtered array. Has the same shape as `input`.
 
     See Also
@@ -2346,7 +2346,7 @@ def generic_filter(input, function, size=None, footprint=None,
     Import the necessary modules and load the example image used for
     filtering.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import datasets
     >>> from scipy.ndimage import zoom, generic_filter
     >>> import matplotlib.pyplot as plt
@@ -2355,7 +2355,7 @@ def generic_filter(input, function, size=None, footprint=None,
     Compute a maximum filter with kernel size 5 by passing a simple NumPy
     aggregation function as argument to `function`.
 
-    >>> maximum_filter_result = generic_filter(ascent, np.amax, [5, 5])
+    >>> maximum_filter_result = generic_filter(ascent, mx.amax, [5, 5])
 
     While a maximum filter could also directly be obtained using
     `maximum_filter`, `generic_filter` allows generic Python function or
@@ -2364,7 +2364,7 @@ def generic_filter(input, function, size=None, footprint=None,
     of 5.
 
     >>> def custom_filter(image):
-    ...     return np.amax(image) - np.amin(image)
+    ...     return mx.amax(image) - mx.amin(image)
     >>> custom_filter_result = generic_filter(ascent, custom_filter, [5, 5])
 
     Plot the original and filtered images.
@@ -2388,8 +2388,8 @@ def generic_filter(input, function, size=None, footprint=None,
                       UserWarning, stacklevel=2)
     if extra_keywords is None:
         extra_keywords = {}
-    input = np.asarray(input)
-    if np.iscomplexobj(input):
+    input = mx.array(input)
+    if mx.iscomplexobj(input):
         raise TypeError('Complex type not supported')
     axes = _ni_support._check_axes(axes, input.ndim)
     num_axes = len(axes)
@@ -2397,9 +2397,9 @@ def generic_filter(input, function, size=None, footprint=None,
         if size is None:
             raise RuntimeError("no footprint or filter size provided")
         sizes = _ni_support._normalize_sequence(size, num_axes)
-        footprint = np.ones(sizes, dtype=bool)
+        footprint = mx.ones(sizes, dtype=bool)
     else:
-        footprint = np.asarray(footprint, dtype=bool)
+        footprint = mx.array(footprint, dtype=bool)
 
     # expand origins, footprint if num_axes < input.ndim
     footprint = _expand_footprint(input.ndim, axes, footprint)

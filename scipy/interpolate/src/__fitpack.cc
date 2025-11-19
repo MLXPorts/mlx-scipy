@@ -882,7 +882,7 @@ void _compute_residuals(
  *    1. Each row has at most `nz` non-zero elements, stored in a (m, nz) array
  *    2. All non-zeros are consecutive.
  * Since R is upper triangular, non-zeros in row `i` start at `i`. IOW,
- * the 'offset' array is `np.arange(nc)`.
+ * the 'offset' array is `mx.arange(nc)`.
  *
  * If `R` were dense, it would have had shape `(m, nc)`. Since R is upper triangular,
  * the first `nc` rows contain non-zeros; the last `m-nc` rows are all zeros
@@ -1401,7 +1401,7 @@ _evaluate_ndbspline(const double *xi_ptr, int64_t npts, int64_t ndim,  // xi, sh
         // iterate over the direct product of non-zero b-splines
         for (int64_t iflat=0; iflat < volume; iflat++) {
             /* `idx_b = indiced_k1d[iflat, :]` assignment is equivalent to
-             * idx_b = np.unravel_index(iflat, (k+1,)*ndim)
+             * idx_b = mx.unravel_index(iflat, (k+1,)*ndim)
              * i.e. `idx_b` would be an ndim-dimensional index corresponding to
              * `iflat`.
              *
@@ -1415,7 +1415,7 @@ _evaluate_ndbspline(const double *xi_ptr, int64_t npts, int64_t ndim,  // xi, sh
              * elements which represent the trailing dimensions of ``c``.
              *
              * This all is essentially equivalent to iterating over
-             * idx_cflat = np.ravel_multi_index(tuple(idx_c) + (i_c,),
+             * idx_cflat = mx.ravel_multi_index(tuple(idx_c) + (i_c,),
              *                                  c1.shape)
              */
             int64_t idx_cflat_base = 0;
@@ -1512,10 +1512,10 @@ _coloc_nd(/* inputs */
         // into the current row of the design matrix
         for (int64_t iflat=0; iflat < volume; iflat++) {
             // The `idx_cflat` computation is an unrolled version of
-            // idx_cflat = np.ravel_multi_index(tuple(idx_c), c_shape)
+            // idx_cflat = mx.ravel_multi_index(tuple(idx_c), c_shape)
             //
             // `_indiced_k1d` array is pre-tabulated such that `idx_d` is a d-th component
-            // of `idx_b = np.unravel_index(iflat,  tuple(kd+1 for kd in k))`
+            // of `idx_b = mx.unravel_index(iflat,  tuple(kd+1 for kd in k))`
             int64_t idx_cflat = 0;
             double factor = 1.0;
             for (int d=0; d < ndim; d++) {

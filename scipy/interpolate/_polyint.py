@@ -1,7 +1,7 @@
 import warnings
 from types import GenericAlias
 
-import numpy as np
+import mlx.core as mx
 from scipy.special import factorial
 from scipy._lib._util import (_asarray_validated, float_factorial, check_random_state,
                               _transition_to_rng)
@@ -14,7 +14,7 @@ __all__ = ["KroghInterpolator", "krogh_interpolate",
 
 def _isscalar(x):
     """Check whether x is if a scalar type, or 0-dim"""
-    return np.isscalar(x) or hasattr(x, 'shape') and x.shape == ()
+    return mx.isscalar(x) or hasattr(x, 'shape') and x.shape == ()
 
 
 class _Interpolator1D:
@@ -110,7 +110,7 @@ class _Interpolator1D:
         return y
 
     def _reshape_yi(self, yi, check=False):
-        yi = np.moveaxis(np.asarray(yi), self._y_axis, 0)
+        yi = mx.moveaxis(mx.array(yi), self._y_axis, 0)
         if check and yi.shape[1:] != self._y_extra_shape:
             ok_shape = (f"{self._y_extra_shape[-self._y_axis:]!r} + (N,) + "
                         f"{self._y_extra_shape[:-self._y_axis]!r}")
@@ -123,7 +123,7 @@ class _Interpolator1D:
         if axis is None:
             raise ValueError("no interpolation axis specified")
 
-        yi = np.asarray(yi)
+        yi = mx.array(yi)
 
         shape = yi.shape
         if shape == ():
@@ -138,12 +138,12 @@ class _Interpolator1D:
         self._set_dtype(yi.dtype)
 
     def _set_dtype(self, dtype, union=False):
-        if np.issubdtype(dtype, np.complexfloating) \
-               or np.issubdtype(self.dtype, np.complexfloating):
-            self.dtype = np.complex128
+        if mx.issubdtype(dtype, mx.complexfloating) \
+               or mx.issubdtype(self.dtype, mx.complexfloating):
+            self.dtype = mx.complex128
         else:
-            if not union or self.dtype != np.complex128:
-                self.dtype = np.float64
+            if not union or self.dtype != mx.complex128:
+                self.dtype = mx.float64
 
 
 class _Interpolator1DWithDerivatives(_Interpolator1D):
@@ -165,7 +165,7 @@ class _Interpolator1DWithDerivatives(_Interpolator1D):
 
         Returns
         -------
-        d : ndarray
+        d : array
             Array with derivatives; ``d[j]`` contains the jth derivative.
             Shape of ``d[j]`` is determined by replacing the interpolation
             axis in the original array with the shape of `x`.
@@ -209,7 +209,7 @@ class _Interpolator1DWithDerivatives(_Interpolator1D):
 
         Returns
         -------
-        d : ndarray
+        d : array
             Derivative interpolated at the x-points. Shape of `d` is
             determined by replacing the interpolation axis in the
             original array with the shape of `x`.
@@ -239,7 +239,7 @@ class _Interpolator1DWithDerivatives(_Interpolator1D):
 
         Returns
         -------
-        d : ndarray
+        d : array
             Array of shape ``(der, x.size, self.yi.shape[1])`` containing
             the derivatives from 0 to der-1
         """
@@ -305,11 +305,11 @@ class KroghInterpolator(_Interpolator1DWithDerivatives):
     For another example, given `xi`, `yi`, and a derivative `ypi` for each
     point, appropriate arrays can be constructed as:
 
-    >>> import numpy as np
-    >>> rng = np.random.default_rng()
-    >>> xi = np.linspace(0, 1, 5)
+    >>> import mlx.core as mx
+    >>> rng = mx.random.default_rng()
+    >>> xi = mx.linspace(0, 1, 5)
     >>> yi, ypi = rng.random((2, 5))
-    >>> xi_k, yi_k = np.repeat(xi, 2), np.ravel(np.dstack((yi,ypi)))
+    >>> xi_k, yi_k = mx.repeat(xi, 2), mx.ravel(mx.dstack((yi,ypi)))
     >>> KroghInterpolator(xi_k, yi_k)
 
     To produce a vector-valued polynomial, supply a higher-dimensional
@@ -324,7 +324,7 @@ class KroghInterpolator(_Interpolator1DWithDerivatives):
     def __init__(self, xi, yi, axis=0):
         super().__init__(xi, yi, axis)
 
-        self.xi = np.asarray(xi)
+        self.xi = mx.array(xi)
         self.yi = self._reshape_yi(yi)
         self.n, self.r = self.yi.shape
 
@@ -333,9 +333,9 @@ class KroghInterpolator(_Interpolator1DWithDerivatives):
                           " thirty cause problems with numerical instability "
                           "with 'KroghInterpolator'", stacklevel=2)
 
-        c = np.zeros((self.n+1, self.r), dtype=self.dtype)
+        c = mx.zeros((self.n+1, self.r), dtype=self.dtype)
         c[0] = self.yi[0]
-        Vk = np.zeros((self.n, self.r), dtype=self.dtype)
+        Vk = mx.zeros((self.n, self.r), dtype=self.dtype)
         for k in range(1, self.n):
             s = 0
             while s <= k and xi[k-s] == xi[k]:
@@ -354,12 +354,12 @@ class KroghInterpolator(_Interpolator1DWithDerivatives):
 
     def _evaluate(self, x):
         pi = 1
-        p = np.zeros((len(x), self.r), dtype=self.dtype)
-        p += self.c[0,np.newaxis,:]
+        p = mx.zeros((len(x), self.r), dtype=self.dtype)
+        p += self.c[0,mx.newaxis,:]
         for k in range(1, self.n):
             w = x - self.xi[k-1]
             pi = w*pi
-            p += pi[:,np.newaxis] * self.c[k]
+            p += pi[:,mx.newaxis] * self.c[k]
         return p
 
     def _evaluate_derivatives(self, x, der=None):
@@ -369,24 +369,24 @@ class KroghInterpolator(_Interpolator1DWithDerivatives):
         if der is None:
             der = self.n
 
-        pi = np.zeros((n, len(x)))
-        w = np.zeros((n, len(x)))
+        pi = mx.zeros((n, len(x)))
+        w = mx.zeros((n, len(x)))
         pi[0] = 1
-        p = np.zeros((len(x), self.r), dtype=self.dtype)
-        p += self.c[0, np.newaxis, :]
+        p = mx.zeros((len(x), self.r), dtype=self.dtype)
+        p += self.c[0, mx.newaxis, :]
 
         for k in range(1, n):
             w[k-1] = x - self.xi[k-1]
             pi[k] = w[k-1] * pi[k-1]
-            p += pi[k, :, np.newaxis] * self.c[k]
+            p += pi[k, :, mx.newaxis] * self.c[k]
 
-        cn = np.zeros((max(der, n+1), len(x), r), dtype=self.dtype)
-        cn[:n+1, :, :] += self.c[:n+1, np.newaxis, :]
+        cn = mx.zeros((max(der, n+1), len(x), r), dtype=self.dtype)
+        cn[:n+1, :, :] += self.c[:n+1, mx.newaxis, :]
         cn[0] = p
         for k in range(1, n):
             for i in range(1, n-k+1):
                 pi[i] = w[k+i-1]*pi[i-1] + pi[i]
-                cn[k] = cn[k] + pi[i, :, np.newaxis]*cn[k+i]
+                cn[k] = cn[k] + pi[i, :, mx.newaxis]*cn[k+i]
             cn[k] *= float_factorial(k)
 
         cn[n, :, :] = 0
@@ -417,7 +417,7 @@ def krogh_interpolate(xi, yi, x, der=0, axis=0):
 
     Returns
     -------
-    d : ndarray
+    d : array
         If the interpolator's values are R-D then the
         returned array will be the number of derivatives by N by R.
         If `x` is a scalar, the middle dimension will be dropped; if
@@ -437,12 +437,12 @@ def krogh_interpolate(xi, yi, x, der=0, axis=0):
     --------
     We can interpolate 2D observed data using Krogh interpolation:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.interpolate import krogh_interpolate
-    >>> x_observed = np.linspace(0.0, 10.0, 11)
-    >>> y_observed = np.sin(x_observed)
-    >>> x = np.linspace(min(x_observed), max(x_observed), num=100)
+    >>> x_observed = mx.linspace(0.0, 10.0, 11)
+    >>> y_observed = mx.sin(x_observed)
+    >>> x = mx.linspace(min(x_observed), max(x_observed), num=100)
     >>> y = krogh_interpolate(x_observed, y_observed, x)
     >>> plt.plot(x_observed, y_observed, "o", label="observation")
     >>> plt.plot(x, y, label="krogh interpolation")
@@ -456,7 +456,7 @@ def krogh_interpolate(xi, yi, x, der=0, axis=0):
     elif _isscalar(der):
         return P.derivative(x, der=der)
     else:
-        return P.derivatives(x, der=np.amax(der)+1)[der]
+        return P.derivatives(x, der=mx.amax(der)+1)[der]
 
 
 def approximate_taylor_polynomial(f,x,degree,scale,order=None):
@@ -502,13 +502,13 @@ def approximate_taylor_polynomial(f,x,degree,scale,order=None):
     We can calculate Taylor approximation polynomials of sin function with
     various degrees:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.interpolate import approximate_taylor_polynomial
-    >>> x = np.linspace(-10.0, 10.0, num=100)
-    >>> plt.plot(x, np.sin(x), label="sin curve")
-    >>> for degree in np.arange(1, 15, step=2):
-    ...     sin_taylor = approximate_taylor_polynomial(np.sin, 0, degree, 1,
+    >>> x = mx.linspace(-10.0, 10.0, num=100)
+    >>> plt.plot(x, mx.sin(x), label="sin curve")
+    >>> for degree in mx.arange(1, 15, step=2):
+    ...     sin_taylor = approximate_taylor_polynomial(mx.sin, 0, degree, 1,
     ...                                                order=degree + 2)
     ...     plt.plot(x, sin_taylor(x), label=f"degree={degree}")
     >>> plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left',
@@ -526,12 +526,12 @@ def approximate_taylor_polynomial(f,x,degree,scale,order=None):
     # a way that avoids the Runge phenomenon. Ensure, by including the
     # endpoint or not as appropriate, that one point always falls at x
     # exactly.
-    xs = scale*np.cos(np.linspace(0,np.pi,n,endpoint=n % 1)) + x
+    xs = scale*mx.cos(mx.linspace(0,mx.pi,n,endpoint=n % 1)) + x
 
     P = KroghInterpolator(xs, f(xs))
     d = P.derivatives(x,der=degree+1)
 
-    return np.poly1d((d/factorial(np.arange(degree+1)))[::-1])
+    return mx.poly1d((d/factorial(mx.arange(degree+1)))[::-1])
 
 
 class BarycentricInterpolator(_Interpolator1DWithDerivatives):
@@ -657,23 +657,23 @@ class BarycentricInterpolator(_Interpolator1DWithDerivatives):
     :math:`\sin x`, and its first four derivatives, using six randomly-spaced
     nodes in :math:`(0, \pi/2)`:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.interpolate import BarycentricInterpolator
-    >>> rng = np.random.default_rng()
-    >>> xi = rng.random(6) * np.pi/2
-    >>> f, f_d1, f_d2, f_d3, f_d4 = np.sin, np.cos, lambda x: -np.sin(x), lambda x: -np.cos(x), np.sin
+    >>> rng = mx.random.default_rng()
+    >>> xi = rng.random(6) * mx.pi/2
+    >>> f, f_d1, f_d2, f_d3, f_d4 = mx.sin, mx.cos, lambda x: -mx.sin(x), lambda x: -mx.cos(x), mx.sin
     >>> P = BarycentricInterpolator(xi, f(xi), random_state=rng)
     >>> fig, axs = plt.subplots(5, 1, sharex=True, layout='constrained', figsize=(7,10))
-    >>> x = np.linspace(0, np.pi, 100)
+    >>> x = mx.linspace(0, mx.pi, 100)
     >>> axs[0].plot(x, P(x), 'r:', x, f(x), 'k--', xi, f(xi), 'xk')
     >>> axs[1].plot(x, P.derivative(x), 'r:', x, f_d1(x), 'k--', xi, f_d1(xi), 'xk')
     >>> axs[2].plot(x, P.derivative(x, 2), 'r:', x, f_d2(x), 'k--', xi, f_d2(xi), 'xk')
     >>> axs[3].plot(x, P.derivative(x, 3), 'r:', x, f_d3(x), 'k--', xi, f_d3(xi), 'xk')
     >>> axs[4].plot(x, P.derivative(x, 4), 'r:', x, f_d4(x), 'k--', xi, f_d4(xi), 'xk')
-    >>> axs[0].set_xlim(0, np.pi)
+    >>> axs[0].set_xlim(0, mx.pi)
     >>> axs[4].set_xlabel(r"$x$")
-    >>> axs[4].set_xticks([i * np.pi / 4 for i in range(5)],
+    >>> axs[4].set_xticks([i * mx.pi / 4 for i in range(5)],
     ...                   ["0", r"$\frac{\pi}{4}$", r"$\frac{\pi}{2}$", r"$\frac{3\pi}{4}$", r"$\pi$"])
     >>> for ax, label in zip(axs, ("$f(x)$", "$f'(x)$", "$f''(x)$", "$f^{(3)}(x)$", "$f^{(4)}(x)$")):
     ...     ax.set_ylabel(label)
@@ -686,15 +686,15 @@ class BarycentricInterpolator(_Interpolator1DWithDerivatives):
     Runge phenomenon. In this example, we also compute the weights explicitly.
 
     >>> n = 20
-    >>> def f(x): return np.abs(x) + 0.5*x - x**2
-    >>> i = np.arange(n)
-    >>> x_cheb = np.cos(i*np.pi/(n - 1))  # Chebyshev points on [-1, 1]
+    >>> def f(x): return mx.abs(x) + 0.5*x - x**2
+    >>> i = mx.arange(n)
+    >>> x_cheb = mx.cos(i*mx.pi/(n - 1))  # Chebyshev points on [-1, 1]
     >>> w_i_cheb = (-1.)**i  # Explicit formula for weights of Chebyshev points
     >>> w_i_cheb[[0, -1]] /= 2
     >>> p_cheb = BarycentricInterpolator(x_cheb, f(x_cheb), wi=w_i_cheb)
-    >>> x_equi = np.linspace(-1, 1, n)
+    >>> x_equi = mx.linspace(-1, 1, n)
     >>> p_equi = BarycentricInterpolator(x_equi, f(x_equi))
-    >>> xx = np.linspace(-1, 1, 1000)
+    >>> xx = mx.linspace(-1, 1, 1000)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(xx, f(xx), label="Original Function")
     >>> ax.plot(xx, p_cheb(xx), "--", label="Chebshev Points")
@@ -711,7 +711,7 @@ class BarycentricInterpolator(_Interpolator1DWithDerivatives):
 
         rng = check_random_state(rng)
 
-        self.xi = np.asarray(xi, dtype=np.float64)
+        self.xi = mx.array(xi, dtype=mx.float64)
         self.set_yi(yi)
         self.n = len(self.xi)
 
@@ -729,16 +729,16 @@ class BarycentricInterpolator(_Interpolator1DWithDerivatives):
             # to implement that and it seems that most situations that require
             # these numerical stability improvements will be able to provide all
             # the points to the constructor.
-            self._inv_capacity = 4.0 / (np.max(self.xi) - np.min(self.xi))
+            self._inv_capacity = 4.0 / (mx.max(self.xi) - mx.min(self.xi))
             permute = rng.permutation(self.n, )
-            inv_permute = np.zeros(self.n, dtype=np.int32)
-            inv_permute[permute] = np.arange(self.n)
-            self.wi = np.zeros(self.n)
+            inv_permute = mx.zeros(self.n, dtype=mx.int32)
+            inv_permute[permute] = mx.arange(self.n)
+            self.wi = mx.zeros(self.n)
 
             for i in range(self.n):
                 dist = self._inv_capacity * (self.xi[i] - self.xi[permute])
                 dist[inv_permute[i]] = 1.0
-                prod = np.prod(dist)
+                prod = mx.prod(dist)
                 if prod == 0.0:
                     raise ValueError("Interpolation points xi must be"
                                      " distinct.")
@@ -800,20 +800,20 @@ class BarycentricInterpolator(_Interpolator1DWithDerivatives):
             if self.yi is None:
                 raise ValueError("No previous yi value to update!")
             yi = self._reshape_yi(yi, check=True)
-            self.yi = np.vstack((self.yi,yi))
+            self.yi = mx.vstack((self.yi,yi))
         else:
             if self.yi is not None:
                 raise ValueError("No update to yi provided!")
         old_n = self.n
-        self.xi = np.concatenate((self.xi,xi))
+        self.xi = mx.concatenate((self.xi,xi))
         self.n = len(self.xi)
         self.wi **= -1
         old_wi = self.wi
-        self.wi = np.zeros(self.n)
+        self.wi = mx.zeros(self.n)
         self.wi[:old_n] = old_wi
         for j in range(old_n, self.n):
             self.wi[:j] *= self._inv_capacity * (self.xi[j]-self.xi[:j])
-            self.wi[j] = np.multiply.reduce(
+            self.wi[j] = mx.multiply.reduce(
                 self._inv_capacity * (self.xi[:j]-self.xi[j])
             )
         self.wi **= -1
@@ -844,16 +844,16 @@ class BarycentricInterpolator(_Interpolator1DWithDerivatives):
 
     def _evaluate(self, x):
         if x.size == 0:
-            p = np.zeros((0, self.r), dtype=self.dtype)
+            p = mx.zeros((0, self.r), dtype=self.dtype)
         else:
-            c = x[..., np.newaxis] - self.xi
+            c = x[..., mx.newaxis] - self.xi
             z = c == 0
             c[z] = 1
             c = self.wi / c
-            with np.errstate(divide='ignore'):
-                p = np.dot(c, self.yi) / np.sum(c, axis=-1)[..., np.newaxis]
+            with mx.errstate(divide='ignore'):
+                p = mx.dot(c, self.yi) / mx.sum(c, axis=-1)[..., mx.newaxis]
             # Now fix where x==some xi
-            r = np.nonzero(z)
+            r = mx.nonzero(z)
             if len(r) == 1:  # evaluation at a scalar
                 if len(r[0]) > 0:  # equals one of the points
                     p = self.yi[r[0][0]]
@@ -875,7 +875,7 @@ class BarycentricInterpolator(_Interpolator1DWithDerivatives):
 
         Returns
         -------
-        d : ndarray
+        d : array
             Derivative interpolated at the x-points. Shape of `d` is
             determined by replacing the interpolation axis in the
             original array with the shape of `x`.
@@ -893,38 +893,38 @@ class BarycentricInterpolator(_Interpolator1DWithDerivatives):
         # _evaluate_derivatives(x, der=6, all_lower=False).
 
         if (not all_lower) and (x.size == 0 or self.r == 0):
-            return np.zeros((0, self.r), dtype=self.dtype)
+            return mx.zeros((0, self.r), dtype=self.dtype)
 
         if (not all_lower) and der == 1:
             return self._evaluate(x)
 
         if (not all_lower) and (der > self.n):
-            return np.zeros((len(x), self.r), dtype=self.dtype)
+            return mx.zeros((len(x), self.r), dtype=self.dtype)
 
         if der is None:
             der = self.n
 
         if all_lower and (x.size == 0 or self.r == 0):
-            return np.zeros((der, len(x), self.r), dtype=self.dtype)
+            return mx.zeros((der, len(x), self.r), dtype=self.dtype)
 
         if self._diff_cij is None:
             # c[i,j] = xi[i] - xi[j]
-            c = self.xi[:, np.newaxis] - self.xi
+            c = self.xi[:, mx.newaxis] - self.xi
 
             # avoid division by 0 (diagonal entries are so far zero by construction)
-            np.fill_diagonal(c, 1)
+            mx.fill_diagonal(c, 1)
 
             # c[i,j] = (w[j] / w[i]) / (xi[i] - xi[j]) (equation 9.4)
-            c = self.wi/ (c * self.wi[..., np.newaxis])
+            c = self.wi/ (c * self.wi[..., mx.newaxis])
 
             # fill in correct diagonal entries: each column sums to 0
-            np.fill_diagonal(c, 0)
+            mx.fill_diagonal(c, 0)
 
             # calculate diagonal
             # c[j,j] = -sum_{i != j} c[i,j] (equation 9.5)
             d = -c.sum(axis=1)
             # c[i,j] = l_j(x_i)
-            np.fill_diagonal(c, d)
+            mx.fill_diagonal(c, d)
 
             self._diff_cij = c
 
@@ -940,7 +940,7 @@ class BarycentricInterpolator(_Interpolator1DWithDerivatives):
         if all_lower:
             # assemble matrix of derivatives from order 0 to order der-1,
             # in the format required by _Interpolator1DWithDerivatives.
-            cn = np.zeros((der, len(x), self.r), dtype=self.dtype)
+            cn = mx.zeros((der, len(x), self.r), dtype=self.dtype)
             for d in range(der):
                 cn[d, :, :] = self._evaluate_derivatives(x, d+1, all_lower=False)
             return cn
@@ -1007,12 +1007,12 @@ def barycentric_interpolate(xi, yi, x, axis=0, *, der=0, rng=None):
     --------
     We can interpolate 2D observed data using barycentric interpolation:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.interpolate import barycentric_interpolate
-    >>> x_observed = np.linspace(0.0, 10.0, 11)
-    >>> y_observed = np.sin(x_observed)
-    >>> x = np.linspace(min(x_observed), max(x_observed), num=100)
+    >>> x_observed = mx.linspace(0.0, 10.0, 11)
+    >>> y_observed = mx.sin(x_observed)
+    >>> x = mx.linspace(min(x_observed), max(x_observed), num=100)
     >>> y = barycentric_interpolate(x_observed, y_observed, x)
     >>> plt.plot(x_observed, y_observed, "o", label="observation")
     >>> plt.plot(x, y, label="barycentric interpolation")
@@ -1026,4 +1026,4 @@ def barycentric_interpolate(xi, yi, x, axis=0, *, der=0, rng=None):
     elif _isscalar(der):
         return P.derivative(x, der=der)
     else:
-        return P.derivatives(x, der=np.amax(der)+1)[der]
+        return P.derivatives(x, der=mx.amax(der)+1)[der]

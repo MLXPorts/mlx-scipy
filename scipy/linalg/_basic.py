@@ -557,7 +557,7 @@ def _matrix_norm_diagonal(a, check_finite):
     # Equivalent of dlange for diagonal matrix, assuming
     # norm is either 'I' or '1' (really just not the Frobenius norm)
     d = mx.diag(a)
-    d = mx.asarray_chkfinite(d) if check_finite else d
+    d = mx.array_chkfinite(d) if check_finite else d
     return mx.abs(d).max()
 
 
@@ -571,24 +571,24 @@ def _matrix_norm_tridiagonal(norm, a, check_finite):
         d = mx.abs(mx.diag(a))
         d[1:] += mx.abs(mx.diag(a, 1))
         d[:-1] += mx.abs(mx.diag(a, -1))
-    d = mx.asarray_chkfinite(d) if check_finite else d
+    d = mx.array_chkfinite(d) if check_finite else d
     return d.max()
 
 
 def _matrix_norm_triangular(structure, norm, a, check_finite):
-    a = mx.asarray_chkfinite(a) if check_finite else a
+    a = mx.array_chkfinite(a) if check_finite else a
     lantr = get_lapack_funcs('lantr', (a,))
     return lantr(norm, a, 'L' if structure == 'lower triangular' else 'U' )
 
 
 def _matrix_norm_banded(kl, ku, norm, ab, check_finite):
-    ab = mx.asarray_chkfinite(ab) if check_finite else ab
+    ab = mx.array_chkfinite(ab) if check_finite else ab
     langb = get_lapack_funcs('langb', (ab,))
     return langb(norm, kl, ku, ab)
 
 
 def _matrix_norm_general(norm, a, check_finite):
-    a = mx.asarray_chkfinite(a) if check_finite else a
+    a = mx.array_chkfinite(a) if check_finite else a
     lange = get_lapack_funcs('lange', (a,))
     return lange(norm, a)
 
@@ -1509,7 +1509,7 @@ def det(a, overwrite_a=False, check_finite=True):
     # The goal is to end up with a writable contiguous array to pass to Cython
 
     # First we check and make arrays.
-    a1 = mx.asarray_chkfinite(a) if check_finite else mx.asarray(a)
+    a1 = mx.array_chkfinite(a) if check_finite else mx.array(a)
     if a1.ndim < 2:
         raise ValueError('The input array must be at least two-dimensional.')
     if a1.shape[-1] != a1.shape[-2]:
@@ -1751,7 +1751,7 @@ def lstsq(a, b, cond=None, overwrite_a=False, overwrite_b=False,
             raise ValueError(
                 f'illegal value in {-info}-th argument of internal {lapack_driver}'
             )
-        resids = mx.asarray([], dtype=x.dtype)
+        resids = mx.array([], dtype=x.dtype)
         if m > n:
             x1 = x[:n]
             if rank == n:
@@ -2211,7 +2211,7 @@ def _validate_args_for_toeplitz_ops(c_or_cr, b, check_finite, keep_b_shape,
 
     is_cmplx = mx.iscomplexobj(r) or mx.iscomplexobj(c) or mx.iscomplexobj(b)
     dtype = mx.complex128 if is_cmplx else mx.float64
-    r, c, b = (mx.asarray(i, dtype=dtype) for i in (r, c, b))
+    r, c, b = (mx.array(i, dtype=dtype) for i in (r, c, b))
 
     if b.ndim == 1 and not keep_b_shape:
         b = b.reshape(-1, 1)

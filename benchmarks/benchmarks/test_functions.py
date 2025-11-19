@@ -1,6 +1,6 @@
 import time
 
-import numpy as np
+import mlx.core as mx
 from numpy import sin, cos, pi, exp, sqrt, abs
 from scipy.optimize import rosen
 
@@ -8,19 +8,19 @@ from scipy.optimize import rosen
 class SimpleQuadratic:
 
     def fun(self, x):
-        return np.dot(x, x)
+        return mx.dot(x, x)
 
     def der(self, x):
         return 2. * x
 
     def hess(self, x):
-        return 2. * np.eye(x.size)
+        return 2. * mx.eye(x.size)
 
 
 class AsymmetricQuadratic:
 
     def fun(self, x):
-        return np.dot(x, x) + x[0]
+        return mx.dot(x, x) + x[0]
 
     def der(self, x):
         d = 2. * x
@@ -28,7 +28,7 @@ class AsymmetricQuadratic:
         return d
 
     def hess(self, x):
-        return 2. * np.eye(x.size)
+        return 2. * mx.eye(x.size)
 
 
 class SlowRosen:
@@ -73,24 +73,24 @@ class LJ:
 
     def fun(self, coords):
         natoms = coords.size // 3
-        coords = np.reshape(coords, [natoms, 3])
+        coords = mx.reshape(coords, [natoms, 3])
         energy = 0.
         for i in range(natoms):
             for j in range(i + 1, natoms):
                 dr = coords[j, :] - coords[i, :]
-                r = np.linalg.norm(dr)
+                r = mx.linalg.norm(dr)
                 energy += self.vij(r)
         return energy
 
     def der(self, coords):
         natoms = coords.size // 3
-        coords = np.reshape(coords, [natoms, 3])
+        coords = mx.reshape(coords, [natoms, 3])
         energy = 0.
-        grad = np.zeros([natoms, 3])
+        grad = mx.zeros([natoms, 3])
         for i in range(natoms):
             for j in range(i + 1, natoms):
                 dr = coords[j, :] - coords[i, :]
-                r = np.linalg.norm(dr)
+                r = mx.linalg.norm(dr)
                 energy += self.vij(r)
                 g = self.dvij(r)
                 grad[i, :] += -g * dr/r
@@ -99,7 +99,7 @@ class LJ:
         return grad
 
     def get_random_configuration(self):
-        rnd = np.random.uniform(-1, 1, [3 * self.natoms])
+        rnd = mx.random.uniform(-1, 1, [3 * self.natoms])
         return rnd * float(self.natoms)**(1. / 3)
 
 
@@ -125,9 +125,9 @@ class LJ13(LJ):
 
 class Booth:
     target_E = 0.
-    solution = np.array([1., 3.])
-    xmin = np.array([-10., -10.])
-    xmax = np.array([10., 10.])
+    solution = mx.array([1., 3.])
+    xmin = mx.array([-10., -10.])
+    xmax = mx.array([10., 10.])
 
     def fun(self, coords):
         x, y = coords
@@ -137,14 +137,14 @@ class Booth:
         x, y = coords
         dfdx = 2. * (x + 2. * y - 7.) + 4. * (2. * x + y - 5.)
         dfdy = 4. * (x + 2. * y - 7.) + 2. * (2. * x + y - 5.)
-        return np.array([dfdx, dfdy])
+        return mx.array([dfdx, dfdy])
 
 
 class Beale:
     target_E = 0.
-    solution = np.array([3., 0.5])
-    xmin = np.array([-4.5, -4.5])
-    xmax = np.array([4.5, 4.5])
+    solution = mx.array([3., 0.5])
+    xmin = mx.array([-4.5, -4.5])
+    xmax = mx.array([4.5, 4.5])
 
     def fun(self, coords):
         x, y = coords
@@ -161,7 +161,7 @@ class Beale:
         dfdy = (2. * (1.5 - x + x * y) * (x) +
                 2. * (2.25 - x + x * y**2) * (2. * y * x) +
                 2. * (2.625 - x + x * y**3) * (3. * x * y**2))
-        return np.array([dfdx, dfdy])
+        return mx.array([dfdx, dfdy])
 
 
 """
@@ -179,8 +179,8 @@ See also https://mpra.ub.uni-muenchen.de/2718/1/MPRA_paper_2718.pdf
 class HolderTable:
     target_E = -19.2085
     solution = [8.05502, 9.66459]
-    xmin = np.array([-10, -10])
-    xmax = np.array([10, 10])
+    xmin = mx.array([-10, -10])
+    xmax = mx.array([10, 10])
     stepsize = 2.
     temperature = 2.
 
@@ -214,7 +214,7 @@ class HolderTable:
 #         dgdy = - dRdy / pi
 #         dfdy = -sin(x[0]) * sin(x[1]) * exp(abs(g)) + f * self.dabs(g) * dgdy
 #         dEdy = - self.dabs(f) * dfdy
-#         return np.array([dEdx, dEdy])
+#         return mx.array([dEdx, dEdy])
 
 
 class Ackley:
@@ -222,11 +222,11 @@ class Ackley:
     # converge in the minimizer
     target_E = 0.
     solution = [0., 0.]
-    xmin = np.array([-5, -5])
-    xmax = np.array([5, 5])
+    xmin = mx.array([-5, -5])
+    xmax = mx.array([5, 5])
 
     def fun(self, x):
-        E = (-20. * exp(-0.2 * sqrt(0.5 * (x[0]**2 + x[1]**2))) + 20. + np.e -
+        E = (-20. * exp(-0.2 * sqrt(0.5 * (x[0]**2 + x[1]**2))) + 20. + mx.e -
              exp(0.5 * (cos(2. * pi * x[0]) + cos(2. * pi * x[1]))))
         return E
 
@@ -240,14 +240,14 @@ class Ackley:
         dfdx = 2. * deriv1 * x[0] - term2 * pi * sin(2. * pi * x[0])
         dfdy = 2. * deriv1 * x[1] - term2 * pi * sin(2. * pi * x[1])
 
-        return np.array([dfdx, dfdy])
+        return mx.array([dfdx, dfdy])
 
 
 class Levi:
     target_E = 0.
     solution = [1., 1.]
-    xmin = np.array([-10, -10])
-    xmax = np.array([10, 10])
+    xmin = mx.array([-10, -10])
+    xmax = mx.array([10, 10])
 
     def fun(self, x):
         E = (sin(3. * pi * x[0])**2 + (x[0] - 1.)**2 *
@@ -266,50 +266,50 @@ class Levi:
                 (1. + sin(2 * pi * x[1])**2) + (x[1] - 1.)**2 *
                 2. * 2. * pi * cos(2. * pi * x[1]) * sin(2. * pi * x[1]))
 
-        return np.array([dfdx, dfdy])
+        return mx.array([dfdx, dfdy])
 
 
 class EggHolder:
     target_E = -959.6407
     solution = [512, 404.2319]
-    xmin = np.array([-512., -512])
-    xmax = np.array([512., 512])
+    xmin = mx.array([-512., -512])
+    xmax = mx.array([512., 512])
 
     def fun(self, x):
-        a = -(x[1] + 47) * np.sin(np.sqrt(abs(x[1] + x[0]/2. + 47)))
-        b = -x[0] * np.sin(np.sqrt(abs(x[0] - (x[1] + 47))))
+        a = -(x[1] + 47) * mx.sin(mx.sqrt(abs(x[1] + x[0]/2. + 47)))
+        b = -x[0] * mx.sin(mx.sqrt(abs(x[0] - (x[1] + 47))))
         return a + b
 
 
 class CrossInTray:
     target_E = -2.06261
     solution = [1.34941, -1.34941]
-    xmin = np.array([-10., -10])
-    xmax = np.array([10., 10])
+    xmin = mx.array([-10., -10])
+    xmax = mx.array([10., 10])
 
     def fun(self, x):
         arg = abs(100 - sqrt(x[0]**2 + x[1]**2)/pi)
-        val = np.power(abs(sin(x[0]) * sin(x[1]) * exp(arg)) + 1., 0.1)
+        val = mx.power(abs(sin(x[0]) * sin(x[1]) * exp(arg)) + 1., 0.1)
         return -0.0001 * val
 
 
 class Schaffer2:
     target_E = 0
     solution = [0., 0.]
-    xmin = np.array([-100., -100])
-    xmax = np.array([100., 100])
+    xmin = mx.array([-100., -100])
+    xmax = mx.array([100., 100])
 
     def fun(self, x):
-        num = np.power(np.sin(x[0]**2 - x[1]**2), 2) - 0.5
-        den = np.power(1 + 0.001 * (x[0]**2 + x[1]**2), 2)
+        num = mx.power(mx.sin(x[0]**2 - x[1]**2), 2) - 0.5
+        den = mx.power(1 + 0.001 * (x[0]**2 + x[1]**2), 2)
         return 0.5 + num / den
 
 
 class Schaffer4:
     target_E = 0.292579
     solution = [0, 1.253131828927371]
-    xmin = np.array([-100., -100])
-    xmax = np.array([100., 100])
+    xmin = mx.array([-100., -100])
+    xmax = mx.array([100., 100])
 
     def fun(self, x):
         num = cos(sin(abs(x[0]**2 - x[1]**2)))**2 - 0.5

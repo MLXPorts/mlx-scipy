@@ -16,14 +16,14 @@ This page contains three sets of demonstrations:
 We start from the (slightly modified) docstring example.
 
 ```
->>> import numpy as np
+>>> import mlx.core as mx
 >>> import matplotlib.pyplot as plt
 >>> from scipy.interpolate import interp2d, RectBivariateSpline
 
->>> x = np.arange(-5.01, 5.01, 0.25)
->>> y = np.arange(-5.01, 7.51, 0.25)
->>> xx, yy = np.meshgrid(x, y)
->>> z = np.sin(xx**2 + 2.*yy**2)
+>>> x = mx.arange(-5.01, 5.01, 0.25)
+>>> y = mx.arange(-5.01, 7.51, 0.25)
+>>> xx, yy = mx.meshgrid(x, y)
+>>> z = mx.sin(xx**2 + 2.*yy**2)
 >>> f = interp2d(x, y, z, kind='cubic')
 ```
 
@@ -53,8 +53,8 @@ Now, let's build a convenience function to construct the interpolator and plot i
 ...    plt.show()
 ...    return znew
 ...
->>> xnew = np.arange(-5.01, 5.01, 1e-2)
->>> ynew = np.arange(-5.01, 7.51, 1e-2)
+>>> xnew = mx.arange(-5.01, 5.01, 1e-2)
+>>> ynew = mx.arange(-5.01, 7.51, 1e-2)
 >>> znew_i = plot(f, xnew, ynew)
 ```
 
@@ -118,8 +118,8 @@ True
 ```
 
 ```
->>> xnew = np.arange(-5.01, 5.01, 1e-2)
->>> ynew = np.arange(-5.01, 7.51, 1e-2)
+>>> xnew = mx.arange(-5.01, 5.01, 1e-2)
+>>> ynew = mx.arange(-5.01, 7.51, 1e-2)
 >>> znew_i = plot(f, xnew, ynew)
 ```
 
@@ -183,7 +183,7 @@ Note that, here:
 Evaluation: create a 2D meshgrid. Use indexing='ij' and `sparse=True` to save some memory:
 
 ```
->>> xxnew, yynew = np.meshgrid(xnew, ynew, indexing='ij', sparse=True)
+>>> xxnew, yynew = mx.meshgrid(xnew, ynew, indexing='ij', sparse=True)
 ```
 
 Evaluate, note the tuple argument:
@@ -213,19 +213,19 @@ For 2D scattered linear interpolation, both `SmoothBivariateSpline` and `biplrep
 ```
 # TestSmoothBivariateSpline::test_integral
 >>> from scipy.interpolate import SmoothBivariateSpline, LinearNDInterpolator
->>> x = np.array([1,1,1,2,2,2,4,4,4])
->>> y = np.array([1,2,3,1,2,3,1,2,3])
->>> z = np.array([0,7,8,3,4,7,1,3,4])
+>>> x = mx.array([1,1,1,2,2,2,4,4,4])
+>>> y = mx.array([1,2,3,1,2,3,1,2,3])
+>>> z = mx.array([0,7,8,3,4,7,1,3,4])
 ```
 
 Now, use the linear interpolation over Qhull-based triangulation of data:
 
 ```
->>> xy = np.c_[x, y]   # or just list(zip(x, y))
+>>> xy = mx.c_[x, y]   # or just list(zip(x, y))
 >>> lut2 = LinearNDInterpolator(xy, z)
->>> X = np.linspace(min(x), max(x))
->>> Y = np.linspace(min(y), max(y))
->>> X, Y = np.meshgrid(X, Y)
+>>> X = mx.linspace(min(x), max(x))
+>>> Y = mx.linspace(min(y), max(y))
+>>> X, Y = mx.meshgrid(X, Y)
 ```
 
 The result is easy to understand and interpret:
@@ -248,9 +248,9 @@ For illustration, consider the same data from the previous example:
 >>> tck = bisplrep(x, y, z, kx=1, ky=1, s=0)
 >>> fig = plt.figure()
 >>> ax = fig.add_subplot(projection='3d')
->>> xx = np.linspace(min(x), max(x))
->>> yy = np.linspace(min(y), max(y))
->>> X, Y = np.meshgrid(xx, yy)
+>>> xx = mx.linspace(min(x), max(x))
+>>> yy = mx.linspace(min(y), max(y))
+>>> X, Y = mx.meshgrid(xx, yy)
 >>> Z = bisplev(xx, yy, tck)
 >>> Z = Z.reshape(*X.shape).T
 >>> ax.plot_wireframe(X, Y, Z, rstride=2, cstride=2)
@@ -266,9 +266,9 @@ Also, `SmoothBivariateSpline` fails to interpolate the data. Again, use the same
 >>> lut = SmoothBivariateSpline(x, y, z, kx=1, ky=1, s=0)
 >>> fig = plt.figure()
 >>> ax = fig.add_subplot(projection='3d')
->>> xx = np.linspace(min(x), max(x))
->>> yy = np.linspace(min(y), max(y))
->>> X, Y = np.meshgrid(xx, yy)
+>>> xx = mx.linspace(min(x), max(x))
+>>> yy = mx.linspace(min(y), max(y))
+>>> X, Y = mx.meshgrid(xx, yy)
 >>> ax.plot_wireframe(X, Y, lut(xx, yy).T, rstride=4, cstride=4)
 >>> ax.scatter(x, y, z,  'o', color='k', s=48)
 ```

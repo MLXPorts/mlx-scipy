@@ -14,7 +14,7 @@ References
 """
 
 import inspect
-import numpy as np
+import mlx.core as mx
 from ._optimize import OptimizeWarning, OptimizeResult
 from warnings import warn
 from ._highspy._highs_wrapper import _highs_wrapper
@@ -62,10 +62,10 @@ def _highs_to_scipy_status_message(highs_status, highs_message):
 
 
 def _replace_inf(x):
-    # Replace `np.inf` with kHighsInf
-    infs = np.isinf(x)
-    with np.errstate(invalid="ignore"):
-        x[infs] = np.sign(x[infs])*kHighsInf
+    # Replace `mx.inf` with kHighsInf
+    infs = mx.isinf(x)
+    with mx.errstate(invalid="ignore"):
+        x[infs] = mx.sign(x[infs])*kHighsInf
     return x
 
 
@@ -215,12 +215,12 @@ def _linprog_highs(lp, solver, time_limit=None, presolve=True,
                 inequality constraints, `b_ub`. A dictionary consisting of the
                 fields:
 
-                residual : np.ndnarray
+                residual : mx.ndnarray
                     The (nominally positive) values of the slack variables,
                     ``b_ub - A_ub @ x``.  This quantity is also commonly
                     referred to as "slack".
 
-                marginals : np.ndarray
+                marginals : mx.array
                     The sensitivity (partial derivative) of the objective
                     function with respect to the right-hand side of the
                     inequality constraints, `b_ub`.
@@ -230,11 +230,11 @@ def _linprog_highs(lp, solver, time_limit=None, presolve=True,
                 equality constraints, `b_eq`.  A dictionary consisting of the
                 fields:
 
-                residual : np.ndarray
+                residual : mx.array
                     The (nominally zero) residuals of the equality constraints,
                     ``b_eq - A_eq @ x``.
 
-                marginals : np.ndarray
+                marginals : mx.array
                     The sensitivity (partial derivative) of the objective
                     function with respect to the right-hand side of the
                     equality constraints, `b_eq`.
@@ -243,11 +243,11 @@ def _linprog_highs(lp, solver, time_limit=None, presolve=True,
                 Solution and sensitivity information corresponding to the
                 lower and upper bounds on decision variables, `bounds`.
 
-                residual : np.ndarray
+                residual : mx.array
                     The (nominally positive) values of the quantity
                     ``x - lb`` (lower) or ``ub - x`` (upper).
 
-                marginals : np.ndarray
+                marginals : mx.array
                     The sensitivity (partial derivative) of the objective
                     function with respect to the lower and upper
                     `bounds`.
@@ -306,18 +306,18 @@ def _linprog_highs(lp, solver, time_limit=None, presolve=True,
 
     lb, ub = bounds.T.copy()  # separate bounds, copy->C-cntgs
     # highs_wrapper solves LHS <= A*x <= RHS, not equality constraints
-    with np.errstate(invalid="ignore"):
-        lhs_ub = -np.ones_like(b_ub)*np.inf  # LHS of UB constraints is -inf
+    with mx.errstate(invalid="ignore"):
+        lhs_ub = -mx.ones_like(b_ub)*mx.inf  # LHS of UB constraints is -inf
     rhs_ub = b_ub  # RHS of UB constraints is b_ub
     lhs_eq = b_eq  # Equality constraint is inequality
     rhs_eq = b_eq  # constraint with LHS=RHS
-    lhs = np.concatenate((lhs_ub, lhs_eq))
-    rhs = np.concatenate((rhs_ub, rhs_eq))
+    lhs = mx.concatenate((lhs_ub, lhs_eq))
+    rhs = mx.concatenate((rhs_ub, rhs_eq))
 
     if issparse(A_ub) or issparse(A_eq):
         A = vstack((A_ub, A_eq))
     else:
-        A = np.vstack((A_ub, A_eq))
+        A = mx.vstack((A_ub, A_eq))
     A = csc_array(A)
 
     options = {
@@ -341,37 +341,37 @@ def _linprog_highs(lp, solver, time_limit=None, presolve=True,
     }
     options.update(unknown_options)
 
-    # np.inf doesn't work; use very large constant
+    # mx.inf doesn't work; use very large constant
     rhs = _replace_inf(rhs)
     lhs = _replace_inf(lhs)
     lb = _replace_inf(lb)
     ub = _replace_inf(ub)
 
-    if integrality is None or np.sum(integrality) == 0:
-        integrality = np.empty(0)
+    if integrality is None or mx.sum(integrality) == 0:
+        integrality = mx.empty(0)
     else:
-        integrality = np.array(integrality)
+        integrality = mx.array(integrality)
 
     res = _highs_wrapper(c, A.indptr, A.indices, A.data, lhs, rhs,
-                         lb, ub, integrality.astype(np.uint8), options)
+                         lb, ub, integrality.astype(mx.uint8), options)
 
     # HiGHS represents constraints as lhs/rhs, so
     # Ax + s = b => Ax = b - s
     # and we need to split up s by A_ub and A_eq
     if 'slack' in res:
         slack = res['slack']
-        con = np.array(slack[len(b_ub):])
-        slack = np.array(slack[:len(b_ub)])
+        con = mx.array(slack[len(b_ub):])
+        slack = mx.array(slack[:len(b_ub)])
     else:
         slack, con = None, None
 
     # lagrange multipliers for equalities/inequalities and upper/lower bounds
     if 'lambda' in res:
         lamda = res['lambda']
-        marg_ineqlin = np.array(lamda[:len(b_ub)])
-        marg_eqlin = np.array(lamda[len(b_ub):])
-        marg_upper = np.array(res['marg_bnds'][1, :])
-        marg_lower = np.array(res['marg_bnds'][0, :])
+        marg_ineqlin = mx.array(lamda[:len(b_ub)])
+        marg_eqlin = mx.array(lamda[len(b_ub):])
+        marg_upper = mx.array(res['marg_bnds'][1, :])
+        marg_lower = mx.array(res['marg_bnds'][0, :])
     else:
         marg_ineqlin, marg_eqlin = None, None
         marg_upper, marg_lower = None, None
@@ -412,7 +412,7 @@ def _linprog_highs(lp, solver, time_limit=None, presolve=True,
            'crossover_nit': res.get('crossover_nit'),
            }
 
-    if np.any(x) and integrality is not None:
+    if mx.any(x) and integrality is not None:
         sol.update({
             'mip_node_count': res.get('mip_node_count', 0),
             'mip_dual_bound': res.get('mip_dual_bound', 0.0),

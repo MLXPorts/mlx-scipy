@@ -43,7 +43,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
-import numpy as np
+import mlx.core as mx
 
 from scipy import linalg
 from scipy.special import xlogy
@@ -111,9 +111,9 @@ class Rbf:
     ----------
     N : int
         The number of data points (as determined by the input arrays).
-    di : ndarray
+    di : array
         The 1-D array of data values at each of the data coordinates `xi`.
-    xi : ndarray
+    xi : array
         The 2-D array of data coordinates.
     function : str or callable
         The radial basis function. See description under Parameters.
@@ -125,7 +125,7 @@ class Rbf:
         The distance function. See description under Parameters.
     mode : str
         Mode of the interpolation. See description under Parameters.
-    nodes : ndarray
+    nodes : array
         A 1-D array of node values for the interpolation.
     A : internal property, do not use
 
@@ -135,12 +135,12 @@ class Rbf:
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.interpolate import Rbf
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> x, y, z, d = rng.random((4, 50))
     >>> rbfi = Rbf(x, y, z, d)  # radial basis function interpolator instance
-    >>> xi = yi = zi = np.linspace(0, 1, 20)
+    >>> xi = yi = zi = mx.linspace(0, 1, 20)
     >>> di = rbfi(xi, yi, zi)   # interpolated values
     >>> di.shape
     (20,)
@@ -149,13 +149,13 @@ class Rbf:
     # Available radial basis functions that can be selected as strings;
     # they all start with _h_ (self._init_function relies on that)
     def _h_multiquadric(self, r):
-        return np.sqrt((1.0/self.epsilon*r)**2 + 1)
+        return mx.sqrt((1.0/self.epsilon*r)**2 + 1)
 
     def _h_inverse_multiquadric(self, r):
-        return 1.0/np.sqrt((1.0/self.epsilon*r)**2 + 1)
+        return 1.0/mx.sqrt((1.0/self.epsilon*r)**2 + 1)
 
     def _h_gaussian(self, r):
-        return np.exp(-(1.0/self.epsilon*r)**2)
+        return mx.exp(-(1.0/self.epsilon*r)**2)
 
     def _h_linear(self, r):
         return r
@@ -220,17 +220,17 @@ class Rbf:
         # them as a single 2-D array `xi` of shape (n_args-1, array_size),
         # plus a 1-D array `di` for the values.
         # All arrays must have the same number of elements
-        self.xi = np.asarray([np.asarray(a, dtype=np.float64).flatten()
+        self.xi = mx.array([mx.array(a, dtype=mx.float64).flatten()
                               for a in args[:-1]])
         self.N = self.xi.shape[-1]
 
         self.mode = kwargs.pop('mode', '1-D')
 
         if self.mode == '1-D':
-            self.di = np.asarray(args[-1]).flatten()
+            self.di = mx.array(args[-1]).flatten()
             self._target_dim = 1
         elif self.mode == 'N-D':
-            self.di = np.asarray(args[-1])
+            self.di = mx.array(args[-1])
             self._target_dim = self.di.shape[-1]
         else:
             raise ValueError("Mode has to be 1-D or N-D.")
@@ -243,11 +243,11 @@ class Rbf:
         if self.epsilon is None:
             # default epsilon is the "the average distance between nodes" based
             # on a bounding hypercube
-            ximax = np.amax(self.xi, axis=1)
-            ximin = np.amin(self.xi, axis=1)
+            ximax = mx.amax(self.xi, axis=1)
+            ximin = mx.amin(self.xi, axis=1)
             edges = ximax - ximin
-            edges = edges[np.nonzero(edges)]
-            self.epsilon = np.power(np.prod(edges)/self.N, 1.0/edges.size)
+            edges = edges[mx.nonzero(edges)]
+            self.epsilon = mx.power(mx.prod(edges)/self.N, 1.0/edges.size)
 
         self.smooth = kwargs.pop('smooth', 0.0)
         self.function = kwargs.pop('function', 'multiquadric')
@@ -260,7 +260,7 @@ class Rbf:
         # Compute weights
         if self._target_dim > 1:  # If we have more than one target dimension,
             # we first factorize the matrix
-            self.nodes = np.zeros((self.N, self._target_dim), dtype=self.di.dtype)
+            self.nodes = mx.zeros((self.N, self._target_dim), dtype=self.di.dtype)
             lu, piv = linalg.lu_factor(self.A)
             for i in range(self._target_dim):
                 self.nodes[:, i] = linalg.lu_solve((lu, piv), self.di[:, i])
@@ -272,19 +272,19 @@ class Rbf:
         # this only exists for backwards compatibility: self.A was available
         # and, at least technically, public.
         r = squareform(pdist(self.xi.T, self.norm))  # Pairwise norm
-        return self._init_function(r) - np.eye(self.N)*self.smooth
+        return self._init_function(r) - mx.eye(self.N)*self.smooth
 
     def _call_norm(self, x1, x2):
         return cdist(x1.T, x2.T, self.norm)
 
     def __call__(self, *args):
-        args = [np.asarray(x) for x in args]
+        args = [mx.array(x) for x in args]
         if not all([x.shape == y.shape for x in args for y in args]):
             raise ValueError("Array lengths must be equal")
         if self._target_dim > 1:
             shp = args[0].shape + (self._target_dim,)
         else:
             shp = args[0].shape
-        xa = np.asarray([a.flatten() for a in args], dtype=np.float64)
+        xa = mx.array([a.flatten() for a in args], dtype=mx.float64)
         r = self._call_norm(xa, self.xi)
-        return np.dot(self._function(r), self.nodes).reshape(shp)
+        return mx.dot(self._function(r), self.nodes).reshape(shp)

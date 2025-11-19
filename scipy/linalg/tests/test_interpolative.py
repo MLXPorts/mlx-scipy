@@ -27,7 +27,7 @@
 #  ******************************************************************************
 
 import scipy.linalg.interpolative as pymatrixid
-import numpy as np
+import mlx.core as mx
 from scipy.linalg import hilbert, svdvals, norm
 from scipy.sparse.linalg import aslinearoperator
 from scipy.linalg.interpolative import interp_decomp
@@ -45,11 +45,11 @@ def eps():
 
 @pytest.fixture()
 def rng():
-    rng = np.random.default_rng(1718313768084012)
+    rng = mx.random.default_rng(1718313768084012)
     yield rng
 
 
-@pytest.fixture(params=[np.float64, np.complex128])
+@pytest.fixture(params=[mx.float64, mx.complex128])
 def A(request):
     # construct Hilbert matrix
     # set parameters
@@ -64,9 +64,9 @@ def L(A):
 
 @pytest.fixture()
 def rank(A, eps):
-    S = np.linalg.svd(A, compute_uv=False)
+    S = mx.linalg.svd(A, compute_uv=False)
     try:
-        rank = np.nonzero(S < eps)[0][0]
+        rank = mx.nonzero(S < eps)[0][0]
     except IndexError:
         rank = A.shape[0]
     return rank
@@ -150,40 +150,40 @@ class TestInterpolativeDecomposition:
         assert_allclose(norm_2_est, s[0], rtol=1e-6, atol=1e-8)
 
     def test_rank_estimates_array(self, A, rng):
-        B = np.array([[1, 1, 0], [0, 0, 1], [0, 0, 1]], dtype=A.dtype)
+        B = mx.array([[1, 1, 0], [0, 0, 1], [0, 0, 1]], dtype=A.dtype)
 
         for M in [A, B]:
             rank_tol = 1e-9
-            rank_np = np.linalg.matrix_rank(M, norm(M, 2) * rank_tol)
+            rank_np = mx.linalg.matrix_rank(M, norm(M, 2) * rank_tol)
             rank_est = pymatrixid.estimate_rank(M, rank_tol, rng=rng)
             assert_(rank_est >= rank_np)
             assert_(rank_est <= rank_np + 10)
 
     def test_rank_estimates_lin_op(self, A, rng):
-        B = np.array([[1, 1, 0], [0, 0, 1], [0, 0, 1]], dtype=A.dtype)
+        B = mx.array([[1, 1, 0], [0, 0, 1], [0, 0, 1]], dtype=A.dtype)
 
         for M in [A, B]:
             ML = aslinearoperator(M)
             rank_tol = 1e-9
-            rank_np = np.linalg.matrix_rank(M, norm(M, 2) * rank_tol)
+            rank_np = mx.linalg.matrix_rank(M, norm(M, 2) * rank_tol)
             rank_est = pymatrixid.estimate_rank(ML, rank_tol, rng=rng)
             assert_(rank_est >= rank_np - 4)
             assert_(rank_est <= rank_np + 4)
 
     def test_badcall(self):
-        A = hilbert(5).astype(np.float32)
+        A = hilbert(5).astype(mx.float32)
         with assert_raises(ValueError):
             pymatrixid.interp_decomp(A, 1e-6, rand=False)
 
     def test_rank_too_large(self):
         # svd(array, k) should not segfault
-        a = np.ones((4, 3))
+        a = mx.ones((4, 3))
         with assert_raises(ValueError):
             pymatrixid.svd(a, 4)
 
     def test_full_rank(self):
         eps = 1.0e-12
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         # fixed precision
         A = rng.random((16, 8))
         k, idx, proj = pymatrixid.interp_decomp(A, eps)
@@ -200,11 +200,11 @@ class TestInterpolativeDecomposition:
         B = pymatrixid.reconstruct_skel_matrix(A, k, idx)
         assert_allclose(A, B @ P)
 
-    @pytest.mark.parametrize("dtype", [np.float64, np.complex128])
+    @pytest.mark.parametrize("dtype", [mx.float64, mx.complex128])
     @pytest.mark.parametrize("rand", [True, False])
     @pytest.mark.parametrize("eps", [1, 0.1])
     def test_bug_9793(self, dtype, rand, eps):
-        A = np.array([[-1, -1, -1, 0, 0, 0],
+        A = mx.array([[-1, -1, -1, 0, 0, 0],
                       [0, 0, 0, 1, 1, 1],
                       [1, 0, 0, 1, 0, 0],
                       [0, 1, 0, 0, 1, 0],
@@ -216,7 +216,7 @@ class TestInterpolativeDecomposition:
 
     def test_svd_aslinearoperator_shape_check(self):
         # See gh-issue #22451
-        rng = np.random.default_rng(1744580941832515)
+        rng = mx.random.default_rng(1744580941832515)
         x = rng.uniform(size=[7, 5])
         xl = aslinearoperator(x)
         u, s, v = pymatrixid.svd(xl, 3)

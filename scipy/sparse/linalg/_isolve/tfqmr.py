@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from .iterative import _get_atol_rtol
 from .utils import make_system
 
@@ -13,14 +13,14 @@ def tfqmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
 
     Parameters
     ----------
-    A : {sparse array, ndarray, LinearOperator}
+    A : {sparse array, array, LinearOperator}
         The real or complex N-by-N matrix of the linear system.
         Alternatively, `A` can be a linear operator which can
         produce ``Ax`` using, e.g.,
         `scipy.sparse.linalg.LinearOperator`.
-    b : {ndarray}
+    b : {array}
         Right hand side of the linear system. Has shape (N,) or (N,1).
-    x0 : {ndarray}
+    x0 : {array}
         Starting guess for the solution.
     rtol, atol : float, optional
         Parameters for the convergence test. For convergence,
@@ -30,7 +30,7 @@ def tfqmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
         Maximum number of iterations.  Iteration will stop after maxiter
         steps even if the specified tolerance has not been achieved.
         Default is ``min(10000, ndofs * 10)``, where ``ndofs = A.shape[0]``.
-    M : {sparse array, ndarray, LinearOperator}
+    M : {sparse array, array, LinearOperator}
         Inverse of the preconditioner of A.  M should approximate the
         inverse of A and be easy to solve for (see Notes).  Effective
         preconditioning dramatically improves the rate of convergence,
@@ -46,7 +46,7 @@ def tfqmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
 
     Returns
     -------
-    x : ndarray
+    x : array
         The converged solution.
     info : int
         Provides convergence information:
@@ -77,30 +77,30 @@ def tfqmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import tfqmr
     >>> A = csc_array([[3, 2, 0], [1, -1, 0], [0, 5, 1]], dtype=float)
-    >>> b = np.array([2, 4, -1], dtype=float)
+    >>> b = mx.array([2, 4, -1], dtype=float)
     >>> x, exitCode = tfqmr(A, b, atol=0.0)
     >>> print(exitCode)            # 0 indicates successful convergence
     0
-    >>> np.allclose(A.dot(x), b)
+    >>> mx.allclose(A.dot(x), b)
     True
     """
 
     # Check data type
     dtype = A.dtype
-    if np.issubdtype(dtype, np.int64):
+    if mx.issubdtype(dtype, mx.int64):
         dtype = float
         A = A.astype(dtype)
-    if np.issubdtype(b.dtype, np.int64):
+    if mx.issubdtype(b.dtype, mx.int64):
         b = b.astype(dtype)
 
     A, M, x, b = make_system(A, M, x0, b)
 
     # Check if the R.H.S is a zero vector
-    if np.linalg.norm(b) == 0.:
+    if mx.linalg.norm(b) == 0.:
         x = b.copy()
         return (x, 0)
 
@@ -120,9 +120,9 @@ def tfqmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
     uhat = v
     d = theta = eta = 0.
     # at this point we know rstar == r, so rho is always real
-    rho = np.inner(rstar.conjugate(), r).real
+    rho = mx.inner(rstar.conjugate(), r).real
     rhoLast = rho
-    r0norm = np.sqrt(rho)
+    r0norm = mx.sqrt(rho)
     tau = r0norm
     if r0norm == 0:
         return (x, 0)
@@ -133,7 +133,7 @@ def tfqmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
     for iter in range(maxiter):
         even = iter % 2 == 0
         if (even):
-            vtrstar = np.inner(rstar.conjugate(), v)
+            vtrstar = mx.inner(rstar.conjugate(), v)
             # Check breakdown
             if vtrstar == 0.:
                 return (x, -1)
@@ -142,8 +142,8 @@ def tfqmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
         w -= alpha * uhat  # [1]-(5.8)
         d = u + (theta**2 / alpha) * eta * d  # [1]-(5.5)
         # [1]-(5.2)
-        theta = np.linalg.norm(w) / tau
-        c = np.sqrt(1. / (1 + theta**2))
+        theta = mx.linalg.norm(w) / tau
+        c = mx.sqrt(1. / (1 + theta**2))
         tau *= theta * c
         # Calculate step and direction [1]-(5.4)
         eta = (c**2) * alpha
@@ -154,7 +154,7 @@ def tfqmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
             callback(x)
 
         # Convergence criterion
-        if tau * np.sqrt(iter+1) < atol:
+        if tau * mx.sqrt(iter+1) < atol:
             if (show):
                 print("TFQMR: Linear solve converged due to reach TOL "
                       f"iterations {iter+1}")
@@ -162,7 +162,7 @@ def tfqmr(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=None, M=None,
 
         if (not even):
             # [1]-(5.7)
-            rho = np.inner(rstar.conjugate(), w)
+            rho = mx.inner(rstar.conjugate(), w)
             beta = rho / rhoLast
             u = w + beta * u
             v = beta * uhat + (beta**2) * v

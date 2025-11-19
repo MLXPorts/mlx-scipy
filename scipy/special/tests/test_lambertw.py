@@ -7,7 +7,7 @@
 #     http://code.google.com/p/mpmath/source/browse/trunk/mpmath/tests/test_functions2.py?spec=svn994&r=992
 
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_, assert_equal, assert_allclose
 from scipy.special import lambertw
 from numpy import nan, inf, pi, e, isnan, log, r_, array, complex128
@@ -80,7 +80,7 @@ def test_values():
 
     def w(x, y):
         return lambertw(x, y.real.astype(int))
-    with np.errstate(all='ignore'):
+    with mx.errstate(all='ignore'):
         FuncData(w, data, (0,1), 2, rtol=1e-10, atol=1e-13).check()
 
 
@@ -91,7 +91,7 @@ def test_ufunc():
 
 def test_lambertw_ufunc_loop_selection():
     # see https://github.com/scipy/scipy/issues/4895
-    dt = np.dtype(np.complex128)
+    dt = mx.dtype(mx.complex128)
     assert_equal(lambertw(0, 0, 0).dtype, dt)
     assert_equal(lambertw([0], 0, 0).dtype, dt)
     assert_equal(lambertw(0, [0], 0).dtype, dt)

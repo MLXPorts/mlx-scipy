@@ -5,7 +5,7 @@ optiprofiler = pytest.importorskip("optiprofiler", exc_type=ImportError)
 from optiprofiler.problems import load_cutest_problem
 import pyprima
 from pyprima import minimize, Bounds, LinearConstraint, NonlinearConstraint
-import numpy as np
+import mlx.core as mx
 
 
 '''
@@ -29,13 +29,13 @@ def set_comparing():
 def get_constraints(problem):
     constraints = []
     if problem.m_linear_ub > 0:
-        constraints.append(LinearConstraint(problem.a_ub, -np.inf, problem.b_ub))
+        constraints.append(LinearConstraint(problem.a_ub, -mx.inf, problem.b_ub))
     if problem.m_linear_eq > 0:
         constraints.append(LinearConstraint(problem.a_eq, problem.b_eq, problem.b_eq))
     if problem.m_nonlinear_ub > 0:
-        constraints.append(NonlinearConstraint(problem.c_ub, -np.inf, np.zeros(problem.m_nonlinear_ub)))
+        constraints.append(NonlinearConstraint(problem.c_ub, -mx.inf, mx.zeros(problem.m_nonlinear_ub)))
     if problem.m_nonlinear_eq > 0:
-        constraints.append(NonlinearConstraint(problem.c_eq, np.zeros(problem.m_nonlinear_eq), np.zeros(problem.m_nonlinear_eq)))
+        constraints.append(NonlinearConstraint(problem.c_eq, mx.zeros(problem.m_nonlinear_eq), mx.zeros(problem.m_nonlinear_eq)))
     return constraints
 
 
@@ -44,9 +44,9 @@ def run_problem(name, expected_x, expected_f, expected_constraints, expected_nf,
     constraints = get_constraints(problem)
     bounds = Bounds(problem.lb, problem.ub)
     result = minimize(problem.fun, problem.x0, method='cobyla', constraints=constraints, bounds=bounds, options=options)
-    assert np.allclose(result.x, expected_x, atol=1e-15)
-    assert np.isclose(result.f, expected_f, atol=1e-15)
-    assert np.allclose(result.constr, expected_constraints, atol=1e-15)
+    assert mx.allclose(result.x, expected_x, atol=1e-15)
+    assert mx.isclose(result.f, expected_f, atol=1e-15)
+    assert mx.allclose(result.constr, expected_constraints, atol=1e-15)
     assert result.nf == expected_nf
 
 
@@ -55,7 +55,7 @@ def run_problem(name, expected_x, expected_f, expected_constraints, expected_nf,
 def test_errinbar():
     # Expected values are just obtained from running the problem and collecting the results
     # If future changes improve the algorithm, these values may need to be updated.
-    expected_x = np.array([-245.5081612710879710448,  -54.2958188399598853380,
+    expected_x = mx.array([-245.5081612710879710448,  -54.2958188399598853380,
                             262.7230936253279196535,  -45.9309872501519365073,
                              -2.2691358288677578869,    7.6733425543485722642,
                             -31.0344774501767943775,   26.9394969852641779084,
@@ -65,7 +65,7 @@ def test_errinbar():
                               7.1143643043640603096,    3.3150533074468162553,
                               1.1289565001348098594,   13.0411964959208557246])
     expected_f = 203.48674841371607
-    expected_constraints = np.array([
+    expected_constraints = mx.array([
           3.4958188399598881801,  -4.8690127498480606505, -58.4733425543485694220,
         -77.7394969852641679608,   1.8168811167782970006,   3.4958188399598868479,
           3.4958188399598868479,   3.4958188399598868479, -61.8843726076140185910,
@@ -82,28 +82,28 @@ def test_errinbar():
 
 
 def test_palmer2c():
-    expected_x = np.array([0.8853310838319223830, 0.8885299788096961970, 0.8805439805147466936,
+    expected_x = mx.array([0.8853310838319223830, 0.8885299788096961970, 0.8805439805147466936,
         0.7783464729241426072, 0.5850067768175214455, 0.0316686276050338403,
         0.0244429707945372325, -0.0163015984157743772])
     expected_f = 1414.0819761003331
-    expected_constraints = np.array([])
+    expected_constraints = mx.array([])
     expected_nf = 4000
     run_problem('PALMER2C', expected_x, expected_f, expected_constraints, expected_nf)
 
 
 def test_palmer3b():
-    expected_x = np.array([1.2090027787973145479, 7.5461811633941122679, 0.4433420649209307562,
+    expected_x = mx.array([1.2090027787973145479, 7.5461811633941122679, 0.4433420649209307562,
         0.0387612788701699879])
     expected_f = 324.6120596974852
-    expected_constraints = np.array([-0.4433320649209307462, -0.0387512788701699848])
+    expected_constraints = mx.array([-0.4433320649209307462, -0.0387512788701699848])
     expected_nf = 2000
     run_problem('PALMER3B', expected_x, expected_f, expected_constraints, expected_nf)
 
 
 def test_tfi3():
-    expected_x = np.array([1.0052196032967017914, -0.1118710807081673281, -0.3933485225885347547])
+    expected_x = mx.array([1.0052196032967017914, -0.1118710807081673281, -0.3933485225885347547])
     expected_f = 4.301460324843021
-    expected_constraints = np.array([
+    expected_constraints = mx.array([
         -5.2196032967017913506e-03, -4.1615476373613180527e-03,
         -3.2246822735029212481e-03, -2.4086482051270952098e-03,
         -1.7128464322335723580e-03, -1.1364439548220417464e-03,
@@ -162,11 +162,11 @@ def test_tfi3():
 def test_hs103():
     # This one hits the section in trustregion.py which scales the problem if A
     # contains large values.
-    expected_x = np.array([2.5289807396883552393, 0.4636478250644894272, 3.4406699575922705669,
+    expected_x = mx.array([2.5289807396883552393, 0.4636478250644894272, 3.4406699575922705669,
         9.1465471863584326684, 2.2192889216323616886, 2.8022288337905920663,
         0.0173213436307221025])
     expected_f = 3000.2102326770078
-    expected_constraints = np.array([
+    expected_constraints = mx.array([
         -2.4289807396883551505e+00, -3.6364782506448944943e-01,
         -3.3406699575922704781e+00, -9.0465471863584330237e+00,
         -2.1192889216323615997e+00, -2.7022288337905919775e+00,
@@ -182,12 +182,12 @@ def test_hs103():
 
 
 def test_cresc4():
-    expected_x = np.array([
+    expected_x = mx.array([
         -2.4712333082037314824e+01,  1.2118172433432175539e-01,
          1.0544855650501498978e+00,  2.3019400598944947944e+01,
         -2.3698388504182490846e-18,  3.9000000000000001332e-01])
     expected_f = 2.2014732007195974
-    expected_constraints = np.array([
+    expected_constraints = mx.array([
         -1.0544855550501499586e+00, -2.2019400598944947944e+01,
          2.3698388504182490846e-18,  0.0000000000000000000e+00,
         -6.2831852000000001368e+00, -1.9744556915237687633e-03,
@@ -202,10 +202,10 @@ def test_cresc4():
 def test_mgh10ls():
     # This one also hits the section in trustregion.py which scales the problem if A
     # contains large values.
-    expected_x = np.array([1.4950790839504562481e-03, 3.9999949550186062697e+05,
+    expected_x = mx.array([1.4950790839504562481e-03, 3.9999949550186062697e+05,
         2.5001006103891704697e+04])
     expected_f = 1366860355.936367
-    expected_constraints = np.array([])
+    expected_constraints = mx.array([])
     expected_nf = 51
     run_problem('MGH10LS', expected_x, expected_f, expected_constraints, expected_nf)
 
@@ -213,7 +213,7 @@ def test_mgh10ls():
 @pytest.mark.order(1)  # This test takes the longest
 @pytest.mark.xdist_group(name="tenbars1")  # Separate group to make sure it gets a separate worker
 def test_tenbars1():
-    expected_x = np.array([
+    expected_x = mx.array([
          1.9568934516948072542e+03,  3.3869509993142941084e+02,
          5.1084410783004557288e+02,  7.1451015340321816893e+02,
          6.7889550790383304957e+02,  5.5925898284379888992e+02,
@@ -224,7 +224,7 @@ def test_tenbars1():
         -1.3262297582844631005e+00, -1.3262297582844631005e+00,
         -1.3262297582844631005e+00, -1.3262297582844631005e+00])
     expected_f = -30.27643654696821
-    expected_constraints = np.array([
+    expected_constraints = mx.array([
         -3.8949509993142942221e+02, -7.6531015340321812346e+02,
         -6.1005898284379884444e+02, -6.1607088845435748681e+02,
         -2.0648703700913728643e-01,  1.9712297582844631183e+00,
@@ -246,24 +246,24 @@ def test_tenbars1():
 
 
 def test_biggs3():
-    expected_x = np.array([0.9999739462811082502, 9.9987085888009339385, 4.9992405910694346360])
+    expected_x = mx.array([0.9999739462811082502, 9.9987085888009339385, 4.9992405910694346360])
     expected_f = 1.0631133951128183e-08
-    expected_constraints = np.array([])
+    expected_constraints = mx.array([])
     expected_nf = 1500
     run_problem('BIGGS3', expected_x, expected_f, expected_constraints, expected_nf)
 
 
 def test_biggs6():
-    expected_x = np.array([1.2194245092803301933, 8.5197890909932567638, 1.1508892999691997527,
+    expected_x = mx.array([1.2194245092803301933, 8.5197890909932567638, 1.1508892999691997527,
         3.8853547380197808181, 3.4765466485421625542, 2.4764750429775079787])
     expected_f = 0.009233751892945407
-    expected_constraints = np.array([])
+    expected_constraints = mx.array([])
     expected_nf = 3000
     run_problem('BIGGS6', expected_x, expected_f, expected_constraints, expected_nf)
 
 
 def test_degenlpb():
-    expected_x = np.array([
+    expected_x = mx.array([
          2.5048137222646543742e-01,  8.1652820831984397262e-04,
          2.8086877200736666549e-02,  9.9836359424439302668e-02,
          3.9729580203073201622e-06,  1.3602542024738497294e-04,
@@ -275,7 +275,7 @@ def test_degenlpb():
         -2.5390811415199054935e-13,  1.6586456462450486181e-06,
          3.9275644489467232551e-03,  1.2011160395190988333e-03])
     expected_f = -30.731246817983664
-    expected_constraints = np.array([
+    expected_constraints = mx.array([
         -2.5048137222646543742e-01, -8.1652820831984397262e-04,
         -2.8086877200736666549e-02, -9.9836359424439302668e-02,
         -3.9729580203073201622e-06, -1.3602542024738497294e-04,
@@ -322,11 +322,11 @@ def test_hs102():
     # that it wasn't caught earlier, but it's a good reminder that these things happen, and
     # also why it's important to check the math with precision algorithms instead of just
     # ignoring issues when the differences appear close to machine epsilon.
-    expected_x = np.array([2.4754575633775468546, 0.5541250457494729664, 3.6444439553239513785,
+    expected_x = mx.array([2.4754575633775468546, 0.5541250457494729664, 3.6444439553239513785,
         8.1630851993117925502, 1.5198804708746382897, 1.9600795356050697560,
         0.0196160573415092507])
     expected_f = 3000.076360741547
-    expected_constraints = np.array([
+    expected_constraints = mx.array([
         -2.3754575633775467658e+00, -4.5412504574947298863e-01,
         -3.5444439553239512897e+00, -8.0630851993117929055e+00,
         -1.4198804708746382008e+00, -1.8600795356050696672e+00,
@@ -344,9 +344,9 @@ def test_hs102():
 
 def test_misra1als():
     # This test uncovered an issue with moderatef. We had been clipping incorrectly.
-    expected_x = np.array([5.0105555094407225E+002, 2.4181408013565766E-004])
+    expected_x = mx.array([5.0105555094407225E+002, 2.4181408013565766E-004])
     expected_f = 1.9594518355352196E+001
-    expected_constraints = np.array([])
+    expected_constraints = mx.array([])
     expected_nf = 39
     run_problem('MISRA1ALS', expected_x, expected_f, expected_constraints, expected_nf)
 
@@ -355,12 +355,12 @@ def test_polak3():
     # This one, with these particular options, actually triggered the logic for taking
     # the inverse of a non-triangular matrix. It happened via updatexfc, when the error
     # between SIM and SIMI was too large.
-    expected_x = np.array([1.0000000000000000E+000, 1.0000000000000000E+000, 1.0000000000000000E+000,
+    expected_x = mx.array([1.0000000000000000E+000, 1.0000000000000000E+000, 1.0000000000000000E+000,
         1.0000000000000000E+000, 1.0000000000000000E+000, 1.0000000000000000E+000,
         1.0000000000000000E+000, 1.0000000000000000E+000, 1.0000000000000000E+000,
         1.0000000000000000E+000, 1.0000000000000000E+000, 3.7182800000000000E+000])
     expected_f = 3.71828
-    expected_constraints = np.array([1.7673936794898822E+001, 4.2552779271657478E+001, 3.3334527708058324E+001,
+    expected_constraints = mx.array([1.7673936794898822E+001, 4.2552779271657478E+001, 3.3334527708058324E+001,
         6.8251421914926908E+001, 1.6633544068845666E+001, 2.8929015570937477E+001,
         1.6062115937829471E+001, 4.1328621950812334E+001, 2.8671452438715288E+001,
         7.1375489109225455E+001])

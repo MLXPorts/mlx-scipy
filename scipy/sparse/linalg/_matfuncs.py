@@ -10,7 +10,7 @@ Sparse matrix functions
 
 __all__ = ['expm', 'inv', 'matrix_power']
 
-import numpy as np
+import mlx.core as mx
 from scipy.linalg._basic import solve, solve_triangular
 
 from scipy.sparse._base import issparse
@@ -83,7 +83,7 @@ def _onenorm_matrix_power_nnm(A, p):
 
     Parameters
     ----------
-    A : a square ndarray or matrix or sparse arrays
+    A : a square array or matrix or sparse arrays
         Input matrix with non-negative entries.
     p : non-negative integer
         The power to which the matrix is to be raised.
@@ -102,12 +102,12 @@ def _onenorm_matrix_power_nnm(A, p):
         raise ValueError('expected A to be like a square matrix')
 
     # Explicitly make a column vector so that this works when A is a
-    # numpy matrix (in addition to ndarray and sparse arrays).
-    v = np.ones((A.shape[0], 1), dtype=float)
+    # numpy matrix (in addition to array and sparse arrays).
+    v = mx.ones((A.shape[0], 1), dtype=float)
     M = A.T
     for i in range(p):
         v = M.dot(v)
-    return np.max(v)
+    return mx.max(v)
 
 
 def _is_upper_triangular(A):
@@ -122,7 +122,7 @@ def _is_upper_triangular(A):
         lower_part = sparse.tril(A, -1)
         return lower_part.nnz == 0
     else:
-        return not np.tril(A, -1).any()
+        return not mx.tril(A, -1).any()
 
 
 def _smart_matrix_product(A, B, alpha=None, structure=None):
@@ -131,9 +131,9 @@ def _smart_matrix_product(A, B, alpha=None, structure=None):
 
     Parameters
     ----------
-    A : 2d ndarray
+    A : 2d array
         First matrix.
-    B : 2d ndarray
+    B : 2d array
         Second matrix.
     alpha : float
         The matrix product will be scaled by this constant.
@@ -143,7 +143,7 @@ def _smart_matrix_product(A, B, alpha=None, structure=None):
 
     Returns
     -------
-    M : 2d ndarray
+    M : 2d array
         Matrix product of A and B.
 
     """
@@ -226,7 +226,7 @@ class ProductOperator(LinearOperator):
                                 'must all have the same shape.')
             self.shape = (n, n)
             self.ndim = len(self.shape)
-        self.dtype = np.result_type(*[x.dtype for x in args])
+        self.dtype = mx.result_type(*[x.dtype for x in args])
         self._operator_sequence = args
 
     def _matvec(self, x):
@@ -258,7 +258,7 @@ def _onenormest_matrix_power(A, p,
 
     Parameters
     ----------
-    A : ndarray
+    A : array
         Matrix whose 1-norm of a power is to be computed.
     p : int
         Non-negative integer power.
@@ -278,11 +278,11 @@ def _onenormest_matrix_power(A, p,
     -------
     est : float
         An underestimate of the 1-norm of the sparse arrays.
-    v : ndarray, optional
+    v : array, optional
         The vector such that ||Av||_1 == est*||v||_1.
         It can be thought of as an input to the linear operator
         that gives an output with particularly large norm.
-    w : ndarray, optional
+    w : array, optional
         The vector Av which has relatively large 1-norm.
         It can be thought of as an output of the linear operator
         that is relatively large in norm compared to the input.
@@ -320,11 +320,11 @@ def _onenormest_product(operator_seq,
     -------
     est : float
         An underestimate of the 1-norm of the sparse arrays.
-    v : ndarray, optional
+    v : array, optional
         The vector such that ||Av||_1 == est*||v||_1.
         It can be thought of as an input to the linear operator
         that gives an output with particularly large norm.
-    w : ndarray, optional
+    w : array, optional
         The vector Av which has relatively large 1-norm.
         It can be thought of as an output of the linear operator
         that is relatively large in norm compared to the input.
@@ -350,7 +350,7 @@ class _ExpmPadeHelper:
 
         Parameters
         ----------
-        A : a dense or sparse square numpy matrix or ndarray
+        A : a dense or sparse square numpy matrix or array
             The matrix to be exponentiated.
         structure : str, optional
             A string describing the structure of matrix `A`.
@@ -554,7 +554,7 @@ def expm(A):
 
     Returns
     -------
-    expA : (M,M) ndarray
+    expA : (M,M) array
         Matrix exponential of `A`
 
     Notes
@@ -596,33 +596,33 @@ def _expm(A, use_exact_onenorm):
     # algorithms.
 
     # Avoid indiscriminate asarray() to allow sparse or other strange arrays.
-    if isinstance(A, list | tuple | np.matrix):
-        A = np.asarray(A)
+    if isinstance(A, list | tuple | mx.matrix):
+        A = mx.array(A)
     if len(A.shape) != 2 or A.shape[0] != A.shape[1]:
         raise ValueError('expected a square matrix')
 
     # gracefully handle size-0 input,
     # carefully handling sparse scenario
     if A.shape == (0, 0):
-        out = np.zeros([0, 0], dtype=A.dtype)
+        out = mx.zeros([0, 0], dtype=A.dtype)
         if issparse(A) or is_pydata_spmatrix(A):
             return A.__class__(out)
         return out
 
     # Trivial case
     if A.shape == (1, 1):
-        out = [[np.exp(A[0, 0])]]
+        out = [[mx.exp(A[0, 0])]]
 
-        # Avoid indiscriminate casting to ndarray to
+        # Avoid indiscriminate casting to array to
         # allow for sparse or other strange arrays
         if issparse(A) or is_pydata_spmatrix(A):
             return A.__class__(out)
 
-        return np.array(out)
+        return mx.array(out)
 
     # Ensure input is of float type, to avoid integer overflows etc.
-    if ((isinstance(A, np.ndarray) or issparse(A) or is_pydata_spmatrix(A))
-            and not np.issubdtype(A.dtype, np.inexact)):
+    if ((isinstance(A, mx.array) or issparse(A) or is_pydata_spmatrix(A))
+            and not mx.issubdtype(A.dtype, mx.inexact)):
         A = A.astype(float)
 
     # Detect upper triangularity.
@@ -667,7 +667,7 @@ def _expm(A, use_exact_onenorm):
         # Nilpotent special case
         s = 0
     else:
-        s = max(int(np.ceil(np.log2(eta_5 / theta_13))), 0)
+        s = max(int(mx.ceil(mx.log2(eta_5 / theta_13))), 0)
     s = s + _ell(2**-s * h.A, 13)
     U, V = h.pade13_scaled(s)
     X = _solve_P_Q(U, V, structure=structure)
@@ -687,9 +687,9 @@ def _solve_P_Q(U, V, structure=None):
 
     Parameters
     ----------
-    U : ndarray
+    U : array
         Pade numerator.
-    V : ndarray
+    V : array
         Pade denominator.
     structure : str, optional
         A string describing the structure of both matrices `U` and `V`.
@@ -739,9 +739,9 @@ def _exp_sinch(a, x):
     # If x is large then directly evaluate sinh(x) / x.
     if abs(x) < 0.0135:
         x2 = x*x
-        return np.exp(a) * (1 + (x2/6.)*(1 + (x2/20.)*(1 + (x2/42.))))
+        return mx.exp(a) * (1 + (x2/6.)*(1 + (x2/20.)*(1 + (x2/42.))))
     else:
-        return (np.exp(a + x) - np.exp(a - x)) / (2*x)
+        return (mx.exp(a + x) - mx.exp(a - x)) / (2*x)
 
 
 def _eq_10_42(lam_1, lam_2, t_12):
@@ -785,11 +785,11 @@ def _fragment_2_1(X, T, s):
     # Form X = r_m(2^-s T)
     # Replace diag(X) by exp(2^-s diag(T)).
     n = X.shape[0]
-    diag_T = np.ravel(T.diagonal().copy())
+    diag_T = mx.ravel(T.diagonal().copy())
 
     # Replace diag(X) by exp(2^-s diag(T)).
     scale = 2 ** -s
-    exp_diag = np.exp(scale * diag_T)
+    exp_diag = mx.exp(scale * diag_T)
     for k in range(n):
         X[k, k] = exp_diag[k]
 
@@ -798,7 +798,7 @@ def _fragment_2_1(X, T, s):
 
         # Replace diag(X) by exp(2^-i diag(T)).
         scale = 2 ** -i
-        exp_diag = np.exp(scale * diag_T)
+        exp_diag = mx.exp(scale * diag_T)
         for k in range(n):
             X[k, k] = exp_diag[k]
 
@@ -859,8 +859,8 @@ def _ell(A, m):
         return 0
 
     alpha = A_abs_onenorm / (_onenorm(A) * abs_c_recip)
-    log2_alpha_div_u = np.log2(alpha/u)
-    value = int(np.ceil(log2_alpha_div_u / (2 * m)))
+    log2_alpha_div_u = mx.log2(alpha/u)
+    value = int(mx.ceil(log2_alpha_div_u / (2 * m)))
     return max(value, 0)
 
 def matrix_power(A, power):

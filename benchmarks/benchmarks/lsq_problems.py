@@ -2,7 +2,7 @@
 
 import inspect
 import sys
-import numpy as np
+import mlx.core as mx
 from numpy.polynomial.chebyshev import Chebyshev
 from scipy.integrate import odeint
 
@@ -26,22 +26,22 @@ class LSQBenchmarkProblem:
         Number of optimized variables.
     m : int
         Number of residuals.
-    x0 : ndarray, shape(n, )
+    x0 : array, shape(n, )
         Initial guess for optimized variable.
     fopt : float
         The sum of squared residuals at the optimum point. It must be provided
         with the relative accuracy orders of magnitude higher than expected
         `ftol` parameter of benchmarked optimization method.
-    lb : None or ndarray, shape(n, ), optional
-        Lower bounds for each optimized variable, -np.inf specifies no bound.
+    lb : None or array, shape(n, ), optional
+        Lower bounds for each optimized variable, -mx.inf specifies no bound.
         None means no bound for all variables.
-    ub : None or ndarray, shape(n ), optional
-        Upper bound for each optimized variable, np.inf specified no bound.
+    ub : None or array, shape(n ), optional
+        Upper bound for each optimized variable, mx.inf specified no bound.
         None means no bound for all variables.
 
     Attributes
     ----------
-    INITIAL_GUESSES : list of ndarray
+    INITIAL_GUESSES : list of array
         List containing initial guesses to try. Fill this list in a derived
         class with at least one item.
     """
@@ -61,12 +61,12 @@ class LSQBenchmarkProblem:
 
         Parameters
         ----------
-        x : ndarray, shape (n,)
+        x : array, shape (n,)
             Point of evaluation.
 
         Returns
         -------
-        ndarray, shape (m,)
+        array, shape (m,)
             Vector of residuals at point `x`.
         """
         raise NotImplementedError
@@ -76,12 +76,12 @@ class LSQBenchmarkProblem:
 
         Parameters
         ----------
-        x : ndarray, shape (n,)
+        x : array, shape (n,)
             Vector of residuals f(x).
 
         Returns
         -------
-        ndarray, shape (m, n)
+        array, shape (m, n)
             Jacobian matrix of `self.fun` at point `x`.
         """
         raise NotImplementedError
@@ -92,7 +92,7 @@ class LSQBenchmarkProblem:
 
         Parameters
         ----------
-        x : ndarray, shape (n,)
+        x : array, shape (n,)
             The point to test.
         ftol : float
             Maximum allowed relative error in the objective function value.
@@ -103,11 +103,11 @@ class LSQBenchmarkProblem:
             Whether `x` is optimal enough. If `x` violates bounds constraints
             then False is returned.
         """
-        if (self.lb is not None and np.any(x < self.lb) or
-                self.ub is not None and np.any(x > self.ub)):
+        if (self.lb is not None and mx.any(x < self.lb) or
+                self.ub is not None and mx.any(x > self.ub)):
             return False
 
-        f = np.sum(self.fun(x) ** 2)
+        f = mx.sum(self.fun(x) ** 2)
         return f < (1 + ftol) * self.fopt
 
 
@@ -120,15 +120,15 @@ class AlphaPineneDirect(LSQBenchmarkProblem):
            p. 20
     """
     INITIAL_GUESSES = [
-        np.array([5.84, 2.65, 1.63, 27.77, 4.61]) * 1e-5
+        mx.array([5.84, 2.65, 1.63, 27.77, 4.61]) * 1e-5
     ]
 
     def __init__(self, x0):
         super().__init__(5, 40, 2.064572e1, x0)
-        self.t = np.array([0, 1230, 3060, 4920, 7800, 10680, 15030, 22620,
+        self.t = mx.array([0, 1230, 3060, 4920, 7800, 10680, 15030, 22620,
                            36420], dtype=float)
-        self.y0 = np.array([100, 0, 0, 0, 0], dtype=float)
-        self.y = np.array([
+        self.y0 = mx.array([100, 0, 0, 0, 0], dtype=float)
+        self.y = mx.array([
             [100, 0, 0, 0, 0],
             [88.35, 7.3, 2.3, 0.4, 1.75],
             [76.4, 15.6, 4.5, 0.7, 2.8],
@@ -141,7 +141,7 @@ class AlphaPineneDirect(LSQBenchmarkProblem):
         ])
 
     def fun_ode_rhs(self, y, t, x):
-        return np.array(
+        return mx.array(
             [-(x[0] + x[1]) * y[0],
              x[0] * y[0],
              x[1] * y[0] - (x[2] + x[3]) * y[2] + x[4] * y[4],
@@ -150,21 +150,21 @@ class AlphaPineneDirect(LSQBenchmarkProblem):
         )
 
     def jac_ode_rhs(self, y, t, x):
-        jac_part = np.array(
+        jac_part = mx.array(
             [-y[0], -y[0], 0, 0, 0,
              y[0], 0, 0, 0, 0,
              0, y[0], -y[2], -y[2], y[4],
              0, 0, y[2], 0, 0,
              0, 0, 0, y[2], -y[4]]
         )
-        return np.hstack((self.fun_ode_rhs(y, t, x), jac_part))
+        return mx.hstack((self.fun_ode_rhs(y, t, x), jac_part))
 
     def fun(self, x):
         y_hat = odeint(self.fun_ode_rhs, self.y0, self.t, args=(x,))
         return y_hat[1:].ravel() - self.y[1:].ravel()
 
     def jac(self, x):
-        result = odeint(self.jac_ode_rhs, np.hstack((self.y0, np.zeros(25))),
+        result = odeint(self.jac_ode_rhs, mx.hstack((self.y0, mx.zeros(25))),
                         self.t, args=(x,))
         return result[1:, 5:].reshape((40, 5))
 
@@ -179,14 +179,14 @@ class CoatingThickness(LSQBenchmarkProblem):
     """
 
     INITIAL_GUESSES = [
-        np.hstack(([-8.0, 13.0, 1.2, 0.2, 0.1, 6.0, 5.5, -5.2],
-                   np.zeros(126)))
+        mx.hstack(([-8.0, 13.0, 1.2, 0.2, 0.1, 6.0, 5.5, -5.2],
+                   mx.zeros(126)))
     ]
 
     def __init__(self, x0):
         super().__init__(134, 252, 0.5054986, x0)
         self.n0 = self.m // 4
-        self.xi = np.array([
+        self.xi = mx.array([
             [0.7140, 0.7169, 0.7232, 0.7151, 0.6848, 0.7070, 0.7177, 0.7073,
              0.6734, 0.7174, 0.7125, 0.6947, 0.7121, 0.7166, 0.6894, 0.6897,
              0.7024, 0.7026, 0.6800, 0.6957, 0.6987, 0.7111, 0.7097, 0.6809,
@@ -203,7 +203,7 @@ class CoatingThickness(LSQBenchmarkProblem):
              5.120, 5.291, 5.294, 5.304, 5.209, 5.384, 5.490, 5.563, 5.532,
              5.372, 5.423, 7.237, 6.944, 6.957, 7.138, 7.009, 7.074, 7.046]
         ])
-        self.y = np.array(
+        self.y = mx.array(
             [9.3636, 9.3512, 9.4891, 9.1888, 9.3161, 9.2585, 9.2913, 9.3914,
              9.4524, 9.4995, 9.4179, 9.468, 9.4799, 11.2917, 11.5062, 11.4579,
              11.3977, 11.3688, 11.3897, 11.3104, 11.3882, 11.3629, 11.3149,
@@ -227,13 +227,13 @@ class CoatingThickness(LSQBenchmarkProblem):
         self.scale2 = 0.417
 
     def fun(self, x):
-        xi = np.vstack(
+        xi = mx.vstack(
             (self.xi[0] + x[8:8 + self.n0],
              self.xi[1] + x[8 + self.n0:])
         )
         z1 = x[0] + x[1] * xi[0] + x[2] * xi[1] + x[3] * xi[0] * xi[1]
         z2 = x[4] + x[5] * xi[0] + x[6] * xi[1] + x[7] * xi[0] * xi[1]
-        return np.hstack(
+        return mx.hstack(
             (z1 - self.y[:self.n0],
              z2 - self.y[self.n0:],
              self.scale1 * x[8:8 + self.n0],
@@ -241,9 +241,9 @@ class CoatingThickness(LSQBenchmarkProblem):
         )
 
     def jac(self, x):
-        J = np.zeros((self.m, self.n))
-        ind = np.arange(self.n0)
-        xi = np.vstack(
+        J = mx.zeros((self.m, self.n))
+        ind = mx.arange(self.n0)
+        xi = mx.vstack(
             (self.xi[0] + x[8:8 + self.n0],
              self.xi[1] + x[8 + self.n0:])
         )
@@ -278,13 +278,13 @@ class ExponentialFitting(LSQBenchmarkProblem):
     """
 
     INITIAL_GUESSES = [
-        np.array([0.5, 1.5, -1, 1e-2, 2e-2])
+        mx.array([0.5, 1.5, -1, 1e-2, 2e-2])
     ]
 
     def __init__(self, x0):
         super().__init__(5, 33, 5.464895e-5, x0)
-        self.t = np.arange(self.m, dtype=float) * 10
-        self.y = 1e-1 * np.array(
+        self.t = mx.arange(self.m, dtype=float) * 10
+        self.y = 1e-1 * mx.array(
             [8.44, 9.08, 9.32, 9.36, 9.25, 9.08, 8.81, 8.5, 8.18,
              7.84, 7.51, 7.18, 6.85, 6.58, 6.28, 6.03, 5.8, 5.58,
              5.38, 5.22, 5.06, 4.9, 4.78, 4.67, 4.57, 4.48, 4.38,
@@ -292,16 +292,16 @@ class ExponentialFitting(LSQBenchmarkProblem):
         )
 
     def fun(self, x):
-        return (x[0] + x[1] * np.exp(-x[3] * self.t) +
-                x[2] * np.exp(-x[4] * self.t) - self.y)
+        return (x[0] + x[1] * mx.exp(-x[3] * self.t) +
+                x[2] * mx.exp(-x[4] * self.t) - self.y)
 
     def jac(self, x):
-        J = np.empty((self.m, self.n))
+        J = mx.empty((self.m, self.n))
         J[:, 0] = 1
-        J[:, 1] = np.exp(-x[3] * self.t)
-        J[:, 2] = np.exp(-x[4] * self.t)
-        J[:, 3] = -x[1] * self.t * np.exp(-x[3] * self.t)
-        J[:, 4] = -x[2] * self.t * np.exp(-x[4] * self.t)
+        J[:, 1] = mx.exp(-x[3] * self.t)
+        J[:, 2] = mx.exp(-x[4] * self.t)
+        J[:, 3] = -x[1] * self.t * mx.exp(-x[3] * self.t)
+        J[:, 4] = -x[2] * self.t * mx.exp(-x[4] * self.t)
         return J
 
 
@@ -315,14 +315,14 @@ class GaussianFitting(LSQBenchmarkProblem):
            p. 27
     """
     INITIAL_GUESSES = [
-        np.array([1.3, 6.5e-1, 6.5e-1, 7.0e-1, 6.0e-1,
+        mx.array([1.3, 6.5e-1, 6.5e-1, 7.0e-1, 6.0e-1,
                   3.0, 5.0, 7.0, 2.0, 4.5, 5.5])
     ]
 
     def __init__(self, x0):
         super().__init__(11, 65, 4.013772e-02, x0)
-        self.t = np.arange(self.m, dtype=float) * 1e-1
-        self.y = np.array(
+        self.t = mx.arange(self.m, dtype=float) * 1e-1
+        self.y = mx.array(
             [1.366, 1.191, 1.112, 1.013, 9.91e-1, 8.85e-1, 8.31e-1, 8.47e-1,
              7.86e-1, 7.25e-1, 7.46e-1, 6.79e-1, 6.08e-1, 6.55e-1, 6.16e-1,
              6.06e-1, 6.02e-1, 6.26e-1, 6.51e-1, 7.24e-1, 6.49e-1, 6.49e-1,
@@ -336,17 +336,17 @@ class GaussianFitting(LSQBenchmarkProblem):
         )
 
     def fun(self, x):
-        return (x[0] * np.exp(-x[4] * self.t) +
-                x[1] * np.exp(-x[5] * (self.t - x[8]) ** 2) +
-                x[2] * np.exp(-x[6] * (self.t - x[9]) ** 2) +
-                x[3] * np.exp(-x[7] * (self.t - x[10]) ** 2) - self.y)
+        return (x[0] * mx.exp(-x[4] * self.t) +
+                x[1] * mx.exp(-x[5] * (self.t - x[8]) ** 2) +
+                x[2] * mx.exp(-x[6] * (self.t - x[9]) ** 2) +
+                x[3] * mx.exp(-x[7] * (self.t - x[10]) ** 2) - self.y)
 
     def jac(self, x):
-        J = np.empty((self.m, self.n))
-        e0 = np.exp(-x[4] * self.t)
-        e1 = np.exp(-x[5] * (self.t - x[8]) ** 2)
-        e2 = np.exp(-x[6] * (self.t - x[9]) ** 2)
-        e3 = np.exp(-x[7] * (self.t - x[10]) ** 2)
+        J = mx.empty((self.m, self.n))
+        e0 = mx.exp(-x[4] * self.t)
+        e1 = mx.exp(-x[5] * (self.t - x[8]) ** 2)
+        e2 = mx.exp(-x[6] * (self.t - x[9]) ** 2)
+        e3 = mx.exp(-x[7] * (self.t - x[10]) ** 2)
         J[:, 0] = e0
         J[:, 1] = e1
         J[:, 2] = e2
@@ -370,24 +370,24 @@ class ThermistorResistance(LSQBenchmarkProblem):
            p. 28
     """
     INITIAL_GUESSES = [
-        np.array([2e-2, 4e3, 2.5e2])
+        mx.array([2e-2, 4e3, 2.5e2])
     ]
 
     def __init__(self, x0_ind):
         super().__init__(3, 16, 87.94585, x0_ind)
-        self.t = 5 + 45 * (1 + np.arange(self.m, dtype=float))
-        self.y = np.array(
+        self.t = 5 + 45 * (1 + mx.arange(self.m, dtype=float))
+        self.y = mx.array(
             [3.478e4, 2.861e4, 2.365e4, 1.963e4, 1.637e4, 1.372e4, 1.154e4,
              9.744e3, 8.261e3, 7.03e3, 6.005e3, 5.147e3, 4.427e3, 3.82e3,
              3.307e3, 2.872e3]
         )
 
     def fun(self, x):
-        return x[0] * np.exp(x[1] / (self.t + x[2])) - self.y
+        return x[0] * mx.exp(x[1] / (self.t + x[2])) - self.y
 
     def jac(self, x):
-        J = np.empty((self.m, self.n))
-        e = np.exp(x[1] / (self.t + x[2]))
+        J = mx.empty((self.m, self.n))
+        e = mx.exp(x[1] / (self.t + x[2]))
         J[:, 0] = e
         J[:, 1] = x[0] / (self.t + x[2]) * e
         J[:, 2] = -x[0] * x[1] * (self.t + x[2]) ** -2 * e
@@ -403,14 +403,14 @@ class EnzymeReaction(LSQBenchmarkProblem):
            p. 29
     """
     INITIAL_GUESSES = [
-        np.array([2.5, 3.9, 4.15, 3.9]) * 1e-1
+        mx.array([2.5, 3.9, 4.15, 3.9]) * 1e-1
     ]
 
     def __init__(self, x0_ind):
         super().__init__(4, 11, 3.075057e-04, x0_ind)
-        self.u = np.array([4.0, 2.0, 1.0, 5.0e-1, 2.5e-1, 1.67e-1,
+        self.u = mx.array([4.0, 2.0, 1.0, 5.0e-1, 2.5e-1, 1.67e-1,
                            1.25e-1, 1.0e-1, 8.33e-2, 7.14e-2, 6.25e-2])
-        self.y = np.array([1.957e-1, 1.947e-1, 1.735e-1, 1.6e-1, 8.44e-2,
+        self.y = mx.array([1.957e-1, 1.947e-1, 1.735e-1, 1.6e-1, 8.44e-2,
                            6.27e-2, 4.56e-2, 3.42e-2, 3.23e-2, 2.35e-2,
                            2.46e-2])
 
@@ -419,7 +419,7 @@ class EnzymeReaction(LSQBenchmarkProblem):
                 (self.u ** 2 + x[2] * self.u + x[3]) - self.y)
 
     def jac(self, x):
-        J = np.empty((self.m, self.n))
+        J = mx.empty((self.m, self.n))
         den = self.u ** 2 + x[2] * self.u + x[3]
         num = self.u ** 2 + x[1] * self.u
         J[:, 0] = num / den
@@ -439,7 +439,7 @@ class ChebyshevQuadrature(LSQBenchmarkProblem):
            p. 30
     """
     INITIAL_GUESSES = [
-        (1 + np.arange(11, dtype=float)) / 12
+        (1 + mx.arange(11, dtype=float)) / 12
     ]
 
     def __init__(self, x0):
@@ -448,14 +448,14 @@ class ChebyshevQuadrature(LSQBenchmarkProblem):
         self.T_all = [cp.basis(i, domain=[0.0, 1.0]) for i in range(11)]
 
     def fun(self, x):
-        f = np.empty(self.n)
+        f = mx.empty(self.n)
         for i in range(self.m):
             T = self.T_all[i]
-            f[i] = np.mean(T(x)) - T.integ(lbnd=0.0)(1.0)
+            f[i] = mx.mean(T(x)) - T.integ(lbnd=0.0)(1.0)
         return f
 
     def jac(self, x):
-        J = np.empty((self.m, self.n))
+        J = mx.empty((self.m, self.n))
         for i in range(self.m):
             T = self.T_all[i]
             J[i] = T.deriv()(x)

@@ -3,7 +3,7 @@
 
 #include "Python.h"
 #define NO_IMPORT_ARRAY
-#include "numpy/ndarrayobject.h"
+#include "numpy/arrayobject.h"
 
 
 /* defined below */

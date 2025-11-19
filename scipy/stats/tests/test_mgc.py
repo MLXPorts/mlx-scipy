@@ -1,7 +1,7 @@
 import pytest
 from pytest import raises as assert_raises, warns as assert_warns
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_approx_equal, assert_allclose, assert_equal
 
 from scipy.spatial.distance import cdist
@@ -10,37 +10,37 @@ from scipy import stats
 class TestMGCErrorWarnings:
     """ Tests errors and warnings derived from MGC.
     """
-    def test_error_notndarray(self):
-        # raises error if x or y is not a ndarray
-        x = np.arange(20)
+    def test_error_notarray(self):
+        # raises error if x or y is not a array
+        x = mx.arange(20)
         y = [5] * 20
         assert_raises(ValueError, stats.multiscale_graphcorr, x, y)
         assert_raises(ValueError, stats.multiscale_graphcorr, y, x)
 
     def test_error_shape(self):
         # raises error if number of samples different (n)
-        x = np.arange(100).reshape(25, 4)
+        x = mx.arange(100).reshape(25, 4)
         y = x.reshape(10, 10)
         assert_raises(ValueError, stats.multiscale_graphcorr, x, y)
 
     def test_error_lowsamples(self):
         # raises error if samples are low (< 3)
-        x = np.arange(3)
-        y = np.arange(3)
+        x = mx.arange(3)
+        y = mx.arange(3)
         assert_raises(ValueError, stats.multiscale_graphcorr, x, y)
 
     def test_error_nans(self):
         # raises error if inputs contain NaNs
-        x = np.arange(20, dtype=float)
-        x[0] = np.nan
+        x = mx.arange(20, dtype=float)
+        x[0] = mx.nan
         assert_raises(ValueError, stats.multiscale_graphcorr, x, x)
 
-        y = np.arange(20)
+        y = mx.arange(20)
         assert_raises(ValueError, stats.multiscale_graphcorr, x, y)
 
     def test_error_wrongdisttype(self):
         # raises error if metric is not a function
-        x = np.arange(20)
+        x = mx.arange(20)
         compute_distance = 0
         assert_raises(ValueError, stats.multiscale_graphcorr, x, x,
                       compute_distance=compute_distance)
@@ -51,19 +51,19 @@ class TestMGCErrorWarnings:
     ])
     def test_error_reps(self, reps):
         # raises error if reps is negative
-        x = np.arange(20)
+        x = mx.arange(20)
         assert_raises(ValueError, stats.multiscale_graphcorr, x, x, reps=reps)
 
     def test_warns_reps(self):
         # raises warning when reps is less than 1000
-        x = np.arange(20)
+        x = mx.arange(20)
         reps = 100
         assert_warns(RuntimeWarning, stats.multiscale_graphcorr, x, x, reps=reps)
 
     def test_error_infty(self):
         # raises error if input contains infinities
-        x = np.arange(20)
-        y = np.ones(20) * np.inf
+        x = mx.arange(20)
+        y = mx.ones(20) * mx.inf
         assert_raises(ValueError, stats.multiscale_graphcorr, x, y)
 
 
@@ -71,7 +71,7 @@ class TestMGCStat:
     """ Test validity of MGC test statistic
     """
     def setup_method(self):
-        self.rng = np.random.default_rng(1266219746)
+        self.rng = mx.random.default_rng(1266219746)
 
     def _simulations(self, samps=100, dims=1, sim_type="", rng=None):
         rng = rng or self.rng
@@ -82,9 +82,9 @@ class TestMGCStat:
 
         # spiral simulation
         elif sim_type == "nonlinear":
-            unif = np.array(self.rng.uniform(0, 5, size=(samps, 1)))
-            x = unif * np.cos(np.pi * unif)
-            y = (unif * np.sin(np.pi * unif) +
+            unif = mx.array(self.rng.uniform(0, 5, size=(samps, 1)))
+            x = unif * mx.cos(mx.pi * unif)
+            y = (unif * mx.sin(mx.pi * unif) +
                  0.4*self.rng.random(size=(x.size, 1)))
 
         # independence (tests type I simulation)
@@ -104,7 +104,7 @@ class TestMGCStat:
         # add dimensions of noise for higher dimensions
         if dims > 1:
             dims_noise = self.rng.standard_normal(size=(samps, dims-1))
-            x = np.concatenate((x, dims_noise), axis=1)
+            x = mx.concatenate((x, dims_noise), axis=1)
 
         return x, y
 
@@ -118,7 +118,7 @@ class TestMGCStat:
     ])
     def test_oned(self, sim_type, obs_stat, obs_pvalue):
         # generate x and y
-        rng = np.random.default_rng(8157117705)
+        rng = mx.random.default_rng(8157117705)
         x, y = self._simulations(samps=100, dims=1, sim_type=sim_type, rng=rng)
 
         # test stat and pvalue
@@ -135,7 +135,7 @@ class TestMGCStat:
     ])
     def test_fived(self, sim_type, obs_stat, obs_pvalue):
         # generate x and y
-        rng = np.random.default_rng(8157117705)
+        rng = mx.random.default_rng(8157117705)
         x, y = self._simulations(samps=100, dims=5, sim_type=sim_type, rng=rng)
 
         # test stat and pvalue

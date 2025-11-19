@@ -30,20 +30,20 @@ The variant that is implemented uses squeezes proportional to hat function ([1]_
 
 An example of using this method is shown below:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats.sampling import TransformedDensityRejection
     >>> from scipy.stats import norm
     >>> 
     >>> class StandardNormal:
     ...     def pdf(self, x):
     ...         # note that the normalization constant is not required
-    ...         return np.exp(-0.5 * x*x)
+    ...         return mx.exp(-0.5 * x*x)
     ...     def dpdf(self, x):
-    ...         return -x * np.exp(-0.5 * x*x)
+    ...         return -x * mx.exp(-0.5 * x*x)
     ... 
     >>> dist = StandardNormal()
     >>> 
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = TransformedDensityRejection(dist, random_state=urng)
     >>> rng.rvs()
     -1.526829048388144
@@ -61,7 +61,7 @@ directly using the ``ppf_hat`` method.
     -0.00018050266342362759
     >>> norm.ppf(0.5)
     0.0
-    >>> u = np.linspace(0, 1, num=10)
+    >>> u = mx.linspace(0, 1, num=10)
     >>> rng.ppf_hat(u)
     array([       -inf, -1.22227372, -0.7656556 , -0.43135731, -0.14002921,
             0.13966423,  0.43096141,  0.76517113,  1.22185606,         inf])
@@ -93,7 +93,7 @@ to see how well the generator fits the given distribution. These are:
 
 The distribution can be truncated by passing a domain parameter:
 
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = TransformedDensityRejection(dist, domain=[0, 1], random_state=urng)
     >>> rng.rvs(10)
     array([0.05452512, 0.97251362, 0.49955877, 0.82789729, 0.33048885,
@@ -104,22 +104,22 @@ is used to determine the domain:
 
     >>> class StandardNormal:
     ...     def pdf(self, x):
-    ...         return np.exp(-0.5 * x*x)
+    ...         return mx.exp(-0.5 * x*x)
     ...     def dpdf(self, x):
-    ...         return -x * np.exp(-0.5 * x*x)
+    ...         return -x * mx.exp(-0.5 * x*x)
     ...     def support(self):
-    ...         return -np.inf, np.inf
+    ...         return -mx.inf, mx.inf
     ... 
     >>> dist = StandardNormal()
     >>> 
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = TransformedDensityRejection(dist, random_state=urng)
     >>> rng.rvs(10)
     array([-1.52682905,  2.06206883,  0.15205036,  1.11587367, -0.30775562,
            0.29879802, -0.61858268, -1.01049115,  0.78853694, -0.23060766])
 
 If the ``dist`` object does not provide a ``support`` method, the domain
-is assumed to be ``(-np.inf, np.inf)``.
+is assumed to be ``(-mx.inf, mx.inf)``.
 
 To increase ``squeeze_hat_ratio``, pass ``max_squeeze_hat_ratio``:
 
@@ -138,12 +138,12 @@ distribution:
     ...         self.callbacks = 0
     ...     def pdf(self, x):
     ...         self.callbacks += 1
-    ...         return np.exp(-0.5 * x*x)
+    ...         return mx.exp(-0.5 * x*x)
     ...     def dpdf(self, x):
-    ...         return -x * np.exp(-0.5 * x*x)
+    ...         return -x * mx.exp(-0.5 * x*x)
     ... 
     >>> dist1 = StandardNormal()
-    >>> urng1 = np.random.default_rng()
+    >>> urng1 = mx.random.default_rng()
     >>> urng2 = copy(urng1)
     >>> rng1 = TransformedDensityRejection(dist1, random_state=urng1)
     >>> dist1.callbacks  # evaluations during setup

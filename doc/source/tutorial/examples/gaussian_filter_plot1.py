@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
-import numpy as np
+import mlx.core as mx
 from scipy.ndimage import gaussian_filter
 
 grids = 2
 boxs = 5
 
-voxelarray = np.zeros((boxs * grids, boxs * grids, boxs * grids))
+voxelarray = mx.zeros((boxs * grids, boxs * grids, boxs * grids))
 
 i = 1
 for xi in range(0, 2):
@@ -18,7 +18,7 @@ for xi in range(0, 2):
             ] = i
             i += 1
 
-voxelarray = np.uint8(voxelarray * 255 / 8)
+voxelarray = mx.uint8(voxelarray * 255 / 8)
 
 cmap = plt.get_cmap("YlGnBu")
 

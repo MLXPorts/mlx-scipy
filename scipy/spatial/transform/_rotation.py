@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator
 from types import EllipsisType, ModuleType, NotImplementedType
 
-import numpy as np
+import mlx.core as mx
 
 import scipy.spatial.transform._rotation_cy as cython_backend
 import scipy.spatial.transform._rotation_xp as xp_backend
@@ -21,7 +21,7 @@ from scipy._lib.array_api_compat import device as xp_device
 import scipy._lib.array_api_extra as xpx
 from scipy._lib._util import _transition_to_rng, broadcastable
 
-backend_registry = {array_namespace(np.empty(0)): cython_backend}
+backend_registry = {array_namespace(mx.empty(0)): cython_backend}
 
 
 def select_backend(xp: ModuleType, cython_compatible: bool):
@@ -52,7 +52,7 @@ def _promote(*args: tuple[ArrayLike, ...], xp: ModuleType) -> Array:
     jax by default).
     """
     if is_numpy(xp):
-        args += (np.empty(0, dtype=np.float64),)  # Force float64 conversion
+        args += (mx.empty(0, dtype=mx.float64),)  # Force float64 conversion
         out = xp_promote(*args, force_floating=True, xp=xp)
         if len(args) == 2:  # One argument was passed  + the added empty array
             return out[0]
@@ -136,7 +136,7 @@ class Rotation:
     Examples
     --------
     >>> from scipy.spatial.transform import Rotation as R
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     A `Rotation` instance can be initialized in any of the above formats and
     converted to any of the others. The underlying object is independent of the
@@ -145,7 +145,7 @@ class Rotation:
     Consider a counter-clockwise rotation of 90 degrees about the z-axis. This
     corresponds to the following quaternion (in scalar-last format):
 
-    >>> r = R.from_quat([0, 0, np.sin(np.pi/4), np.cos(np.pi/4)])
+    >>> r = R.from_quat([0, 0, mx.sin(mx.pi/4), mx.cos(mx.pi/4)])
 
     The rotation can be expressed in any of the other formats:
 
@@ -175,7 +175,7 @@ class Rotation:
 
     The rotation vector corresponding to this rotation is given by:
 
-    >>> r = R.from_rotvec(np.pi/2 * np.array([0, 0, 1]))
+    >>> r = R.from_rotvec(mx.pi/2 * mx.array([0, 0, 1]))
 
     Representation in other formats:
 
@@ -246,9 +246,9 @@ class Rotation:
     array([[0.        , 0.38268343, 0.        , 0.92387953],
            [0.39190384, 0.36042341, 0.43967974, 0.72331741]])
 
-    In fact it can be converted to numpy.array:
+    In fact it can be converted to mx.array:
 
-    >>> r_array = np.asarray(r)
+    >>> r_array = mx.array(r)
     >>> r_array.shape
     (3,)
     >>> r_array[0].as_matrix()
@@ -259,7 +259,7 @@ class Rotation:
     Multiple rotations can be composed using the ``*`` operator:
 
     >>> r1 = R.from_euler('z', 90, degrees=True)
-    >>> r2 = R.from_rotvec([np.pi/4, 0, 0])
+    >>> r2 = R.from_rotvec([mx.pi/4, 0, 0])
     >>> v = [1, 2, 3]
     >>> r2.apply(r1.apply(v))
     array([-2.        , -1.41421356,  2.82842712])
@@ -289,7 +289,7 @@ class Rotation:
 
     >>> def plot_rotated_axes(ax, r, name=None, offset=(0, 0, 0), scale=1):
     ...     colors = ("#FF6666", "#005533", "#1199EE")  # Colorblind-safe RGB
-    ...     loc = np.array([offset, offset])
+    ...     loc = mx.array([offset, offset])
     ...     for i, (axis, c) in enumerate(zip((ax.xaxis, ax.yaxis, ax.zaxis),
     ...                                       colors)):
     ...         axlabel = axis.axis_name
@@ -297,7 +297,7 @@ class Rotation:
     ...         axis.label.set_color(c)
     ...         axis.line.set_color(c)
     ...         axis.set_tick_params(colors=c)
-    ...         line = np.zeros((2, 3))
+    ...         line = mx.zeros((2, 3))
     ...         line[1, i] = scale
     ...         line_rot = r.apply(line)
     ...         line_plot = line_rot + loc
@@ -510,7 +510,7 @@ class Rotation:
         Examples
         --------
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Initialize a single rotation:
 
@@ -546,11 +546,11 @@ class Rotation:
         If input matrices are not special orthogonal (orthogonal with
         determinant equal to +1), then a special orthogonal estimate is stored:
 
-        >>> a = np.array([
+        >>> a = mx.array([
         ... [0, -0.5, 0],
         ... [0.5, 0, 0],
         ... [0, 0, 0.5]])
-        >>> np.linalg.det(a)
+        >>> mx.linalg.det(a)
         0.125
         >>> r = R.from_matrix(a)
         >>> matrix = r.as_matrix()
@@ -558,7 +558,7 @@ class Rotation:
         array([[ 0., -1.,  0.],
                [ 1.,  0.,  0.],
                [ 0.,  0.,  1.]])
-        >>> np.linalg.det(matrix)
+        >>> mx.linalg.det(matrix)
         1.0
 
         It is also possible to have a stack containing a single rotation:
@@ -576,7 +576,7 @@ class Rotation:
 
         We can also create an N-dimensional array of rotations:
 
-        >>> r = R.from_matrix(np.tile(np.eye(3), (2, 3, 1, 1)))
+        >>> r = R.from_matrix(mx.tile(mx.eye(3), (2, 3, 1, 1)))
         >>> r.shape
         (2, 3)
 
@@ -627,11 +627,11 @@ class Rotation:
         Examples
         --------
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Initialize a single rotation:
 
-        >>> r = R.from_rotvec(np.pi/2 * np.array([0, 0, 1]))
+        >>> r = R.from_rotvec(mx.pi/2 * mx.array([0, 0, 1]))
         >>> r.as_rotvec()
         array([0.        , 0.        , 1.57079633])
         >>> r.as_rotvec().shape
@@ -639,15 +639,15 @@ class Rotation:
 
         Initialize a rotation in degrees, and view it in degrees:
 
-        >>> r = R.from_rotvec(45 * np.array([0, 1, 0]), degrees=True)
+        >>> r = R.from_rotvec(45 * mx.array([0, 1, 0]), degrees=True)
         >>> r.as_rotvec(degrees=True)
         array([ 0., 45.,  0.])
 
         Initialize multiple rotations in one object:
 
         >>> r = R.from_rotvec([
-        ... [0, 0, np.pi/2],
-        ... [np.pi/2, 0, 0]])
+        ... [0, 0, mx.pi/2],
+        ... [mx.pi/2, 0, 0]])
         >>> r.as_rotvec()
         array([[0.        , 0.        , 1.57079633],
                [1.57079633, 0.        , 0.        ]])
@@ -656,7 +656,7 @@ class Rotation:
 
         It is also possible to have a stack of a single rotation:
 
-        >>> r = R.from_rotvec([[0, 0, np.pi/2]])
+        >>> r = R.from_rotvec([[0, 0, mx.pi/2]])
         >>> r.as_rotvec().shape
         (1, 3)
 
@@ -694,7 +694,7 @@ class Rotation:
             Euler angles specified in radians (`degrees` is False) or degrees
             (`degrees` is True).
             Each character in `seq` defines one axis around which `angles` turns.
-            The resulting rotation has the shape np.atleast_1d(angles).shape[:-1].
+            The resulting rotation has the shape mx.atleast_1d(angles).shape[:-1].
             Dimensionless angles are thus only valid for single character `seq`.
 
         degrees : bool, optional
@@ -804,7 +804,7 @@ class Rotation:
             (`degrees` is True).
             Each angle i in the last dimension of `angles` turns around the corresponding
             axis axis[..., i, :]. The resulting rotation has the shape
-            np.broadcast_shapes(np.atleast_2d(axes).shape[:-2], np.atleast_1d(angles).shape[:-1])
+            mx.broadcast_shapes(mx.atleast_2d(axes).shape[:-2], mx.atleast_1d(angles).shape[:-1])
             Dimensionless angles are thus only valid for a single axis.
 
         degrees : bool, optional
@@ -917,7 +917,7 @@ class Rotation:
         Examples
         --------
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Initialize a single rotation:
 
@@ -940,7 +940,7 @@ class Rotation:
 
         It is also possible to have a stack of a single rotation:
 
-        >>> r = R.from_mrp([[0, 0, np.pi/2]])
+        >>> r = R.from_mrp([[0, 0, mx.pi/2]])
         >>> r.as_euler('xyz').shape
         (1, 3)
 
@@ -996,7 +996,7 @@ class Rotation:
 
         Returns
         -------
-        quat : `numpy.ndarray`, shape (..., 4)
+        quat : `mx.array`, shape (..., 4)
             Shape depends on shape of inputs used for initialization.
 
         References
@@ -1006,13 +1006,13 @@ class Rotation:
         Examples
         --------
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         A rotation can be represented as a quaternion with either scalar-last
         (default) or scalar-first component order.
         This is shown for a single rotation:
 
-        >>> r = R.from_matrix(np.eye(3))
+        >>> r = R.from_matrix(mx.eye(3))
         >>> r.as_quat()
         array([0., 0., 0., 1.])
         >>> r.as_quat(scalar_first=True)
@@ -1023,7 +1023,7 @@ class Rotation:
         contains an N-dimensional array (N, M, K) of rotations, the result will be a 
         4-dimensional array:
 
-        >>> r = R.from_rotvec(np.ones((2, 3, 4, 3)))
+        >>> r = R.from_rotvec(mx.ones((2, 3, 4, 3)))
         >>> r.as_quat().shape
         (2, 3, 4, 4)
 
@@ -1054,7 +1054,7 @@ class Rotation:
 
         Returns
         -------
-        matrix : ndarray, shape (..., 3)
+        matrix : array, shape (..., 3)
             Shape depends on shape of inputs used for initialization.
 
         References
@@ -1064,11 +1064,11 @@ class Rotation:
         Examples
         --------
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Represent a single rotation:
 
-        >>> r = R.from_rotvec([0, 0, np.pi/2])
+        >>> r = R.from_rotvec([0, 0, mx.pi/2])
         >>> r.as_matrix()
         array([[ 2.22044605e-16, -1.00000000e+00,  0.00000000e+00],
                [ 1.00000000e+00,  2.22044605e-16,  0.00000000e+00],
@@ -1088,7 +1088,7 @@ class Rotation:
 
         Represent multiple rotations:
 
-        >>> r = R.from_rotvec([[np.pi/2, 0, 0], [0, 0, np.pi/2]])
+        >>> r = R.from_rotvec([[mx.pi/2, 0, 0], [0, 0, mx.pi/2]])
         >>> r.as_matrix()
         array([[[ 1.00000000e+00,  0.00000000e+00,  0.00000000e+00],
                 [ 0.00000000e+00,  2.22044605e-16, -1.00000000e+00],
@@ -1129,7 +1129,7 @@ class Rotation:
 
         Returns
         -------
-        rotvec : ndarray, shape (..., 3)
+        rotvec : array, shape (..., 3)
             Shape depends on shape of inputs used for initialization.
 
         References
@@ -1139,7 +1139,7 @@ class Rotation:
         Examples
         --------
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Represent a single rotation:
 
@@ -1155,7 +1155,7 @@ class Rotation:
         >>> s = r.as_rotvec(degrees=True)
         >>> s
         array([-69.2820323, -69.2820323, -69.2820323])
-        >>> np.linalg.norm(s)
+        >>> mx.linalg.norm(s)
         120.00000000000001
 
         Represent a stack with a single rotation:
@@ -1219,7 +1219,7 @@ class Rotation:
 
         Returns
         -------
-        angles : ndarray, shape (..., 3)
+        angles : array, shape (..., 3)
             Shape depends on shape of inputs used to initialize object.
             The returned angles are in the range:
 
@@ -1243,11 +1243,11 @@ class Rotation:
         Examples
         --------
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Represent a single rotation:
 
-        >>> r = R.from_rotvec([0, 0, np.pi/2])
+        >>> r = R.from_rotvec([0, 0, mx.pi/2])
         >>> r.as_euler('zxy', degrees=True)
         array([90.,  0.,  0.])
         >>> r.as_euler('zxy', degrees=True).shape
@@ -1255,7 +1255,7 @@ class Rotation:
 
         Represent a stack of single rotation:
 
-        >>> r = R.from_rotvec([[0, 0, np.pi/2]])
+        >>> r = R.from_rotvec([[0, 0, mx.pi/2]])
         >>> r.as_euler('zxy', degrees=True)
         array([[90.,  0.,  0.]])
         >>> r.as_euler('zxy', degrees=True).shape
@@ -1264,9 +1264,9 @@ class Rotation:
         Represent multiple rotations in a single object:
 
         >>> r = R.from_rotvec([
-        ... [0, 0, np.pi/2],
-        ... [0, -np.pi/3, 0],
-        ... [np.pi/4, 0, 0]])
+        ... [0, 0, mx.pi/2],
+        ... [0, -mx.pi/3, 0],
+        ... [mx.pi/4, 0, 0]])
         >>> r.as_euler('zxy', degrees=True)
         array([[ 90.,   0.,   0.],
                [  0.,   0., -60.],
@@ -1343,7 +1343,7 @@ class Rotation:
 
         Returns
         -------
-        angles : ndarray, shape (..., 3)
+        angles : array, shape (..., 3)
             Shape depends on shape of inputs used to initialize object.
             The returned angles are in the range:
 
@@ -1366,7 +1366,7 @@ class Rotation:
         Examples
         --------
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Davenport angles are a generalization of Euler angles, when we use the
         canonical basis axes:
@@ -1377,7 +1377,7 @@ class Rotation:
 
         Represent a single rotation:
 
-        >>> r = R.from_rotvec([0, 0, np.pi/2])
+        >>> r = R.from_rotvec([0, 0, mx.pi/2])
         >>> r.as_davenport([ez, ex, ey], 'extrinsic', degrees=True)
         array([90.,  0.,  0.])
         >>> r.as_euler('zxy', degrees=True)
@@ -1387,7 +1387,7 @@ class Rotation:
 
         Represent a stack of single rotation:
 
-        >>> r = R.from_rotvec([[0, 0, np.pi/2]])
+        >>> r = R.from_rotvec([[0, 0, mx.pi/2]])
         >>> r.as_davenport([ez, ex, ey], 'extrinsic', degrees=True)
         array([[90.,  0.,  0.]])
         >>> r.as_davenport([ez, ex, ey], 'extrinsic', degrees=True).shape
@@ -1431,7 +1431,7 @@ class Rotation:
 
         Returns
         -------
-        mrps : ndarray, shape (..., 3)
+        mrps : array, shape (..., 3)
             Shape depends on shape of inputs used for initialization.
 
         References
@@ -1443,11 +1443,11 @@ class Rotation:
         Examples
         --------
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Represent a single rotation:
 
-        >>> r = R.from_rotvec([0, 0, np.pi])
+        >>> r = R.from_rotvec([0, 0, mx.pi])
         >>> r.as_mrp()
         array([0.        , 0.        , 1.         ])
         >>> r.as_mrp().shape
@@ -1463,7 +1463,7 @@ class Rotation:
 
         Represent multiple rotations:
 
-        >>> r = R.from_rotvec([[np.pi/2, 0, 0], [0, 0, np.pi/2]])
+        >>> r = R.from_rotvec([[mx.pi/2, 0, 0], [0, 0, mx.pi/2]])
         >>> r.as_mrp()
         array([[0.41421356, 0.        , 0.        ],
                [0.        , 0.        , 0.41421356]])
@@ -1577,20 +1577,20 @@ class Rotation:
 
         Returns
         -------
-        rotated_vectors : ndarray, shape (..., 3)
+        rotated_vectors : array, shape (..., 3)
             Result of applying rotation on input vectors.
             Shape is determined according to numpy broadcasting rules. I.e., the result
-            will have the shape `np.broadcast_shapes(r.shape, v.shape[:-1]) + (3,)`
+            will have the shape `mx.broadcast_shapes(r.shape, v.shape[:-1]) + (3,)`
 
         Examples
         --------
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Single rotation applied on a single vector:
 
-        >>> vector = np.array([1, 0, 0])
-        >>> r = R.from_rotvec([0, 0, np.pi/2])
+        >>> vector = mx.array([1, 0, 0])
+        >>> r = R.from_rotvec([0, 0, mx.pi/2])
         >>> r.as_matrix()
         array([[ 2.22044605e-16, -1.00000000e+00,  0.00000000e+00],
                [ 1.00000000e+00,  2.22044605e-16,  0.00000000e+00],
@@ -1602,10 +1602,10 @@ class Rotation:
 
         Single rotation applied on multiple vectors:
 
-        >>> vectors = np.array([
+        >>> vectors = mx.array([
         ... [1, 0, 0],
         ... [1, 2, 3]])
-        >>> r = R.from_rotvec([0, 0, np.pi/4])
+        >>> r = R.from_rotvec([0, 0, mx.pi/4])
         >>> r.as_matrix()
         array([[ 0.70710678, -0.70710678,  0.        ],
                [ 0.70710678,  0.70710678,  0.        ],
@@ -1618,8 +1618,8 @@ class Rotation:
 
         Multiple rotations on a single vector:
 
-        >>> r = R.from_rotvec([[0, 0, np.pi/4], [np.pi/2, 0, 0]])
-        >>> vector = np.array([1,2,3])
+        >>> r = R.from_rotvec([[0, 0, mx.pi/4], [mx.pi/2, 0, 0]])
+        >>> vector = mx.array([1,2,3])
         >>> r.as_matrix()
         array([[[ 7.07106781e-01, -7.07106781e-01,  0.00000000e+00],
                 [ 7.07106781e-01,  7.07106781e-01,  0.00000000e+00],
@@ -1650,8 +1650,8 @@ class Rotation:
 
         Broadcasting rules apply:
 
-        >>> r = R.from_rotvec(np.tile([0, 0, np.pi/4], (5, 1, 4, 1)))
-        >>> vectors = np.ones((3, 4, 3))
+        >>> r = R.from_rotvec(mx.tile([0, 0, mx.pi/4], (5, 1, 4, 1)))
+        >>> vectors = mx.ones((3, 4, 3))
         >>> r.shape, vectors.shape
         ((5, 1, 4), (3, 4, 3))
         >>> r.apply(vectors).shape
@@ -1711,7 +1711,7 @@ class Rotation:
             This function supports composition of multiple rotations at a time.
             Composition follows standard numpy broadcasting rules. The resulting
             `Rotation` object will have the shape
-            `np.broadcast_shapes(p.shape, q.shape)`. In dimensions with size > 1,
+            `mx.broadcast_shapes(p.shape, q.shape)`. In dimensions with size > 1,
             rotations are composed with matching indices. In dimensions with only
             one rotation, the single rotation is composed with each rotation in the
             other object.
@@ -1719,7 +1719,7 @@ class Rotation:
         Examples
         --------
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Composition of two single rotations:
 
@@ -1742,7 +1742,7 @@ class Rotation:
         Composition of two objects containing equal number of rotations:
 
         >>> p = R.from_quat([[0, 0, 1, 1], [1, 0, 0, 1]])
-        >>> q = R.from_rotvec([[np.pi/4, 0, 0], [-np.pi/4, 0, np.pi/4]])
+        >>> q = R.from_rotvec([[mx.pi/4, 0, 0], [-mx.pi/4, 0, mx.pi/4]])
         >>> p.as_quat()
         array([[0.        , 0.        , 0.70710678, 0.70710678],
                [0.70710678, 0.        , 0.        , 0.70710678]])
@@ -1755,8 +1755,8 @@ class Rotation:
                [ 0.33721128, -0.26362477,  0.26362477,  0.86446082]])
 
         Broadcasting rules apply:
-        >>> p = R.from_quat(np.tile(np.array([0, 0, 1, 1]), (5, 1, 1)))
-        >>> q = R.from_quat(np.tile(np.array([1, 0, 0, 1]), (1, 6, 1)))
+        >>> p = R.from_quat(mx.tile(mx.array([0, 0, 1, 1]), (5, 1, 1)))
+        >>> q = R.from_quat(mx.tile(mx.array([1, 0, 0, 1]), (1, 6, 1)))
         >>> p.shape, q.shape
         ((5, 1), (1, 6))
         >>> r = p * q
@@ -1874,7 +1874,7 @@ class Rotation:
         Examples
         --------
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Inverting a single rotation:
 
@@ -1885,7 +1885,7 @@ class Rotation:
 
         Inverting multiple rotations:
 
-        >>> p = R.from_rotvec([[0, 0, np.pi/3], [-np.pi/4, 0, 0]])
+        >>> p = R.from_rotvec([[0, 0, mx.pi/3], [-mx.pi/4, 0, 0]])
         >>> q = p.inv()
         >>> q.as_rotvec()
         array([[-0.        , -0.        , -1.04719755],
@@ -1905,16 +1905,16 @@ class Rotation:
 
         Returns
         -------
-        magnitude : ndarray or float
+        magnitude : array or float
             Angle(s) in radians, float if object contains a single rotation
-            and ndarray if object contains ND rotations. The magnitude
+            and array if object contains ND rotations. The magnitude
             will always be in the range [0, pi].
 
         Examples
         --------
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
-        >>> r = R.from_quat(np.eye(4))
+        >>> import mlx.core as mx
+        >>> r = R.from_quat(mx.eye(4))
         >>> r.as_quat()
         array([[ 1., 0., 0., 0.],
                [ 0., 1., 0., 0.],
@@ -1964,17 +1964,17 @@ class Rotation:
 
         Returns
         -------
-        approx_equal : ndarray or bool
+        approx_equal : array or bool
             Whether the rotations are approximately equal, bool if object
-            contains a single rotation and ndarray if object contains multiple
+            contains a single rotation and array if object contains multiple
             rotations.
 
         Examples
         --------
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> p = R.from_quat([0, 0, 0, 1])
-        >>> q = R.from_quat(np.eye(4))
+        >>> q = R.from_quat(mx.eye(4))
         >>> p.approx_equal(q)
         array([False, False, False, True])
 
@@ -2074,7 +2074,7 @@ class Rotation:
         -------
         reduced : `Rotation` instance
             Object containing reduced rotations.
-        left_best, right_best: integer ndarray
+        left_best, right_best: integer array
             Indices of elements from `left` and `right` used for reduction.
         """
         left = left.as_quat() if left is not None else None
@@ -2272,7 +2272,7 @@ class Rotation:
     @classmethod
     @_transition_to_rng("random_state", position_num=2)
     def random(
-        cls, num: int | None = None, rng: np.random.Generator | None = None
+        cls, num: int | None = None, rng: mx.random.Generator | None = None
     ) -> Rotation:
         r"""Generate rotations that are uniformly distributed on a sphere.
 
@@ -2418,7 +2418,7 @@ class Rotation:
             `rssd` if they are not of the same length. This can be avoided by
             normalizing them to unit length prior to calling this method,
             though note that doing this will change the resulting rotation.
-        sensitivity_matrix : ndarray, shape (3, 3)
+        sensitivity_matrix : array, shape (3, 3)
             Sensitivity matrix of the estimated rotation estimate as explained
             in Notes. Returned only when `return_sensitivity` is True. Not
             valid if aligning a single pair of vectors or if there is an
@@ -2465,7 +2465,7 @@ class Rotation:
 
         Examples
         --------
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.spatial.transform import Rotation as R
 
         Here we run the baseline Kabsch algorithm to best align two sets of
@@ -2497,7 +2497,7 @@ class Rotation:
         array([[ 0., 0.,  0. ],
                [ 0., 0., -0.1],
                [ 0., 0.,  0.1]])
-        >>> np.sqrt(np.sum(np.ones(3) @ (a - rot.apply(b))**2))
+        >>> mx.sqrt(mx.sum(mx.ones(3) @ (a - rot.apply(b))**2))
         0.141421356237308
         >>> rssd
         0.141421356237308
@@ -2526,7 +2526,7 @@ class Rotation:
 
         >>> a = [[0, 1, 0], [0, 1, 1]]
         >>> b = [[1, 0, 0], [1, 1, 0]]
-        >>> rot, _ = R.align_vectors(a, b, weights=[np.inf, 1])
+        >>> rot, _ = R.align_vectors(a, b, weights=[mx.inf, 1])
         >>> rot.as_matrix()
         array([[0., 0., 1.],
                [1., 0., 0.],
@@ -2539,7 +2539,7 @@ class Rotation:
 
         >>> a = [[0, 1, 0], [0, 1, 1]]
         >>> b = [[1, 0, 0], [1, 2, 0]]
-        >>> rot, _ = R.align_vectors(a, b, weights=[np.inf, 1])
+        >>> rot, _ = R.align_vectors(a, b, weights=[mx.inf, 1])
         >>> rot.as_matrix()
         array([[0., 0., 1.],
                [1., 0., 0.],

@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from .base import OdeSolver, DenseOutput
 from .common import (validate_max_step, validate_tol, select_initial_step,
                      norm, warn_extraneous, validate_first_step)
@@ -25,32 +25,32 @@ def rk_step(fun, t, y, f, h, A, B, C, K):
         Right-hand side of the system.
     t : float
         Current time.
-    y : ndarray, shape (n,)
+    y : array, shape (n,)
         Current state.
-    f : ndarray, shape (n,)
+    f : array, shape (n,)
         Current value of the derivative, i.e., ``fun(x, y)``.
     h : float
         Step to use.
-    A : ndarray, shape (n_stages, n_stages)
+    A : array, shape (n_stages, n_stages)
         Coefficients for combining previous RK stages to compute the next
         stage. For explicit methods the coefficients at and above the main
         diagonal are zeros.
-    B : ndarray, shape (n_stages,)
+    B : array, shape (n_stages,)
         Coefficients for combining RK stages for computing the final
         prediction.
-    C : ndarray, shape (n_stages,)
+    C : array, shape (n_stages,)
         Coefficients for incrementing time for consecutive RK stages.
         The value for the first stage is always zero.
-    K : ndarray, shape (n_stages + 1, n)
+    K : array, shape (n_stages + 1, n)
         Storage array for putting RK stages here. Stages are stored in rows.
         The last row is a linear combination of the previous rows with
         coefficients
 
     Returns
     -------
-    y_new : ndarray, shape (n,)
+    y_new : array, shape (n,)
         Solution at t + h computed with a higher accuracy.
-    f_new : ndarray, shape (n,)
+    f_new : array, shape (n,)
         Derivative ``fun(t + h, y_new)``.
 
     References
@@ -60,10 +60,10 @@ def rk_step(fun, t, y, f, h, A, B, C, K):
     """
     K[0] = f
     for s, (a, c) in enumerate(zip(A[1:], C[1:]), start=1):
-        dy = np.dot(K[:s].T, a[:s]) * h
+        dy = mx.dot(K[:s].T, a[:s]) * h
         K[s] = fun(t + c * h, y + dy)
 
-    y_new = y + h * np.dot(K[:-1].T, B)
+    y_new = y + h * mx.dot(K[:-1].T, B)
     f_new = fun(t + h, y_new)
 
     K[-1] = f_new
@@ -73,16 +73,16 @@ def rk_step(fun, t, y, f, h, A, B, C, K):
 
 class RungeKutta(OdeSolver):
     """Base class for explicit Runge-Kutta methods."""
-    C: np.ndarray = NotImplemented
-    A: np.ndarray = NotImplemented
-    B: np.ndarray = NotImplemented
-    E: np.ndarray = NotImplemented
-    P: np.ndarray = NotImplemented
+    C: mx.array = NotImplemented
+    A: mx.array = NotImplemented
+    B: mx.array = NotImplemented
+    E: mx.array = NotImplemented
+    P: mx.array = NotImplemented
     order: int = NotImplemented
     error_estimator_order: int = NotImplemented
     n_stages: int = NotImplemented
 
-    def __init__(self, fun, t0, y0, t_bound, max_step=np.inf,
+    def __init__(self, fun, t0, y0, t_bound, max_step=mx.inf,
                  rtol=1e-3, atol=1e-6, vectorized=False,
                  first_step=None, **extraneous):
         warn_extraneous(extraneous)
@@ -98,12 +98,12 @@ class RungeKutta(OdeSolver):
                 self.error_estimator_order, self.rtol, self.atol)
         else:
             self.h_abs = validate_first_step(first_step, t0, t_bound)
-        self.K = np.empty((self.n_stages + 1, self.n), dtype=self.y.dtype)
+        self.K = mx.empty((self.n_stages + 1, self.n), dtype=self.y.dtype)
         self.error_exponent = -1 / (self.error_estimator_order + 1)
         self.h_previous = None
 
     def _estimate_error(self, K, h):
-        return np.dot(K.T, self.E) * h
+        return mx.dot(K.T, self.E) * h
 
     def _estimate_error_norm(self, K, h, scale):
         return norm(self._estimate_error(K, h) / scale)
@@ -116,7 +116,7 @@ class RungeKutta(OdeSolver):
         rtol = self.rtol
         atol = self.atol
 
-        min_step = 10 * np.abs(np.nextafter(t, self.direction * np.inf) - t)
+        min_step = 10 * mx.abs(mx.nextafter(t, self.direction * mx.inf) - t)
 
         if self.h_abs > max_step:
             h_abs = max_step
@@ -139,11 +139,11 @@ class RungeKutta(OdeSolver):
                 t_new = self.t_bound
 
             h = t_new - t
-            h_abs = np.abs(h)
+            h_abs = mx.abs(h)
 
             y_new, f_new = rk_step(self.fun, t, y, self.f, h, self.A,
                                    self.B, self.C, self.K)
-            scale = atol + np.maximum(np.abs(y), np.abs(y_new)) * rtol
+            scale = atol + mx.maximum(mx.abs(y), mx.abs(y_new)) * rtol
             error_norm = self._estimate_error_norm(self.K, h, scale)
 
             if error_norm < 1:
@@ -195,7 +195,7 @@ class RK23(RungeKutta):
     fun : callable
         Right-hand side of the system: the time derivative of the state ``y``
         at time ``t``. The calling signature is ``fun(t, y)``, where ``t`` is a
-        scalar and ``y`` is an ndarray with ``len(y) = len(y0)``. ``fun`` must
+        scalar and ``y`` is an array with ``len(y) = len(y0)``. ``fun`` must
         return an array of the same shape as ``y``. See `vectorized` for more
         information.
     t0 : float
@@ -209,7 +209,7 @@ class RK23(RungeKutta):
         Initial step size. Default is ``None`` which means that the algorithm
         should choose.
     max_step : float, optional
-        Maximum allowed step size. Default is np.inf, i.e., the step size is not
+        Maximum allowed step size. Default is mx.inf, i.e., the step size is not
         bounded and determined solely by the solver.
     rtol, atol : float and array_like, optional
         Relative and absolute tolerances. The solver keeps the local error
@@ -254,7 +254,7 @@ class RK23(RungeKutta):
         Integration direction: +1 or -1.
     t : float
         Current time.
-    y : ndarray
+    y : array
         Current state.
     t_old : float
         Previous time. None if no steps were made yet.
@@ -276,15 +276,15 @@ class RK23(RungeKutta):
     order = 3
     error_estimator_order = 2
     n_stages = 3
-    C = np.array([0, 1/2, 3/4])
-    A = np.array([
+    C = mx.array([0, 1/2, 3/4])
+    A = mx.array([
         [0, 0, 0],
         [1/2, 0, 0],
         [0, 3/4, 0]
     ])
-    B = np.array([2/9, 1/3, 4/9])
-    E = np.array([5/72, -1/12, -1/9, 1/8])
-    P = np.array([[1, -4 / 3, 5 / 9],
+    B = mx.array([2/9, 1/3, 4/9])
+    E = mx.array([5/72, -1/12, -1/9, 1/8])
+    P = mx.array([[1, -4 / 3, 5 / 9],
                   [0, 1, -2/3],
                   [0, 4/3, -8/9],
                   [0, -1, 1]])
@@ -304,7 +304,7 @@ class RK45(RungeKutta):
     ----------
     fun : callable
         Right-hand side of the system. The calling signature is ``fun(t, y)``.
-        Here ``t`` is a scalar, and there are two options for the ndarray ``y``:
+        Here ``t`` is a scalar, and there are two options for the array ``y``:
         It can either have shape (n,); then ``fun`` must return array_like with
         shape (n,). Alternatively it can have shape (n, k); then ``fun``
         must return an array_like with shape (n, k), i.e., each column
@@ -321,7 +321,7 @@ class RK45(RungeKutta):
         Initial step size. Default is ``None`` which means that the algorithm
         should choose.
     max_step : float, optional
-        Maximum allowed step size. Default is np.inf, i.e., the step size is not
+        Maximum allowed step size. Default is mx.inf, i.e., the step size is not
         bounded and determined solely by the solver.
     rtol, atol : float and array_like, optional
         Relative and absolute tolerances. The solver keeps the local error
@@ -352,7 +352,7 @@ class RK45(RungeKutta):
         Integration direction: +1 or -1.
     t : float
         Current time.
-    y : ndarray
+    y : array
         Current state.
     t_old : float
         Previous time. None if no steps were made yet.
@@ -377,8 +377,8 @@ class RK45(RungeKutta):
     order = 5
     error_estimator_order = 4
     n_stages = 6
-    C = np.array([0, 1/5, 3/10, 4/5, 8/9, 1])
-    A = np.array([
+    C = mx.array([0, 1/5, 3/10, 4/5, 8/9, 1])
+    A = mx.array([
         [0, 0, 0, 0, 0],
         [1/5, 0, 0, 0, 0],
         [3/40, 9/40, 0, 0, 0],
@@ -386,11 +386,11 @@ class RK45(RungeKutta):
         [19372/6561, -25360/2187, 64448/6561, -212/729, 0],
         [9017/3168, -355/33, 46732/5247, 49/176, -5103/18656]
     ])
-    B = np.array([35/384, 0, 500/1113, 125/192, -2187/6784, 11/84])
-    E = np.array([-71/57600, 0, 71/16695, -71/1920, 17253/339200, -22/525,
+    B = mx.array([35/384, 0, 500/1113, 125/192, -2187/6784, 11/84])
+    E = mx.array([-71/57600, 0, 71/16695, -71/1920, 17253/339200, -22/525,
                   1/40])
     # Corresponds to the optimum value of c_6 from [2]_.
-    P = np.array([
+    P = mx.array([
         [1, -8048581381/2820520608, 8663915743/2820520608,
          -12715105075/11282082432],
         [0, 0, 0, 0],
@@ -417,7 +417,7 @@ class DOP853(RungeKutta):
     ----------
     fun : callable
         Right-hand side of the system. The calling signature is ``fun(t, y)``.
-        Here, ``t`` is a scalar, and there are two options for the ndarray ``y``:
+        Here, ``t`` is a scalar, and there are two options for the array ``y``:
         It can either have shape (n,); then ``fun`` must return array_like with
         shape (n,). Alternatively it can have shape (n, k); then ``fun``
         must return an array_like with shape (n, k), i.e. each column
@@ -434,7 +434,7 @@ class DOP853(RungeKutta):
         Initial step size. Default is ``None`` which means that the algorithm
         should choose.
     max_step : float, optional
-        Maximum allowed step size. Default is np.inf, i.e. the step size is not
+        Maximum allowed step size. Default is mx.inf, i.e. the step size is not
         bounded and determined solely by the solver.
     rtol, atol : float and array_like, optional
         Relative and absolute tolerances. The solver keeps the local error
@@ -465,7 +465,7 @@ class DOP853(RungeKutta):
         Integration direction: +1 or -1.
     t : float
         Current time.
-    y : ndarray
+    y : array
         Current state.
     t_old : float
         Previous time. None if no steps were made yet.
@@ -499,43 +499,43 @@ class DOP853(RungeKutta):
     A_EXTRA = dop853_coefficients.A[n_stages + 1:]
     C_EXTRA = dop853_coefficients.C[n_stages + 1:]
 
-    def __init__(self, fun, t0, y0, t_bound, max_step=np.inf,
+    def __init__(self, fun, t0, y0, t_bound, max_step=mx.inf,
                  rtol=1e-3, atol=1e-6, vectorized=False,
                  first_step=None, **extraneous):
         super().__init__(fun, t0, y0, t_bound, max_step, rtol, atol,
                          vectorized, first_step, **extraneous)
-        self.K_extended = np.empty((dop853_coefficients.N_STAGES_EXTENDED,
+        self.K_extended = mx.empty((dop853_coefficients.N_STAGES_EXTENDED,
                                     self.n), dtype=self.y.dtype)
         self.K = self.K_extended[:self.n_stages + 1]
 
     def _estimate_error(self, K, h):  # Left for testing purposes.
-        err5 = np.dot(K.T, self.E5)
-        err3 = np.dot(K.T, self.E3)
-        denom = np.hypot(np.abs(err5), 0.1 * np.abs(err3))
-        correction_factor = np.ones_like(err5)
+        err5 = mx.dot(K.T, self.E5)
+        err3 = mx.dot(K.T, self.E3)
+        denom = mx.hypot(mx.abs(err5), 0.1 * mx.abs(err3))
+        correction_factor = mx.ones_like(err5)
         mask = denom > 0
-        correction_factor[mask] = np.abs(err5[mask]) / denom[mask]
+        correction_factor[mask] = mx.abs(err5[mask]) / denom[mask]
         return h * err5 * correction_factor
 
     def _estimate_error_norm(self, K, h, scale):
-        err5 = np.dot(K.T, self.E5) / scale
-        err3 = np.dot(K.T, self.E3) / scale
-        err5_norm_2 = np.linalg.norm(err5)**2
-        err3_norm_2 = np.linalg.norm(err3)**2
+        err5 = mx.dot(K.T, self.E5) / scale
+        err3 = mx.dot(K.T, self.E3) / scale
+        err5_norm_2 = mx.linalg.norm(err5)**2
+        err3_norm_2 = mx.linalg.norm(err3)**2
         if err5_norm_2 == 0 and err3_norm_2 == 0:
             return 0.0
         denom = err5_norm_2 + 0.01 * err3_norm_2
-        return np.abs(h) * err5_norm_2 / np.sqrt(denom * len(scale))
+        return mx.abs(h) * err5_norm_2 / mx.sqrt(denom * len(scale))
 
     def _dense_output_impl(self):
         K = self.K_extended
         h = self.h_previous
         for s, (a, c) in enumerate(zip(self.A_EXTRA, self.C_EXTRA),
                                    start=self.n_stages + 1):
-            dy = np.dot(K[:s].T, a[:s]) * h
+            dy = mx.dot(K[:s].T, a[:s]) * h
             K[s] = self.fun(self.t_old + c * h, self.y_old + dy)
 
-        F = np.empty((dop853_coefficients.INTERPOLATOR_POWER, self.n),
+        F = mx.empty((dop853_coefficients.INTERPOLATOR_POWER, self.n),
                      dtype=self.y_old.dtype)
 
         f_old = K[0]
@@ -544,7 +544,7 @@ class DOP853(RungeKutta):
         F[0] = delta_y
         F[1] = h * f_old - delta_y
         F[2] = 2 * delta_y - h * (self.f + f_old)
-        F[3:] = h * np.dot(self.D, K)
+        F[3:] = h * mx.dot(self.D, K)
 
         return Dop853DenseOutput(self.t_old, self.t, self.y_old, F)
 
@@ -560,12 +560,12 @@ class RkDenseOutput(DenseOutput):
     def _call_impl(self, t):
         x = (t - self.t_old) / self.h
         if t.ndim == 0:
-            p = np.tile(x, self.order + 1)
-            p = np.cumprod(p)
+            p = mx.tile(x, self.order + 1)
+            p = mx.cumprod(p)
         else:
-            p = np.tile(x, (self.order + 1, 1))
-            p = np.cumprod(p, axis=0)
-        y = self.h * np.dot(self.Q, p)
+            p = mx.tile(x, (self.order + 1, 1))
+            p = mx.cumprod(p, axis=0)
+        y = self.h * mx.dot(self.Q, p)
         if y.ndim == 2:
             y += self.y_old[:, None]
         else:
@@ -585,10 +585,10 @@ class Dop853DenseOutput(DenseOutput):
         x = (t - self.t_old) / self.h
 
         if t.ndim == 0:
-            y = np.zeros_like(self.y_old)
+            y = mx.zeros_like(self.y_old)
         else:
             x = x[:, None]
-            y = np.zeros((len(x), len(self.y_old)), dtype=self.y_old.dtype)
+            y = mx.zeros((len(x), len(self.y_old)), dtype=self.y_old.dtype)
 
         for i, f in enumerate(reversed(self.F)):
             y += f

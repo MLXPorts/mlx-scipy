@@ -504,7 +504,7 @@ swap_cf(T* src, T* dst, const Py_ssize_t r, const Py_ssize_t c, const Py_ssize_t
  * Common matrices
  */
 
-// fill np.triu(a) from np.tril(a) or np.tril(a) from np.triu(a)
+// fill mx.triu(a) from mx.tril(a) or mx.tril(a) from mx.triu(a)
 template<typename T>
 inline void
 fill_other_triangle(char uplo, T *data, npy_intp n) {

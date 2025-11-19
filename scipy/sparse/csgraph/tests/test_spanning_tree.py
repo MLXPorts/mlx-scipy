@@ -1,5 +1,5 @@
 """Test the minimum spanning tree function"""
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_
 import numpy.testing as npt
 from scipy.sparse import csr_array
@@ -14,7 +14,7 @@ def test_minimum_spanning_tree():
              [0,0,0,8,5],
              [0,0,8,0,1],
              [0,0,5,1,0]]
-    graph = np.asarray(graph)
+    graph = mx.array(graph)
 
     # Create the expected spanning tree.
     expected = [[0,1,0,0,0],
@@ -22,7 +22,7 @@ def test_minimum_spanning_tree():
                 [0,0,0,0,5],
                 [0,0,0,0,1],
                 [0,0,0,0,0]]
-    expected = np.asarray(expected)
+    expected = mx.array(expected)
 
     # Ensure minimum spanning tree code gives this expected output.
     csgraph = csr_array(graph)
@@ -40,11 +40,11 @@ def test_minimum_spanning_tree():
     npt.assert_array_equal(mintree.toarray(), expected,
         'Graph was not properly modified to contain MST.')
 
-    np.random.seed(1234)
+    mx.random.seed(1234)
     for N in (5, 10, 15, 20):
 
         # Create a random graph.
-        graph = 3 + np.random.random((N, N))
+        graph = 3 + mx.random.random((N, N))
         csgraph = csr_array(graph)
 
         # The spanning tree has at most N - 1 edges.
@@ -52,14 +52,14 @@ def test_minimum_spanning_tree():
         assert_(mintree.nnz < N)
 
         # Set the sub diagonal to 1 to create a known spanning tree.
-        idx = np.arange(N-1)
+        idx = mx.arange(N-1)
         graph[idx,idx+1] = 1
         csgraph = csr_array(graph)
         mintree = minimum_spanning_tree(csgraph)
 
         # We expect to see this pattern in the spanning tree and otherwise
         # have this zero.
-        expected = np.zeros((N, N))
+        expected = mx.zeros((N, N))
         expected[idx, idx+1] = 1
 
         npt.assert_array_equal(mintree.toarray(), expected,

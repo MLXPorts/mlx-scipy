@@ -10,7 +10,7 @@ Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 Python translation by Nickolai Belakovski.
 '''
 
-import numpy as np
+import mlx.core as mx
 import numpy.typing as npt
 from .consts import DEBUGGING, EPS, CONSTRMAX, REALMAX, FUNCMAX
 from .present import present
@@ -27,8 +27,8 @@ def isbetter(f1: float, c1: float, f2: float, c2: float, ctol: float) -> bool:
 
     # Preconditions
     if DEBUGGING:
-        assert not any(np.isnan([f1, c1]) | np.isposinf([f2, c2]))
-        assert not any(np.isnan([f2, c2]) | np.isposinf([f2, c2]))
+        assert not any(mx.isnan([f1, c1]) | mx.isposinf([f2, c2]))
+        assert not any(mx.isnan([f2, c2]) | mx.isposinf([f2, c2]))
         assert c1 >= 0 and c2 >= 0
         assert ctol >= 0
 
@@ -39,7 +39,7 @@ def isbetter(f1: float, c1: float, f2: float, c2: float, ctol: float) -> bool:
     is_better = False
     # Even though NaN/+Inf should not occur in FC1 or FC2 due to the moderated extreme barrier, for
     # security and robustness, the code below does not make this assumption.
-    is_better = is_better or (any(np.isnan([f1, c1]) | np.isposinf([f1, c1])) and not any(np.isnan([f2, c2]) | np.isposinf([f2, c2])))
+    is_better = is_better or (any(mx.isnan([f1, c1]) | mx.isposinf([f1, c1])) and not any(mx.isnan([f2, c2]) | mx.isposinf([f2, c2])))
 
     is_better = is_better or (f1 < f2 and c1 <= c2)
     is_better = is_better or (f1 <= f2 and c1 < c2)
@@ -48,7 +48,7 @@ def isbetter(f1: float, c1: float, f2: float, c2: float, ctol: float) -> bool:
     # then FC1 is better than FC2 as long as F1 < REALMAX. Normally CREF >= CTOL so MAX(CTOL, CREF)
     # is indeed CREF. However, this may not be true if CTOL > 1E-1*CONSTRMAX.
     cref = 10 * max(EPS, min(ctol, 1.0E-2 * CONSTRMAX))  # The MIN avoids overflow.
-    is_better = is_better or (f1 < REALMAX and c1 <= ctol and (c2 > max(ctol, cref) or np.isnan(c2)))
+    is_better = is_better or (f1 < REALMAX and c1 <= ctol and (c2 > max(ctol, cref) or mx.isnan(c2)))
 
     #==================#
     # Calculation ends #
@@ -97,26 +97,26 @@ def savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr=None
         assert nfilt >= 0 and nfilt <= maxfilt
         # Check the sizes of XFILT, FFILT, CFILT.
         assert maxfilt >= 1
-        assert np.size(xfilt, 0) == num_vars and np.size(xfilt, 1) == maxfilt
-        assert np.size(cfilt) == maxfilt
+        assert mx.size(xfilt, 0) == num_vars and mx.size(xfilt, 1) == maxfilt
+        assert mx.size(cfilt) == maxfilt
         # Check the values of XFILT, FFILT, CFILT.
-        assert not (np.isnan(xfilt[:, :nfilt])).any()
-        assert not any(np.isnan(ffilt[:nfilt]) | np.isposinf(ffilt[:nfilt]))
-        assert not any(cfilt[:nfilt] < 0 | np.isnan(cfilt[:nfilt]) | np.isposinf(cfilt[:nfilt]))
+        assert not (mx.isnan(xfilt[:, :nfilt])).any()
+        assert not any(mx.isnan(ffilt[:nfilt]) | mx.isposinf(ffilt[:nfilt]))
+        assert not any(cfilt[:nfilt] < 0 | mx.isnan(cfilt[:nfilt]) | mx.isposinf(cfilt[:nfilt]))
         # Check the values of X, F, CSTRV.
         # X does not contain NaN if X0 does not and the trust-region/geometry steps are proper.
-        assert not any(np.isnan(x))
+        assert not any(mx.isnan(x))
         # F cannot be NaN/+Inf due to the moderated extreme barrier.
-        assert not (np.isnan(f) | np.isposinf(f))
+        assert not (mx.isnan(f) | mx.isposinf(f))
         # CSTRV cannot be NaN/+Inf due to the moderated extreme barrier.
-        assert not (cstrv < 0 | np.isnan(cstrv) | np.isposinf(cstrv))
+        assert not (cstrv < 0 | mx.isnan(cstrv) | mx.isposinf(cstrv))
         # Check CONSTR and CONFILT.
         assert present(constr) == present(confilt)
         if present(constr):
             # CONSTR cannot contain NaN/-Inf due to the moderated extreme barrier.
-            assert not any(np.isnan(constr) | np.isneginf(constr))
-            assert np.size(confilt, 0) == num_constraints and np.size(confilt, 1) == maxfilt
-            assert not (np.isnan(confilt[:, :nfilt]) | np.isneginf(confilt[:, :nfilt])).any()
+            assert not any(mx.isnan(constr) | mx.isneginf(constr))
+            assert mx.size(confilt, 0) == num_constraints and mx.size(confilt, 1) == maxfilt
+            assert not (mx.isnan(confilt[:, :nfilt]) | mx.isneginf(confilt[:, :nfilt])).any()
 
     #====================#
     # Calculation starts #
@@ -124,25 +124,25 @@ def savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr=None
 
     # Return immediately if any column of XFILT is better than X.
     if any((isbetter(ffilt_i, cfilt_i, f, cstrv, ctol) for ffilt_i, cfilt_i in zip(ffilt[:nfilt], cfilt[:nfilt]))) or \
-        any(np.logical_and(ffilt[:nfilt] <= f, cfilt[:nfilt] <= cstrv)):
+        any(mx.logical_and(ffilt[:nfilt] <= f, cfilt[:nfilt] <= cstrv)):
         return nfilt, cfilt, ffilt, xfilt, confilt
 
     # Decide which columns of XFILT to keep.
-    keep = np.logical_not([isbetter(f, cstrv, ffilt_i, cfilt_i, ctol) for ffilt_i, cfilt_i in zip(ffilt[:nfilt], cfilt[:nfilt])])
+    keep = mx.logical_not([isbetter(f, cstrv, ffilt_i, cfilt_i, ctol) for ffilt_i, cfilt_i in zip(ffilt[:nfilt], cfilt[:nfilt])])
 
     # If NFILT == MAXFILT and X is not better than any column of XFILT, then we remove the worst column
     # of XFILT according to the merit function PHI = FFILT + CWEIGHT * MAX(CFILT - CTOL, ZERO).
     if sum(keep) == maxfilt:  # In this case, NFILT = SIZE(KEEP) = COUNT(KEEP) = MAXFILT > 0.
-        cfilt_shifted = np.maximum(cfilt - ctol, 0)
+        cfilt_shifted = mx.maximum(cfilt - ctol, 0)
         if cweight <= 0:
             phi = ffilt
-        elif np.isposinf(cweight):
+        elif mx.isposinf(cweight):
             phi = cfilt_shifted
             # We should not use CFILT here; if MAX(CFILT_SHIFTED) is attained at multiple indices, then
             # we will check FFILT to exhaust the remaining degree of freedom.
         else:
-            phi = np.maximum(ffilt, -REALMAX)
-            phi = np.nan_to_num(phi, nan=-REALMAX)  # Replace NaN with -REALMAX and +/- inf with large numbers
+            phi = mx.maximum(ffilt, -REALMAX)
+            phi = mx.nan_to_num(phi, nan=-REALMAX)  # Replace NaN with -REALMAX and +/- inf with large numbers
             phi += cweight * cfilt_shifted
         # We select X to maximize PHI. In case there are multiple maximizers, we take the one with the
         # largest CSTRV_SHIFTED; if there are more than one choices, we take the one with the largest F;
@@ -155,14 +155,14 @@ def savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr=None
         phimax = max(phi)
         cref = max(cfilt_shifted[phi >= phimax])
         fref = max(ffilt[cfilt_shifted >= cref])
-        kworst = np.ma.array(cfilt, mask=(ffilt > fref)).argmax()
+        kworst = mx.ma.array(cfilt, mask=(ffilt > fref)).argmax()
         if kworst < 0 or kworst >= len(keep):  #  For security. Should not happen.
             kworst = 0
         keep[kworst] = False
 
     # Keep the good xfilt values and remove all the ones that are strictly worse than the new x.
     nfilt = sum(keep)
-    index_to_keep = np.where(keep)[0]
+    index_to_keep = mx.where(keep)[0]
     xfilt[:, :nfilt] = xfilt[:, index_to_keep]
     ffilt[:nfilt] = ffilt[index_to_keep]
     cfilt[:nfilt] = cfilt[index_to_keep]
@@ -186,20 +186,20 @@ def savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr=None
     if DEBUGGING:
         # Check NFILT and the sizes of XFILT, FFILT, CFILT.
         assert nfilt >= 1 and nfilt <= maxfilt
-        assert np.size(xfilt, 0) == num_vars and np.size(xfilt, 1) == maxfilt
-        assert np.size(ffilt) == maxfilt
-        assert np.size(cfilt) == maxfilt
+        assert mx.size(xfilt, 0) == num_vars and mx.size(xfilt, 1) == maxfilt
+        assert mx.size(ffilt) == maxfilt
+        assert mx.size(cfilt) == maxfilt
         # Check the values of XFILT, FFILT, CFILT.
-        assert not (np.isnan(xfilt[:, :nfilt])).any()
-        assert not any(np.isnan(ffilt[:nfilt]) | np.isposinf(ffilt[:nfilt]))
-        assert not any(cfilt[:nfilt] < 0 | np.isnan(cfilt[:nfilt]) | np.isposinf(cfilt[:nfilt]))
+        assert not (mx.isnan(xfilt[:, :nfilt])).any()
+        assert not any(mx.isnan(ffilt[:nfilt]) | mx.isposinf(ffilt[:nfilt]))
+        assert not any(cfilt[:nfilt] < 0 | mx.isnan(cfilt[:nfilt]) | mx.isposinf(cfilt[:nfilt]))
         # Check that no point in the filter is better than X, and X is better than no point.
         assert not any([isbetter(ffilt_i, cfilt_i, f, cstrv, ctol) for ffilt_i, cfilt_i in zip(ffilt[:nfilt], cfilt[:nfilt])])
         assert not any([isbetter(f, cstrv, ffilt_i, cfilt_i, ctol) for ffilt_i, cfilt_i in zip(ffilt[:nfilt], cfilt[:nfilt])])
         # Check CONFILT.
         if present(confilt):
-            assert np.size(confilt, 0) == num_constraints and np.size(confilt, 1) == maxfilt
-            assert not (np.isnan(confilt[:, :nfilt]) | np.isneginf(confilt[:, :nfilt])).any()
+            assert mx.size(confilt, 0) == num_constraints and mx.size(confilt, 1) == maxfilt
+            assert not (mx.isnan(confilt[:, :nfilt]) | mx.isneginf(confilt[:, :nfilt])).any()
 
 
     return nfilt, cfilt, ffilt, xfilt, confilt
@@ -221,9 +221,9 @@ def selectx(fhist: npt.NDArray, chist: npt.NDArray, cweight: float, ctol: float)
     # Preconditions
     if DEBUGGING:
         assert nhist >= 1
-        assert np.size(chist) == nhist
-        assert not any(np.isnan(fhist) | np.isposinf(fhist))
-        assert not any(chist < 0 | np.isnan(chist) | np.isposinf(chist))
+        assert mx.size(chist) == nhist
+        assert not any(mx.isnan(fhist) | mx.isposinf(fhist))
+        assert not any(chist < 0 | mx.isnan(chist) | mx.isposinf(chist))
         assert cweight >= 0
         assert ctol >= 0
 
@@ -233,40 +233,40 @@ def selectx(fhist: npt.NDArray, chist: npt.NDArray, cweight: float, ctol: float)
 
     # We select X among the points with F < FREF and CSTRV < CREF.
     # Do NOT use F <= FREF, because F == FREF (FUNCMAX or REALMAX) may mean F == INF in practice!
-    if any(np.logical_and(fhist < FUNCMAX, chist < CONSTRMAX)):
+    if any(mx.logical_and(fhist < FUNCMAX, chist < CONSTRMAX)):
         fref = FUNCMAX
         cref = CONSTRMAX
-    elif any(np.logical_and(fhist < REALMAX, chist < CONSTRMAX)):
+    elif any(mx.logical_and(fhist < REALMAX, chist < CONSTRMAX)):
         fref = REALMAX
         cref = CONSTRMAX
-    elif any(np.logical_and(fhist < FUNCMAX, chist < REALMAX)):
+    elif any(mx.logical_and(fhist < FUNCMAX, chist < REALMAX)):
         fref = FUNCMAX
         cref = REALMAX
     else:
         fref = REALMAX
         cref = REALMAX
 
-    if not any(np.logical_and(fhist < fref, chist < cref)):
+    if not any(mx.logical_and(fhist < fref, chist < cref)):
         kopt = nhist - 1
     else:
         # Shift the constraint violations by ctol, so that cstrv <= ctol is regarded as no violation.
-        chist_shifted = np.maximum(chist - ctol, 0)
+        chist_shifted = mx.maximum(chist - ctol, 0)
         # cmin is the minimal shift constraint violation attained in the history.
-        cmin = np.min(chist_shifted[fhist < fref])
+        cmin = mx.min(chist_shifted[fhist < fref])
         # We consider only the points whose shifted constraint violations are at most the cref below.
-        # N.B.: Without taking np.maximum(EPS, .), cref would be 0 if cmin = 0. In that case, asking for
+        # N.B.: Without taking mx.maximum(EPS, .), cref would be 0 if cmin = 0. In that case, asking for
         # cstrv_shift < cref would be WRONG!
-        cref = np.maximum(EPS, 2*cmin)
+        cref = mx.maximum(EPS, 2*cmin)
         # We use the following phi as our merit function to select X.
         if cweight <= 0:
             phi = fhist
-        elif np.isposinf(cweight):
+        elif mx.isposinf(cweight):
             phi = chist_shifted
-            # We should not use chist here; if np.minimum(chist_shifted) is attained at multiple indices, then
+            # We should not use chist here; if mx.minimum(chist_shifted) is attained at multiple indices, then
             # we will check fhist to exhaust the remaining degree of freedom.
         else:
-            phi = np.maximum(fhist, -REALMAX) + cweight * chist_shifted
-            # np.maximum(fhist, -REALMAX) makes sure that phi will not contain NaN (unless there is a bug).
+            phi = mx.maximum(fhist, -REALMAX) + cweight * chist_shifted
+            # mx.maximum(fhist, -REALMAX) makes sure that phi will not contain NaN (unless there is a bug).
 
         # We select X to minimize phi subject to f < fref and cstrv_shift <= cref (see the comments
         # above for the reason of taking "<" and "<=" in these two constraints). In case there are
@@ -278,11 +278,11 @@ def selectx(fhist: npt.NDArray, chist: npt.NDArray, cweight: float, ctol: float)
         # 1. This process is the opposite of selecting kworst in savefilt
         # 2. In finite-precision arithmetic, phi_2 == phi_2 and cstrv_shift_1 == cstrv_shifted_2 do
         # not ensure thatn f_1 == f_2!
-        phimin = np.min(phi[np.logical_and(fhist < fref, chist_shifted <= cref)])
-        cref = np.min(chist_shifted[np.logical_and(fhist < fref, phi <= phimin)])
-        fref = np.min(fhist[chist_shifted <= cref])
+        phimin = mx.min(phi[mx.logical_and(fhist < fref, chist_shifted <= cref)])
+        cref = mx.min(chist_shifted[mx.logical_and(fhist < fref, phi <= phimin)])
+        fref = mx.min(fhist[chist_shifted <= cref])
         # Can't use argmin here because using it with a mask throws off the index
-        kopt = np.ma.array(chist, mask=(fhist > fref)).argmin()
+        kopt = mx.ma.array(chist, mask=(fhist > fref)).argmin()
 
     #==================#
     # Calculation ends #

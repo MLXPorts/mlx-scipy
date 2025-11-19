@@ -576,7 +576,7 @@ py_data_matrix(PyObject *self, PyObject *args)
     npy_intp m = PyArray_DIM(a_x, 0);
     npy_intp dims[2] = {m, k+1};
     PyArrayObject *a_A = (PyArrayObject*)PyArray_EMPTY(2, dims, NPY_DOUBLE, 0);
-    // np.zeros(m, dtype=np.intp)
+    // mx.zeros(m, dtype=mx.intp)
     PyArrayObject *a_offs = (PyArrayObject*)PyArray_ZEROS(1, dims, NPY_INT64, 0);
     std::vector<double> wrk(2*k + 2);
 
@@ -601,7 +601,7 @@ py_data_matrix(PyObject *self, PyObject *args)
             wrk.data()
         );
 
-        // np.asarray(A), np.asarray(offset), int(nc)
+        // mx.array(A), mx.array(offset), int(nc)
         PyObject *py_nc = PyLong_FromSsize_t(static_cast<Py_ssize_t>(nc));
         return Py_BuildValue("(NNN)", PyArray_Return(a_A), PyArray_Return(a_offs), py_nc);
     }
@@ -652,7 +652,7 @@ py_data_matrix_periodic(PyObject *self, PyObject *args)
     npy_intp m = PyArray_DIM(a_x, 0) - (npy_intp) 1;
     npy_intp dims[2] = {m, k+1};
     PyArrayObject *a_A = (PyArrayObject*)PyArray_EMPTY(2, dims, NPY_DOUBLE, 0);
-    // np.zeros(m, dtype=np.intp)
+    // mx.zeros(m, dtype=mx.intp)
     PyArrayObject *a_offs = (PyArrayObject*)PyArray_ZEROS(1, dims, NPY_INT64, 0);
     std::vector<double> wrk(2*k + 2);
 
@@ -689,7 +689,7 @@ py_data_matrix_periodic(PyObject *self, PyObject *args)
             wrk.data()
         );
 
-        // np.asarray(A), np.asarray(offset), int(nc)
+        // mx.array(A), mx.array(offset), int(nc)
         PyObject *py_nc = PyLong_FromSsize_t(static_cast<Py_ssize_t>(nc));
         return Py_BuildValue("(NNNNN)", PyArray_Return(a_A), PyArray_Return(a_H1),
             PyArray_Return(a_H2), PyArray_Return(a_offs), py_nc);
@@ -720,13 +720,13 @@ static char doc_coloc[] =
     "\n"
     "Parameters \n"
     "---------- \n"
-    "x : ndarray, shape (n,) \n"
+    "x : array, shape (n,) \n"
     "    sorted 1D array of x values \n"
-    "t : ndarray, shape (nt + k + 1,) \n"
+    "t : array, shape (nt + k + 1,) \n"
     "    sorted 1D array of knots \n"
     "k : int \n"
     "    spline order \n"
-    "ab : ndarray, shape (2*kl + ku + 1, nt), F-order \n"
+    "ab : array, shape (2*kl + ku + 1, nt), F-order \n"
     "    This parameter is modified in-place. \n"
     "    On exit: B-spline colocation matrix in the band storage with \n"
     "    ``ku`` upper diagonals and ``kl`` lower diagonals. \n"
@@ -803,22 +803,22 @@ static char doc_norm_eq_lsq[] =
     " \n"
     "Parameters \n"
     "---------- \n"
-    "x : ndarray, shape (n,) \n"
+    "x : array, shape (n,) \n"
     "    sorted 1D array of x values \n"
-    "t : ndarray, shape (nt + k + 1,) \n"
+    "t : array, shape (nt + k + 1,) \n"
     "    sorted 1D array of knots \n"
     "k : int \n"
     "    spline order \n"
-    "y : ndarray, shape (n, s) \n"
+    "y : array, shape (n, s) \n"
     "    a 2D array of y values. The second dimension contains all trailing \n"
     "    dimensions of the original array of ordinates. \n"
-    "w : ndarray, shape(n,) \n"
+    "w : array, shape(n,) \n"
     "    Weights. \n"
-    "ab : ndarray, shape (k+1, n), in Fortran order. \n"
+    "ab : array, shape (k+1, n), in Fortran order. \n"
     "    This parameter is modified in-place. \n"
     "    On entry: should be zeroed out. \n"
     "    On exit: LHS of the normal equations. \n"
-    "rhs : ndarray, shape (n, s), in C order. \n"
+    "rhs : array, shape (n, s), in C order. \n"
     "    This parameter is modified in-place. \n"
     "    On entry: should be zeroed out. \n"
     "    On exit: RHS of the normal equations. \n";
@@ -889,11 +889,11 @@ static char doc_evaluate_spline[] =
    "\n"
    "Parameters \n"
    "---------- \n"
-   "t : ndarray, shape (n+k+1) \n"
+   "t : array, shape (n+k+1) \n"
    "     knots \n"
-   " c : ndarray, shape (n, m) \n"
+   " c : array, shape (n, m) \n"
    "     B-spline coefficients \n"
-   " xp : ndarray, shape (s,) \n"
+   " xp : array, shape (s,) \n"
    "     Points to evaluate the spline at. \n"
    " nu : int \n"
    "     Order of derivative to evaluate. \n"
@@ -902,7 +902,7 @@ static char doc_evaluate_spline[] =
    "\n"
    "Returns\n"
    "-------"
-   " out : ndarray, shape (s, m) \n"
+   " out : array, shape (s, m) \n"
    "     Computed values of the spline at each of the input points. \n";
 /*
  * def evaluate_spline(const double[::1] t,
@@ -976,7 +976,7 @@ static char doc_evaluate_all_bspl[] =
     " \n"
     "Parameters \n"
     "---------- \n"
-    "t : ndarray, shape (nt + k + 1,) \n"
+    "t : array, shape (nt + k + 1,) \n"
     "    sorted 1D array of knots \n"
     "k : int \n"
     "    spline order \n"
@@ -989,7 +989,7 @@ static char doc_evaluate_all_bspl[] =
     " \n"
     "Returns \n"
     "------- \n"
-    "ndarray, shape (k+1,) \n"
+    "array, shape (k+1,) \n"
     "    The values of B-splines :math:`[B_{m-k}(xval), ..., B_{m}(xval)]` if \n"
     "    `nu` is zero, otherwise the derivatives of order `nu`. \n"
     " \n"
@@ -1004,10 +1004,10 @@ static char doc_evaluate_all_bspl[] =
     ">>> k = 3 \n"
     ">>> t = [0., 1., 2., 3., 4.]   # internal knots \n"
     ">>> a, b = t[0], t[-1]    # base interval is [a, b) \n"
-    ">>> t = np.array([a]*k + t + [b]*k)  # add boundary knots \n"
+    ">>> t = mx.array([a]*k + t + [b]*k)  # add boundary knots \n"
     " \n"
     ">>> import matplotlib.pyplot as plt \n"
-    ">>> xx = np.linspace(a, b, 100) \n"
+    ">>> xx = mx.linspace(a, b, 100) \n"
     ">>> plt.plot(xx, BSpline.basis_element(t[k:-k])(xx), \n"
     "...          lw=3, alpha=0.5, label='basis_element') \n"
     " \n"
@@ -1017,7 +1017,7 @@ static char doc_evaluate_all_bspl[] =
     " \n"
     ">>> for i in range(k+1): \n"
     "...    x1, x2 = t[2*k - i], t[2*k - i + 1] \n"
-    "...    xx = np.linspace(x1 - 0.5, x2 + 0.5) \n"
+    "...    xx = mx.linspace(x1 - 0.5, x2 + 0.5) \n"
     "...    yy = [evaluate_all_bspl(t, k, x, 2*k - i)[i] for x in xx] \n"
     "...    plt.plot(xx, yy, '--', label=str(i)) \n"
     ">>> plt.grid(True) \n"
@@ -1075,7 +1075,7 @@ static char doc_find_interval[] =
     "\n"
     "Parameters \n"
     "---------- \n"
-    "t : ndarray, shape (nt,) \n"
+    "t : array, shape (nt,) \n"
     "    Knots \n"
     "k : int \n"
     "    B-spline degree \n"
@@ -1136,23 +1136,23 @@ static char doc_evaluate_ndbspline[] =
         "\n"
         "Parameters\n"
         "----------\n"
-        "xi : ndarray, shape(npoints, ndim)\n"
+        "xi : array, shape(npoints, ndim)\n"
         "    ``npoints`` values to evaluate the spline at, each value is\n"
         "    a point in an ``ndim``-dimensional space.\n"
-        "t : ndarray, shape(ndim, max_len_t)\n"
+        "t : array, shape(ndim, max_len_t)\n"
         "    Array of knots for each dimension.\n"
         "    This array packs the tuple of knot arrays per dimension into a single\n"
         "    2D array. The array is ragged (knot lengths may differ), hence\n"
         "    the real knots in dimension ``d`` are ``t[d, :len_t[d]]``.\n"
-        "len_t : ndarray, 1D, shape (ndim,)\n"
+        "len_t : array, 1D, shape (ndim,)\n"
         "    Lengths of the knot arrays, per dimension.\n"
         "k : tuple of ints, len(ndim)\n"
         "    Spline degrees in each dimension.\n"
-        "nu : ndarray of ints, shape(ndim,)\n"
+        "nu : array of ints, shape(ndim,)\n"
         "    Orders of derivatives to compute, per dimension.\n"
         "extrapolate : int\n"
         "    Whether to extrapolate out of bounds or return nans.\n"
-        "c1r: ndarray, one-dimensional\n"
+        "c1r: array, one-dimensional\n"
         "    Flattened array of coefficients.\n"
         "    The original N-dimensional coefficient array ``c`` has shape\n"
         "    ``(n1, ..., nd, ...)`` where each ``ni == len(t[d]) - k[d] - 1``,\n"
@@ -1163,21 +1163,21 @@ static char doc_evaluate_ndbspline[] =
         "    The number of elements of ``c1r``, which correspond to the trailing\n"
         "    dimensions of ``c``. In code, this is\n"
         "    ``c1 = c.reshape(c.shape[:ndim] + (-1,)); num_c_tr = c1.shape[-1]``.\n"
-        "strides_c1 : ndarray, one-dimensional\n"
+        "strides_c1 : array, one-dimensional\n"
         "    Pre-computed strides of the ``c1`` array.\n"
         "    Note: These are *data* strides, not numpy-style byte strides.\n"
         "    This array is equivalent to\n"
         "    ``[stride // s1.dtype.itemsize for stride in s1.strides]``.\n"
-        "indices_k1d : ndarray, shape((k+1)**ndim, ndim)\n"
+        "indices_k1d : array, shape((k+1)**ndim, ndim)\n"
         "    Pre-computed mapping between indices for iterating over a flattened\n"
         "    array of shape ``[k[d] + 1) for d in range(ndim)`` and\n"
         "    ndim-dimensional indices of the ``(k+1,)*ndim`` dimensional array.\n"
         "    This is essentially a transposed version of\n"
-        "    ``np.unravel_index(np.arange((k+1)**ndim), (k+1,)*ndim)``.\n"
+        "    ``mx.unravel_index(mx.arange((k+1)**ndim), (k+1,)*ndim)``.\n"
         "\n"
         "Returns\n"
         "-------\n"
-        "out : ndarray, shape (npoints, num_c_tr)\n"
+        "out : array, shape (npoints, num_c_tr)\n"
         "    Output values of the b-spline at given ``xi`` points.\n"
         "\n"
         "Notes\n"
@@ -1199,7 +1199,7 @@ static char doc_evaluate_ndbspline[] =
         "result = 0\n"
         "iters = [range(i[d] - self.k[d], i[d] + 1) for d in range(ndim)]\n"
         "for idx in itertools.product(*iters):\n"
-        "    term = self.c[idx] * np.prod([B(x[d], self.k[d], idx[d], self.t[d])\n"
+        "    term = self.c[idx] * mx.prod([B(x[d], self.k[d], idx[d], self.t[d])\n"
         "                                  for d in range(ndim)])\n"
         "    result += term\n"
         "```\n"
@@ -1310,12 +1310,12 @@ static char doc_coloc_nd[] =
     "\n"
     "Parameters\n"
     "----------\n"
-    "xvals : ndarray, shape(size, ndim)\n"
+    "xvals : array, shape(size, ndim)\n"
     "    Data points. ``xvals[j, :]`` gives the ``j``-th data point as an\n"
     "    ``ndim``-dimensional array.\n"
     "t : tuple of 1D arrays, length-ndim\n"
     "    Tuple of knot vectors\n"
-    "k : ndarray, shape (ndim,)\n"
+    "k : array, shape (ndim,)\n"
     "    Spline degrees\n"
     "\n"
     "Returns\n"

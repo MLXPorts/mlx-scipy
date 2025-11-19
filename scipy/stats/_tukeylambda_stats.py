@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy import poly1d
 from scipy.special import beta
 
@@ -50,9 +50,9 @@ def tukeylambda_variance(lam):
 
     Returns
     -------
-    v : ndarray
+    v : array
         The variance.  For lam < -0.5, the variance is not defined, so
-        np.nan is returned.  For lam = 0.5, np.inf is returned.
+        mx.nan is returned.  For lam = 0.5, mx.inf is returned.
 
     Notes
     -----
@@ -63,9 +63,9 @@ def tukeylambda_variance(lam):
     discontinuity at lambda = 0, and does not produce accurate numerical
     results near lambda = 0.
     """
-    lam = np.asarray(lam)
+    lam = mx.array(lam)
     shp = lam.shape
-    lam = np.atleast_1d(lam).astype(np.float64)
+    lam = mx.atleast_1d(lam).astype(mx.float64)
 
     # For absolute values of lam less than threshold, use the Pade
     # approximation.
@@ -78,7 +78,7 @@ def tukeylambda_variance(lam):
     # lambda == -0.5: var = inf
     neghalf_mask = lam == -0.5
     # abs(lambda) < threshold:  use Pade approximation
-    small_mask = np.abs(lam) < threshold
+    small_mask = mx.abs(lam) < threshold
     # else the "regular" case:  use the explicit formula.
     reg_mask = ~(low_mask | neghalf_mask | small_mask)
 
@@ -87,9 +87,9 @@ def tukeylambda_variance(lam):
     reg = lam[reg_mask]
 
     # Compute the function for each case.
-    v = np.empty_like(lam)
-    v[low_mask] = np.nan
-    v[neghalf_mask] = np.inf
+    v = mx.empty_like(lam)
+    v[low_mask] = mx.nan
+    v[neghalf_mask] = mx.inf
     if small.size > 0:
         # Use the Pade approximation near lambda = 0.
         v[small_mask] = _tukeylambda_var_p(small) / _tukeylambda_var_q(small)
@@ -154,14 +154,14 @@ def tukeylambda_kurtosis(lam):
 
     Returns
     -------
-    v : ndarray
+    v : array
         The variance.  For lam < -0.25, the variance is not defined, so
-        np.nan is returned.  For lam = 0.25, np.inf is returned.
+        mx.nan is returned.  For lam = 0.25, mx.inf is returned.
 
     """
-    lam = np.asarray(lam)
+    lam = mx.array(lam)
     shp = lam.shape
-    lam = np.atleast_1d(lam).astype(np.float64)
+    lam = mx.atleast_1d(lam).astype(mx.float64)
 
     # For absolute values of lam less than threshold, use the Pade
     # approximation.
@@ -173,7 +173,7 @@ def tukeylambda_kurtosis(lam):
     # lambda == -0.25: kurtosis = inf
     negqrtr_mask = lam == -0.25
     # lambda near 0:  use Pade approximation
-    small_mask = np.abs(lam) < threshold
+    small_mask = mx.abs(lam) < threshold
     # else the "regular" case:  use the explicit formula.
     reg_mask = ~(low_mask | negqrtr_mask | small_mask)
 
@@ -182,9 +182,9 @@ def tukeylambda_kurtosis(lam):
     reg = lam[reg_mask]
 
     # Compute the function for each case.
-    k = np.empty_like(lam)
-    k[low_mask] = np.nan
-    k[negqrtr_mask] = np.inf
+    k = mx.empty_like(lam)
+    k[low_mask] = mx.nan
+    k[negqrtr_mask] = mx.inf
     if small.size > 0:
         k[small_mask] = _tukeylambda_kurt_p(small) / _tukeylambda_kurt_q(small)
     if reg.size > 0:

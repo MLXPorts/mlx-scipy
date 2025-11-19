@@ -156,7 +156,7 @@ template<typename MinMaxDist>
         if(std::isinf(max_distance)) {
             const char *msg = "Encountering floating point overflow. "
                               "The value of p too large for this dataset; "
-                              "For such large p, consider using the special case p=np.inf . ";
+                              "For such large p, consider using the special case p=mx.inf . ";
             throw std::invalid_argument(msg); // raises ValueError
         }
         inaccurate_distance_limit = max_distance;

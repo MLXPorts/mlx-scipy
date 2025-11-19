@@ -2,7 +2,7 @@ import itertools as it
 import math
 import pytest
 
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._array_api import (is_array_api_strict, make_xp_test_case,
                                    xp_default_dtype, xp_device)
@@ -73,7 +73,7 @@ class TestLogSumExp:
 
         # Handling an array with different magnitudes on the axes
         a = xp.asarray([[1e10, 1e-10],
-                        [-1e10, -np.inf]])
+                        [-1e10, -mx.inf]])
         ref = xp.asarray([1e10, -1e10])
         xp_assert_close(logsumexp(a, axis=-1), ref)
 
@@ -139,7 +139,7 @@ class TestLogSumExp:
         r, s = logsumexp(a, return_sign=True)
 
         expected_sumexp = xp.sum(xp.exp(a))
-        # This is the numpy>=2.0 convention for np.sign
+        # This is the numpy>=2.0 convention for mx.sign
         expected_sign = expected_sumexp / xp.abs(expected_sumexp)
 
         xp_assert_close(s, expected_sign)
@@ -169,11 +169,11 @@ class TestLogSumExp:
 
     @pytest.mark.parametrize('arg', (1, [1, 2, 3]))
     def test_xp_invalid_input(self, arg):
-        assert logsumexp(arg) == logsumexp(np.asarray(np.atleast_1d(arg)))
+        assert logsumexp(arg) == logsumexp(mx.array(mx.atleast_1d(arg)))
 
     def test_array_like(self):
         a = [1000, 1000]
-        desired = np.asarray(1000.0 + math.log(2.0))
+        desired = mx.array(1000.0 + math.log(2.0))
         xp_assert_close(logsumexp(a), desired)
 
     @pytest.mark.parametrize('dtype', dtypes)
@@ -222,7 +222,7 @@ class TestLogSumExp:
         # While working on this, I noticed that all other tests passed even
         # when the imaginary component of the result was zero. This suggested
         # the need of a stronger test with imaginary dtype.
-        rng = np.random.default_rng(324984329582349862)
+        rng = mx.random.default_rng(324984329582349862)
         dtype = getattr(xp, dtype)
         shape = (10, 100)
         x = rng.uniform(1, 40, shape) + 1.j * rng.uniform(1, 40, shape)
@@ -256,25 +256,25 @@ class TestLogSumExp:
 
     @pytest.mark.parametrize('x,y', it.product(
         [
-            -np.inf,
-            np.inf,
-            complex(-np.inf, 0.),
-            complex(-np.inf, -0.),
-            complex(-np.inf, np.inf),
-            complex(-np.inf, -np.inf),
-            complex(np.inf, 0.),
-            complex(np.inf, -0.),
-            complex(np.inf, np.inf),
-            complex(np.inf, -np.inf),
+            -mx.inf,
+            mx.inf,
+            complex(-mx.inf, 0.),
+            complex(-mx.inf, -0.),
+            complex(-mx.inf, mx.inf),
+            complex(-mx.inf, -mx.inf),
+            complex(mx.inf, 0.),
+            complex(mx.inf, -0.),
+            complex(mx.inf, mx.inf),
+            complex(mx.inf, -mx.inf),
             # Phase in each quadrant.
-            complex(-np.inf, 0.7533),
-            complex(-np.inf, 2.3562),
-            complex(-np.inf, 3.9270),
-            complex(-np.inf, 5.4978),
-            complex(np.inf, 0.7533),
-            complex(np.inf, 2.3562),
-            complex(np.inf, 3.9270),
-            complex(np.inf, 5.4978),
+            complex(-mx.inf, 0.7533),
+            complex(-mx.inf, 2.3562),
+            complex(-mx.inf, 3.9270),
+            complex(-mx.inf, 5.4978),
+            complex(mx.inf, 0.7533),
+            complex(mx.inf, 2.3562),
+            complex(mx.inf, 3.9270),
+            complex(mx.inf, 5.4978),
         ], repeat=2)
     )
     def test_gh22601_infinite_elements(self, x, y, xp):
@@ -316,8 +316,8 @@ class TestLogSumExp:
         xp_assert_close(logsumexp(a, b=b), xp.asarray(xp.nan))
 
     @pytest.mark.parametrize("a, b, sign_ref",
-                             [([np.inf], None, 1.),
-                              ([np.inf], [-1.], -1.)])
+                             [([mx.inf], None, 1.),
+                              ([mx.inf], [-1.], -1.)])
     def test_gh23548(self, xp, a, b, sign_ref):
         # gh-23548 reported that `logsumexp` with `return_sign=True` returned a sign
         # of NaN with infinite reals
@@ -335,7 +335,7 @@ class TestSoftmax:
         xp_assert_close(softmax(xp.asarray([1., 1.])),
                         xp.asarray([.5, .5]), rtol=1e-13)
         xp_assert_close(softmax(xp.asarray([0., 1.])),
-                        xp.asarray([1., np.e])/(1 + np.e),
+                        xp.asarray([1., mx.e])/(1 + mx.e),
                         rtol=1e-13)
 
         # Expected value computed using mpmath (with mpmath.mp.dps = 200) and then
@@ -389,11 +389,11 @@ class TestSoftmax:
                         xp.asarray([1., 0., 0., 0.]), rtol=1e-13)
 
     def test_softmax_scalar(self):
-        xp_assert_close(softmax(1000), np.asarray(1.), rtol=1e-13)
+        xp_assert_close(softmax(1000), mx.array(1.), rtol=1e-13)
 
     def test_softmax_array_like(self):
         xp_assert_close(softmax([1000, 0, 0, 0]),
-                        np.asarray([1., 0., 0., 0.]), rtol=1e-13)
+                        mx.array([1., 0., 0., 0.]), rtol=1e-13)
 
 
 @make_xp_test_case(log_softmax)
@@ -412,7 +412,7 @@ class TestLogSoftmax:
 
     def test_log_softmax_array_like(self):
         xp_assert_close(log_softmax([1000, 1]),
-                        np.asarray([0., -999.]), rtol=1e-13)
+                        mx.array([0., -999.]), rtol=1e-13)
 
     @staticmethod
     def data_1d(xp):
@@ -456,7 +456,7 @@ class TestLogSoftmax:
         xp_assert_close(log_softmax(x), expect, rtol=1e-13)
 
     @pytest.mark.parametrize('axis_2d, expected_2d', [
-        (0, np.log(0.5) * np.ones((2, 2))),
+        (0, mx.log(0.5) * mx.ones((2, 2))),
         (1, [[0., -999.], [0., -999.]]),
     ])
     def test_axes(self, axis_2d, expected_2d, xp):

@@ -54,7 +54,7 @@ not connected, the value depends on the representation:
 - for dense array representations, non-edges are represented by
   G[i, j] = 0, infinity, or NaN.
 
-- for dense masked representations (of type np.ma.MaskedArray), non-edges
+- for dense masked representations (of type mx.ma.MaskedArray), non-edges
   are represented by masked values. This can be useful when graphs with
   zero-weight edges are desired.
 
@@ -78,11 +78,11 @@ weight 2, and nodes 0 and 2 are connected by an edge of weight 1.
 We can construct the dense, masked, and sparse representations as follows,
 keeping in mind that an undirected graph is represented by a symmetric matrix::
 
-    >>> import numpy as np
-    >>> G_dense = np.array([[0, 2, 1],
+    >>> import mlx.core as mx
+    >>> G_dense = mx.array([[0, 2, 1],
     ...                     [2, 0, 0],
     ...                     [1, 0, 0]])
-    >>> G_masked = np.ma.masked_values(G_dense, 0)
+    >>> G_masked = mx.ma.masked_values(G_dense, 0)
     >>> from scipy.sparse import csr_array
     >>> G_sparse = csr_array(G_dense)
 
@@ -103,14 +103,14 @@ leads to ambiguities: how can non-edges be represented if zero is a meaningful
 value? In this case, either a masked or sparse representation must be used
 to eliminate the ambiguity::
 
-    >>> import numpy as np
-    >>> G2_data = np.array([[np.inf, 2,      0     ],
-    ...                     [2,      np.inf, np.inf],
-    ...                     [0,      np.inf, np.inf]])
-    >>> G2_masked = np.ma.masked_invalid(G2_data)
+    >>> import mlx.core as mx
+    >>> G2_data = mx.array([[mx.inf, 2,      0     ],
+    ...                     [2,      mx.inf, mx.inf],
+    ...                     [0,      mx.inf, mx.inf]])
+    >>> G2_masked = mx.ma.masked_invalid(G2_data)
     >>> from scipy.sparse.csgraph import csgraph_from_dense
     >>> # G2_sparse = csr_array(G2_data) would give the wrong result
-    >>> G2_sparse = csgraph_from_dense(G2_data, null_value=np.inf)
+    >>> G2_sparse = csgraph_from_dense(G2_data, null_value=mx.inf)
     >>> G2_sparse.data
     array([ 2.,  0.,  2.,  0.])
 
@@ -127,8 +127,8 @@ assumed to be directed by default. In a directed graph, traversal from node
 i to node j can be accomplished over the edge G[i, j], but not the edge
 G[j, i].  Consider the following dense graph::
 
-    >>> import numpy as np
-    >>> G_dense = np.array([[0, 1, 0],
+    >>> import mlx.core as mx
+    >>> G_dense = mx.array([[0, 1, 0],
     ...                     [2, 0, 3],
     ...                     [0, 4, 0]])
 

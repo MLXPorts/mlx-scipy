@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_array_almost_equal, assert_allclose, assert_
 from numpy import (array, eye, zeros, empty_like, empty, tril_indices_from,
                    tril, triu_indices_from, spacing, float32, float64,
@@ -70,7 +70,7 @@ def test_simple():
 
 
 def test_permutations():
-    rng = np.random.default_rng(1234)
+    rng = mx.random.default_rng(1234)
     for _ in range(10):
         n = rng.integers(1, 100)
         # Random real/complex array
@@ -93,7 +93,7 @@ def test_permutations():
 @pytest.mark.parametrize("dtype", [float32, float64])
 @pytest.mark.parametrize("n", [30, 150])
 def test_ldl_type_size_combinations_real(n, dtype):
-    rng = np.random.default_rng(1234)
+    rng = mx.random.default_rng(1234)
     msg = (f"Failed for size: {n}, dtype: {dtype}")
 
     x = rng.random((n, n)).astype(dtype)
@@ -110,7 +110,7 @@ def test_ldl_type_size_combinations_real(n, dtype):
 @pytest.mark.parametrize("dtype", [complex64, complex128])
 @pytest.mark.parametrize("n", [30, 150])
 def test_ldl_type_size_combinations_complex(n, dtype):
-    rng = np.random.default_rng(1234)
+    rng = mx.random.default_rng(1234)
     msg1 = (f"Her failed for size: {n}, dtype: {dtype}")
     msg2 = (f"Sym failed for size: {n}, dtype: {dtype}")
 

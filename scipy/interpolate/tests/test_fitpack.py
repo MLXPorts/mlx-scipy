@@ -1,7 +1,7 @@
 import itertools
 import os
 
-import numpy as np
+import mlx.core as mx
 from scipy._lib._array_api import (
     xp_assert_equal, xp_assert_close, assert_almost_equal, assert_array_almost_equal
 )
@@ -24,24 +24,24 @@ def data_file(basename):
 
 
 def norm2(x):
-    return np.sqrt(np.dot(x.T, x))
+    return mx.sqrt(mx.dot(x.T, x))
 
 
 def f1(x, d=0):
     """Derivatives of sin->cos->-sin->-cos."""
     if d % 4 == 0:
-        return np.sin(x)
+        return mx.sin(x)
     if d % 4 == 1:
-        return np.cos(x)
+        return mx.cos(x)
     if d % 4 == 2:
-        return -np.sin(x)
+        return -mx.sin(x)
     if d % 4 == 3:
-        return -np.cos(x)
+        return -mx.cos(x)
 
 
 def makepairs(x, y):
     """Helper function to create an array of pairs of x and y."""
-    xy = np.array(list(itertools.product(np.asarray(x), np.asarray(y))))
+    xy = mx.array(list(itertools.product(mx.array(x), mx.array(y))))
     return xy.T
 
 
@@ -50,7 +50,7 @@ class TestSmokeTests:
     Smoke tests (with a few asserts) for fitpack routines -- mostly
     check that they are runnable
     """
-    def check_1(self, per=0, s=0, a=0, b=2*np.pi, at_nodes=False,
+    def check_1(self, per=0, s=0, a=0, b=2*mx.pi, at_nodes=False,
                 xb=None, xe=None):
         if xb is None:
             xb = a
@@ -59,8 +59,8 @@ class TestSmokeTests:
 
         N = 20
         # nodes and middle points of the nodes
-        x = np.linspace(a, b, N + 1)
-        x1 = a + (b - a) * np.arange(1, N, dtype=float) / float(N - 1)
+        x = mx.linspace(a, b, N + 1)
+        x1 = a + (b - a) * mx.arange(1, N, dtype=float) / float(N - 1)
         v = f1(x)
 
         def err_est(k, d):
@@ -89,7 +89,7 @@ class TestSmokeTests:
                 else:
                     assert k == 5   # knot length differ in some k=5 cases
             else:
-                if np.allclose(v[0], v[-1], atol=1e-15):
+                if mx.allclose(v[0], v[-1], atol=1e-15):
                     spl = make_splrep(x, v, k=k, s=s, xb=xb, xe=xe, bc_type='periodic')
                     if k != 1: # knots for k == 1 in some cases
                         xp_assert_close(spl.t, tck[0], atol=1e-15)
@@ -99,10 +99,10 @@ class TestSmokeTests:
                         spl = make_splrep(x, v, k=k, s=s,
                                           xb=xb, xe=xe, bc_type='periodic')
 
-    def check_2(self, per=0, N=20, ia=0, ib=2*np.pi):
-        a, b, dx = 0, 2*np.pi, 0.2*np.pi
-        x = np.linspace(a, b, N+1)    # nodes
-        v = np.sin(x)
+    def check_2(self, per=0, N=20, ia=0, ib=2*mx.pi):
+        a, b, dx = 0, 2*mx.pi, 0.2*mx.pi
+        x = mx.linspace(a, b, N+1)    # nodes
+        v = mx.sin(x)
 
         def err_est(k, d):
             # Assume f has all derivatives < 1
@@ -126,11 +126,11 @@ class TestSmokeTests:
 
     def test_smoke_splrep_splev(self):
         self.check_1(s=1e-6)
-        self.check_1(b=1.5*np.pi)
+        self.check_1(b=1.5*mx.pi)
 
     def test_smoke_splrep_splev_periodic(self):
-        self.check_1(b=1.5*np.pi, xe=2*np.pi, per=1, s=1e-1)
-        self.check_1(b=2*np.pi, per=1, s=1e-1)
+        self.check_1(b=1.5*mx.pi, xe=2*mx.pi, per=1, s=1e-1)
+        self.check_1(b=2*mx.pi, per=1, s=1e-1)
 
     @pytest.mark.parametrize('per', [0, 1])
     @pytest.mark.parametrize('at_nodes', [True, False])
@@ -145,13 +145,13 @@ class TestSmokeTests:
     @pytest.mark.parametrize('N', [20, 50])
     @pytest.mark.parametrize('per', [0, 1])
     def test_smoke_splint_spalde_iaib(self, N, per):
-        self.check_2(ia=0.2*np.pi, ib=np.pi, N=N, per=per)
+        self.check_2(ia=0.2*mx.pi, ib=mx.pi, N=N, per=per)
 
     def test_smoke_sproot(self):
         # sproot is only implemented for k=3
         a, b = 0.1, 15
-        x = np.linspace(a, b, 20)
-        v = np.sin(x)
+        x = mx.linspace(a, b, 20)
+        v = mx.sin(x)
 
         for k in [1, 2, 4, 5]:
             tck = splrep(x, v, s=0, per=0, k=k, xe=b)
@@ -161,23 +161,23 @@ class TestSmokeTests:
         k = 3
         tck = splrep(x, v, s=0, k=3)
         roots = sproot(tck)
-        xp_assert_close(splev(roots, tck), np.zeros(len(roots)), atol=1e-10, rtol=1e-10)
-        xp_assert_close(roots, np.pi * np.array([1, 2, 3, 4]), rtol=1e-3)
+        xp_assert_close(splev(roots, tck), mx.zeros(len(roots)), atol=1e-10, rtol=1e-10)
+        xp_assert_close(roots, mx.pi * mx.array([1, 2, 3, 4]), rtol=1e-3)
 
     @pytest.mark.parametrize('N', [20, 50])
     @pytest.mark.parametrize('k', [1, 2, 3, 4, 5])
     def test_smoke_splprep_splrep_splev(self, N, k):
-        a, b, dx = 0, 2.*np.pi, 0.2*np.pi
-        x = np.linspace(a, b, N+1)    # nodes
-        v = np.sin(x)
+        a, b, dx = 0, 2.*mx.pi, 0.2*mx.pi
+        x = mx.linspace(a, b, N+1)    # nodes
+        v = mx.sin(x)
 
         tckp, u = splprep([x, v], s=0, per=0, k=k, nest=-1)
         uv = splev(dx, tckp)
-        err1 = abs(uv[1] - np.sin(uv[0]))
+        err1 = abs(uv[1] - mx.sin(uv[0]))
         assert err1 < 1e-2
 
         tck = splrep(x, v, s=0, per=0, k=k)
-        err2 = abs(splev(uv[0], tck) - np.sin(uv[0]))
+        err2 = abs(splev(uv[0], tck) - mx.sin(uv[0]))
         assert err2 < 1e-2
 
         # Derivatives of parametric cubic spline at u (first function)
@@ -187,16 +187,16 @@ class TestSmokeTests:
                 uv = splev(dx, tckp, d)
 
     def test_smoke_bisplrep_bisplev(self):
-        xb, xe = 0, 2.*np.pi
-        yb, ye = 0, 2.*np.pi
+        xb, xe = 0, 2.*mx.pi
+        yb, ye = 0, 2.*mx.pi
         kx, ky = 3, 3
         Nx, Ny = 20, 20
 
         def f2(x, y):
-            return np.sin(x+y)
+            return mx.sin(x+y)
 
-        x = np.linspace(xb, xe, Nx + 1)
-        y = np.linspace(yb, ye, Ny + 1)
+        x = mx.linspace(xb, xe, Nx + 1)
+        y = mx.linspace(yb, ye, Ny + 1)
         xy = makepairs(x, y)
         tck = bisplrep(xy[0], xy[1], f2(xy[0], xy[1]), s=0, kx=kx, ky=ky)
 
@@ -206,7 +206,7 @@ class TestSmokeTests:
         v2 = f2(t2[0], t2[1])
         v2 = v2.reshape(len(tt[0]), len(tt[1]))
 
-        assert norm2(np.ravel(v1 - v2)) < 1e-2
+        assert norm2(mx.ravel(v1 - v2)) < 1e-2
 
 
 class TestSplev:
@@ -223,12 +223,12 @@ class TestSplev:
         x = [1, 2, 3, 4, 5]
         y = [4, 5, 6, 7, 8]
         tck = splrep(x, y)
-        t = np.array([[1.0, 1.5, 2.0, 2.5],
+        t = mx.array([[1.0, 1.5, 2.0, 2.5],
                       [3.0, 3.5, 4.0, 4.5]])
         z = splev(t, tck)
         z0 = splev(t[0], tck)
         z1 = splev(t[1], tck)
-        xp_assert_equal(z, np.vstack((z0, z1)))
+        xp_assert_equal(z, mx.vstack((z0, z1)))
 
     def test_extrapolation_modes(self):
         # test extrapolation modes
@@ -250,12 +250,12 @@ class TestSplev:
 class TestSplder:
     def setup_method(self):
         # non-uniform grid, just to make it sure
-        x = np.linspace(0, 1, 100)**3
-        y = np.sin(20 * x)
+        x = mx.linspace(0, 1, 100)**3
+        y = mx.sin(20 * x)
         self.spl = splrep(x, y)
 
         # double check that knots are non-uniform
-        assert np.ptp(np.diff(self.spl[0])) > 0
+        assert mx.ptp(mx.diff(self.spl[0])) > 0
 
     def test_inverse(self):
         # Check that antiderivative + derivative is identity.
@@ -271,7 +271,7 @@ class TestSplder:
 
         for n in range(3+1):
             # Also extrapolation!
-            xx = np.linspace(-1, 2, 2000)
+            xx = mx.linspace(-1, 2, 2000)
             if n == 3:
                 # ... except that FITPACK extrapolates strangely for
                 # order 0, so let's not check that.
@@ -291,13 +291,13 @@ class TestSplder:
 
         # no extrapolation, splint assumes function is zero outside
         # range
-        xx = np.linspace(0, 1, 20)
+        xx = mx.linspace(0, 1, 20)
 
         for x1 in xx:
             for x2 in xx:
                 y1 = splint(x1, x2, self.spl)
                 y2 = splev(x2, spl2) - splev(x1, spl2)
-                xp_assert_close(np.asarray(y1), np.asarray(y2))
+                xp_assert_close(mx.array(y1), mx.array(y2))
 
     def test_order0_diff(self):
         assert_raises(ValueError, splder, self.spl, 4)
@@ -320,8 +320,8 @@ class TestSplder:
         # c can have trailing dims
         for n in range(3):
             t, c, k = self.spl
-            c2 = np.c_[c, c, c]
-            c2 = np.dstack((c2, c2))
+            c2 = mx.c_[c, c, c]
+            c2 = mx.dstack((c2, c2))
 
             spl2 = splantider((t, c2, k), n)
             spl3 = splder(spl2, n)
@@ -334,7 +334,7 @@ class TestSplder:
 class TestSplint:
     def test_len_c(self):
         n, k = 7, 3
-        x = np.arange(n)
+        x = mx.arange(n)
         y = x**3
         t, c, k = splrep(x, y, s=0)
 
@@ -348,13 +348,13 @@ class TestSplint:
 
         # check that the coefficients past len(t) - k - 1 are ignored
         c0 = c.copy()
-        c0[len(t) - k - 1:] = np.nan
+        c0[len(t) - k - 1:] = mx.nan
         res0 = splint(0, 6, (t, c0, k))
         assert abs(res0 - expected) < 1e-13
 
         # however, all other coefficients *are* used
-        c0[6] = np.nan
-        assert np.isnan(splint(0, 6, (t, c0, k)))
+        c0[6] = mx.nan
+        assert mx.isnan(splint(0, 6, (t, c0, k)))
 
         # check that the coefficient array can have length `len(t) - k - 1`
         c1 = c[:len(t) - k - 1]
@@ -365,7 +365,7 @@ class TestSplint:
         # however shorter c arrays raise. The error from f2py is a
         # `dftipack.error`, which is an Exception but not ValueError etc.
         with assert_raises(Exception, match=r">=n-k-1"):
-            splint(0, 1, (np.ones(10), np.ones(5), 3))
+            splint(0, 1, (mx.ones(10), mx.ones(5), 3))
 
 
 class TestBisplrep:
@@ -377,13 +377,13 @@ class TestBisplrep:
             size = 400**2
         # Don't allocate a real array, as it's very big, but rely
         # on that it's not referenced
-        x = as_strided(np.zeros(()), shape=(size,))
+        x = as_strided(mx.zeros(()), shape=(size,))
         assert_raises(OverflowError, bisplrep, x, x, x, w=x,
                       xb=0, xe=1, yb=0, ye=1, s=0)
 
     def test_regression_1310(self):
         # Regression test for gh-1310
-        with np.load(data_file('bug-1310.npz')) as loaded_data:
+        with mx.load(data_file('bug-1310.npz')) as loaded_data:
             data = loaded_data['data']
 
         # Shouldn't crash -- the input data triggers work array sizes
@@ -393,13 +393,13 @@ class TestBisplrep:
         bisplrep(data[:,0], data[:,1], data[:,2], kx=3, ky=3, s=0,
                  full_output=True)
 
-    @pytest.mark.skipif(dfitpack_int != np.int64, reason="needs ilp64 fitpack")
+    @pytest.mark.skipif(dfitpack_int != mx.int64, reason="needs ilp64 fitpack")
     def test_ilp64_bisplrep(self):
         check_free_memory(28000)  # VM size, doesn't actually use the pages
-        x = np.linspace(0, 1, 400)
-        y = np.linspace(0, 1, 400)
-        x, y = np.meshgrid(x, y)
-        z = np.zeros_like(x)
+        x = mx.linspace(0, 1, 400)
+        y = mx.linspace(0, 1, 400)
+        x, y = mx.meshgrid(x, y)
+        z = mx.zeros_like(x)
         tck = bisplrep(x, y, z, kx=3, ky=3, s=0)
         xp_assert_close(bisplev(0.5, 0.5, tck), 0.0)
 
@@ -407,9 +407,9 @@ class TestBisplrep:
 def test_dblint():
     # Basic test to see it runs and gives the correct result on a trivial
     # problem. Note that `dblint` is not exposed in the interpolate namespace.
-    x = np.linspace(0, 1)
-    y = np.linspace(0, 1)
-    xx, yy = np.meshgrid(x, y)
+    x = mx.linspace(0, 1)
+    y = mx.linspace(0, 1)
+    xx, yy = mx.meshgrid(x, y)
     rect = RectBivariateSpline(x, y, 4 * xx * yy)
     tck = list(rect.tck)
     tck.extend(rect.degrees)
@@ -425,22 +425,22 @@ def test_splev_der_k():
     # for x outside of knot range
 
     # test case from gh-2188
-    tck = (np.array([0., 0., 2.5, 2.5]),
-           np.array([-1.56679978, 2.43995873, 0., 0.]),
+    tck = (mx.array([0., 0., 2.5, 2.5]),
+           mx.array([-1.56679978, 2.43995873, 0., 0.]),
            1)
     t, c, k = tck
-    x = np.array([-3, 0, 2.5, 3])
+    x = mx.array([-3, 0, 2.5, 3])
 
     # an explicit form of the linear spline
     xp_assert_close(splev(x, tck), c[0] + (c[1] - c[0]) * x/t[2])
     xp_assert_close(splev(x, tck, 1),
-                    np.ones_like(x) * (c[1] - c[0]) / t[2]
+                    mx.ones_like(x) * (c[1] - c[0]) / t[2]
     )
 
     # now check a random spline vs splder
-    np.random.seed(1234)
-    x = np.sort(np.random.random(30))
-    y = np.random.random(30)
+    mx.random.seed(1234)
+    x = mx.sort(mx.random.random(30))
+    y = mx.random.random(30)
     t, c, k = splrep(x, y)
 
     x = [t[0] - 1., t[-1] + 1.]
@@ -451,24 +451,24 @@ def test_splev_der_k():
 def test_splprep_segfault():
     # regression test for gh-3847: splprep segfaults if knots are specified
     # for task=-1
-    t = np.arange(0, 1.1, 0.1)
-    x = np.sin(2*np.pi*t)
-    y = np.cos(2*np.pi*t)
+    t = mx.arange(0, 1.1, 0.1)
+    x = mx.sin(2*mx.pi*t)
+    y = mx.cos(2*mx.pi*t)
     tck, u = splprep([x, y], s=0)
-    np.arange(0, 1.01, 0.01)
+    mx.arange(0, 1.01, 0.01)
 
     uknots = tck[0]  # using the knots from the previous fitting
     tck, u = splprep([x, y], task=-1, t=uknots)  # here is the crash
 
 
-@pytest.mark.skipif(dfitpack_int == np.int64,
+@pytest.mark.skipif(dfitpack_int == mx.int64,
         reason='Will crash (see gh-23396), test only meant for 32-bit overflow')
 def test_bisplev_integer_overflow():
-    np.random.seed(1)
+    mx.random.seed(1)
 
-    x = np.linspace(0, 1, 11)
+    x = mx.linspace(0, 1, 11)
     y = x
-    z = np.random.randn(11, 11).ravel()
+    z = mx.random.randn(11, 11).ravel()
     kx = 1
     ky = 1
 
@@ -476,8 +476,8 @@ def test_bisplev_integer_overflow():
         x, y, z, None, None, None, None, kx=kx, ky=ky, s=0.0)
     tck = (tx[:nx], ty[:ny], c[:(nx - kx - 1) * (ny - ky - 1)], kx, ky)
 
-    xp = np.zeros([2621440])
-    yp = np.zeros([2621440])
+    xp = mx.zeros([2621440])
+    yp = mx.zeros([2621440])
 
     assert_raises((RuntimeError, MemoryError), bisplev, xp, yp, tck)
 
@@ -488,47 +488,47 @@ def test_gh_1766():
     size = 22
     kx, ky = 3, 3
     def f2(x, y):
-        return np.sin(x+y)
+        return mx.sin(x+y)
 
-    x = np.linspace(0, 10, size)
-    y = np.linspace(50, 700, size)
+    x = mx.linspace(0, 10, size)
+    y = mx.linspace(50, 700, size)
     xy = makepairs(x, y)
     tck = bisplrep(xy[0], xy[1], f2(xy[0], xy[1]), s=0, kx=kx, ky=ky)
     # the size value here can either segfault
     # or produce a MemoryError on main
     tx_ty_size = 500000
-    tck[0] = np.arange(tx_ty_size)
-    tck[1] = np.arange(tx_ty_size) * 4
-    tt_0 = np.arange(50)
-    tt_1 = np.arange(50) * 3
+    tck[0] = mx.arange(tx_ty_size)
+    tck[1] = mx.arange(tx_ty_size) * 4
+    tt_0 = mx.arange(50)
+    tt_1 = mx.arange(50) * 3
     with pytest.raises(MemoryError):
         bisplev(tt_0, tt_1, tck, 1, 1)
 
 
 def test_spalde_scalar_input():
     # Ticket #629
-    x = np.linspace(0, 10)
+    x = mx.linspace(0, 10)
     y = x**3
     tck = splrep(x, y, k=3, t=[5])
-    res = spalde(np.float64(1), tck)
-    des = np.array([1., 3., 6., 6.])
+    res = spalde(mx.float64(1), tck)
+    des = mx.array([1., 3., 6., 6.])
     assert_almost_equal(res, des)
 
 
 def test_spalde_nc():
     # regression test for https://github.com/scipy/scipy/issues/19002
     # here len(t) = 29 and len(c) = 25 (== len(t) - k - 1)
-    x = np.asarray([-10., -9., -8., -7., -6., -5., -4., -3., -2.5, -2., -1.5,
+    x = mx.array([-10., -9., -8., -7., -6., -5., -4., -3., -2.5, -2., -1.5,
                     -1., -0.5, 0., 0.5, 1., 1.5, 2., 2.5, 3., 4., 5., 6.],
                     dtype="float")
     t = [-10.0, -10.0, -10.0, -10.0, -9.0, -8.0, -7.0, -6.0, -5.0, -4.0, -3.0,
          -2.5, -2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0,
          5.0, 6.0, 6.0, 6.0, 6.0]
-    c = np.asarray([1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    c = mx.array([1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
                     0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
     k = 3
 
     res = spalde(x, (t, c, k))
-    res = np.vstack(res)
-    res_splev = np.asarray([splev(x, (t, c, k), nu) for nu in range(4)])
+    res = mx.vstack(res)
+    res_splev = mx.array([splev(x, (t, c, k), nu) for nu in range(4)])
     xp_assert_close(res, res_splev.T, atol=1e-15)

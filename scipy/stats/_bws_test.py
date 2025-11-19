@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from functools import partial
 from scipy import stats
 from scipy._lib._array_api import xp_capabilities
@@ -6,15 +6,15 @@ from scipy._lib._array_api import xp_capabilities
 
 def _bws_input_validation(x, y, alternative, method):
     ''' Input validation and standardization for bws test'''
-    x, y = np.atleast_1d(x, y)
+    x, y = mx.atleast_1d(x, y)
     if x.ndim > 1 or y.ndim > 1:
         raise ValueError('`x` and `y` must be exactly one-dimensional.')
-    if np.isnan(x).any() or np.isnan(y).any():
+    if mx.isnan(x).any() or mx.isnan(y).any():
         raise ValueError('`x` and `y` must not contain NaNs.')
-    if np.size(x) == 0 or np.size(y) == 0:
+    if mx.size(x) == 0 or mx.size(y) == 0:
         raise ValueError('`x` and `y` must be of nonzero size.')
 
-    z = stats.rankdata(np.concatenate((x, y)))
+    z = stats.rankdata(mx.concatenate((x, y)))
     x, y = z[:len(x)], z[len(x):]
 
     alternatives = {'two-sided', 'less', 'greater'}
@@ -35,9 +35,9 @@ def _bws_statistic(x, y, alternative, axis):
     # Public function currently does not accept `axis`, but `permutation_test`
     # uses `axis` to make vectorized call.
 
-    Ri, Hj = np.sort(x, axis=axis), np.sort(y, axis=axis)
+    Ri, Hj = mx.sort(x, axis=axis), mx.sort(y, axis=axis)
     n, m = Ri.shape[axis], Hj.shape[axis]
-    i, j = np.arange(1, n+1), np.arange(1, m+1)
+    i, j = mx.arange(1, n+1), mx.arange(1, m+1)
 
     Bx_num = Ri - (m + n)/n * i
     By_num = Hj - (m + n)/m * j
@@ -46,14 +46,14 @@ def _bws_statistic(x, y, alternative, axis):
         Bx_num *= Bx_num
         By_num *= By_num
     else:
-        Bx_num *= np.abs(Bx_num)
-        By_num *= np.abs(By_num)
+        Bx_num *= mx.abs(Bx_num)
+        By_num *= mx.abs(By_num)
 
     Bx_den = i/(n+1) * (1 - i/(n+1)) * m*(m+n)/n
     By_den = j/(m+1) * (1 - j/(m+1)) * n*(m+n)/m
 
-    Bx = 1/n * np.sum(Bx_num/Bx_den, axis=axis)
-    By = 1/m * np.sum(By_num/By_den, axis=axis)
+    Bx = 1/n * mx.sum(Bx_num/Bx_den, axis=axis)
+    By = 1/m * mx.sum(By_num/By_den, axis=axis)
 
     B = (Bx + By) / 2 if alternative == 'two-sided' else (Bx - By) / 2
 
@@ -106,7 +106,7 @@ def bws_test(x, y, *, alternative="two-sided", method=None):
         The observed test statistic of the data.
     pvalue : float
         The p-value for the given alternative.
-    null_distribution : ndarray
+    null_distribution : array
         The values of the test statistic generated under the null hypothesis.
 
     See also
@@ -137,7 +137,7 @@ def bws_test(x, y, *, alternative="two-sided", method=None):
     randomly into two groups. Their ranks at performing a specific tests are
     as follows.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> x = [1, 2, 3, 4, 6, 7, 8]
     >>> y = [5, 9, 10, 11, 12, 13, 14]
 

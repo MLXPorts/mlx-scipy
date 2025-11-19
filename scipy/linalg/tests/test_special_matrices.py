@@ -1,5 +1,5 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy import arange, array, eye, copy, sqrt
 from numpy.testing import (assert_equal, assert_array_equal,
                            assert_array_almost_equal, assert_allclose)
@@ -220,7 +220,7 @@ class TestHelmert:
     def test_orthogonality(self):
         for n in range(1, 7):
             H = helmert(n, full=True)
-            Id = np.eye(n)
+            Id = mx.eye(n)
             assert_allclose(H.dot(H.T), Id, atol=1e-12)
             assert_allclose(H.T.dot(H), Id, atol=1e-12)
 
@@ -229,9 +229,9 @@ class TestHelmert:
             H_full = helmert(n, full=True)
             H_partial = helmert(n)
             for U in H_full[1:, :].T, H_partial.T:
-                C = np.eye(n) - np.full((n, n), 1 / n)
+                C = mx.eye(n) - mx.full((n, n), 1 / n)
                 assert_allclose(U.dot(U.T), C)
-                assert_allclose(U.T.dot(U), np.eye(n-1), atol=1e-12)
+                assert_allclose(U.T.dot(U), mx.eye(n-1), atol=1e-12)
 
 
 class TestHilbert:
@@ -458,7 +458,7 @@ class TestPascal:
 
     def test_threshold(self):
         # Regression test.  An early version of `pascal` returned an
-        # array of type np.uint64 for n=35, but that data type is too small
+        # array of type mx.uint64 for n=35, but that data type is too small
         # to hold p[-1, -1].  The second assert_equal below would fail
         # because p[-1, -1] overflowed.
         p = pascal(34)
@@ -474,8 +474,8 @@ def test_invpascal():
         p = pascal(n, kind=kind, exact=exact)
         # Matrix-multiply ip and p, and check that we get the identity matrix.
         # We can't use the simple expression e = ip.dot(p), because when
-        # n < 35 and exact is True, p.dtype is np.uint64 and ip.dtype is
-        # np.int64. The product of those dtypes is np.float64, which loses
+        # n < 35 and exact is True, p.dtype is mx.uint64 and ip.dtype is
+        # mx.int64. The product of those dtypes is mx.float64, which loses
         # precision when n is greater than 18.  Instead we'll cast both to
         # object arrays, and then multiply.
         e = ip.astype(object).dot(p.astype(object))
@@ -535,14 +535,14 @@ def test_fiedler_companion():
     fc = fiedler_companion([1.])
     assert_equal(fc.size, 0)
     fc = fiedler_companion([1., 2.])
-    assert_array_equal(fc, np.array([[-2.]]))
+    assert_array_equal(fc, mx.array([[-2.]]))
     fc = fiedler_companion([1e-12, 2., 3.])
     assert_array_almost_equal(fc, companion([1e-12, 2., 3.]))
     with assert_raises(ValueError):
         fiedler_companion([0, 1, 2])
     fc = fiedler_companion([1., -16., 86., -176., 105.])
     assert_array_almost_equal(eigvals(fc),
-                              np.array([7., 5., 3., 1.]))
+                              mx.array([7., 5., 3., 1.]))
 
 
 class TestConvolutionMatrix:
@@ -552,9 +552,9 @@ class TestConvolutionMatrix:
 
     def create_vector(self, n, cpx):
         """Make a complex or real test vector of length n."""
-        x = np.linspace(-2.5, 2.2, n)
+        x = mx.linspace(-2.5, 2.2, n)
         if cpx:
-            x = x + 1j*np.linspace(-1.5, 3.1, n)
+            x = x + 1j*mx.linspace(-1.5, 3.1, n)
         return x
 
     def test_bad_n(self):
@@ -580,10 +580,10 @@ class TestConvolutionMatrix:
         a = self.create_vector(na, cpx)
         v = self.create_vector(nv, cpx)
         if mode is None:
-            y1 = np.convolve(v, a)
+            y1 = mx.convolve(v, a)
             A = convolution_matrix(a, nv)
         else:
-            y1 = np.convolve(v, a, mode)
+            y1 = mx.convolve(v, a, mode)
             A = convolution_matrix(a, nv, mode)
         y2 = A @ v
         assert_array_almost_equal(y1, y2)
@@ -595,12 +595,12 @@ class TestConvolutionMatrix:
                                      (convolution_matrix, (5, 'same')),
                                      (fiedler, ()),
                                      (fiedler_companion, ()),
-                                     (hankel, (np.arange(9),)),
-                                     (leslie, (np.arange(9),)),
-                                     (toeplitz, (np.arange(9),)),
+                                     (hankel, (mx.arange(9),)),
+                                     (leslie, (mx.arange(9),)),
+                                     (toeplitz, (mx.arange(9),)),
                                      ])
 def test_batch(f, args):
-    rng = np.random.default_rng(283592436523456)
+    rng = mx.random.default_rng(283592436523456)
     batch_shape = (2, 3)
     m = 10
     A = rng.random(batch_shape + (m,))
@@ -612,6 +612,6 @@ def test_batch(f, args):
         return
 
     res = f(A, *args)
-    ref = np.asarray([f(a, *args) for a in A.reshape(-1, m)])
+    ref = mx.array([f(a, *args) for a in A.reshape(-1, m)])
     ref = ref.reshape(A.shape[:-1] + ref.shape[-2:])
     assert_allclose(res, ref)

@@ -1,21 +1,21 @@
 from functools import partial
 
-import numpy as np
+import mlx.core as mx
 from scipy import stats
 import matplotlib.pyplot as plt
 
 
 def my_kde_bandwidth(obj, fac=1./5):
     """We use Scott's Rule, multiplied by a constant factor."""
-    return np.power(obj.n, -1./(obj.d+4)) * fac
+    return mx.power(obj.n, -1./(obj.d+4)) * fac
 
 
 loc1, scale1, size1 = (-2, 1, 175)
 loc2, scale2, size2 = (2, 0.2, 50)
-x2 = np.concatenate([np.random.normal(loc=loc1, scale=scale1, size=size1),
-                     np.random.normal(loc=loc2, scale=scale2, size=size2)])
+x2 = mx.concatenate([mx.random.normal(loc=loc1, scale=scale1, size=size1),
+                     mx.random.normal(loc=loc2, scale=scale2, size=size2)])
 
-x_eval = np.linspace(x2.min() - 1, x2.max() + 1, 500)
+x_eval = mx.linspace(x2.min() - 1, x2.max() + 1, 500)
 
 kde = stats.gaussian_kde(x2)
 kde2 = stats.gaussian_kde(x2, bw_method='silverman')
@@ -29,7 +29,7 @@ bimodal_pdf = pdf(x_eval, loc=loc1, scale=scale1) * float(size1) / x2.size + \
 fig = plt.figure(figsize=(8, 6))
 ax = fig.add_subplot(111)
 
-ax.plot(x2, np.zeros(x2.shape), 'b+', ms=12)
+ax.plot(x2, mx.zeros(x2.shape), 'b+', ms=12)
 ax.plot(x_eval, kde(x_eval), 'k-', label="Scott's Rule")
 ax.plot(x_eval, kde2(x_eval), 'b-', label="Silverman's Rule")
 ax.plot(x_eval, kde3(x_eval), 'g-', label="Scott * 0.2")

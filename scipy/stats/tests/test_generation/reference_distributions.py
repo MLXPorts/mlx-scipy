@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import mpmath
 from mpmath import mp
 
@@ -27,7 +27,7 @@ class ReferenceDistribution:
     other parameters are noteworthy:
 
     - All methods accept `dtype` to control the output data type. The default
-      is `np.float64`, but `object` or `mp.mpf` may be
+      is `mx.float64`, but `object` or `mp.mpf` may be
       specified to output the full `mpf`.
     - `ppf`/`isf` accept a `guess` because they use a scalar rootfinder
       to invert the `cdf`/`sf`. This is passed directly into the `x0` method
@@ -81,9 +81,9 @@ class ReferenceDistribution:
                         for key, val in kwargs.items()}
 
     def _make_mpf_array(self, x):
-        shape = np.shape(x)
-        x = np.asarray(x, dtype=np.float64).ravel()
-        return np.asarray([mp.mpf(xi) for xi in x]).reshape(shape)[()]
+        shape = mx.shape(x)
+        x = mx.array(x, dtype=mx.float64).ravel()
+        return mx.array([mp.mpf(xi) for xi in x]).reshape(shape)[()]
 
     def _pdf(self, x):
         raise NotImplementedError("_pdf must be overridden.")
@@ -175,89 +175,89 @@ class ReferenceDistribution:
         a, b = self._support(**kwargs)
         return mp.quad(integrand, (a, b))
 
-    def pdf(self, x, dtype=np.float64):
-        fun = np.vectorize(self._pdf)
+    def pdf(self, x, dtype=mx.float64):
+        fun = mx.vectorize(self._pdf)
         x = self._make_mpf_array(x)
         res = fun(x, **self._params)
-        return np.asarray(res, dtype=dtype)[()]
+        return mx.array(res, dtype=dtype)[()]
 
-    def cdf(self, x, dtype=np.float64):
-        fun = np.vectorize(self._cdf)
+    def cdf(self, x, dtype=mx.float64):
+        fun = mx.vectorize(self._cdf)
         x = self._make_mpf_array(x)
         res = fun(x, **self._params)
-        return np.asarray(res, dtype=dtype)[()]
+        return mx.array(res, dtype=dtype)[()]
 
-    def sf(self, x, dtype=np.float64):
-        fun = np.vectorize(self._sf)
+    def sf(self, x, dtype=mx.float64):
+        fun = mx.vectorize(self._sf)
         x = self._make_mpf_array(x)
         res = fun(x, **self._params)
-        return np.asarray(res, dtype=dtype)[()]
+        return mx.array(res, dtype=dtype)[()]
 
-    def ppf(self, x, guess=0, dtype=np.float64):
-        fun = np.vectorize(self._ppf, excluded={1})  # don't vectorize guess
+    def ppf(self, x, guess=0, dtype=mx.float64):
+        fun = mx.vectorize(self._ppf, excluded={1})  # don't vectorize guess
         x = self._make_mpf_array(x)
         res = fun(x, guess, **self._params)
-        return np.asarray(res, dtype=dtype)[()]
+        return mx.array(res, dtype=dtype)[()]
 
-    def isf(self, x, guess=0, dtype=np.float64):
-        fun = np.vectorize(self._isf, excluded={1})  # don't vectorize guess
+    def isf(self, x, guess=0, dtype=mx.float64):
+        fun = mx.vectorize(self._isf, excluded={1})  # don't vectorize guess
         x = self._make_mpf_array(x)
         res = fun(x, guess, **self._params)
-        return np.asarray(res, dtype=dtype)[()]
+        return mx.array(res, dtype=dtype)[()]
 
-    def logpdf(self, x, dtype=np.float64):
-        fun = np.vectorize(self._logpdf)
+    def logpdf(self, x, dtype=mx.float64):
+        fun = mx.vectorize(self._logpdf)
         x = self._make_mpf_array(x)
         res = fun(x, **self._params)
-        return np.asarray(res, dtype=dtype)[()]
+        return mx.array(res, dtype=dtype)[()]
 
-    def logcdf(self, x, dtype=np.float64):
-        fun = np.vectorize(self._logcdf)
+    def logcdf(self, x, dtype=mx.float64):
+        fun = mx.vectorize(self._logcdf)
         x = self._make_mpf_array(x)
         res = fun(x, **self._params)
-        return np.asarray(res, dtype=dtype)[()]
+        return mx.array(res, dtype=dtype)[()]
 
-    def logsf(self, x, dtype=np.float64):
-        fun = np.vectorize(self._logsf)
+    def logsf(self, x, dtype=mx.float64):
+        fun = mx.vectorize(self._logsf)
         x = self._make_mpf_array(x)
         res = fun(x, **self._params)
-        return np.asarray(res, dtype=dtype)[()]
+        return mx.array(res, dtype=dtype)[()]
 
-    def support(self, dtype=np.float64):
-        fun = np.vectorize(self._support)
+    def support(self, dtype=mx.float64):
+        fun = mx.vectorize(self._support)
         res = fun(**self._params)
-        return np.asarray(res, dtype=dtype)[()]
+        return mx.array(res, dtype=dtype)[()]
 
-    def entropy(self, dtype=np.float64):
-        fun = np.vectorize(self._entropy)
+    def entropy(self, dtype=mx.float64):
+        fun = mx.vectorize(self._entropy)
         res = fun(**self._params)
-        return np.asarray(res, dtype=dtype)[()]
+        return mx.array(res, dtype=dtype)[()]
 
-    def mean(self, dtype=np.float64):
-        fun = np.vectorize(self._mean)
+    def mean(self, dtype=mx.float64):
+        fun = mx.vectorize(self._mean)
         res = fun(**self._params)
-        return np.asarray(res, dtype=dtype)[()]
+        return mx.array(res, dtype=dtype)[()]
 
-    def var(self, dtype=np.float64):
-        fun = np.vectorize(self._var)
+    def var(self, dtype=mx.float64):
+        fun = mx.vectorize(self._var)
         res = fun(**self._params)
-        return np.asarray(res, dtype=dtype)[()]
+        return mx.array(res, dtype=dtype)[()]
 
-    def skew(self, dtype=np.float64):
-        fun = np.vectorize(self._skew)
+    def skew(self, dtype=mx.float64):
+        fun = mx.vectorize(self._skew)
         res = fun(**self._params)
-        return np.asarray(res, dtype=dtype)[()]
+        return mx.array(res, dtype=dtype)[()]
 
-    def kurtosis(self, dtype=np.float64):
-        fun = np.vectorize(self._kurtosis)
+    def kurtosis(self, dtype=mx.float64):
+        fun = mx.vectorize(self._kurtosis)
         res = fun(**self._params)
-        return np.asarray(res, dtype=dtype)[()]
+        return mx.array(res, dtype=dtype)[()]
 
-    def moment(self, order, center=None, dtype=np.float64):
-        fun = np.vectorize(self._moment)
+    def moment(self, order, center=None, dtype=mx.float64):
+        fun = mx.vectorize(self._moment)
         order = self._make_mpf_array(order)
         res = fun(order, **self._params)
-        return np.asarray(res, dtype=dtype)[()]
+        return mx.array(res, dtype=dtype)[()]
 
 
 class SkewNormal(ReferenceDistribution):

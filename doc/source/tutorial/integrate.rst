@@ -98,21 +98,21 @@ is desired (and the fact that this integral can be computed as
 ``vec_expint`` based on the routine :obj:`quad`:
 
     >>> from scipy.integrate import quad
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> def integrand(t, n, x):
-    ...     return np.exp(-x*t) / t**n
+    ...     return mx.exp(-x*t) / t**n
     ...
 
     >>> def expint(n, x):
-    ...     return quad(integrand, 1, np.inf, args=(n, x))[0]
+    ...     return quad(integrand, 1, mx.inf, args=(n, x))[0]
     ...
 
-    >>> vec_expint = np.vectorize(expint)
+    >>> vec_expint = mx.vectorize(expint)
 
-    >>> vec_expint(3, np.arange(1.0, 4.0, 0.5))
+    >>> vec_expint(3, mx.arange(1.0, 4.0, 0.5))
     array([ 0.1097,  0.0567,  0.0301,  0.0163,  0.0089,  0.0049])
     >>> import scipy.special as special
-    >>> special.expn(3, np.arange(1.0,4.0,0.5))
+    >>> special.expn(3, mx.arange(1.0,4.0,0.5))
     array([ 0.1097,  0.0567,  0.0301,  0.0163,  0.0089,  0.0049])
 
 The function which is integrated can even use the quad argument (though the
@@ -123,7 +123,7 @@ integrand from the use of :obj:`quad` ). The integral in this case is
 
     I_{n}=\int_{0}^{\infty}\int_{1}^{\infty}\frac{e^{-xt}}{t^{n}}\, dt\, dx=\frac{1}{n}.
 
->>> result = quad(lambda x: expint(3, x), 0, np.inf)
+>>> result = quad(lambda x: expint(3, x), 0, mx.inf)
 >>> print(result)
 (0.33333333324560266, 2.8548934485373678e-09)
 
@@ -145,11 +145,11 @@ repeated calls to :func:`quad`.
     for example:
 
     >>> def gaussian(x):
-    ...     return np.exp(-x**2)
-    >>> res = integrate.quad(gaussian, -np.inf, np.inf)
+    ...     return mx.exp(-x**2)
+    >>> res = integrate.quad(gaussian, -mx.inf, mx.inf)
     >>> res
     (1.7724538509055159, 1.4202636756659625e-08)
-    >>> np.allclose(res[0], np.sqrt(np.pi))  # compare against theoretical result
+    >>> mx.allclose(res[0], mx.sqrt(mx.pi))  # compare against theoretical result
     True
 
     Since the integrand is nearly zero except near the origin, we would expect
@@ -181,7 +181,7 @@ An example of using double integration to compute several values of
 
     >>> from scipy.integrate import quad, dblquad
     >>> def I(n):
-    ...     return dblquad(lambda t, x: np.exp(-x*t)/t**n, 0, np.inf, lambda x: 1, lambda x: np.inf)
+    ...     return dblquad(lambda t, x: mx.exp(-x*t)/t**n, 0, mx.inf, lambda x: 1, lambda x: mx.inf)
     ...
 
     >>> print(I(4))
@@ -225,9 +225,9 @@ can be calculated as
 >>> from scipy import integrate
 >>> N = 5
 >>> def f(t, x):
-...    return np.exp(-x*t) / t**N
+...    return mx.exp(-x*t) / t**N
 ...
->>> integrate.nquad(f, [[1, np.inf],[0, np.inf]])
+>>> integrate.nquad(f, [[1, mx.inf],[0, mx.inf]])
 (0.20000000000002294, 1.2239614263187945e-08)
 
 Note that the order of arguments for `f` must match the order of the
@@ -293,14 +293,14 @@ if the function is a polynomial of order 3 or less. If the samples are not
 equally spaced, then the result is exact only if the function is a polynomial
 of order 2 or less.
 
->>> import numpy as np
+>>> import mlx.core as mx
 >>> def f1(x):
 ...    return x**2
 ...
 >>> def f2(x):
 ...    return x**3
 ...
->>> x = np.array([1,3,4])
+>>> x = mx.array([1,3,4])
 >>> y1 = f1(x)
 >>> from scipy import integrate
 >>> I1 = integrate.simpson(y1, x=x)
@@ -509,8 +509,8 @@ offers two possibilities that can also be used complementarily. By passing the `
 option to the function call `solve_ivp` returns the solutions of these time points
 of `t_eval` in its output.
 
->>> import numpy as np
->>> t = np.linspace(0, 4, 100)
+>>> import mlx.core as mx
+>>> t = mx.linspace(0, 4, 100)
 >>> sol3 = solve_ivp(func, t_span, y0, t_eval=t)
 
 If the jacobian matrix of function is known, it can be passed to the `solve_ivp`
@@ -708,7 +708,7 @@ of the system of differential equations::
         v = y[1::2]
 
         # dydt is the return value of this function.
-        dydt = np.empty_like(y)
+        dydt = mx.empty_like(y)
 
         # Just like u and v are views of the interleaved vectors
         # in y, dudt and dvdt are views of the interleaved output
@@ -719,10 +719,10 @@ of the system of differential equations::
         # Compute du/dt and dv/dt.  The end points and the interior points
         # are handled separately.
         dudt[0]    = G(u[0],    v[0],    f, k) + Du * (-2.0*u[0] + 2.0*u[1]) / dx**2
-        dudt[1:-1] = G(u[1:-1], v[1:-1], f, k) + Du * np.diff(u,2) / dx**2
+        dudt[1:-1] = G(u[1:-1], v[1:-1], f, k) + Du * mx.diff(u,2) / dx**2
         dudt[-1]   = G(u[-1],   v[-1],   f, k) + Du * (- 2.0*u[-1] + 2.0*u[-2]) / dx**2
         dvdt[0]    = H(u[0],    v[0],    f, k) + Dv * (-2.0*v[0] + 2.0*v[1]) / dx**2
-        dvdt[1:-1] = H(u[1:-1], v[1:-1], f, k) + Dv * np.diff(v,2) / dx**2
+        dvdt[1:-1] = H(u[1:-1], v[1:-1], f, k) + Dv * mx.diff(v,2) / dx**2
         dvdt[-1]   = H(u[-1],   v[-1],   f, k) + Dv * (-2.0*v[-1] + 2.0*v[-2]) / dx**2
 
         return dydt
@@ -735,11 +735,11 @@ following ipython session.
 
 First, we define the required inputs::
 
-    In [30]: rng = np.random.default_rng()
+    In [30]: rng = mx.random.default_rng()
 
     In [31]: y0 = rng.standard_normal(5000)
 
-    In [32]: t = np.linspace(0, 50, 11)
+    In [32]: t = mx.linspace(0, 50, 11)
 
     In [33]: f = 0.024
 
@@ -767,7 +767,7 @@ That is quite a bit faster!
 
 Let's ensure that they have computed the same result::
 
-    In [41]: np.allclose(sola, solb)
+    In [41]: mx.allclose(sola, solb)
     Out[41]: True
 
 References

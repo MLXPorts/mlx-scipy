@@ -135,7 +135,7 @@ STUBS = """\
 
 from typing import Any, Dict
 
-import numpy as np
+import mlx.core as mx
 
 __all__ = [
     'geterr',
@@ -292,9 +292,9 @@ def generate_loop(func_inputs, func_outputs, func_retval,
 
     name = (f"loop_{func_retval}_{func_inputs}_{func_outputs}"
             f"_As_{ufunc_inputs}_{ufunc_outputs}")
-    body = (f"cdef void {name}(char **args, np.npy_intp *dims, np.npy_intp *steps, "
+    body = (f"cdef void {name}(char **args, mx.npy_intp *dims, mx.npy_intp *steps, "
             f"void *data) noexcept nogil:\n")
-    body += "    cdef np.npy_intp i, n = dims[0]\n"
+    body += "    cdef mx.npy_intp i, n = dims[0]\n"
     body += "    cdef void *func = (<void**>data)[0]\n"
     body += "    cdef char *func_name = <char*>(<void**>data)[1]\n"
 
@@ -591,7 +591,7 @@ class Ufunc(Func):
             funcs.append(func_name)
 
         toplevel += (
-        f"cdef np.PyUFuncGenericFunction ufunc_{self.name}_loops[{len(loops)}]\n"
+        f"cdef mx.PyUFuncGenericFunction ufunc_{self.name}_loops[{len(loops)}]\n"
         )
         toplevel += f"cdef void *ufunc_{self.name}_ptr[{2 * len(funcs)}]\n"
         toplevel += f"cdef void *ufunc_{self.name}_data[{len(funcs)}]\n"
@@ -604,7 +604,7 @@ class Ufunc(Func):
 
         for j, function in enumerate(loops):
             toplevel += (f"ufunc_{self.name}_loops[{j}] = "
-                        f"<np.PyUFuncGenericFunction>{function}\n")
+                        f"<mx.PyUFuncGenericFunction>{function}\n")
         for j, type in enumerate(types):
             toplevel += f"ufunc_{self.name}_types[{j}] = <char>{type}\n"
         for j, func in enumerate(funcs):
@@ -615,7 +615,7 @@ class Ufunc(Func):
         for j, func in enumerate(funcs):
             toplevel += f"ufunc_{self.name}_data[{j}] = &ufunc_{self.name}_ptr[2*{j}]\n"
 
-        toplevel += (f"@ = np.PyUFunc_FromFuncAndData(ufunc_@_loops, ufunc_@_data, "
+        toplevel += (f"@ = mx.PyUFunc_FromFuncAndData(ufunc_@_loops, ufunc_@_data, "
                     f"ufunc_@_types, {int(len(types)/(inarg_num + outarg_num))}, "
                     f"{inarg_num}, {outarg_num}, 0, '@', ufunc_@_doc, 0)"
                     f"\n").replace('@', self.name)

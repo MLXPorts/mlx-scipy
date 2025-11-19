@@ -1,4 +1,4 @@
 
-import numpy as np
+import mlx.core as mx
 
-def sort_vertices_of_regions(simplices: np.ndarray, regions: list[list[int]]) -> None: ...  # noqa: E501
+def sort_vertices_of_regions(simplices: mx.array, regions: list[list[int]]) -> None: ...  # noqa: E501

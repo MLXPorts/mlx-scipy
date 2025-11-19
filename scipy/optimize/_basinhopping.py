@@ -1,7 +1,7 @@
 """
 basinhopping: The basinhopping global optimization algorithm
 """
-import numpy as np
+import mlx.core as mx
 import math
 import inspect
 import scipy.optimize
@@ -24,7 +24,7 @@ class Storage:
 
     def _add(self, minres):
         self.minres = minres
-        self.minres.x = np.copy(minres.x)
+        self.minres.x = mx.copy(minres.x)
 
     def update(self, minres):
         if minres.success and (minres.fun < self.minres.fun
@@ -41,7 +41,7 @@ class Storage:
 class BasinHoppingRunner:
     """This class implements the core of the basinhopping algorithm.
 
-    x0 : ndarray
+    x0 : array
         The starting coordinates.
     minimizer : callable
         The local minimizer, with signature ``result = minimizer(x)``.
@@ -62,7 +62,7 @@ class BasinHoppingRunner:
 
     """
     def __init__(self, x0, minimizer, step_taking, accept_tests, disp=False):
-        self.x = np.copy(x0)
+        self.x = mx.copy(x0)
         self.minimizer = minimizer
         self.step_taking = step_taking
         self.accept_tests = accept_tests
@@ -80,7 +80,7 @@ class BasinHoppingRunner:
             self.res.minimization_failures += 1
             if self.disp:
                 print("warning: basinhopping: local minimization failure")
-        self.x = np.copy(minres.x)
+        self.x = mx.copy(minres.x)
         self.energy = minres.fun
         self.incumbent_minres = minres  # best minimize result found so far
         if self.disp:
@@ -104,7 +104,7 @@ class BasinHoppingRunner:
         """
         # Take a random step.  Make a copy of x because the step_taking
         # algorithm might change x in place
-        x_after_step = np.copy(self.x)
+        x_after_step = mx.copy(self.x)
         x_after_step = self.step_taking(x_after_step)
 
         # do a local minimization
@@ -163,7 +163,7 @@ class BasinHoppingRunner:
 
         if accept:
             self.energy = minres.fun
-            self.x = np.copy(minres.x)
+            self.x = mx.copy(minres.x)
             self.incumbent_minres = minres  # best minimize result found so far
             new_global_min = self.storage.update(minres)
 
@@ -278,7 +278,7 @@ class RandomDisplacement:
 
     def __call__(self, x):
         x += self.rng.uniform(-self.stepsize, self.stepsize,
-                              np.shape(x))
+                              mx.shape(x))
         return x
 
 
@@ -324,7 +324,7 @@ class Metropolis:
         If new is higher than old, there is a chance it will be accepted,
         less likely for larger differences.
         """
-        with np.errstate(invalid='ignore'):
+        with mx.errstate(invalid='ignore'):
             # The energy values being fed to Metropolis are 1-length arrays, and if
             # they are equal, their difference is 0, which gets multiplied by beta,
             # which is inf, and array([0]) * float('inf') causes
@@ -554,9 +554,9 @@ def basinhopping(func, x0, niter=100, T=1.0, stepsize=0.5,
     The following example is a 1-D minimization problem, with many
     local minima superimposed on a parabola.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import basinhopping
-    >>> func = lambda x: np.cos(14.5 * x - 0.3) + (x + 0.2) * x
+    >>> func = lambda x: mx.cos(14.5 * x - 0.3) + (x + 0.2) * x
     >>> x0 = [1.]
 
     Basinhopping, internally, uses a local minimization algorithm. We will use
@@ -575,10 +575,10 @@ def basinhopping(func, x0, niter=100, T=1.0, stepsize=0.5,
     will use gradient information to significantly speed up the search.
 
     >>> def func2d(x):
-    ...     f = np.cos(14.5 * x[0] - 0.3) + (x[1] + 0.2) * x[1] + (x[0] +
+    ...     f = mx.cos(14.5 * x[0] - 0.3) + (x[1] + 0.2) * x[1] + (x[0] +
     ...                                                            0.2) * x[0]
-    ...     df = np.zeros(2)
-    ...     df[0] = -14.5 * np.sin(14.5 * x[0] - 0.3) + 2. * x[0] + 0.2
+    ...     df = mx.zeros(2)
+    ...     df[0] = -14.5 * mx.sin(14.5 * x[0] - 0.3) + 2. * x[0] + 0.2
     ...     df[1] = 2. * x[1] + 0.2
     ...     return f, df
 
@@ -601,7 +601,7 @@ def basinhopping(func, x0, niter=100, T=1.0, stepsize=0.5,
     >>> class MyTakeStep:
     ...    def __init__(self, stepsize=0.5):
     ...        self.stepsize = stepsize
-    ...        self.rng = np.random.default_rng()
+    ...        self.rng = mx.random.default_rng()
     ...    def __call__(self, x):
     ...        s = self.stepsize
     ...        x[0] += self.rng.uniform(-2.*s, 2.*s)
@@ -628,7 +628,7 @@ def basinhopping(func, x0, niter=100, T=1.0, stepsize=0.5,
 
     We'll run it for only 10 basinhopping steps this time.
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> ret = basinhopping(func2d, x0, minimizer_kwargs=minimizer_kwargs,
     ...                    niter=10, callback=print_fun, rng=rng)
     at minimum 0.4159 accepted 1
@@ -652,9 +652,9 @@ def basinhopping(func, x0, niter=100, T=1.0, stepsize=0.5,
     if stepwise_factor <= 0. or stepwise_factor >= 1.:
         raise ValueError('stepwise_factor has to be in range (0, 1)')
 
-    x0 = np.array(x0)
+    x0 = mx.array(x0)
 
-    # set up the np.random generator
+    # set up the mx.random generator
     rng = check_random_state(rng)
 
     # set up minimizer
@@ -733,7 +733,7 @@ def basinhopping(func, x0, niter=100, T=1.0, stepsize=0.5,
     # prepare return object
     res = bh.res
     res.lowest_optimization_result = bh.storage.get_lowest()
-    res.x = np.copy(res.lowest_optimization_result.x)
+    res.x = mx.copy(res.lowest_optimization_result.x)
     res.fun = res.lowest_optimization_result.fun
     res.message = message
     res.nit = i + 1

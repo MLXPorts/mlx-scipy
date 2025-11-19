@@ -4,7 +4,7 @@
 import sys
 from typing import Any, Literal, Union
 import operator
-import numpy as np
+import mlx.core as mx
 from math import prod
 import scipy.sparse as sp
 from scipy._lib._util import np_long, np_ulong
@@ -14,10 +14,10 @@ __all__ = ['upcast', 'getdtype', 'getdata', 'isscalarlike', 'isintlike',
            'isshape', 'issequence', 'isdense', 'ismatrix', 'get_sum_dtype',
            'broadcast_shapes']
 
-supported_dtypes = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc,
-                    np.uintc, np_long, np_ulong, np.longlong, np.ulonglong,
-                    np.float32, np.float64, np.longdouble,
-                    np.complex64, np.complex128, np.clongdouble]
+supported_dtypes = [mx.bool_, mx.byte, mx.ubyte, mx.short, mx.ushort, mx.intc,
+                    mx.uintc, np_long, np_ulong, mx.longlong, mx.ulonglong,
+                    mx.float32, mx.float64, mx.longdouble,
+                    mx.complex64, mx.complex128, mx.clongdouble]
 
 _upcast_memo = {}
 
@@ -46,10 +46,10 @@ def upcast(*args):
     if t is not None:
         return t
 
-    upcast = np.result_type(*args)
+    upcast = mx.result_type(*args)
 
     for t in supported_dtypes:
-        if np.can_cast(upcast, t):
+        if mx.can_cast(upcast, t):
             _upcast_memo[hash(args)] = t
             return t
 
@@ -61,7 +61,7 @@ def upcast_char(*args):
     t = _upcast_memo.get(args)
     if t is not None:
         return t
-    t = upcast(*map(np.dtype, args))
+    t = upcast(*map(mx.dtype, args))
     _upcast_memo[args] = t
     return t
 
@@ -70,26 +70,26 @@ def upcast_scalar(dtype, scalar):
     """Determine data type for binary operation between an array of
     type `dtype` and a scalar.
     """
-    return (np.array([0], dtype=dtype) * scalar).dtype
+    return (mx.array([0], dtype=dtype) * scalar).dtype
 
 
 def downcast_intp_index(arr):
     """
-    Down-cast index array to np.intp dtype if it is of a larger dtype.
+    Down-cast index array to mx.intp dtype if it is of a larger dtype.
 
     Raise an error if the array contains a value that is too large for
     intp.
     """
-    if arr.dtype.itemsize > np.dtype(np.intp).itemsize:
+    if arr.dtype.itemsize > mx.dtype(mx.intp).itemsize:
         if arr.size == 0:
-            return arr.astype(np.intp)
+            return arr.astype(mx.intp)
         maxval = arr.max()
         minval = arr.min()
-        if maxval > np.iinfo(np.intp).max or minval < np.iinfo(np.intp).min:
+        if maxval > mx.iinfo(mx.intp).max or minval < mx.iinfo(mx.intp).min:
             raise ValueError("Cannot deal with arrays with indices larger "
                              "than the machine maximum address size "
                              "(e.g. 64-bit indices on 32-bit machine).")
-        return arr.astype(np.intp)
+        return arr.astype(mx.intp)
     return arr
 
 
@@ -106,7 +106,7 @@ def to_native(A):
         # Don't call `asarray()` if A is already native, to avoid unnecessarily
         # creating a view of the input array.
         return A
-    return np.asarray(A, dtype=dt.newbyteorder('native'))
+    return mx.array(A, dtype=dt.newbyteorder('native'))
 
 
 def getdtype(dtype, a=None, default=None):
@@ -126,11 +126,11 @@ def getdtype(dtype, a=None, default=None):
             newdtype = a.dtype
         except AttributeError as e:
             if default is not None:
-                newdtype = np.dtype(default)
+                newdtype = mx.dtype(default)
             else:
                 raise TypeError("could not interpret data type") from e
     else:
-        newdtype = np.dtype(dtype)
+        newdtype = mx.dtype(dtype)
 
     if newdtype not in supported_dtypes:
         supported_dtypes_fmt = ", ".join(t.__name__ for t in supported_dtypes)
@@ -139,19 +139,19 @@ def getdtype(dtype, a=None, default=None):
     return newdtype
 
 
-def getdata(obj, dtype=None, copy=False) -> np.ndarray:
+def getdata(obj, dtype=None, copy=False) -> mx.array:
     """
-    This is a wrapper of `np.array(obj, dtype=dtype, copy=copy)`
+    This is a wrapper of `mx.array(obj, dtype=dtype, copy=copy)`
     that will generate a warning if the result is an object array.
     """
-    data = np.array(obj, dtype=dtype, copy=copy)
+    data = mx.array(obj, dtype=dtype, copy=copy)
     # Defer to getdtype for checking that the dtype is OK.
     # This is called for the validation only; we don't need the return value.
     getdtype(data.dtype)
     return data
 
 
-def safely_cast_index_arrays(A, idx_dtype=np.int32, msg=""):
+def safely_cast_index_arrays(A, idx_dtype=mx.int32, msg=""):
     """Safely cast sparse array indices to `idx_dtype`.
 
     Check the shape of `A` to determine if it is safe to cast its index
@@ -171,7 +171,7 @@ def safely_cast_index_arrays(A, idx_dtype=np.int32, msg=""):
     A : sparse array or matrix
         The array for which index arrays should be downcast.
     idx_dtype : dtype
-        Desired dtype. Should be an integer dtype (default: ``np.int32``).
+        Desired dtype. Should be an integer dtype (default: ``mx.int32``).
         Most of scipy.sparse uses either int64 or int32.
     msg : string, optional
         A string to be added to the end of the ValueError message
@@ -182,7 +182,7 @@ def safely_cast_index_arrays(A, idx_dtype=np.int32, msg=""):
 
     Returns
     -------
-    idx_arrays : ndarray or tuple of ndarrays
+    idx_arrays : array or tuple of arrays
         Based on ``A.format``, index arrays are returned after casting to `idx_dtype`.
         For CSC/CSR, returns ``(indices, indptr)``.
         For COO, returns ``coords``.
@@ -197,16 +197,16 @@ def safely_cast_index_arrays(A, idx_dtype=np.int32, msg=""):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import sparse
     >>> data = [3]
-    >>> coords = (np.array([3]), np.array([1]))  # Note: int64 arrays
+    >>> coords = (mx.array([3]), mx.array([1]))  # Note: int64 arrays
     >>> A = sparse.coo_array((data, coords))
     >>> A.coords[0].dtype
     dtype('int64')
 
     >>> # rescast after construction, raising exception if shape too big
-    >>> coords = sparse.safely_cast_index_arrays(A, np.int32)
+    >>> coords = sparse.safely_cast_index_arrays(A, mx.int32)
     >>> A.coords[0] is coords[0]  # False if casting is needed
     False
     >>> A.coords = coords  # set the index dtype of A
@@ -216,7 +216,7 @@ def safely_cast_index_arrays(A, idx_dtype=np.int32, msg=""):
     if not msg:
         msg = f"dtype {idx_dtype}"
     # check for safe downcasting
-    max_value = np.iinfo(idx_dtype).max
+    max_value = mx.iinfo(idx_dtype).max
 
     if A.format in ("csc", "csr"):
         # indptr[-1] is max b/c indptr always sorted
@@ -283,14 +283,14 @@ def get_index_dtype(arrays=(), maxval=None, check_contents=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import sparse
     >>> # select index dtype based on shape
     >>> shape = (3, 3)
     >>> idx_dtype = sparse.get_index_dtype(maxval=max(shape))
     >>> data = [1.1, 3.0, 1.5]
-    >>> indices = np.array([0, 1, 0], dtype=idx_dtype)
-    >>> indptr = np.array([0, 2, 3, 3], dtype=idx_dtype)
+    >>> indices = mx.array([0, 1, 0], dtype=idx_dtype)
+    >>> indptr = mx.array([0, 2, 3, 3], dtype=idx_dtype)
     >>> A = sparse.csr_array((data, indices, indptr), shape=shape)
     >>> A.indptr.dtype
     dtype('int32')
@@ -302,49 +302,49 @@ def get_index_dtype(arrays=(), maxval=None, check_contents=False):
     <class 'numpy.int32'>
     """
     # not using intc directly due to misinteractions with pythran
-    if np.intc().itemsize != 4:
-        return np.int64
+    if mx.intc().itemsize != 4:
+        return mx.int64
 
-    int32min = np.int32(np.iinfo(np.int32).min)
-    int32max = np.int32(np.iinfo(np.int32).max)
+    int32min = mx.int32(mx.iinfo(mx.int32).min)
+    int32max = mx.int32(mx.iinfo(mx.int32).max)
 
     if maxval is not None:
-        maxval = np.int64(maxval)
+        maxval = mx.int64(maxval)
         if maxval > int32max:
-            return np.int64
+            return mx.int64
 
-    if isinstance(arrays, np.ndarray):
+    if isinstance(arrays, mx.array):
         arrays = (arrays,)
 
     for arr in arrays:
-        arr = np.asarray(arr)
-        if not np.can_cast(arr.dtype, np.int32):
+        arr = mx.array(arr)
+        if not mx.can_cast(arr.dtype, mx.int32):
             if check_contents:
                 if arr.size == 0:
                     # a bigger type not needed
                     continue
-                elif np.issubdtype(arr.dtype, np.integer):
+                elif mx.issubdtype(arr.dtype, mx.integer):
                     maxval = arr.max()
                     minval = arr.min()
                     if minval >= int32min and maxval <= int32max:
                         # a bigger type not needed
                         continue
-            return np.int64
-    return np.int32
+            return mx.int64
+    return mx.int32
 
 
-def get_sum_dtype(dtype: np.dtype) -> np.dtype:
-    """Mimic numpy's casting for np.sum"""
-    if dtype.kind == 'u' and np.can_cast(dtype, np.uint):
-        return np.uint
-    if np.can_cast(dtype, np.int_):
-        return np.int_
+def get_sum_dtype(dtype: mx.dtype) -> mx.dtype:
+    """Mimic numpy's casting for mx.sum"""
+    if dtype.kind == 'u' and mx.can_cast(dtype, mx.uint):
+        return mx.uint
+    if mx.can_cast(dtype, mx.int_):
+        return mx.int_
     return dtype
 
 
 def isscalarlike(x) -> bool:
     """Is x either a scalar, an array scalar, or a 0-dim array?"""
-    return np.isscalar(x) or (isdense(x) and x.ndim == 0)
+    return mx.isscalar(x) or (isdense(x) and x.ndim == 0)
 
 
 def isintlike(x) -> bool:
@@ -353,7 +353,7 @@ def isintlike(x) -> bool:
     """
     # Fast-path check to eliminate non-scalar values. operator.index would
     # catch this case too, but the exception catching is slow.
-    if np.ndim(x) != 0:
+    if mx.ndim(x) != 0:
         return False
     try:
         operator.index(x)
@@ -389,18 +389,18 @@ def isshape(x, nonneg=False, *, allow_nd=(2,)) -> bool:
 
 def issequence(t) -> bool:
     return ((isinstance(t, list | tuple) and
-            (len(t) == 0 or np.isscalar(t[0]))) or
-            (isinstance(t, np.ndarray) and (t.ndim == 1)))
+            (len(t) == 0 or mx.isscalar(t[0]))) or
+            (isinstance(t, mx.array) and (t.ndim == 1)))
 
 
 def ismatrix(t) -> bool:
     return ((isinstance(t, list | tuple) and
              len(t) > 0 and issequence(t[0])) or
-            (isinstance(t, np.ndarray) and t.ndim == 2))
+            (isinstance(t, mx.array) and t.ndim == 2))
 
 
 def isdense(x) -> bool:
-    return isinstance(x, np.ndarray)
+    return isinstance(x, mx.array)
 
 
 def validateaxis(axis, *, ndim=2) -> tuple[int, ...] | None:
@@ -416,7 +416,7 @@ def validateaxis(axis, *, ndim=2) -> tuple[int, ...] | None:
     if not isinstance(axis, tuple):
         # If not a tuple, check that the provided axis is actually
         # an integer and raise a TypeError similar to NumPy's
-        if not np.issubdtype(np.dtype(type(axis)), np.integer):
+        if not mx.issubdtype(mx.dtype(type(axis)), mx.integer):
             raise TypeError(f'axis must be an integer/tuple of ints, not {type(axis)}')
         axis = (axis,)
 
@@ -593,18 +593,18 @@ def convert_pydata_sparse_to_scipy(
 # ones below do not.
 
 def matrix(*args, **kwargs):
-    return np.array(*args, **kwargs).view(np.matrix)
+    return mx.array(*args, **kwargs).view(mx.matrix)
 
 
 def asmatrix(data, dtype=None):
-    if isinstance(data, np.matrix) and (dtype is None or data.dtype == dtype):
+    if isinstance(data, mx.matrix) and (dtype is None or data.dtype == dtype):
         return data
-    return np.asarray(data, dtype=dtype).view(np.matrix)
+    return mx.array(data, dtype=dtype).view(mx.matrix)
 
 ###############################################################################
 
 
-def _todata(s) -> np.ndarray:
+def _todata(s) -> mx.array:
     """Access nonzero values, possibly after summing duplicates.
 
     Parameters
@@ -614,7 +614,7 @@ def _todata(s) -> np.ndarray:
 
     Returns
     -------
-    data: ndarray
+    data: array
       Nonzero values of the array, with shape (s.nnz,)
 
     """
@@ -622,10 +622,10 @@ def _todata(s) -> np.ndarray:
         return s._deduped_data()
 
     if isinstance(s, sp.dok_array):
-        return np.fromiter(s.values(), dtype=s.dtype, count=s.nnz)
+        return mx.fromiter(s.values(), dtype=s.dtype, count=s.nnz)
 
     if isinstance(s, sp.lil_array):
-        data = np.empty(s.nnz, dtype=s.dtype)
+        data = mx.empty(s.nnz, dtype=s.dtype)
         sp._csparsetools.lil_flatten_to_array(s.data, data)
         return data
 

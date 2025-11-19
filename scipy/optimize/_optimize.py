@@ -30,7 +30,7 @@ import warnings
 import sys
 import inspect
 from numpy import eye, argmin, zeros, shape, asarray, sqrt
-import numpy as np
+import mlx.core as mx
 from scipy.linalg import cholesky, issymmetric, LinAlgError
 from scipy.sparse.linalg import LinearOperator
 from ._linesearch import (line_search_wolfe1, line_search_wolfe2,
@@ -69,8 +69,8 @@ class MemoizeJac:
         self.x = None
 
     def _compute_if_needed(self, x, *args):
-        if not np.all(x == self.x) or self._value is None or self.jac is None:
-            self.x = np.asarray(x).copy()
+        if not mx.all(x == self.x) or self._value is None or self.jac is None:
+            self.x = mx.array(x).copy()
             fg = self.fun(x, *args)
             self.jac = fg[1]
             self._value = fg[0]
@@ -97,13 +97,13 @@ def _wrap_callback(callback, method=None):
             return callback(intermediate_result=res)
     elif method == 'trust-constr':
         def wrapped_callback(res):
-            return callback(np.copy(res.x), res)
+            return callback(mx.copy(res.x), res)
     elif method == 'differential_evolution':
         def wrapped_callback(res):
-            return callback(np.copy(res.x), res.convergence)
+            return callback(mx.copy(res.x), res.convergence)
     else:
         def wrapped_callback(res):
-            return callback(np.copy(res.x))
+            return callback(mx.copy(res.x))
 
     wrapped_callback.stop_iteration = False
     return wrapped_callback
@@ -115,7 +115,7 @@ class OptimizeResult(_RichResult):
 
     Attributes
     ----------
-    x : ndarray
+    x : array
         The solution of the optimization.
     success : bool
         Whether or not the optimizer exited successfully.
@@ -126,14 +126,14 @@ class OptimizeResult(_RichResult):
         Description of the cause of the termination.
     fun : float
         Value of objective function at `x`.
-    jac, hess : ndarray
+    jac, hess : array
         Values of objective function's Jacobian and its Hessian at `x` (if
         available). The Hessian may be an approximation, see the documentation
         of the function in question.
     hess_inv : object
         Inverse of the objective function's Hessian; may be an approximation.
         Not available for all solvers. The type of this attribute may be
-        either np.ndarray or scipy.sparse.linalg.LinearOperator.
+        either mx.array or scipy.sparse.linalg.LinearOperator.
     nfev, njev, nhev : int
         Number of evaluations of the objective functions and of its
         Jacobian and Hessian.
@@ -186,19 +186,19 @@ def is_finite_scalar(x):
     """Test whether `x` is either a finite scalar or a finite array scalar.
 
     """
-    return np.size(x) == 1 and np.isfinite(x)
+    return mx.size(x) == 1 and mx.isfinite(x)
 
 
-_epsilon = sqrt(np.finfo(float).eps)
+_epsilon = sqrt(mx.finfo(float).eps)
 
 
 def vecnorm(x, ord=2):
-    if ord == np.inf:
-        return np.amax(np.abs(x))
-    elif ord == -np.inf:
-        return np.amin(np.abs(x))
+    if ord == mx.inf:
+        return mx.amax(mx.abs(x))
+    elif ord == -mx.inf:
+        return mx.amin(mx.abs(x))
     else:
-        return np.sum(np.abs(x)**ord, axis=0)**(1.0 / ord)
+        return mx.sum(mx.abs(x)**ord, axis=0)**(1.0 / ord)
 
 
 def _prepare_scalar_function(fun, x0, jac=None, args=(), bounds=None,
@@ -218,7 +218,7 @@ def _prepare_scalar_function(fun, x0, jac=None, args=(), bounds=None,
         where ``x`` is an 1-D array with shape (n,) and ``args``
         is a tuple of the fixed parameters needed to completely
         specify the function.
-    x0 : ndarray, shape (n,)
+    x0 : array, shape (n,)
         Initial guess. Array of real elements of size (n,),
         where 'n' is the number of independent variables.
     jac : {callable,  '2-point', '3-point', 'cs', None}, optional
@@ -235,7 +235,7 @@ def _prepare_scalar_function(fun, x0, jac=None, args=(), bounds=None,
         derivatives (`fun`, `jac` functions).
     bounds : sequence, optional
         Bounds on variables. 'new-style' bounds are required.
-    eps : float or ndarray
+    eps : float or array
         If ``jac is None`` the absolute step size used for numerical
         approximation of the jacobian via forward differences.
     finite_diff_rel_step : None or array_like, optional
@@ -300,7 +300,7 @@ def _prepare_scalar_function(fun, x0, jac=None, args=(), bounds=None,
             return None
 
     if bounds is None:
-        bounds = (-np.inf, np.inf)
+        bounds = (-mx.inf, mx.inf)
 
     # normalize workers
     workers = workers or map
@@ -332,7 +332,7 @@ def _check_clip_x(x, bounds):
         warnings.warn("Values in x were outside bounds during a "
                       "minimize step, clipping to bounds",
                       RuntimeWarning, stacklevel=3)
-        x = np.clip(x, bounds[0], bounds[1])
+        x = mx.clip(x, bounds[0], bounds[1])
         return x
 
     return x
@@ -363,9 +363,9 @@ def rosen(x):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import rosen
-    >>> X = 0.1 * np.arange(10)
+    >>> X = 0.1 * mx.arange(10)
     >>> rosen(X)
     76.56
 
@@ -375,8 +375,8 @@ def rosen(x):
 
     >>> import matplotlib.pyplot as plt
     >>> from mpl_toolkits.mplot3d import Axes3D
-    >>> x = np.linspace(-1, 1, 50)
-    >>> X, Y = np.meshgrid(x, x)
+    >>> x = mx.linspace(-1, 1, 50)
+    >>> X, Y = mx.meshgrid(x, x)
     >>> ax = plt.subplot(111, projection='3d')
     >>> ax.plot_surface(X, Y, rosen([X, Y]))
     >>> plt.show()
@@ -400,7 +400,7 @@ def rosen_der(x):
 
     Returns
     -------
-    rosen_der : (N,) ndarray
+    rosen_der : (N,) array
         The gradient of the Rosenbrock function at `x`.
 
     See Also
@@ -409,9 +409,9 @@ def rosen_der(x):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import rosen_der
-    >>> X = 0.1 * np.arange(9)
+    >>> X = 0.1 * mx.arange(9)
     >>> rosen_der(X)
     array([ -2. ,  10.6,  15.6,  13.4,   6.4,  -3. , -12.4, -19.4,  62. ])
 
@@ -441,7 +441,7 @@ def rosen_hess(x):
 
     Returns
     -------
-    rosen_hess : ndarray
+    rosen_hess : array
         The Hessian matrix of the Rosenbrock function at `x`.
 
     See Also
@@ -450,9 +450,9 @@ def rosen_hess(x):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import rosen_hess
-    >>> X = 0.1 * np.arange(4)
+    >>> X = 0.1 * mx.arange(4)
     >>> rosen_hess(X)
     array([[-38.,   0.,   0.,   0.],
            [  0., 134., -40.,   0.],
@@ -486,7 +486,7 @@ def rosen_hess_prod(x, p):
 
     Returns
     -------
-    rosen_hess_prod : ndarray
+    rosen_hess_prod : array
         The Hessian matrix of the Rosenbrock function at `x` multiplied
         by the vector `p`.
 
@@ -496,10 +496,10 @@ def rosen_hess_prod(x, p):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import rosen_hess_prod
-    >>> X = 0.1 * np.arange(9)
-    >>> p = 0.5 * np.arange(9)
+    >>> X = 0.1 * mx.arange(9)
+    >>> p = 0.5 * mx.arange(9)
     >>> rosen_hess_prod(X, p)
     array([  -0.,   27.,  -10.,  -95., -192., -265., -278., -195., -180.])
 
@@ -527,12 +527,12 @@ def _wrap_scalar_function(function, args):
     def function_wrapper(x, *wrapper_args):
         ncalls[0] += 1
         # A copy of x is sent to the user function (gh13740)
-        fx = function(np.copy(x), *(wrapper_args + args))
+        fx = function(mx.copy(x), *(wrapper_args + args))
         # Ideally, we'd like to a have a true scalar returned from f(x). For
-        # backwards-compatibility, also allow np.array([1.3]), np.array([[1.3]]) etc.
-        if not np.isscalar(fx):
+        # backwards-compatibility, also allow mx.array([1.3]), mx.array([[1.3]]) etc.
+        if not mx.isscalar(fx):
             try:
-                fx = np.asarray(fx).item()
+                fx = mx.array(fx).item()
             except (TypeError, ValueError) as e:
                 raise ValueError("The user-provided objective function "
                                  "must return a scalar value.") from e
@@ -557,13 +557,13 @@ def _wrap_scalar_function_maxfun_validation(function, args, maxfun):
             raise _MaxFuncCallError("Too many function calls")
         ncalls[0] += 1
         # A copy of x is sent to the user function (gh13740)
-        fx = function(np.copy(x), *(wrapper_args + args))
+        fx = function(mx.copy(x), *(wrapper_args + args))
         # Ideally, we'd like to a have a true scalar returned from f(x). For
-        # backwards-compatibility, also allow np.array([1.3]),
-        # np.array([[1.3]]) etc.
-        if not np.isscalar(fx):
+        # backwards-compatibility, also allow mx.array([1.3]),
+        # mx.array([[1.3]]) etc.
+        if not mx.isscalar(fx):
             try:
-                fx = np.asarray(fx).item()
+                fx = mx.array(fx).item()
             except (TypeError, ValueError) as e:
                 raise ValueError("The user-provided objective function "
                                  "must return a scalar value.") from e
@@ -584,7 +584,7 @@ def fmin(func, x0, args=(), xtol=1e-4, ftol=1e-4, maxiter=None, maxfun=None,
     ----------
     func : callable func(x,*args)
         The objective function to be minimized.
-    x0 : ndarray
+    x0 : array
         Initial guess.
     args : tuple, optional
         Extra arguments passed to func, i.e., ``f(x,*args)``.
@@ -615,7 +615,7 @@ def fmin(func, x0, args=(), xtol=1e-4, ftol=1e-4, maxiter=None, maxfun=None,
 
     Returns
     -------
-    xopt : ndarray
+    xopt : array
         Parameter that minimizes function.
     fopt : float
         Value of function at minimum: ``fopt = func(xopt)``.
@@ -755,9 +755,9 @@ def _minimize_neldermead(func, x0, args=(), callback=None,
     maxfun = maxfev
     retall = return_all
 
-    x0 = np.atleast_1d(x0).flatten()
-    dtype = x0.dtype if np.issubdtype(x0.dtype, np.inexact) else np.float64
-    x0 = np.asarray(x0, dtype=dtype)
+    x0 = mx.atleast_1d(x0).flatten()
+    dtype = x0.dtype if mx.issubdtype(x0.dtype, mx.inexact) else mx.float64
+    x0 = mx.array(x0, dtype=dtype)
 
     if adaptive:
         dim = float(len(x0))
@@ -780,29 +780,29 @@ def _minimize_neldermead(func, x0, args=(), callback=None,
         if (lower_bound > upper_bound).any():
             raise ValueError("Nelder Mead - one of the lower bounds "
                              "is greater than an upper bound.")
-        if np.any(lower_bound > x0) or np.any(x0 > upper_bound):
+        if mx.any(lower_bound > x0) or mx.any(x0 > upper_bound):
             warnings.warn("Initial guess is not within the specified bounds",
                           OptimizeWarning, stacklevel=3)
 
     if bounds is not None:
-        x0 = np.clip(x0, lower_bound, upper_bound)
+        x0 = mx.clip(x0, lower_bound, upper_bound)
 
     if initial_simplex is None:
         N = len(x0)
 
-        sim = np.empty((N + 1, N), dtype=x0.dtype)
+        sim = mx.empty((N + 1, N), dtype=x0.dtype)
         sim[0] = x0
         for k in range(N):
-            y = np.array(x0, copy=True)
+            y = mx.array(x0, copy=True)
             if y[k] != 0:
                 y[k] = (1 + nonzdelt)*y[k]
             else:
                 y[k] = zdelt
             sim[k + 1] = y
     else:
-        sim = np.atleast_2d(initial_simplex).copy()
-        dtype = sim.dtype if np.issubdtype(sim.dtype, np.inexact) else np.float64
-        sim = np.asarray(sim, dtype=dtype)
+        sim = mx.atleast_2d(initial_simplex).copy()
+        dtype = sim.dtype if mx.issubdtype(sim.dtype, mx.inexact) else mx.float64
+        sim = mx.array(sim, dtype=dtype)
         if sim.ndim != 2 or sim.shape[0] != sim.shape[1] + 1:
             raise ValueError("`initial_simplex` should be an array of shape (N+1,N)")
         if len(x0) != sim.shape[1]:
@@ -817,17 +817,17 @@ def _minimize_neldermead(func, x0, args=(), callback=None,
         maxiter = N * 200
         maxfun = N * 200
     elif maxiter is None:
-        # Convert remaining Nones, to np.inf, unless the other is np.inf, in
+        # Convert remaining Nones, to mx.inf, unless the other is mx.inf, in
         # which case use the default to avoid unbounded iteration
-        if maxfun == np.inf:
+        if maxfun == mx.inf:
             maxiter = N * 200
         else:
-            maxiter = np.inf
+            maxiter = mx.inf
     elif maxfun is None:
-        if maxiter == np.inf:
+        if maxiter == mx.inf:
             maxfun = N * 200
         else:
-            maxfun = np.inf
+            maxfun = mx.inf
 
     if bounds is not None:
         # The default simplex construction may make all entries (for a given
@@ -837,12 +837,12 @@ def _minimize_neldermead(func, x0, args=(), callback=None,
         # interior.
         msk = sim > upper_bound
         # reflect into the interior
-        sim = np.where(msk, 2*upper_bound - sim, sim)
+        sim = mx.where(msk, 2*upper_bound - sim, sim)
         # but make sure the reflection is no less than the lower_bound
-        sim = np.clip(sim, lower_bound, upper_bound)
+        sim = mx.clip(sim, lower_bound, upper_bound)
 
     one2np1 = list(range(1, N + 1))
-    fsim = np.full((N + 1,), np.inf, dtype=float)
+    fsim = mx.full((N + 1,), mx.inf, dtype=float)
 
     fcalls, func = _wrap_scalar_function_maxfun_validation(func, args, maxfun)
 
@@ -852,34 +852,34 @@ def _minimize_neldermead(func, x0, args=(), callback=None,
     except _MaxFuncCallError:
         pass
     finally:
-        ind = np.argsort(fsim)
-        sim = np.take(sim, ind, 0)
-        fsim = np.take(fsim, ind, 0)
+        ind = mx.argsort(fsim)
+        sim = mx.take(sim, ind, 0)
+        fsim = mx.take(fsim, ind, 0)
 
-    ind = np.argsort(fsim)
-    fsim = np.take(fsim, ind, 0)
+    ind = mx.argsort(fsim)
+    fsim = mx.take(fsim, ind, 0)
     # sort so sim[0,:] has the lowest function value
-    sim = np.take(sim, ind, 0)
+    sim = mx.take(sim, ind, 0)
 
     iterations = 1
 
     while (fcalls[0] < maxfun and iterations < maxiter):
         try:
-            if (np.max(np.ravel(np.abs(sim[1:] - sim[0]))) <= xatol and
-                    np.max(np.abs(fsim[0] - fsim[1:])) <= fatol):
+            if (mx.max(mx.ravel(mx.abs(sim[1:] - sim[0]))) <= xatol and
+                    mx.max(mx.abs(fsim[0] - fsim[1:])) <= fatol):
                 break
 
-            xbar = np.add.reduce(sim[:-1], 0) / N
+            xbar = mx.add.reduce(sim[:-1], 0) / N
             xr = (1 + rho) * xbar - rho * sim[-1]
             if bounds is not None:
-                xr = np.clip(xr, lower_bound, upper_bound)
+                xr = mx.clip(xr, lower_bound, upper_bound)
             fxr = func(xr)
             doshrink = 0
 
             if fxr < fsim[0]:
                 xe = (1 + rho * chi) * xbar - rho * chi * sim[-1]
                 if bounds is not None:
-                    xe = np.clip(xe, lower_bound, upper_bound)
+                    xe = mx.clip(xe, lower_bound, upper_bound)
                 fxe = func(xe)
 
                 if fxe < fxr:
@@ -897,7 +897,7 @@ def _minimize_neldermead(func, x0, args=(), callback=None,
                     if fxr < fsim[-1]:
                         xc = (1 + psi * rho) * xbar - psi * rho * sim[-1]
                         if bounds is not None:
-                            xc = np.clip(xc, lower_bound, upper_bound)
+                            xc = mx.clip(xc, lower_bound, upper_bound)
                         fxc = func(xc)
 
                         if fxc <= fxr:
@@ -909,7 +909,7 @@ def _minimize_neldermead(func, x0, args=(), callback=None,
                         # Perform an inside contraction
                         xcc = (1 - psi) * xbar + psi * sim[-1]
                         if bounds is not None:
-                            xcc = np.clip(xcc, lower_bound, upper_bound)
+                            xcc = mx.clip(xcc, lower_bound, upper_bound)
                         fxcc = func(xcc)
 
                         if fxcc < fsim[-1]:
@@ -922,15 +922,15 @@ def _minimize_neldermead(func, x0, args=(), callback=None,
                         for j in one2np1:
                             sim[j] = sim[0] + sigma * (sim[j] - sim[0])
                             if bounds is not None:
-                                sim[j] = np.clip(
+                                sim[j] = mx.clip(
                                     sim[j], lower_bound, upper_bound)
                             fsim[j] = func(sim[j])
             iterations += 1
         except _MaxFuncCallError:
             pass
-        ind = np.argsort(fsim)
-        sim = np.take(sim, ind, 0)
-        fsim = np.take(fsim, ind, 0)
+        ind = mx.argsort(fsim)
+        sim = mx.take(sim, ind, 0)
+        fsim = mx.take(fsim, ind, 0)
         if retall:
             allvecs.append(sim[0])
         intermediate_result = OptimizeResult(x=sim[0], fun=fsim[0])
@@ -938,7 +938,7 @@ def _minimize_neldermead(func, x0, args=(), callback=None,
             break
 
     x = sim[0]
-    fval = np.min(fsim)
+    fval = mx.min(fsim)
     warnflag = 0
 
     if fcalls[0] >= maxfun:
@@ -985,7 +985,7 @@ def approx_fprime(xk, f, epsilon=_epsilon, *args):
         ``f(xk, *args)`` where `xk` is the argument in the form of a 1-D array
         and `args` is a tuple of any additional fixed parameters needed to
         completely specify the function. The argument `xk` passed to this
-        function is an ndarray of shape (n,) (never a scalar even if n=1).
+        function is an array of shape (n,) (never a scalar even if n=1).
         It must return a 1-D array_like of shape (m,) or a scalar.
 
         Suppose the callable has signature ``f0(x, *my_args, **my_kwargs)``, where
@@ -1003,14 +1003,14 @@ def approx_fprime(xk, f, epsilon=_epsilon, *args):
         Increment to `xk` to use for determining the function gradient.
         If a scalar, uses the same finite difference delta for all partial
         derivatives. If an array, should contain one value per element of
-        `xk`. Defaults to ``sqrt(np.finfo(float).eps)``, which is approximately
+        `xk`. Defaults to ``sqrt(mx.finfo(float).eps)``, which is approximately
         1.49e-08.
     \\*args : args, optional
         Any other arguments that are to be passed to `f`.
 
     Returns
     -------
-    jac : ndarray
+    jac : array
         The partial derivatives of `f` to `xk`.
 
     See Also
@@ -1028,20 +1028,20 @@ def approx_fprime(xk, f, epsilon=_epsilon, *args):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import optimize
     >>> def func(x, c0, c1):
     ...     "Coordinate vector `x` should be an array of size two."
     ...     return c0 * x[0]**2 + c1*x[1]**2
 
-    >>> x = np.ones(2)
+    >>> x = mx.ones(2)
     >>> c0, c1 = (1, 200)
-    >>> eps = np.sqrt(np.finfo(float).eps)
-    >>> optimize.approx_fprime(x, func, [eps, np.sqrt(200) * eps], c0, c1)
+    >>> eps = mx.sqrt(mx.finfo(float).eps)
+    >>> optimize.approx_fprime(x, func, [eps, mx.sqrt(200) * eps], c0, c1)
     array([   2.        ,  400.00004208])
 
     """
-    xk = np.asarray(xk, float)
+    xk = mx.array(xk, float)
     f0 = f(xk, *args)
 
     return approx_derivative(f, xk, method='2-point', abs_step=epsilon,
@@ -1060,14 +1060,14 @@ def check_grad(func, grad, x0, *args, epsilon=_epsilon,
         Function whose derivative is to be checked.
     grad : callable ``grad(x0, *args)``
         Jacobian of `func`.
-    x0 : ndarray
+    x0 : array
         Points to check `grad` against forward difference approximation of grad
         using `func`.
     args : \\*args, optional
         Extra arguments passed to `func` and `grad`.
     epsilon : float, optional
         Step size used for the finite difference approximation. It defaults to
-        ``sqrt(np.finfo(float).eps)``, which is approximately 1.49e-08.
+        ``sqrt(mx.finfo(float).eps)``, which is approximately 1.49e-08.
     direction : str, optional
         If set to ``'random'``, then gradients along a random vector
         are used to check `grad` against forward difference approximation
@@ -1097,7 +1097,7 @@ def check_grad(func, grad, x0, *args, epsilon=_epsilon,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> def func(x):
     ...     return x[0]**2 - 0.5 * x[1]**3
     >>> def grad(x):
@@ -1105,20 +1105,20 @@ def check_grad(func, grad, x0, *args, epsilon=_epsilon,
     >>> from scipy.optimize import check_grad
     >>> check_grad(func, grad, [1.5, -1.5])
     2.9802322387695312e-08  # may vary
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> check_grad(func, grad, [1.5, -1.5],
     ...             direction='random', seed=rng)
     2.9802322387695312e-08
 
     """
     step = epsilon
-    x0 = np.asarray(x0)
+    x0 = mx.array(x0)
 
     def g(w, func, x0, v, *args):
         return func(x0 + w*v, *args)
 
     if direction == 'random':
-        _grad = np.asanyarray(grad(x0, *args))
+        _grad = mx.asanyarray(grad(x0, *args))
         if _grad.ndim > 1:
             raise ValueError("'random' can only be used with scalar valued"
                              " func")
@@ -1126,8 +1126,8 @@ def check_grad(func, grad, x0, *args, epsilon=_epsilon,
         v = rng_gen.standard_normal(size=(x0.shape))
         _args = (func, x0, v) + args
         _func = g
-        vars = np.zeros((1,))
-        analytical_grad = np.dot(_grad, v)
+        vars = mx.zeros((1,))
+        analytical_grad = mx.dot(_grad, v)
     elif direction == 'all':
         _args = args
         _func = func
@@ -1137,7 +1137,7 @@ def check_grad(func, grad, x0, *args, epsilon=_epsilon,
         raise ValueError(f"{direction} is not a valid string for "
                          "``direction`` argument")
 
-    return np.sqrt(np.sum(np.abs(
+    return mx.sqrt(mx.sum(mx.abs(
         (analytical_grad - approx_fprime(vars, _func, step, *_args))**2
     )))
 
@@ -1198,7 +1198,7 @@ def _line_search_wolfe12(f, fprime, xk, pk, gfk, old_fval, old_old_fval,
     return ret
 
 
-def fmin_bfgs(f, x0, fprime=None, args=(), gtol=1e-5, norm=np.inf,
+def fmin_bfgs(f, x0, fprime=None, args=(), gtol=1e-5, norm=mx.inf,
               epsilon=_epsilon, maxiter=None, full_output=0, disp=1,
               retall=0, callback=None, xrtol=0, c1=1e-4, c2=0.9,
               hess_inv0=None):
@@ -1209,7 +1209,7 @@ def fmin_bfgs(f, x0, fprime=None, args=(), gtol=1e-5, norm=np.inf,
     ----------
     f : callable ``f(x,*args)``
         Objective function to be minimized.
-    x0 : ndarray
+    x0 : array
         Initial guess, shape (n,)
     fprime : callable ``f'(x,*args)``, optional
         Gradient of f.
@@ -1219,7 +1219,7 @@ def fmin_bfgs(f, x0, fprime=None, args=(), gtol=1e-5, norm=np.inf,
         Terminate successfully if gradient norm is less than `gtol`
     norm : float, optional
         Order of norm (Inf is max, -Inf is min)
-    epsilon : int or ndarray, optional
+    epsilon : int or array, optional
         If `fprime` is approximated, use this value for the step size.
     callback : callable, optional
         An optional user-supplied function to call after each
@@ -1242,19 +1242,19 @@ def fmin_bfgs(f, x0, fprime=None, args=(), gtol=1e-5, norm=np.inf,
         Parameter for Armijo condition rule.
     c2 : float, default: 0.9
         Parameter for curvature condition rule.
-    hess_inv0 : None or ndarray, optional``
+    hess_inv0 : None or array, optional``
         Initial inverse hessian estimate, shape (n, n). If None (default) then
         the identity matrix is used.
 
     Returns
     -------
-    xopt : ndarray
+    xopt : array
         Parameters which minimize f, i.e., ``f(xopt) == fopt``.
     fopt : float
         Minimum value.
-    gopt : ndarray
+    gopt : array
         Value of gradient at minimum, f'(xopt), which should be near 0.
-    Bopt : ndarray
+    Bopt : array
         Value of 1/f''(xopt), i.e., the inverse Hessian matrix.
     func_calls : int
         Number of function_calls made.
@@ -1287,13 +1287,13 @@ def fmin_bfgs(f, x0, fprime=None, args=(), gtol=1e-5, norm=np.inf,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import fmin_bfgs
     >>> def quadratic_cost(x, Q):
     ...     return x @ Q @ x
     ...
-    >>> x0 = np.array([-3, -4])
-    >>> cost_weight =  np.diag([1., 10.])
+    >>> x0 = mx.array([-3, -4])
+    >>> cost_weight =  mx.diag([1., 10.])
     >>> # Note that a trailing comma is necessary for a tuple with single element
     >>> fmin_bfgs(quadratic_cost, x0, args=(cost_weight,))
     Optimization terminated successfully.
@@ -1343,7 +1343,7 @@ def fmin_bfgs(f, x0, fprime=None, args=(), gtol=1e-5, norm=np.inf,
 
 
 def _minimize_bfgs(fun, x0, args=(), jac=None, callback=None,
-                   gtol=1e-5, norm=np.inf, eps=_epsilon, maxiter=None,
+                   gtol=1e-5, norm=mx.inf, eps=_epsilon, maxiter=None,
                    disp=False, return_all=False, finite_diff_rel_step=None,
                    xrtol=0, c1=1e-4, c2=0.9,
                    hess_inv0=None, workers=None, **unknown_options):
@@ -1361,7 +1361,7 @@ def _minimize_bfgs(fun, x0, args=(), jac=None, callback=None,
         Terminate successfully if gradient norm is less than `gtol`.
     norm : float
         Order of norm (Inf is max, -Inf is min).
-    eps : float or ndarray
+    eps : float or array
         If `jac is None` the absolute step size used for numerical
         approximation of the jacobian via forward differences.
     return_all : bool, optional
@@ -1381,7 +1381,7 @@ def _minimize_bfgs(fun, x0, args=(), jac=None, callback=None,
         Parameter for Armijo condition rule.
     c2 : float, default: 0.9
         Parameter for curvature condition rule.
-    hess_inv0 : None or ndarray, optional
+    hess_inv0 : None or array, optional
         Initial inverse hessian estimate, shape (n, n). If None (default) then
         the identity matrix is used.
     workers : int, map-like callable, optional
@@ -1425,11 +1425,11 @@ def _minimize_bfgs(fun, x0, args=(), jac=None, callback=None,
 
     k = 0
     N = len(x0)
-    I = np.eye(N, dtype=int)
+    I = mx.eye(N, dtype=int)
     Hk = I if hess_inv0 is None else hess_inv0
 
     # Sets the initial step guess to dx ~ 1
-    old_old_fval = old_fval + np.linalg.norm(gfk) / 2
+    old_old_fval = old_fval + mx.linalg.norm(gfk) / 2
 
     xk = x0
     if retall:
@@ -1437,7 +1437,7 @@ def _minimize_bfgs(fun, x0, args=(), jac=None, callback=None,
     warnflag = 0
     gnorm = vecnorm(gfk, ord=norm)
     while (gnorm > gtol) and (k < maxiter):
-        pk = -np.dot(Hk, gfk)
+        pk = -mx.dot(Hk, gfk)
         try:
             alpha_k, fc, gc, old_fval, old_old_fval, gfkp1 = \
                      _line_search_wolfe12(f, myfprime, xk, pk, gfk,
@@ -1474,13 +1474,13 @@ def _minimize_bfgs(fun, x0, args=(), jac=None, callback=None,
         if (alpha_k*vecnorm(pk) <= xrtol*(xrtol + vecnorm(xk))):
             break
 
-        if not np.isfinite(old_fval):
+        if not mx.isfinite(old_fval):
             # We correctly found +-Inf as optimal value, or something went
             # wrong.
             warnflag = 2
             break
 
-        rhok_inv = np.dot(yk, sk)
+        rhok_inv = mx.dot(yk, sk)
         # this was handled in numeric, let it remains for more safety
         # Cryptic comment above is preserved for posterity. Future reader:
         # consider change to condition below proposed in gh-1261/gh-17345.
@@ -1492,10 +1492,10 @@ def _minimize_bfgs(fun, x0, args=(), jac=None, callback=None,
         else:
             rhok = 1. / rhok_inv
 
-        A1 = I - sk[:, np.newaxis] * yk[np.newaxis, :] * rhok
-        A2 = I - yk[:, np.newaxis] * sk[np.newaxis, :] * rhok
-        Hk = np.dot(A1, np.dot(Hk, A2)) + (rhok * sk[:, np.newaxis] *
-                                                 sk[np.newaxis, :])
+        A1 = I - sk[:, mx.newaxis] * yk[mx.newaxis, :] * rhok
+        A2 = I - yk[:, mx.newaxis] * sk[mx.newaxis, :] * rhok
+        Hk = mx.dot(A1, mx.dot(Hk, A2)) + (rhok * sk[:, mx.newaxis] *
+                                                 sk[mx.newaxis, :])
 
     fval = old_fval
 
@@ -1504,7 +1504,7 @@ def _minimize_bfgs(fun, x0, args=(), jac=None, callback=None,
     elif k >= maxiter:
         warnflag = 1
         msg = _status_message['maxiter']
-    elif np.isnan(gnorm) or np.isnan(fval) or np.isnan(xk).any():
+    elif mx.isnan(gnorm) or mx.isnan(fval) or mx.isnan(xk).any():
         warnflag = 3
         msg = _status_message['nan']
     else:
@@ -1533,7 +1533,7 @@ def _print_success_message_or_warn(warnflag, message, warntype=None):
         warnings.warn(message, warntype or OptimizeWarning, stacklevel=3)
 
 
-def fmin_cg(f, x0, fprime=None, args=(), gtol=1e-5, norm=np.inf,
+def fmin_cg(f, x0, fprime=None, args=(), gtol=1e-5, norm=mx.inf,
             epsilon=_epsilon, maxiter=None, full_output=0, disp=1, retall=0,
             callback=None, c1=1e-4, c2=0.4):
     """
@@ -1545,7 +1545,7 @@ def fmin_cg(f, x0, fprime=None, args=(), gtol=1e-5, norm=np.inf,
         Objective function to be minimized. Here `x` must be a 1-D array of
         the variables that are to be changed in the search for a minimum, and
         `args` are the other (fixed) parameters of `f`.
-    x0 : ndarray
+    x0 : array
         A user-supplied initial estimate of `xopt`, the optimal value of `x`.
         It must be a 1-D array of values.
     fprime : callable, ``fprime(x, *args)``, optional
@@ -1561,8 +1561,8 @@ def fmin_cg(f, x0, fprime=None, args=(), gtol=1e-5, norm=np.inf,
         Stop when the norm of the gradient is less than `gtol`.
     norm : float, optional
         Order to use for the norm of the gradient
-        (``-np.inf`` is min, ``np.inf`` is max).
-    epsilon : float or ndarray, optional
+        (``-mx.inf`` is min, ``mx.inf`` is max).
+    epsilon : float or array, optional
         Step size(s) to use when `fprime` is approximated numerically. Can be a
         scalar or a 1-D array. Defaults to ``sqrt(eps)``, with eps the
         floating point machine precision.  Usually ``sqrt(eps)`` is about
@@ -1587,7 +1587,7 @@ def fmin_cg(f, x0, fprime=None, args=(), gtol=1e-5, norm=np.inf,
 
     Returns
     -------
-    xopt : ndarray
+    xopt : array
         Parameters which minimize f, i.e., ``f(xopt) == fopt``.
     fopt : float, optional
         Minimum value found, f(xopt). Only returned if `full_output` is True.
@@ -1610,7 +1610,7 @@ def fmin_cg(f, x0, fprime=None, args=(), gtol=1e-5, norm=np.inf,
 
         3 : NaN result encountered.
 
-    allvecs : list of ndarray, optional
+    allvecs : list of array, optional
         List of arrays, containing the results at each iteration.
         Only returned if `retall` is True.
 
@@ -1649,7 +1649,7 @@ def fmin_cg(f, x0, fprime=None, args=(), gtol=1e-5, norm=np.inf,
     ``a*u**2 + b*u*v + c*v**2 + d*u + e*v + f`` for given values
     of the parameters and an initial guess ``(u, v) = (0, 0)``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> args = (2, 3, 7, 8, 9, 10)  # parameter values
     >>> def f(x, *args):
     ...     u, v = x
@@ -1660,8 +1660,8 @@ def fmin_cg(f, x0, fprime=None, args=(), gtol=1e-5, norm=np.inf,
     ...     a, b, c, d, e, f = args
     ...     gu = 2*a*u + b*v + d     # u-component of the gradient
     ...     gv = b*u + 2*c*v + e     # v-component of the gradient
-    ...     return np.asarray((gu, gv))
-    >>> x0 = np.asarray((0, 0))  # Initial guess.
+    ...     return mx.array((gu, gv))
+    >>> x0 = mx.array((0, 0))  # Initial guess.
     >>> from scipy import optimize
     >>> res1 = optimize.fmin_cg(f, x0, fprime=gradf, args=args)
     Optimization terminated successfully.
@@ -1680,7 +1680,7 @@ def fmin_cg(f, x0, fprime=None, args=(), gtol=1e-5, norm=np.inf,
     >>> opts = {'maxiter' : None,    # default value.
     ...         'disp' : True,    # non-default value.
     ...         'gtol' : 1e-5,    # default value.
-    ...         'norm' : np.inf,  # default value.
+    ...         'norm' : mx.inf,  # default value.
     ...         'eps' : 1.4901161193847656e-08}  # default value.
     >>> res2 = optimize.minimize(f, x0, jac=gradf, args=args,
     ...                          method='CG', options=opts)
@@ -1717,7 +1717,7 @@ def fmin_cg(f, x0, fprime=None, args=(), gtol=1e-5, norm=np.inf,
 
 
 def _minimize_cg(fun, x0, args=(), jac=None, callback=None,
-                 gtol=1e-5, norm=np.inf, eps=_epsilon, maxiter=None,
+                 gtol=1e-5, norm=mx.inf, eps=_epsilon, maxiter=None,
                  disp=False, return_all=False, finite_diff_rel_step=None,
                  c1=1e-4, c2=0.4, workers=None,
                  **unknown_options):
@@ -1736,7 +1736,7 @@ def _minimize_cg(fun, x0, args=(), jac=None, callback=None,
         termination.
     norm : float
         Order of norm (Inf is max, -Inf is min).
-    eps : float or ndarray
+    eps : float or array
         If `jac is None` the absolute step size used for numerical
         approximation of the jacobian via forward differences.
     return_all : bool, optional
@@ -1785,7 +1785,7 @@ def _minimize_cg(fun, x0, args=(), jac=None, callback=None,
     k = 0
     xk = x0
     # Sets the initial step guess to dx ~ 1
-    old_old_fval = old_fval + np.linalg.norm(gfk) / 2
+    old_old_fval = old_fval + mx.linalg.norm(gfk) / 2
 
     if retall:
         allvecs = [xk]
@@ -1796,7 +1796,7 @@ def _minimize_cg(fun, x0, args=(), jac=None, callback=None,
     sigma_3 = 0.01
 
     while (gnorm > gtol) and (k < maxiter):
-        deltak = np.dot(gfk, gfk)
+        deltak = mx.dot(gfk, gfk)
 
         cached_step = [None]
 
@@ -1805,7 +1805,7 @@ def _minimize_cg(fun, x0, args=(), jac=None, callback=None,
             if gfkp1 is None:
                 gfkp1 = myfprime(xkp1)
             yk = gfkp1 - gfk
-            beta_k = max(0, np.dot(yk, gfkp1) / deltak)
+            beta_k = max(0, mx.dot(yk, gfkp1) / deltak)
             pkp1 = -gfkp1 + beta_k * pk
             gnorm = vecnorm(gfkp1, ord=norm)
             return (alpha, xkp1, pkp1, gfkp1, gnorm)
@@ -1825,7 +1825,7 @@ def _minimize_cg(fun, x0, args=(), jac=None, callback=None,
                 return True
 
             # Accept step if sufficient descent condition applies.
-            return np.dot(pk, gfk) <= -sigma_3 * np.dot(gfk, gfk)
+            return mx.dot(pk, gfk) <= -sigma_3 * mx.dot(gfk, gfk)
 
         try:
             alpha_k, fc, gc, old_fval, old_old_fval, gfkp1 = \
@@ -1856,7 +1856,7 @@ def _minimize_cg(fun, x0, args=(), jac=None, callback=None,
     elif k >= maxiter:
         warnflag = 1
         msg = _status_message['maxiter']
-    elif np.isnan(gnorm) or np.isnan(fval) or np.isnan(xk).any():
+    elif mx.isnan(gnorm) or mx.isnan(fval) or mx.isnan(xk).any():
         warnflag = 3
         msg = _status_message['nan']
     else:
@@ -1888,7 +1888,7 @@ def fmin_ncg(f, x0, fprime, fhess_p=None, fhess=None, args=(), avextol=1e-5,
     ----------
     f : callable ``f(x, *args)``
         Objective function to be minimized.
-    x0 : ndarray
+    x0 : array
         Initial guess.
     fprime : callable ``f'(x, *args)``
         Gradient of f.
@@ -1901,7 +1901,7 @@ def fmin_ncg(f, x0, fprime, fhess_p=None, fhess=None, args=(), avextol=1e-5,
         Extra arguments passed to f, fprime, fhess_p, and fhess
         (the same set of extra arguments is supplied to all of
         these functions).
-    epsilon : float or ndarray, optional
+    epsilon : float or array, optional
         If fhess is approximated, use this value for the step size.
     callback : callable, optional
         An optional user-supplied function which is called after
@@ -1925,7 +1925,7 @@ def fmin_ncg(f, x0, fprime, fhess_p=None, fhess=None, args=(), avextol=1e-5,
 
     Returns
     -------
-    xopt : ndarray
+    xopt : array
         Parameters which minimize f, i.e., ``f(xopt) == fopt``.
     fopt : float
         Value of the function at xopt, i.e., ``fopt = f(xopt)``.
@@ -2017,7 +2017,7 @@ def _minimize_newtoncg(fun, x0, args=(), jac=None, hess=None, hessp=None,
         convergence.
     maxiter : int
         Maximum number of iterations to perform.
-    eps : float or ndarray
+    eps : float or array
         If `hessp` is approximated, use this value for the step size.
     return_all : bool, optional
         Set to True to return a list of the best solution at each of the
@@ -2094,15 +2094,15 @@ def _minimize_newtoncg(fun, x0, args=(), jac=None, hess=None, hessp=None,
 
     xtol = len(x0) * avextol
     # Make sure we enter the while loop.
-    update_l1norm = np.finfo(float).max
-    xk = np.copy(x0)
+    update_l1norm = mx.finfo(float).max
+    xk = mx.copy(x0)
     if retall:
         allvecs = [xk]
     k = 0
     gfk = None
     old_fval = f(x0)
     old_old_fval = None
-    float64eps = np.finfo(np.float64).eps
+    float64eps = mx.finfo(mx.float64).eps
     while update_l1norm > xtol:
         if k >= maxiter:
             msg = "Warning: " + _status_message['maxiter']
@@ -2110,21 +2110,21 @@ def _minimize_newtoncg(fun, x0, args=(), jac=None, hess=None, hessp=None,
         # Compute a search direction pk by applying the CG method to
         #  del2 f(xk) p = - grad f(xk) starting from 0.
         b = -fprime(xk)
-        maggrad = np.linalg.norm(b, ord=1)
+        maggrad = mx.linalg.norm(b, ord=1)
         eta = min(0.5, math.sqrt(maggrad))
         termcond = eta * maggrad
         xsupi = zeros(len(x0), dtype=x0.dtype)
         ri = -b
         psupi = -ri
         i = 0
-        dri0 = np.dot(ri, ri)
+        dri0 = mx.dot(ri, ri)
 
         if fhess is not None:             # you want to compute hessian once.
             A = sf.hess(xk)
             hcalls += 1
 
         for k2 in range(cg_maxiter):
-            if np.add.reduce(np.abs(ri)) <= termcond:
+            if mx.add.reduce(mx.abs(ri)) <= termcond:
                 break
             if fhess is None:
                 if fhess_p is None:
@@ -2138,7 +2138,7 @@ def _minimize_newtoncg(fun, x0, args=(), jac=None, hess=None, hessp=None,
                 Ap = A.dot(psupi)
             # check curvature
             Ap = asarray(Ap).squeeze()  # get rid of matrices...
-            curv = np.dot(psupi, Ap)
+            curv = mx.dot(psupi, Ap)
             if 0 <= curv <= 3 * float64eps:
                 break
             elif curv < 0:
@@ -2151,11 +2151,11 @@ def _minimize_newtoncg(fun, x0, args=(), jac=None, hess=None, hessp=None,
             alphai = dri0 / curv
             xsupi += alphai * psupi
             ri += alphai * Ap
-            dri1 = np.dot(ri, ri)
+            dri1 = mx.dot(ri, ri)
             betai = dri1 / dri0
             psupi = -ri + betai * psupi
             i += 1
-            dri0 = dri1          # update np.dot(ri,ri) for next time.
+            dri0 = dri1          # update mx.dot(ri,ri) for next time.
         else:
             # curvature keeps increasing, bail out
             msg = ("Warning: CG iterations didn't converge. The Hessian is not "
@@ -2182,10 +2182,10 @@ def _minimize_newtoncg(fun, x0, args=(), jac=None, hess=None, hessp=None,
         intermediate_result = OptimizeResult(x=xk, fun=old_fval)
         if _call_callback_maybe_halt(callback, intermediate_result):
             return terminate(5, "")
-        update_l1norm = np.linalg.norm(update, ord=1)
+        update_l1norm = mx.linalg.norm(update, ord=1)
 
     else:
-        if np.isnan(old_fval) or np.isnan(update_l1norm):
+        if mx.isnan(old_fval) or mx.isnan(update_l1norm):
             return terminate(3, _status_message['nan'])
 
         msg = _status_message['success']
@@ -2223,7 +2223,7 @@ def fminbound(func, x1, x2, args=(), xtol=1e-5, maxfun=500,
 
     Returns
     -------
-    xopt : ndarray
+    xopt : array
         Parameters (over given interval) which minimize the
         objective function.
     fval : number
@@ -2336,11 +2336,11 @@ def _minimize_scalar_bounded(func, bounds, args=(),
     fx = func(x, *args)
     num = 1
     fmin_data = (1, xf, fx)
-    fu = np.inf
+    fu = mx.inf
 
     ffulc = fnfc = fx
     xm = 0.5 * (a + b)
-    tol1 = sqrt_eps * np.abs(xf) + xatol / 3.0
+    tol1 = sqrt_eps * mx.abs(xf) + xatol / 3.0
     tol2 = 2.0 * tol1
 
     if disp > 2:
@@ -2348,10 +2348,10 @@ def _minimize_scalar_bounded(func, bounds, args=(),
         print(header)
         print("%5.0f   %12.6g %12.6g %s" % (fmin_data + (step,)))
 
-    while (np.abs(xf - xm) > (tol2 - 0.5 * (b - a))):
+    while (mx.abs(xf - xm) > (tol2 - 0.5 * (b - a))):
         golden = 1
         # Check for parabolic fit
-        if np.abs(e) > tol1:
+        if mx.abs(e) > tol1:
             golden = 0
             r = (xf - nfc) * (fx - ffulc)
             q = (xf - fulc) * (fx - fnfc)
@@ -2359,19 +2359,19 @@ def _minimize_scalar_bounded(func, bounds, args=(),
             q = 2.0 * (q - r)
             if q > 0.0:
                 p = -p
-            q = np.abs(q)
+            q = mx.abs(q)
             r = e
             e = rat
 
             # Check for acceptability of parabola
-            if ((np.abs(p) < np.abs(0.5*q*r)) and (p > q*(a - xf)) and
+            if ((mx.abs(p) < mx.abs(0.5*q*r)) and (p > q*(a - xf)) and
                     (p < q * (b - xf))):
                 rat = (p + 0.0) / q
                 x = xf + rat
                 step = '       parabolic'
 
                 if ((x - a) < tol2) or ((b - x) < tol2):
-                    si = np.sign(xm - xf) + ((xm - xf) == 0)
+                    si = mx.sign(xm - xf) + ((xm - xf) == 0)
                     rat = tol1 * si
             else:      # do a golden-section step
                 golden = 1
@@ -2384,8 +2384,8 @@ def _minimize_scalar_bounded(func, bounds, args=(),
             rat = golden_mean*e
             step = '       golden'
 
-        si = np.sign(rat) + (rat == 0)
-        x = xf + si * np.maximum(np.abs(rat), tol1)
+        si = mx.sign(rat) + (rat == 0)
+        x = xf + si * mx.maximum(mx.abs(rat), tol1)
         fu = func(x, *args)
         num += 1
         fmin_data = (num, x, fu)
@@ -2412,14 +2412,14 @@ def _minimize_scalar_bounded(func, bounds, args=(),
                 fulc, ffulc = x, fu
 
         xm = 0.5 * (a + b)
-        tol1 = sqrt_eps * np.abs(xf) + xatol / 3.0
+        tol1 = sqrt_eps * mx.abs(xf) + xatol / 3.0
         tol2 = 2.0 * tol1
 
         if num >= maxfun:
             flag = 1
             break
 
-    if np.isnan(xf) or np.isnan(fx) or np.isnan(fu):
+    if mx.isnan(xf) or mx.isnan(fx) or mx.isnan(fu):
         flag = 2
 
     fval = fx
@@ -2520,16 +2520,16 @@ class Brent:
             print(f"{funcalls:^12g} {x:^12.6g} {fx:^12.6g}")
 
         while (iter < self.maxiter):
-            tol1 = self.tol * np.abs(x) + _mintol
+            tol1 = self.tol * mx.abs(x) + _mintol
             tol2 = 2.0 * tol1
             xmid = 0.5 * (a + b)
             # check for convergence
-            if np.abs(x - xmid) < (tol2 - 0.5 * (b - a)):
+            if mx.abs(x - xmid) < (tol2 - 0.5 * (b - a)):
                 break
             # XXX In the first iteration, rat is only bound in the true case
             # of this conditional. This used to cause an UnboundLocalError
             # (gh-4140). It should be set before the if (but to what?).
-            if (np.abs(deltax) <= tol1):
+            if (mx.abs(deltax) <= tol1):
                 if (x >= xmid):
                     deltax = a - x       # do a golden section step
                 else:
@@ -2542,12 +2542,12 @@ class Brent:
                 tmp2 = 2.0 * (tmp2 - tmp1)
                 if (tmp2 > 0.0):
                     p = -p
-                tmp2 = np.abs(tmp2)
+                tmp2 = mx.abs(tmp2)
                 dx_temp = deltax
                 deltax = rat
                 # check parabolic fit
                 if ((p > tmp2 * (a - x)) and (p < tmp2 * (b - x)) and
-                        (np.abs(p) < np.abs(0.5 * tmp2 * dx_temp))):
+                        (mx.abs(p) < mx.abs(0.5 * tmp2 * dx_temp))):
                     rat = p * 1.0 / tmp2        # if parabolic step is useful.
                     u = x + rat
                     if ((u - a) < tol2 or (b - u) < tol2):
@@ -2562,7 +2562,7 @@ class Brent:
                         deltax = b - x
                     rat = _cg * deltax
 
-            if (np.abs(rat) < tol1):            # update by at least tol1
+            if (mx.abs(rat) < tol1):            # update by at least tol1
                 if rat >= 0:
                     u = x + tol1
                 else:
@@ -2645,7 +2645,7 @@ def brent(func, args=(), brack=None, tol=1.48e-8, full_output=0, maxiter=500):
 
     Returns
     -------
-    xmin : ndarray
+    xmin : array
         Optimum point.
     fval : float
         (Optional output) Optimum function value.
@@ -2735,7 +2735,7 @@ def _minimize_scalar_brent(func, brack=None, args=(), xtol=1.48e-8,
     brent.optimize()
     x, fval, nit, nfev = brent.get_result(full_output=True)
 
-    success = nit < maxiter and not (np.isnan(x) or np.isnan(fval))
+    success = nit < maxiter and not (mx.isnan(x) or mx.isnan(fval))
 
     if success:
         message = ("\nOptimization terminated successfully;\n"
@@ -2744,7 +2744,7 @@ def _minimize_scalar_brent(func, brack=None, args=(), xtol=1.48e-8,
     else:
         if nit >= maxiter:
             message = "\nMaximum number of iterations exceeded"
-        if np.isnan(x) or np.isnan(fval):
+        if mx.isnan(x) or mx.isnan(fval):
             message = f"{_status_message['nan']}"
 
     if disp:
@@ -2785,7 +2785,7 @@ def golden(func, args=(), brack=None, tol=_epsilon,
 
     Returns
     -------
-    xmin : ndarray
+    xmin : array
         Optimum point.
     fval : float
         (Optional output) Optimum function value.
@@ -2884,7 +2884,7 @@ def _minimize_scalar_golden(func, brack=None, args=(),
     _gC = 1.0 - _gR
     x3 = xc
     x0 = xa
-    if (np.abs(xc - xb) > np.abs(xb - xa)):
+    if (mx.abs(xc - xb) > mx.abs(xb - xa)):
         x1 = xb
         x2 = xb + _gC * (xc - xb)
     else:
@@ -2900,7 +2900,7 @@ def _minimize_scalar_golden(func, brack=None, args=(),
         print(f"{'Func-count':^12} {'x':^12} {'f(x)': ^12}")
 
     for i in range(maxiter):
-        if np.abs(x3 - x0) <= tol * (np.abs(x1) + np.abs(x2)):
+        if mx.abs(x3 - x0) <= tol * (mx.abs(x1) + mx.abs(x2)):
             break
         if (f2 < f1):
             x0 = x1
@@ -2932,7 +2932,7 @@ def _minimize_scalar_golden(func, brack=None, args=(),
         xmin = x2
         fval = f2
 
-    success = nit < maxiter and not (np.isnan(fval) or np.isnan(xmin))
+    success = nit < maxiter and not (mx.isnan(fval) or mx.isnan(xmin))
 
     if success:
         message = ("\nOptimization terminated successfully;\n"
@@ -2941,7 +2941,7 @@ def _minimize_scalar_golden(func, brack=None, args=(),
     else:
         if nit >= maxiter:
             message = "\nMaximum number of iterations exceeded"
-        if np.isnan(xmin) or np.isnan(fval):
+        if mx.isnan(xmin) or mx.isnan(fval):
             message = f"{_status_message['nan']}"
 
     if disp:
@@ -3000,12 +3000,12 @@ def bracket(func, xa=0.0, xb=1.0, args=(), grow_limit=110.0, maxiter=1000):
     --------
     This function can find a downward convex region of a function:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.optimize import bracket
     >>> def f(x):
     ...     return 10*x**2 + 3*x + 5
-    >>> x = np.linspace(-2, 2)
+    >>> x = mx.linspace(-2, 2)
     >>> y = f(x)
     >>> init_xa, init_xb = 0.1, 1
     >>> xa, xb, xc, fa, fb, fc, funcalls = bracket(f, xa=init_xa, xb=init_xb)
@@ -3028,7 +3028,7 @@ def bracket(func, xa=0.0, xb=1.0, args=(), grow_limit=110.0, maxiter=1000):
     _gold = 1.618034  # golden ratio: (1.0+sqrt(5.0))/2.0
     _verysmall_num = 1e-21
     # convert to numpy floats if not already
-    xa, xb = np.asarray([xa, xb])
+    xa, xb = mx.array([xa, xb])
     fa = func(*(xa,) + args)
     fb = func(*(xb,) + args)
     if (fa < fb):                      # Switch so fa > fb
@@ -3042,7 +3042,7 @@ def bracket(func, xa=0.0, xb=1.0, args=(), grow_limit=110.0, maxiter=1000):
         tmp1 = (xb - xa) * (fb - fc)
         tmp2 = (xb - xc) * (fb - fa)
         val = tmp2 - tmp1
-        if np.abs(val) < _verysmall_num:
+        if mx.abs(val) < _verysmall_num:
             denom = 2.0 * _verysmall_num
         else:
             denom = 2.0 * val
@@ -3099,7 +3099,7 @@ def bracket(func, xa=0.0, xb=1.0, args=(), grow_limit=110.0, maxiter=1000):
     # three conditions for a valid bracket
     cond1 = (fb < fc and fb <= fa) or (fb < fa and fb <= fc)
     cond2 = (xa < xb < xc or xc < xb < xa)
-    cond3 = np.isfinite(xa) and np.isfinite(xb) and np.isfinite(xc)
+    cond3 = mx.isfinite(xa) and mx.isfinite(xb) and mx.isfinite(xc)
     msg = ("The algorithm terminated without finding a valid bracket. "
            "Consider trying different initial points.")
     if not (cond1 and cond2 and cond3):
@@ -3138,10 +3138,10 @@ def _recover_from_bracket_error(solver, fun, bracket, args, **options):
         msg = str(e)
         xa, xb, xc, fa, fb, fc, funcalls = e.data
         xs, fs = [xa, xb, xc], [fa, fb, fc]
-        if np.any(np.isnan([xs, fs])):
-            x, fun = np.nan, np.nan
+        if mx.any(mx.isnan([xs, fs])):
+            x, fun = mx.nan, mx.nan
         else:
-            imin = np.argmin(fs)
+            imin = mx.argmin(fs)
             x, fun = xs[imin], fs[imin]
         return OptimizeResult(fun=fun, nfev=funcalls, x=x,
                               nit=0, success=False, message=msg)
@@ -3158,22 +3158,22 @@ def _line_for_search(x0, alpha, lower_bound, upper_bound):
 
     Parameters
     ----------
-    x0 : np.array.
+    x0 : mx.array.
         The vector representing the current location.
-        Note ``np.shape(x0) == (n,)``.
-    alpha : np.array.
+        Note ``mx.shape(x0) == (n,)``.
+    alpha : mx.array.
         The vector representing the direction.
-        Note ``np.shape(alpha) == (n,)``.
-    lower_bound : np.array.
+        Note ``mx.shape(alpha) == (n,)``.
+    lower_bound : mx.array.
         The lower bounds for each parameter in ``x0``. If the ``i``th
         parameter in ``x0`` is unbounded below, then ``lower_bound[i]``
-        should be ``-np.inf``.
-        Note ``np.shape(lower_bound) == (n,)``.
-    upper_bound : np.array.
+        should be ``-mx.inf``.
+        Note ``mx.shape(lower_bound) == (n,)``.
+    upper_bound : mx.array.
         The upper bounds for each parameter in ``x0``. If the ``i``th
         parameter in ``x0`` is unbounded above, then ``upper_bound[i]``
-        should be ``np.inf``.
-        Note ``np.shape(upper_bound) == (n,)``.
+        should be ``mx.inf``.
+        Note ``mx.shape(upper_bound) == (n,)``.
 
     Returns
     -------
@@ -3195,13 +3195,13 @@ def _line_for_search(x0, alpha, lower_bound, upper_bound):
     # positive and negative indices
     pos = alpha > 0
 
-    lmin_pos = np.where(pos, low, 0)
-    lmin_neg = np.where(pos, 0, high)
-    lmax_pos = np.where(pos, high, 0)
-    lmax_neg = np.where(pos, 0, low)
+    lmin_pos = mx.where(pos, low, 0)
+    lmin_neg = mx.where(pos, 0, high)
+    lmax_pos = mx.where(pos, high, 0)
+    lmax_neg = mx.where(pos, 0, low)
 
-    lmin = np.max(lmin_pos + lmin_neg)
-    lmax = np.min(lmax_pos + lmax_neg)
+    lmin = mx.max(lmin_pos + lmin_neg)
+    lmax = mx.min(lmax_pos + lmax_neg)
 
     # if x0 is outside the bounds, then it is possible that there is
     # no way to get back in the bounds for the parameters being updated
@@ -3217,16 +3217,16 @@ def _linesearch_powell(func, p, xi, tol=1e-3,
 
     Find the minimum of the function ``func(x0 + alpha*direc)``.
 
-    lower_bound : np.array.
+    lower_bound : mx.array.
         The lower bounds for each parameter in ``x0``. If the ``i``th
         parameter in ``x0`` is unbounded below, then ``lower_bound[i]``
-        should be ``-np.inf``.
-        Note ``np.shape(lower_bound) == (n,)``.
-    upper_bound : np.array.
+        should be ``-mx.inf``.
+        Note ``mx.shape(lower_bound) == (n,)``.
+    upper_bound : mx.array.
         The upper bounds for each parameter in ``x0``. If the ``i``th
         parameter in ``x0`` is unbounded above, then ``upper_bound[i]``
-        should be ``np.inf``.
-        Note ``np.shape(upper_bound) == (n,)``.
+        should be ``mx.inf``.
+        Note ``mx.shape(upper_bound) == (n,)``.
     fval : number.
         ``fval`` is equal to ``func(p)``, the idea is just to avoid
         recomputing it so we can limit the ``fevals``.
@@ -3236,7 +3236,7 @@ def _linesearch_powell(func, p, xi, tol=1e-3,
         return func(p + alpha*xi)
 
     # if xi is zero, then don't optimize
-    if not np.any(xi):
+    if not mx.any(xi):
         return ((fval, p, xi) if fval is not None else (func(p), p, xi))
     elif lower_bound is None and upper_bound is None:
         # non-bounded minimization
@@ -3247,10 +3247,10 @@ def _linesearch_powell(func, p, xi, tol=1e-3,
         return fret, p + xi, xi
     else:
         bound = _line_for_search(p, xi, lower_bound, upper_bound)
-        if np.isneginf(bound[0]) and np.isposinf(bound[1]):
+        if mx.isneginf(bound[0]) and mx.isposinf(bound[1]):
             # equivalent to unbounded
             return _linesearch_powell(func, p, xi, fval=fval, tol=tol)
-        elif not np.isneginf(bound[0]) and not np.isposinf(bound[1]):
+        elif not mx.isneginf(bound[0]) and not mx.isposinf(bound[1]):
             # we can use a bounded scalar minimization
             res = _minimize_scalar_bounded(myfunc, bound, xatol=tol / 100)
             xi = res.x * xi
@@ -3258,13 +3258,13 @@ def _linesearch_powell(func, p, xi, tol=1e-3,
         else:
             # only bounded on one side. use the tangent function to convert
             # the infinity bound to a finite bound. The new bounded region
-            # is a subregion of the region bounded by -np.pi/2 and np.pi/2.
-            bound = np.arctan(bound[0]), np.arctan(bound[1])
+            # is a subregion of the region bounded by -mx.pi/2 and mx.pi/2.
+            bound = mx.arctan(bound[0]), mx.arctan(bound[1])
             res = _minimize_scalar_bounded(
-                lambda x: myfunc(np.tan(x)),
+                lambda x: myfunc(mx.tan(x)),
                 bound,
                 xatol=tol / 100)
-            xi = np.tan(res.x) * xi
+            xi = mx.tan(res.x) * xi
             return res.fun, p + xi, xi
 
 
@@ -3280,7 +3280,7 @@ def fmin_powell(func, x0, args=(), xtol=1e-4, ftol=1e-4, maxiter=None,
     ----------
     func : callable f(x,*args)
         Objective function to be minimized.
-    x0 : ndarray
+    x0 : array
         Initial guess.
     args : tuple, optional
         Extra arguments passed to func.
@@ -3303,10 +3303,10 @@ def fmin_powell(func, x0, args=(), xtol=1e-4, ftol=1e-4, maxiter=None,
         An optional user-supplied function, called after each
         iteration.  Called as ``callback(xk)``, where ``xk`` is the
         current parameter vector.
-    direc : ndarray, optional
+    direc : array, optional
         Initial fitting step and parameter order set as an (N, N) array, where N
         is the number of fitting parameters in `x0`. Defaults to step size 1.0
-        fitting all parameters simultaneously (``np.eye((N, N))``). To
+        fitting all parameters simultaneously (``mx.eye((N, N))``). To
         prevent initial consideration of values in a step or to change initial
         step size, set to 0 or desired step size in the Jth position in the Mth
         block, where J is the position in `x0` and M is the desired evaluation
@@ -3315,11 +3315,11 @@ def fmin_powell(func, x0, args=(), xtol=1e-4, ftol=1e-4, maxiter=None,
 
     Returns
     -------
-    xopt : ndarray
+    xopt : array
         Parameter which minimizes `func`.
     fopt : number
         Value of function at minimum: ``fopt = func(xopt)``.
-    direc : ndarray
+    direc : array
         Current direction set.
     iter : int
         Number of iterations.
@@ -3428,7 +3428,7 @@ def _minimize_powell(func, x0, args=(), callback=None, bounds=None,
         where ``x`` is a 1-D array with shape (n,) and ``args``
         is a tuple of the fixed parameters needed to completely
         specify the function.
-    x0 : ndarray, shape (n,)
+    x0 : array, shape (n,)
         Initial guess. Array of real elements of size (n,),
         where ``n`` is the number of independent variables.
     args : tuple, optional
@@ -3496,7 +3496,7 @@ def _minimize_powell(func, x0, args=(), callback=None, bounds=None,
         variables, if neither `maxiter` or `maxfev` is set. If both
         `maxiter` and `maxfev` are set, minimization will stop at the
         first reached.
-    direc : ndarray
+    direc : array
         Initial set of direction vectors for the Powell method.
     return_all : bool, optional
         Set to True to return a list of the best solution at each of the
@@ -3515,17 +3515,17 @@ def _minimize_powell(func, x0, args=(), callback=None, bounds=None,
         maxiter = N * 1000
         maxfun = N * 1000
     elif maxiter is None:
-        # Convert remaining Nones, to np.inf, unless the other is np.inf, in
+        # Convert remaining Nones, to mx.inf, unless the other is mx.inf, in
         # which case use the default to avoid unbounded iteration
-        if maxfun == np.inf:
+        if maxfun == mx.inf:
             maxiter = N * 1000
         else:
-            maxiter = np.inf
+            maxiter = mx.inf
     elif maxfun is None:
-        if maxiter == np.inf:
+        if maxiter == mx.inf:
             maxfun = N * 1000
         else:
-            maxfun = np.inf
+            maxfun = mx.inf
 
     # we need to use a mutable object here that we can update in the
     # wrapper function
@@ -3535,7 +3535,7 @@ def _minimize_powell(func, x0, args=(), callback=None, bounds=None,
         direc = eye(N, dtype=float)
     else:
         direc = asarray(direc, dtype=float)
-        if np.linalg.matrix_rank(direc) != direc.shape[0]:
+        if mx.linalg.matrix_rank(direc) != direc.shape[0]:
             warnings.warn("direc input is not full rank, some parameters may "
                           "not be optimized",
                           OptimizeWarning, stacklevel=3)
@@ -3549,7 +3549,7 @@ def _minimize_powell(func, x0, args=(), callback=None, bounds=None,
     else:
         # bounds is standardized in _minimize.py.
         lower_bound, upper_bound = bounds.lb, bounds.ub
-        if np.any(lower_bound > x0) or np.any(x0 > upper_bound):
+        if mx.any(lower_bound > x0) or mx.any(x0 > upper_bound):
             warnings.warn("Initial guess is not within the specified bounds",
                           OptimizeWarning, stacklevel=3)
 
@@ -3578,14 +3578,14 @@ def _minimize_powell(func, x0, args=(), callback=None, bounds=None,
             intermediate_result = OptimizeResult(x=x, fun=fval)
             if _call_callback_maybe_halt(callback, intermediate_result):
                 break
-            bnd = ftol * (np.abs(fx) + np.abs(fval)) + 1e-20
+            bnd = ftol * (mx.abs(fx) + mx.abs(fval)) + 1e-20
             if 2.0 * (fx - fval) <= bnd:
                 break
             if fcalls[0] >= maxfun:
                 break
             if iter >= maxiter:
                 break
-            if np.isnan(fx) and np.isnan(fval):
+            if mx.isnan(fx) and mx.isnan(fval):
                 # Ended up in a nan-region: bail out
                 break
 
@@ -3614,7 +3614,7 @@ def _minimize_powell(func, x0, args=(), callback=None, bounds=None,
                         upper_bound=upper_bound,
                         fval=fval
                     )
-                    if np.any(direc1):
+                    if mx.any(direc1):
                         direc[bigind] = direc[-1]
                         direc[-1] = direc1
         except _MaxFuncCallError:
@@ -3626,7 +3626,7 @@ def _minimize_powell(func, x0, args=(), callback=None, bounds=None,
     # but I don't want to cause inconsistencies by changing the
     # established warning flags for maxfev and maxiter, so the out of bounds
     # warning flag becomes 3, but is checked for first.
-    if bounds and (np.any(lower_bound > x) or np.any(x > upper_bound)):
+    if bounds and (mx.any(lower_bound > x) or mx.any(x > upper_bound)):
         warnflag = 4
         msg = _status_message['out_of_bounds']
     elif fcalls[0] >= maxfun:
@@ -3635,7 +3635,7 @@ def _minimize_powell(func, x0, args=(), callback=None, bounds=None,
     elif iter >= maxiter:
         warnflag = 2
         msg = _status_message['maxiter']
-    elif np.isnan(fval) or np.isnan(x).any():
+    elif mx.isnan(fval) or mx.isnan(x).any():
         warnflag = 3
         msg = _status_message['nan']
 
@@ -3736,7 +3736,7 @@ def brute(func, ranges, args=(), Ns=20, full_output=0, finish=fmin,
 
     Returns
     -------
-    x0 : ndarray
+    x0 : array
         A 1-D array containing the coordinates of a point at which the
         objective function had its minimum value. (See `Note 1` for
         which point is returned.)
@@ -3746,7 +3746,7 @@ def brute(func, ranges, args=(), Ns=20, full_output=0, finish=fmin,
     grid : tuple
         Representation of the evaluation grid. It has the same
         length as `x0`. (Returned when `full_output` is True.)
-    Jout : ndarray
+    Jout : array
         Function values at each point of the evaluation
         grid, i.e., ``Jout = func(*grid)``. (Returned
         when `full_output` is True.)
@@ -3805,7 +3805,7 @@ def brute(func, ranges, args=(), Ns=20, full_output=0, finish=fmin,
     ``(z, *params)``, where ``z = (x, y)``,  and ``params`` and the functions
     are as defined below.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> params = (2, 3, 7, 8, 9, 10, 44, -1, 2, 26, 1, -2, 0.5)
     >>> def f1(z, *params):
     ...     x, y = z
@@ -3815,12 +3815,12 @@ def brute(func, ranges, args=(), Ns=20, full_output=0, finish=fmin,
     >>> def f2(z, *params):
     ...     x, y = z
     ...     a, b, c, d, e, f, g, h, i, j, k, l, scale = params
-    ...     return (-g*np.exp(-((x-h)**2 + (y-i)**2) / scale))
+    ...     return (-g*mx.exp(-((x-h)**2 + (y-i)**2) / scale))
 
     >>> def f3(z, *params):
     ...     x, y = z
     ...     a, b, c, d, e, f, g, h, i, j, k, l, scale = params
-    ...     return (-j*np.exp(-((x-k)**2 + (y-l)**2) / scale))
+    ...     return (-j*mx.exp(-((x-k)**2 + (y-l)**2) / scale))
 
     >>> def f(z, *params):
     ...     return f1(z, *params) + f2(z, *params) + f3(z, *params)
@@ -3856,33 +3856,33 @@ def brute(func, ranges, args=(), Ns=20, full_output=0, finish=fmin,
     if (N == 1):
         lrange = lrange[0]
 
-    grid = np.mgrid[lrange]
+    grid = mx.mgrid[lrange]
 
     # obtain an array of parameters that is iterable by a map-like callable
     inpt_shape = grid.shape
     if (N > 1):
-        grid = np.reshape(grid, (inpt_shape[0], np.prod(inpt_shape[1:]))).T
+        grid = mx.reshape(grid, (inpt_shape[0], mx.prod(inpt_shape[1:]))).T
 
-    if not np.iterable(args):
+    if not mx.iterable(args):
         args = (args,)
 
     wrapped_func = _Brute_Wrapper(func, args)
 
     # iterate over input arrays, possibly in parallel
     with MapWrapper(pool=workers) as mapper:
-        Jout = np.array(list(mapper(wrapped_func, grid)))
+        Jout = mx.array(list(mapper(wrapped_func, grid)))
         if (N == 1):
             grid = (grid,)
-            Jout = np.squeeze(Jout)
+            Jout = mx.squeeze(Jout)
         elif (N > 1):
-            Jout = np.reshape(Jout, inpt_shape[1:])
-            grid = np.reshape(grid.T, inpt_shape)
+            Jout = mx.reshape(Jout, inpt_shape[1:])
+            grid = mx.reshape(grid.T, inpt_shape)
 
     Nshape = shape(Jout)
 
     indx = argmin(Jout.ravel(), axis=-1)
-    Nindx = np.empty(N, int)
-    xmin = np.empty(N, float)
+    Nindx = mx.empty(N, int)
+    xmin = mx.empty(N, float)
     for k in range(N - 1, -1, -1):
         thisN = Nshape[k]
         Nindx[k] = indx % Nshape[k]
@@ -3942,7 +3942,7 @@ class _Brute_Wrapper:
 
     def __call__(self, x):
         # flatten needed for one dimensional case.
-        return self.f(np.asarray(x).flatten(), *self.args)
+        return self.f(mx.array(x).flatten(), *self.args)
 
 
 def show_options(solver=None, method=None, disp=True):

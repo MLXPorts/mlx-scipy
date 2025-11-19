@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy import pi, log, sqrt
 from numpy.testing import assert_, assert_equal
 
@@ -14,8 +14,8 @@ def test_consistency():
     # agrees with the implementation of digamma for complex arguments.
 
     # It's all poles after -1e16
-    x = np.r_[-np.logspace(15, -30, 200), np.logspace(-30, 300, 200)]
-    dataset = np.vstack((x + 0j, sc.digamma(x))).T
+    x = mx.r_[-mx.logspace(15, -30, 200), mx.logspace(-30, 300, 200)]
+    dataset = mx.vstack((x + 0j, sc.digamma(x))).T
     FuncData(sc.digamma, dataset, 0, 1, rtol=5e-14, nan_ok=True).check()
 
 
@@ -34,12 +34,12 @@ def test_special_values():
          -pi/2 - 4*log(2) - (pi + log(2 + sqrt(2)) - log(2 - sqrt(2)))/sqrt(2) - euler)
     ]
 
-    dataset = np.asarray(dataset)
+    dataset = mx.array(dataset)
     FuncData(sc.digamma, dataset, 0, 1, rtol=1e-14).check()
 
 
 def test_nonfinite():
-    pts = [0.0, -0.0, np.inf]
-    std = [-np.inf, np.inf, np.inf]
+    pts = [0.0, -0.0, mx.inf]
+    std = [-mx.inf, mx.inf, mx.inf]
     assert_equal(sc.digamma(pts), std)
-    assert_(all(np.isnan(sc.digamma([-np.inf, -1]))))
+    assert_(all(mx.isnan(sc.digamma([-mx.inf, -1]))))

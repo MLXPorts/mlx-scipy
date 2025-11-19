@@ -36,7 +36,7 @@ def delegate_xp(delegator, module_name):
                 xp = delegator(*args, **kwds)
             except TypeError:
                 # object arrays
-                import numpy as np
+                import mlx.core as mx
                 xp = np
 
             # try delegating to a cupyx/jax namesake

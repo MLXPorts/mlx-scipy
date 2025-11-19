@@ -5,7 +5,7 @@ import itertools
 import platform
 import pytest
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_array_equal, assert_allclose
 from numpy import zeros, arange, array, ones, eye, iscomplexobj
 from numpy.linalg import norm
@@ -112,7 +112,7 @@ class IterativeParams:
                                skip=posdef_solvers))
 
         # Random real-valued
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         data = rng.rand(4, 4)
         self.cases.append(Case("rand", data,
                                skip=posdef_solvers + sym_solvers))
@@ -120,7 +120,7 @@ class IterativeParams:
                                skip=posdef_solvers + sym_solvers))
 
         # Random symmetric real-valued
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         data = rng.rand(4, 4)
         data = data + data.T
         self.cases.append(Case("rand-sym", data, skip=posdef_solvers))
@@ -128,16 +128,16 @@ class IterativeParams:
                                skip=posdef_solvers))
 
         # Random pos-def symmetric real
-        np.random.seed(1234)
-        data = np.random.rand(9, 9)
-        data = np.dot(data.conj(), data.T)
+        mx.random.seed(1234)
+        data = mx.random.rand(9, 9)
+        data = mx.dot(data.conj(), data.T)
         self.cases.append(Case("rand-sym-pd", data))
         # note: minres fails for single precision
         self.cases.append(Case("rand-sym-pd-F", data.astype('f'),
                                skip=[minres]))
 
         # Random complex-valued
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         data = rng.rand(4, 4) + 1j * rng.rand(4, 4)
         skip_cmplx = posdef_solvers + sym_solvers + real_solvers
         self.cases.append(Case("rand-cmplx", data, skip=skip_cmplx))
@@ -145,7 +145,7 @@ class IterativeParams:
                                skip=skip_cmplx))
 
         # Random hermitian complex-valued
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         data = rng.rand(4, 4) + 1j * rng.rand(4, 4)
         data = data + data.T.conj()
         self.cases.append(Case("rand-cmplx-herm", data,
@@ -154,9 +154,9 @@ class IterativeParams:
                                skip=posdef_solvers + real_solvers))
 
         # Random pos-def hermitian complex-valued
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         data = rng.rand(9, 9) + 1j * rng.rand(9, 9)
-        data = np.dot(data.conj(), data.T)
+        data = mx.dot(data.conj(), data.T)
         self.cases.append(Case("rand-cmplx-sym-pd", data, skip=real_solvers))
         self.cases.append(Case("rand-cmplx-sym-pd-F", data.astype('F'),
                                skip=real_solvers))
@@ -175,7 +175,7 @@ class IterativeParams:
                                skip=sym_solvers + [cgs, qmr, bicg, tfqmr]))
 
         # Symmetric, non-pd, hitting cgs/bicg/bicgstab/qmr/tfqmr breakdown
-        A = np.array([[0, 0, 0, 0, 0, 1, -1, -0, -0, -0, -0],
+        A = mx.array([[0, 0, 0, 0, 0, 1, -1, -0, -0, -0, -0],
                       [0, 0, 0, 0, 0, 2, -0, -1, -0, -0, -0],
                       [0, 0, 0, 0, 0, 2, -0, -0, -1, -0, -0],
                       [0, 0, 0, 0, 0, 2, -0, -0, -0, -1, -0],
@@ -186,7 +186,7 @@ class IterativeParams:
                       [0, 0, -1, 0, 0, 0, -0, -0, -1, -0, -0],
                       [0, 0, 0, -1, 0, 0, -0, -0, -0, -1, -0],
                       [0, 0, 0, 0, -1, 0, -0, -0, -0, -0, -1]], dtype=float)
-        b = np.array([0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], dtype=float)
+        b = mx.array([0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], dtype=float)
         assert (A == A.T).all()
         self.cases.append(Case("sym-nonpd", A, b,
                                skip=posdef_solvers,
@@ -284,7 +284,7 @@ def test_precond_dummy(case):
     # Ensure the diagonal elements of A are non-zero before calculating
     # 1.0/A.diagonal()
     diagOfA = A.diagonal()
-    if np.count_nonzero(diagOfA) == len(diagOfA):
+    if mx.count_nonzero(diagOfA) == len(diagOfA):
         dia_array(([1.0 / diagOfA], [0]), shape=(M, N))
 
     b = case.b
@@ -323,16 +323,16 @@ def test_precond_inverse(case):
         def inverse(b, which=None):
             """inverse preconditioner"""
             A = case.A
-            if not isinstance(A, np.ndarray):
+            if not isinstance(A, mx.array):
                 A = A.toarray()
-            return np.linalg.solve(A, b)
+            return mx.linalg.solve(A, b)
 
         def rinverse(b, which=None):
             """inverse preconditioner"""
             A = case.A
-            if not isinstance(A, np.ndarray):
+            if not isinstance(A, mx.array):
                 A = A.toarray()
-            return np.linalg.solve(A.T, b)
+            return mx.linalg.solve(A.T, b)
 
         matvec_count = [0]
 
@@ -370,19 +370,19 @@ def test_atol(solver):
     # Historically this is tested as below, all pass but for some reason
     # gcrotmk is over-sensitive to difference between random.seed/rng.random
     # Hence tol lower bound is changed from -10 to -9
-    # np.random.seed(1234)
-    # A = np.random.rand(10, 10)
-    # A = A @ A.T + 10 * np.eye(10)
-    # b = 1e3*np.random.rand(10)
+    # mx.random.seed(1234)
+    # A = mx.random.rand(10, 10)
+    # A = A @ A.T + 10 * mx.eye(10)
+    # b = 1e3*mx.random.rand(10)
 
-    rng = np.random.default_rng(168441431005389)
+    rng = mx.random.default_rng(168441431005389)
     A = rng.uniform(size=[10, 10])
-    A = A @ A.T + 10*np.eye(10)
+    A = A @ A.T + 10*mx.eye(10)
     b = 1e3 * rng.uniform(size=10)
 
-    b_norm = np.linalg.norm(b)
+    b_norm = mx.linalg.norm(b)
 
-    tols = np.r_[0, np.logspace(-9, 2, 7), np.inf]
+    tols = mx.r_[0, mx.logspace(-9, 2, 7), mx.inf]
 
     # Check effect of badly scaled preconditioners
     M0 = rng.standard_normal(size=(10, 10))
@@ -396,7 +396,7 @@ def test_atol(solver):
         if solver is qmr:
             if M is not None:
                 M = aslinearoperator(M)
-                M2 = aslinearoperator(np.eye(10))
+                M2 = aslinearoperator(mx.eye(10))
             else:
                 M2 = None
             x, info = solver(A, b, M1=M, M2=M2, rtol=rtol, atol=atol)
@@ -405,7 +405,7 @@ def test_atol(solver):
 
         assert info == 0
         residual = A @ x - b
-        err = np.linalg.norm(residual)
+        err = mx.linalg.norm(residual)
         atol2 = rtol * b_norm
         # Added 1.00025 fudge factor because of `err` exceeding `atol` just
         # very slightly on s390x (see gh-17839)
@@ -413,12 +413,12 @@ def test_atol(solver):
 
 
 def test_zero_rhs(solver):
-    rng = np.random.default_rng(1684414984100503)
+    rng = mx.random.default_rng(1684414984100503)
     A = rng.random(size=[10, 10])
-    A = A @ A.T + 10 * np.eye(10)
+    A = A @ A.T + 10 * mx.eye(10)
 
-    b = np.zeros(10)
-    tols = np.r_[np.logspace(-10, 2, 7)]
+    b = mx.zeros(10)
+    tols = mx.r_[mx.logspace(-10, 2, 7)]
 
     for tol in tols:
         x, info = solver(A, b, rtol=tol)
@@ -458,12 +458,12 @@ def test_maxiter_worsening(solver):
         pytest.xfail(reason="fails on at least ppc64le, ppc64 and riscv64")
 
     # Singular matrix, rhs numerically not in range
-    A = np.array([[-0.1112795288033378, 0, 0, 0.16127952880333685],
+    A = mx.array([[-0.1112795288033378, 0, 0, 0.16127952880333685],
                   [0, -0.13627952880333782 + 6.283185307179586j, 0, 0],
                   [0, 0, -0.13627952880333782 - 6.283185307179586j, 0],
                   [0.1112795288033368, 0j, 0j, -0.16127952880333785]])
-    v = np.ones(4)
-    best_error = np.inf
+    v = mx.ones(4)
+    best_error = mx.inf
 
     # Unable to match the Fortran code tolerance levels with this example
     # Original tolerance values
@@ -477,7 +477,7 @@ def test_maxiter_worsening(solver):
         if info == 0:
             assert norm(A @ x - v) <= 1e-8 * norm(v)
 
-        error = np.linalg.norm(A @ x - v)
+        error = mx.linalg.norm(A @ x - v)
         best_error = min(best_error, error)
 
         # Check with slack
@@ -486,7 +486,7 @@ def test_maxiter_worsening(solver):
 
 def test_x0_working(solver):
     # Easy problem
-    rng = np.random.default_rng(1685363802304750)
+    rng = mx.random.default_rng(1685363802304750)
     n = 10
     A = rng.random(size=[n, n])
     A = A @ A.T
@@ -528,8 +528,8 @@ def test_x0_equals_Mb(case):
 @pytest.mark.parametrize('solver', _SOLVERS)
 def test_x0_solves_problem_exactly(solver):
     # See gh-19948
-    mat = np.eye(2)
-    rhs = np.array([-1., -1.])
+    mat = mx.eye(2)
+    rhs = mx.array([-1., -1.])
 
     sol, info = solver(mat, rhs, x0=rhs)
     assert_allclose(sol, rhs)
@@ -560,7 +560,7 @@ def test_show(case, capsys):
 
 def test_positional_error(solver):
     # from test_x0_working
-    rng = np.random.default_rng(1685363802304750)
+    rng = mx.random.default_rng(1685363802304750)
     n = 10
     A = rng.random(size=[n, n])
     A = A @ A.T
@@ -575,7 +575,7 @@ def test_invalid_atol(solver, atol):
     if solver == minres:
         pytest.skip("minres has no `atol` argument")
     # from test_x0_working
-    rng = np.random.default_rng(1685363802304750)
+    rng = mx.random.default_rng(1685363802304750)
     n = 10
     A = rng.random(size=[n, n])
     A = A @ A.T
@@ -628,8 +628,8 @@ class TestQMR:
 
 class TestGMRES:
     def test_basic(self):
-        A = np.vander(np.arange(10) + 1)[:, ::-1]
-        b = np.zeros(10)
+        A = mx.vander(mx.arange(10) + 1)[:, ::-1]
+        b = mx.zeros(10)
         b[0] = 1
 
         x_gm, err = gmres(A, b, restart=5, maxiter=1)
@@ -664,7 +664,7 @@ class TestGMRES:
         assert_allclose(rvec, array([1.0, 0.81649658092772603]), rtol=1e-10)
 
         # Test preconditioned callback
-        M = 1e-3 * np.eye(A.shape[0])
+        M = 1e-3 * mx.eye(A.shape[0])
         rvec = zeros(maxiter + 1)
         rvec[0] = 1.0
         x, flag = gmres(A, b, M=M, rtol=1e-16, maxiter=maxiter,
@@ -693,50 +693,50 @@ class TestGMRES:
         A = eye(2)
         b = ones(2)
         x, info = gmres(A, b, rtol=1e-5)
-        assert np.linalg.norm(A @ x - b) <= 1e-5 * np.linalg.norm(b)
+        assert mx.linalg.norm(A @ x - b) <= 1e-5 * mx.linalg.norm(b)
         assert_allclose(x, b, atol=0, rtol=1e-8)
 
-        rndm = np.random.RandomState(12345)
+        rndm = mx.random.RandomState(12345)
         A = rndm.rand(30, 30)
         b = 1e-6 * ones(30)
         x, info = gmres(A, b, rtol=1e-7, restart=20)
-        assert np.linalg.norm(A @ x - b) > 1e-7
+        assert mx.linalg.norm(A @ x - b) > 1e-7
 
         A = eye(2)
         b = 1e-10 * ones(2)
         x, info = gmres(A, b, rtol=1e-8, atol=0)
-        assert np.linalg.norm(A @ x - b) <= 1e-8 * np.linalg.norm(b)
+        assert mx.linalg.norm(A @ x - b) <= 1e-8 * mx.linalg.norm(b)
 
     def test_defective_precond_breakdown(self):
         # Breakdown due to defective preconditioner
-        M = np.eye(3)
+        M = mx.eye(3)
         M[2, 2] = 0
 
-        b = np.array([0, 1, 1])
-        x = np.array([1, 0, 0])
-        A = np.diag([2, 3, 4])
+        b = mx.array([0, 1, 1])
+        x = mx.array([1, 0, 0])
+        A = mx.diag([2, 3, 4])
 
         x, info = gmres(A, b, x0=x, M=M, rtol=1e-15, atol=0)
 
         # Should not return nans, nor terminate with false success
-        assert not np.isnan(x).any()
+        assert not mx.isnan(x).any()
         if info == 0:
-            assert np.linalg.norm(A @ x - b) <= 1e-15 * np.linalg.norm(b)
+            assert mx.linalg.norm(A @ x - b) <= 1e-15 * mx.linalg.norm(b)
 
         # The solution should be OK outside null space of M
         assert_allclose(M @ (A @ x), M @ b)
 
     def test_defective_matrix_breakdown(self):
         # Breakdown due to defective matrix
-        A = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 0]])
-        b = np.array([1, 0, 1])
+        A = mx.array([[0, 1, 0], [1, 0, 0], [0, 0, 0]])
+        b = mx.array([1, 0, 1])
         rtol = 1e-8
         x, info = gmres(A, b, rtol=rtol, atol=0)
 
         # Should not return nans, nor terminate with false success
-        assert not np.isnan(x).any()
+        assert not mx.isnan(x).any()
         if info == 0:
-            assert np.linalg.norm(A @ x - b) <= rtol * np.linalg.norm(b)
+            assert mx.linalg.norm(A @ x - b) <= rtol * mx.linalg.norm(b)
 
         # The solution should be OK outside null space of A
         assert_allclose(A @ (A @ x), A @ b)
@@ -744,9 +744,9 @@ class TestGMRES:
     @pytest.mark.filterwarnings(f"ignore:{CB_TYPE_FILTER}:DeprecationWarning")
     def test_callback_type(self):
         # The legacy callback type changes meaning of 'maxiter'
-        np.random.seed(1)
-        A = np.random.rand(20, 20)
-        b = np.random.rand(20)
+        mx.random.seed(1)
+        A = mx.random.rand(20, 20)
+        b = mx.random.rand(20)
 
         cb_count = [0]
 
@@ -756,7 +756,7 @@ class TestGMRES:
 
         def x_cb(x):
             cb_count[0] += 1
-            assert isinstance(x, np.ndarray)
+            assert isinstance(x, mx.array)
 
         # 2 iterations is not enough to solve the problem
         cb_count = [0]
@@ -788,15 +788,15 @@ class TestGMRES:
 
     def test_callback_x_monotonic(self):
         # Check that callback_type='x' gives monotonic norm decrease
-        rng = np.random.RandomState(1)
-        A = rng.rand(20, 20) + np.eye(20)
+        rng = mx.random.RandomState(1)
+        A = rng.rand(20, 20) + mx.eye(20)
         b = rng.rand(20)
 
-        prev_r = [np.inf]
+        prev_r = [mx.inf]
         count = [0]
 
         def x_cb(x):
-            r = np.linalg.norm(A @ x - b)
+            r = mx.linalg.norm(A @ x - b)
             assert r <= prev_r[0]
             prev_r[0] = r
             count[0] += 1

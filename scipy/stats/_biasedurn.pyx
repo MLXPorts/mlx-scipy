@@ -1,10 +1,10 @@
 from ._biasedurn cimport CFishersNCHypergeometric, StochasticLib3
-cimport numpy as np
-import numpy as np
+cimport mlx.core as mx
+import mlx.core as mx
 from libc.stdint cimport uint32_t, uint64_t
 from libcpp.memory cimport unique_ptr
 
-np.import_array()
+mx.import_array()
 
 from cpython.pycapsule cimport PyCapsule_GetPointer, PyCapsule_IsValid
 
@@ -77,10 +77,10 @@ cdef double next_normal(const double m, const double s) noexcept nogil:
 cdef object make_rng(random_state=None):
     # get a bit_generator object
     if random_state is None or isinstance(random_state, int):
-        bg = np.random.RandomState(random_state)._bit_generator
-    elif isinstance(random_state, np.random.RandomState):
+        bg = mx.random.RandomState(random_state)._bit_generator
+    elif isinstance(random_state, mx.random.RandomState):
         bg = random_state._bit_generator
-    elif isinstance(random_state, np.random.Generator):
+    elif isinstance(random_state, mx.random.Generator):
         bg = random_state.bit_generator
     else:
         raise ValueError('random_state is not one of None, int, RandomState, Generator')
@@ -120,7 +120,7 @@ cdef class _PyStochasticLib3:
         self.HandleRng(random_state)
 
         # call for each
-        rvs = np.empty(size, dtype=np.float64)
+        rvs = mx.empty(size, dtype=mx.float64)
         for ii in range(size):
             rvs[ii] = self.c_sl3.get().FishersNCHyp(n, m, N, odds)
         return rvs
@@ -130,7 +130,7 @@ cdef class _PyStochasticLib3:
         self.HandleRng(random_state)
 
         # call for each
-        rvs = np.empty(size, dtype=np.float64)
+        rvs = mx.empty(size, dtype=mx.float64)
         for ii in range(size):
             rvs[ii] = self.c_sl3.get().WalleniusNCHyp(n, m, N, odds)
         return rvs

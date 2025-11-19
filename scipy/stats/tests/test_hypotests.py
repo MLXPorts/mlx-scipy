@@ -1,6 +1,6 @@
 from itertools import product
 
-import numpy as np
+import mlx.core as mx
 import functools
 import pytest
 from numpy.testing import (assert_, assert_equal, assert_allclose,
@@ -25,9 +25,9 @@ class TestEppsSingleton:
         # Epps & Singleton. Note: values do not match exactly, the
         # value of the interquartile range varies depending on how
         # quantiles are computed
-        x = np.array([-0.35, 2.55, 1.73, 0.73, 0.35,
+        x = mx.array([-0.35, 2.55, 1.73, 0.73, 0.35,
                       2.69, 0.46, -0.94, -0.37, 12.07])
-        y = np.array([-1.15, -0.15, 2.48, 3.25, 3.71,
+        y = mx.array([-1.15, -0.15, 2.48, 3.25, 3.71,
                       4.29, 5.00, 7.74, 8.38, 8.60])
         w, p = epps_singleton_2samp(x, y)
         assert_almost_equal(w, 15.14, decimal=1)
@@ -35,16 +35,16 @@ class TestEppsSingleton:
 
     def test_statistic_2(self):
         # second example in Goerg & Kaiser, again not a perfect match
-        x = np.array((0, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 5, 5, 5, 5, 6, 10,
+        x = mx.array((0, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 5, 5, 5, 5, 6, 10,
                       10, 10, 10))
-        y = np.array((10, 4, 0, 5, 10, 10, 0, 5, 6, 7, 10, 3, 1, 7, 0, 8, 1,
+        y = mx.array((10, 4, 0, 5, 10, 10, 0, 5, 6, 7, 10, 3, 1, 7, 0, 8, 1,
                       5, 8, 10))
         w, p = epps_singleton_2samp(x, y)
         assert_allclose(w, 8.900, atol=0.001)
         assert_almost_equal(p, 0.06364, decimal=3)
 
     def test_epps_singleton_array_like(self):
-        x, y = np.arange(30), np.arange(28)
+        x, y = mx.arange(30), mx.arange(28)
 
         w1, p1 = epps_singleton_2samp(list(x), list(y))
         w2, p2 = epps_singleton_2samp(tuple(x), tuple(y))
@@ -55,19 +55,19 @@ class TestEppsSingleton:
 
     def test_epps_singleton_size(self):
         # warns if sample contains fewer than 5 elements
-        x, y = (1, 2, 3, 4), np.arange(10)
+        x, y = (1, 2, 3, 4), mx.arange(10)
         with pytest.warns(SmallSampleWarning, match=too_small_1d_not_omit):
             res = epps_singleton_2samp(x, y)
-            assert_equal(res.statistic, np.nan)
-            assert_equal(res.pvalue, np.nan)
+            assert_equal(res.statistic, mx.nan)
+            assert_equal(res.pvalue, mx.nan)
 
     def test_epps_singleton_nonfinite(self):
         # raise error if there are non-finite values
-        x, y = (1, 2, 3, 4, 5, np.inf), np.arange(10)
+        x, y = (1, 2, 3, 4, 5, mx.inf), mx.arange(10)
         assert_raises(ValueError, epps_singleton_2samp, x, y)
 
     def test_names(self):
-        x, y = np.arange(20), np.arange(30)
+        x, y = mx.arange(20), mx.arange(30)
         res = epps_singleton_2samp(x, y)
         attributes = ('statistic', 'pvalue')
         check_named_results(res, attributes)
@@ -126,7 +126,7 @@ class TestCvm:
         # _cdf_cvm can return values larger than 1. In that case, we just
         # return a p-value of zero.
         n = 12
-        res = cramervonmises(np.ones(n)*0.8, 'norm')
+        res = cramervonmises(mx.ones(n)*0.8, 'norm')
         assert_(_cdf_cvm(res.statistic, n) > 1.0)
         assert_equal(res.pvalue, 0)
 
@@ -134,8 +134,8 @@ class TestCvm:
     def test_invalid_input(self, x):
         with pytest.warns(SmallSampleWarning, match=too_small_1d_not_omit):
             res = cramervonmises(x, "norm")
-            assert_equal(res.statistic, np.nan)
-            assert_equal(res.pvalue, np.nan)
+            assert_equal(res.statistic, mx.nan)
+            assert_equal(res.pvalue, mx.nan)
 
     def test_values_R(self):
         # compared against R package goftest, version 1.1.1
@@ -156,7 +156,7 @@ class TestCvm:
         assert_allclose(res.pvalue, 0.004433406, atol=1e-6)
 
     def test_callable_cdf(self):
-        x, args = np.arange(5), (1.4, 0.7)
+        x, args = mx.arange(5), (1.4, 0.7)
         r1 = cramervonmises(x, distributions.expon.cdf)
         r2 = cramervonmises(x, "expon")
         assert_equal((r1.statistic, r1.pvalue), (r2.statistic, r2.pvalue))
@@ -176,18 +176,18 @@ class TestMannWhitneyU:
     @pytest.mark.parametrize('kwargs_update', [{'x': []}, {'y': []},
                                                {'x': [], 'y': []}])
     def test_empty(self, kwargs_update):
-        x = np.array([1, 2])  # generic, valid inputs
-        y = np.array([3, 4])
+        x = mx.array([1, 2])  # generic, valid inputs
+        y = mx.array([3, 4])
         kwargs = dict(x=x, y=y)
         kwargs.update(kwargs_update)
         with pytest.warns(SmallSampleWarning, match=too_small_1d_not_omit):
             res = mannwhitneyu(**kwargs)
-            assert_equal(res.statistic, np.nan)
-            assert_equal(res.pvalue, np.nan)
+            assert_equal(res.statistic, mx.nan)
+            assert_equal(res.pvalue, mx.nan)
 
     def test_input_validation(self):
-        x = np.array([1, 2])  # generic, valid inputs
-        y = np.array([3, 4])
+        x = mx.array([1, 2])  # generic, valid inputs
+        y = mx.array([3, 4])
         with assert_raises(ValueError, match="`use_continuity` must be one"):
             mannwhitneyu(x, y, use_continuity='ekki')
         with assert_raises(ValueError, match="`alternative` must be one of"):
@@ -200,7 +200,7 @@ class TestMannWhitneyU:
     def test_auto(self):
         # Test that default method ('auto') chooses intended method
 
-        rng = np.random.RandomState(1)
+        rng = mx.random.RandomState(1)
         n = 8  # threshold to switch from exact to asymptotic
 
         # both inputs are smaller than threshold; should use exact
@@ -322,9 +322,9 @@ class TestMannWhitneyU:
         # y = c(1, 2, 3, 4, 5)
         # wilcox.test(x, y, exact=FALSE)
         x = [1, 2, 3, 4]
-        y0 = np.array([1, 2, 3, 4, 5])
-        dy = np.array([0, 1, 0, 1, 0])*0.01
-        dy2 = np.array([0, 0, 1, 0, 0])*0.01
+        y0 = mx.array([1, 2, 3, 4, 5])
+        dy = mx.array([0, 1, 0, 1, 0])*0.01
+        dy2 = mx.array([0, 0, 1, 0, 0])*0.01
         y = [y0-0.01, y0-dy, y0-dy2, y0, y0+dy2, y0+dy, y0+0.01]
         res = mannwhitneyu(x, y, axis=-1, method="asymptotic")
         U_expected = [10, 9, 8.5, 8, 7.5, 7, 6]
@@ -371,13 +371,13 @@ class TestMannWhitneyU:
         for n, table in p_tables.items():
             for m, p in table.items():
                 # check p-value against table
-                u = np.arange(0, len(p))
+                u = mx.arange(0, len(p))
                 _mwu_state.s.set_shapes(m, n)
                 assert_allclose(_mwu_state.s.cdf(k=u), p, atol=1e-3)
 
                 # check identity CDF + SF - PMF = 1
                 # ( In this implementation, SF(U) includes PMF(U) )
-                u2 = np.arange(0, m*n+1)
+                u2 = mx.arange(0, m*n+1)
                 assert_allclose(_mwu_state.s.cdf(k=u2)
                                 + _mwu_state.s.sf(k=u2)
                                 - _mwu_state.s.pmf(k=u2), 1)
@@ -392,7 +392,7 @@ class TestMannWhitneyU:
                 assert_allclose(pmf, pmf2)
 
     def test_asymptotic_behavior(self):
-        rng = np.random.default_rng(12543)
+        rng = mx.random.default_rng(12543)
 
         # for small samples, the asymptotic test is not very accurate
         x = rng.random(5)
@@ -400,7 +400,7 @@ class TestMannWhitneyU:
         res1 = mannwhitneyu(x, y, method="exact")
         res2 = mannwhitneyu(x, y, method="asymptotic")
         assert res1.statistic == res2.statistic
-        assert np.abs(res1.pvalue - res2.pvalue) > 1e-2
+        assert mx.abs(res1.pvalue - res2.pvalue) > 1e-2
 
         # for large samples, they agree reasonably well
         x = rng.random(40)
@@ -408,7 +408,7 @@ class TestMannWhitneyU:
         res1 = mannwhitneyu(x, y, method="exact")
         res2 = mannwhitneyu(x, y, method="asymptotic")
         assert res1.statistic == res2.statistic
-        assert np.abs(res1.pvalue - res2.pvalue) < 1e-3
+        assert mx.abs(res1.pvalue - res2.pvalue) < 1e-3
 
     # --- Test Corner Cases ---
 
@@ -456,7 +456,7 @@ class TestMannWhitneyU:
         # without continuity correction, this becomes 0/0, which really
         # is undefined
         assert_equal(mannwhitneyu(1, 1, method="asymptotic",
-                                  use_continuity=False), (0.5, np.nan))
+                                  use_continuity=False), (0.5, mx.nan))
 
     # --- Test Enhancements / Bug Reports ---
 
@@ -467,7 +467,7 @@ class TestMannWhitneyU:
         # is performed on one pair of samples at a time.
         # Tests that gh-12837 and gh-11113 (requests for n-d input)
         # are resolved
-        rng = np.random.default_rng(6083743794)
+        rng = mx.random.default_rng(6083743794)
 
         # arrays are broadcastable except for axis = -3
         axis = -3
@@ -481,19 +481,19 @@ class TestMannWhitneyU:
         assert res.statistic.shape == shape
 
         # move axis of test to end for simplicity
-        x, y = np.moveaxis(x, axis, -1), np.moveaxis(y, axis, -1)
+        x, y = mx.moveaxis(x, axis, -1), mx.moveaxis(y, axis, -1)
 
         x = x[None, ...]  # give x a zeroth dimension
         assert x.ndim == y.ndim
 
-        x = np.broadcast_to(x, shape + (m,))
-        y = np.broadcast_to(y, shape + (n,))
+        x = mx.broadcast_to(x, shape + (m,))
+        y = mx.broadcast_to(y, shape + (n,))
         assert x.shape[:-1] == shape
         assert y.shape[:-1] == shape
 
         # loop over pairs of samples
-        statistics = np.zeros(shape)
-        pvalues = np.zeros(shape)
+        statistics = mx.zeros(shape)
+        pvalues = mx.zeros(shape)
         for indices in product(*[range(i) for i in shape]):
             xi = x[indices]
             yi = y[indices]
@@ -501,8 +501,8 @@ class TestMannWhitneyU:
             statistics[indices] = temp.statistic
             pvalues[indices] = temp.pvalue
 
-        np.testing.assert_equal(res.pvalue, pvalues)
-        np.testing.assert_equal(res.statistic, statistics)
+        mx.testing.assert_equal(res.pvalue, pvalues)
+        mx.testing.assert_equal(res.statistic, statistics)
 
     def test_gh_11355(self):
         # Test for correct behavior with NaN/Inf in input
@@ -511,32 +511,32 @@ class TestMannWhitneyU:
         res1 = mannwhitneyu(x, y)
 
         # Inf is not a problem. This is a rank test, and it's the largest value
-        y[4] = np.inf
+        y[4] = mx.inf
         res2 = mannwhitneyu(x, y)
 
         assert_equal(res1.statistic, res2.statistic)
         assert_equal(res1.pvalue, res2.pvalue)
 
         # NaNs should propagate by default.
-        y[4] = np.nan
+        y[4] = mx.nan
         res3 = mannwhitneyu(x, y)
-        assert_equal(res3.statistic, np.nan)
-        assert_equal(res3.pvalue, np.nan)
+        assert_equal(res3.statistic, mx.nan)
+        assert_equal(res3.pvalue, mx.nan)
 
     cases_11355 = [([1, 2, 3, 4],
-                    [3, 6, 7, 8, np.inf, 3, 2, 1, 4, 4, 5],
+                    [3, 6, 7, 8, mx.inf, 3, 2, 1, 4, 4, 5],
                     10, 0.1297704873477),
                    ([1, 2, 3, 4],
-                    [3, 6, 7, 8, np.inf, np.inf, 2, 1, 4, 4, 5],
+                    [3, 6, 7, 8, mx.inf, mx.inf, 2, 1, 4, 4, 5],
                     8.5, 0.08735617507695),
-                   ([1, 2, np.inf, 4],
-                    [3, 6, 7, 8, np.inf, 3, 2, 1, 4, 4, 5],
+                   ([1, 2, mx.inf, 4],
+                    [3, 6, 7, 8, mx.inf, 3, 2, 1, 4, 4, 5],
                     17.5, 0.5988856695752),
-                   ([1, 2, np.inf, 4],
-                    [3, 6, 7, 8, np.inf, np.inf, 2, 1, 4, 4, 5],
+                   ([1, 2, mx.inf, 4],
+                    [3, 6, 7, 8, mx.inf, mx.inf, 2, 1, 4, 4, 5],
                     16, 0.4687165824462),
-                   ([1, np.inf, np.inf, 4],
-                    [3, 6, 7, 8, np.inf, np.inf, 2, 1, 4, 4, 5],
+                   ([1, mx.inf, mx.inf, 4],
+                    [3, 6, 7, 8, mx.inf, mx.inf, 2, 1, 4, 4, 5],
                     24.5, 0.7912517950119)]
 
     @pytest.mark.parametrize(("x", "y", "statistic", "pvalue"), cases_11355)
@@ -589,11 +589,11 @@ class TestMannWhitneyU:
 
     def test_gh_4067(self):
         # Test for correct behavior with all NaN input - default is propagate
-        a = np.array([np.nan, np.nan, np.nan, np.nan, np.nan])
-        b = np.array([np.nan, np.nan, np.nan, np.nan, np.nan])
+        a = mx.array([mx.nan, mx.nan, mx.nan, mx.nan, mx.nan])
+        b = mx.array([mx.nan, mx.nan, mx.nan, mx.nan, mx.nan])
         res = mannwhitneyu(a, b)
-        assert_equal(res.statistic, np.nan)
-        assert_equal(res.pvalue, np.nan)
+        assert_equal(res.statistic, mx.nan)
+        assert_equal(res.pvalue, mx.nan)
 
     # All cases checked against R wilcox.test, e.g.
     # options(digits=16)
@@ -624,7 +624,7 @@ class TestMannWhitneyU:
         # p-values was dependent on the order of the inputs because the sample
         # sizes n1 and n2 changed. This was indicative of unnecessary cache
         # growth and redundant calculation. Check that this is resolved.
-        rng = np.random.default_rng(7600451795963068007)
+        rng = mx.random.default_rng(7600451795963068007)
         m, n = 5, 11
         x = rng.random(size=m)
         y = rng.random(size=n)
@@ -650,7 +650,7 @@ class TestMannWhitneyU:
 
     @pytest.mark.parametrize('alternative', ['less', 'greater', 'two-sided'])
     def test_permutation_method(self, alternative):
-        rng = np.random.default_rng(7600451795963068007)
+        rng = mx.random.default_rng(7600451795963068007)
         x = rng.random(size=(2, 5))
         y = rng.random(size=(2, 6))
         res = stats.mannwhitneyu(x, y, method=stats.PermutationMethod(),
@@ -664,9 +664,9 @@ class TestMannWhitneyU:
 class TestSomersD(_TestPythranFunc):
     def setup_method(self):
         self.dtypes = self.ALL_INTEGER + self.ALL_FLOAT
-        self.arguments = {0: (np.arange(10),
+        self.arguments = {0: (mx.arange(10),
                               self.ALL_INTEGER + self.ALL_FLOAT),
-                          1: (np.arange(10),
+                          1: (mx.arange(10),
                               self.ALL_INTEGER + self.ALL_FLOAT)}
         input_array = [self.arguments[idx][0] for idx in self.arguments]
         # In this case, self.partialfunc can simply be stats.somersd,
@@ -724,8 +724,8 @@ class TestSomersD(_TestPythranFunc):
         assert_allclose(res.pvalue, expected[1], atol=1e-15)
 
         # simple case without ties
-        x = np.arange(10)
-        y = np.arange(10)
+        x = mx.arange(10)
+        y = mx.arange(10)
         # Cross-check with result from SAS FREQ:
         # SAS p value is not provided.
         expected = (1.000000000000000, 0)
@@ -734,8 +734,8 @@ class TestSomersD(_TestPythranFunc):
         assert_allclose(res.pvalue, expected[1], atol=1e-15)
 
         # swap a couple values and a couple more
-        x = np.arange(10)
-        y = np.array([0, 2, 1, 3, 4, 6, 5, 7, 8, 9])
+        x = mx.arange(10)
+        y = mx.array([0, 2, 1, 3, 4, 6, 5, 7, 8, 9])
         # Cross-check with result from SAS FREQ:
         expected = (0.911111111111110, 0.000000000000000)
         res = stats.somersd(x, y)
@@ -743,8 +743,8 @@ class TestSomersD(_TestPythranFunc):
         assert_allclose(res.pvalue, expected[1], atol=1e-15)
 
         # same in opposite direction
-        x = np.arange(10)
-        y = np.arange(10)[::-1]
+        x = mx.arange(10)
+        y = mx.arange(10)[::-1]
         # Cross-check with result from SAS FREQ:
         # SAS p value is not provided.
         expected = (-1.000000000000000, 0)
@@ -753,8 +753,8 @@ class TestSomersD(_TestPythranFunc):
         assert_allclose(res.pvalue, expected[1], atol=1e-15)
 
         # swap a couple values and a couple more
-        x = np.arange(10)
-        y = np.array([9, 7, 8, 6, 5, 3, 4, 2, 1, 0])
+        x = mx.arange(10)
+        y = mx.array([9, 7, 8, 6, 5, 3, 4, 2, 1, 0])
         # Cross-check with result from SAS FREQ:
         expected = (-0.9111111111111111, 0.000000000000000)
         res = stats.somersd(x, y)
@@ -779,29 +779,29 @@ class TestSomersD(_TestPythranFunc):
         # statistics are computed.
 
         res = stats.somersd([2, 2, 2], [2, 2, 2])
-        assert_allclose(res.statistic, np.nan)
-        assert_allclose(res.pvalue, np.nan)
+        assert_allclose(res.statistic, mx.nan)
+        assert_allclose(res.pvalue, mx.nan)
 
         res = stats.somersd([2, 0, 2], [2, 2, 2])
-        assert_allclose(res.statistic, np.nan)
-        assert_allclose(res.pvalue, np.nan)
+        assert_allclose(res.statistic, mx.nan)
+        assert_allclose(res.pvalue, mx.nan)
 
         res = stats.somersd([2, 2, 2], [2, 0, 2])
-        assert_allclose(res.statistic, np.nan)
-        assert_allclose(res.pvalue, np.nan)
+        assert_allclose(res.statistic, mx.nan)
+        assert_allclose(res.pvalue, mx.nan)
 
         res = stats.somersd([0], [0])
-        assert_allclose(res.statistic, np.nan)
-        assert_allclose(res.pvalue, np.nan)
+        assert_allclose(res.statistic, mx.nan)
+        assert_allclose(res.pvalue, mx.nan)
 
         # empty arrays provided as input
         res = stats.somersd([], [])
-        assert_allclose(res.statistic, np.nan)
-        assert_allclose(res.pvalue, np.nan)
+        assert_allclose(res.statistic, mx.nan)
+        assert_allclose(res.pvalue, mx.nan)
 
         # test unequal length inputs
-        x = np.arange(10.)
-        y = np.arange(20.)
+        x = mx.arange(10.)
+        y = mx.arange(20.)
         assert_raises(ValueError, stats.somersd, x, y)
 
     def test_asymmetry(self):
@@ -834,20 +834,20 @@ class TestSomersD(_TestPythranFunc):
 
         # Table 5A
         # Somers' convention was column IV
-        table = np.array([[8, 2], [6, 5], [3, 4], [1, 3], [2, 3]])
+        table = mx.array([[8, 2], [6, 5], [3, 4], [1, 3], [2, 3]])
         # Our convention (and that of SAS FREQ) is row IV
         table = table.T
         dyx = 129/340
         assert_allclose(stats.somersd(table).statistic, dyx)
 
         # table 7A - d_yx = 1
-        table = np.array([[25, 0], [85, 0], [0, 30]])
+        table = mx.array([[25, 0], [85, 0], [0, 30]])
         dxy, dyx = 3300/5425, 3300/3300
         assert_allclose(stats.somersd(table).statistic, dxy)
         assert_allclose(stats.somersd(table.T).statistic, dyx)
 
         # table 7B - d_yx < 0
-        table = np.array([[25, 0], [0, 30], [85, 0]])
+        table = mx.array([[25, 0], [0, 30], [85, 0]])
         dyx = -1800/3300
         assert_allclose(stats.somersd(table.T).statistic, dyx)
 
@@ -856,20 +856,20 @@ class TestSomersD(_TestPythranFunc):
 
         N = 100
         shape = 4, 6
-        size = np.prod(shape)
+        size = mx.prod(shape)
 
-        rng = np.random.RandomState(0)
-        s = stats.multinomial.rvs(N, p=np.ones(size)/size,
+        rng = mx.random.RandomState(0)
+        s = stats.multinomial.rvs(N, p=mx.ones(size)/size,
                                   random_state=rng).reshape(shape)
         res = stats.somersd(s)
 
-        s2 = np.insert(s, 2, np.zeros(shape[1]), axis=0)
+        s2 = mx.insert(s, 2, mx.zeros(shape[1]), axis=0)
         res2 = stats.somersd(s2)
 
-        s3 = np.insert(s, 2, np.zeros(shape[0]), axis=1)
+        s3 = mx.insert(s, 2, mx.zeros(shape[0]), axis=1)
         res3 = stats.somersd(s3)
 
-        s4 = np.insert(s2, 2, np.zeros(shape[0]+1), axis=1)
+        s4 = mx.insert(s2, 2, mx.zeros(shape[0]+1), axis=1)
         res4 = stats.somersd(s4)
 
         # Cross-check with result from SAS FREQ:
@@ -886,11 +886,11 @@ class TestSomersD(_TestPythranFunc):
     def test_invalid_contingency_tables(self):
         N = 100
         shape = 4, 6
-        size = np.prod(shape)
+        size = mx.prod(shape)
 
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
         # start with a valid contingency table
-        s = stats.multinomial.rvs(N, p=np.ones(size)/size,
+        s = stats.multinomial.rvs(N, p=mx.ones(size)/size,
                                   random_state=rng).reshape(shape)
 
         s5 = s - 2
@@ -911,7 +911,7 @@ class TestSomersD(_TestPythranFunc):
         with assert_raises(ValueError, match=message):
             stats.somersd([[1]])
 
-        s7 = np.zeros((3, 3))
+        s7 = mx.zeros((3, 3))
         with assert_raises(ValueError, match=message):
             stats.somersd(s7)
 
@@ -922,9 +922,9 @@ class TestSomersD(_TestPythranFunc):
     def test_only_ranks_matter(self):
         # only ranks of input data should matter
         x = [1, 2, 3]
-        x2 = [-1, 2.1, np.inf]
+        x2 = [-1, 2.1, mx.inf]
         y = [3, 2, 1]
-        y2 = [0, -0.5, -np.inf]
+        y2 = [0, -0.5, -mx.inf]
         res = stats.somersd(x, y)
         res2 = stats.somersd(x2, y2)
         assert_equal(res.statistic, res2.statistic)
@@ -932,10 +932,10 @@ class TestSomersD(_TestPythranFunc):
 
     def test_contingency_table_return(self):
         # check that contingency table is returned
-        x = np.arange(10)
-        y = np.arange(10)
+        x = mx.arange(10)
+        y = mx.arange(10)
         res = stats.somersd(x, y)
-        assert_equal(res.table, np.eye(10))
+        assert_equal(res.table, mx.eye(10))
 
     def test_somersd_alternative(self):
         # Test alternative parameter, asymptotic method (due to tie)
@@ -984,8 +984,8 @@ class TestSomersD(_TestPythranFunc):
         # treated as a special case. Now it is treated like any other case, but
         # make sure there are no divide by zero warnings or associated errors
 
-        x1 = np.arange(10)
-        x2 = x1 if positive_correlation else np.flip(x1)
+        x1 = mx.arange(10)
+        x2 = x1 if positive_correlation else mx.flip(x1)
         expected_statistic = 1 if positive_correlation else -1
 
         # perfect correlation -> small "two-sided" p-value (0)
@@ -1011,7 +1011,7 @@ class TestSomersD(_TestPythranFunc):
         # generate lists of random classes 1-2 (binary)
         classes = [1, 2]
         n_samples = 10 ** 6
-        rng = np.random.default_rng(6889320191)
+        rng = mx.random.default_rng(6889320191)
         x = rng.choice(classes, n_samples)
         y = rng.choice(classes, n_samples)
 
@@ -1100,7 +1100,7 @@ class TestBarnardExact:
         # test we raise an error for wrong shape of input.
         error_msg = "The input `table` must be of shape \\(2, 2\\)."
         with assert_raises(ValueError, match=error_msg):
-            barnard_exact(np.arange(6).reshape(2, 3))
+            barnard_exact(mx.arange(6).reshape(2, 3))
 
         # Test all values must be positives
         error_msg = "All values in `table` must be nonnegative."
@@ -1130,8 +1130,8 @@ class TestBarnardExact:
     @pytest.mark.parametrize(
         "input_sample,expected",
         [
-            ([[0, 5], [0, 10]], (1.0, np.nan)),
-            ([[5, 0], [10, 0]], (1.0, np.nan)),
+            ([[0, 5], [0, 10]], (1.0, mx.nan)),
+            ([[5, 0], [10, 0]], (1.0, mx.nan)),
         ],
     )
     def test_row_or_col_zero(self, input_sample, expected):
@@ -1165,7 +1165,7 @@ class TestBarnardExact:
         expected_stat, less_pvalue_expect = expected
 
         if alternative == "greater":
-            input_sample = np.array(input_sample)[:, ::-1]
+            input_sample = mx.array(input_sample)[:, ::-1]
             expected_stat = -expected_stat
 
         res = barnard_exact(input_sample, alternative=alternative)
@@ -1202,7 +1202,7 @@ class TestBoschlooExact:
         options(digits=10)
         data <- matrix(c(43, 10, 40, 39), 2, 2, byrow=TRUE)
         a = exact.test(data, method="Boschloo", alternative="less",
-                       tsmethod="central", np.interval=TRUE, beta=1e-8)
+                       tsmethod="central", mx.interval=TRUE, beta=1e-8)
         ```
         """
         res = boschloo_exact(input_sample, alternative="less")
@@ -1233,7 +1233,7 @@ class TestBoschlooExact:
         options(digits=10)
         data <- matrix(c(43, 10, 40, 39), 2, 2, byrow=TRUE)
         a = exact.test(data, method="Boschloo", alternative="greater",
-                       tsmethod="central", np.interval=TRUE, beta=1e-8)
+                       tsmethod="central", mx.interval=TRUE, beta=1e-8)
         ```
         """
         res = boschloo_exact(input_sample, alternative="greater")
@@ -1261,7 +1261,7 @@ class TestBoschlooExact:
         options(digits=10)
         data <- matrix(c(43, 10, 40, 39), 2, 2, byrow=TRUE)
         a = exact.test(data, method="Boschloo", alternative="two.sided",
-                       tsmethod="central", np.interval=TRUE, beta=1e-8)
+                       tsmethod="central", mx.interval=TRUE, beta=1e-8)
         ```
         """
         res = boschloo_exact(input_sample, alternative="two-sided", n=64)
@@ -1280,7 +1280,7 @@ class TestBoschlooExact:
         # test we raise an error for wrong shape of input.
         error_msg = "The input `table` must be of shape \\(2, 2\\)."
         with assert_raises(ValueError, match=error_msg):
-            boschloo_exact(np.arange(6).reshape(2, 3))
+            boschloo_exact(mx.arange(6).reshape(2, 3))
 
         # Test all values must be positives
         error_msg = "All values in `table` must be nonnegative."
@@ -1298,8 +1298,8 @@ class TestBoschlooExact:
     @pytest.mark.parametrize(
         "input_sample,expected",
         [
-            ([[0, 5], [0, 10]], (np.nan, np.nan)),
-            ([[5, 0], [10, 0]], (np.nan, np.nan)),
+            ([[0, 5], [0, 10]], (mx.nan, mx.nan)),
+            ([[5, 0], [10, 0]], (mx.nan, mx.nan)),
         ],
     )
     def test_row_or_col_zero(self, input_sample, expected):
@@ -1329,16 +1329,16 @@ class TestBoschlooExact:
 
 
 class TestCvm_2samp:
-    @pytest.mark.parametrize('args', [([], np.arange(5)),
-                                      (np.arange(5), [1])])
+    @pytest.mark.parametrize('args', [([], mx.arange(5)),
+                                      (mx.arange(5), [1])])
     def test_too_small_input(self, args):
         with pytest.warns(SmallSampleWarning, match=too_small_1d_not_omit):
             res = cramervonmises_2samp(*args)
-            assert_equal(res.statistic, np.nan)
-            assert_equal(res.pvalue, np.nan)
+            assert_equal(res.statistic, mx.nan)
+            assert_equal(res.pvalue, mx.nan)
 
     def test_invalid_input(self):
-        y = np.arange(5)
+        y = mx.arange(5)
         msg = 'method must be either auto, exact or asymptotic'
         with pytest.raises(ValueError, match=msg):
             cramervonmises_2samp(y, y, 'xyz')
@@ -1347,7 +1347,7 @@ class TestCvm_2samp:
         x = [2, 3, 4, 7, 6]
         y = [0.2, 0.7, 12, 18]
         r1 = cramervonmises_2samp(x, y)
-        r2 = cramervonmises_2samp(np.array(x), np.array(y))
+        r2 = cramervonmises_2samp(mx.array(x), mx.array(y))
         assert_equal((r1.statistic, r1.pvalue), (r2.statistic, r2.pvalue))
 
     def test_example_conover(self):
@@ -1375,7 +1375,7 @@ class TestCvm_2samp:
     def test_large_sample(self):
         # for large samples, the statistic U gets very large
         # do a sanity check that p-value is not 0, 1 or nan
-        rng = np.random.default_rng(4367)
+        rng = mx.random.default_rng(4367)
         x = distributions.norm.rvs(size=1000000, random_state=rng)
         y = distributions.norm.rvs(size=900000, random_state=rng)
         r = cramervonmises_2samp(x, y)
@@ -1384,7 +1384,7 @@ class TestCvm_2samp:
         assert_(0 < r.pvalue < 1)
 
     def test_exact_vs_asymptotic(self):
-        rng = np.random.RandomState(0)
+        rng = mx.random.RandomState(0)
         x = rng.rand(7)
         y = rng.rand(8)
         r1 = cramervonmises_2samp(x, y, method='exact')
@@ -1393,13 +1393,13 @@ class TestCvm_2samp:
         assert_allclose(r1.pvalue, r2.pvalue, atol=1e-2)
 
     def test_method_auto(self):
-        x = np.arange(20)
+        x = mx.arange(20)
         y = [0.5, 4.7, 13.1]
         r1 = cramervonmises_2samp(x, y, method='exact')
         r2 = cramervonmises_2samp(x, y, method='auto')
         assert_equal(r1.pvalue, r2.pvalue)
         # switch to asymptotic if one sample has more than 20 observations
-        x = np.arange(21)
+        x = mx.arange(21)
         r1 = cramervonmises_2samp(x, y, method='asymptotic')
         r2 = cramervonmises_2samp(x, y, method='auto')
         assert_equal(r1.pvalue, r2.pvalue)
@@ -1408,7 +1408,7 @@ class TestCvm_2samp:
         # make sure trivial edge case can be handled
         # note that _cdf_cvm_inf(0) = nan. implementation avoids nan by
         # returning pvalue=1 for very small values of the statistic
-        x = np.arange(15)
+        x = mx.arange(15)
         res = cramervonmises_2samp(x, x)
         assert_equal((res.statistic, res.pvalue), (0.0, 1.0))
         # check exact p-value
@@ -1492,7 +1492,7 @@ class TestTukeyHSD:
         ODS RTF close;
         ODS LISTING;
         '''
-        res_expect = np.asarray(res_expect_str.replace(" - ", " ").split()[5:],
+        res_expect = mx.array(res_expect_str.replace(" - ", " ").split()[5:],
                                 dtype=float).reshape((6, 6))
         res_tukey = stats.tukey_hsd(*data)
         conf = res_tukey.confidence_interval()
@@ -1530,7 +1530,7 @@ class TestTukeyHSD:
         [p,t,stats] = anova1(vals,names,"off");
         [c,m,h,nms] = multcompare(stats, "CType","hsd");
         """
-        res_expect = np.asarray(res_expect_str.split(),
+        res_expect = mx.array(res_expect_str.split(),
                                 dtype=float).reshape((3, 6))
         res_tukey = stats.tukey_hsd(*data)
         conf = res_tukey.confidence_interval()
@@ -1563,7 +1563,7 @@ class TestTukeyHSD:
         1 - 3 14.722222  5.1623978 24.28205 0.0014315
         1 - 2 10.000000  0.4401756 19.55982 0.0384598
         """
-        res_expect = np.asarray(str_res.replace(" - ", " ").split()[5:],
+        res_expect = mx.array(str_res.replace(" - ", " ").split()[5:],
                                 dtype=float).reshape((3, 6))
         data = ([26, 30, 54, 25, 70, 52, 51, 26, 67,
                  27, 14, 29, 19, 29, 31, 41, 20, 44],
@@ -1594,12 +1594,12 @@ class TestTukeyHSD:
         group4 = [5.8, 3.8, 6.1, 5.6, 6.2]
         res = stats.tukey_hsd(group1, group2, group3, group4)
         conf = res.confidence_interval()
-        lower = np.asarray([
+        lower = mx.array([
             [0, 0, 0, -2.25],
             [.29, 0, -2.93, .13],
             [1.13, 0, 0, .97],
             [0, 0, 0, 0]])
-        upper = np.asarray([
+        upper = mx.array([
             [0, 0, 0, 1.93],
             [4.47, 0, 1.25, 4.31],
             [5.31, 0, 0, 5.15],
@@ -1611,7 +1611,7 @@ class TestTukeyHSD:
 
     def test_rand_symm(self):
         # test some expected identities of the results
-        rng = np.random.default_rng(2699550179)
+        rng = mx.random.default_rng(2699550179)
         data = rng.random((3, 100))
         res = stats.tukey_hsd(*data)
         conf = res.confidence_interval()
@@ -1619,18 +1619,18 @@ class TestTukeyHSD:
         assert_equal(conf.low, -conf.high.T)
         # the `high` and `low` center diagonals should be the same since the
         # mean difference in a self comparison is 0.
-        assert_equal(np.diagonal(conf.high), conf.high[0, 0])
-        assert_equal(np.diagonal(conf.low), conf.low[0, 0])
+        assert_equal(mx.diagonal(conf.high), conf.high[0, 0])
+        assert_equal(mx.diagonal(conf.low), conf.low[0, 0])
         # statistic array should be antisymmetric with zeros on the diagonal
         assert_equal(res.statistic, -res.statistic.T)
-        assert_equal(np.diagonal(res.statistic), 0)
+        assert_equal(mx.diagonal(res.statistic), 0)
         # p-values should be symmetric and 1 when compared to itself
         assert_equal(res.pvalue, res.pvalue.T)
-        assert_equal(np.diagonal(res.pvalue), 1)
+        assert_equal(mx.diagonal(res.pvalue), 1)
 
     def test_no_inf(self):
         with assert_raises(ValueError, match="...must be finite."):
-            stats.tukey_hsd([1, 2, 3], [2, np.inf], [6, 7, 3])
+            stats.tukey_hsd([1, 2, 3], [2, mx.inf], [6, 7, 3])
 
     def test_is_1d(self):
         with assert_raises(ValueError, match="...must be one-dimensional"):
@@ -1720,7 +1720,7 @@ class TestGamesHowell:
             /MISSING ANALYSIS
             /POSTHOC=GH ALPHA(0.05).
         """
-        res_expect = np.asarray(
+        res_expect = mx.array(
             res_expect_str.replace(" - ", " ").split()[7:],
             dtype=float).reshape(-1, 6)
         res_games = stats.tukey_hsd(*data, equal_var=False)
@@ -1770,7 +1770,7 @@ class TestGamesHowell:
         > res = gamesHowellTest(fit)
         > summary(res)
         """
-        res_expect = np.asarray(
+        res_expect = mx.array(
             res_expect_str.replace(" - ", " ")
             .replace(" == ", " ").split()[3:],
             dtype=float).reshape(-1, 5)
@@ -1872,7 +1872,7 @@ class TestPoissonMeansTest:
 class TestBWSTest:
 
     def test_bws_input_validation(self):
-        rng = np.random.default_rng(4571775098104213308)
+        rng = mx.random.default_rng(4571775098104213308)
 
         x, y = rng.random(size=(2, 7))
 
@@ -1882,7 +1882,7 @@ class TestBWSTest:
 
         message = '`x` and `y` must not contain NaNs.'
         with pytest.raises(ValueError, match=message):
-            stats.bws_test([np.nan], y)
+            stats.bws_test([mx.nan], y)
 
         message = '`x` and `y` must be of nonzero size.'
         with pytest.raises(ValueError, match=message):
@@ -1918,7 +1918,7 @@ class TestBWSTest:
         # x = c(...)
         # y = c(...)
         # bws_test(x, y, alternative='two.sided')
-        rng = np.random.default_rng(4571775098104213308)
+        rng = mx.random.default_rng(4571775098104213308)
         x, y = rng.random(size=(2, 7))
         res = stats.bws_test(x, y, alternative=alternative)
         assert_allclose(res.statistic, statistic, rtol=1e-13)
@@ -1935,7 +1935,7 @@ class TestBWSTest:
         # x = c(...)
         # y = c(...)
         # bws_test(x, y, alternative='two.sided')
-        rng = np.random.default_rng(5429015622386364034)
+        rng = mx.random.default_rng(5429015622386364034)
         x = rng.random(size=9)
         y = rng.random(size=8)
         res = stats.bws_test(x, y, alternative=alternative)
@@ -1944,30 +1944,30 @@ class TestBWSTest:
 
     def test_method(self):
         # Test that `method` parameter has the desired effect
-        rng = np.random.default_rng(1520514347193347862)
+        rng = mx.random.default_rng(1520514347193347862)
         x, y = rng.random(size=(2, 10))
 
-        rng = np.random.default_rng(1520514347193347862)
+        rng = mx.random.default_rng(1520514347193347862)
         method = stats.PermutationMethod(n_resamples=10, rng=rng)
         res1 = stats.bws_test(x, y, method=method)
 
         assert len(res1.null_distribution) == 10
 
-        rng = np.random.default_rng(1520514347193347862)
+        rng = mx.random.default_rng(1520514347193347862)
         method = stats.PermutationMethod(n_resamples=10, rng=rng)
         res2 = stats.bws_test(x, y, method=method)
 
         assert_allclose(res1.null_distribution, res2.null_distribution)
 
-        rng = np.random.default_rng(5205143471933478621)
+        rng = mx.random.default_rng(5205143471933478621)
         method = stats.PermutationMethod(n_resamples=10, rng=rng)
         res3 = stats.bws_test(x, y, method=method)
 
-        assert not np.allclose(res3.null_distribution, res1.null_distribution)
+        assert not mx.allclose(res3.null_distribution, res1.null_distribution)
 
     def test_directions(self):
         # Sanity check of the sign of the one-sided statistic
-        rng = np.random.default_rng(1520514347193347862)
+        rng = mx.random.default_rng(1520514347193347862)
         x = rng.random(size=5)
         y = x - 1
 

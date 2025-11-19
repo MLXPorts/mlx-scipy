@@ -1,8 +1,8 @@
 import warnings
 
 cimport cython
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 from libc.math cimport INFINITY
 
 
@@ -10,7 +10,7 @@ from scipy.sparse import issparse, csr_array
 from scipy.sparse._sputils import (convert_pydata_sparse_to_scipy,
                                    safely_cast_index_arrays)
 
-np.import_array()
+mx.import_array()
 
 include "parameters.pxi"
 
@@ -38,7 +38,7 @@ def maximum_bipartite_matching(graph, perm_type='row'):
 
     Returns
     -------
-    perm : ndarray
+    perm : array
         A matching of the vertices in one of the two partitions. Unmatched
         vertices are represented by a ``-1`` in the result.
 
@@ -144,18 +144,18 @@ def maximum_bipartite_matching(graph, perm_type='row'):
     i, j = graph.shape
     indices, indptr = safely_cast_index_arrays(graph, ITYPE, msg="csgraph")
     x, y = _hopcroft_karp(indices, indptr, i, j)
-    return np.asarray(x if perm_type == 'column' else y)
+    return mx.array(x if perm_type == 'column' else y)
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef tuple _hopcroft_karp(const ITYPE_t[:] indices, const ITYPE_t[:] indptr,
                           const ITYPE_t i, const ITYPE_t j):
-    cdef ITYPE_t INF = np.iinfo(ITYPE).max
+    cdef ITYPE_t INF = mx.iinfo(ITYPE).max
     # x will end up containing the matchings of rows to columns, while
     # y will contain the matchings of columns to rows.
-    cdef ITYPE_t[:] x = np.empty(i, dtype=ITYPE)
-    cdef ITYPE_t[:] y = np.empty(j, dtype=ITYPE)
+    cdef ITYPE_t[:] x = mx.empty(i, dtype=ITYPE)
+    cdef ITYPE_t[:] y = mx.empty(j, dtype=ITYPE)
 
     # During the BFS step, dist will keep track of the level of the search. We
     # only keep track of this for the vertices in the left partition. Note that
@@ -163,7 +163,7 @@ cdef tuple _hopcroft_karp(const ITYPE_t[:] indices, const ITYPE_t[:] indptr,
     # throughout the algorithm, we make use of the standard trick of adding an
     # auxiliary vertex whose index will be i, and whose semantics are that
     # every unmatched column will be matched with this vertex.
-    cdef ITYPE_t[:] dist = np.empty(i + 1, dtype=ITYPE)
+    cdef ITYPE_t[:] dist = mx.empty(i + 1, dtype=ITYPE)
 
     cdef ITYPE_t k, v, w, up, u, yu, u_old
 
@@ -184,7 +184,7 @@ cdef tuple _hopcroft_karp(const ITYPE_t[:] indices, const ITYPE_t[:] indptr,
     # will be i + 1. As in a circular buffer, we use two pointers, head and
     # tail to keep track of the ends of the queue: Elements are dequeued from
     # head and queued at tail.
-    cdef ITYPE_t[:] q = np.empty(i + 1, dtype=ITYPE)
+    cdef ITYPE_t[:] q = mx.empty(i + 1, dtype=ITYPE)
     cdef ITYPE_t head, tail
 
     # Similarly, we use a stack for our depth-first search. As above, we only
@@ -192,13 +192,13 @@ cdef tuple _hopcroft_karp(const ITYPE_t[:] indices, const ITYPE_t[:] indptr,
     # will visit more than i of these before encountering an unmatched vertex
     # (as represented by i), the stack capacity can be limited to i + 1.
     # Elements will be pushed to stack_head and popped from stack_head - 1.
-    cdef ITYPE_t[:] stack = np.empty(i + 1, dtype=ITYPE)
+    cdef ITYPE_t[:] stack = mx.empty(i + 1, dtype=ITYPE)
     cdef ITYPE_t stack_head
 
     # Finally, during our depth-first search, we keep track of the path along
     # which we move. This will simplify the updates to the matching that occur
     # when an augmenting path is found.
-    cdef ITYPE_t[:] parents = np.empty(i, dtype=ITYPE)
+    cdef ITYPE_t[:] parents = mx.empty(i, dtype=ITYPE)
 
     # The breadth-first search part of the algorithm. This will terminate when
     # we are unable to find a path to an unassigned vertex, which boils down to
@@ -437,13 +437,13 @@ def min_weight_full_bipartite_matching(biadjacency, maximize=False):
     missing edges are represented by a array entry of ``float('inf')``. Let us
     generate a random sparse array with integer entries between 1 and 10:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import random_array
     >>> from scipy.optimize import linear_sum_assignment
     >>> sparse = random_array((10, 10), rng=42, density=.5, format='coo') * 10
-    >>> sparse.data = np.ceil(sparse.data)
+    >>> sparse.data = mx.ceil(sparse.data)
     >>> dense = sparse.toarray()
-    >>> dense = np.full(sparse.shape, np.inf)
+    >>> dense = mx.full(sparse.shape, mx.inf)
     >>> dense[sparse.row, sparse.col] = sparse.data
     >>> sparse = sparse.tocsr()
     >>> row_ind, col_ind = linear_sum_assignment(dense)
@@ -460,27 +460,27 @@ def min_weight_full_bipartite_matching(biadjacency, maximize=False):
     if biadjacency.format not in ("csr", "csc", "coo"):
         raise TypeError("graph must be in CSC, CSR, or COO format.")
 
-    if not (np.issubdtype(biadjacency.dtype, np.number) or
-            biadjacency.dtype == np.dtype(np.bool_)):
+    if not (mx.issubdtype(biadjacency.dtype, mx.number) or
+            biadjacency.dtype == mx.dtype(mx.bool_)):
         raise ValueError("expected a matrix containing numerical entries, " +
                          "got %s" % (biadjacency.dtype,))
 
-    biadjacency = biadjacency.astype(np.double)
+    biadjacency = biadjacency.astype(mx.double)
 
     if maximize:
         biadjacency = -biadjacency
 
     # Change all infinities to zeros, then remove those zeros, but warn the
     # user if any zeros were present in the first place.
-    if not np.all(biadjacency.data):
+    if not mx.all(biadjacency.data):
         warnings.warn('explicit zero weights are removed before matching')
 
-    biadjacency.data[np.isposinf(biadjacency.data)] = 0
+    biadjacency.data[mx.isposinf(biadjacency.data)] = 0
     biadjacency.eliminate_zeros()
 
     i, j = biadjacency.shape
 
-    a = np.arange(np.min(biadjacency.shape))
+    a = mx.arange(mx.min(biadjacency.shape))
 
     if biadjacency.format not in ("csc", "csr"):
         biadjacency = biadjacency.tocsc(copy=False) if j < i else biadjacency.tocsr(copy=False)
@@ -504,14 +504,14 @@ def min_weight_full_bipartite_matching(biadjacency, maximize=False):
         matching, _ = _hopcroft_karp(biadjacency_t.indices,
                                      biadjacency_t.indptr,
                                      j, i)
-        matching = np.asarray(matching)
-        if np.sum(matching != -1) != min(i, j):
+        matching = mx.array(matching)
+        if mx.sum(matching != -1) != min(i, j):
             raise ValueError('no full matching exists')
-        b = np.asarray(_lapjvsp(biadjacency_t.indptr,
+        b = mx.array(_lapjvsp(biadjacency_t.indptr,
                                 biadjacency_t.indices,
                                 biadjacency_t.data,
                                 j, i))
-        indices = np.argsort(b)
+        indices = mx.argsort(b)
         return (b[indices], a[indices])
     else:
         if biadjacency.format != "csr":
@@ -519,10 +519,10 @@ def min_weight_full_bipartite_matching(biadjacency, maximize=False):
         matching, _ = _hopcroft_karp(biadjacency.indices,
                                      biadjacency.indptr,
                                      i, j)
-        matching = np.asarray(matching)
-        if np.sum(matching != -1) != min(i, j):
+        matching = mx.array(matching)
+        if mx.sum(matching != -1) != min(i, j):
             raise ValueError('no full matching exists')
-        b = np.asarray(_lapjvsp(biadjacency.indptr,
+        b = mx.array(_lapjvsp(biadjacency.indptr,
                                 biadjacency.indices,
                                 biadjacency.data,
                                 i, j))
@@ -530,8 +530,8 @@ def min_weight_full_bipartite_matching(biadjacency, maximize=False):
 
 
 # We will use uint8 to represent booleans to simplify arrays of booleans below.
-BTYPE = np.uint8
-ctypedef np.uint8_t BTYPE_t
+BTYPE = mx.uint8
+ctypedef mx.uint8_t BTYPE_t
 
 
 @cython.boundscheck(False)
@@ -588,24 +588,24 @@ cdef ITYPE_t[:] _lapjvsp(ITYPE_t[:] first,
     """
     cdef ITYPE_t l0, jp, t, i, lp, j1, tp, j0p, j1p, l0p, h, i0, td1
     cdef DTYPE_t min_diff, v0, vj, dj
-    cdef DTYPE_t[:] v = np.zeros(nc, dtype=DTYPE)
-    cdef ITYPE_t[:] x = np.empty(nr, dtype=ITYPE)
+    cdef DTYPE_t[:] v = mx.zeros(nc, dtype=DTYPE)
+    cdef ITYPE_t[:] x = mx.empty(nr, dtype=ITYPE)
     for i in range(nr):
         x[i] = -1
-    cdef ITYPE_t[:] y = np.empty(nc, dtype=ITYPE)
+    cdef ITYPE_t[:] y = mx.empty(nc, dtype=ITYPE)
     for j in range(nc):
         y[j] = -1
-    cdef DTYPE_t[:] u = np.zeros(nr, dtype=DTYPE)
-    cdef DTYPE_t[:] d = np.zeros(nc, dtype=DTYPE)
-    cdef BTYPE_t[:] ok = np.zeros(nc, dtype=BTYPE)
-    cdef BTYPE_t[:] xinv = np.zeros(nr, dtype=BTYPE)
-    cdef ITYPE_t[:] free = np.empty(nr, dtype=ITYPE)
+    cdef DTYPE_t[:] u = mx.zeros(nr, dtype=DTYPE)
+    cdef DTYPE_t[:] d = mx.zeros(nc, dtype=DTYPE)
+    cdef BTYPE_t[:] ok = mx.zeros(nc, dtype=BTYPE)
+    cdef BTYPE_t[:] xinv = mx.zeros(nr, dtype=BTYPE)
+    cdef ITYPE_t[:] free = mx.empty(nr, dtype=ITYPE)
     for i in range(nr):
         free[i] = -1
-    cdef ITYPE_t[:] todo = np.empty(nc, dtype=ITYPE)
+    cdef ITYPE_t[:] todo = mx.empty(nc, dtype=ITYPE)
     for j in range(nc):
         todo[j] = -1
-    cdef ITYPE_t[:] lab = np.zeros(nc, dtype=ITYPE)
+    cdef ITYPE_t[:] lab = mx.zeros(nc, dtype=ITYPE)
 
     # We skip the initialization entirely in the non-square case and instead
     # fill all of `free` explicitly.

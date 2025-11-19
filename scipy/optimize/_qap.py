@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import operator
 import warnings
 import numbers
@@ -73,14 +73,14 @@ def quadratic_assignment(A, B, method="faq", options=None):
                 As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
                 transition from use of `numpy.random.RandomState` to
                 `numpy.random.Generator` is occurring. Supplying
-                `np.random.RandomState` to this function will now emit a
+                `mx.random.RandomState` to this function will now emit a
                 `DeprecationWarning`. In SciPy 1.17 its use will raise an exception.
-                In addition relying on global state using `np.random.seed`
+                In addition relying on global state using `mx.random.seed`
                 will emit a `FutureWarning`. In SciPy 1.17 the global random number
                 generator will no longer be used.
                 Use of an int-like seed will raise a `FutureWarning`, in SciPy 1.17 it
-                will be normalized via `np.random.default_rng` rather than
-                `np.random.RandomState`.
+                will be normalized via `mx.random.default_rng` rather than
+                `mx.random.RandomState`.
 
         For method-specific options, see
         :func:`show_options('quadratic_assignment') <show_options>`.
@@ -124,12 +124,12 @@ def quadratic_assignment(A, B, method="faq", options=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import quadratic_assignment
-    >>> rng = np.random.default_rng()
-    >>> A = np.array([[0, 80, 150, 170], [80, 0, 130, 100],
+    >>> rng = mx.random.default_rng()
+    >>> A = mx.array([[0, 80, 150, 170], [80, 0, 130, 100],
     ...               [150, 130, 0, 120], [170, 100, 120, 0]])
-    >>> B = np.array([[0, 5, 2, 7], [0, 0, 3, 8],
+    >>> B = mx.array([[0, 5, 2, 7], [0, 0, 3, 8],
     ...               [0, 0, 0, 3], [0, 0, 0, 0]])
     >>> res = quadratic_assignment(A, B, options={'rng': rng})
     >>> print(res)
@@ -142,15 +142,15 @@ def quadratic_assignment(A, B, method="faq", options=None):
     the objective function :math:`f(P) = trace(A^T P B P^T )`.
 
     >>> perm = res['col_ind']
-    >>> P = np.eye(len(A), dtype=int)[perm]
-    >>> fun = np.trace(A.T @ P @ B @ P.T)
+    >>> P = mx.eye(len(A), dtype=int)[perm]
+    >>> fun = mx.trace(A.T @ P @ B @ P.T)
     >>> print(fun)
     3260
 
     Alternatively, to avoid constructing the permutation matrix explicitly,
     directly permute the rows and columns of the distance matrix.
 
-    >>> fun = np.trace(A.T @ B[perm][:, perm])
+    >>> fun = mx.trace(A.T @ B[perm][:, perm])
     >>> print(fun)
     3260
 
@@ -158,21 +158,21 @@ def quadratic_assignment(A, B, method="faq", options=None):
     have found the globally optimal solution.
 
     >>> from itertools import permutations
-    >>> perm_opt, fun_opt = None, np.inf
+    >>> perm_opt, fun_opt = None, mx.inf
     >>> for perm in permutations([0, 1, 2, 3]):
-    ...     perm = np.array(perm)
-    ...     fun = np.trace(A.T @ B[perm][:, perm])
+    ...     perm = mx.array(perm)
+    ...     fun = mx.trace(A.T @ B[perm][:, perm])
     ...     if fun < fun_opt:
     ...         fun_opt, perm_opt = fun, perm
-    >>> print(np.array_equal(perm_opt, res['col_ind']))
+    >>> print(mx.array_equal(perm_opt, res['col_ind']))
     True
 
     Here is an example for which the default method,
     :ref:`'faq' <optimize.qap-faq>`, does not find the global optimum.
 
-    >>> A = np.array([[0, 5, 8, 6], [5, 0, 5, 1],
+    >>> A = mx.array([[0, 5, 8, 6], [5, 0, 5, 1],
     ...               [8, 5, 0, 2], [6, 1, 2, 0]])
-    >>> B = np.array([[0, 1, 8, 4], [1, 0, 5, 2],
+    >>> B = mx.array([[0, 1, 8, 4], [1, 0, 5, 2],
     ...               [8, 5, 0, 5], [4, 2, 5, 0]])
     >>> res = quadratic_assignment(A, B, options={'rng': rng})
     >>> print(res)
@@ -183,7 +183,7 @@ def quadratic_assignment(A, B, method="faq", options=None):
     If accuracy is important, consider using  :ref:`'2opt' <optimize.qap-2opt>`
     to refine the solution.
 
-    >>> guess = np.array([np.arange(len(A)), res.col_ind]).T
+    >>> guess = mx.array([mx.arange(len(A)), res.col_ind]).T
     >>> res = quadratic_assignment(A, B, method="2opt",
     ...     options = {'rng': rng, 'partial_guess': guess})
     >>> print(res)
@@ -208,25 +208,25 @@ def quadratic_assignment(A, B, method="faq", options=None):
 
 
 def _spec007_transition(rng):
-    if isinstance(rng, np.random.RandomState):
+    if isinstance(rng, mx.random.RandomState):
         warnings.warn(
             "Use of `RandomState` with `quadratic_assignment` is deprecated"
             " and will result in an exception in SciPy 1.17",
             DeprecationWarning,
             stacklevel=2
         )
-    if ((rng is None or rng is np.random) and
-            np.random.mtrand._rand._bit_generator._seed_seq is None):
+    if ((rng is None or rng is mx.random) and
+            mx.random.mtrand._rand._bit_generator._seed_seq is None):
         warnings.warn(
-            "The NumPy global RNG was seeded by calling `np.random.seed`."
+            "The NumPy global RNG was seeded by calling `mx.random.seed`."
             " From SciPy 1.17, this function will no longer use the global RNG.",
             FutureWarning,
             stacklevel=2
         )
-    if isinstance(rng, numbers.Integral | np.integer):
+    if isinstance(rng, numbers.Integral | mx.integer):
         warnings.warn(
             "The behavior when the rng option is an integer is changing: the value"
-            " will be normalized using np.random.default_rng beginning in SciPy 1.17,"
+            " will be normalized using mx.random.default_rng beginning in SciPy 1.17,"
             " and the resulting Generator will be used to generate random numbers.",
             FutureWarning,
             stacklevel=2
@@ -235,16 +235,16 @@ def _spec007_transition(rng):
 
 def _calc_score(A, B, perm):
     # equivalent to objective function but avoids matmul
-    return np.sum(A * B[perm][:, perm])
+    return mx.sum(A * B[perm][:, perm])
 
 
 def _common_input_validation(A, B, partial_match):
-    A = np.atleast_2d(A)
-    B = np.atleast_2d(B)
+    A = mx.atleast_2d(A)
+    B = mx.atleast_2d(B)
 
     if partial_match is None:
-        partial_match = np.array([[], []]).T
-    partial_match = np.atleast_2d(partial_match).astype(int)
+        partial_match = mx.array([[], []]).T
+    partial_match = mx.atleast_2d(partial_match).astype(int)
 
     msg = None
     if A.shape[0] != A.shape[1]:
@@ -382,8 +382,8 @@ def _quadratic_assignment_faq(A, B,
     solution than a single random initialization.
 
     >>> from scipy.optimize import quadratic_assignment
-    >>> import numpy as np
-    >>> rng = np.random.default_rng()
+    >>> import mlx.core as mx
+    >>> rng = mx.random.default_rng()
     >>> n = 15
     >>> A = rng.random((n, n))
     >>> B = rng.random((n, n))
@@ -407,7 +407,7 @@ def _quadratic_assignment_faq(A, B,
 
     The '2-opt' method can be used to attempt to refine the results.
 
-    >>> options = {"partial_guess": np.array([np.arange(n), res.col_ind]).T, "rng": rng}
+    >>> options = {"partial_guess": mx.array([mx.arange(n), res.col_ind]).T, "rng": rng}
     >>> res = quadratic_assignment(A, B, method="2opt", options=options)
     >>> print(res.fun)
     46.55974835248574 # may vary
@@ -453,18 +453,18 @@ def _quadratic_assignment_faq(A, B,
 
     # [1] Algorithm 1 Line 1 - choose initialization
     if not isinstance(P0, str):
-        P0 = np.atleast_2d(P0)
+        P0 = mx.atleast_2d(P0)
         if P0.shape != (n_unseed, n_unseed):
             msg = "`P0` matrix must have shape m' x m', where m'=n-m"
-        elif ((P0 < 0).any() or not np.allclose(np.sum(P0, axis=0), 1)
-              or not np.allclose(np.sum(P0, axis=1), 1)):
+        elif ((P0 < 0).any() or not mx.allclose(mx.sum(P0, axis=0), 1)
+              or not mx.allclose(mx.sum(P0, axis=1), 1)):
             msg = "`P0` matrix must be doubly stochastic"
         if msg is not None:
             raise ValueError(msg)
     elif P0 == 'barycenter':
-        P0 = np.ones((n_unseed, n_unseed)) / n_unseed
+        P0 = mx.ones((n_unseed, n_unseed)) / n_unseed
     elif P0 == 'randomized':
-        J = np.ones((n_unseed, n_unseed)) / n_unseed
+        J = mx.ones((n_unseed, n_unseed)) / n_unseed
         # generate a nxn matrix where each entry is a random number [0, 1]
         # would use rand, but Generators don't have it
         # would use random, but old mtrand.RandomStates don't have it
@@ -481,13 +481,13 @@ def _quadratic_assignment_faq(A, B,
     if maximize:
         obj_func_scalar = -1
 
-    nonseed_B = np.setdiff1d(range(n), partial_match[:, 1])
+    nonseed_B = mx.setdiff1d(range(n), partial_match[:, 1])
     if shuffle_input:
         nonseed_B = rng.permutation(nonseed_B)
 
-    nonseed_A = np.setdiff1d(range(n), partial_match[:, 0])
-    perm_A = np.concatenate([partial_match[:, 0], nonseed_A])
-    perm_B = np.concatenate([partial_match[:, 1], nonseed_B])
+    nonseed_A = mx.setdiff1d(range(n), partial_match[:, 0])
+    perm_A = mx.concatenate([partial_match[:, 0], nonseed_A])
+    perm_B = mx.concatenate([partial_match[:, 1], nonseed_B])
 
     # definitions according to Seeded Graph Matching [2].
     A11, A12, A21, A22 = _split_matrix(A[perm_A][:, perm_A], n_seeds)
@@ -501,7 +501,7 @@ def _quadratic_assignment_faq(A, B,
         grad_fp = (const_sum + A22 @ P @ B22.T + A22.T @ P @ B22)
         # [1] Algorithm 1 Line 4 - get direction Q by solving Eq. 8
         _, cols = linear_sum_assignment(grad_fp, maximize=maximize)
-        Q = np.eye(n_unseed)[cols]
+        Q = mx.eye(n_unseed)[cols]
 
         # [1] Algorithm 1 Line 5 - compute the step size
         # Noting that e.g. trace(Ax) = trace(A)*x, expand and re-collect
@@ -523,11 +523,11 @@ def _quadratic_assignment_faq(A, B,
         if a*obj_func_scalar > 0 and 0 <= -b/(2*a) <= 1:
             alpha = -b/(2*a)
         else:
-            alpha = np.argmin([0, (b + a)*obj_func_scalar])
+            alpha = mx.argmin([0, (b + a)*obj_func_scalar])
 
         # [1] Algorithm 1 Line 6 - Update P
         P_i1 = alpha * P + (1 - alpha) * Q
-        if np.linalg.norm(P - P_i1) / np.sqrt(n_unseed) < tol:
+        if mx.linalg.norm(P - P_i1) / mx.sqrt(n_unseed) < tol:
             P = P_i1
             break
         P = P_i1
@@ -535,9 +535,9 @@ def _quadratic_assignment_faq(A, B,
 
     # [1] Algorithm 1 Line 8 - project onto the set of permutation matrices
     _, col = linear_sum_assignment(P, maximize=True)
-    perm = np.concatenate((np.arange(n_seeds), col + n_seeds))
+    perm = mx.concatenate((mx.arange(n_seeds), col + n_seeds))
 
-    unshuffled_perm = np.zeros(n, dtype=int)
+    unshuffled_perm = mx.zeros(n, dtype=int)
     unshuffled_perm[perm_A] = perm_B[perm]
 
     score = _calc_score(A, B, unshuffled_perm)
@@ -563,8 +563,8 @@ def _doubly_stochastic(P, tol=1e-3):
     P_eps = P
 
     for it in range(max_iter):
-        if ((np.abs(P_eps.sum(axis=1) - 1) < tol).all() and
-                (np.abs(P_eps.sum(axis=0) - 1) < tol).all()):
+        if ((mx.abs(P_eps.sum(axis=1) - 1) < tol).all() and
+                (mx.abs(P_eps.sum(axis=0) - 1) < tol).all()):
             # All column/row sums ~= 1 within threshold
             break
 
@@ -685,8 +685,8 @@ def _quadratic_assignment_2opt(A, B, maximize=False, rng=None,
         return OptimizeResult(res)
 
     if partial_guess is None:
-        partial_guess = np.array([[], []]).T
-    partial_guess = np.atleast_2d(partial_guess).astype(int)
+        partial_guess = mx.array([[], []]).T
+    partial_guess = mx.atleast_2d(partial_guess).astype(int)
 
     msg = None
     if partial_guess.shape[0] > A.shape[0]:
@@ -710,11 +710,11 @@ def _quadratic_assignment_2opt(A, B, maximize=False, rng=None,
     if partial_match.size or partial_guess.size:
         # use partial_match and partial_guess for initial permutation,
         # but randomly permute the rest.
-        guess_rows = np.zeros(N, dtype=bool)
-        guess_cols = np.zeros(N, dtype=bool)
-        fixed_rows = np.zeros(N, dtype=bool)
-        fixed_cols = np.zeros(N, dtype=bool)
-        perm = np.zeros(N, dtype=int)
+        guess_rows = mx.zeros(N, dtype=bool)
+        guess_cols = mx.zeros(N, dtype=bool)
+        fixed_rows = mx.zeros(N, dtype=bool)
+        fixed_cols = mx.zeros(N, dtype=bool)
+        perm = mx.zeros(N, dtype=int)
 
         rg, cg = partial_guess.T
         guess_rows[rg] = True
@@ -729,13 +729,13 @@ def _quadratic_assignment_2opt(A, B, maximize=False, rng=None,
 
         random_rows = ~fixed_rows & ~guess_rows
         random_cols = ~fixed_cols & ~guess_cols
-        perm[random_rows] = rng.permutation(np.arange(N)[random_cols])
+        perm[random_rows] = rng.permutation(mx.arange(N)[random_cols])
     else:
-        perm = rng.permutation(np.arange(N))
+        perm = rng.permutation(mx.arange(N))
 
     best_score = _calc_score(A, B, perm)
 
-    i_free = np.arange(N)
+    i_free = mx.arange(N)
     if fixed_rows is not None:
         i_free = i_free[~fixed_rows]
 

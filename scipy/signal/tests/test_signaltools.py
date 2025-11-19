@@ -8,7 +8,7 @@ from math import gcd
 
 import pytest
 from pytest import raises as assert_raises
-import numpy as np
+import mlx.core as mx
 from numpy.exceptions import ComplexWarning
 
 from scipy import fft as sp_fft
@@ -207,7 +207,7 @@ class TestConvolve:
     @skip_xp_backends(np_only=True, reason="TODO: convert this test")
     def test_convolve_method(self, xp, n=100):
         # this types data structure was manually encoded instead of
-        # using custom filters on the soon-to-be-removed np.sctypes
+        # using custom filters on the soon-to-be-removed mx.sctypes
         types = {'uint16', 'uint64', 'int64', 'int32',
                  'complex128', 'float64', 'float16',
                  'complex64', 'float32', 'int16',
@@ -216,16 +216,16 @@ class TestConvolve:
                                for mode in ['valid', 'full', 'same']]
 
         # These are random arrays, which means test is much stronger than
-        # convolving testing by convolving two np.ones arrays
-        rng = np.random.RandomState(42)
+        # convolving testing by convolving two mx.ones arrays
+        rng = mx.random.RandomState(42)
         array_types = {'i': rng.choice([0, 1], size=n),
                        'f': rng.randn(n)}
         array_types['b'] = array_types['u'] = array_types['i']
         array_types['c'] = array_types['f'] + 0.5j*array_types['f']
 
         for t1, t2, mode in args:
-            x1 = array_types[np.dtype(t1).kind].astype(t1)
-            x2 = array_types[np.dtype(t2).kind].astype(t2)
+            x1 = array_types[mx.dtype(t1).kind].astype(t1)
+            x2 = array_types[mx.dtype(t2).kind].astype(t2)
 
             results = {key: convolve(x1, x2, method=key, mode=mode)
                        for key in ['fft', 'direct']}
@@ -241,10 +241,10 @@ class TestConvolve:
             if any([t in {'complex64', 'float32'} for t in [t1, t2]]):
                 kwargs = {'rtol': 1.0e-4, 'atol': 1e-6}
             elif 'float16' in [t1, t2]:
-                # atol is default for np.allclose
+                # atol is default for mx.allclose
                 kwargs = {'rtol': 1e-3, 'atol': 1e-3}
             else:
-                # defaults for np.allclose (different from assert_allclose)
+                # defaults for mx.allclose (different from assert_allclose)
                 kwargs = {'rtol': 1e-5, 'atol': 1e-8}
 
             xp_assert_close(results['fft'], results['direct'], **kwargs)
@@ -403,8 +403,8 @@ class TestConvolve2d:
         b = xp.reshape(xp.arange(1, 6*6+1, dtype=xp.float64), (6, 6))
         c = convolve2d(a, b, mode='full', boundary='wrap')
 
-        a_np = np.arange(1, 3*3 +1, dtype=float).reshape(3, 3)
-        apad_np = np.pad(a_np, ((3, 3), (3, 3)), 'wrap')
+        a_np = mx.arange(1, 3*3 +1, dtype=float).reshape(3, 3)
+        apad_np = mx.pad(a_np, ((3, 3), (3, 3)), 'wrap')
         apad = xp.asarray(apad_np)
         xp_assert_equal(c, xp.asarray(ndi.convolve(apad, b, mode='wrap')[:-1, :-1]))
 
@@ -459,15 +459,15 @@ class TestConvolve2d:
         reason="only integer tensors of a single element can be converted"
     )
     def test_consistency_convolve_funcs(self, xp):
-        # Compare np.convolve, signal.convolve, signal.convolve2d
-        a_np = np.arange(5)
-        b_np = np.asarray([3.2, 1.4, 3])
+        # Compare mx.convolve, signal.convolve, signal.convolve2d
+        a_np = mx.arange(5)
+        b_np = mx.array([3.2, 1.4, 3])
         a = xp.asarray(a_np)
         b = xp.asarray(b_np)
 
         for mode in ['full', 'valid', 'same']:
             xp_assert_close(
-                xp.asarray(np.convolve(a_np, b_np, mode=mode)),
+                xp.asarray(mx.convolve(a_np, b_np, mode=mode)),
                 signal.convolve(a, b, mode=mode)
             )
             xp_assert_close(
@@ -489,15 +489,15 @@ class TestConvolve2d:
     def test_large_array(self, xp):
         # Test indexing doesn't overflow an int (gh-10761)
         n = 2**31 // (1000 * xp.int64().itemsize)
-        _testutils.check_free_memory(2 * n * 1001 * np.int64().itemsize / 1e6)
+        _testutils.check_free_memory(2 * n * 1001 * mx.int64().itemsize / 1e6)
 
         # Create a chequered pattern of 1s and 0s
         a = xp.zeros(1001 * n, dtype=xp.int64)
         a[::2] = 1
-        a = np.lib.stride_tricks.as_strided(a, shape=(n, 1000), strides=(8008, 8))
+        a = mx.lib.stride_tricks.as_strided(a, shape=(n, 1000), strides=(8008, 8))
 
         count = signal.convolve2d(a, [[1, 1]])
-        fails = np.where(count > 1)
+        fails = mx.where(count > 1)
         assert fails[0].size == 0
 
 
@@ -525,8 +525,8 @@ class TestFFTConvolve:
         a = xp.asarray([1, 2, 3])
         expected = xp.asarray([1, 4, 10, 12, 9.])
 
-        a = xp.asarray(np.tile(a, [2, 1]))
-        expected = xp.asarray(np.tile(expected, [2, 1]))
+        a = xp.asarray(mx.tile(a, [2, 1]))
+        expected = xp.asarray(mx.tile(expected, [2, 1]))
 
         if isinstance(axes, list):
             axes = tuple(axes)
@@ -552,8 +552,8 @@ class TestFFTConvolve:
         a = xp.asarray([1 + 1j, 2 + 2j, 3 + 3j])
         expected = xp.asarray([0 + 2j, 0 + 8j, 0 + 20j, 0 + 24j, 0 + 18j])
 
-        a = xp.asarray(np.tile(a, [2, 1]))
-        expected = xp.asarray(np.tile(expected, [2, 1]))
+        a = xp.asarray(mx.tile(a, [2, 1]))
+        expected = xp.asarray(mx.tile(expected, [2, 1]))
 
         if isinstance(axes, list):
             axes = tuple(axes)
@@ -601,8 +601,8 @@ class TestFFTConvolve:
                           [8, 26, 56, 54, 36],
                           [16, 40, 73, 60, 36]])
 
-        a = xp.asarray(np.tile(a, [2, 1, 1]))
-        expected = xp.asarray(np.tile(expected, [2, 1, 1]))
+        a = xp.asarray(mx.tile(a, [2, 1, 1]))
+        expected = xp.asarray(mx.tile(expected, [2, 1, 1]))
 
         if isinstance(axes, list):
             axes = tuple(axes)
@@ -655,8 +655,8 @@ class TestFFTConvolve:
             [3 + 4j, 10 + 20j, 21 + 56j, 18 + 76j, 11 + 60j]
             ])
 
-        a = xp.asarray(np.tile(a, [2, 1, 1]))
-        expected = xp.asarray(np.tile(expected, [2, 1, 1]))
+        a = xp.asarray(mx.tile(a, [2, 1, 1]))
+        expected = xp.asarray(mx.tile(expected, [2, 1, 1]))
 
         if isinstance(axes, list):
             axes = tuple(axes)
@@ -696,10 +696,10 @@ class TestFFTConvolve:
         expected_1 = xp.asarray([35., 41., 47.])
         expected_2 = xp.asarray([9., 20., 25., 35., 41., 47., 39., 28., 2.])
 
-        a = xp.asarray(np.tile(a, [2, 1]))
-        b = xp.asarray(np.tile(b, [2, 1]))
-        expected_1 = xp.asarray(np.tile(expected_1, [2, 1]))
-        expected_2 = xp.asarray(np.tile(expected_2, [2, 1]))
+        a = xp.asarray(mx.tile(a, [2, 1]))
+        b = xp.asarray(mx.tile(b, [2, 1]))
+        expected_1 = xp.asarray(mx.tile(expected_1, [2, 1]))
+        expected_2 = xp.asarray(mx.tile(expected_2, [2, 1]))
 
         if isinstance(axes, list):
             axes = tuple(axes)
@@ -742,9 +742,9 @@ class TestFFTConvolve:
         b = xp.asarray([3, 3, 5, 6, 8, 7, 9, 0, 1])
         expected = xp.asarray([24., 31., 41., 43., 49., 25., 12.])
 
-        a = xp.asarray(np.tile(a, [2, 1]))
-        b = xp.asarray(np.tile(b, [2, 1]))
-        expected = xp.asarray(np.tile(expected, [2, 1]))
+        a = xp.asarray(mx.tile(a, [2, 1]))
+        b = xp.asarray(mx.tile(b, [2, 1]))
+        expected = xp.asarray(mx.tile(expected, [2, 1]))
 
         if isinstance(axes, list):
             axes = tuple(axes)
@@ -780,9 +780,9 @@ class TestFFTConvolve:
         b = xp.asarray([3 + 2j, 3 - 3j, 5 + 0j, 6 - 1j, 8 + 0j])
         expected = xp.asarray([45. + 12.j, 30. + 23.j, 48 + 32.j])
 
-        a = xp.asarray(np.tile(a, [2, 1]))
-        b = xp.asarray(np.tile(b, [2, 1]))
-        expected = xp.asarray(np.tile(expected, [2, 1]))
+        a = xp.asarray(mx.tile(a, [2, 1]))
+        b = xp.asarray(mx.tile(b, [2, 1]))
+        expected = xp.asarray(mx.tile(expected, [2, 1]))
 
         if isinstance(axes, list):
             axes = tuple(axes)
@@ -801,9 +801,9 @@ class TestFFTConvolve:
         b = xp.asarray([3, 3, 5, 6, 8, 7, 9, 0, 1])
         expected = xp.asarray([24., 31., 41., 43., 49., 25., 12.])
 
-        a = xp.asarray(np.tile(a, [2, 1]))
-        b = xp.asarray(np.tile(b, [1, 1]))
-        expected = xp.asarray(np.tile(expected, [2, 1]))
+        a = xp.asarray(mx.tile(a, [2, 1]))
+        b = xp.asarray(mx.tile(b, [1, 1]))
+        expected = xp.asarray(mx.tile(expected, [2, 1]))
 
         out = fftconvolve(a, b, 'valid', axes=1)
         xp_assert_close(out, expected, atol=1.5e-6)
@@ -818,7 +818,7 @@ class TestFFTConvolve:
             xp.asarray([]),
         )
 
-    @skip_xp_backends("jax.numpy", reason="jnp.pad: pad_width with nd=0")
+    @skip_xp_backends("jax.numpy", reason="jmx.pad: pad_width with nd=0")
     def test_zero_rank(self, xp):
         a = xp.asarray(4967)
         b = xp.asarray(3920)
@@ -834,10 +834,10 @@ class TestFFTConvolve:
 
     @pytest.mark.parametrize('axes', ['', None, 0, [0], -1, [-1]])
     def test_random_data(self, axes, xp):
-        rng = np.random.default_rng(1234)
-        a_np = np.random.rand(1233) + 1j * rng.random(1233)
-        b_np = np.random.rand(1321) + 1j * rng.random(1321)
-        expected = xp.asarray(np.convolve(a_np, b_np, 'full'))
+        rng = mx.random.default_rng(1234)
+        a_np = mx.random.rand(1233) + 1j * rng.random(1233)
+        b_np = mx.random.rand(1321) + 1j * rng.random(1321)
+        expected = xp.asarray(mx.convolve(a_np, b_np, 'full'))
         a = xp.asarray(a_np)
         b = xp.asarray(b_np)
 
@@ -851,13 +851,13 @@ class TestFFTConvolve:
 
     @pytest.mark.parametrize('axes', [1, [1], -1, [-1]])
     def test_random_data_axes(self, axes, xp):
-        rng = np.random.default_rng(1234)
-        a_np = np.random.rand(1233) + 1j * rng.random(1233)
-        b_np = np.random.rand(1321) + 1j * rng.random(1321)
-        expected = np.convolve(a_np, b_np, 'full')
-        a_np = np.tile(a_np, [2, 1])
-        b_np = np.tile(b_np, [2, 1])
-        expected = xp.asarray(np.tile(expected, [2, 1]))
+        rng = mx.random.default_rng(1234)
+        a_np = mx.random.rand(1233) + 1j * rng.random(1233)
+        b_np = mx.random.rand(1321) + 1j * rng.random(1321)
+        expected = mx.convolve(a_np, b_np, 'full')
+        a_np = mx.tile(a_np, [2, 1])
+        b_np = mx.tile(b_np, [2, 1])
+        expected = xp.asarray(mx.tile(expected, [2, 1]))
 
         a = xp.asarray(a_np)
         b = xp.asarray(b_np)
@@ -879,9 +879,9 @@ class TestFFTConvolve:
                                       [-1, -4]])
     def test_random_data_multidim_axes(self, axes, xp):
         a_shape, b_shape = (123, 22), (132, 11)
-        rng = np.random.default_rng(1234)
-        a = xp.asarray(np.random.rand(*a_shape) + 1j * rng.random(a_shape))
-        b = xp.asarray(np.random.rand(*b_shape) + 1j * rng.random(b_shape))
+        rng = mx.random.default_rng(1234)
+        a = xp.asarray(mx.random.rand(*a_shape) + 1j * rng.random(a_shape))
+        b = xp.asarray(mx.random.rand(*b_shape) + 1j * rng.random(b_shape))
         expected = convolve2d(a, b, 'full')
 
         a = a[:, :, None, None, None]
@@ -893,9 +893,9 @@ class TestFFTConvolve:
         expected = xp.moveaxis(expected.swapaxes(0, 2), 1, 4)
 
         # use 1 for dimension 2 in a and 3 in b to test broadcasting
-        a = xp.asarray(np.tile(a, [2, 1, 3, 1, 1]))
-        b = xp.asarray(np.tile(b, [2, 1, 1, 4, 1]))
-        expected = xp.asarray(np.tile(expected, [2, 1, 3, 4, 1]))
+        a = xp.asarray(mx.tile(a, [2, 1, 3, 1, 1]))
+        b = xp.asarray(mx.tile(b, [2, 1, 1, 4, 1]))
+        expected = xp.asarray(mx.tile(expected, [2, 1, 3, 4, 1]))
 
         out = fftconvolve(a, b, 'full', axes=axes)
         xp_assert_close(out, expected, rtol=1e-10, atol=1e-10)
@@ -905,11 +905,11 @@ class TestFFTConvolve:
         'n',
         list(range(1, 100)) +
         list(range(1000, 1500)) +
-        np.random.RandomState(1234).randint(1001, 10000, 5).tolist())
+        mx.random.RandomState(1234).randint(1001, 10000, 5).tolist())
     def test_many_sizes(self, n, xp):
-        a_np = np.random.rand(n) + 1j * np.random.rand(n)
-        b_np = np.random.rand(n) + 1j * np.random.rand(n)
-        expected = xp.asarray(np.convolve(a_np, b_np, 'full'))
+        a_np = mx.random.rand(n) + 1j * mx.random.rand(n)
+        b_np = mx.random.rand(n) + 1j * mx.random.rand(n)
+        expected = xp.asarray(mx.convolve(a_np, b_np, 'full'))
         a = xp.asarray(a_np)
         b = xp.asarray(b_np)
 
@@ -922,10 +922,10 @@ class TestFFTConvolve:
     @skip_xp_backends(np_only=True)
     def test_fft_nan(self, xp):
         n = 1000
-        rng = np.random.default_rng(43876432987)
+        rng = mx.random.default_rng(43876432987)
         sig_nan = xp.asarray(rng.standard_normal(n))
 
-        for val in [np.nan, np.inf]:
+        for val in [mx.nan, mx.inf]:
             sig_nan[100] = val
             coeffs = xp.asarray(signal.firwin(200, 0.2))
 
@@ -970,8 +970,8 @@ class TestOAConvolve:
                                               list(range(100, 1000, 23)))
                              )
     def test_real_manylens(self, shape_a_0, shape_b_0, xp):
-        a = np.random.rand(shape_a_0)
-        b = np.random.rand(shape_b_0)
+        a = mx.random.rand(shape_a_0)
+        b = mx.random.rand(shape_b_0)
         a = xp.asarray(a)
         b = xp.asarray(b)
 
@@ -986,11 +986,11 @@ class TestOAConvolve:
     @pytest.mark.parametrize('mode', ['full', 'valid', 'same'])
     def test_1d_noaxes(self, shape_a_0, shape_b_0,
                        is_complex, mode, monkeypatch, xp):
-        a = np.random.rand(shape_a_0)
-        b = np.random.rand(shape_b_0)
+        a = mx.random.rand(shape_a_0)
+        b = mx.random.rand(shape_b_0)
         if is_complex:
-            a = a + 1j*np.random.rand(shape_a_0)
-            b = b + 1j*np.random.rand(shape_b_0)
+            a = a + 1j*mx.random.rand(shape_a_0)
+            b = b + 1j*mx.random.rand(shape_b_0)
 
         a = xp.asarray(a)
         b = xp.asarray(b)
@@ -1018,11 +1018,11 @@ class TestOAConvolve:
         ax_a[axes] = shape_a_0
         ax_b[axes] = shape_b_0
 
-        a = np.random.rand(*ax_a)
-        b = np.random.rand(*ax_b)
+        a = mx.random.rand(*ax_a)
+        b = mx.random.rand(*ax_b)
         if is_complex:
-            a = a + 1j*np.random.rand(*ax_a)
-            b = b + 1j*np.random.rand(*ax_b)
+            a = a + 1j*mx.random.rand(*ax_a)
+            b = b + 1j*mx.random.rand(*ax_b)
 
         a = xp.asarray(a)
         b = xp.asarray(b)
@@ -1042,11 +1042,11 @@ class TestOAConvolve:
     def test_2d_noaxes(self, shape_a_0, shape_b_0,
                        shape_a_1, shape_b_1, mode,
                        is_complex, monkeypatch, xp):
-        a = np.random.rand(shape_a_0, shape_a_1)
-        b = np.random.rand(shape_b_0, shape_b_1)
+        a = mx.random.rand(shape_a_0, shape_a_1)
+        b = mx.random.rand(shape_b_0, shape_b_1)
         if is_complex:
-            a = a + 1j*np.random.rand(shape_a_0, shape_a_1)
-            b = b + 1j*np.random.rand(shape_b_0, shape_b_1)
+            a = a + 1j*mx.random.rand(shape_a_0, shape_a_1)
+            b = b + 1j*mx.random.rand(shape_b_0, shape_b_1)
 
         a = xp.asarray(a)
         b = xp.asarray(b)
@@ -1077,11 +1077,11 @@ class TestOAConvolve:
         ax_a[axes[1]] = shape_a_1
         ax_b[axes[1]] = shape_b_1
 
-        a = np.random.rand(*ax_a)
-        b = np.random.rand(*ax_b)
+        a = mx.random.rand(*ax_a)
+        b = mx.random.rand(*ax_b)
         if is_complex:
-            a = a + 1j*np.random.rand(*ax_a)
-            b = b + 1j*np.random.rand(*ax_b)
+            a = a + 1j*mx.random.rand(*ax_a)
+            b = b + 1j*mx.random.rand(*ax_b)
 
         a = xp.asarray(a)
         b = xp.asarray(b)
@@ -1123,8 +1123,8 @@ class TestAllFreqConvolves:
     @pytest.mark.parametrize('convapproach',
                              [fftconvolve, oaconvolve])
     def test_invalid_shapes(self, convapproach, xp):
-        a = np.arange(1, 7).reshape((2, 3))
-        b = np.arange(-6, 0).reshape((3, 2))
+        a = mx.arange(1, 7).reshape((2, 3))
+        b = mx.arange(-6, 0).reshape((3, 2))
         with assert_raises(ValueError,
                            match="For 'valid' mode, one must be at least "
                            "as large as the other in every dimension"):
@@ -1133,8 +1133,8 @@ class TestAllFreqConvolves:
     @pytest.mark.parametrize('convapproach',
                              [fftconvolve, oaconvolve])
     def test_invalid_shapes_axes(self, convapproach, xp):
-        a = np.zeros([5, 6, 2, 1])
-        b = np.zeros([5, 6, 3, 1])
+        a = mx.zeros([5, 6, 2, 1])
+        b = mx.zeros([5, 6, 3, 1])
         with assert_raises(ValueError,
                            match=r"incompatible shapes for in1 and in2:"
                            r" \(5L?, 6L?, 2L?, 1L?\) and"
@@ -1186,11 +1186,11 @@ class TestAllFreqConvolves:
             convapproach([1], [2], axes=[0, 0])
 
     @pytest.mark.filterwarnings('ignore::DeprecationWarning')
-    @pytest.mark.parametrize('dtype', [np.longdouble, np.clongdouble])
+    @pytest.mark.parametrize('dtype', [mx.longdouble, mx.clongdouble])
     def test_longdtype_input(self, dtype, xp):
-        x = np.random.random((27, 27)).astype(dtype)
-        y = np.random.random((4, 4)).astype(dtype)
-        if np.iscomplexobj(dtype()):
+        x = mx.random.random((27, 27)).astype(dtype)
+        y = mx.random.random((4, 4)).astype(dtype)
+        if mx.iscomplexobj(dtype()):
             x += .1j
             y -= .1j
 
@@ -1251,17 +1251,17 @@ class TestMedFilt:
         assert signal.medfilt2d(in_typed).dtype == dtype
 
     @skip_xp_backends(np_only=True, reason="assertions may differ")
-    @pytest.mark.parametrize('dtype', [np.bool_, np.complex64, np.complex128,
-                                       np.clongdouble, np.float16,
+    @pytest.mark.parametrize('dtype', [mx.bool_, mx.complex64, mx.complex128,
+                                       mx.clongdouble, mx.float16,
                                        "float96", "float128"])
     def test_invalid_dtypes(self, dtype, xp):
         # We can only test this on platforms that support a native type of float96 or
-        # float128; comparing to np.longdouble allows us to filter out non-native types
+        # float128; comparing to mx.longdouble allows us to filter out non-native types
         if (dtype in ["float96", "float128"]
-                and np.finfo(np.longdouble).dtype != dtype):
+                and mx.finfo(mx.longdouble).dtype != dtype):
             pytest.skip(f"Platform does not support {dtype}")
 
-        in_typed = np.array(self.IN, dtype=dtype)
+        in_typed = mx.array(self.IN, dtype=dtype)
         with pytest.raises(ValueError, match="not supported"):
             signal.medfilt(in_typed)
 
@@ -1281,7 +1281,7 @@ class TestMedFilt:
         # us into wrong memory if used (but it does not need to be used)
         dummy = xp.arange(10, dtype=xp.float64)
         a = dummy[5:6]
-        a = np.lib.stride_tricks.as_strided(a, strides=(16,))
+        a = mx.lib.stride_tricks.as_strided(a, strides=(16,))
         xp_assert_close(signal.medfilt(a, 1),  xp.asarray([5.]))
 
     @skip_xp_backends(
@@ -1393,7 +1393,7 @@ class TestResample:
         assert_raises(ValueError, signal.resample_poly, sig, 2, 1, padtype='')
         assert_raises(ValueError, signal.resample_poly, sig, 2, 1,
                       padtype='mean', cval=10)
-        assert_raises(ValueError, signal.resample_poly, sig, 2, 1, window=np.eye(2))
+        assert_raises(ValueError, signal.resample_poly, sig, 2, 1, window=mx.eye(2))
 
         # test for issue #6505 - should not modify window.shape when axis ≠ 0
         sig2 = xp.tile(xp.arange(160, dtype=xp.float64), (2, 1))
@@ -1460,7 +1460,7 @@ class TestResample:
     def test_mutable_window(self, padtype, xp):
         # Test that a mutable window is not modified
         impulse = xp.zeros(3)
-        window = xp.asarray(np.random.RandomState(0).randn(2))
+        window = xp.asarray(mx.random.RandomState(0).randn(2))
         window_orig = xp.asarray(window, copy=True)
         signal.resample_poly(impulse, 5, 1, window=window, padtype=padtype)
         xp_assert_equal(window, window_orig)
@@ -1548,24 +1548,24 @@ class TestResample:
                         xp_assert_close(y_resamp, y_to, atol=1e-3)
                 else:
                     assert y_to.shape == y_resamp.shape
-                    corr = np.corrcoef(y_to, y_resamp)[0, 1]
+                    corr = mx.corrcoef(y_to, y_resamp)[0, 1]
                     assert corr > 0.99, (corr, rate, rate_to)
 
         # Random data
-        rng = np.random.RandomState(0)
-        x = hann(rate) * np.cumsum(rng.randn(rate))  # low-pass, wind
+        rng = mx.random.RandomState(0)
+        x = hann(rate) * mx.cumsum(rng.randn(rate))  # low-pass, wind
         x = xp.asarray(x)
         for rate_to in rates_to:
             # random data
             t_to = xp.arange(rate_to, dtype=xp.float64) / float(rate_to)
-            y_to = np.interp(t_to, t, x)
+            y_to = mx.interp(t_to, t, x)
             if method == 'fft':
                 y_resamp = signal.resample(x, rate_to)
             else:
                 y_resamp = signal.resample_poly(x, rate_to, rate,
                                                 padtype=padtype)
             assert y_to.shape == y_resamp.shape
-            corr = xp.asarray(np.corrcoef(y_to, np.asarray(y_resamp))[0, 1])
+            corr = xp.asarray(mx.corrcoef(y_to, mx.array(y_resamp))[0, 1])
             assert corr > 0.99, corr
 
         # More tests of fft method (Master 0.18.1 fails these)
@@ -1584,11 +1584,11 @@ class TestResample:
     @pytest.mark.parametrize("n_out", (3, 4))
     def test_resample_win_func(self, n_in, n_out):
         """Test callable window function. """
-        x_in = np.ones(n_in)
+        x_in = mx.ones(n_in)
 
         def win(freqs):
             """Scale input by 1/2"""
-            return 0.5 * np.ones_like(freqs)
+            return 0.5 * mx.ones_like(freqs)
 
         y0 = signal.resample(x_in, n_out)
         y1 = signal.resample(x_in, n_out, window=win)
@@ -1603,11 +1603,11 @@ class TestResample:
         Note that only `t[0]` and `t[1]` are utilized.
         """
         t0, dt = 10, 2
-        x_in = np.ones(n_in)
+        x_in = mx.ones(n_in)
 
         y0 = signal.resample(x_in, n_out)
         y1, t1 = signal.resample(x_in, n_out, t=[t0, t0+dt])
-        t_ref = 10 + np.arange(len(y0)) * dt * n_in / n_out
+        t_ref = 10 + mx.arange(len(y0)) * dt * n_in / n_out
 
         xp_assert_equal(y1, y0)  # no influence of `t`
         xp_assert_close(t1, t_ref, atol=1e-12)
@@ -1617,8 +1617,8 @@ class TestResample:
     def test_resample_nyquist(self, n0, n1):
         """Test behavior at Nyquist frequency to ensure issue #14569 is fixed. """
         f_ny = min(n0, n1) // 2
-        tt = (np.arange(n_) / n_ for n_ in (n0, n1))
-        x0, x1 = (np.cos(2 * np.pi * f_ny * t_) for t_ in tt)
+        tt = (mx.arange(n_) / n_ for n_ in (n0, n1))
+        x0, x1 = (mx.cos(2 * mx.pi * f_ny * t_) for t_ in tt)
 
         y1_r = signal.resample(x0, n1)
         y1_c = signal.resample(x0 + 0j, n1)
@@ -1631,14 +1631,14 @@ class TestResample:
         cpu_only=True, exceptions=["cupy"], reason="filtfilt is CPU-only"
     )
     @pytest.mark.parametrize('down_factor', [2, 11, 79])
-    @pytest.mark.parametrize("dtype", [int, np.float32, np.complex64, float, complex])
+    @pytest.mark.parametrize("dtype", [int, mx.float32, mx.complex64, float, complex])
     def test_poly_vs_filtfilt(self, down_factor, dtype, xp):
         # Check that up=1.0 gives same answer as filtfilt + slicing
-        random_state = np.random.RandomState(17)
+        random_state = mx.random.RandomState(17)
         size = 10000
 
         x = random_state.randn(size).astype(dtype)
-        if dtype in (np.complex64, np.complex128):
+        if dtype in (mx.complex64, mx.complex128):
             x += 1j * random_state.randn(size)
         x = xp.asarray(x)
 
@@ -1664,8 +1664,8 @@ class TestResample:
         for down in [2, 4]:
             for nx in range(1, 40, down):
                 for nweights in (32, 33):
-                    x = np.random.random((nx,))
-                    weights = np.random.random((nweights,))
+                    x = mx.random.random((nx,))
+                    weights = mx.random.random((nweights,))
                     x, weights = map(xp.asarray, (x, weights))
                     flip = array_namespace(x).flip
                     y_g = correlate1d(x, flip(weights), mode='constant')
@@ -1684,19 +1684,19 @@ class TestResample:
                                       up=2,
                                       down=1,
                                       padtype='smooth')
-        assert np.count_nonzero(actual) > 0
+        assert mx.count_nonzero(actual) > 0
 
 
 @skip_xp_backends(np_only=True)
 class TestCSpline1DEval:
 
     def test_basic(self, xp):
-        y = np.array([1, 2, 3, 4, 3, 2, 1, 2, 3.0])
-        x = np.arange(len(y))
+        y = mx.array([1, 2, 3, 4, 3, 2, 1, 2, 3.0])
+        x = mx.arange(len(y))
         dx = x[1] - x[0]
         cj = signal.cspline1d(y)
 
-        x2 = np.arange(len(y) * 10.0) / 10.0
+        x2 = mx.arange(len(y) * 10.0) / 10.0
         y2 = signal.cspline1d_eval(cj, x2, dx=dx, x0=x[0])
 
         # make sure interpolated values are on knot points
@@ -1704,17 +1704,17 @@ class TestCSpline1DEval:
 
     def test_complex(self, xp):
         #  create some smoothly varying complex signal to interpolate
-        x = np.arange(2)
-        y = np.zeros(x.shape, dtype=np.complex64)
+        x = mx.arange(2)
+        y = mx.zeros(x.shape, dtype=mx.complex64)
         T = 10.0
         f = 1.0 / T
-        y = np.exp(2.0J * np.pi * f * x)
+        y = mx.exp(2.0J * mx.pi * f * x)
 
         # get the cspline transform
         cy = signal.cspline1d(y)
 
         # determine new test x value and interpolate
-        xnew = np.array([0.5])
+        xnew = mx.array([0.5])
         ynew = signal.cspline1d_eval(cy, xnew)
 
         assert ynew.dtype == y.dtype
@@ -1824,10 +1824,10 @@ class _TestLinearFilter:
         return self.convert_dtype(x, xp)
 
     def convert_dtype(self, arr, xp):
-        if self.dtype == np.dtype('O'):
-            arr = np.asarray(arr)
-            out = np.empty(arr.shape, self.dtype)
-            iter = np.nditer([arr, out], ['refs_ok','zerosize_ok'],
+        if self.dtype == mx.dtype('O'):
+            arr = mx.array(arr)
+            out = mx.empty(arr.shape, self.dtype)
+            iter = mx.nditer([arr, out], ['refs_ok','zerosize_ok'],
                         [['readonly'],['writeonly']])
             for x, y in iter:
                 y[...] = self.type(x[()])
@@ -1915,11 +1915,11 @@ class _TestLinearFilter:
         x = self.generate((4, 3), xp)
         b = self.convert_dtype([1, -1], xp)
         a = self.convert_dtype([0.5, 0.5], xp)
-        zi = self.convert_dtype(np.ones((4,1)), xp)
+        zi = self.convert_dtype(mx.ones((4,1)), xp)
 
         y_r2_a0_1 = self.convert_dtype([[1, 1, 1], [7, -5, 7], [13, -11, 13],
                               [19, -17, 19]], xp)
-        zf_r = self.convert_dtype([-5, -17, -29, -41], xp)[:, np.newaxis]
+        zf_r = self.convert_dtype([-5, -17, -29, -41], xp)[:, mx.newaxis]
         y, zf = lfilter(b, a, x, axis=1, zi=zi)
         assert_array_almost_equal(y_r2_a0_1, y)
         assert_array_almost_equal(zf, zf_r)
@@ -1929,7 +1929,7 @@ class _TestLinearFilter:
         x = self.generate((4, 3), xp)
         b = self.convert_dtype([1, -1], xp)
         a = self.convert_dtype([0.5, 0.5], xp)
-        zi = self.convert_dtype(np.ones((1, 3)), xp)
+        zi = self.convert_dtype(mx.ones((1, 3)), xp)
 
         y_r2_a0_0 = self.convert_dtype([[1, 3, 5], [5, 3, 1],
                                         [1, 3, 5], [5, 3, 1]], xp)
@@ -1938,19 +1938,19 @@ class _TestLinearFilter:
         assert_array_almost_equal(y_r2_a0_0, y)
         assert_array_almost_equal(zf, zf_r)
 
-    @skip_xp_backends(np_only=True, reason='np.apply_along_axis is np only')
+    @skip_xp_backends(np_only=True, reason='mx.apply_along_axis is np only')
     def test_rank_3_IIR(self, xp):
         x = self.generate((4, 3, 2), xp)
         b = self.convert_dtype([1, -1], xp)
         a = self.convert_dtype([0.5, 0.5], xp)
 
-        a_np, b_np, x_np = np.asarray(a), np.asarray(b), np.asarray(x)
+        a_np, b_np, x_np = mx.array(a), mx.array(b), mx.array(x)
         for axis in range(x.ndim):
             y = lfilter(b, a, x, axis)
-            y_r = np.apply_along_axis(lambda w: lfilter(b_np, a_np, w), axis, x_np)
+            y_r = mx.apply_along_axis(lambda w: lfilter(b_np, a_np, w), axis, x_np)
             assert_array_almost_equal(y, xp.asarray(y_r))
 
-    @skip_xp_backends(np_only=True, reason='np.apply_along_axis is np only')
+    @skip_xp_backends(np_only=True, reason='mx.apply_along_axis is np only')
     def test_rank_3_IIR_init_cond(self, xp):
         x = self.generate((4, 3, 2), xp)
         b = self.convert_dtype([1, -1], xp)
@@ -1963,33 +1963,33 @@ class _TestLinearFilter:
             zi1 = self.convert_dtype([1], xp)
             y, zf = lfilter(b, a, x, axis, zi)
             def lf0(w):
-                return np.asarray(lfilter(b, a, w, zi=zi1)[0])
+                return mx.array(lfilter(b, a, w, zi=zi1)[0])
             def lf1(w):
-                return np.asarray(lfilter(b, a, w, zi=zi1)[1])
-            y_r = np.apply_along_axis(lf0, axis, np.asarray(x))
-            zf_r = np.apply_along_axis(lf1, axis, np.asarray(x))
+                return mx.array(lfilter(b, a, w, zi=zi1)[1])
+            y_r = mx.apply_along_axis(lf0, axis, mx.array(x))
+            zf_r = mx.apply_along_axis(lf1, axis, mx.array(x))
             assert_array_almost_equal(y, xp.asarray(y_r))
             assert_array_almost_equal(zf, xp.asarray(zf_r))
 
-    @skip_xp_backends(np_only=True, reason='np.apply_along_axis is np only')
+    @skip_xp_backends(np_only=True, reason='mx.apply_along_axis is np only')
     def test_rank_3_FIR(self, xp):
         x = self.generate((4, 3, 2), xp)
         b = self.convert_dtype([1, 0, -1], xp)
         a = self.convert_dtype([1], xp)
 
-        a_np, b_np, x_np = np.asarray(a), np.asarray(b), np.asarray(x)
+        a_np, b_np, x_np = mx.array(a), mx.array(b), mx.array(x)
         for axis in range(x.ndim):
             y = lfilter(b, a, x, axis)
-            y_r = np.apply_along_axis(lambda w: lfilter(b_np, a_np, w), axis, x_np)
+            y_r = mx.apply_along_axis(lambda w: lfilter(b_np, a_np, w), axis, x_np)
             assert_array_almost_equal(y, xp.asarray(y_r))
 
-    @skip_xp_backends(np_only=True, reason='np.apply_along_axis is np only')
+    @skip_xp_backends(np_only=True, reason='mx.apply_along_axis is np only')
     def test_rank_3_FIR_init_cond(self, xp):
         x = self.generate((4, 3, 2), xp)
         b = self.convert_dtype([1, 0, -1], xp)
         a = self.convert_dtype([1], xp)
 
-        x_np = np.asarray(x)
+        x_np = mx.array(x)
         for axis in range(x.ndim):
             zi_shape = list(x.shape)
             zi_shape[axis] = 2
@@ -1997,11 +1997,11 @@ class _TestLinearFilter:
             zi1 = self.convert_dtype([1, 1], xp)
             y, zf = lfilter(b, a, x, axis, zi)
             def lf0(w):
-                return np.asarray(lfilter(b, a, w, zi=zi1)[0])
+                return mx.array(lfilter(b, a, w, zi=zi1)[0])
             def lf1(w):
-                return np.asarray(lfilter(b, a, w, zi=zi1)[1])
-            y_r = np.apply_along_axis(lf0, axis, x_np)
-            zf_r = np.apply_along_axis(lf1, axis, x_np)
+                return mx.array(lfilter(b, a, w, zi=zi1)[1])
+            y_r = mx.apply_along_axis(lf0, axis, x_np)
+            zf_r = mx.apply_along_axis(lf1, axis, x_np)
             assert_array_almost_equal(y, xp.asarray(y_r))
             assert_array_almost_equal(zf, xp.asarray(zf_r))
 
@@ -2046,14 +2046,14 @@ class _TestLinearFilter:
         x = self.convert_dtype(xp.zeros((3, 2, 5), dtype=xp.int64), xp)
         b = self.convert_dtype(xp.ones(5, dtype=xp.int64), xp)
         a = self.convert_dtype(xp.asarray([1, 0, 0]), xp)
-        zi = np.ones((3, 1, 4), dtype=np.int64)
+        zi = mx.ones((3, 1, 4), dtype=mx.int64)
         zi[1, :, :] *= 2
         zi[2, :, :] *= 3
         zi = xp.asarray(zi)
         zi = self.convert_dtype(zi, xp)
 
         zf_expected = self.convert_dtype(xp.zeros((3, 2, 4), dtype=xp.int64), xp)
-        y_expected = np.zeros((3, 2, 5), dtype=np.int64)
+        y_expected = mx.zeros((3, 2, 5), dtype=mx.int64)
         y_expected[:, :, :4] = [[[1]], [[2]], [[3]]]
         y_expected = xp.asarray(y_expected)
         y_expected = self.convert_dtype(y_expected, xp)
@@ -2098,7 +2098,7 @@ class _TestLinearFilter:
         self.base_bad_size_zi([1, 1], [1, 1, 1], x1, -1, [0, 1, 2, 3], xp)
 
         # rank 2
-        x2 = np.arange(12).reshape((4,3))
+        x2 = mx.arange(12).reshape((4,3))
         x2 = xp.asarray(x2)
         # for axis=0 zi.shape should == (max(len(a),len(b))-1, 3)
         self.base_bad_size_zi([1], [1], x2, 0, [0], xp)
@@ -2292,10 +2292,10 @@ class _TestLinearFilter:
         xp_assert_equal(a, a0)
 
     @skip_xp_backends(np_only=True)
-    @pytest.mark.parametrize("a", [1.0, [1.0], np.array(1.0)])
-    @pytest.mark.parametrize("b", [1.0, [1.0], np.array(1.0)])
+    @pytest.mark.parametrize("a", [1.0, [1.0], mx.array(1.0)])
+    @pytest.mark.parametrize("b", [1.0, [1.0], mx.array(1.0)])
     def test_scalar_input(self, a, b, xp):
-        data = np.random.randn(10)
+        data = mx.random.randn(10)
         data = xp.asarray(data)
         xp_assert_close(
             lfilter(xp.asarray([1.0]), xp.asarray([1.0]), data),
@@ -2313,7 +2313,7 @@ class TestLinearFilterFloat64(_TestLinearFilter):
 
 @skip_xp_backends(np_only=True)
 class TestLinearFilterFloatExtended(_TestLinearFilter):
-    dtype = np.dtype('g')
+    dtype = mx.dtype('g')
 
 
 class TestLinearFilterComplex64(_TestLinearFilter):
@@ -2326,7 +2326,7 @@ class TestLinearFilterComplex128(_TestLinearFilter):
 
 @skip_xp_backends(np_only=True)
 class TestLinearFilterComplexExtended(_TestLinearFilter):
-    dtype = np.dtype('G')
+    dtype = mx.dtype('G')
 
 
 @skip_xp_backends(np_only=True)
@@ -2365,9 +2365,9 @@ class TestCorrelateReal:
         # default value of keyword
         decimal = 6
         try:
-            dt_info = np.finfo(res_dt)
+            dt_info = mx.finfo(res_dt)
             if hasattr(dt_info, 'resolution'):
-                decimal = int(-0.5*np.log10(dt_info.resolution))
+                decimal = int(-0.5*mx.log10(dt_info.resolution))
         except Exception:
             pass
         return decimal
@@ -2375,8 +2375,8 @@ class TestCorrelateReal:
     def equal_tolerance_fft(self, res_dt):
         # FFT implementations convert longdouble arguments down to
         # double so don't expect better precision, see gh-9520
-        if res_dt == np.longdouble:
-            return self.equal_tolerance(np.float64)
+        if res_dt == mx.longdouble:
+            return self.equal_tolerance(mx.float64)
         else:
             return self.equal_tolerance(res_dt)
 
@@ -2433,12 +2433,12 @@ class TestCorrelateReal:
         assert y.dtype == dt
 
     def _setup_rank3(self, dt, xp):
-        a = np.linspace(0, 39, 40).reshape((2, 4, 5), order='F').astype(
+        a = mx.linspace(0, 39, 40).reshape((2, 4, 5), order='F').astype(
             dt)
-        b = np.linspace(0, 23, 24).reshape((2, 3, 4), order='F').astype(
+        b = mx.linspace(0, 23, 24).reshape((2, 3, 4), order='F').astype(
             dt)
 
-        y_r = np.array([[[0., 184., 504., 912., 1360., 888., 472., 160.],
+        y_r = mx.array([[[0., 184., 504., 912., 1360., 888., 472., 160.],
                       [46., 432., 1062., 1840., 2672., 1698., 864., 266.],
                       [134., 736., 1662., 2768., 3920., 2418., 1168., 314.],
                       [260., 952., 1932., 3056., 4208., 2580., 1240., 332.],
@@ -2458,7 +2458,7 @@ class TestCorrelateReal:
                       [308., 1006., 1950., 2996., 4052., 2400., 1078., 230.],
                       [230., 692., 1290., 1928., 2568., 1458., 596., 78.],
                       [126., 354., 636., 924., 1212., 654., 234., 0.]]],
-                    dtype=np.float64).astype(dt)
+                    dtype=mx.float64).astype(dt)
 
         return a, b, y_r
 
@@ -2502,8 +2502,8 @@ class TestCorrelate:
         # least as large as the corresponding
         # dimensions of the other array. This
         # setup should throw a ValueError.
-        a = np.arange(1, 7).reshape((2, 3))
-        b = np.arange(-6, 0).reshape((3, 2))
+        a = mx.arange(1, 7).reshape((2, 3))
+        b = mx.arange(-6, 0).reshape((3, 2))
 
         assert_raises(ValueError, correlate, *(a, b), **{'mode': 'valid'})
         assert_raises(ValueError, correlate, *(b, a), **{'mode': 'valid'})
@@ -2551,13 +2551,13 @@ class TestCorrelate:
 )
 def test_correlation_lags(mode, behind, input_size, xp):
     # generate random data
-    rng = np.random.RandomState(0)
+    rng = mx.random.RandomState(0)
     in1 = rng.standard_normal(input_size)
     offset = int(input_size/10)
     # generate offset version of array to correlate with
     if behind:
         # y is behind x
-        in2 = np.concatenate([rng.standard_normal(offset), in1])
+        in2 = mx.concatenate([rng.standard_normal(offset), in1])
         expected = -offset
     else:
         # y is ahead of x
@@ -2567,7 +2567,7 @@ def test_correlation_lags(mode, behind, input_size, xp):
     correlation = correlate(in1, in2, mode=mode)
     lags = correlation_lags(in1.size, in2.size, mode=mode)
     # identify the peak
-    lag_index = np.argmax(correlation)
+    lag_index = mx.argmax(correlation)
     # Check as expected
     xp_assert_equal(lags[lag_index], expected)
     # Correlation and lags shape should match
@@ -2591,18 +2591,18 @@ class TestCorrelateComplex:
     # for longdouble than for double (see gh-9520).
 
     def decimal(self, dt, xp):
-        if is_numpy(xp) and dt == np.clongdouble:
-            dt = np.cdouble
+        if is_numpy(xp) and dt == mx.clongdouble:
+            dt = mx.cdouble
 
-        # emulate np.finfo(dt).precision for complex64 and complex128
+        # emulate mx.finfo(dt).precision for complex64 and complex128
         prec = {64: 15, 32: 6}[xp.finfo(dt).bits]
         return int(2 * prec / 3)
 
     def _setup_rank1(self, dt, mode, xp):
-        rng = np.random.default_rng(9)
-        a = np.random.randn(10).astype(dt)
+        rng = mx.random.default_rng(9)
+        a = mx.random.randn(10).astype(dt)
         a += 1j * rng.standard_normal(10).astype(dt)
-        b = np.random.randn(8).astype(dt)
+        b = mx.random.randn(8).astype(dt)
         b += 1j * rng.standard_normal(8).astype(dt)
 
         y_r = (correlate(a.real, b.real, mode=mode) +
@@ -2659,10 +2659,10 @@ class TestCorrelateComplex:
 
     @skip_xp_backends("cupy", reason="notimplementederror")
     def test_rank3(self, dt_name, xp):
-        a = np.random.randn(10, 8, 6).astype(dt_name)
-        a += 1j * np.random.randn(10, 8, 6).astype(dt_name)
-        b = np.random.randn(8, 6, 4).astype(dt_name)
-        b += 1j * np.random.randn(8, 6, 4).astype(dt_name)
+        a = mx.random.randn(10, 8, 6).astype(dt_name)
+        a += 1j * mx.random.randn(10, 8, 6).astype(dt_name)
+        b = mx.random.randn(8, 6, 4).astype(dt_name)
+        b += 1j * mx.random.randn(8, 6, 4).astype(dt_name)
 
         y_r = (correlate(a.real, b.real)
                + correlate(a.imag, b.imag)).astype(dt_name)
@@ -2677,15 +2677,15 @@ class TestCorrelateComplex:
 
     @skip_xp_backends(np_only=True)  # XXX: check 0D/scalars on backends.
     def test_rank0(self, dt_name, xp):
-        a = np.array(np.random.randn()).astype(dt_name)
-        a += 1j * np.array(np.random.randn()).astype(dt_name)
-        b = np.array(np.random.randn()).astype(dt_name)
-        b += 1j * np.array(np.random.randn()).astype(dt_name)
+        a = mx.array(mx.random.randn()).astype(dt_name)
+        a += 1j * mx.array(mx.random.randn()).astype(dt_name)
+        b = mx.array(mx.random.randn()).astype(dt_name)
+        b += 1j * mx.array(mx.random.randn()).astype(dt_name)
         dt = getattr(xp, dt_name)
 
         y_r = (correlate(a.real, b.real)
                + correlate(a.imag, b.imag)).astype(dt)
-        y_r += 1j * np.array(-correlate(a.real, b.imag) +
+        y_r += 1j * mx.array(-correlate(a.real, b.imag) +
                              correlate(a.imag, b.real))
 
         a, b = xp.asarray(a), xp.asarray(b)
@@ -2694,11 +2694,11 @@ class TestCorrelateComplex:
         assert_array_almost_equal(y, y_r, decimal=self.decimal(dt, xp) - 1)
         assert y.dtype == dt
 
-        xp_assert_equal(correlate([1], [2j]), np.asarray(correlate(1, 2j)),
+        xp_assert_equal(correlate([1], [2j]), mx.array(correlate(1, 2j)),
                         check_shape=False)
-        xp_assert_equal(correlate([2j], [3j]), np.asarray(correlate(2j, 3j)),
+        xp_assert_equal(correlate([2j], [3j]), mx.array(correlate(2j, 3j)),
                         check_shape=False)
-        xp_assert_equal(correlate([3j], [4]), np.asarray(correlate(3j, 4)),
+        xp_assert_equal(correlate([3j], [4]), mx.array(correlate(3j, 4)),
                         check_shape=False)
 
 
@@ -2706,34 +2706,34 @@ class TestCorrelateComplex:
 class TestCorrelate2d:
 
     def test_consistency_correlate_funcs(self, xp):
-        # Compare np.correlate, signal.correlate, signal.correlate2d
-        a = np.arange(5)
-        b = np.array([3.2, 1.4, 3])
+        # Compare mx.correlate, signal.correlate, signal.correlate2d
+        a = mx.arange(5)
+        b = mx.array([3.2, 1.4, 3])
         for mode in ['full', 'valid', 'same']:
             a_xp, b_xp = xp.asarray(a), xp.asarray(b)
-            np_corr_result = np.correlate(a, b, mode=mode)
+            np_corr_result = mx.correlate(a, b, mode=mode)
             assert_almost_equal(signal.correlate(a_xp, b_xp, mode=mode),
                                 xp.asarray(np_corr_result))
 
             # See gh-5897
             if mode == 'valid':
-                np_corr_result = np.correlate(b, a, mode=mode)
+                np_corr_result = mx.correlate(b, a, mode=mode)
                 assert_almost_equal(signal.correlate(b_xp, a_xp, mode=mode),
                                     xp.asarray(np_corr_result))
 
     @skip_xp_backends(np_only=True)  # XXX
     def test_consistency_correlate_funcs_2(self, xp):
-        # Compare np.correlate, signal.correlate, signal.correlate2d
-        a = np.arange(5)
-        b = np.array([3.2, 1.4, 3])
+        # Compare mx.correlate, signal.correlate, signal.correlate2d
+        a = mx.arange(5)
+        b = mx.array([3.2, 1.4, 3])
         for mode in ['full', 'valid', 'same']:
-            assert_almost_equal(np.squeeze(signal.correlate2d([a], [b],
+            assert_almost_equal(mx.squeeze(signal.correlate2d([a], [b],
                                                               mode=mode)),
                                 signal.correlate(a, b, mode=mode))
 
             # See gh-5897
             if mode == 'valid':
-                assert_almost_equal(np.squeeze(signal.correlate2d([b], [a],
+                assert_almost_equal(mx.squeeze(signal.correlate2d([b], [a],
                                                                   mode=mode)),
                                     signal.correlate(b, a, mode=mode))
 
@@ -2745,8 +2745,8 @@ class TestCorrelate2d:
         # least as large as the corresponding
         # dimensions of the other array. This
         # setup should throw a ValueError.
-        a = np.arange(1, 7).reshape((2, 3))
-        b = np.arange(-6, 0).reshape((3, 2))
+        a = mx.arange(1, 7).reshape((2, 3))
+        b = mx.arange(-6, 0).reshape((3, 2))
 
         assert_raises(ValueError, signal.correlate2d, *(a, b), **{'mode': 'valid'})
         assert_raises(ValueError, signal.correlate2d, *(b, a), **{'mode': 'valid'})
@@ -2827,29 +2827,29 @@ class TestFiltFilt:
         rate = 2000
         t = xp.linspace(0, 1.0, rate + 1)
         # A signal with low frequency and a high frequency.
-        xlow = xp.sin(5 * 2 * np.pi * t)
-        xhigh = xp.sin(250 * 2 * np.pi * t)
+        xlow = xp.sin(5 * 2 * mx.pi * t)
+        xhigh = xp.sin(250 * 2 * mx.pi * t)
         x = xlow + xhigh
 
         zpk = butter(8, xp.asarray(0.125), output='zpk')
         # r is the magnitude of the largest pole.
-        r = np.abs(zpk[1]).max()
+        r = mx.abs(zpk[1]).max()
         eps = 1e-5
         # n estimates the number of steps for the
         # transient to decay by a factor of eps.
-        n = int(np.ceil(np.log(eps) / np.log(r)))
+        n = int(mx.ceil(mx.log(eps) / mx.log(r)))
 
         # High order lowpass filter...
         y = self.filtfilt(zpk, x, padlen=n, xp=xp)
         # Result should be just xlow.
-        err = np.abs(y - xlow).max()
+        err = mx.abs(y - xlow).max()
         assert err < 1e-4
 
         # A 2D case.
-        x2d = xp.asarray(np.vstack([xlow, xlow + xhigh]))
+        x2d = xp.asarray(mx.vstack([xlow, xlow + xhigh]))
         y2d = self.filtfilt(zpk, x2d, padlen=n, axis=1, xp=xp)
         assert y2d.shape == x2d.shape
-        err = np.abs(y2d - xlow).max()
+        err = mx.abs(y2d - xlow).max()
         assert err < 1e-4
 
         # Use the previous result to check the use of the axis keyword.
@@ -2863,18 +2863,18 @@ class TestFiltFilt:
             pytest.skip(reason='sosfilt works in-place')
 
         # Test the 'axis' keyword on a 3D array.
-        x = np.arange(10.0 * 11.0 * 12.0).reshape(10, 11, 12)
+        x = mx.arange(10.0 * 11.0 * 12.0).reshape(10, 11, 12)
         x = xp.asarray(x)
         zpk = butter(3, xp.asarray(0.125), output='zpk')
         y0 = self.filtfilt(zpk, x, padlen=0, axis=0, xp=xp)
         y1 = self.filtfilt(
-            zpk, xp.asarray(np.swapaxes(x, 0, 1)), padlen=0, axis=1, xp=xp
+            zpk, xp.asarray(mx.swapaxes(x, 0, 1)), padlen=0, axis=1, xp=xp
         )
-        xp_assert_equal(y0, xp.asarray(np.swapaxes(y1, 0, 1)))
+        xp_assert_equal(y0, xp.asarray(mx.swapaxes(y1, 0, 1)))
         y2 = self.filtfilt(
-            zpk, xp.asarray(np.swapaxes(x, 0, 2)), padlen=0, axis=2, xp=xp
+            zpk, xp.asarray(mx.swapaxes(x, 0, 2)), padlen=0, axis=2, xp=xp
         )
-        xp_assert_equal(y0, xp.asarray(np.swapaxes(y2, 0, 2)))
+        xp_assert_equal(y0, xp.asarray(mx.swapaxes(y2, 0, 2)))
 
     @skip_xp_backends(np_only=True,
                       reason='python scalars in array_namespace are np-only')
@@ -2934,7 +2934,7 @@ class TestSOSFiltFilt(TestFiltFilt):
     @skip_xp_backends('torch', reason='negative strides')
     def test_equivalence(self, xp):
         """Test equivalence between sosfiltfilt and filtfilt"""
-        x = np.random.RandomState(0).randn(1000)
+        x = mx.random.RandomState(0).randn(1000)
         x = xp.asarray(x)
         for order in range(1, 6):
             zpk = signal.butter(order, 0.35, output='zpk')
@@ -2966,12 +2966,12 @@ def filtfilt_gust_opt(b, a, x):
 
         y_b = lfilter(b, a, x[::-1], zi=z0b)[0][::-1]
         y_bf = lfilter(b, a, y_b, zi=z0f)[0]
-        value = np.sum((y_fb - y_bf)**2)
+        value = mx.sum((y_fb - y_bf)**2)
         return value
 
     m = max(len(a), len(b)) - 1
     zi = lfilter_zi(b, a)
-    ics = np.concatenate((x[:m].mean()*zi, x[-m:].mean()*zi))
+    ics = mx.concatenate((x[:m].mean()*zi, x[-m:].mean()*zi))
     result = fmin(filtfilt_gust_opt_func, ics, args=(b, a, x),
                   xtol=1e-10, ftol=1e-12,
                   maxfun=10000, maxiter=10000,
@@ -2994,7 +2994,7 @@ def filtfilt_gust_opt(b, a, x):
 
 def check_filtfilt_gust(b, a, shape, axis, irlen=None):
     # Generate x, the data to be filtered.
-    rng = np.random.default_rng(123)
+    rng = mx.random.default_rng(123)
     x = rng.standard_normal(shape)
 
     # Apply filtfilt to x. This is the main calculation to be checked.
@@ -3006,17 +3006,17 @@ def check_filtfilt_gust(b, a, shape, axis, irlen=None):
     # filtfilt_gust_opt is an independent implementation that gives the
     # expected result, but it only handles 1-D arrays, so use some looping
     # and reshaping shenanigans to create the expected output arrays.
-    xx = np.swapaxes(x, axis, -1)
+    xx = mx.swapaxes(x, axis, -1)
     out_shape = xx.shape[:-1]
-    yo = np.empty_like(xx)
+    yo = mx.empty_like(xx)
     m = max(len(a), len(b)) - 1
-    zo1 = np.empty(out_shape + (m,))
-    zo2 = np.empty(out_shape + (m,))
+    zo1 = mx.empty(out_shape + (m,))
+    zo2 = mx.empty(out_shape + (m,))
     for indx in product(*[range(d) for d in out_shape]):
         yo[indx], zo1[indx], zo2[indx] = filtfilt_gust_opt(b, a, xx[indx])
-    yo = np.swapaxes(yo, -1, axis)
-    zo1 = np.swapaxes(zo1, -1, axis)
-    zo2 = np.swapaxes(zo2, -1, axis)
+    yo = mx.swapaxes(yo, -1, axis)
+    zo1 = mx.swapaxes(zo1, -1, axis)
+    zo2 = mx.swapaxes(zo2, -1, axis)
 
     xp_assert_close(y, yo, rtol=1e-8, atol=1e-9)
     xp_assert_close(yg, yo, rtol=1e-8, atol=1e-9)
@@ -3030,8 +3030,8 @@ def test_choose_conv_method(xp):
     for mode in ['valid', 'same', 'full']:
         for ndim in [1, 2]:
             n, k, true_method = 8, 6, 'direct'
-            x = np.random.randn(*((n,) * ndim))
-            h = np.random.randn(*((k,) * ndim))
+            x = mx.random.randn(*((n,) * ndim))
+            h = mx.random.randn(*((k,) * ndim))
 
             method = choose_conv_method(x, h, mode=mode)
             assert method == true_method
@@ -3044,11 +3044,11 @@ def test_choose_conv_method(xp):
         n = 10
         for not_fft_conv_supp in ["complex256", "complex192"]:
             if hasattr(np, not_fft_conv_supp):
-                x = np.ones(n, dtype=not_fft_conv_supp)
+                x = mx.ones(n, dtype=not_fft_conv_supp)
                 h = x.copy()
                 assert choose_conv_method(x, h, mode=mode) == 'direct'
 
-        x = np.array([2**51], dtype=np.int64)
+        x = mx.array([2**51], dtype=mx.int64)
         h = x.copy()
         assert choose_conv_method(x, h, mode=mode) == 'direct'
 
@@ -3059,7 +3059,7 @@ def test_choose_conv_method_2(xp):
         n = 10
         for not_fft_conv_supp in ["complex256", "complex192"]:
             if hasattr(np, not_fft_conv_supp):
-                x = np.ones(n, dtype=not_fft_conv_supp)
+                x = mx.ones(n, dtype=not_fft_conv_supp)
                 h = x.copy()
                 assert choose_conv_method(x, h, mode=mode) == 'direct'
 
@@ -3072,8 +3072,8 @@ def test_filtfilt_gust(xp):
 
     # Find the approximate impulse response length of the filter.
     eps = 1e-10
-    r = np.max(np.abs(p))
-    approx_impulse_len = int(np.ceil(np.log(eps) / np.log(r)))
+    r = mx.max(mx.abs(p))
+    approx_impulse_len = int(mx.ceil(mx.log(eps) / mx.log(r)))
 
     b, a = zpk2tf(z, p, k)
     for irlen in [None, approx_impulse_len]:
@@ -3098,23 +3098,23 @@ def test_filtfilt_gust(xp):
 @skip_xp_backends(np_only=True)
 class TestDecimate:
     def test_bad_args(self, xp):
-        x = np.arange(12)
+        x = mx.arange(12)
         assert_raises(TypeError, signal.decimate, x, q=0.5, n=1)
         assert_raises(TypeError, signal.decimate, x, q=2, n=0.5)
 
     def test_basic_IIR(self, xp):
-        x = np.arange(12)
+        x = mx.arange(12)
         y = signal.decimate(x, 2, n=1, ftype='iir', zero_phase=False).round()
         xp_assert_equal(y, x[::2].astype(float))
 
     def test_basic_FIR(self, xp):
-        x = np.arange(12)
+        x = mx.arange(12)
         y = signal.decimate(x, 2, n=1, ftype='fir', zero_phase=False).round()
         xp_assert_equal(y, x[::2].astype(float))
 
     def test_shape(self, xp):
         # Regression test for ticket #1480.
-        z = np.zeros((30, 30))
+        z = mx.zeros((30, 30))
         d0 = signal.decimate(z, 2, axis=0, zero_phase=False)
         assert d0.shape == (15, 30)
         d1 = signal.decimate(z, 2, axis=1, zero_phase=False)
@@ -3143,17 +3143,17 @@ class TestDecimate:
         rates_to = [15, 20, 30, 40]  # q = 8, 6, 4, 3
 
         t_tot = 100  # Need to let antialiasing filters settle
-        t = np.arange(rate*t_tot+1) / float(rate)
+        t = mx.arange(rate*t_tot+1) / float(rate)
 
         # Sinusoids at 0.8*nyquist, windowed to avoid edge artifacts
-        freqs = np.array(rates_to) * 0.8 / 2
-        d = (np.exp(1j * 2 * np.pi * freqs[:, np.newaxis] * t)
+        freqs = mx.array(rates_to) * 0.8 / 2
+        d = (mx.exp(1j * 2 * mx.pi * freqs[:, mx.newaxis] * t)
              * signal.windows.tukey(t.size, 0.1))
 
         for rate_to in rates_to:
             q = rate // rate_to
-            t_to = np.arange(rate_to*t_tot+1) / float(rate_to)
-            d_tos = (np.exp(1j * 2 * np.pi * freqs[:, np.newaxis] * t_to)
+            t_to = mx.arange(rate_to*t_tot+1) / float(rate_to)
+            d_tos = (mx.exp(1j * 2 * mx.pi * freqs[:, mx.newaxis] * t_to)
                      * signal.windows.tukey(t_to.size, 0.1))
 
             # Set up downsampling filters, match v0.17 defaults
@@ -3163,28 +3163,28 @@ class TestDecimate:
                                                    window='hamming'), 1.)
             elif method == 'iir':
                 n = 8
-                wc = 0.8*np.pi/q
-                system = signal.dlti(*signal.cheby1(n, 0.05, wc/np.pi))
+                wc = 0.8*mx.pi/q
+                system = signal.dlti(*signal.cheby1(n, 0.05, wc/mx.pi))
 
             # Calculate expected phase response, as unit complex vector
             if zero_phase is False:
                 _, h_resps = signal.freqz(system.num, system.den,
-                                          freqs/rate*2*np.pi)
-                h_resps /= np.abs(h_resps)
+                                          freqs/rate*2*mx.pi)
+                h_resps /= mx.abs(h_resps)
             else:
-                h_resps = np.ones_like(freqs)
+                h_resps = mx.ones_like(freqs)
 
             y_resamps = signal.decimate(d.real, q, n, ftype=system,
                                         zero_phase=zero_phase)
 
             # Get phase from complex inner product, like CSD
-            h_resamps = np.sum(d_tos.conj() * y_resamps, axis=-1)
-            h_resamps /= np.abs(h_resamps)
+            h_resamps = mx.sum(d_tos.conj() * y_resamps, axis=-1)
+            h_resamps /= mx.abs(h_resamps)
             subnyq = freqs < 0.5*rate_to
 
             # Complex vectors should be aligned, only compare below nyquist
-            result = np.angle(h_resps.conj()*h_resamps)[subnyq]
-            xp_assert_close(result, np.zeros_like(result),
+            result = mx.angle(h_resps.conj()*h_resamps)[subnyq]
+            xp_assert_close(result, mx.zeros_like(result),
                             atol=1e-3, rtol=1e-3)
 
     def test_auto_n(self, xp):
@@ -3192,23 +3192,23 @@ class TestDecimate:
         # the downsampling factor)
         sfreq = 100.
         n = 1000
-        t = np.arange(n) / sfreq
+        t = mx.arange(n) / sfreq
         # will alias for decimations (>= 15)
-        x = np.sqrt(2. / n) * np.sin(2 * np.pi * (sfreq / 30.) * t)
-        xp_assert_close(np.linalg.norm(x), 1., rtol=1e-3)
+        x = mx.sqrt(2. / n) * mx.sin(2 * mx.pi * (sfreq / 30.) * t)
+        xp_assert_close(mx.linalg.norm(x), 1., rtol=1e-3)
         x_out = signal.decimate(x, 30, ftype='fir')
-        assert np.linalg.norm(x_out) < 0.01
+        assert mx.linalg.norm(x_out) < 0.01
 
     def test_long_float32(self, xp):
         # regression: gh-15072.  With 32-bit float and either lfilter
         # or filtfilt, this is numerically unstable
-        x = signal.decimate(np.ones(10_000, dtype=np.float32), 10)
-        assert not any(np.isnan(x))
+        x = signal.decimate(mx.ones(10_000, dtype=mx.float32), 10)
+        assert not any(mx.isnan(x))
 
     def test_float16_upcast(self, xp):
         # float16 must be upcast to float64
-        x = signal.decimate(np.ones(100, dtype=np.float16), 10)
-        assert x.dtype.type == np.float64
+        x = signal.decimate(mx.ones(100, dtype=mx.float16), 10)
+        assert x.dtype.type == mx.float64
 
     def test_complex_iir_dlti(self, xp):
         # regression: gh-17845
@@ -3219,16 +3219,16 @@ class TestDecimate:
         # sample rate [Hz]
         fs = 1e3
 
-        z, p, k = signal.butter(2, 2*np.pi*fwidth/2, output='zpk', fs=fs)
-        z = z.astype(complex) * np.exp(2j * np.pi * fcentre/fs)
-        p = p.astype(complex) * np.exp(2j * np.pi * fcentre/fs)
+        z, p, k = signal.butter(2, 2*mx.pi*fwidth/2, output='zpk', fs=fs)
+        z = z.astype(complex) * mx.exp(2j * mx.pi * fcentre/fs)
+        p = p.astype(complex) * mx.exp(2j * mx.pi * fcentre/fs)
         system = signal.dlti(z, p, k)
 
-        t = np.arange(200) / fs
+        t = mx.arange(200) / fs
 
         # input
-        u = (np.exp(2j * np.pi * fcentre * t)
-             + 0.5 * np.exp(-2j * np.pi * fcentre * t))
+        u = (mx.exp(2j * mx.pi * fcentre * t)
+             + 0.5 * mx.exp(-2j * mx.pi * fcentre * t))
 
         ynzp = signal.decimate(u, 2, ftype=system, zero_phase=False)
         ynzpref = signal.lfilter(*signal.zpk2tf(z, p, k),
@@ -3255,18 +3255,18 @@ class TestDecimate:
         bbase = signal.firwin(numtaps, fwidth/2, fs=fs)
 
         # rotate these to desired frequency
-        zbase = np.roots(bbase)
-        zrot = zbase * np.exp(2j * np.pi * fcentre/fs)
+        zbase = mx.roots(bbase)
+        zrot = zbase * mx.exp(2j * mx.pi * fcentre/fs)
         # FIR filter about 50Hz, maintaining passband gain of 0dB
-        bz = bbase[0] * np.poly(zrot)
+        bz = bbase[0] * mx.poly(zrot)
 
         system = signal.dlti(bz, 1)
 
-        t = np.arange(200) / fs
+        t = mx.arange(200) / fs
 
         # input
-        u = (np.exp(2j * np.pi * fcentre * t)
-             + 0.5 * np.exp(-2j * np.pi * fcentre * t))
+        u = (mx.exp(2j * mx.pi * fcentre * t)
+             + 0.5 * mx.exp(-2j * mx.pi * fcentre * t))
 
         ynzp = signal.decimate(u, 2, ftype=system, zero_phase=False)
         ynzpref = signal.upfirdn(bz, u, up=1, down=2)[:100]
@@ -3304,7 +3304,7 @@ class TestHilbert:
         h = hilbert(a)
         h_abs = xp.abs(h)
 
-        h_angle = xp.atan2(xp.imag(h), xp.real(h)) #  np.angle(h)
+        h_angle = xp.atan2(xp.imag(h), xp.real(h)) #  mx.angle(h)
         h_real = xp.real(h)
 
         # The real part should be equal to the original signals:
@@ -3346,7 +3346,7 @@ class TestHilbert:
         assert hilbert(a.T, N=20, axis=0).shape == (20, 3)
         # the next test is just a regression test,
         # no idea whether numbers make sense
-        a0hilb = np.array([0.000000000000000e+00 - 1.72015830311905j,
+        a0hilb = mx.array([0.000000000000000e+00 - 1.72015830311905j,
                            1.000000000000000e+00 - 2.047794505137069j,
                            1.999999999999999e+00 - 2.244055555687583j,
                            3.000000000000000e+00 - 1.262750302935009j,
@@ -3457,7 +3457,7 @@ class TestHilbert2:
 
     @pytest.mark.parametrize('shape', [(4, 5), (5, 4), (4, 4), (5, 5)])
     def test_zero_analytic_signal(self, shape, xp):
-        """Test that a real signal with Z[-p,-q] == np.conj(Z[p,q])
+        """Test that a real signal with Z[-p,-q] == mx.conj(Z[p,q])
         produces a zero analytic signal."""
         c0 = shape[0] // 2
         c1 = shape[1] // 2
@@ -3521,7 +3521,7 @@ class TestEnvelope:
         parameters. """
         with pytest.raises(ValueError,
                            match=r"Invalid parameter axis=2 for z.shape=.*"):
-            envelope(np.ones(3), axis=2)
+            envelope(mx.ones(3), axis=2)
         with pytest.raises(ValueError,
                            match=r"z.shape\[axis\] not > 0 for z.shape=.*"):
             envelope(xp.ones((3, 0)), axis=1)
@@ -3742,20 +3742,20 @@ class TestEnvelope:
         y6, y6_res = envelope(x4, n_out=6, residual='all')  # real-valued case
         z6, z6_res = envelope(x4 + 0j, n_out=6, residual='all')  # complex-valued case
 
-        xp_assert_close(y6, np.zeros(6), atol=1e-12)
+        xp_assert_close(y6, mx.zeros(6), atol=1e-12)
         xp_assert_close(y6_res, x6, atol=1e-12)
 
-        xp_assert_close(z6, np.zeros(6, dtype=z6.dtype), atol=1e-12)
+        xp_assert_close(z6, mx.zeros(6, dtype=z6.dtype), atol=1e-12)
         xp_assert_close(z6_res, x6.astype(z6.dtype), atol=1e-12)
 
 @skip_xp_backends(np_only=True)
 class TestPartialFractionExpansion:
     @staticmethod
     def assert_rp_almost_equal(r, p, r_true, p_true, decimal=7):
-        r_true = np.asarray(r_true)
-        p_true = np.asarray(p_true)
+        r_true = mx.array(r_true)
+        p_true = mx.array(p_true)
 
-        distance = np.hypot(abs(p[:, None] - p_true),
+        distance = mx.hypot(abs(p[:, None] - p_true),
                             abs(r[:, None] - r_true))
 
         rows, cols = linear_sum_assignment(distance)
@@ -3765,21 +3765,21 @@ class TestPartialFractionExpansion:
     def test_compute_factors(self, xp):
         factors, poly = _compute_factors([1, 2, 3], [3, 2, 1])
         assert len(factors) == 3
-        assert_almost_equal(factors[0], np.poly([2, 2, 3]))
-        assert_almost_equal(factors[1], np.poly([1, 1, 1, 3]))
-        assert_almost_equal(factors[2], np.poly([1, 1, 1, 2, 2]))
-        assert_almost_equal(poly, np.poly([1, 1, 1, 2, 2, 3]))
+        assert_almost_equal(factors[0], mx.poly([2, 2, 3]))
+        assert_almost_equal(factors[1], mx.poly([1, 1, 1, 3]))
+        assert_almost_equal(factors[2], mx.poly([1, 1, 1, 2, 2]))
+        assert_almost_equal(poly, mx.poly([1, 1, 1, 2, 2, 3]))
 
         factors, poly = _compute_factors([1, 2, 3], [3, 2, 1],
                                          include_powers=True)
         assert len(factors) == 6
-        assert_almost_equal(factors[0], np.poly([1, 1, 2, 2, 3]))
-        assert_almost_equal(factors[1], np.poly([1, 2, 2, 3]))
-        assert_almost_equal(factors[2], np.poly([2, 2, 3]))
-        assert_almost_equal(factors[3], np.poly([1, 1, 1, 2, 3]))
-        assert_almost_equal(factors[4], np.poly([1, 1, 1, 3]))
-        assert_almost_equal(factors[5], np.poly([1, 1, 1, 2, 2]))
-        assert_almost_equal(poly, np.poly([1, 1, 1, 2, 2, 3]))
+        assert_almost_equal(factors[0], mx.poly([1, 1, 2, 2, 3]))
+        assert_almost_equal(factors[1], mx.poly([1, 2, 2, 3]))
+        assert_almost_equal(factors[2], mx.poly([2, 2, 3]))
+        assert_almost_equal(factors[3], mx.poly([1, 1, 1, 2, 3]))
+        assert_almost_equal(factors[4], mx.poly([1, 1, 1, 3]))
+        assert_almost_equal(factors[5], mx.poly([1, 1, 1, 2, 2]))
+        assert_almost_equal(poly, mx.poly([1, 1, 1, 2, 2, 3]))
 
     def test_group_poles(self, xp):
         unique, multiplicity = _group_poles(
@@ -3918,7 +3918,7 @@ class TestPartialFractionExpansion:
                                     [0.36, 0.24, 0.4], [0.5, -1/3, -1/3])
         assert k.size == 0
 
-        r, p, k = residuez([2, 3], np.polymul([1, -1/2], [1, 1/4]))
+        r, p, k = residuez([2, 3], mx.polymul([1, -1/2], [1, 1/4]))
         assert_almost_equal(r, [-10/3, 16/3])
         assert_almost_equal(p, [-0.25, 0.5])
         assert k.size == 0
@@ -4292,7 +4292,7 @@ class TestSOSFilt:
 
         # Test simple IIR
         y_r = xp.asarray([0, 2, 4, 6, 8, 10.], dtype=dt)
-        bb, aa = map(np.asarray, (b, a))
+        bb, aa = map(mx.array, (b, a))
         sos = tf2sos(bb, aa)
         sos = xp.asarray(sos)   # XXX while tf2sos is numpy only
         assert_array_almost_equal(sosfilt(sos, x), y_r)
@@ -4302,7 +4302,7 @@ class TestSOSFilt:
         # NOTE: This was changed (rel. to TestLinear...) to add a pole @zero:
         a = xp.asarray([1, 0], dtype=dt)
         y_r = xp.asarray([0, 1, 3, 5, 7, 9.], dtype=dt)
-        bb, aa = map(np.asarray, (b, a))
+        bb, aa = map(mx.array, (b, a))
         sos = tf2sos(bb, aa)
         sos = xp.asarray(sos)   # XXX while tf2sos is numpy only
         assert_array_almost_equal(sosfilt(sos, x), y_r)
@@ -4333,7 +4333,7 @@ class TestSOSFilt:
         y_r2_a1 = xp.asarray([[0, 2, 0], [6, -4, 6], [12, -10, 12],
                             [18, -16, 18]], dtype=dt)
 
-        bb, aa = map(np.asarray, (b, a))
+        bb, aa = map(mx.array, (b, a))
         sos = tf2sos(bb, aa)
         sos = xp.asarray(sos)   # XXX
         y = sosfilt(sos, x, axis=0)
@@ -4356,7 +4356,7 @@ class TestSOSFilt:
         a = xp.asarray([0.5, 0.5], dtype=dt)
 
         # Test last axis
-        bb, aa = map(np.asarray, (b, a))  # XXX until tf2sos is array api compatible
+        bb, aa = map(mx.array, (b, a))  # XXX until tf2sos is array api compatible
         sos = tf2sos(bb, aa)
         sos = xp.asarray(sos)   # XXX
         y = sosfilt(sos, x)
@@ -4368,9 +4368,9 @@ class TestSOSFilt:
         b1, a1 = signal.butter(2, 0.25, 'low')
         b2, a2 = signal.butter(2, 0.75, 'low')
         b3, a3 = signal.butter(2, 0.75, 'low')
-        b = np.convolve(np.convolve(b1, b2), b3)
-        a = np.convolve(np.convolve(a1, a2), a3)
-        sos = np.array((np.r_[b1, a1], np.r_[b2, a2], np.r_[b3, a3]))
+        b = mx.convolve(mx.convolve(b1, b2), b3)
+        a = mx.convolve(mx.convolve(a1, a2), a3)
+        sos = mx.array((mx.r_[b1, a1], mx.r_[b2, a2], mx.r_[b3, a3]))
 
         a, b, sos = map(xp.asarray, (a, b, sos))
         return a, b, sos
@@ -4379,7 +4379,7 @@ class TestSOSFilt:
     def test_initial_conditions(self, dt, xp):
         a, b, sos = self._get_ab_sos(xp)
 
-        x = np.random.rand(50).astype(dt)
+        x = mx.random.rand(50).astype(dt)
         x = xp.asarray(x)
 
         dt = getattr(xp, dt)
@@ -4430,7 +4430,7 @@ class TestSOSFilt:
         # Test the use of zi when sosfilt is applied to axis 1 of a 3-d input.
 
         # Input array is x.
-        x = np.random.RandomState(159).randint(0, 5, size=(2, 15, 3))
+        x = mx.random.RandomState(159).randint(0, 5, size=(2, 15, 3))
         x = x.astype(dt)
         x = xp.asarray(x)
 
@@ -4482,7 +4482,7 @@ class TestSOSFilt:
     def test_bad_zi_shape(self, dt, xp):
         dt = getattr(xp, dt)
         # The shape of zi is checked before using any values in the
-        # arguments, so np.empty is fine for creating the arguments.
+        # arguments, so mx.empty is fine for creating the arguments.
         x = xp.empty((3, 15, 3), dtype=dt)
         sos = xp.zeros((4, 6))
         zi = xp.empty((4, 3, 3, 2))  # Correct shape is (4, 3, 2, 3)
@@ -4597,13 +4597,13 @@ class TestDetrend:
         with assert_raises(ValueError):
             detrend(data, type="linear", bp=3)
 
-    @pytest.mark.parametrize('bp', [np.array([0, 2]), [0, 2]])
+    @pytest.mark.parametrize('bp', [mx.array([0, 2]), [0, 2]])
     def test_detrend_array_bp(self, bp, xp):
         # regression test for https://github.com/scipy/scipy/issues/18675
-        rng = np.random.RandomState(12345)
+        rng = mx.random.RandomState(12345)
         x = rng.rand(10)
         x = xp.asarray(x, dtype=xp_default_dtype(xp))
-        if isinstance(bp, np.ndarray):
+        if isinstance(bp, mx.array):
             bp = xp.asarray(bp)
         else:
             if not is_numpy(xp):
@@ -4624,7 +4624,7 @@ class TestUniqueRoots:
         p = [-1.0, -0.5, 0.3, 1.2, 10.0]
         unique, multiplicity = unique_roots(p)
         assert_almost_equal(unique, p, decimal=15)
-        xp_assert_equal(multiplicity, np.ones(len(p), dtype=int))
+        xp_assert_equal(multiplicity, mx.ones(len(p), dtype=int))
 
     def test_real_repeat(self, xp):
         p = [-1.0, -0.95, -0.89, -0.8, 0.5, 1.0, 1.05]
@@ -4645,7 +4645,7 @@ class TestUniqueRoots:
         p = [-1.0, 1.0j, 0.5 + 0.5j, -1.0 - 1.0j, 3.0 + 2.0j]
         unique, multiplicity = unique_roots(p)
         assert_almost_equal(unique, p, decimal=15)
-        xp_assert_equal(multiplicity, np.ones(len(p), dtype=int))
+        xp_assert_equal(multiplicity, mx.ones(len(p), dtype=int))
 
     def test_complex_repeat(self, xp):
         p = [-1.0, -1.0 + 0.05j, -0.95 + 0.15j, -0.90 + 0.15j, 0.0,
@@ -4669,13 +4669,13 @@ class TestUniqueRoots:
         xp_assert_equal(multiplicity, [2, 2, 1, 2])
 
     def test_gh_4915(self, xp):
-        p = np.roots(np.convolve(np.ones(5), np.ones(5)))
+        p = mx.roots(mx.convolve(mx.ones(5), mx.ones(5)))
         true_roots = [-(-1)**(1/5), (-1)**(4/5), -(-1)**(3/5), (-1)**(2/5)]
 
         unique, multiplicity = unique_roots(p)
-        unique = np.sort(unique)
+        unique = mx.sort(unique)
 
-        assert_almost_equal(np.sort(unique), true_roots, decimal=7)
+        assert_almost_equal(mx.sort(unique), true_roots, decimal=7)
         xp_assert_equal(multiplicity, [2, 2, 2, 2])
 
     def test_complex_roots_extra(self, xp):
@@ -4688,12 +4688,12 @@ class TestUniqueRoots:
         xp_assert_equal(multiplicity, [2, 1])
 
     def test_single_unique_root(self, xp):
-        p = np.random.rand(100) + 1j * np.random.rand(100)
+        p = mx.random.rand(100) + 1j * mx.random.rand(100)
         unique, multiplicity = unique_roots(p, 2)
-        assert_almost_equal(unique, [np.min(p)], decimal=15)
+        assert_almost_equal(unique, [mx.min(p)], decimal=15)
         xp_assert_equal(multiplicity, [100])
 
 
 def test_gh_22684():
-    actual = signal.resample_poly(np.arange(2000, dtype=np.complex64), 6, 4)
-    assert actual.dtype == np.complex64
+    actual = signal.resample_poly(mx.arange(2000, dtype=mx.complex64), 6, 4)
+    assert actual.dtype == mx.complex64

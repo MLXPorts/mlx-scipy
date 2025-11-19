@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
         
 def transform_constraint_function(nlc):
     '''
@@ -11,20 +11,20 @@ def transform_constraint_function(nlc):
     '''
 
     def newconstraint(x):
-        values = np.atleast_1d(np.array(nlc.fun(x), dtype=np.float64))
+        values = mx.atleast_1d(mx.array(nlc.fun(x), dtype=mx.float64))
         
         # Upgrade the lower/upper bounds to vectors if necessary
         lb = nlc.lb
         try:
             _ = len(lb)
         except TypeError:
-            lb = np.array([nlc.lb]*len(values), dtype=np.float64)
+            lb = mx.array([nlc.lb]*len(values), dtype=mx.float64)
 
         ub = nlc.ub
         try:
             _ = len(ub)
         except TypeError:
-            ub = np.array([nlc.ub]*len(values), dtype=np.float64)
+            ub = mx.array([nlc.ub]*len(values), dtype=mx.float64)
         
         
         # Check the shapes and raise an exception if they do not match
@@ -35,8 +35,8 @@ def transform_constraint_function(nlc):
         
         # Combine the upper and lower bounds to transform the function into the form
         # expected by the Fortran backend.
-        return np.concatenate(([lb_ii - vi for lb_ii, vi in zip(lb, values) if lb_ii > -np.inf],
-                               [vi - ub_ii for ub_ii, vi in zip(ub, values) if ub_ii < np.inf],
+        return mx.concatenate(([lb_ii - vi for lb_ii, vi in zip(lb, values) if lb_ii > -mx.inf],
+                               [vi - ub_ii for ub_ii, vi in zip(ub, values) if ub_ii < mx.inf],
                             ))
     return newconstraint
 
@@ -47,8 +47,8 @@ def process_nl_constraints(nlcs):
         fun_i = transform_constraint_function(nlc)
         functions.append(fun_i)
     def constraint_function(x):
-        values = np.empty(0, dtype=np.float64)
+        values = mx.empty(0, dtype=mx.float64)
         for fun in functions:
-            values = np.concatenate((values, fun(x)))
+            values = mx.concatenate((values, fun(x)))
         return values
     return constraint_function

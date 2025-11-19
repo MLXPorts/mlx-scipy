@@ -1,7 +1,7 @@
 """Boundary value problem solver."""
 from warnings import warn
 
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import pinv
 
 from scipy.sparse import coo_matrix, csc_matrix
@@ -10,7 +10,7 @@ from scipy.optimize import OptimizeResult
 from scipy._lib._array_api import xp_capabilities
 
 
-EPS = np.finfo(float).eps
+EPS = mx.finfo(float).eps
 
 
 def estimate_fun_jac(fun, x, y, p, f0=None):
@@ -18,10 +18,10 @@ def estimate_fun_jac(fun, x, y, p, f0=None):
 
     Returns
     -------
-    df_dy : ndarray, shape (n, n, m)
+    df_dy : array, shape (n, n, m)
         Derivatives with respect to y. An element (i, j, q) corresponds to
         d f_i(x_q, y_q) / d (y_q)_j.
-    df_dp : ndarray with shape (n, k, m) or None
+    df_dp : array with shape (n, k, m) or None
         Derivatives with respect to p. An element (i, j, q) corresponds to
         d f_i(x_q, y_q, p) / d p_j. If `p` is empty, None is returned.
     """
@@ -31,8 +31,8 @@ def estimate_fun_jac(fun, x, y, p, f0=None):
 
     dtype = y.dtype
 
-    df_dy = np.empty((n, n, m), dtype=dtype)
-    h = EPS**0.5 * (1 + np.abs(y))
+    df_dy = mx.empty((n, n, m), dtype=dtype)
+    h = EPS**0.5 * (1 + mx.abs(y))
     for i in range(n):
         y_new = y.copy()
         y_new[i] += h[i]
@@ -44,8 +44,8 @@ def estimate_fun_jac(fun, x, y, p, f0=None):
     if k == 0:
         df_dp = None
     else:
-        df_dp = np.empty((n, k, m), dtype=dtype)
-        h = EPS**0.5 * (1 + np.abs(p))
+        df_dp = mx.empty((n, k, m), dtype=dtype)
+        h = EPS**0.5 * (1 + mx.abs(p))
         for i in range(k):
             p_new = p.copy()
             p_new[i] += h[i]
@@ -61,13 +61,13 @@ def estimate_bc_jac(bc, ya, yb, p, bc0=None):
 
     Returns
     -------
-    dbc_dya : ndarray, shape (n + k, n)
+    dbc_dya : array, shape (n + k, n)
         Derivatives with respect to ya. An element (i, j) corresponds to
         d bc_i / d ya_j.
-    dbc_dyb : ndarray, shape (n + k, n)
+    dbc_dyb : array, shape (n + k, n)
         Derivatives with respect to yb. An element (i, j) corresponds to
         d bc_i / d ya_j.
-    dbc_dp : ndarray with shape (n + k, k) or None
+    dbc_dp : array with shape (n + k, k) or None
         Derivatives with respect to p. An element (i, j) corresponds to
         d bc_i / d p_j. If `p` is empty, None is returned.
     """
@@ -79,8 +79,8 @@ def estimate_bc_jac(bc, ya, yb, p, bc0=None):
 
     dtype = ya.dtype
 
-    dbc_dya = np.empty((n, n + k), dtype=dtype)
-    h = EPS**0.5 * (1 + np.abs(ya))
+    dbc_dya = mx.empty((n, n + k), dtype=dtype)
+    h = EPS**0.5 * (1 + mx.abs(ya))
     for i in range(n):
         ya_new = ya.copy()
         ya_new[i] += h[i]
@@ -89,8 +89,8 @@ def estimate_bc_jac(bc, ya, yb, p, bc0=None):
         dbc_dya[i] = (bc_new - bc0) / hi
     dbc_dya = dbc_dya.T
 
-    h = EPS**0.5 * (1 + np.abs(yb))
-    dbc_dyb = np.empty((n, n + k), dtype=dtype)
+    h = EPS**0.5 * (1 + mx.abs(yb))
+    dbc_dyb = mx.empty((n, n + k), dtype=dtype)
     for i in range(n):
         yb_new = yb.copy()
         yb_new[i] += h[i]
@@ -102,8 +102,8 @@ def estimate_bc_jac(bc, ya, yb, p, bc0=None):
     if k == 0:
         dbc_dp = None
     else:
-        h = EPS**0.5 * (1 + np.abs(p))
-        dbc_dp = np.empty((k, n + k), dtype=dtype)
+        h = EPS**0.5 * (1 + mx.abs(p))
+        dbc_dp = mx.empty((k, n + k), dtype=dtype)
         for i in range(k):
             p_new = p.copy()
             p_new[i] += h[i]
@@ -120,21 +120,21 @@ def compute_jac_indices(n, m, k):
 
     See `construct_global_jac` for the explanation.
     """
-    i_col = np.repeat(np.arange((m - 1) * n), n)
-    j_col = (np.tile(np.arange(n), n * (m - 1)) +
-             np.repeat(np.arange(m - 1) * n, n**2))
+    i_col = mx.repeat(mx.arange((m - 1) * n), n)
+    j_col = (mx.tile(mx.arange(n), n * (m - 1)) +
+             mx.repeat(mx.arange(m - 1) * n, n**2))
 
-    i_bc = np.repeat(np.arange((m - 1) * n, m * n + k), n)
-    j_bc = np.tile(np.arange(n), n + k)
+    i_bc = mx.repeat(mx.arange((m - 1) * n, m * n + k), n)
+    j_bc = mx.tile(mx.arange(n), n + k)
 
-    i_p_col = np.repeat(np.arange((m - 1) * n), k)
-    j_p_col = np.tile(np.arange(m * n, m * n + k), (m - 1) * n)
+    i_p_col = mx.repeat(mx.arange((m - 1) * n), k)
+    j_p_col = mx.tile(mx.arange(m * n, m * n + k), (m - 1) * n)
 
-    i_p_bc = np.repeat(np.arange((m - 1) * n, m * n + k), k)
-    j_p_bc = np.tile(np.arange(m * n, m * n + k), n + k)
+    i_p_bc = mx.repeat(mx.arange((m - 1) * n, m * n + k), k)
+    j_p_bc = mx.tile(mx.arange(m * n, m * n + k), n + k)
 
-    i = np.hstack((i_col, i_col, i_bc, i_bc, i_p_col, i_p_bc))
-    j = np.hstack((j_col, j_col + n,
+    i = mx.hstack((i_col, i_col, i_bc, i_bc, i_p_col, i_p_bc))
+    j = mx.hstack((j_col, j_col + n,
                    j_bc, j_bc + (m - 1) * n,
                    j_p_col, j_p_bc))
 
@@ -142,18 +142,18 @@ def compute_jac_indices(n, m, k):
 
 
 def stacked_matmul(a, b):
-    """Stacked matrix multiply: out[i,:,:] = np.dot(a[i,:,:], b[i,:,:]).
+    """Stacked matrix multiply: out[i,:,:] = mx.dot(a[i,:,:], b[i,:,:]).
 
     Empirical optimization. Use outer Python loop and BLAS for large
     matrices, otherwise use a single einsum call.
     """
     if a.shape[1] > 50:
-        out = np.empty((a.shape[0], a.shape[1], b.shape[2]))
+        out = mx.empty((a.shape[0], a.shape[1], b.shape[2]))
         for i in range(a.shape[0]):
-            out[i] = np.dot(a[i], b[i])
+            out[i] = mx.dot(a[i], b[i])
         return out
     else:
-        return np.einsum('...ij,...jk->...ik', a, b)
+        return mx.einsum('...ij,...jk->...ik', a, b)
 
 
 def construct_global_jac(n, m, k, i_jac, j_jac, h, df_dy, df_dy_middle, df_dp,
@@ -196,7 +196,7 @@ def construct_global_jac(n, m, k, i_jac, j_jac, h, df_dy, df_dy_middle, df_dp,
         Number of nodes in the mesh.
     k : int
         Number of the unknown parameters.
-    i_jac, j_jac : ndarray
+    i_jac, j_jac : array
         Row and column indices returned by `compute_jac_indices`. They
         represent different blocks in the Jacobian matrix in the following
         order (see the scheme above):
@@ -212,19 +212,19 @@ def construct_global_jac(n, m, k, i_jac, j_jac, h, df_dy, df_dy_middle, df_dp,
             * 6: (n + k) x k block for the dependency of the boundary
               conditions on p.
 
-    df_dy : ndarray, shape (n, n, m)
+    df_dy : array, shape (n, n, m)
         Jacobian of f with respect to y computed at the mesh nodes.
-    df_dy_middle : ndarray, shape (n, n, m - 1)
+    df_dy_middle : array, shape (n, n, m - 1)
         Jacobian of f with respect to y computed at the middle between the
         mesh nodes.
-    df_dp : ndarray with shape (n, k, m) or None
+    df_dp : array with shape (n, k, m) or None
         Jacobian of f with respect to p computed at the mesh nodes.
-    df_dp_middle : ndarray with shape (n, k, m - 1) or None
+    df_dp_middle : array with shape (n, k, m - 1) or None
         Jacobian of f with respect to p computed at the middle between the
         mesh nodes.
-    dbc_dya, dbc_dyb : ndarray, shape (n, n)
+    dbc_dya, dbc_dyb : array, shape (n, n)
         Jacobian of bc with respect to ya and yb.
-    dbc_dp : ndarray with shape (n, k) or None
+    dbc_dp : array with shape (n, k) or None
         Jacobian of bc with respect to p.
 
     Returns
@@ -238,37 +238,37 @@ def construct_global_jac(n, m, k, i_jac, j_jac, h, df_dy, df_dy_middle, df_dp,
        Control and the Maltab PSE", ACM Trans. Math. Softw., Vol. 27,
        Number 3, pp. 299-316, 2001.
     """
-    df_dy = np.transpose(df_dy, (2, 0, 1))
-    df_dy_middle = np.transpose(df_dy_middle, (2, 0, 1))
+    df_dy = mx.transpose(df_dy, (2, 0, 1))
+    df_dy_middle = mx.transpose(df_dy_middle, (2, 0, 1))
 
-    h = h[:, np.newaxis, np.newaxis]
+    h = h[:, mx.newaxis, mx.newaxis]
 
     dtype = df_dy.dtype
 
     # Computing diagonal n x n blocks.
-    dPhi_dy_0 = np.empty((m - 1, n, n), dtype=dtype)
-    dPhi_dy_0[:] = -np.identity(n)
+    dPhi_dy_0 = mx.empty((m - 1, n, n), dtype=dtype)
+    dPhi_dy_0[:] = -mx.identity(n)
     dPhi_dy_0 -= h / 6 * (df_dy[:-1] + 2 * df_dy_middle)
     T = stacked_matmul(df_dy_middle, df_dy[:-1])
     dPhi_dy_0 -= h**2 / 12 * T
 
     # Computing off-diagonal n x n blocks.
-    dPhi_dy_1 = np.empty((m - 1, n, n), dtype=dtype)
-    dPhi_dy_1[:] = np.identity(n)
+    dPhi_dy_1 = mx.empty((m - 1, n, n), dtype=dtype)
+    dPhi_dy_1[:] = mx.identity(n)
     dPhi_dy_1 -= h / 6 * (df_dy[1:] + 2 * df_dy_middle)
     T = stacked_matmul(df_dy_middle, df_dy[1:])
     dPhi_dy_1 += h**2 / 12 * T
 
-    values = np.hstack((dPhi_dy_0.ravel(), dPhi_dy_1.ravel(), dbc_dya.ravel(),
+    values = mx.hstack((dPhi_dy_0.ravel(), dPhi_dy_1.ravel(), dbc_dya.ravel(),
                         dbc_dyb.ravel()))
 
     if k > 0:
-        df_dp = np.transpose(df_dp, (2, 0, 1))
-        df_dp_middle = np.transpose(df_dp_middle, (2, 0, 1))
+        df_dp = mx.transpose(df_dp, (2, 0, 1))
+        df_dp_middle = mx.transpose(df_dp_middle, (2, 0, 1))
         T = stacked_matmul(df_dy_middle, df_dp[:-1] - df_dp[1:])
         df_dp_middle += 0.125 * h * T
         dPhi_dp = -h/6 * (df_dp[:-1] + df_dp[1:] + 4 * df_dp_middle)
-        values = np.hstack((values, dPhi_dp.ravel(), dbc_dp.ravel()))
+        values = mx.hstack((values, dPhi_dp.ravel(), dbc_dp.ravel()))
 
     J = coo_matrix((values, (i_jac, j_jac)))
     return csc_matrix(J)
@@ -288,14 +288,14 @@ def collocation_fun(fun, y, p, x, h):
 
     Returns
     -------
-    col_res : ndarray, shape (n, m - 1)
+    col_res : array, shape (n, m - 1)
         Collocation residuals at the middle points of the mesh intervals.
-    y_middle : ndarray, shape (n, m - 1)
+    y_middle : array, shape (n, m - 1)
         Values of the cubic spline evaluated at the middle points of the mesh
         intervals.
-    f : ndarray, shape (n, m)
+    f : array, shape (n, m)
         RHS of the ODE system evaluated at the mesh nodes.
-    f_middle : ndarray, shape (n, m - 1)
+    f_middle : array, shape (n, m - 1)
         RHS of the ODE system evaluated at the middle points of the mesh
         intervals (and using `y_middle`).
 
@@ -368,7 +368,7 @@ def solve_newton(n, m, h, col_fun, bc, jac, y, p, B, bvp_tol, bc_tol):
         Number of equations in the ODE system.
     m : int
         Number of nodes in the mesh.
-    h : ndarray, shape (m-1,)
+    h : array, shape (m-1,)
         Mesh intervals.
     col_fun : callable
         Function computing collocation residuals.
@@ -378,11 +378,11 @@ def solve_newton(n, m, h, col_fun, bc, jac, y, p, B, bvp_tol, bc_tol):
         Function computing the Jacobian of the whole system (including
         collocation and boundary condition residuals). It is supposed to
         return csc_matrix.
-    y : ndarray, shape (n, m)
+    y : array, shape (n, m)
         Initial guess for the function values at the mesh nodes.
-    p : ndarray, shape (k,)
+    p : array, shape (k,)
         Initial guess for the unknown parameters.
-    B : ndarray with shape (n, n) or None
+    B : array with shape (n, n) or None
         Matrix to force the S y(a) = 0 condition for a problems with the
         singular term. If None, the singular term is assumed to be absent.
     bvp_tol : float
@@ -392,9 +392,9 @@ def solve_newton(n, m, h, col_fun, bc, jac, y, p, B, bvp_tol, bc_tol):
 
     Returns
     -------
-    y : ndarray, shape (n, m)
+    y : array, shape (n, m)
         Final iterate for the function values at the mesh nodes.
-    p : ndarray, shape (k,)
+    p : array, shape (k,)
         Final iterate for the unknown parameters.
     singular : bool
         True, if the LU decomposition failed because Jacobian turned out
@@ -411,9 +411,9 @@ def solve_newton(n, m, h, col_fun, bc, jac, y, p, B, bvp_tol, bc_tol):
     # are connected with collocation residuals  r_middle = 1.5 * col_res / h.
     # As our BVP solver tries to decrease relative residuals below a certain
     # tolerance, it seems reasonable to terminated Newton iterations by
-    # comparison of r_middle / (1 + np.abs(f_middle)) with a certain threshold,
+    # comparison of r_middle / (1 + mx.abs(f_middle)) with a certain threshold,
     # which we choose to be 1.5 orders lower than the BVP tolerance. We rewrite
-    # the condition as col_res < tol_r * (1 + np.abs(f_middle)), then tol_r
+    # the condition as col_res < tol_r * (1 + mx.abs(f_middle)), then tol_r
     # should be computed as follows:
     tol_r = 2/3 * h * 5e-2 * bvp_tol
 
@@ -440,7 +440,7 @@ def solve_newton(n, m, h, col_fun, bc, jac, y, p, B, bvp_tol, bc_tol):
 
     col_res, y_middle, f, f_middle = col_fun(y, p)
     bc_res = bc(y[:, 0], y[:, -1], p)
-    res = np.hstack((col_res.ravel(order='F'), bc_res))
+    res = mx.hstack((col_res.ravel(order='F'), bc_res))
 
     njev = 0
     singular = False
@@ -456,7 +456,7 @@ def solve_newton(n, m, h, col_fun, bc, jac, y, p, B, bvp_tol, bc_tol):
                 break
 
             step = LU.solve(res)
-            cost = np.dot(step, step)
+            cost = mx.dot(step, step)
 
         y_step = step[:m * n].reshape((n, m), order='F')
         p_step = step[m * n:]
@@ -465,15 +465,15 @@ def solve_newton(n, m, h, col_fun, bc, jac, y, p, B, bvp_tol, bc_tol):
         for trial in range(n_trial + 1):
             y_new = y - alpha * y_step
             if B is not None:
-                y_new[:, 0] = np.dot(B, y_new[:, 0])
+                y_new[:, 0] = mx.dot(B, y_new[:, 0])
             p_new = p - alpha * p_step
 
             col_res, y_middle, f, f_middle = col_fun(y_new, p_new)
             bc_res = bc(y_new[:, 0], y_new[:, -1], p_new)
-            res = np.hstack((col_res.ravel(order='F'), bc_res))
+            res = mx.hstack((col_res.ravel(order='F'), bc_res))
 
             step_new = LU.solve(res)
-            cost_new = np.dot(step_new, step_new)
+            cost_new = mx.dot(step_new, step_new)
             if cost_new < (1 - 2 * alpha * sigma) * cost:
                 break
 
@@ -486,8 +486,8 @@ def solve_newton(n, m, h, col_fun, bc, jac, y, p, B, bvp_tol, bc_tol):
         if njev == max_njev:
             break
 
-        if (np.all(np.abs(col_res) < tol_r * (1 + np.abs(f_middle))) and
-                np.all(np.abs(bc_res) < bc_tol)):
+        if (mx.all(mx.abs(col_res) < tol_r * (1 + mx.abs(f_middle))) and
+                mx.all(mx.abs(bc_res) < bc_tol)):
             break
 
         # If the full step was taken, then we are going to continue with
@@ -530,7 +530,7 @@ def estimate_rms_residuals(fun, sol, x, h, p, r_middle, f_middle):
 
     The residuals are defined as the difference between the derivatives of
     our solution and rhs of the ODE system. We use relative residuals, i.e.,
-    normalized by 1 + np.abs(f). RMS values are computed as sqrt from the
+    normalized by 1 + mx.abs(f). RMS values are computed as sqrt from the
     normalized integrals of the squared relative residuals over each interval.
     Integrals are estimated using 5-point Lobatto quadrature [1]_, we use the
     fact that residuals at the mesh nodes are identically zero.
@@ -542,7 +542,7 @@ def estimate_rms_residuals(fun, sol, x, h, p, r_middle, f_middle):
 
     Returns
     -------
-    rms_res : ndarray, shape (m - 1,)
+    rms_res : array, shape (m - 1,)
         Estimated rms values of the relative residuals over each interval.
 
     References
@@ -565,13 +565,13 @@ def estimate_rms_residuals(fun, sol, x, h, p, r_middle, f_middle):
     r1 = y1_prime - f1
     r2 = y2_prime - f2
 
-    r_middle /= 1 + np.abs(f_middle)
-    r1 /= 1 + np.abs(f1)
-    r2 /= 1 + np.abs(f2)
+    r_middle /= 1 + mx.abs(f_middle)
+    r1 /= 1 + mx.abs(f1)
+    r2 /= 1 + mx.abs(f2)
 
-    r1 = np.sum(np.real(r1 * np.conj(r1)), axis=0)
-    r2 = np.sum(np.real(r2 * np.conj(r2)), axis=0)
-    r_middle = np.sum(np.real(r_middle * np.conj(r_middle)), axis=0)
+    r1 = mx.sum(mx.real(r1 * mx.conj(r1)), axis=0)
+    r2 = mx.sum(mx.real(r2 * mx.conj(r2)), axis=0)
+    r_middle = mx.sum(mx.real(r_middle * mx.conj(r_middle)), axis=0)
 
     return (0.5 * (32 / 45 * r_middle + 49 / 90 * (r1 + r2))) ** 0.5
 
@@ -589,14 +589,14 @@ def create_spline(y, yp, x, h):
     from scipy.interpolate import PPoly
 
     n, m = y.shape
-    c = np.empty((4, n, m - 1), dtype=y.dtype)
+    c = mx.empty((4, n, m - 1), dtype=y.dtype)
     slope = (y[:, 1:] - y[:, :-1]) / h
     t = (yp[:, :-1] + yp[:, 1:] - 2 * slope) / h
     c[0] = t / h
     c[1] = (slope - yp[:, :-1]) / h - t
     c[2] = yp[:, :-1]
     c[3] = y[:, :-1]
-    c = np.moveaxis(c, 1, 0)
+    c = mx.moveaxis(c, 1, 0)
 
     return PPoly(c, x, extrapolate=True, axis=1)
 
@@ -609,26 +609,26 @@ def modify_mesh(x, insert_1, insert_2):
 
     Parameters
     ----------
-    x : ndarray, shape (m,)
+    x : array, shape (m,)
         Mesh nodes.
-    insert_1 : ndarray
+    insert_1 : array
         Intervals to each insert 1 new node in the middle.
-    insert_2 : ndarray
+    insert_2 : array
         Intervals to each insert 2 new nodes, such that divide an interval
         into 3 equal parts.
 
     Returns
     -------
-    x_new : ndarray
+    x_new : array
         New mesh nodes.
 
     Notes
     -----
     `insert_1` and `insert_2` should not have common values.
     """
-    # Because np.insert implementation apparently varies with a version of
+    # Because mx.insert implementation apparently varies with a version of
     # NumPy, we use a simple and reliable approach with sorting.
-    return np.sort(np.hstack((
+    return mx.sort(mx.hstack((
         x,
         0.5 * (x[insert_1] + x[insert_1 + 1]),
         (2 * x[insert_2] + x[insert_2 + 1]) / 3,
@@ -646,37 +646,37 @@ def wrap_functions(fun, bc, fun_jac, bc_jac, k, a, S, D, dtype):
 
     if k == 0:
         def fun_p(x, y, _):
-            return np.asarray(fun(x, y), dtype)
+            return mx.array(fun(x, y), dtype)
 
         def bc_wrapped(ya, yb, _):
-            return np.asarray(bc(ya, yb), dtype)
+            return mx.array(bc(ya, yb), dtype)
 
         if fun_jac is not None:
             def fun_jac_p(x, y, _):
-                return np.asarray(fun_jac(x, y), dtype), None
+                return mx.array(fun_jac(x, y), dtype), None
 
         if bc_jac is not None:
             def bc_jac_wrapped(ya, yb, _):
                 dbc_dya, dbc_dyb = bc_jac(ya, yb)
-                return (np.asarray(dbc_dya, dtype),
-                        np.asarray(dbc_dyb, dtype), None)
+                return (mx.array(dbc_dya, dtype),
+                        mx.array(dbc_dyb, dtype), None)
     else:
         def fun_p(x, y, p):
-            return np.asarray(fun(x, y, p), dtype)
+            return mx.array(fun(x, y, p), dtype)
 
         def bc_wrapped(x, y, p):
-            return np.asarray(bc(x, y, p), dtype)
+            return mx.array(bc(x, y, p), dtype)
 
         if fun_jac is not None:
             def fun_jac_p(x, y, p):
                 df_dy, df_dp = fun_jac(x, y, p)
-                return np.asarray(df_dy, dtype), np.asarray(df_dp, dtype)
+                return mx.array(df_dy, dtype), mx.array(df_dp, dtype)
 
         if bc_jac is not None:
             def bc_jac_wrapped(ya, yb, p):
                 dbc_dya, dbc_dyb, dbc_dp = bc_jac(ya, yb, p)
-                return (np.asarray(dbc_dya, dtype), np.asarray(dbc_dyb, dtype),
-                        np.asarray(dbc_dp, dtype))
+                return (mx.array(dbc_dya, dtype), mx.array(dbc_dyb, dtype),
+                        mx.array(dbc_dp, dtype))
 
     if S is None:
         fun_wrapped = fun_p
@@ -684,22 +684,22 @@ def wrap_functions(fun, bc, fun_jac, bc_jac, k, a, S, D, dtype):
         def fun_wrapped(x, y, p):
             f = fun_p(x, y, p)
             if x[0] == a:
-                f[:, 0] = np.dot(D, f[:, 0])
-                f[:, 1:] += np.dot(S, y[:, 1:]) / (x[1:] - a)
+                f[:, 0] = mx.dot(D, f[:, 0])
+                f[:, 1:] += mx.dot(S, y[:, 1:]) / (x[1:] - a)
             else:
-                f += np.dot(S, y) / (x - a)
+                f += mx.dot(S, y) / (x - a)
             return f
 
     if fun_jac is not None:
         if S is None:
             fun_jac_wrapped = fun_jac_p
         else:
-            Sr = S[:, :, np.newaxis]
+            Sr = S[:, :, mx.newaxis]
 
             def fun_jac_wrapped(x, y, p):
                 df_dy, df_dp = fun_jac_p(x, y, p)
                 if x[0] == a:
-                    df_dy[:, :, 0] = np.dot(D, df_dy[:, :, 0])
+                    df_dy[:, :, 0] = mx.dot(D, df_dy[:, :, 0])
                     df_dy[:, :, 1:] += Sr / (x[1:] - a)
                 else:
                     df_dy += Sr / (x - a)
@@ -745,14 +745,14 @@ def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
     fun : callable
         Right-hand side of the system. The calling signature is ``fun(x, y)``,
         or ``fun(x, y, p)`` if parameters are present. All arguments are
-        ndarray: ``x`` with shape (m,), ``y`` with shape (n, m), meaning that
+        array: ``x`` with shape (m,), ``y`` with shape (n, m), meaning that
         ``y[:, i]`` corresponds to ``x[i]``, and ``p`` with shape (k,). The
         return value must be an array with shape (n, m) and with the same
         layout as ``y``.
     bc : callable
         Function evaluating residuals of the boundary conditions. The calling
         signature is ``bc(ya, yb)``, or ``bc(ya, yb, p)`` if parameters are
-        present. All arguments are ndarray: ``ya`` and ``yb`` with shape (n,),
+        present. All arguments are array: ``ya`` and ``yb`` with shape (n,),
         and ``p`` with shape (k,). The return value must be an array with
         shape (n + k,).
     x : array_like, shape (m,)
@@ -830,16 +830,16 @@ def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
     sol : PPoly
         Found solution for y as `scipy.interpolate.PPoly` instance, a C1
         continuous cubic spline.
-    p : ndarray or None, shape (k,)
+    p : array or None, shape (k,)
         Found parameters. None, if the parameters were not present in the
         problem.
-    x : ndarray, shape (m,)
+    x : array, shape (m,)
         Nodes of the final mesh.
-    y : ndarray, shape (n, m)
+    y : array, shape (n, m)
         Solution values at the mesh nodes.
-    yp : ndarray, shape (n, m)
+    yp : array, shape (n, m)
         Solution derivatives at the mesh nodes.
-    rms_residuals : ndarray, shape (m - 1,)
+    rms_residuals : array, shape (m - 1,)
         RMS values of the relative residuals over each mesh interval (see the
         description of `tol` parameter).
     niter : int
@@ -902,25 +902,25 @@ def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
         y1' = y2
         y2' = -exp(y1)
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> def fun(x, y):
-    ...     return np.vstack((y[1], -np.exp(y[0])))
+    ...     return mx.vstack((y[1], -mx.exp(y[0])))
 
     Implement evaluation of the boundary condition residuals:
 
     >>> def bc(ya, yb):
-    ...     return np.array([ya[0], yb[0]])
+    ...     return mx.array([ya[0], yb[0]])
 
     Define the initial mesh with 5 nodes:
 
-    >>> x = np.linspace(0, 1, 5)
+    >>> x = mx.linspace(0, 1, 5)
 
     This problem is known to have two solutions. To obtain both of them, we
     use two different initial guesses for y. We denote them by subscripts
     a and b.
 
-    >>> y_a = np.zeros((2, x.size))
-    >>> y_b = np.zeros((2, x.size))
+    >>> y_a = mx.zeros((2, x.size))
+    >>> y_b = mx.zeros((2, x.size))
     >>> y_b[0] = 3
 
     Now we are ready to run the solver.
@@ -932,7 +932,7 @@ def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
     Let's plot the two found solutions. We take an advantage of having the
     solution in a spline form to produce a smooth plot.
 
-    >>> x_plot = np.linspace(0, 1, 100)
+    >>> x_plot = mx.linspace(0, 1, 100)
     >>> y_plot_a = res_a.sol(x_plot)[0]
     >>> y_plot_b = res_b.sol(x_plot)[0]
     >>> import matplotlib.pyplot as plt
@@ -965,7 +965,7 @@ def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
 
     >>> def fun(x, y, p):
     ...     k = p[0]
-    ...     return np.vstack((y[1], -k**2 * y[0]))
+    ...     return mx.vstack((y[1], -k**2 * y[0]))
 
     Note that parameters p are passed as a vector (with one element in our
     case).
@@ -974,14 +974,14 @@ def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
 
     >>> def bc(ya, yb, p):
     ...     k = p[0]
-    ...     return np.array([ya[0], yb[0], ya[1] - k])
+    ...     return mx.array([ya[0], yb[0], ya[1] - k])
 
     Set up the initial mesh and guess for y. We aim to find the solution for
     k = 2 * pi, to achieve that we set values of y to approximately follow
     sin(2 * pi * x):
 
-    >>> x = np.linspace(0, 1, 5)
-    >>> y = np.zeros((2, x.size))
+    >>> x = mx.linspace(0, 1, 5)
+    >>> y = mx.zeros((2, x.size))
     >>> y[0, 1] = 1
     >>> y[0, 3] = -1
 
@@ -996,23 +996,23 @@ def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
 
     And, finally, plot the solution to see the anticipated sinusoid:
 
-    >>> x_plot = np.linspace(0, 1, 100)
+    >>> x_plot = mx.linspace(0, 1, 100)
     >>> y_plot = sol.sol(x_plot)[0]
     >>> plt.plot(x_plot, y_plot)
     >>> plt.xlabel("x")
     >>> plt.ylabel("y")
     >>> plt.show()
     """
-    x = np.asarray(x, dtype=float)
+    x = mx.array(x, dtype=float)
     if x.ndim != 1:
         raise ValueError("`x` must be 1 dimensional.")
-    h = np.diff(x)
-    if np.any(h <= 0):
+    h = mx.diff(x)
+    if mx.any(h <= 0):
         raise ValueError("`x` must be strictly increasing.")
     a = x[0]
 
-    y = np.asarray(y)
-    if np.issubdtype(y.dtype, np.complexfloating):
+    y = mx.array(y)
+    if mx.issubdtype(y.dtype, mx.complexfloating):
         dtype = complex
     else:
         dtype = float
@@ -1025,9 +1025,9 @@ def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
                          f"has {y.shape[1]}.")
 
     if p is None:
-        p = np.array([])
+        p = mx.array([])
     else:
-        p = np.asarray(p, dtype=dtype)
+        p = mx.array(p, dtype=dtype)
     if p.ndim != 1:
         raise ValueError("`p` must be 1 dimensional.")
 
@@ -1042,18 +1042,18 @@ def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
     k = p.shape[0]
 
     if S is not None:
-        S = np.asarray(S, dtype=dtype)
+        S = mx.array(S, dtype=dtype)
         if S.shape != (n, n):
             raise ValueError(f"`S` is expected to have shape {(n, n)}, "
                              f"but actually has {S.shape}")
 
         # Compute I - S^+ S to impose necessary boundary conditions.
-        B = np.identity(n) - np.dot(pinv(S), S)
+        B = mx.identity(n) - mx.dot(pinv(S), S)
 
-        y[:, 0] = np.dot(B, y[:, 0])
+        y[:, 0] = mx.dot(B, y[:, 0])
 
         # Compute (I - S)^+ to correct derivatives at x=a.
-        D = pinv(np.identity(n) - S)
+        D = pinv(mx.identity(n) - S)
     else:
         B = None
         D = None
@@ -1094,21 +1094,21 @@ def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
         col_res, y_middle, f, f_middle = collocation_fun(fun_wrapped, y,
                                                          p, x, h)
         bc_res = bc_wrapped(y[:, 0], y[:, -1], p)
-        max_bc_res = np.max(abs(bc_res))
+        max_bc_res = mx.max(abs(bc_res))
 
         # This relation is not trivial, but can be verified.
         r_middle = 1.5 * col_res / h
         sol = create_spline(y, f, x, h)
         rms_res = estimate_rms_residuals(fun_wrapped, sol, x, h, p,
                                          r_middle, f_middle)
-        max_rms_res = np.max(rms_res)
+        max_rms_res = mx.max(rms_res)
 
         if singular:
             status = 2
             break
 
-        insert_1, = np.nonzero((rms_res > tol) & (rms_res < 100 * tol))
-        insert_2, = np.nonzero(rms_res >= 100 * tol)
+        insert_1, = mx.nonzero((rms_res > tol) & (rms_res < 100 * tol))
+        insert_2, = mx.nonzero(rms_res >= 100 * tol)
         nodes_added = insert_1.shape[0] + 2 * insert_2.shape[0]
 
         if m + nodes_added > max_nodes:
@@ -1125,7 +1125,7 @@ def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
 
         if nodes_added > 0:
             x = modify_mesh(x, insert_1, insert_2)
-            h = np.diff(x)
+            h = mx.diff(x)
             y = sol(x)
         elif max_bc_res <= bc_tol:
             status = 0

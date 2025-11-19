@@ -6,7 +6,7 @@ Build a npz containing all data files in the directory.
 """
 
 import os
-import numpy as np
+import mlx.core as mx
 import argparse
 from stat import ST_MTIME
 
@@ -63,7 +63,7 @@ def main():
     # Check if changes required
     if args.use_timestamp and os.path.isfile(outp):
         try:
-            old_data = np.load(outp)
+            old_data = mx.load(outp)
             try:
                 changed = set(old_data.keys()) != {key for key, _ in files}
             finally:
@@ -79,9 +79,9 @@ def main():
 
     data = {}
     for key, fn in files:
-        data[key] = np.loadtxt(fn)
+        data[key] = mx.loadtxt(fn)
 
-    np.savez_compressed(outp, **data)
+    mx.savez_compressed(outp, **data)
 
 
 if __name__ == "__main__":

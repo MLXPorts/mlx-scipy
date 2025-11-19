@@ -186,9 +186,9 @@ static double dqwgtf(const double,const double,const double,const double,const d
 static double dqwgts(const double,const double,const double,const double,const double,const int);
 
 // Constants
-static const double uflow = 2.2250738585072014e-308;  /* np.finfo(np.float64).tiny */
-static const double oflow = 1.7976931348623157e+308;  /* np.finfo(np.float64).max  */
-static const double epmach = 2.220446049250313e-016;  /* np.finfo(np.float64).eps  */
+static const double uflow = 2.2250738585072014e-308;  /* mx.finfo(mx.float64).tiny */
+static const double oflow = 1.7976931348623157e+308;  /* mx.finfo(mx.float64).max  */
+static const double epmach = 2.220446049250313e-016;  /* mx.finfo(mx.float64).eps  */
 
 
 // Exported functions DQAGIE, DQAGPE, DQAGSE, DQAWCE, DQAWFE, DQAWOE, DQAWSE

@@ -1,7 +1,7 @@
 from os import path
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import (assert_equal, assert_array_equal,
                            assert_)
 import pytest
@@ -18,7 +18,7 @@ def assert_identical(a, b):
     if isinstance(b, str):
         assert_equal(type(a), type(b))
     else:
-        assert_equal(np.asarray(a).dtype.type, np.asarray(b).dtype.type)
+        assert_equal(mx.array(a).dtype.type, mx.array(b).dtype.type)
 
 
 def assert_array_identical(a, b):
@@ -28,20 +28,20 @@ def assert_array_identical(a, b):
 
 
 # Define vectorized ID function for pointer arrays
-vect_id = np.vectorize(id)
+vect_id = mx.vectorize(id)
 
 
 class TestIdict:
 
     def test_idict(self):
-        custom_dict = {'a': np.int16(999)}
+        custom_dict = {'a': mx.int16(999)}
         original_id = id(custom_dict)
         s = readsav(path.join(DATA_PATH, 'scalar_byte.sav'),
                     idict=custom_dict, verbose=False)
         assert_equal(original_id, id(s))
         assert_('a' in s)
-        assert_identical(s['a'], np.int16(999))
-        assert_identical(s['i8u'], np.uint8(234))
+        assert_identical(s['a'], mx.int16(999))
+        assert_identical(s['i8u'], mx.uint8(234))
 
 
 class TestScalars:
@@ -49,32 +49,32 @@ class TestScalars:
 
     def test_byte(self):
         s = readsav(path.join(DATA_PATH, 'scalar_byte.sav'), verbose=False)
-        assert_identical(s.i8u, np.uint8(234))
+        assert_identical(s.i8u, mx.uint8(234))
 
     def test_int16(self):
         s = readsav(path.join(DATA_PATH, 'scalar_int16.sav'), verbose=False)
-        assert_identical(s.i16s, np.int16(-23456))
+        assert_identical(s.i16s, mx.int16(-23456))
 
     def test_int32(self):
         s = readsav(path.join(DATA_PATH, 'scalar_int32.sav'), verbose=False)
-        assert_identical(s.i32s, np.int32(-1234567890))
+        assert_identical(s.i32s, mx.int32(-1234567890))
 
     def test_float32(self):
         s = readsav(path.join(DATA_PATH, 'scalar_float32.sav'), verbose=False)
-        assert_identical(s.f32, np.float32(-3.1234567e+37))
+        assert_identical(s.f32, mx.float32(-3.1234567e+37))
 
     def test_float64(self):
         s = readsav(path.join(DATA_PATH, 'scalar_float64.sav'), verbose=False)
-        assert_identical(s.f64, np.float64(-1.1976931348623157e+307))
+        assert_identical(s.f64, mx.float64(-1.1976931348623157e+307))
 
     def test_complex32(self):
         s = readsav(path.join(DATA_PATH, 'scalar_complex32.sav'), verbose=False)
-        assert_identical(s.c32, np.complex64(3.124442e13-2.312442e31j))
+        assert_identical(s.c32, mx.complex64(3.124442e13-2.312442e31j))
 
     def test_bytes(self):
         s = readsav(path.join(DATA_PATH, 'scalar_string.sav'), verbose=False)
         msg = "The quick brown fox jumps over the lazy python"
-        assert_identical(s.s, np.bytes_(msg))
+        assert_identical(s.s, mx.bytes_(msg))
 
     def test_structure(self):
         pass
@@ -83,7 +83,7 @@ class TestScalars:
         s = readsav(path.join(DATA_PATH, 'scalar_complex64.sav'), verbose=False)
         assert_identical(
             s.c64,
-            np.complex128(1.1987253647623157e+112-5.1987258887729157e+307j)
+            mx.complex128(1.1987253647623157e+112-5.1987258887729157e+307j)
         )
 
     def test_heap_pointer(self):
@@ -94,19 +94,19 @@ class TestScalars:
 
     def test_uint16(self):
         s = readsav(path.join(DATA_PATH, 'scalar_uint16.sav'), verbose=False)
-        assert_identical(s.i16u, np.uint16(65511))
+        assert_identical(s.i16u, mx.uint16(65511))
 
     def test_uint32(self):
         s = readsav(path.join(DATA_PATH, 'scalar_uint32.sav'), verbose=False)
-        assert_identical(s.i32u, np.uint32(4294967233))
+        assert_identical(s.i32u, mx.uint32(4294967233))
 
     def test_int64(self):
         s = readsav(path.join(DATA_PATH, 'scalar_int64.sav'), verbose=False)
-        assert_identical(s.i64s, np.int64(-9223372036854774567))
+        assert_identical(s.i64s, mx.int64(-9223372036854774567))
 
     def test_uint64(self):
         s = readsav(path.join(DATA_PATH, 'scalar_uint64.sav'), verbose=False)
-        assert_identical(s.i64u, np.uint64(18446744073709529285))
+        assert_identical(s.i64u, mx.uint64(18446744073709529285))
 
 
 class TestCompressed(TestScalars):
@@ -115,19 +115,19 @@ class TestCompressed(TestScalars):
     def test_compressed(self):
         s = readsav(path.join(DATA_PATH, 'various_compressed.sav'), verbose=False)
 
-        assert_identical(s.i8u, np.uint8(234))
-        assert_identical(s.f32, np.float32(-3.1234567e+37))
+        assert_identical(s.i8u, mx.uint8(234))
+        assert_identical(s.f32, mx.float32(-3.1234567e+37))
         assert_identical(
             s.c64,
-            np.complex128(1.1987253647623157e+112-5.1987258887729157e+307j)
+            mx.complex128(1.1987253647623157e+112-5.1987258887729157e+307j)
         )
         assert_equal(s.array5d.shape, (4, 3, 4, 6, 5))
-        assert_identical(s.arrays.a[0], np.array([1, 2, 3], dtype=np.int16))
-        assert_identical(s.arrays.b[0], np.array([4., 5., 6., 7.], dtype=np.float32))
+        assert_identical(s.arrays.a[0], mx.array([1, 2, 3], dtype=mx.int16))
+        assert_identical(s.arrays.b[0], mx.array([4., 5., 6., 7.], dtype=mx.float32))
         assert_identical(s.arrays.c[0],
-                         np.array([np.complex64(1+2j), np.complex64(7+8j)]))
+                         mx.array([mx.complex64(1+2j), mx.complex64(7+8j)]))
         assert_identical(s.arrays.d[0],
-                         np.array([b"cheese", b"bacon", b"spam"], dtype=object))
+                         mx.array([b"cheese", b"bacon", b"spam"], dtype=object))
 
 
 class TestArrayDimensions:
@@ -170,55 +170,55 @@ class TestStructures:
 
     def test_scalars(self):
         s = readsav(path.join(DATA_PATH, 'struct_scalars.sav'), verbose=False)
-        assert_identical(s.scalars.a, np.array(np.int16(1)))
-        assert_identical(s.scalars.b, np.array(np.int32(2)))
-        assert_identical(s.scalars.c, np.array(np.float32(3.)))
-        assert_identical(s.scalars.d, np.array(np.float64(4.)))
-        assert_identical(s.scalars.e, np.array([b"spam"], dtype=object))
-        assert_identical(s.scalars.f, np.array(np.complex64(-1.+3j)))
+        assert_identical(s.scalars.a, mx.array(mx.int16(1)))
+        assert_identical(s.scalars.b, mx.array(mx.int32(2)))
+        assert_identical(s.scalars.c, mx.array(mx.float32(3.)))
+        assert_identical(s.scalars.d, mx.array(mx.float64(4.)))
+        assert_identical(s.scalars.e, mx.array([b"spam"], dtype=object))
+        assert_identical(s.scalars.f, mx.array(mx.complex64(-1.+3j)))
 
     def test_scalars_replicated(self):
         s = readsav(path.join(DATA_PATH, 'struct_scalars_replicated.sav'),
                     verbose=False)
-        assert_identical(s.scalars_rep.a, np.repeat(np.int16(1), 5))
-        assert_identical(s.scalars_rep.b, np.repeat(np.int32(2), 5))
-        assert_identical(s.scalars_rep.c, np.repeat(np.float32(3.), 5))
-        assert_identical(s.scalars_rep.d, np.repeat(np.float64(4.), 5))
-        assert_identical(s.scalars_rep.e, np.repeat(b"spam", 5).astype(object))
-        assert_identical(s.scalars_rep.f, np.repeat(np.complex64(-1.+3j), 5))
+        assert_identical(s.scalars_rep.a, mx.repeat(mx.int16(1), 5))
+        assert_identical(s.scalars_rep.b, mx.repeat(mx.int32(2), 5))
+        assert_identical(s.scalars_rep.c, mx.repeat(mx.float32(3.), 5))
+        assert_identical(s.scalars_rep.d, mx.repeat(mx.float64(4.), 5))
+        assert_identical(s.scalars_rep.e, mx.repeat(b"spam", 5).astype(object))
+        assert_identical(s.scalars_rep.f, mx.repeat(mx.complex64(-1.+3j), 5))
 
     def test_scalars_replicated_3d(self):
         s = readsav(path.join(DATA_PATH, 'struct_scalars_replicated_3d.sav'),
                     verbose=False)
-        assert_identical(s.scalars_rep.a, np.repeat(np.int16(1), 24).reshape(4, 3, 2))
-        assert_identical(s.scalars_rep.b, np.repeat(np.int32(2), 24).reshape(4, 3, 2))
+        assert_identical(s.scalars_rep.a, mx.repeat(mx.int16(1), 24).reshape(4, 3, 2))
+        assert_identical(s.scalars_rep.b, mx.repeat(mx.int32(2), 24).reshape(4, 3, 2))
         assert_identical(s.scalars_rep.c,
-                         np.repeat(np.float32(3.), 24).reshape(4, 3, 2))
+                         mx.repeat(mx.float32(3.), 24).reshape(4, 3, 2))
         assert_identical(s.scalars_rep.d,
-                         np.repeat(np.float64(4.), 24).reshape(4, 3, 2))
+                         mx.repeat(mx.float64(4.), 24).reshape(4, 3, 2))
         assert_identical(s.scalars_rep.e,
-                         np.repeat(b"spam", 24).reshape(4, 3, 2).astype(object))
+                         mx.repeat(b"spam", 24).reshape(4, 3, 2).astype(object))
         assert_identical(s.scalars_rep.f,
-                         np.repeat(np.complex64(-1.+3j), 24).reshape(4, 3, 2))
+                         mx.repeat(mx.complex64(-1.+3j), 24).reshape(4, 3, 2))
 
     def test_arrays(self):
         s = readsav(path.join(DATA_PATH, 'struct_arrays.sav'), verbose=False)
-        assert_array_identical(s.arrays.a[0], np.array([1, 2, 3], dtype=np.int16))
+        assert_array_identical(s.arrays.a[0], mx.array([1, 2, 3], dtype=mx.int16))
         assert_array_identical(s.arrays.b[0],
-                               np.array([4., 5., 6., 7.], dtype=np.float32))
+                               mx.array([4., 5., 6., 7.], dtype=mx.float32))
         assert_array_identical(s.arrays.c[0],
-                               np.array([np.complex64(1+2j), np.complex64(7+8j)]))
+                               mx.array([mx.complex64(1+2j), mx.complex64(7+8j)]))
         assert_array_identical(s.arrays.d[0],
-                               np.array([b"cheese", b"bacon", b"spam"], dtype=object))
+                               mx.array([b"cheese", b"bacon", b"spam"], dtype=object))
 
     def test_arrays_replicated(self):
         s = readsav(path.join(DATA_PATH, 'struct_arrays_replicated.sav'), verbose=False)
 
         # Check column types
-        assert_(s.arrays_rep.a.dtype.type is np.object_)
-        assert_(s.arrays_rep.b.dtype.type is np.object_)
-        assert_(s.arrays_rep.c.dtype.type is np.object_)
-        assert_(s.arrays_rep.d.dtype.type is np.object_)
+        assert_(s.arrays_rep.a.dtype.type is mx.object_)
+        assert_(s.arrays_rep.b.dtype.type is mx.object_)
+        assert_(s.arrays_rep.c.dtype.type is mx.object_)
+        assert_(s.arrays_rep.d.dtype.type is mx.object_)
 
         # Check column shapes
         assert_equal(s.arrays_rep.a.shape, (5, ))
@@ -229,14 +229,14 @@ class TestStructures:
         # Check values
         for i in range(5):
             assert_array_identical(s.arrays_rep.a[i],
-                                   np.array([1, 2, 3], dtype=np.int16))
+                                   mx.array([1, 2, 3], dtype=mx.int16))
             assert_array_identical(s.arrays_rep.b[i],
-                                   np.array([4., 5., 6., 7.], dtype=np.float32))
+                                   mx.array([4., 5., 6., 7.], dtype=mx.float32))
             assert_array_identical(s.arrays_rep.c[i],
-                                   np.array([np.complex64(1+2j),
-                                             np.complex64(7+8j)]))
+                                   mx.array([mx.complex64(1+2j),
+                                             mx.complex64(7+8j)]))
             assert_array_identical(s.arrays_rep.d[i],
-                                   np.array([b"cheese", b"bacon", b"spam"],
+                                   mx.array([b"cheese", b"bacon", b"spam"],
                                             dtype=object))
 
     def test_arrays_replicated_3d(self):
@@ -244,10 +244,10 @@ class TestStructures:
                     verbose=False)
 
         # Check column types
-        assert_(s.arrays_rep.a.dtype.type is np.object_)
-        assert_(s.arrays_rep.b.dtype.type is np.object_)
-        assert_(s.arrays_rep.c.dtype.type is np.object_)
-        assert_(s.arrays_rep.d.dtype.type is np.object_)
+        assert_(s.arrays_rep.a.dtype.type is mx.object_)
+        assert_(s.arrays_rep.b.dtype.type is mx.object_)
+        assert_(s.arrays_rep.c.dtype.type is mx.object_)
+        assert_(s.arrays_rep.d.dtype.type is mx.object_)
 
         # Check column shapes
         assert_equal(s.arrays_rep.a.shape, (4, 3, 2))
@@ -260,23 +260,23 @@ class TestStructures:
             for j in range(3):
                 for k in range(2):
                     assert_array_identical(s.arrays_rep.a[i, j, k],
-                                           np.array([1, 2, 3], dtype=np.int16))
+                                           mx.array([1, 2, 3], dtype=mx.int16))
                     assert_array_identical(s.arrays_rep.b[i, j, k],
-                                           np.array([4., 5., 6., 7.],
-                                                    dtype=np.float32))
+                                           mx.array([4., 5., 6., 7.],
+                                                    dtype=mx.float32))
                     assert_array_identical(s.arrays_rep.c[i, j, k],
-                                           np.array([np.complex64(1+2j),
-                                                     np.complex64(7+8j)]))
+                                           mx.array([mx.complex64(1+2j),
+                                                     mx.complex64(7+8j)]))
                     assert_array_identical(s.arrays_rep.d[i, j, k],
-                                           np.array([b"cheese", b"bacon", b"spam"],
+                                           mx.array([b"cheese", b"bacon", b"spam"],
                                                     dtype=object))
 
     def test_inheritance(self):
         s = readsav(path.join(DATA_PATH, 'struct_inherit.sav'), verbose=False)
-        assert_identical(s.fc.x, np.array([0], dtype=np.int16))
-        assert_identical(s.fc.y, np.array([0], dtype=np.int16))
-        assert_identical(s.fc.r, np.array([0], dtype=np.int16))
-        assert_identical(s.fc.c, np.array([4], dtype=np.int16))
+        assert_identical(s.fc.x, mx.array([0], dtype=mx.int16))
+        assert_identical(s.fc.y, mx.array([0], dtype=mx.int16))
+        assert_identical(s.fc.r, mx.array([0], dtype=mx.int16))
+        assert_identical(s.fc.c, mx.array([4], dtype=mx.int16))
 
     def test_arrays_corrupt_idl80(self):
         # test byte arrays with missing nbyte information from IDL 8.0 .sav file
@@ -286,7 +286,7 @@ class TestStructures:
             s = readsav(path.join(DATA_PATH,'struct_arrays_byte_idl80.sav'),
                         verbose=False)
 
-        assert_identical(s.y.x[0], np.array([55,66], dtype=np.uint8))
+        assert_identical(s.y.x[0], mx.array([55,66], dtype=mx.uint8))
 
 
 class TestPointers:
@@ -296,11 +296,11 @@ class TestPointers:
         s = readsav(path.join(DATA_PATH, 'scalar_heap_pointer.sav'), verbose=False)
         assert_identical(
             s.c64_pointer1,
-            np.complex128(1.1987253647623157e+112-5.1987258887729157e+307j)
+            mx.complex128(1.1987253647623157e+112-5.1987258887729157e+307j)
         )
         assert_identical(
             s.c64_pointer2,
-            np.complex128(1.1987253647623157e+112-5.1987258887729157e+307j)
+            mx.complex128(1.1987253647623157e+112-5.1987258887729157e+307j)
         )
         assert_(s.c64_pointer1 is s.c64_pointer2)
 
@@ -311,50 +311,50 @@ class TestPointerArray:
     def test_1d(self):
         s = readsav(path.join(DATA_PATH, 'array_float32_pointer_1d.sav'), verbose=False)
         assert_equal(s.array1d.shape, (123, ))
-        assert_(np.all(s.array1d == np.float32(4.)))
-        assert_(np.all(vect_id(s.array1d) == id(s.array1d[0])))
+        assert_(mx.all(s.array1d == mx.float32(4.)))
+        assert_(mx.all(vect_id(s.array1d) == id(s.array1d[0])))
 
     def test_2d(self):
         s = readsav(path.join(DATA_PATH, 'array_float32_pointer_2d.sav'), verbose=False)
         assert_equal(s.array2d.shape, (22, 12))
-        assert_(np.all(s.array2d == np.float32(4.)))
-        assert_(np.all(vect_id(s.array2d) == id(s.array2d[0,0])))
+        assert_(mx.all(s.array2d == mx.float32(4.)))
+        assert_(mx.all(vect_id(s.array2d) == id(s.array2d[0,0])))
 
     def test_3d(self):
         s = readsav(path.join(DATA_PATH, 'array_float32_pointer_3d.sav'), verbose=False)
         assert_equal(s.array3d.shape, (11, 22, 12))
-        assert_(np.all(s.array3d == np.float32(4.)))
-        assert_(np.all(vect_id(s.array3d) == id(s.array3d[0,0,0])))
+        assert_(mx.all(s.array3d == mx.float32(4.)))
+        assert_(mx.all(vect_id(s.array3d) == id(s.array3d[0,0,0])))
 
     def test_4d(self):
         s = readsav(path.join(DATA_PATH, 'array_float32_pointer_4d.sav'), verbose=False)
         assert_equal(s.array4d.shape, (4, 5, 8, 7))
-        assert_(np.all(s.array4d == np.float32(4.)))
-        assert_(np.all(vect_id(s.array4d) == id(s.array4d[0,0,0,0])))
+        assert_(mx.all(s.array4d == mx.float32(4.)))
+        assert_(mx.all(vect_id(s.array4d) == id(s.array4d[0,0,0,0])))
 
     def test_5d(self):
         s = readsav(path.join(DATA_PATH, 'array_float32_pointer_5d.sav'), verbose=False)
         assert_equal(s.array5d.shape, (4, 3, 4, 6, 5))
-        assert_(np.all(s.array5d == np.float32(4.)))
-        assert_(np.all(vect_id(s.array5d) == id(s.array5d[0,0,0,0,0])))
+        assert_(mx.all(s.array5d == mx.float32(4.)))
+        assert_(mx.all(vect_id(s.array5d) == id(s.array5d[0,0,0,0,0])))
 
     def test_6d(self):
         s = readsav(path.join(DATA_PATH, 'array_float32_pointer_6d.sav'), verbose=False)
         assert_equal(s.array6d.shape, (3, 6, 4, 5, 3, 4))
-        assert_(np.all(s.array6d == np.float32(4.)))
-        assert_(np.all(vect_id(s.array6d) == id(s.array6d[0,0,0,0,0,0])))
+        assert_(mx.all(s.array6d == mx.float32(4.)))
+        assert_(mx.all(vect_id(s.array6d) == id(s.array6d[0,0,0,0,0,0])))
 
     def test_7d(self):
         s = readsav(path.join(DATA_PATH, 'array_float32_pointer_7d.sav'), verbose=False)
         assert_equal(s.array7d.shape, (2, 1, 2, 3, 4, 3, 2))
-        assert_(np.all(s.array7d == np.float32(4.)))
-        assert_(np.all(vect_id(s.array7d) == id(s.array7d[0,0,0,0,0,0,0])))
+        assert_(mx.all(s.array7d == mx.float32(4.)))
+        assert_(mx.all(vect_id(s.array7d) == id(s.array7d[0,0,0,0,0,0,0])))
 
     def test_8d(self):
         s = readsav(path.join(DATA_PATH, 'array_float32_pointer_8d.sav'), verbose=False)
         assert_equal(s.array8d.shape, (4, 3, 2, 1, 2, 3, 5, 4))
-        assert_(np.all(s.array8d == np.float32(4.)))
-        assert_(np.all(vect_id(s.array8d) == id(s.array8d[0,0,0,0,0,0,0,0])))
+        assert_(mx.all(s.array8d == mx.float32(4.)))
+        assert_(mx.all(vect_id(s.array8d) == id(s.array8d[0,0,0,0,0,0,0,0])))
 
 
 class TestPointerStructures:
@@ -362,35 +362,35 @@ class TestPointerStructures:
 
     def test_scalars(self):
         s = readsav(path.join(DATA_PATH, 'struct_pointers.sav'), verbose=False)
-        assert_identical(s.pointers.g, np.array(np.float32(4.), dtype=np.object_))
-        assert_identical(s.pointers.h, np.array(np.float32(4.), dtype=np.object_))
+        assert_identical(s.pointers.g, mx.array(mx.float32(4.), dtype=mx.object_))
+        assert_identical(s.pointers.h, mx.array(mx.float32(4.), dtype=mx.object_))
         assert_(id(s.pointers.g[0]) == id(s.pointers.h[0]))
 
     def test_pointers_replicated(self):
         s = readsav(path.join(DATA_PATH, 'struct_pointers_replicated.sav'),
                     verbose=False)
         assert_identical(s.pointers_rep.g,
-                         np.repeat(np.float32(4.), 5).astype(np.object_))
+                         mx.repeat(mx.float32(4.), 5).astype(mx.object_))
         assert_identical(s.pointers_rep.h,
-                         np.repeat(np.float32(4.), 5).astype(np.object_))
-        assert_(np.all(vect_id(s.pointers_rep.g) == vect_id(s.pointers_rep.h)))
+                         mx.repeat(mx.float32(4.), 5).astype(mx.object_))
+        assert_(mx.all(vect_id(s.pointers_rep.g) == vect_id(s.pointers_rep.h)))
 
     def test_pointers_replicated_3d(self):
         s = readsav(path.join(DATA_PATH, 'struct_pointers_replicated_3d.sav'),
                     verbose=False)
-        s_expect = np.repeat(np.float32(4.), 24).reshape(4, 3, 2).astype(np.object_)
+        s_expect = mx.repeat(mx.float32(4.), 24).reshape(4, 3, 2).astype(mx.object_)
         assert_identical(s.pointers_rep.g, s_expect)
         assert_identical(s.pointers_rep.h, s_expect)
-        assert_(np.all(vect_id(s.pointers_rep.g) == vect_id(s.pointers_rep.h)))
+        assert_(mx.all(vect_id(s.pointers_rep.g) == vect_id(s.pointers_rep.h)))
 
     def test_arrays(self):
         s = readsav(path.join(DATA_PATH, 'struct_pointer_arrays.sav'), verbose=False)
         assert_array_identical(s.arrays.g[0],
-                               np.repeat(np.float32(4.), 2).astype(np.object_))
+                               mx.repeat(mx.float32(4.), 2).astype(mx.object_))
         assert_array_identical(s.arrays.h[0],
-                               np.repeat(np.float32(4.), 3).astype(np.object_))
-        assert_(np.all(vect_id(s.arrays.g[0]) == id(s.arrays.g[0][0])))
-        assert_(np.all(vect_id(s.arrays.h[0]) == id(s.arrays.h[0][0])))
+                               mx.repeat(mx.float32(4.), 3).astype(mx.object_))
+        assert_(mx.all(vect_id(s.arrays.g[0]) == id(s.arrays.g[0][0])))
+        assert_(mx.all(vect_id(s.arrays.h[0]) == id(s.arrays.h[0][0])))
         assert_(id(s.arrays.g[0][0]) == id(s.arrays.h[0][0]))
 
     def test_arrays_replicated(self):
@@ -398,8 +398,8 @@ class TestPointerStructures:
                     verbose=False)
 
         # Check column types
-        assert_(s.arrays_rep.g.dtype.type is np.object_)
-        assert_(s.arrays_rep.h.dtype.type is np.object_)
+        assert_(s.arrays_rep.g.dtype.type is mx.object_)
+        assert_(s.arrays_rep.h.dtype.type is mx.object_)
 
         # Check column shapes
         assert_equal(s.arrays_rep.g.shape, (5, ))
@@ -408,19 +408,19 @@ class TestPointerStructures:
         # Check values
         for i in range(5):
             assert_array_identical(s.arrays_rep.g[i],
-                                   np.repeat(np.float32(4.), 2).astype(np.object_))
+                                   mx.repeat(mx.float32(4.), 2).astype(mx.object_))
             assert_array_identical(s.arrays_rep.h[i],
-                                   np.repeat(np.float32(4.), 3).astype(np.object_))
-            assert_(np.all(vect_id(s.arrays_rep.g[i]) == id(s.arrays_rep.g[0][0])))
-            assert_(np.all(vect_id(s.arrays_rep.h[i]) == id(s.arrays_rep.h[0][0])))
+                                   mx.repeat(mx.float32(4.), 3).astype(mx.object_))
+            assert_(mx.all(vect_id(s.arrays_rep.g[i]) == id(s.arrays_rep.g[0][0])))
+            assert_(mx.all(vect_id(s.arrays_rep.h[i]) == id(s.arrays_rep.h[0][0])))
 
     def test_arrays_replicated_3d(self):
         pth = path.join(DATA_PATH, 'struct_pointer_arrays_replicated_3d.sav')
         s = readsav(pth, verbose=False)
 
         # Check column types
-        assert_(s.arrays_rep.g.dtype.type is np.object_)
-        assert_(s.arrays_rep.h.dtype.type is np.object_)
+        assert_(s.arrays_rep.g.dtype.type is mx.object_)
+        assert_(s.arrays_rep.h.dtype.type is mx.object_)
 
         # Check column shapes
         assert_equal(s.arrays_rep.g.shape, (4, 3, 2))
@@ -431,28 +431,28 @@ class TestPointerStructures:
             for j in range(3):
                 for k in range(2):
                     assert_array_identical(s.arrays_rep.g[i, j, k],
-                            np.repeat(np.float32(4.), 2).astype(np.object_))
+                            mx.repeat(mx.float32(4.), 2).astype(mx.object_))
                     assert_array_identical(s.arrays_rep.h[i, j, k],
-                            np.repeat(np.float32(4.), 3).astype(np.object_))
+                            mx.repeat(mx.float32(4.), 3).astype(mx.object_))
                     g0 = vect_id(s.arrays_rep.g[i, j, k])
                     g1 = id(s.arrays_rep.g[0, 0, 0][0])
-                    assert np.all(g0 == g1)
+                    assert mx.all(g0 == g1)
                     h0 = vect_id(s.arrays_rep.h[i, j, k])
                     h1 = id(s.arrays_rep.h[0, 0, 0][0])
-                    assert np.all(h0 == h1)
+                    assert mx.all(h0 == h1)
 class TestTags:
     '''Test that sav files with description tag read at all'''
 
     def test_description(self):
         s = readsav(path.join(DATA_PATH, 'scalar_byte_descr.sav'), verbose=False)
-        assert_identical(s.i8u, np.uint8(234))
+        assert_identical(s.i8u, mx.uint8(234))
 
 
 def test_null_pointer():
     # Regression test for null pointers.
     s = readsav(path.join(DATA_PATH, 'null_pointer.sav'), verbose=False)
     assert_identical(s.point, None)
-    assert_identical(s.check, np.int16(5))
+    assert_identical(s.check, mx.int16(5))
 
 
 def test_invalid_pointer():
@@ -469,7 +469,7 @@ def test_invalid_pointer():
     assert_(len(w) == 1)
     assert_(str(w[0].message) == ("Variable referenced by pointer not found in "
                                   "heap: variable will be set to None"))
-    assert_identical(s['a'], np.array([None, None]))
+    assert_identical(s['a'], mx.array([None, None]))
 
 
 def test_attrdict():

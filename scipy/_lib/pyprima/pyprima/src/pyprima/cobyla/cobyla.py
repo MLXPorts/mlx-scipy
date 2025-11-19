@@ -34,22 +34,22 @@ from ..common.preproc import preproc
 from ..common.present import present
 from ..common.linalg import matprod
 from .cobylb import cobylb
-import numpy as np
+import mlx.core as mx
 from dataclasses import dataclass
 from copy import copy
 
 
 @dataclass
 class COBYLAResult:
-    x: np.ndarray
+    x: mx.array
     f: float
-    constr: np.ndarray
+    constr: mx.array
     cstrv: float
     nf: int
-    xhist: np.ndarray | None
-    fhist: np.ndarray | None
-    chist: np.ndarray | None
-    conhist: np.ndarray | None
+    xhist: mx.array | None
+    fhist: mx.array | None
+    chist: mx.array | None
+    conhist: mx.array | None
     info: int
 
 
@@ -97,7 +97,7 @@ def cobyla(calcfc, m_nlcon, x, Aineq=None, bineq=None, Aeq=None, beq=None,
       #-------------------------------------------------------------------------#
        def calcfc(x):
            f = 0.0
-           nlconstr = np.zeros(m_nlcon)
+           nlconstr = mx.zeros(m_nlcon)
            return f, nlconstr
       #-------------------------------------------------------------------------#
 
@@ -322,32 +322,32 @@ def cobyla(calcfc, m_nlcon, x, Aineq=None, bineq=None, Aeq=None, beq=None,
         if present(nlconstr0):
             assert present(f0), f'{srname} If NLCONSTR0 is present, then F0 is present'
         if present(f0):
-            assert np.isnan(f0) or present(nlconstr0), \
+            assert mx.isnan(f0) or present(nlconstr0), \
                 f'{srname} If F0 is present and not NaN, then NLCONSTR0 is present'
 
 
 
     # Exit if the size of NLCONSTR0 is inconsistent with M_NLCON.
     if present(nlconstr0):
-        assert np.size(nlconstr0) == m_nlcon
+        assert mx.size(nlconstr0) == m_nlcon
 
     # Read the inputs.
 
     if xl is not None:
       xl = copy(xl)
-      xl[np.isnan(xl)] = -BOUNDMAX
+      xl[mx.isnan(xl)] = -BOUNDMAX
       xl[xl < -BOUNDMAX] = -BOUNDMAX
 
     if xu is not None:
       xu = copy(xu)
-      xu[np.isnan(xu)] = BOUNDMAX
+      xu[mx.isnan(xu)] = BOUNDMAX
       xu[xu > BOUNDMAX] = BOUNDMAX
 
     # Wrap the linear and bound constraints into a single constraint: AMAT@X <= BVEC.
     amat, bvec = get_lincon(Aeq, Aineq, beq, bineq, xl, xu)
 
     # Create constraint vector
-    constr = np.zeros(mmm)
+    constr = mx.zeros(mmm)
 
     # Set [F_LOC, CONSTR_LOC] to [F(X0), CONSTR(X0)] after evaluating the latter if
     # needed. In this way, COBYLB only needs one interface.
@@ -358,7 +358,7 @@ def cobyla(calcfc, m_nlcon, x, Aineq=None, bineq=None, Aeq=None, beq=None,
     # If NLCONSTR0 is absent, then F0 must be either absent or NaN, both of which will
     # be interpreted as F(X0) is not provided and we have to evaluate F(X0) and
     # NLCONSTR(X0) now.
-    if (present(f0) and present(nlconstr0) and all(np.isfinite(x))):
+    if (present(f0) and present(nlconstr0) and all(mx.isfinite(x))):
         f = moderatef(f0)
         if amat is not None:
           constr[:mmm - m_nlcon] = moderatec(matprod(amat, x) - bvec)
@@ -369,7 +369,7 @@ def cobyla(calcfc, m_nlcon, x, Aineq=None, bineq=None, Aeq=None, beq=None,
         constr[:mmm - m_nlcon] = moderatec(constr[:mmm - m_nlcon])
         # N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
         # They will be called during the initialization, which will read the function/constraint at X0.
-    cstrv = max(np.append(0, constr))
+    cstrv = max(mx.append(0, constr))
 
 
     # If RHOBEG is present, use it; otherwise, RHOBEG takes the default value for
@@ -378,7 +378,7 @@ def cobyla(calcfc, m_nlcon, x, Aineq=None, bineq=None, Aeq=None, beq=None,
     # inputs are read similarly.
     if present(rhobeg):
         rhobeg = rhobeg
-    elif present(rhoend) and np.isfinite(rhoend) and rhoend > 0:
+    elif present(rhoend) and mx.isfinite(rhoend) and rhoend > 0:
         rhobeg = max(10 * rhoend, RHOBEG_DEFAULT)
     else:
         rhobeg = RHOBEG_DEFAULT
@@ -518,8 +518,8 @@ def get_lincon(Aeq=None, Aineq=None, beq=None, bineq=None, xl=None, xu=None):
     #====================#
 
     # Define the indices of the nontrivial bound constraints.
-    ixl = np.where(xl > -BOUNDMAX)[0] if xl is not None else None
-    ixu = np.where(xu < BOUNDMAX)[0] if xu is not None else None
+    ixl = mx.where(xl > -BOUNDMAX)[0] if xl is not None else None
+    ixu = mx.where(xu < BOUNDMAX)[0] if xu is not None else None
 
     # Wrap the linear constraints.
     # The bound constraint XL <= X <= XU is handled as two constraints:
@@ -529,20 +529,20 @@ def get_lincon(Aeq=None, Aineq=None, beq=None, bineq=None, xl=None, xu=None):
     # N.B.:
     # 1. The treatment of the equality constraints is naive. One may choose to
     #    eliminate them instead.
-    idmat = np.eye(num_vars)
-    amat = np.vstack([
-        -idmat[ixl, :] if ixl is not None else np.empty((0, num_vars)),
-        idmat[ixu, :] if ixu is not None else np.empty((0, num_vars)),
-        -Aeq if Aeq is not None else np.empty((0, num_vars)),
-        Aeq if Aeq is not None else np.empty((0, num_vars)),
-        Aineq if Aineq is not None else np.empty((0, num_vars))
+    idmat = mx.eye(num_vars)
+    amat = mx.vstack([
+        -idmat[ixl, :] if ixl is not None else mx.empty((0, num_vars)),
+        idmat[ixu, :] if ixu is not None else mx.empty((0, num_vars)),
+        -Aeq if Aeq is not None else mx.empty((0, num_vars)),
+        Aeq if Aeq is not None else mx.empty((0, num_vars)),
+        Aineq if Aineq is not None else mx.empty((0, num_vars))
     ])
-    bvec = np.hstack([
-        -xl[ixl] if ixl is not None else np.empty(0),
-        xu[ixu] if ixu is not None else np.empty(0),
-        -beq if beq is not None else np.empty(0),
-        beq if beq is not None else np.empty(0),
-        bineq if bineq is not None else np.empty(0)
+    bvec = mx.hstack([
+        -xl[ixl] if ixl is not None else mx.empty(0),
+        xu[ixu] if ixu is not None else mx.empty(0),
+        -beq if beq is not None else mx.empty(0),
+        beq if beq is not None else mx.empty(0),
+        bineq if bineq is not None else mx.empty(0)
     ])
 
     amat = amat if amat.shape[0] > 0 else None

@@ -1,6 +1,6 @@
 import operator
 from dataclasses import dataclass
-import numpy as np
+import mlx.core as mx
 from scipy.special import ndtri
 from ._common import ConfidenceInterval
 
@@ -98,13 +98,13 @@ class RelativeRiskResult:
         # from the epitools library.
         if self.exposed_cases == 0 and self.control_cases == 0:
             # relative risk is nan.
-            return ConfidenceInterval(low=np.nan, high=np.nan)
+            return ConfidenceInterval(low=mx.nan, high=mx.nan)
         elif self.exposed_cases == 0:
             # relative risk is 0.
-            return ConfidenceInterval(low=0.0, high=np.nan)
+            return ConfidenceInterval(low=0.0, high=mx.nan)
         elif self.control_cases == 0:
             # relative risk is inf
-            return ConfidenceInterval(low=np.nan, high=np.inf)
+            return ConfidenceInterval(low=mx.nan, high=mx.inf)
 
         alpha = 1 - confidence_level
         z = ndtri(1 - alpha/2)
@@ -114,11 +114,11 @@ class RelativeRiskResult:
         # var(log(rr)) = 1/exposed_cases - 1/exposed_total +
         #                1/control_cases - 1/control_total
         # and the standard error is the square root of that.
-        se = np.sqrt(1/self.exposed_cases - 1/self.exposed_total +
+        se = mx.sqrt(1/self.exposed_cases - 1/self.exposed_total +
                      1/self.control_cases - 1/self.control_total)
         delta = z*se
-        katz_lo = rr*np.exp(-delta)
-        katz_hi = rr*np.exp(delta)
+        katz_lo = rr*mx.exp(-delta)
+        katz_hi = rr*mx.exp(delta)
         return ConfidenceInterval(low=katz_lo, high=katz_hi)
 
 
@@ -245,13 +245,13 @@ def relative_risk(exposed_cases, exposed_total, control_cases, control_total):
 
     if exposed_cases == 0 and control_cases == 0:
         # relative risk is 0/0.
-        rr = np.nan
+        rr = mx.nan
     elif exposed_cases == 0:
         # relative risk is 0/nonzero
         rr = 0.0
     elif control_cases == 0:
         # relative risk is nonzero/0.
-        rr = np.inf
+        rr = mx.inf
     else:
         p1 = exposed_cases / exposed_total
         p2 = control_cases / control_total

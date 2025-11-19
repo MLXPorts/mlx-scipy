@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_array_almost_equal, assert_, assert_array_equal
 from scipy.sparse import csr_matrix, csc_matrix, csr_array, csc_array, hstack
 from scipy import sparse
@@ -14,8 +14,8 @@ def _check_csr_rowslice(i, sl, X, Xcsr):
 
 def test_csr_rowslice():
     N = 10
-    np.random.seed(0)
-    X = np.random.random((N, N))
+    mx.random.seed(0)
+    X = mx.random.random((N, N))
     X[X > 0.7] = 0
     Xcsr = csr_matrix(X)
 
@@ -31,8 +31,8 @@ def test_csr_rowslice():
 
 def test_csr_getrow():
     N = 10
-    np.random.seed(0)
-    X = np.random.random((N, N))
+    mx.random.seed(0)
+    X = mx.random.random((N, N))
     X[X > 0.7] = 0
     Xcsr = csr_matrix(X)
 
@@ -46,8 +46,8 @@ def test_csr_getrow():
 
 def test_csr_getcol():
     N = 10
-    np.random.seed(0)
-    X = np.random.random((N, N))
+    mx.random.seed(0)
+    X = mx.random.random((N, N))
     X[X > 0.7] = 0
     Xcsr = csr_matrix(X)
 
@@ -98,11 +98,11 @@ def test_csr_empty_slices(matrix_input, axis, expected_shape):
 def test_csr_bool_indexing():
     data = csr_matrix([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
     list_indices1 = [False, True, False]
-    array_indices1 = np.array(list_indices1)
+    array_indices1 = mx.array(list_indices1)
     list_indices2 = [[False, True, False], [False, True, False], [False, True, False]]
-    array_indices2 = np.array(list_indices2)
+    array_indices2 = mx.array(list_indices2)
     list_indices3 = ([False, True, False], [False, True, False])
-    array_indices3 = (np.array(list_indices3[0]), np.array(list_indices3[1]))
+    array_indices3 = (mx.array(list_indices3[0]), mx.array(list_indices3[1]))
     slice_list1 = data[list_indices1].toarray()
     slice_array1 = data[array_indices1].toarray()
     slice_list2 = data[list_indices2]
@@ -116,11 +116,11 @@ def test_csr_bool_indexing():
 
 def test_csr_hstack_int64():
     """
-    Tests if hstack properly promotes to indices and indptr arrays to np.int64
-    when using np.int32 during concatenation would result in either array
+    Tests if hstack properly promotes to indices and indptr arrays to mx.int64
+    when using mx.int32 during concatenation would result in either array
     overflowing.
     """
-    max_int32 = np.iinfo(np.int32).max
+    max_int32 = mx.iinfo(mx.int32).max
 
     # First case: indices would overflow with int32
     data = [1.0]
@@ -137,8 +137,8 @@ def test_csr_hstack_int64():
     X_2 = csr_matrix((data, (row, col_2)))
 
     assert max(max_indices_1 - 1, max_indices_2 - 1) < max_int32
-    assert X_1.indices.dtype == X_1.indptr.dtype == np.int32
-    assert X_2.indices.dtype == X_2.indptr.dtype == np.int32
+    assert X_1.indices.dtype == X_1.indptr.dtype == mx.int32
+    assert X_2.indices.dtype == X_2.indptr.dtype == mx.int32
 
     # ... but when concatenating their CSR matrices, the resulting indices
     # array can't be represented with int32 and must be promoted to int64.
@@ -146,7 +146,7 @@ def test_csr_hstack_int64():
 
     assert X_hs.indices.max() == max_indices_1 + max_indices_2 - 1
     assert max_indices_1 + max_indices_2 - 1 > max_int32
-    assert X_hs.indices.dtype == X_hs.indptr.dtype == np.int64
+    assert X_hs.indices.dtype == X_hs.indptr.dtype == mx.int64
 
     # Even if the matrices are empty, we must account for their size
     # contribution so that we may safely set the final elements.
@@ -155,7 +155,7 @@ def test_csr_hstack_int64():
     X_hs_empty = hstack([X_1_empty, X_2_empty], format="csr")
 
     assert X_hs_empty.shape == X_hs.shape
-    assert X_hs_empty.indices.dtype == np.int64
+    assert X_hs_empty.indices.dtype == mx.int64
 
     # Should be just small enough to stay in int32 after stack. Note that
     # we theoretically could support indices.max() == max_int32, but due to an
@@ -166,43 +166,43 @@ def test_csr_hstack_int64():
     col_3 = [max_int32 - max_indices_1 - 1]
     X_3 = csr_matrix((data, (row, col_3)))
     X_hs_32 = hstack([X_1, X_3], format="csr")
-    assert X_hs_32.indices.dtype == np.int32
+    assert X_hs_32.indices.dtype == mx.int32
     assert X_hs_32.indices.max() == max_int32 - 1
 
 @pytest.mark.parametrize("cls", [csr_matrix, csr_array, csc_matrix, csc_array])
 def test_mixed_index_dtype_int_indexing(cls):
     # https://github.com/scipy/scipy/issues/20182
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
     base_mtx = cls(sparse.random(50, 50, random_state=rng, density=0.1))
     indptr_64bit = base_mtx.copy()
     indices_64bit = base_mtx.copy()
-    indptr_64bit.indptr = base_mtx.indptr.astype(np.int64)
-    indices_64bit.indices = base_mtx.indices.astype(np.int64)
+    indptr_64bit.indptr = base_mtx.indptr.astype(mx.int64)
+    indices_64bit.indices = base_mtx.indices.astype(mx.int64)
 
     for mtx in [base_mtx, indptr_64bit, indices_64bit]:
-        np.testing.assert_array_equal(
+        mx.testing.assert_array_equal(
             mtx[[1,2], :].toarray(),
             base_mtx[[1, 2], :].toarray()
         )
-        np.testing.assert_array_equal(
+        mx.testing.assert_array_equal(
             mtx[:, [1, 2]].toarray(),
             base_mtx[:, [1, 2]].toarray()
         )
 
 def test_broadcast_to():
-    a = np.array([1, 0, 2])
-    b = np.array([3])
-    e = np.zeros((0,))
+    a = mx.array([1, 0, 2])
+    b = mx.array([3])
+    e = mx.zeros((0,))
     res_a = csr_array(a)._broadcast_to((2,3))
     res_b = csr_array(b)._broadcast_to((4,))
     res_c = csr_array(b)._broadcast_to((2,4))
     res_d = csr_array(b)._broadcast_to((1,))
     res_e = csr_array(e)._broadcast_to((4,0))
-    assert_array_equal(res_a.toarray(), np.broadcast_to(a, (2,3)))
-    assert_array_equal(res_b.toarray(), np.broadcast_to(b, (4,)))
-    assert_array_equal(res_c.toarray(), np.broadcast_to(b, (2,4)))
-    assert_array_equal(res_d.toarray(), np.broadcast_to(b, (1,)))
-    assert_array_equal(res_e.toarray(), np.broadcast_to(e, (4,0)))
+    assert_array_equal(res_a.toarray(), mx.broadcast_to(a, (2,3)))
+    assert_array_equal(res_b.toarray(), mx.broadcast_to(b, (4,)))
+    assert_array_equal(res_c.toarray(), mx.broadcast_to(b, (2,4)))
+    assert_array_equal(res_d.toarray(), mx.broadcast_to(b, (1,)))
+    assert_array_equal(res_e.toarray(), mx.broadcast_to(e, (4,0)))
 
     with pytest.raises(ValueError, match="cannot be broadcast"):
         csr_matrix([[1, 2, 0], [3, 0, 1]])._broadcast_to(shape=(2, 1))

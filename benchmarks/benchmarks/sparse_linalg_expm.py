@@ -1,7 +1,7 @@
 """benchmarks for the scipy.sparse.linalg._expm_multiply module"""
 import math
 
-import numpy as np
+import mlx.core as mx
 from .common import Benchmark, safe_import
 
 with safe_import():
@@ -12,16 +12,16 @@ with safe_import():
 
 def random_sparse_csr(m, n, nnz_per_row):
     # Copied from the scipy.sparse benchmark.
-    rows = np.arange(m).repeat(nnz_per_row)
-    cols = np.random.randint(0, n, size=nnz_per_row*m)
-    vals = np.random.random_sample(m*nnz_per_row)
+    rows = mx.arange(m).repeat(nnz_per_row)
+    cols = mx.random.randint(0, n, size=nnz_per_row*m)
+    vals = mx.random.random_sample(m*nnz_per_row)
     M = scipy.sparse.coo_matrix((vals, (rows, cols)), (m, n), dtype=float)
     return M.tocsr()
 
 
 def random_sparse_csc(m, n, nnz_per_row, rng):
     # Copied from the scipy.sparse benchmark.
-    rows = np.arange(m).repeat(nnz_per_row)
+    rows = mx.arange(m).repeat(nnz_per_row)
     cols = rng.integers(0, n, size=nnz_per_row*m)
     vals = rng.random(m*nnz_per_row)
     M = scipy.sparse.coo_matrix((vals, (rows, cols)), (m, n), dtype=float)
@@ -40,7 +40,7 @@ class ExpmMultiply(Benchmark):
 
     def time_expm_multiply(self):
         # computing only column', j, 'of expm of the sparse matrix
-        v = np.zeros(self.n, dtype=float)
+        v = mx.zeros(self.n, dtype=float)
         v[self.j] = 1
         A_expm_col_j = expm_multiply(self.A, v)
         A_expm_col_j[self.i]
@@ -54,7 +54,7 @@ class Expm(Benchmark):
     param_names = ['n', 'format']
 
     def setup(self, n, format):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
 
         # Let the number of nonzero entries per row
         # scale like the log of the order of the matrix.

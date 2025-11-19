@@ -2,7 +2,7 @@ from typing import (  # noqa: UP035
     Any, Callable, Iterable
 )
 
-import numpy as np
+import mlx.core as mx
 from scipy.optimize import OptimizeResult
 from ._constraints import old_bound_to_new, Bounds
 from ._direct import direct as _direct  # type: ignore
@@ -35,8 +35,8 @@ SUCCESS_MESSAGES = (
 
 def direct(
     func: Callable[
-        [np.ndarray[tuple[int], np.dtype[np.float64]]],
-        float | np.floating[Any] | np.integer[Any] | np.bool_,
+        [mx.array[tuple[int], mx.dtype[mx.float64]]],
+        float | mx.floating[Any] | mx.integer[Any] | mx.bool_,
     ],
     bounds: Iterable | Bounds,
     *,
@@ -45,12 +45,12 @@ def direct(
     maxfun: int | None = None,
     maxiter: int = 1000,
     locally_biased: bool = True,
-    f_min: float = -np.inf,
+    f_min: float = -mx.inf,
     f_min_rtol: float = 1e-4,
     vol_tol: float = 1e-16,
     len_tol: float = 1e-6,
     callback: Callable[
-        [np.ndarray[tuple[int], np.dtype[np.float64]]],
+        [mx.array[tuple[int], mx.dtype[mx.float64]]],
         object,
     ] | None = None,
 ) -> OptimizeResult:
@@ -95,7 +95,7 @@ def direct(
         `False` is recommended.
     f_min : float, optional
         Function value of the global optimum. Set this value only if the
-        global optimum is known. Default is ``-np.inf``, so that this
+        global optimum is known. Default is ``-mx.inf``, so that this
         termination criterion is deactivated.
     f_min_rtol : float, optional
         Terminate the optimization once the relative error between the
@@ -209,15 +209,15 @@ def direct(
                        "instance of Bounds class")
             raise ValueError(message)
 
-    lb = np.ascontiguousarray(bounds.lb, dtype=np.float64)
-    ub = np.ascontiguousarray(bounds.ub, dtype=np.float64)
+    lb = mx.ascontiguousarray(bounds.lb, dtype=mx.float64)
+    ub = mx.ascontiguousarray(bounds.ub, dtype=mx.float64)
 
     # validate bounds
     # check that lower bounds are smaller than upper bounds
-    if not np.all(lb < ub):
+    if not mx.all(lb < ub):
         raise ValueError('Bounds are not consistent min < max')
     # check for infs
-    if (np.any(np.isinf(lb)) or np.any(np.isinf(ub))):
+    if (mx.any(mx.isinf(lb)) or mx.any(mx.isinf(ub))):
         raise ValueError("Bounds must not be inf.")
 
     # validate tolerances
@@ -245,18 +245,18 @@ def direct(
         raise ValueError("locally_biased must be True or False.")
 
     def _func_wrap(x, args=None):
-        x = np.asarray(x)
+        x = mx.array(x)
         if args is None:
             f = func(x)
         else:
             f = func(x, *args)
         # always return a float
-        return np.asarray(f).item()
+        return mx.array(f).item()
 
     # TODO: fix disp argument
     x, fun, ret_code, nfev, nit = _direct(
         _func_wrap,
-        np.asarray(lb), np.asarray(ub),
+        mx.array(lb), mx.array(ub),
         args,
         False, eps, maxfun, maxiter,
         locally_biased,
@@ -275,6 +275,6 @@ def direct(
     else:
         message = ERROR_MESSAGES[ret_code + 99]
 
-    return OptimizeResult(x=np.asarray(x), fun=fun, status=ret_code,
+    return OptimizeResult(x=mx.array(x), fun=fun, status=ret_code,
                           success=ret_code > 2, message=message,
                           nfev=nfev, nit=nit)

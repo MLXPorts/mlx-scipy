@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy import abs, asarray
 
 from ..common import safe_import  # noqa:F401
@@ -56,7 +56,7 @@ class Benchmark:
 
         self._dimensions = dimensions
         self.nfev = 0
-        self.fglob = np.nan
+        self.fglob = mx.nan
         self.global_optimum = None
         self.custom_bounds = None
 
@@ -78,7 +78,7 @@ class Benchmark:
             parameter.
         """
 
-        return asarray([np.random.uniform(l, u) for l, u in self.bounds])
+        return asarray([mx.random.uniform(l, u) for l, u in self.bounds])
 
     def success(self, x, tol=1.e-5):
         """
@@ -103,10 +103,10 @@ class Benchmark:
             return True
 
         # the solution should still be in bounds, otherwise immediate fail.
-        bounds = np.asarray(self.bounds, dtype=np.float64)
-        if np.any(x > bounds[:, 1]):
+        bounds = mx.array(self.bounds, dtype=mx.float64)
+        if mx.any(x > bounds[:, 1]):
             return False
-        if np.any(x < bounds[:, 0]):
+        if mx.any(x < bounds[:, 0]):
             return False
 
         # you found a lower global minimum.  This shouldn't happen.

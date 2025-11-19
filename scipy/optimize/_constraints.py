@@ -2,7 +2,7 @@
 from warnings import warn, catch_warnings, simplefilter, filterwarnings
 from types import GenericAlias
 
-import numpy as np
+import mlx.core as mx
 
 from ._differentiable_functions import (
     VectorFunction, LinearVectorFunction, IdentityVectorFunction
@@ -16,7 +16,7 @@ from scipy._lib._sparse import issparse
 def _arr_to_scalar(x):
     # If x is a numpy array, return x.item().  This will
     # fail if the array has more than one element.
-    return x.item() if isinstance(x, np.ndarray) else x
+    return x.item() if isinstance(x, mx.array) else x
 
 
 class NonlinearConstraint:
@@ -26,7 +26,7 @@ class NonlinearConstraint:
 
         lb <= fun(x) <= ub
 
-    Here the vector of independent variables x is passed as ndarray of shape
+    Here the vector of independent variables x is passed as array of shape
     (n,) and ``fun`` returns a vector with m components.
 
     It is possible to use equal bounds to represent an equality constraint or
@@ -40,7 +40,7 @@ class NonlinearConstraint:
     lb, ub : array_like
         Lower and upper bounds on the constraint. Each array must have the
         shape (m,) or be a scalar, in the latter case a bound will be the same
-        for all components of the constraint. Use ``np.inf`` with an
+        for all components of the constraint. Use ``mx.inf`` with an
         appropriate sign to specify a one-sided constraint.
         Set components of `lb` and `ub` equal to represent an equality
         constraint. Note that you can mix constraints of different types:
@@ -53,7 +53,7 @@ class NonlinearConstraint:
         'cs'} select a finite difference scheme for the numerical estimation.
         A callable must have the following signature::
 
-            jac(x) -> {ndarray, sparse array}, shape (m, n)
+            jac(x) -> {array, sparse array}, shape (m, n)
 
         Default is '2-point'.
     hess : {callable, '2-point', '3-point', 'cs', HessianUpdateStrategy, None}, optional
@@ -69,7 +69,7 @@ class NonlinearConstraint:
         A callable must return the Hessian matrix of ``dot(fun, v)`` and
         must have the following signature:
         ``hess(x, v) -> {LinearOperator, sparse array, array_like}, shape (n, n)``.
-        Here ``v`` is ndarray with shape (m,) containing Lagrange multipliers.
+        Here ``v`` is array with shape (m,) containing Lagrange multipliers.
     keep_feasible : array_like of bool, optional
         Whether to keep the constraint components feasible throughout
         iterations. A single value sets this property for all components.
@@ -105,9 +105,9 @@ class NonlinearConstraint:
     Constrain ``x[0] < sin(x[1]) + 1.9``
 
     >>> from scipy.optimize import NonlinearConstraint
-    >>> import numpy as np
-    >>> con = lambda x: x[0] - np.sin(x[1])
-    >>> nlc = NonlinearConstraint(con, -np.inf, 1.9)
+    >>> import mlx.core as mx
+    >>> con = lambda x: x[0] - mx.sin(x[1])
+    >>> nlc = NonlinearConstraint(con, -mx.inf, 1.9)
 
     """
     def __init__(self, fun, lb, ub, jac='2-point', hess=None,
@@ -132,7 +132,7 @@ class LinearConstraint:
 
         lb <= A.dot(x) <= ub
 
-    Here the vector of independent variables x is passed as ndarray of shape
+    Here the vector of independent variables x is passed as array of shape
     (n,) and the matrix A has shape (m, n).
 
     It is possible to use equal bounds to represent an equality constraint or
@@ -145,13 +145,13 @@ class LinearConstraint:
     lb, ub : dense array_like, optional
         Lower and upper limits on the constraint. Each array must have the
         shape (m,) or be a scalar, in the latter case a bound will be the same
-        for all components of the constraint. Use ``np.inf`` with an
+        for all components of the constraint. Use ``mx.inf`` with an
         appropriate sign to specify a one-sided constraint.
         Set components of `lb` and `ub` equal to represent an equality
         constraint. Note that you can mix constraints of different types:
         interval, one-sided or equality, by setting different components of
-        `lb` and `ub` as  necessary. Defaults to ``lb = -np.inf``
-        and ``ub = np.inf`` (no limits).
+        `lb` and `ub` as  necessary. Defaults to ``lb = -mx.inf``
+        and ``ub = mx.inf`` (no limits).
     keep_feasible : dense array_like of bool, optional
         Whether to keep the constraint components feasible throughout
         iterations. A single value sets this property for all components.
@@ -164,15 +164,15 @@ class LinearConstraint:
 
         try:
             shape = self.A.shape[0:1]
-            self.lb = np.broadcast_to(self.lb, shape)
-            self.ub = np.broadcast_to(self.ub, shape)
-            self.keep_feasible = np.broadcast_to(self.keep_feasible, shape)
+            self.lb = mx.broadcast_to(self.lb, shape)
+            self.ub = mx.broadcast_to(self.ub, shape)
+            self.keep_feasible = mx.broadcast_to(self.keep_feasible, shape)
         except ValueError:
             message = ("`lb`, `ub`, and `keep_feasible` must be broadcastable "
                        "to shape `A.shape[0:1]`")
             raise ValueError(message)
 
-    def __init__(self, A, lb=-np.inf, ub=np.inf, keep_feasible=False):
+    def __init__(self, A, lb=-mx.inf, ub=mx.inf, keep_feasible=False):
         if not issparse(A):
             # In some cases, if the constraint is not valid, this emits a
             # VisibleDeprecationWarning about ragged nested sequences
@@ -181,17 +181,17 @@ class LinearConstraint:
             # rather than concerning the user.
             with catch_warnings():
                 simplefilter("error")
-                self.A = np.atleast_2d(A).astype(np.float64)
+                self.A = mx.atleast_2d(A).astype(mx.float64)
         else:
             self.A = A
         if issparse(lb) or issparse(ub):
             raise ValueError("Constraint limits must be dense arrays.")
-        self.lb = np.atleast_1d(lb).astype(np.float64)
-        self.ub = np.atleast_1d(ub).astype(np.float64)
+        self.lb = mx.atleast_1d(lb).astype(mx.float64)
+        self.ub = mx.atleast_1d(ub).astype(mx.float64)
 
         if issparse(keep_feasible):
             raise ValueError("`keep_feasible` must be a dense array.")
-        self.keep_feasible = np.atleast_1d(keep_feasible).astype(bool)
+        self.keep_feasible = mx.atleast_1d(keep_feasible).astype(bool)
         self._input_validation()
 
     def residual(self, x):
@@ -241,11 +241,11 @@ class Bounds:
         Lower and upper bounds on independent variables. `lb`, `ub`, and
         `keep_feasible` must be the same shape or broadcastable.
         Set components of `lb` and `ub` equal
-        to fix a variable. Use ``np.inf`` with an appropriate sign to disable
+        to fix a variable. Use ``mx.inf`` with an appropriate sign to disable
         bounds on all or some variables. Note that you can mix constraints of
         different types: interval, one-sided or equality, by setting different
-        components of `lb` and `ub` as necessary. Defaults to ``lb = -np.inf``
-        and ``ub = np.inf`` (no bounds).
+        components of `lb` and `ub` as necessary. Defaults to ``lb = -mx.inf``
+        and ``ub = mx.inf`` (no bounds).
     keep_feasible : dense array_like of bool, optional
         Whether to keep the constraint components feasible throughout
         iterations. Must be broadcastable with `lb` and `ub`.
@@ -257,26 +257,26 @@ class Bounds:
 
     def _input_validation(self):
         try:
-            res = np.broadcast_arrays(self.lb, self.ub, self.keep_feasible)
+            res = mx.broadcast_arrays(self.lb, self.ub, self.keep_feasible)
             self.lb, self.ub, self.keep_feasible = res
         except ValueError:
             message = "`lb`, `ub`, and `keep_feasible` must be broadcastable."
             raise ValueError(message)
 
-    def __init__(self, lb=-np.inf, ub=np.inf, keep_feasible=False):
+    def __init__(self, lb=-mx.inf, ub=mx.inf, keep_feasible=False):
         if issparse(lb) or issparse(ub):
             raise ValueError("Lower and upper bounds must be dense arrays.")
-        self.lb = np.atleast_1d(lb)
-        self.ub = np.atleast_1d(ub)
+        self.lb = mx.atleast_1d(lb)
+        self.ub = mx.atleast_1d(ub)
 
         if issparse(keep_feasible):
             raise ValueError("`keep_feasible` must be a dense array.")
-        self.keep_feasible = np.atleast_1d(keep_feasible).astype(bool)
+        self.keep_feasible = mx.atleast_1d(keep_feasible).astype(bool)
         self._input_validation()
 
     def __repr__(self):
         start = f"{type(self).__name__}({self.lb!r}, {self.ub!r}"
-        if np.any(self.keep_feasible):
+        if mx.any(self.keep_feasible):
             end = f", keep_feasible={self.keep_feasible!r})"
         else:
             end = ")"
@@ -339,9 +339,9 @@ class PreparedConstraint:
         classes.
     bounds : 2-tuple
         Contains lower and upper bounds for the constraints --- lb and ub.
-        These are converted to ndarray and have a size equal to the number of
+        These are converted to array and have a size equal to the number of
         the constraints.
-    keep_feasible : ndarray
+    keep_feasible : array
          Array indicating which components must be kept feasible with a size
          equal to the number of the constraints.
     """
@@ -350,7 +350,7 @@ class PreparedConstraint:
     __class_getitem__ = classmethod(GenericAlias)
 
     def __init__(self, constraint, x0, sparse_jacobian=None,
-                 finite_diff_bounds=(-np.inf, np.inf)):
+                 finite_diff_bounds=(-mx.inf, mx.inf)):
         if isinstance(constraint, NonlinearConstraint):
             fun = VectorFunction(constraint.fun, x0,
                                  constraint.jac, constraint.hess,
@@ -366,20 +366,20 @@ class PreparedConstraint:
 
         m = fun.m
 
-        lb = np.asarray(constraint.lb, dtype=float)
-        ub = np.asarray(constraint.ub, dtype=float)
-        keep_feasible = np.asarray(constraint.keep_feasible, dtype=bool)
+        lb = mx.array(constraint.lb, dtype=float)
+        ub = mx.array(constraint.ub, dtype=float)
+        keep_feasible = mx.array(constraint.keep_feasible, dtype=bool)
 
-        lb = np.broadcast_to(lb, m)
-        ub = np.broadcast_to(ub, m)
-        keep_feasible = np.broadcast_to(keep_feasible, m)
+        lb = mx.broadcast_to(lb, m)
+        ub = mx.broadcast_to(ub, m)
+        keep_feasible = mx.broadcast_to(keep_feasible, m)
 
         if keep_feasible.shape != (m,):
             raise ValueError("`keep_feasible` has a wrong shape.")
 
         mask = keep_feasible & (lb != ub)
         f0 = fun.f
-        if np.any(f0[mask] < lb[mask]) or np.any(f0[mask] > ub[mask]):
+        if mx.any(f0[mask] < lb[mask]) or mx.any(f0[mask] > ub[mask]):
             raise ValueError("`x0` is infeasible with respect to some "
                              "inequality constraint with `keep_feasible` "
                              "set to True.")
@@ -408,10 +408,10 @@ class PreparedConstraint:
             # UserWarning: delta_grad == 0.0. Check if the approximated
             # function is linear
             filterwarnings("ignore", "delta_grad", UserWarning)
-            ev = self.fun.fun(np.asarray(x))
+            ev = self.fun.fun(mx.array(x))
 
-        excess_lb = np.maximum(self.bounds[0] - ev, 0)
-        excess_ub = np.maximum(ev - self.bounds[1], 0)
+        excess_lb = mx.maximum(self.bounds[0] - ev, 0)
+        excess_ub = mx.maximum(ev - self.bounds[1], 0)
 
         return excess_lb + excess_ub
 
@@ -422,14 +422,14 @@ def new_bounds_to_old(lb, ub, n):
     The new representation is a tuple (lb, ub) and the old one is a list
     containing n tuples, ith containing lower and upper bound on a ith
     variable.
-    If any of the entries in lb/ub are -np.inf/np.inf they are replaced by
+    If any of the entries in lb/ub are -mx.inf/mx.inf they are replaced by
     None.
     """
-    lb = np.broadcast_to(lb, n)
-    ub = np.broadcast_to(ub, n)
+    lb = mx.broadcast_to(lb, n)
+    ub = mx.broadcast_to(ub, n)
 
-    lb = [float(x) if x > -np.inf else None for x in lb]
-    ub = [float(x) if x < np.inf else None for x in ub]
+    lb = [float(x) if x > -mx.inf else None for x in lb]
+    ub = [float(x) if x < mx.inf else None for x in ub]
 
     return list(zip(lb, ub))
 
@@ -441,15 +441,15 @@ def old_bound_to_new(bounds):
     containing n tuples, ith containing lower and upper bound on a ith
     variable.
     If any of the entries in lb/ub are None they are replaced by
-    -np.inf/np.inf.
+    -mx.inf/mx.inf.
     """
     lb, ub = zip(*bounds)
 
     # Convert occurrences of None to -inf or inf, and replace occurrences of
     # any numpy array x with x.item(). Then wrap the results in numpy arrays.
-    lb = np.array([float(_arr_to_scalar(x)) if x is not None else -np.inf
+    lb = mx.array([float(_arr_to_scalar(x)) if x is not None else -mx.inf
                    for x in lb])
-    ub = np.array([float(_arr_to_scalar(x)) if x is not None else np.inf
+    ub = mx.array([float(_arr_to_scalar(x)) if x is not None else mx.inf
                    for x in ub])
 
     return lb, ub
@@ -457,11 +457,11 @@ def old_bound_to_new(bounds):
 
 def strict_bounds(lb, ub, keep_feasible, n_vars):
     """Remove bounds which are not asked to be kept feasible."""
-    strict_lb = np.resize(lb, n_vars).astype(float)
-    strict_ub = np.resize(ub, n_vars).astype(float)
-    keep_feasible = np.resize(keep_feasible, n_vars)
-    strict_lb[~keep_feasible] = -np.inf
-    strict_ub[~keep_feasible] = np.inf
+    strict_lb = mx.resize(lb, n_vars).astype(float)
+    strict_ub = mx.resize(ub, n_vars).astype(float)
+    keep_feasible = mx.resize(keep_feasible, n_vars)
+    strict_lb[~keep_feasible] = -mx.inf
+    strict_ub[~keep_feasible] = mx.inf
     return strict_lb, strict_ub
 
 
@@ -486,7 +486,7 @@ def new_constraint_to_old(con, x0):
             jac = None
 
     else:  # LinearConstraint
-        if np.any(con.keep_feasible):
+        if mx.any(con.keep_feasible):
             warn("Constraint option `keep_feasible` is ignored by this method.",
                  OptimizeWarning, stacklevel=3)
 
@@ -494,7 +494,7 @@ def new_constraint_to_old(con, x0):
         if issparse(A):
             A = A.toarray()
         def fun(x):
-            return np.dot(A, x)
+            return mx.dot(A, x)
         def jac(x):
             return A
 
@@ -504,19 +504,19 @@ def new_constraint_to_old(con, x0):
     lb, ub = pcon.bounds
 
     i_eq = lb == ub
-    i_bound_below = np.logical_xor(lb != -np.inf, i_eq)
-    i_bound_above = np.logical_xor(ub != np.inf, i_eq)
-    i_unbounded = np.logical_and(lb == -np.inf, ub == np.inf)
+    i_bound_below = mx.logical_xor(lb != -mx.inf, i_eq)
+    i_bound_above = mx.logical_xor(ub != mx.inf, i_eq)
+    i_unbounded = mx.logical_and(lb == -mx.inf, ub == mx.inf)
 
-    if np.any(i_unbounded):
+    if mx.any(i_unbounded):
         warn("At least one constraint is unbounded above and below. Such "
              "constraints are ignored.",
              OptimizeWarning, stacklevel=3)
 
     ceq = []
-    if np.any(i_eq):
+    if mx.any(i_eq):
         def f_eq(x):
-            y = np.array(fun(x)).flatten()
+            y = mx.array(fun(x)).flatten()
             return y[i_eq] - lb[i_eq]
         ceq = [{"type": "eq", "fun": f_eq}]
 
@@ -525,17 +525,17 @@ def new_constraint_to_old(con, x0):
                 dy = jac(x)
                 if issparse(dy):
                     dy = dy.toarray()
-                dy = np.atleast_2d(dy)
+                dy = mx.atleast_2d(dy)
                 return dy[i_eq, :]
             ceq[0]["jac"] = j_eq
 
     cineq = []
-    n_bound_below = np.sum(i_bound_below)
-    n_bound_above = np.sum(i_bound_above)
+    n_bound_below = mx.sum(i_bound_below)
+    n_bound_above = mx.sum(i_bound_above)
     if n_bound_below + n_bound_above:
         def f_ineq(x):
-            y = np.zeros(n_bound_below + n_bound_above)
-            y_all = np.array(fun(x)).flatten()
+            y = mx.zeros(n_bound_below + n_bound_above)
+            y_all = mx.array(fun(x)).flatten()
             y[:n_bound_below] = y_all[i_bound_below] - lb[i_bound_below]
             y[n_bound_below:] = -(y_all[i_bound_above] - ub[i_bound_above])
             return y
@@ -543,11 +543,11 @@ def new_constraint_to_old(con, x0):
 
         if jac is not None:
             def j_ineq(x):
-                dy = np.zeros((n_bound_below + n_bound_above, len(x0)))
+                dy = mx.zeros((n_bound_below + n_bound_above, len(x0)))
                 dy_all = jac(x)
                 if issparse(dy_all):
                     dy_all = dy_all.toarray()
-                dy_all = np.atleast_2d(dy_all)
+                dy_all = mx.atleast_2d(dy_all)
                 dy[:n_bound_below, :] = dy_all[i_bound_below]
                 dy[n_bound_below:, :] = -dy_all[i_bound_above]
                 return dy
@@ -589,7 +589,7 @@ def old_constraint_to_new(ic, con):
     if ctype == 'eq':
         ub = 0
     else:
-        ub = np.inf
+        ub = mx.inf
 
     jac = '2-point'
     if 'args' in con:

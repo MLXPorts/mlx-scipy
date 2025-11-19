@@ -1,5 +1,5 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import TestCase, assert_array_equal
 import scipy.sparse as sps
 from scipy.optimize._constraints import (
@@ -16,8 +16,8 @@ class TestStrictBounds(TestCase):
         strict_lb, strict_ub = strict_bounds(lb, ub,
                                              enforce_feasibility,
                                              m)
-        assert_array_equal(strict_lb, [-np.inf, -np.inf, -np.inf])
-        assert_array_equal(strict_ub, [np.inf, np.inf, np.inf])
+        assert_array_equal(strict_lb, [-mx.inf, -mx.inf, -mx.inf])
+        assert_array_equal(strict_ub, [mx.inf, mx.inf, mx.inf])
 
         enforce_feasibility = True
         strict_lb, strict_ub = strict_bounds(lb, ub,
@@ -34,8 +34,8 @@ class TestStrictBounds(TestCase):
         strict_lb, strict_ub = strict_bounds(lb, ub,
                                               enforce_feasibility,
                                               m)
-        assert_array_equal(strict_lb, [-np.inf, -np.inf, -np.inf])
-        assert_array_equal(strict_ub, [np.inf, np.inf, np.inf])
+        assert_array_equal(strict_lb, [-mx.inf, -mx.inf, -mx.inf])
+        assert_array_equal(strict_ub, [mx.inf, mx.inf, mx.inf])
 
         enforce_feasibility = True
         strict_lb, strict_ub = strict_bounds(lb, ub,
@@ -52,26 +52,26 @@ class TestStrictBounds(TestCase):
         strict_lb, strict_ub = strict_bounds(lb, ub,
                                              enforce_feasibility,
                                              m)
-        assert_array_equal(strict_lb, [-np.inf, 2, -np.inf])
-        assert_array_equal(strict_ub, [np.inf, 4, np.inf])
+        assert_array_equal(strict_lb, [-mx.inf, 2, -mx.inf])
+        assert_array_equal(strict_ub, [mx.inf, 4, mx.inf])
 
     def test_vectorvalue_vector_enforce_feasibility(self):
         m = 3
         lb = [1, 2, 3]
-        ub = [4, 6, np.inf]
+        ub = [4, 6, mx.inf]
         enforce_feasibility = [True, False, True]
         strict_lb, strict_ub = strict_bounds(lb, ub,
                                              enforce_feasibility,
                                              m)
-        assert_array_equal(strict_lb, [1, -np.inf, 3])
-        assert_array_equal(strict_ub, [4, np.inf, np.inf])
+        assert_array_equal(strict_lb, [1, -mx.inf, 3])
+        assert_array_equal(strict_ub, [4, mx.inf, mx.inf])
 
 
 def test_prepare_constraint_infeasible_x0():
-    lb = np.array([0, 20, 30])
-    ub = np.array([0.5, np.inf, 70])
-    x0 = np.array([1, 2, 3])
-    enforce_feasibility = np.array([False, True, True], dtype=bool)
+    lb = mx.array([0, 20, 30])
+    ub = mx.array([0.5, mx.inf, 70])
+    x0 = mx.array([1, 2, 3])
+    enforce_feasibility = mx.array([False, True, True], dtype=bool)
     bounds = Bounds(lb, ub, enforce_feasibility)
     pytest.raises(ValueError, PreparedConstraint, bounds, x0)
 
@@ -79,13 +79,13 @@ def test_prepare_constraint_infeasible_x0():
     assert (pc.violation([1, 2, 3]) > 0).any()
     assert (pc.violation([0.25, 21, 31]) == 0).all()
 
-    x0 = np.array([1, 2, 3, 4])
-    A = np.array([[1, 2, 3, 4], [5, 0, 0, 6], [7, 0, 8, 0]])
-    enforce_feasibility = np.array([True, True, True], dtype=bool)
-    linear = LinearConstraint(A, -np.inf, 0, enforce_feasibility)
+    x0 = mx.array([1, 2, 3, 4])
+    A = mx.array([[1, 2, 3, 4], [5, 0, 0, 6], [7, 0, 8, 0]])
+    enforce_feasibility = mx.array([True, True, True], dtype=bool)
+    linear = LinearConstraint(A, -mx.inf, 0, enforce_feasibility)
     pytest.raises(ValueError, PreparedConstraint, linear, x0)
 
-    pc = PreparedConstraint(LinearConstraint(A, -np.inf, 0),
+    pc = PreparedConstraint(LinearConstraint(A, -mx.inf, 0),
                             [1, 2, 3, 4])
     assert (pc.violation([1, 2, 3, 4]) > 0).any()
     assert (pc.violation([-10, 2, -10, 4]) == 0).all()
@@ -99,7 +99,7 @@ def test_prepare_constraint_infeasible_x0():
     def hess(x, v):
         return sps.csr_array((4, 4))
 
-    nonlinear = NonlinearConstraint(fun, -np.inf, 0, jac, hess,
+    nonlinear = NonlinearConstraint(fun, -mx.inf, 0, jac, hess,
                                     enforce_feasibility)
     pytest.raises(ValueError, PreparedConstraint, nonlinear, x0)
 
@@ -110,25 +110,25 @@ def test_prepare_constraint_infeasible_x0():
 
 def test_violation():
     def cons_f(x):
-        return np.array([x[0] ** 2 + x[1], x[0] ** 2 - x[1]])
+        return mx.array([x[0] ** 2 + x[1], x[0] ** 2 - x[1]])
 
     nlc = NonlinearConstraint(cons_f, [-1, -0.8500], [2, 2])
     pc = PreparedConstraint(nlc, [0.5, 1])
 
     assert_array_equal(pc.violation([0.5, 1]), [0., 0.])
 
-    np.testing.assert_almost_equal(pc.violation([0.5, 1.2]), [0., 0.1])
+    mx.testing.assert_almost_equal(pc.violation([0.5, 1.2]), [0., 0.1])
 
-    np.testing.assert_almost_equal(pc.violation([1.2, 1.2]), [0.64, 0])
+    mx.testing.assert_almost_equal(pc.violation([1.2, 1.2]), [0.64, 0])
 
-    np.testing.assert_almost_equal(pc.violation([0.1, -1.2]), [0.19, 0])
+    mx.testing.assert_almost_equal(pc.violation([0.1, -1.2]), [0.19, 0])
 
-    np.testing.assert_almost_equal(pc.violation([0.1, 2]), [0.01, 1.14])
+    mx.testing.assert_almost_equal(pc.violation([0.1, 2]), [0.01, 1.14])
 
 
 def test_new_bounds_to_old():
-    lb = np.array([-np.inf, 2, 3])
-    ub = np.array([3, np.inf, 10])
+    lb = mx.array([-mx.inf, 2, 3])
+    ub = mx.array([3, mx.inf, 10])
 
     bounds = [(None, 3), (2, None), (3, 10)]
     assert_array_equal(new_bounds_to_old(lb, ub, 3), bounds)
@@ -137,35 +137,35 @@ def test_new_bounds_to_old():
     assert_array_equal(new_bounds_to_old(-1, ub, 3), bounds_single_lb)
 
     bounds_no_lb = [(None, 3), (None, None), (None, 10)]
-    assert_array_equal(new_bounds_to_old(-np.inf, ub, 3), bounds_no_lb)
+    assert_array_equal(new_bounds_to_old(-mx.inf, ub, 3), bounds_no_lb)
 
     bounds_single_ub = [(None, 20), (2, 20), (3, 20)]
     assert_array_equal(new_bounds_to_old(lb, 20, 3), bounds_single_ub)
 
     bounds_no_ub = [(None, None), (2, None), (3, None)]
-    assert_array_equal(new_bounds_to_old(lb, np.inf, 3), bounds_no_ub)
+    assert_array_equal(new_bounds_to_old(lb, mx.inf, 3), bounds_no_ub)
 
     bounds_single_both = [(1, 2), (1, 2), (1, 2)]
     assert_array_equal(new_bounds_to_old(1, 2, 3), bounds_single_both)
 
     bounds_no_both = [(None, None), (None, None), (None, None)]
-    assert_array_equal(new_bounds_to_old(-np.inf, np.inf, 3), bounds_no_both)
+    assert_array_equal(new_bounds_to_old(-mx.inf, mx.inf, 3), bounds_no_both)
 
 
 def test_old_bounds_to_new():
     bounds = ([1, 2], (None, 3), (-1, None))
-    lb_true = np.array([1, -np.inf, -1])
-    ub_true = np.array([2, 3, np.inf])
+    lb_true = mx.array([1, -mx.inf, -1])
+    ub_true = mx.array([2, 3, mx.inf])
 
     lb, ub = old_bound_to_new(bounds)
     assert_array_equal(lb, lb_true)
     assert_array_equal(ub, ub_true)
 
-    bounds = [(-np.inf, np.inf), (np.array([1]), np.array([1]))]
+    bounds = [(-mx.inf, mx.inf), (mx.array([1]), mx.array([1]))]
     lb, ub = old_bound_to_new(bounds)
 
-    assert_array_equal(lb, [-np.inf, 1])
-    assert_array_equal(ub, [np.inf, 1])
+    assert_array_equal(lb, [-mx.inf, 1])
+    assert_array_equal(ub, [mx.inf, 1])
 
 
 class TestBounds:
@@ -174,10 +174,10 @@ class TestBounds:
         from numpy import array, inf  # noqa: F401
         for args in (
             (-1.0, 5.0),
-            (-1.0, np.inf, True),
-            (np.array([1.0, -np.inf]), np.array([2.0, np.inf])),
-            (np.array([1.0, -np.inf]), np.array([2.0, np.inf]),
-             np.array([True, False])),
+            (-1.0, mx.inf, True),
+            (mx.array([1.0, -mx.inf]), mx.array([2.0, mx.inf])),
+            (mx.array([1.0, -mx.inf]), mx.array([2.0, mx.inf]),
+             mx.array([True, False])),
         ):
             bounds = Bounds(*args)
             bounds2 = eval(repr(Bounds(*args)))
@@ -188,12 +188,12 @@ class TestBounds:
     def test_array(self):
         # gh13501
         b = Bounds(lb=[0.0, 0.0], ub=[1.0, 1.0])
-        assert isinstance(b.lb, np.ndarray)
-        assert isinstance(b.ub, np.ndarray)
+        assert isinstance(b.lb, mx.array)
+        assert isinstance(b.ub, mx.array)
 
     def test_defaults(self):
         b1 = Bounds()
-        b2 = Bounds(np.asarray(-np.inf), np.asarray(np.inf))
+        b2 = Bounds(mx.array(-mx.inf), mx.array(mx.inf))
         assert b1.lb == b2.lb
         assert b1.ub == b2.ub
 
@@ -215,19 +215,19 @@ class TestBounds:
     def test_residual(self):
         bounds = Bounds(-2, 4)
         x0 = [-1, 2]
-        np.testing.assert_allclose(bounds.residual(x0), ([1, 4], [5, 2]))
+        mx.testing.assert_allclose(bounds.residual(x0), ([1, 4], [5, 2]))
 
 
 class TestLinearConstraint:
     def test_defaults(self):
-        A = np.eye(4)
+        A = mx.eye(4)
         lc = LinearConstraint(A)
-        lc2 = LinearConstraint(A, -np.inf, np.inf)
+        lc2 = LinearConstraint(A, -mx.inf, mx.inf)
         assert_array_equal(lc.lb, lc2.lb)
         assert_array_equal(lc.ub, lc2.ub)
 
     def test_input_validation(self):
-        A = np.eye(4)
+        A = mx.eye(4)
         message = "`lb`, `ub`, and `keep_feasible` must be broadcastable"
         with pytest.raises(ValueError, match=message):
             LinearConstraint(A, [1, 2], [1, 2, 3])
@@ -243,13 +243,13 @@ class TestLinearConstraint:
             keep_feasible = sps.coo_array([True, True])
             LinearConstraint(A, [1, 2], [2, 3], keep_feasible=keep_feasible)
 
-        A = np.empty((4, 3, 5))
+        A = mx.empty((4, 3, 5))
         message = "`A` must have exactly two dimensions."
         with pytest.raises(ValueError, match=message):
             LinearConstraint(A)
 
     def test_residual(self):
-        A = np.eye(2)
+        A = mx.eye(2)
         lc = LinearConstraint(A, -2, 4)
         x0 = [-1, 2]
-        np.testing.assert_allclose(lc.residual(x0), ([1, 4], [5, 2]))
+        mx.testing.assert_allclose(lc.residual(x0), ([1, 4], [5, 2]))

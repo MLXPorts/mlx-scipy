@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import pytest
 
 from numpy.testing import assert_allclose, assert_equal
@@ -7,7 +7,7 @@ from scipy.special._ufuncs import _log1mexp
 
 # # Test cases generated with the script
 #
-# import numpy as np
+# import mlx.core as mx
 
 # from mpmath import mp
 
@@ -16,7 +16,7 @@ from scipy.special._ufuncs import _log1mexp
 #     with mp.workdps(324):
 #         return float(mp.log(mp.one - mp.exp(x)))
 
-# X = np.concat([-np.logspace(-1, -300, 20), np.linspace(-745, -1, 20)])
+# X = mx.concat([-mx.logspace(-1, -300, 20), mx.linspace(-745, -1, 20)])
 
 # cases = [(float(x), mp_log1mexp(x)) for x in X]
 
@@ -70,15 +70,15 @@ def test_log1mexp(x, expected):
     assert_allclose(observed, expected, rtol=1e-15)
 
 
-@pytest.mark.parametrize("x", [1.1, 1e10, np.inf])
+@pytest.mark.parametrize("x", [1.1, 1e10, mx.inf])
 def test_log1mexp_out_of_domain(x):
     observed = _log1mexp(x)
-    assert np.isnan(observed)
+    assert mx.isnan(observed)
 
 
 @pytest.mark.parametrize(
     "x,expected",
-    [(-np.inf, -0.0), (0.0, -np.inf), (-0.0, -np.inf), (np.nan, np.nan)]
+    [(-mx.inf, -0.0), (0.0, -mx.inf), (-0.0, -mx.inf), (mx.nan, mx.nan)]
 )
 def test_log1mexp_extreme(x, expected):
     observed = _log1mexp(x)

@@ -13,7 +13,7 @@ References
 """
 
 import scipy.sparse as sps
-import numpy as np
+import mlx.core as mx
 from .equality_constrained_sqp import equality_constrained_sqp
 from scipy.sparse.linalg import LinearOperator
 
@@ -83,14 +83,14 @@ class BarrierSubproblem:
 
         # Compute function and constraints,
         # making sure x is within any strict bounds
-        if np.any((x < self.lb) | (x > self.ub)):
+        if mx.any((x < self.lb) | (x > self.ub)):
             # If x is out of the strict bounds, set f = inf,
             # and just set both equality and inequality
             # constraints to 0 since we can't evaluate
             # them separately.
-            f = np.inf
-            c_eq = np.full(self.n_eq, 0.)
-            c_ineq = np.full(self.n_ineq, 0.)
+            f = mx.inf
+            c_eq = mx.full(self.n_eq, 0.)
+            c_ineq = mx.full(self.n_ineq, 0.)
         else:
             f = self.fun(x)
             c_eq, c_ineq = self.constr(x)
@@ -104,13 +104,13 @@ class BarrierSubproblem:
         # to guarantee constraints from `enforce_feasibility`
         # stay feasible along iterations.
         s[self.enforce_feasibility] = -c_ineq[self.enforce_feasibility]
-        log_s = [np.log(s_i) if s_i > 0 else -np.inf for s_i in s]
+        log_s = [mx.log(s_i) if s_i > 0 else -mx.inf for s_i in s]
         # Compute barrier objective function
-        return f - self.barrier_parameter*np.sum(log_s)
+        return f - self.barrier_parameter*mx.sum(log_s)
 
     def _compute_constr(self, c_ineq, c_eq, s):
         # Compute barrier constraint
-        return np.hstack((c_eq,
+        return mx.hstack((c_eq,
                           c_ineq + s))
 
     def scaling(self, z):
@@ -119,7 +119,7 @@ class BarrierSubproblem:
             scaling = [ones(n_vars), s]
         """
         s = self.get_slack(z)
-        diag_elements = np.hstack((np.ones(self.n_vars), s))
+        diag_elements = mx.hstack((mx.ones(self.n_vars), s))
 
         # Diagonal matrix
         def matvec(vec):
@@ -150,7 +150,7 @@ class BarrierSubproblem:
                 self._compute_jacobian(J_eq, J_ineq, s))
 
     def _compute_gradient(self, g):
-        return np.hstack((g, -self.barrier_parameter*np.ones(self.n_ineq)))
+        return mx.hstack((g, -self.barrier_parameter*mx.ones(self.n_ineq)))
 
     def _compute_jacobian(self, J_eq, J_ineq, s):
         if self.n_ineq == 0:
@@ -165,15 +165,15 @@ class BarrierSubproblem:
                 J_ineq = sps.csr_array(J_ineq)
                 return self._assemble_sparse_jacobian(J_eq, J_ineq, s)
             else:
-                S = np.diag(s)
-                zeros = np.zeros((self.n_eq, self.n_ineq))
+                S = mx.diag(s)
+                zeros = mx.zeros((self.n_eq, self.n_ineq))
                 # Convert to matrix
                 if sps.issparse(J_ineq):
                     J_ineq = J_ineq.toarray()
                 if sps.issparse(J_eq):
                     J_eq = J_eq.toarray()
                 # Concatenate matrices
-                return np.block([[J_eq, zeros],
+                return mx.block([[J_eq, zeros],
                                  [J_ineq, S]])
 
     def _assemble_sparse_jacobian(self, J_eq, J_ineq, s):
@@ -192,14 +192,14 @@ class BarrierSubproblem:
         n_vars, n_ineq, n_eq = self.n_vars, self.n_ineq, self.n_eq
         J_aux = sps.vstack([J_eq, J_ineq], "csr")
         indptr, indices, data = J_aux.indptr, J_aux.indices, J_aux.data
-        new_indptr = indptr + np.hstack((np.zeros(n_eq, dtype=int),
-                                         np.arange(n_ineq+1, dtype=int)))
+        new_indptr = indptr + mx.hstack((mx.zeros(n_eq, dtype=int),
+                                         mx.arange(n_ineq+1, dtype=int)))
         size = indices.size+n_ineq
-        new_indices = np.empty(size)
-        new_data = np.empty(size)
-        mask = np.full(size, False, bool)
+        new_indices = mx.empty(size)
+        new_data = mx.empty(size)
+        mask = mx.full(size, False, bool)
         mask[new_indptr[-n_ineq:]-1] = True
-        new_indices[mask] = n_vars+np.arange(n_ineq)
+        new_indices[mask] = n_vars+mx.arange(n_ineq)
         new_indices[~mask] = indices
         new_data[mask] = s
         new_data[~mask] = data
@@ -231,7 +231,7 @@ class BarrierSubproblem:
         # Uses the primal-dual formulation for
         # positives values of v_ineq, and primal
         # formulation for the remaining ones.
-        return np.where(v[-self.n_ineq:] > 0, primal_dual, primal)
+        return mx.where(v[-self.n_ineq:] > 0, primal_dual, primal)
 
     def lagrangian_hessian(self, z, v):
         """Returns scaled Lagrangian Hessian"""
@@ -247,7 +247,7 @@ class BarrierSubproblem:
             vec_x = self.get_variables(vec)
             vec_s = self.get_slack(vec)
             if self.n_ineq > 0:
-                return np.hstack((Hx.dot(vec_x), S_Hs_S*vec_s))
+                return mx.hstack((Hx.dot(vec_x), S_Hs_S*vec_s))
             else:
                 return Hx.dot(vec_x)
         return LinearOperator((self.n_vars+self.n_ineq,
@@ -308,13 +308,13 @@ def tr_interior_point(fun, grad, lagr_hess, n_vars, n_ineq, n_eq,
 
     # Default enforce_feasibility
     if enforce_feasibility is None:
-        enforce_feasibility = np.zeros(n_ineq, bool)
+        enforce_feasibility = mx.zeros(n_ineq, bool)
     # Initial Values
     barrier_parameter = initial_barrier_parameter
     tolerance = initial_tolerance
     trust_radius = initial_trust_radius
     # Define initial value for the slack variables
-    s0 = np.maximum(-1.5*constr_ineq0, np.ones(n_ineq))
+    s0 = mx.maximum(-1.5*constr_ineq0, mx.ones(n_ineq))
     # Define barrier subproblem
     subprob = BarrierSubproblem(
         x0, s0, fun, grad, lagr_hess, n_vars, n_ineq, n_eq, constr, jac,
@@ -322,13 +322,13 @@ def tr_interior_point(fun, grad, lagr_hess, n_vars, n_ineq, n_eq,
         stop_criteria, xtol, fun0, grad0, constr_ineq0, jac_ineq0,
         constr_eq0, jac_eq0, finite_diff_bounds)
     # Define initial parameter for the first iteration.
-    z = np.hstack((x0, s0))
+    z = mx.hstack((x0, s0))
     fun0_subprob, constr0_subprob = subprob.fun0, subprob.constr0
     grad0_subprob, jac0_subprob = subprob.grad0, subprob.jac0
     # Define trust region bounds
-    trust_lb = np.hstack((np.full(subprob.n_vars, -np.inf),
-                          np.full(subprob.n_ineq, -BOUNDARY_PARAMETER)))
-    trust_ub = np.full(subprob.n_vars+subprob.n_ineq, np.inf)
+    trust_lb = mx.hstack((mx.full(subprob.n_vars, -mx.inf),
+                          mx.full(subprob.n_ineq, -BOUNDARY_PARAMETER)))
+    trust_ub = mx.full(subprob.n_vars+subprob.n_ineq, mx.inf)
 
     # Solves a sequence of barrier problems
     while True:

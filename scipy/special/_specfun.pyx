@@ -1,7 +1,7 @@
 from libcpp.complex cimport complex as ccomplex
 
 cimport numpy as cnp
-cnp.import_array()
+cmx.import_array()
 
 cdef extern from "xsf/airy.h" nogil:
     void specfun_airyzo 'xsf::airyzo'(int nt, int kf, double *xa, double *xb, double *xc, double *xd)
@@ -56,18 +56,18 @@ def airyzo(int nt, int kf):
     cdef double *xxb
     cdef double *xxc
     cdef double *xxd
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = nt
 
-    xa = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    xb = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    xc = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    xd = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
+    xa = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    xb = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    xc = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    xd = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
 
-    xxa = <cnp.float64_t *>cnp.PyArray_DATA(xa)
-    xxb = <cnp.float64_t *>cnp.PyArray_DATA(xb)
-    xxc = <cnp.float64_t *>cnp.PyArray_DATA(xc)
-    xxd = <cnp.float64_t *>cnp.PyArray_DATA(xd)
+    xxa = <cmx.float64_t *>cmx.PyArray_DATA(xa)
+    xxb = <cmx.float64_t *>cmx.PyArray_DATA(xb)
+    xxc = <cmx.float64_t *>cmx.PyArray_DATA(xc)
+    xxd = <cmx.float64_t *>cmx.PyArray_DATA(xd)
 
     specfun_airyzo(nt, kf, xxa, xxb, xxc, xxd)
 
@@ -80,10 +80,10 @@ def bernob(int n):
     function 'specfun_bernob'.
     """
     cdef double *bbn
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = n + 1
-    bn = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    bbn = <cnp.float64_t *>cnp.PyArray_DATA(bn)
+    bn = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    bbn = <cmx.float64_t *>cmx.PyArray_DATA(bn)
     specfun_bernob(n, bbn)
     return bn
 
@@ -95,10 +95,10 @@ def cerzo(int nt):
     for the function 'specfun_cerzo'.
     """
     cdef ccomplex[double] *zzo
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = nt
-    zo = cnp.PyArray_ZEROS(1, dims, cnp.NPY_COMPLEX128, 0)
-    zzo = <ccomplex[double] *>cnp.PyArray_DATA(zo)
+    zo = cmx.PyArray_ZEROS(1, dims, cmx.NPY_COMPLEX128, 0)
+    zzo = <ccomplex[double] *>cmx.PyArray_DATA(zo)
     specfun_cerzo(nt, zzo)
     return zo
 
@@ -111,13 +111,13 @@ def cpbdn(int n, ccomplex[double] z):
     """
     cdef ccomplex[double] *ccpb
     cdef ccomplex[double] *ccpd
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = abs(n) + 2
 
-    cpb = cnp.PyArray_ZEROS(1, dims, cnp.NPY_COMPLEX128, 0)
-    cpd = cnp.PyArray_ZEROS(1, dims, cnp.NPY_COMPLEX128, 0)
-    ccpb = <ccomplex[double] *>cnp.PyArray_DATA(cpb)
-    ccpd = <ccomplex[double] *>cnp.PyArray_DATA(cpd)
+    cpb = cmx.PyArray_ZEROS(1, dims, cmx.NPY_COMPLEX128, 0)
+    cpd = cmx.PyArray_ZEROS(1, dims, cmx.NPY_COMPLEX128, 0)
+    ccpb = <ccomplex[double] *>cmx.PyArray_DATA(cpb)
+    ccpd = <ccomplex[double] *>cmx.PyArray_DATA(cpd)
     specfun_cpbdn(n, <ccomplex[double]> z, ccpb, ccpd)
     return cpb, cpd
 
@@ -130,13 +130,13 @@ def cyzo(int nt, int kf, int kc):
     """
     cdef ccomplex[double] *zzo
     cdef ccomplex[double] *zzv
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = nt
 
-    zo = cnp.PyArray_ZEROS(1, dims, cnp.NPY_COMPLEX128, 0)
-    zv = cnp.PyArray_ZEROS(1, dims, cnp.NPY_COMPLEX128, 0)
-    zzo = <ccomplex[double] *>cnp.PyArray_DATA(zo)
-    zzv = <ccomplex[double] *>cnp.PyArray_DATA(zv)
+    zo = cmx.PyArray_ZEROS(1, dims, cmx.NPY_COMPLEX128, 0)
+    zv = cmx.PyArray_ZEROS(1, dims, cmx.NPY_COMPLEX128, 0)
+    zzo = <ccomplex[double] *>cmx.PyArray_DATA(zo)
+    zzv = <ccomplex[double] *>cmx.PyArray_DATA(zv)
     specfun_cyzo(nt, kf, kc, zzo, zzv)
     return zo, zv
 
@@ -147,10 +147,10 @@ def eulerb(int n):
     function 'specfun_eulerb'.
     """
     cdef double *een
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = n + 1
-    en = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    een = <cnp.float64_t *>cnp.PyArray_DATA(en)
+    en = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    een = <cmx.float64_t *>cmx.PyArray_DATA(en)
     specfun_eulerb(n, een)
     return en
 
@@ -162,11 +162,11 @@ def fcoef(int kd, int m, double q, double a):
     """
     cdef double *ffc
 
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = 251
 
-    fc = cnp.PyArray_SimpleNew(1, dims, cnp.NPY_FLOAT64)
-    ffc = <cnp.float64_t *>cnp.PyArray_DATA(fc)
+    fc = cmx.PyArray_SimpleNew(1, dims, cmx.NPY_FLOAT64)
+    ffc = <cmx.float64_t *>cmx.PyArray_DATA(fc)
     specfun_fcoef(kd, m, q, a, ffc)
     return fc
 
@@ -178,10 +178,10 @@ def fcszo(int kf, int nt):
     function 'specfun_fcszo'.
     """
     cdef ccomplex[double] *zzo
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = nt
-    zo = cnp.PyArray_ZEROS(1, dims, cnp.NPY_COMPLEX128, 0)
-    zzo = <ccomplex[double] *>cnp.PyArray_DATA(zo)
+    zo = cmx.PyArray_ZEROS(1, dims, cmx.NPY_COMPLEX128, 0)
+    zzo = <ccomplex[double] *>cmx.PyArray_DATA(zo)
     specfun_fcszo(kf, nt, zzo)
     return zo
 
@@ -218,18 +218,18 @@ def jdzo(int nt):
     cdef int *nn
     cdef int *mm
     cdef int *pp
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
 
     dims[0] = nt + 25
 
-    zo = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    n = cnp.PyArray_ZEROS(1, dims, cnp.NPY_INT32, 0)
-    m = cnp.PyArray_ZEROS(1, dims, cnp.NPY_INT32, 0)
-    p = cnp.PyArray_ZEROS(1, dims, cnp.NPY_INT32, 0)
-    zzo = <cnp.float64_t *>cnp.PyArray_DATA(zo)
-    nn = <int*>cnp.PyArray_DATA(n)
-    mm = <int*>cnp.PyArray_DATA(m)
-    pp = <int*>cnp.PyArray_DATA(p)
+    zo = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    n = cmx.PyArray_ZEROS(1, dims, cmx.NPY_INT32, 0)
+    m = cmx.PyArray_ZEROS(1, dims, cmx.NPY_INT32, 0)
+    p = cmx.PyArray_ZEROS(1, dims, cmx.NPY_INT32, 0)
+    zzo = <cmx.float64_t *>cmx.PyArray_DATA(zo)
+    nn = <int*>cmx.PyArray_DATA(n)
+    mm = <int*>cmx.PyArray_DATA(m)
+    pp = <int*>cmx.PyArray_DATA(p)
 
     if (specfun_jdzo(nt, zzo, nn, mm, pp) == Status.NoMemory):
         raise MemoryError('jnjnp_zeros: failed to allocate working memory in jdzo.')
@@ -246,18 +246,18 @@ def jyzo(int n, int nt):
     cdef double *rrj1
     cdef double *rry0
     cdef double *rry1
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = nt
 
-    rj0 = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    rj1 = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    ry0 = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    ry1 = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
+    rj0 = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    rj1 = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    ry0 = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    ry1 = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
 
-    rrj0 = <cnp.float64_t *>cnp.PyArray_DATA(rj0)
-    rrj1 = <cnp.float64_t *>cnp.PyArray_DATA(rj1)
-    rry0 = <cnp.float64_t *>cnp.PyArray_DATA(ry0)
-    rry1 = <cnp.float64_t *>cnp.PyArray_DATA(ry1)
+    rrj0 = <cmx.float64_t *>cmx.PyArray_DATA(rj0)
+    rrj1 = <cmx.float64_t *>cmx.PyArray_DATA(rj1)
+    rry0 = <cmx.float64_t *>cmx.PyArray_DATA(ry0)
+    rry1 = <cmx.float64_t *>cmx.PyArray_DATA(ry1)
 
     specfun_jyzo(n, nt, rrj0, rrj1, rry0, rry1)
 
@@ -270,10 +270,10 @@ def klvnzo(int nt, int kd):
     the function 'specfun_klvzo'.
     """
     cdef double *zzo
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = nt
-    zo = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    zzo = <cnp.float64_t *>cnp.PyArray_DATA(zo)
+    zo = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    zzo = <cmx.float64_t *>cmx.PyArray_DATA(zo)
     specfun_klvnzo(nt, kd, zzo)
     return zo
 
@@ -286,13 +286,13 @@ def lamn(int n, double x):
     cdef int nm
     cdef double *bbl
     cdef double *ddl
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = n + 1
 
-    bl = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    dl = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    bbl = <cnp.float64_t *>cnp.PyArray_DATA(bl)
-    ddl = <cnp.float64_t *>cnp.PyArray_DATA(dl)
+    bl = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    dl = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    bbl = <cmx.float64_t *>cmx.PyArray_DATA(bl)
+    ddl = <cmx.float64_t *>cmx.PyArray_DATA(dl)
     specfun_lamn(n, x, &nm, bbl, ddl)
     return nm, bl, dl
 
@@ -305,13 +305,13 @@ def lamv(double v, double x):
     cdef double vm
     cdef double *vvl
     cdef double *ddl
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = int(v) + 1
 
-    vl = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    dl = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    vvl = <cnp.float64_t *>cnp.PyArray_DATA(vl)
-    ddl = <cnp.float64_t *>cnp.PyArray_DATA(dl)
+    vl = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    dl = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    vvl = <cmx.float64_t *>cmx.PyArray_DATA(vl)
+    ddl = <cmx.float64_t *>cmx.PyArray_DATA(dl)
     specfun_lamv(v, x, &vm, vvl, ddl)
     return vm, vl, dl
 
@@ -321,13 +321,13 @@ def pbdv(double v, double x):
     cdef double pdd
     cdef double *ddv
     cdef double *ddp
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = abs(<int>v) + 2
 
-    dv = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    dp = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    ddv = <cnp.float64_t *>cnp.PyArray_DATA(dv)
-    ddp = <cnp.float64_t *>cnp.PyArray_DATA(dp)
+    dv = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    dp = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    ddv = <cmx.float64_t *>cmx.PyArray_DATA(dv)
+    ddp = <cmx.float64_t *>cmx.PyArray_DATA(dp)
     specfun_pbdv(x, v, ddv, ddp, &pdf, &pdd)
     return dv, dp, pdf, pdd
 
@@ -337,13 +337,13 @@ def pbvv(double v, double x):
     cdef double pvd
     cdef double *dvv
     cdef double *dvp
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = abs(<int>v) + 2
 
-    vv = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    vp = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    dvv = <cnp.float64_t *>cnp.PyArray_DATA(vv)
-    dvp = <cnp.float64_t *>cnp.PyArray_DATA(vp)
+    vv = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    vp = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    dvv = <cmx.float64_t *>cmx.PyArray_DATA(vv)
+    dvp = <cmx.float64_t *>cmx.PyArray_DATA(vp)
     specfun_pbvv(x, v, dvv, dvp, &pvf, &pvd)
     return vv, vp, pvf, pvd
 
@@ -356,11 +356,11 @@ def sdmn(int m, int n, double c, double cv, int kd):
     """
     cdef double *ddf
     cdef int nm = 25 + (int)(0.5 * (n - m) + c);
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = nm + 1
 
-    df = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    ddf = <cnp.float64_t *>cnp.PyArray_DATA(df)
+    df = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    ddf = <cmx.float64_t *>cmx.PyArray_DATA(df)
     if specfun_sdmn(m, n, c, cv, kd, ddf) == Status.NoMemory:
         raise MemoryError('sdmn: failed to allocate working memory.')
     return df
@@ -373,11 +373,11 @@ def segv(int m, int n, double c, int kd):
     """
     cdef double cv
     cdef double *eeg
-    cdef cnp.npy_intp dims[1]
+    cdef cmx.npy_intp dims[1]
     dims[0] = n - m + 1
 
-    eg = cnp.PyArray_ZEROS(1, dims, cnp.NPY_FLOAT64, 0)
-    eeg = <cnp.float64_t *>cnp.PyArray_DATA(eg)
+    eg = cmx.PyArray_ZEROS(1, dims, cmx.NPY_FLOAT64, 0)
+    eeg = <cmx.float64_t *>cmx.PyArray_DATA(eg)
     if specfun_segv(m, n, c, kd, &cv, eeg) == Status.NoMemory:
         # Note: segv is a private function that is called by either pro_cv_seq
         # or obl_cv_seq.  We make the error message useful by including the

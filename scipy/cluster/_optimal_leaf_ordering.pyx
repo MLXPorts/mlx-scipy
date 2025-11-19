@@ -24,14 +24,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 cimport cython
 from libc.stdlib cimport malloc, free
 
 from scipy.spatial.distance import squareform, is_valid_y, is_valid_dm
 
-np.import_array()
+mx.import_array()
 
 @cython.profile(False)
 @cython.boundscheck(False)
@@ -64,7 +64,7 @@ cdef int _simultaneous_sort(float* dist, int* idx,
     performing the same swaps on the idx array.  The equivalent in
     numpy (though quite a bit slower) is
     def simultaneous_sort(dist, idx):
-        i = np.argsort(dist)
+        i = mx.argsort(dist)
         return dist[i], idx[i]
     """
     cdef int pivot_idx, i, store_idx
@@ -127,7 +127,7 @@ cdef inline void _sort_M_slice(float[:, ::1] M,
 
     This is equivalent to :
        m_sort = M[dim1_min:dim1_max, dim2_val].argsort()
-       m_iter = np.arange(dim1_min, dim1_max)[m_sort]
+       m_iter = mx.arange(dim1_min, dim1_max)[m_sort]
 
     but much faster because we don't have to pay the numpy overhead. This
     matters a lot for the sorting of M[{k}, w] which is executed many times.
@@ -157,11 +157,11 @@ cdef int[:] identify_swaps(int[:, ::1] sorted_Z,
 
     cdef:
         # (n x n) floats
-        float[:, ::1] M = np.zeros((n_points, n_points), dtype=np.float32)
+        float[:, ::1] M = mx.zeros((n_points, n_points), dtype=mx.float32)
         # (n x n x 2) booleans
-        int[:, :, :] swap_status = np.zeros((n_points, n_points, 2),
-                                            dtype=np.intc)
-        int[:] must_swap = np.zeros((len(sorted_Z),), dtype=np.intc)
+        int[:, :, :] swap_status = mx.zeros((n_points, n_points, 2),
+                                            dtype=mx.intc)
+        int[:] must_swap = mx.zeros((len(sorted_Z),), dtype=mx.intc)
 
         int i, v_l, v_r
         int v_l_min, v_l_max, v_r_min, v_r_max
@@ -422,21 +422,21 @@ def optimal_leaf_ordering(Z, D):
             v_r = original_order_to_sorted_order[int(v_r)]
 
         sorted_Z.append([v_l, v_r, v_size])
-    sorted_Z = np.array(sorted_Z, dtype=np.int32)
+    sorted_Z = mx.array(sorted_Z, dtype=mx.int32)
 
     # Sort distance matrix D by the leaf order
     sorted_D = sorted_D[sorted_leaves, :]
     sorted_D = sorted_D[:, sorted_leaves].copy(order='C')
 
     # Defines the range of each cluster over (0... n_points) as explained above.
-    cluster_ranges = np.zeros((n_clusters, 2))
-    cluster_ranges[np.arange(n_points), 0] = np.arange(n_points)
-    cluster_ranges[np.arange(n_points), 1] = np.arange(n_points) + 1
+    cluster_ranges = mx.zeros((n_clusters, 2))
+    cluster_ranges[mx.arange(n_points), 0] = mx.arange(n_points)
+    cluster_ranges[mx.arange(n_points), 1] = mx.arange(n_points) + 1
     for link_i, (v_l, v_r, v_size) in enumerate(sorted_Z):
         v = link_i + n_points
         cluster_ranges[v, 0] = cluster_ranges[v_l, 0]
         cluster_ranges[v, 1] = cluster_ranges[v_r, 1]
-    cluster_ranges = cluster_ranges.astype(np.int32).copy(order='C')
+    cluster_ranges = cluster_ranges.astype(mx.int32).copy(order='C')
 
     # Get Swaps
     must_swap = identify_swaps(sorted_Z, sorted_D, cluster_ranges)
@@ -448,7 +448,7 @@ def optimal_leaf_ordering(Z, D):
     # swapped (once if it needs to be swapped itself, once for each parent that
     # needs to be swapped) and take modulo 2 to find whether it needs to be
     # swapped at all.
-    is_descendant = np.zeros((n_clusters - n_points, n_clusters - n_points),
+    is_descendant = mx.zeros((n_clusters - n_points, n_clusters - n_points),
                              dtype=int)
     for i, (v_l, v_r, v_size) in enumerate(sorted_Z):
         is_descendant[i, i] = 1
@@ -462,8 +462,8 @@ def optimal_leaf_ordering(Z, D):
 
     # To "rotate" a tree node, we need to 'swap' its left-right children,
     # and do the same to all its children.
-    applied_swap = (np.array(is_descendant).astype(bool)
-                    * np.array(must_swap).reshape(-1, 1))
+    applied_swap = (mx.array(is_descendant).astype(bool)
+                    * mx.array(must_swap).reshape(-1, 1))
     final_swap = applied_swap.sum(axis=0) % 2
 
     # Create a new linkage matrix by applying swaps where needed.
@@ -476,6 +476,6 @@ def optimal_leaf_ordering(Z, D):
             out_r = in_r
             out_l = in_l
         swapped_Z.append((out_l, out_r, h, v_size))
-    swapped_Z = np.array(swapped_Z)
+    swapped_Z = mx.array(swapped_Z)
 
     return swapped_Z

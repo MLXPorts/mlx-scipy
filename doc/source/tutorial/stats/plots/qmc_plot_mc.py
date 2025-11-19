@@ -1,10 +1,10 @@
 """Multiple MC to show how it can be bad."""
-import numpy as np
+import mlx.core as mx
 
 import matplotlib.pyplot as plt
 
 
-rng = np.random.default_rng()
+rng = mx.random.default_rng()
 
 n_sample = 256
 dim = 2

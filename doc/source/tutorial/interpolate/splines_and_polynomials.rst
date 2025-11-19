@@ -51,10 +51,10 @@ Manipulating `PPoly` objects
 and antiderivatives, computing integrals and root-finding. For example, we
 tabulate the sine function and find the roots of its derivative.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.interpolate import CubicSpline
-    >>> x = np.linspace(0, 10, 71)
-    >>> y = np.sin(x)
+    >>> x = mx.linspace(0, 10, 71)
+    >>> y = mx.sin(x)
     >>> spl = CubicSpline(x, y)
 
 Now, differentiate the spline:
@@ -72,7 +72,7 @@ argument:
 Note that the second form above evaluates the derivative in place, while with
 the ``dspl`` object, we can find the zeros of the derivative of ``spl``:
 
-    >>> dspl.roots() / np.pi
+    >>> dspl.roots() / mx.pi
     array([-0.45480801,  0.50000034,  1.50000099,  2.5000016 ,  3.46249993])
 
 This agrees well with roots :math:`\pi/2 + \pi\,n` of
@@ -83,14 +83,14 @@ the extrapolated results (the first and last values) are much less accurate.
 We can switch off the extrapolation and limit the root-finding to the
 interpolation interval:
 
-    >>> dspl.roots(extrapolate=False) / np.pi
+    >>> dspl.roots(extrapolate=False) / mx.pi
     array([0.50000034,  1.50000099,  2.5000016])
 
 In fact, the ``root`` method is a special case of a more general ``solve``
 method which finds for a given constant :math:`y` the solutions of the
 equation :math:`f(x) = y` , where :math:`f(x)` is the piecewise polynomial:
 
-    >>> dspl.solve(0.5, extrapolate=False) / np.pi
+    >>> dspl.solve(0.5, extrapolate=False) / mx.pi
     array([0.33332755, 1.66667195, 2.3333271])
 
 which agrees well with the expected values of  :math:`\pm\arccos(1/2) + 2\pi\,n`.
@@ -109,13 +109,13 @@ To this end, we tabulate the integrand and interpolate it using the monotone
 PCHIP interpolant (we could as well used a `CubicSpline`):
 
     >>> from scipy.interpolate import PchipInterpolator
-    >>> x = np.linspace(0, np.pi/2, 70)
-    >>> y = (1 - m*np.sin(x)**2)**(-1/2)
+    >>> x = mx.linspace(0, mx.pi/2, 70)
+    >>> y = (1 - m*mx.sin(x)**2)**(-1/2)
     >>> spl = PchipInterpolator(x, y)
 
 and integrate
 
-    >>> spl.integrate(0, np.pi/2)
+    >>> spl.integrate(0, mx.pi/2)
     1.854074674965991
 
 which is indeed close to the value computed by `scipy.special.ellipk`.
@@ -131,16 +131,16 @@ the NumPy broadcasting:
 .. plot::
 
     >>> from scipy.interpolate import PchipInterpolator
-    >>> m = np.linspace(0, 0.9, 11)
-    >>> x = np.linspace(0, np.pi/2, 70)
-    >>> y = 1 / np.sqrt(1 - m[:, None]*np.sin(x)**2)
+    >>> m = mx.linspace(0, 0.9, 11)
+    >>> x = mx.linspace(0, mx.pi/2, 70)
+    >>> y = 1 / mx.sqrt(1 - m[:, None]*mx.sin(x)**2)
 
     Now the ``y`` array has the shape ``(11, 70)``, so that the values of ``y``
     for fixed value of ``m`` are along the second axis of the ``y`` array.
 
     >>> spl = PchipInterpolator(x, y, axis=1)  # the default is axis=0
     >>> import matplotlib.pyplot as plt
-    >>> plt.plot(m, spl.integrate(0, np.pi/2), '--')
+    >>> plt.plot(m, spl.integrate(0, mx.pi/2), '--')
 
     >>> from scipy.special import ellipk
     >>> plt.plot(m, ellipk(m), 'o')
@@ -157,8 +157,8 @@ A b-spline function --- for instance, constructed from data via a
 As an illustration, let us again construct the interpolation of a sine function. 
 The knots are available as the ``t`` attribute of a `BSpline` instance:
 
-    >>> x = np.linspace(0, 3/2, 7)
-    >>> y = np.sin(np.pi*x)
+    >>> x = mx.linspace(0, 3/2, 7)
+    >>> y = mx.sin(mx.pi*x)
     >>> from scipy.interpolate import make_interp_spline
     >>> bspl = make_interp_spline(x, y, k=3)
     >>> print(bspl.t)
@@ -220,13 +220,13 @@ interval:
 
     >>> k = 3      # cubic splines
     >>> t = [0., 1.4, 2., 3.1, 5.]   # internal knots
-    >>> t = np.r_[[0]*k, t, [5]*k]   # add boundary knots
+    >>> t = mx.r_[[0]*k, t, [5]*k]   # add boundary knots
 
     >>> from scipy.interpolate import BSpline
     >>> import matplotlib.pyplot as plt
     >>> for j in [-2, -1, 0, 1, 2]:
     ...     a, b = t[k+j], t[-k+j-1]
-    ...     xx = np.linspace(a, b, 101)
+    ...     xx = mx.linspace(a, b, 101)
     ...     bspl = BSpline.basis_element(t[k+j:-k+j])
     ...     plt.plot(xx, bspl(xx), label=f'j = {j}')
     >>> plt.legend(loc='best')
@@ -236,10 +236,10 @@ Here `BSpline.basis_element` is essentially a shorthand for constructing a splin
 with only a single non-zero coefficient. For instance, the ``j=2`` element in
 the above example is equivalent to
 
-    >>> c = np.zeros(t.size - k - 1)
+    >>> c = mx.zeros(t.size - k - 1)
     >>> c[-2] = 1
     >>> b = BSpline(t, c, k)
-    >>> np.allclose(b(xx), bspl(xx))
+    >>> mx.allclose(b(xx), bspl(xx))
     True
 
 If desired, a b-spline can be converted into a `PPoly` object using
@@ -283,7 +283,7 @@ Here each row of the design matrix corresponds to a value in the ``xnew`` array,
 and a row has no more than ``k+1 = 4`` non-zero elements; row ``j``
 contains basis elements evaluated at ``xnew[j]``:
 
->>> with np.printoptions(precision=3):
+>>> with mx.printoptions(precision=3):
 ...     print(mat.toarray())
 [[0.125 0.514 0.319 0.042 0.    0.    0.   ]
  [0.    0.111 0.556 0.333 0.    0.    0.   ]

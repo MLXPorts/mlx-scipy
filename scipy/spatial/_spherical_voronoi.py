@@ -11,7 +11,7 @@ Spherical Voronoi Code
 # Distributed under the same BSD license as SciPy.
 #
 
-import numpy as np
+import mlx.core as mx
 import scipy
 from . import _voronoi
 from scipy.spatial import cKDTree  # type: ignore[attr-defined]
@@ -26,11 +26,11 @@ def calculate_solid_angles(R):
     # Original method uses a triple product `R1 . (R2 x R3)` for the numerator.
     # This is equal to the determinant of the matrix [R1 R2 R3], which can be
     # computed with better stability.
-    numerator = np.linalg.det(R)
-    denominator = 1 + (np.einsum('ij,ij->i', R[:, 0], R[:, 1]) +
-                       np.einsum('ij,ij->i', R[:, 1], R[:, 2]) +
-                       np.einsum('ij,ij->i', R[:, 2], R[:, 0]))
-    return np.abs(2 * np.arctan2(numerator, denominator))
+    numerator = mx.linalg.det(R)
+    denominator = 1 + (mx.einsum('ij,ij->i', R[:, 0], R[:, 1]) +
+                       mx.einsum('ij,ij->i', R[:, 1], R[:, 2]) +
+                       mx.einsum('ij,ij->i', R[:, 2], R[:, 0]))
+    return mx.abs(2 * mx.arctan2(numerator, denominator))
 
 
 class SphericalVoronoi:
@@ -40,12 +40,12 @@ class SphericalVoronoi:
 
     Parameters
     ----------
-    points : ndarray of floats, shape (npoints, ndim)
+    points : array of floats, shape (npoints, ndim)
         Coordinates of points from which to construct a spherical
         Voronoi diagram.
     radius : float, optional
         Radius of the sphere (Default: 1)
-    center : ndarray of floats, shape (ndim,)
+    center : array of floats, shape (ndim,)
         Center of sphere (Default: origin)
     threshold : float
         Threshold for detecting duplicate points and
@@ -111,33 +111,33 @@ class SphericalVoronoi:
     --------
     Do some imports and take some points on a cube:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.spatial import SphericalVoronoi, geometric_slerp
     >>> from mpl_toolkits.mplot3d import proj3d
     >>> # set input data
-    >>> points = np.array([[0, 0, 1], [0, 0, -1], [1, 0, 0],
+    >>> points = mx.array([[0, 0, 1], [0, 0, -1], [1, 0, 0],
     ...                    [0, 1, 0], [0, -1, 0], [-1, 0, 0], ])
 
     Calculate the spherical Voronoi diagram:
 
     >>> radius = 1
-    >>> center = np.array([0, 0, 0])
+    >>> center = mx.array([0, 0, 0])
     >>> sv = SphericalVoronoi(points, radius, center)
 
     Generate plot:
 
     >>> # sort vertices (optional, helpful for plotting)
     >>> sv.sort_vertices_of_regions()
-    >>> t_vals = np.linspace(0, 1, 2000)
+    >>> t_vals = mx.linspace(0, 1, 2000)
     >>> fig = plt.figure()
     >>> ax = fig.add_subplot(111, projection='3d')
     >>> # plot the unit sphere for reference (optional)
-    >>> u = np.linspace(0, 2 * np.pi, 100)
-    >>> v = np.linspace(0, np.pi, 100)
-    >>> x = np.outer(np.cos(u), np.sin(v))
-    >>> y = np.outer(np.sin(u), np.sin(v))
-    >>> z = np.outer(np.ones(np.size(u)), np.cos(v))
+    >>> u = mx.linspace(0, 2 * mx.pi, 100)
+    >>> v = mx.linspace(0, mx.pi, 100)
+    >>> x = mx.outer(mx.cos(u), mx.sin(v))
+    >>> y = mx.outer(mx.sin(u), mx.sin(v))
+    >>> z = mx.outer(mx.ones(mx.size(u)), mx.cos(v))
     >>> ax.plot_surface(x, y, z, color='y', alpha=0.1)
     >>> # plot generator points
     >>> ax.scatter(points[:, 0], points[:, 1], points[:, 2], c='b')
@@ -172,15 +172,15 @@ class SphericalVoronoi:
                              '(i.e. `radius=1`).')
 
         self.radius = float(radius)
-        self.points = np.array(points).astype(np.float64)
+        self.points = mx.array(points).astype(mx.float64)
         self._dim = self.points.shape[1]
         if center is None:
-            self.center = np.zeros(self._dim)
+            self.center = mx.zeros(self._dim)
         else:
-            self.center = np.array(center, dtype=float)
+            self.center = mx.array(center, dtype=float)
 
         # test degenerate input
-        self._rank = np.linalg.matrix_rank(self.points - self.points[0],
+        self._rank = mx.linalg.matrix_rank(self.points - self.points[0],
                                            tol=threshold * self.radius)
         if self._rank < self._dim:
             raise ValueError(f"Rank of input points must be at least {self._dim}")
@@ -188,8 +188,8 @@ class SphericalVoronoi:
         if cKDTree(self.points).query_pairs(threshold * self.radius):
             raise ValueError("Duplicate generators present.")
 
-        radii = np.linalg.norm(self.points - self.center, axis=1)
-        max_discrepancy = np.abs(radii - self.radius).max()
+        radii = mx.linalg.norm(self.points - self.center, axis=1)
+        max_discrepancy = mx.abs(radii - self.radius).max()
         if max_discrepancy >= threshold * self.radius:
             raise ValueError("Radius inconsistent with generators.")
 
@@ -212,17 +212,17 @@ class SphericalVoronoi:
         self._simplices = conv.simplices
         # calculate regions from triangulation
         # for 3D input simplex_indices will have shape: (2N-4,)
-        simplex_indices = np.arange(len(self._simplices))
+        simplex_indices = mx.arange(len(self._simplices))
         # for 3D input tri_indices will have shape: (6N-12,)
-        tri_indices = np.column_stack([simplex_indices] * self._dim).ravel()
+        tri_indices = mx.column_stack([simplex_indices] * self._dim).ravel()
         # for 3D input point_indices will have shape: (6N-12,)
         point_indices = self._simplices.ravel()
         # for 3D input indices will have shape: (6N-12,)
-        indices = np.argsort(point_indices, kind='mergesort')
+        indices = mx.argsort(point_indices, kind='mergesort')
         # for 3D input flattened_groups will have shape: (6N-12,)
-        flattened_groups = tri_indices[indices].astype(np.intp)
+        flattened_groups = tri_indices[indices].astype(mx.intp)
         # intervals will have shape: (N+1,)
-        intervals = np.cumsum(np.bincount(point_indices + 1))
+        intervals = mx.cumsum(mx.bincount(point_indices + 1))
         # split flattened groups to get nested list of unsorted regions
         groups = [list(flattened_groups[intervals[i]:intervals[i + 1]])
                   for i in range(len(intervals) - 1)]
@@ -263,7 +263,7 @@ class SphericalVoronoi:
     def _calculate_areas_3d(self):
         self.sort_vertices_of_regions()
         sizes = [len(region) for region in self.regions]
-        csizes = np.cumsum(sizes)
+        csizes = mx.cumsum(sizes)
         num_regions = csizes[-1]
 
         # We create a set of triangles consisting of one point and two Voronoi
@@ -272,12 +272,12 @@ class SphericalVoronoi:
         point_indices = [i for i, size in enumerate(sizes)
                          for j in range(size)]
 
-        nbrs1 = np.array([r for region in self.regions for r in region])
+        nbrs1 = mx.array([r for region in self.regions for r in region])
 
         # The calculation of nbrs2 is a vectorized version of:
-        # np.array([r for region in self.regions for r in np.roll(region, 1)])
-        nbrs2 = np.roll(nbrs1, 1)
-        indices = np.roll(csizes, 1)
+        # mx.array([r for region in self.regions for r in mx.roll(region, 1)])
+        nbrs2 = mx.roll(nbrs1, 1)
+        indices = mx.roll(csizes, 1)
         indices[0] = 0
         nbrs2[indices] = nbrs1[csizes - 1]
 
@@ -286,14 +286,14 @@ class SphericalVoronoi:
         vnormalized = (self.vertices - self.center) / self.radius
 
         # Create the complete set of triangles and calculate their solid angles
-        triangles = np.hstack([pnormalized[point_indices],
+        triangles = mx.hstack([pnormalized[point_indices],
                                vnormalized[nbrs1],
                                vnormalized[nbrs2]
                                ]).reshape((num_regions, 3, 3))
         triangle_solid_angles = calculate_solid_angles(triangles)
 
         # Sum the solid angles of the triangles in each region
-        solid_angles = np.cumsum(triangle_solid_angles)[csizes - 1]
+        solid_angles = mx.cumsum(triangle_solid_angles)[csizes - 1]
         solid_angles[1:] -= solid_angles[:-1]
 
         # Get polygon areas using A = omega * r**2
@@ -304,16 +304,16 @@ class SphericalVoronoi:
         arcs = self.points[self._simplices] - self.center
 
         # Calculate the angle subtended by arcs
-        d = np.sum((arcs[:, 1] - arcs[:, 0]) ** 2, axis=1)
-        theta = np.arccos(1 - (d / (2 * (self.radius ** 2))))
+        d = mx.sum((arcs[:, 1] - arcs[:, 0]) ** 2, axis=1)
+        theta = mx.arccos(1 - (d / (2 * (self.radius ** 2))))
 
         # Get areas using A = r * theta
         areas = self.radius * theta
 
         # Correct arcs which go the wrong way (single-hemisphere inputs)
-        indices = np.einsum('ij,ij->i', arcs[:, 0],
+        indices = mx.einsum('ij,ij->i', arcs[:, 0],
                             self.vertices - self.center) < 0
-        areas[indices] = 2 * np.pi * self.radius - areas[indices]
+        areas[indices] = 2 * mx.pi * self.radius - areas[indices]
         return areas
 
     def calculate_areas(self):

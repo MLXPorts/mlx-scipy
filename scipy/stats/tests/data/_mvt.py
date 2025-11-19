@@ -1,5 +1,5 @@
 import math
-import numpy as np
+import mlx.core as mx
 from scipy import special
 from scipy.stats._qmc import primes_from_2_to
 
@@ -25,11 +25,11 @@ def _qsimvtv(m, nu, sigma, a, b, rng):
         The number of points
     nu : float
         Degrees of freedom
-    sigma : ndarray
+    sigma : array
         A 2D positive semidefinite covariance matrix
-    a : ndarray
+    a : array
         Lower integration limits
-    b : ndarray
+    b : array
         Upper integration limits.
     rng : Generator
         Pseudorandom number generator
@@ -89,19 +89,19 @@ def _qsimvtv(m, nu, sigma, a, b, rng):
 
     # Initialization
     sn = max(1, math.sqrt(nu)); ch, az, bz = _chlrps(sigma, a/sn, b/sn)
-    n = len(sigma); N = 10; P = math.ceil(m/N); on = np.ones(P); p = 0; e = 0
-    ps = np.sqrt(_primes(5*n*math.log(n+4)/4)); q = ps[:, np.newaxis]  # Richtmyer gens.
+    n = len(sigma); N = 10; P = math.ceil(m/N); on = mx.ones(P); p = 0; e = 0
+    ps = mx.sqrt(_primes(5*n*math.log(n+4)/4)); q = ps[:, mx.newaxis]  # Richtmyer gens.
 
     # Randomization loop for ns samples
     c = None; dc = None
     for S in range(N):
-        vp = on.copy(); s = np.zeros((n, P))
+        vp = on.copy(); s = mx.zeros((n, P))
         for i in range(n):
-            x = np.abs(2*np.mod(q[i]*np.arange(1, P+1) + rng.random(), 1)-1)  # periodizing transform
+            x = mx.abs(2*mx.mod(q[i]*mx.arange(1, P+1) + rng.random(), 1)-1)  # periodizing transform
             if i == 0:
                 r = on
                 if nu > 0:
-                    r = np.sqrt(2*_gaminv(x, nu/2))
+                    r = mx.sqrt(2*_gaminv(x, nu/2))
             else:
                 y = _Phinv(c + x*dc)
                 s[i:] += ch[i:, i-1:i] * y
@@ -109,7 +109,7 @@ def _qsimvtv(m, nu, sigma, a, b, rng):
             c[ai <= -9] = 0; tl = abs(ai) < 9; c[tl] = _Phi(ai[tl])
             d[bi <= -9] = 0; tl = abs(bi) < 9; d[tl] = _Phi(bi[tl])
             dc = d - c; vp = vp * dc
-        d = (np.mean(vp) - p)/(S + 1); p = p + d; e = (S - 1)*e/(S + 1) + d**2
+        d = (mx.mean(vp) - p)/(S + 1); p = p + d; e = (S - 1)*e/(S + 1) + d**2
     e = math.sqrt(e)  # error estimate is 3 times std error with N samples.
     return p, e
 
@@ -129,14 +129,14 @@ def _chlrps(R, a, b):
     singular, also permuting and scaling integration limit vectors a and b.
     """
     ep = 1e-10  # singularity tolerance
-    eps = np.finfo(R.dtype).eps
+    eps = mx.finfo(R.dtype).eps
 
-    n = len(R); c = R.copy(); ap = a.copy(); bp = b.copy(); d = np.sqrt(np.maximum(np.diag(c), 0))
+    n = len(R); c = R.copy(); ap = a.copy(); bp = b.copy(); d = mx.sqrt(mx.maximum(mx.diag(c), 0))
     for i in range(n):
         if d[i] > 0:
             c[:, i] /= d[i]; c[i, :] /= d[i]
             ap[i] /= d[i]; bp[i] /= d[i]
-    y = np.zeros((n, 1)); sqtp = math.sqrt(2*math.pi)
+    y = mx.zeros((n, 1)); sqtp = math.sqrt(2*math.pi)
 
     for k in range(n):
         im = k; ckk = 0; dem = 1; s = 0
@@ -157,7 +157,7 @@ def _chlrps(R, a, b):
             for i in range(k+1, n):
                 c[i, k] = c[i, k]/ckk; c[i, k+1:i+1] = c[i, k+1:i+1] - c[i, k]*c[k+1:i+1, k].T
             if abs(dem) > ep:
-                y[k] = (np.exp(-am**2/2) - np.exp(-bm**2/2)) / (sqtp*dem)
+                y[k] = (mx.exp(-am**2/2) - mx.exp(-bm**2/2)) / (sqtp*dem)
             else:
                 y[k] = (am + bm) / 2
                 if am < -10:

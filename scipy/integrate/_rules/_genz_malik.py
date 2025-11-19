@@ -42,18 +42,18 @@ class GenzMalikCubature(NestedFixedRule):
     --------
     Evaluate a 3D integral:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.integrate import cubature
     >>> from scipy.integrate._rules import GenzMalikCubature
     >>> def f(x):
     ...     # f(x) = cos(x_1) + cos(x_2) + cos(x_3)
-    ...     return np.sum(np.cos(x), axis=-1)
+    ...     return mx.sum(mx.cos(x), axis=-1)
     >>> rule = GenzMalikCubature(3) # Use 3D Genz-Malik
-    >>> a, b = np.array([0, 0, 0]), np.array([1, 1, 1])
+    >>> a, b = mx.array([0, 0, 0]), mx.array([1, 1, 1])
     >>> rule.estimate(f, a, b) # True value 3*sin(1), approximately 2.5244
-     np.float64(2.5244129547230862)
+     mx.float64(2.5244129547230862)
     >>> rule.estimate_error(f, a, b)
-     np.float64(1.378269656626685e-06)
+     mx.float64(1.378269656626685e-06)
     """
 
     def __init__(self, ndim, degree=7, lower_degree=5, xp=None):

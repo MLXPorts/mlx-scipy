@@ -35,7 +35,7 @@ Uses ARPACK: https://github.com/opencollab/arpack-ng
 # ARPACK and handle shifted and shift-inverse computations
 # for eigenvalues by providing a shift (sigma) and a solver.
 
-import numpy as np
+import mlx.core as mx
 import warnings
 from scipy.sparse.linalg._interface import aslinearoperator, LinearOperator
 from scipy.sparse import eye, issparse
@@ -296,9 +296,9 @@ class ArpackNoConvergence(ArpackError):
 
     Attributes
     ----------
-    eigenvalues : ndarray
+    eigenvalues : array
         Partial result. Converged eigenvalues.
-    eigenvectors : ndarray
+    eigenvectors : array
         Partial result. Converged eigenvectors.
 
     """
@@ -330,14 +330,14 @@ class _ArpackParams:
 
         if tp not in 'fdFD':
             # Use `float64` libraries from integer dtypes.
-            if np.can_cast(tp, 'd'):
+            if mx.can_cast(tp, 'd'):
                 tp = 'd'
             else:
                 raise ValueError("matrix type must be 'f', 'd', 'F', or 'D'")
 
         if v0 is not None:
             # ARPACK overwrites its initial resid,  make a copy
-            self.resid = np.array(v0, copy=True, dtype=tp)
+            self.resid = mx.array(v0, copy=True, dtype=tp)
             info = 1
         else:
             # ARPACK will use a random initial vector.
@@ -354,7 +354,7 @@ class _ArpackParams:
             ncv = choose_ncv(k)
         self.ncv = min(ncv, n)
         self.n = n
-        self.v = np.zeros((n, ncv), tp)  # holds Ritz vectors
+        self.v = mx.zeros((n, ncv), tp)  # holds Ritz vectors
         self.which = which
 
         # set solver mode and parameters
@@ -415,8 +415,8 @@ class _ArpackParams:
             ev, vec = self.extract(True)
         except ArpackError as err:
             msg = f"{msg} [{err}]"
-            ev = np.zeros((0,))
-            vec = np.zeros((self.n, 0))
+            ev = mx.zeros((0,))
+            vec = mx.zeros((self.n, 0))
             k_ok = 0
         raise ArpackNoConvergence(f"No convergence ({num_iter} iterations, "
                                   f"{k_ok}/{self.k} eigenvectors converged)",
@@ -555,7 +555,7 @@ class _SymmetricArpackParams(_ArpackParams):
         if k >= n:
             raise ValueError(f"k must be less than ndim(A), k={k}")
 
-        self.rng = np.random.default_rng(rng)
+        self.rng = mx.random.default_rng(rng)
         _ArpackParams.__init__(self, n, k, tp, self.rng, mode, sigma, ncv, v0,
                                maxiter, which, tol)
 
@@ -564,8 +564,8 @@ class _SymmetricArpackParams(_ArpackParams):
         if self.ncv > n or self.ncv <= k:
             raise ValueError(f"ncv must be k<ncv<=n, ncv={self.ncv}")
 
-        self.workd = np.zeros(3 * n, dtype=self.tp)
-        self.workl = np.zeros(self.ncv * (self.ncv + 8), dtype=self.tp)
+        self.workd = mx.zeros(3 * n, dtype=self.tp)
+        self.workl = mx.zeros(self.ncv * (self.ncv + 8), dtype=self.tp)
 
         ltr = _type_conv[self.tp]
         if ltr not in ["s", "d"]:
@@ -577,7 +577,7 @@ class _SymmetricArpackParams(_ArpackParams):
         self.iterate_infodict = _SAUPD_ERRORS[ltr]
         self.extract_infodict = _SEUPD_ERRORS[ltr]
 
-        self.ipntr = np.zeros(11, dtype=np.int32)
+        self.ipntr = mx.zeros(11, dtype=mx.int32)
 
     def iterate(self):
         self._arpack_solver(self.arpack_dict, self.resid, self.v, self.ipntr,
@@ -631,9 +631,9 @@ class _SymmetricArpackParams(_ArpackParams):
         ierr = 0
         self.arpack_dict['info'] = 0  # Clear, if any, previous error from naupd
         howmny = HOWMNY_DICT["A"]  # return all eigenvectors
-        sselect = np.zeros(self.ncv, dtype=np.int32)
-        d = np.zeros(self.k, dtype=self.tp)
-        z = np.zeros((self.n, self.ncv), dtype=self.tp, order='F')
+        sselect = mx.zeros(self.ncv, dtype=mx.int32)
+        d = mx.zeros(self.k, dtype=self.tp)
+        z = mx.zeros((self.n, self.ncv), dtype=self.tp, order='F')
 
         self._arpack_extract(
             self.arpack_dict, rvec, howmny, sselect, d, z, self.sigma,
@@ -732,9 +732,9 @@ class _UnsymmetricArpackParams(_ArpackParams):
                     raise ValueError("mode=4 invalid for complex A")
             else:  # real type
                 if mode == 3:
-                    self.OPa = lambda x: np.real(Minv_matvec(x))
+                    self.OPa = lambda x: mx.real(Minv_matvec(x))
                 else:
-                    self.OPa = lambda x: np.imag(Minv_matvec(x))
+                    self.OPa = lambda x: mx.imag(Minv_matvec(x))
             if M_matvec is None:
                 self.B = lambda x: x
                 self.bmat = 'I'
@@ -752,7 +752,7 @@ class _UnsymmetricArpackParams(_ArpackParams):
         if k >= n - 1:
             raise ValueError(f"k must be less than ndim(A)-1, k={k}")
 
-        self.rng = np.random.default_rng(rng)
+        self.rng = mx.random.default_rng(rng)
         _ArpackParams.__init__(self, n, k, tp, rng, mode, sigma, ncv, v0, maxiter,
                                which, tol)
 
@@ -761,8 +761,8 @@ class _UnsymmetricArpackParams(_ArpackParams):
         if self.ncv > n or self.ncv <= k + 1:
             raise ValueError(f"ncv must be k+1<ncv<=n, ncv={self.ncv}")
 
-        self.workd = np.zeros(3 * n, dtype=self.tp)
-        self.workl = np.zeros(3 * self.ncv * (self.ncv + 2), dtype=self.tp)
+        self.workd = mx.zeros(3 * n, dtype=self.tp)
+        self.workl = mx.zeros(3 * self.ncv * (self.ncv + 2), dtype=self.tp)
 
         ltr = _type_conv[self.tp]
         self._arpack_solver = _arpacklib.__dict__[ltr + 'naupd_wrap']
@@ -771,10 +771,10 @@ class _UnsymmetricArpackParams(_ArpackParams):
         self.iterate_infodict = _NAUPD_ERRORS[ltr]
         self.extract_infodict = _NEUPD_ERRORS[ltr]
 
-        self.ipntr = np.zeros(14, dtype=np.int32)
+        self.ipntr = mx.zeros(14, dtype=mx.int32)
 
         if self.tp in 'FD':
-            self.rwork = np.zeros(self.ncv, dtype=self.tp.lower())
+            self.rwork = mx.zeros(self.ncv, dtype=self.tp.lower())
         else:
             self.rwork = None
 
@@ -816,7 +816,7 @@ class _UnsymmetricArpackParams(_ArpackParams):
             else:
                 # Generate complex random vector into resid
                 self.resid[:] = self.rng.uniform(low=-1.0, high=1.0, size=[self.n, 2]
-                ).view(np.complex128).astype(self.tp).ravel()
+                ).view(mx.complex128).astype(self.tp).ravel()
 
         elif self.arpack_dict['ido'] == 5:
             self.workd[yslice] = self.OP(self.workd[xslice])
@@ -838,16 +838,16 @@ class _UnsymmetricArpackParams(_ArpackParams):
         ierr = 0
         self.arpack_dict['info'] = 0  # Clear, if any, previous error from naupd
         howmny = HOWMNY_DICT['A']  # return all eigenvectors
-        sselect = np.zeros(self.ncv, dtype=np.int32)
-        sigmar = float(np.real(self.sigma))
-        sigmai = float(np.imag(self.sigma))
-        workev = np.zeros(3 * self.ncv, self.tp)
+        sselect = mx.zeros(self.ncv, dtype=mx.int32)
+        sigmar = float(mx.real(self.sigma))
+        sigmai = float(mx.imag(self.sigma))
+        workev = mx.zeros(3 * self.ncv, self.tp)
 
         if self.tp in 'fd':
-            dr = np.zeros([k + 1], dtype=self.tp)
-            di = np.zeros([k + 1], dtype=self.tp)
+            dr = mx.zeros([k + 1], dtype=self.tp)
+            di = mx.zeros([k + 1], dtype=self.tp)
             # Using a Fortran ordered array for NumPy parse the result correctly
-            zr = np.zeros([n, k + 1], dtype=self.tp, order='F')
+            zr = mx.zeros([n, k + 1], dtype=self.tp, order='F')
 
             # ARPACK _neupd call
             self._arpack_extract(
@@ -901,18 +901,18 @@ class _UnsymmetricArpackParams(_ArpackParams):
                 i = 0
                 while i <= k:
                     if abs(d[i].imag) == 0:
-                        d[i] = np.dot(zr[:, i], self.matvec(zr[:, i]))
+                        d[i] = mx.dot(zr[:, i], self.matvec(zr[:, i]))
                     else:
                         if i < k:
                             z[:, i] = zr[:, i] + 1.0j * zr[:, i + 1]
                             z[:, i + 1] = z[:, i].conjugate()
-                            d[i] = ((np.dot(zr[:, i],
+                            d[i] = ((mx.dot(zr[:, i],
                                             self.matvec(zr[:, i]))
-                                     + np.dot(zr[:, i + 1],
+                                     + mx.dot(zr[:, i + 1],
                                               self.matvec(zr[:, i + 1])))
-                                    + 1j * (np.dot(zr[:, i],
+                                    + 1j * (mx.dot(zr[:, i],
                                                    self.matvec(zr[:, i + 1]))
-                                            - np.dot(zr[:, i + 1],
+                                            - mx.dot(zr[:, i + 1],
                                                      self.matvec(zr[:, i]))))
                             d[i + 1] = d[i].conj()
                             i += 1
@@ -939,13 +939,13 @@ class _UnsymmetricArpackParams(_ArpackParams):
                     rd = 1 / (d - self.sigma)
 
                 if self.which in ['LR', 'SR']:
-                    ind = np.argsort(rd.real)
+                    ind = mx.argsort(rd.real)
                 elif self.which in ['LI', 'SI']:
                     # for LI,SI ARPACK returns largest,smallest
                     # abs(imaginary) (complex pairs come together)
-                    ind = np.argsort(abs(rd.imag))
+                    ind = mx.argsort(abs(rd.imag))
                 else:
-                    ind = np.argsort(abs(rd))
+                    ind = mx.argsort(abs(rd))
 
                 if self.which in ['LR', 'LM', 'LI']:
                     ind = ind[-k:][::-1]
@@ -955,8 +955,8 @@ class _UnsymmetricArpackParams(_ArpackParams):
                 d = d[ind]
                 z = z[:, ind]
         else:
-            d = np.zeros([k], dtype=self.tp)
-            z = np.zeros([n, k], dtype=self.tp, order='F')
+            d = mx.zeros([k], dtype=self.tp)
+            z = mx.zeros([n, k], dtype=self.tp, order='F')
             self._arpack_extract(
                 self.arpack_dict, return_eigenvectors, howmny, sselect, d, z,
                 self.sigma, workev, self.resid, self.v, self.ipntr, self.workd,
@@ -987,15 +987,15 @@ class SpLuInv(LinearOperator):
         self.M_lu = splu(M)
         self.shape = M.shape
         self.dtype = M.dtype
-        self.isreal = not np.issubdtype(self.dtype, np.complexfloating)
+        self.isreal = not mx.issubdtype(self.dtype, mx.complexfloating)
 
     def _matvec(self, x):
         # careful here: splu.solve will throw away imaginary
         # part of x if M is real
-        x = np.asarray(x)
-        if self.isreal and np.issubdtype(x.dtype, np.complexfloating):
-            return (self.M_lu.solve(np.real(x).astype(self.dtype))
-                    + 1j * self.M_lu.solve(np.imag(x).astype(self.dtype)))
+        x = mx.array(x)
+        if self.isreal and mx.issubdtype(x.dtype, mx.complexfloating):
+            return (self.M_lu.solve(mx.real(x).astype(self.dtype))
+                    + 1j * self.M_lu.solve(mx.imag(x).astype(self.dtype)))
         else:
             return self.M_lu.solve(x.astype(self.dtype))
 
@@ -1020,8 +1020,8 @@ def gmres_loose(A, b, tol):
     """
     gmres with looser termination condition.
     """
-    b = np.asarray(b)
-    min_tol = 1000 * np.sqrt(b.size) * np.finfo(b.dtype).eps
+    b = mx.array(b)
+    min_tol = 1000 * mx.sqrt(b.size) * mx.finfo(b.dtype).eps
     return gmres(A, b, rtol=max(tol, min_tol), atol=0)
 
 
@@ -1037,14 +1037,14 @@ class IterInv(LinearOperator):
         if hasattr(M, 'dtype'):
             self.dtype = M.dtype
         else:
-            x = np.zeros(M.shape[1])
+            x = mx.zeros(M.shape[1])
             self.dtype = (M * x).dtype
         self.shape = M.shape
 
         if tol <= 0:
             # when tol=0, ARPACK uses machine tolerance as calculated
             # by LAPACK's _LAMCH function.  We should match this
-            tol = 2 * np.finfo(self.dtype).eps
+            tol = 2 * mx.finfo(self.dtype).eps
         self.ifunc = ifunc
         self.tol = tol
 
@@ -1076,7 +1076,7 @@ class IterOpInv(LinearOperator):
         def mult_func_M_None(x):
             return A.matvec(x) - sigma * x
 
-        x = np.zeros(A.shape[1])
+        x = mx.zeros(A.shape[1])
         if M is None:
             dtype = mult_func_M_None(x).dtype
             self.OP = LinearOperator(self.A.shape,
@@ -1092,7 +1092,7 @@ class IterOpInv(LinearOperator):
         if tol <= 0:
             # when tol=0, ARPACK uses machine tolerance as calculated
             # by LAPACK's _LAMCH function.  We should match this
-            tol = 2 * np.finfo(self.OP.dtype).eps
+            tol = 2 * mx.finfo(self.OP.dtype).eps
         self.ifunc = ifunc
         self.tol = tol
 
@@ -1113,7 +1113,7 @@ class IterOpInv(LinearOperator):
 def _fast_spmatrix_to_csc(A, hermitian=False):
     """Convert sparse matrix to CSC (by transposing, if possible)"""
     if (A.format == "csr" and hermitian
-            and not np.issubdtype(A.dtype, np.complexfloating)):
+            and not mx.issubdtype(A.dtype, mx.complexfloating)):
         return A.T
     elif is_pydata_spmatrix(A):
         # No need to convert
@@ -1139,9 +1139,9 @@ def get_OPinv_matvec(A, M, sigma, hermitian=False, tol=0):
     if M is None:
         #M is the identity matrix
         if isdense(A):
-            if (np.issubdtype(A.dtype, np.complexfloating)
-                    or np.imag(sigma) == 0):
-                A = np.copy(A)
+            if (mx.issubdtype(A.dtype, mx.complexfloating)
+                    or mx.imag(sigma) == 0):
+                A = mx.copy(A)
             else:
                 A = A + 0j
             A.flat[::A.shape[1] + 1] -= sigma
@@ -1182,14 +1182,14 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
 
     Parameters
     ----------
-    A : ndarray, sparse matrix or LinearOperator
+    A : array, sparse matrix or LinearOperator
         An array, sparse matrix, or LinearOperator representing
         the operation ``A @ x``, where A is a real or complex square matrix.
     k : int, optional
         The number of eigenvalues and eigenvectors desired.
         `k` must be smaller than N-1. It is not possible to compute all
         eigenvectors of a matrix.
-    M : ndarray, sparse matrix or LinearOperator, optional
+    M : array, sparse matrix or LinearOperator, optional
         An array, sparse matrix, or LinearOperator representing
         the operation M@x for the generalized eigenvalue problem
 
@@ -1232,7 +1232,7 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
 
             If A is complex, ``w'[i] = 1/(w[i]-sigma)``.
 
-    v0 : ndarray, optional
+    v0 : array, optional
         Starting vector for iteration.
         Default: random
     ncv : int, optional
@@ -1266,9 +1266,9 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
         The default value of 0 implies machine precision.
     return_eigenvectors : bool, optional
         Return eigenvectors (True) in addition to eigenvalues
-    Minv : ndarray, sparse matrix or LinearOperator, optional
+    Minv : array, sparse matrix or LinearOperator, optional
         See notes in M, above.
-    OPinv : ndarray, sparse matrix or LinearOperator, optional
+    OPinv : array, sparse matrix or LinearOperator, optional
         See notes in sigma, above.
     OPpart : {'r' or 'i'}, optional
         See notes in sigma, above
@@ -1280,9 +1280,9 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
 
     Returns
     -------
-    w : ndarray
+    w : array
         Array of k eigenvalues.
-    v : ndarray
+    v : array
         An array of `k` eigenvectors.
         ``v[:, i]`` is the eigenvector corresponding to the eigenvalue w[i].
 
@@ -1316,9 +1316,9 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
     --------
     Find 6 eigenvectors of the identity matrix:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse.linalg import eigs
-    >>> id = np.eye(13)
+    >>> id = mx.eye(13)
     >>> vals, vecs = eigs(id, k=6)
     >>> vals
     array([ 1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j])
@@ -1333,7 +1333,7 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
     if M is not None:
         if M.shape != A.shape:
             raise ValueError(f'wrong M dimensions {M.shape}, should be {A.shape}')
-        if np.dtype(M.dtype).char.lower() != np.dtype(A.dtype).char.lower():
+        if mx.dtype(M.dtype).char.lower() != mx.dtype(A.dtype).char.lower():
             warnings.warn('M does not have the same type precision as A. '
                           'This may adversely affect ARPACK convergence',
                           stacklevel=2)
@@ -1390,7 +1390,7 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
             M_matvec = aslinearoperator(M).matvec
     else:
         #sigma is not None: shift-invert mode
-        if np.issubdtype(A.dtype, np.complexfloating):
+        if mx.issubdtype(A.dtype, mx.complexfloating):
             if OPpart is not None:
                 raise ValueError("OPpart should not be specified "
                                  "with sigma=None or complex A")
@@ -1398,7 +1398,7 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
         elif OPpart is None or OPpart.lower() == 'r':
             mode = 3
         elif OPpart.lower() == 'i':
-            if np.imag(sigma) == 0:
+            if mx.imag(sigma) == 0:
                 raise ValueError("OPpart cannot be 'i' if sigma is real")
             mode = 4
         else:
@@ -1419,7 +1419,7 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
         else:
             M_matvec = aslinearoperator(M).matvec
 
-    rng = np.random.default_rng(rng)
+    rng = mx.random.default_rng(rng)
     params = _UnsymmetricArpackParams(n, k, A.dtype.char, matvec, mode,
                                       M_matvec, Minv_matvec, sigma,
                                       ncv, v0, maxiter, which, tol, rng)
@@ -1450,7 +1450,7 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
 
     Parameters
     ----------
-    A : ndarray, sparse matrix or LinearOperator
+    A : array, sparse matrix or LinearOperator
         A square operator representing the operation ``A @ x``, where ``A`` is
         real symmetric or complex Hermitian. For buckling mode (see below)
         ``A`` must additionally be positive-definite.
@@ -1513,7 +1513,7 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
             if ``mode == 'buckling'``: ``w'[i] = w[i] / (w[i] - sigma)``.
 
         (see further discussion in 'mode' below)
-    v0 : ndarray, optional
+    v0 : array, optional
         Starting vector for iteration.
         Default: random
     ncv : int, optional
@@ -1634,9 +1634,9 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse.linalg import eigsh
-    >>> identity = np.eye(13)
+    >>> identity = mx.eye(13)
     >>> eigenvalues, eigenvectors = eigsh(identity, k=6)
     >>> eigenvalues
     array([1., 1., 1., 1., 1., 1.])
@@ -1645,7 +1645,7 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
 
     """
     # complex Hermitian matrices should be solved with eigs
-    if np.issubdtype(A.dtype, np.complexfloating):
+    if mx.issubdtype(A.dtype, mx.complexfloating):
         if mode != 'normal':
             raise ValueError(f"mode={mode} cannot be used with complex matrix A")
         if which == 'BE':
@@ -1669,7 +1669,7 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
     if M is not None:
         if M.shape != A.shape:
             raise ValueError(f'wrong M dimensions {M.shape}, should be {A.shape}')
-        if np.dtype(M.dtype).char.lower() != np.dtype(A.dtype).char.lower():
+        if mx.dtype(M.dtype).char.lower() != mx.dtype(A.dtype).char.lower():
             warnings.warn('M does not have the same type precision as A. '
                           'This may adversely affect ARPACK convergence',
                           stacklevel=2)
@@ -1769,7 +1769,7 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
         # unrecognized mode
         else:
             raise ValueError(f"unrecognized mode '{mode}'")
-    rng = np.random.default_rng(rng)
+    rng = mx.random.default_rng(rng)
     params = _SymmetricArpackParams(n, k, A.dtype.char, matvec, mode,
                                     M_matvec, Minv_matvec, sigma,
                                     ncv, v0, maxiter, which, tol, rng)

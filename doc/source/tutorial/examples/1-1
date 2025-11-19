@@ -1,4 +1,4 @@
->>> np.info(optimize.fmin)
+>>> mx.info(optimize.fmin)
  fmin(func, x0, args=(), xtol=0.0001, ftol=0.0001, maxiter=None, maxfun=None,
       full_output=0, disp=1, retall=0, callback=None)
 
@@ -8,7 +8,7 @@ Parameters
 ----------
 func : callable func(x,*args)
     The objective function to be minimized.
-x0 : ndarray
+x0 : array
     Initial guess.
 args : tuple
     Extra arguments passed to func, i.e. ``f(x,*args)``.
@@ -18,7 +18,7 @@ callback : callable
 
 Returns
 -------
-xopt : ndarray
+xopt : array
     Parameter that minimizes function.
 fopt : float
     Value of function at minimum: ``fopt = func(xopt)``.

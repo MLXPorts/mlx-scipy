@@ -9,7 +9,7 @@ Python translation by Nickolai Belakovski.
 '''
 
 from .consts import DEBUGGING
-import numpy as np
+import mlx.core as mx
 
 def redrho(rho_in, rhoend):
     '''
@@ -34,7 +34,7 @@ def redrho(rho_in, rhoend):
     elif rho_ratio <= 16:
         rho = rhoend
     else:
-        rho = np.sqrt(rho_ratio) * rhoend  # rho = np.sqrt(rho * rhoend)
+        rho = mx.sqrt(rho_ratio) * rhoend  # rho = mx.sqrt(rho * rhoend)
 
     #==================#
     # Calculation ends #

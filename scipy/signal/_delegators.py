@@ -27,7 +27,7 @@ are arrays.
   array-like and array arguments
 
 """
-import numpy as np
+import mlx.core as mx
 from scipy._lib._array_api import array_namespace, np_compat
 
 
@@ -53,7 +53,7 @@ def _skip_if_str_or_tuple(window):
 
 
 def _skip_if_poly1d(arg):
-    return None if isinstance(arg, np.poly1d) else arg
+    return None if isinstance(arg, mx.poly1d) else arg
 
 
 ###################

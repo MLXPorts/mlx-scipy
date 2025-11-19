@@ -1,5 +1,5 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 from scipy.special import powm1
 
@@ -7,7 +7,7 @@ from scipy.special import powm1
 # Expected values were computed with mpmath, e.g.
 #
 #   >>> import mpmath
-#   >>> mpmath.np.dps = 200
+#   >>> mpmath.mx.dps = 200
 #   >>> print(float(mpmath.powm1(2.0, 1e-7))
 #   6.931472045825965e-08
 #
@@ -29,23 +29,23 @@ def test_powm1(x, y, expected, rtol):
 
 @pytest.mark.parametrize('x, y, expected',
                          [(0.0, 0.0, 0.0),
-                          (0.0, -1.5, np.inf),
+                          (0.0, -1.5, mx.inf),
                           (0.0, 1.75, -1.0),
                           (-1.5, 2.0, 1.25),
                           (-1.5, 3.0, -4.375),
-                          (np.nan, 0.0, 0.0),
-                          (1.0, np.nan, 0.0),
-                          (1.0, np.inf, 0.0),
-                          (1.0, -np.inf, 0.0),
-                          (np.inf, 7.5, np.inf),
-                          (np.inf, -7.5, -1.0),
-                          (3.25, np.inf, np.inf),
-                          (np.inf, np.inf, np.inf),
-                          (np.inf, -np.inf, -1.0),
-                          (np.inf, 0.0, 0.0),
-                          (-np.inf, 0.0, 0.0),
-                          (-np.inf, 2.0, np.inf),
-                          (-np.inf, 3.0, -np.inf),
+                          (mx.nan, 0.0, 0.0),
+                          (1.0, mx.nan, 0.0),
+                          (1.0, mx.inf, 0.0),
+                          (1.0, -mx.inf, 0.0),
+                          (mx.inf, 7.5, mx.inf),
+                          (mx.inf, -7.5, -1.0),
+                          (3.25, mx.inf, mx.inf),
+                          (mx.inf, mx.inf, mx.inf),
+                          (mx.inf, -mx.inf, -1.0),
+                          (mx.inf, 0.0, 0.0),
+                          (-mx.inf, 0.0, 0.0),
+                          (-mx.inf, 2.0, mx.inf),
+                          (-mx.inf, 3.0, -mx.inf),
                           (-1.0, float(2**53 - 1), -2.0)])
 def test_powm1_exact_cases(x, y, expected):
     # Test cases where we have an exact expected value.
@@ -55,11 +55,11 @@ def test_powm1_exact_cases(x, y, expected):
 
 @pytest.mark.parametrize('x, y',
                          [(-1.25, 751.03),
-                          (-1.25, np.inf),
-                          (np.nan, np.nan),
-                          (-np.inf, -np.inf),
-                          (-np.inf, 2.5)])
+                          (-1.25, mx.inf),
+                          (mx.nan, mx.nan),
+                          (-mx.inf, -mx.inf),
+                          (-mx.inf, 2.5)])
 def test_powm1_return_nan(x, y):
     # Test cases where the expected return value is nan.
     p = powm1(x, y)
-    assert np.isnan(p)
+    assert mx.isnan(p)

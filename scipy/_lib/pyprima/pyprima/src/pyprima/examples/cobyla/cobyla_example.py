@@ -8,19 +8,19 @@ Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 Python translation by Nickolai Belakovski.
 '''
 
-import numpy as np
+import mlx.core as mx
 from pyprima.cobyla.cobyla import cobyla
 
 
 def test_chebyquad():
     f, _ = calcfc_chebyquad([1, 2])
-    assert np.isclose(f, 91+1/9, atol=1e-6)
+    assert mx.isclose(f, 91+1/9, atol=1e-6)
 
 
 def calcfc_chebyquad(x):
-    x = np.array(x)
+    x = mx.array(x)
     n = len(x)  # or shape?
-    y = np.zeros((n + 1, n + 1))
+    y = mx.zeros((n + 1, n + 1))
     y[:n, 0] = 1
     y[:n, 1] = 2*x - 1
     for i in range(1, n):
@@ -32,7 +32,7 @@ def calcfc_chebyquad(x):
         if i % 2 == 0:
             tmp += 1/((i)**2 - 1)
         f += tmp**2
-    constr = np.zeros(0)
+    constr = mx.zeros(0)
     return f, constr
 
 def calcfc_hexagon(x):
@@ -41,7 +41,7 @@ def calcfc_hexagon(x):
     assert len(x) == 9
 
     f = -0.5 * (x[0] * x[3] - x[1] * x[2] + x[2] * x[8] - x[4] * x[8] + x[4] * x[7] - x[5] * x[6])
-    constr = np.zeros(14)
+    constr = mx.zeros(14)
     constr[0] = -1 + x[2]**2 + x[3]**2
     constr[1] = -1 + x[8]**2
     constr[2] = -1 + x[4]**2 + x[5]**2
@@ -64,18 +64,18 @@ if __name__ == "__main__":
     n_chebyquad = 6
 
     # The following lines illustrates how to call the solver to solve the Chebyquad problem.
-    x_chebyquad = np.array([i/(n_chebyquad+1) for i in range(1, n_chebyquad+1)])  # Starting point
+    x_chebyquad = mx.array([i/(n_chebyquad+1) for i in range(1, n_chebyquad+1)])  # Starting point
     m = 0  # Dimension of constraints. M must be specified correctly, or the program will crash!
     result = cobyla(calcfc_chebyquad, m, x_chebyquad)  # This call will not print anything
 
     # In addition to the compulsory arguments, the following illustration specifies also CONSTR, RHOBEG,
     # and IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
     # take their default values coded in the solver.
-    x_chebyquad = np.array([i/(n_chebyquad+1) for i in range(1, n_chebyquad+1)])  # Starting point
+    x_chebyquad = mx.array([i/(n_chebyquad+1) for i in range(1, n_chebyquad+1)])  # Starting point
     result = cobyla(calcfc_chebyquad, m, x_chebyquad, rhobeg=0.2 * x_chebyquad[0], iprint=1)
 
     # The following lines illustrates how to call the solver to solve the Hexagon problem.
-    x_hexagon = np.zeros(9) + 2
+    x_hexagon = mx.zeros(9) + 2
     m_hexagon = 14  # Dimension of constraints. M must the specified correctly, or the program will crash!
     result = cobyla(calcfc_hexagon, m_hexagon, x_hexagon)  # This call will not print anything.
 

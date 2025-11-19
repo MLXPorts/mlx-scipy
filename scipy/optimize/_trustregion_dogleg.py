@@ -1,5 +1,5 @@
 """Dog-leg trust-region optimization."""
-import numpy as np
+import mlx.core as mx
 import scipy.linalg
 from ._trustregion import (_minimize_trust_region, BaseQuadraticSubproblem)
 
@@ -45,7 +45,7 @@ class DoglegSubproblem(BaseQuadraticSubproblem):
         if self._cauchy_point is None:
             g = self.jac
             Bg = self.hessp(g)
-            self._cauchy_point = -(np.dot(g, g) / np.dot(g, Bg)) * g
+            self._cauchy_point = -(mx.dot(g, g) / mx.dot(g, Bg)) * g
         return self._cauchy_point
 
     def newton_point(self):
@@ -74,7 +74,7 @@ class DoglegSubproblem(BaseQuadraticSubproblem):
 
         Returns
         -------
-        p : ndarray
+        p : array
             The proposed step.
         hits_boundary : bool
             True if the proposed step is on the boundary of the trust region.

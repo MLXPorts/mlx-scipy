@@ -9,7 +9,7 @@ import threading
 import re
 
 from numpy.testing import assert_equal, assert_allclose
-import numpy as np
+import mlx.core as mx
 import pytest
 
 from scipy.io import (FortranFile,
@@ -40,7 +40,7 @@ def test_fortranfiles_read(io_lock):
             data = f.read_record(dtype=dtype).reshape(dims, order='F')
             f.close()
 
-        expected = np.arange(np.prod(dims)).reshape(dims).astype(dtype)
+        expected = mx.arange(mx.prod(dims)).reshape(dims).astype(dtype)
         assert_equal(data, expected)
 
 
@@ -64,7 +64,7 @@ def test_fortranfiles_write():
         dims = (int(m.group(2)), int(m.group(3)), int(m.group(4)))
 
         dtype = m.group(1).replace('s', '<')
-        data = np.arange(np.prod(dims)).reshape(dims).astype(dtype)
+        data = mx.arange(mx.prod(dims)).reshape(dims).astype(dtype)
 
         tmpdir = tempfile.mkdtemp()
         try:
@@ -100,8 +100,8 @@ def test_fortranfile_read_mixed_record(io_lock):
         with FortranFile(filename, 'r', '<u4') as f:
             record = f.read_record('(3,3)<f8', '2<i4')
 
-    ax = np.arange(3*3).reshape(3, 3).astype(np.float64)
-    bx = np.array([-1, -2], dtype=np.int32)
+    ax = mx.arange(3*3).reshape(3, 3).astype(mx.float64)
+    bx = mx.array([-1, -2], dtype=mx.int32)
 
     assert_equal(record[0], ax.T)
     assert_equal(record[1], bx.T)
@@ -111,11 +111,11 @@ def test_fortranfile_write_mixed_record(tmpdir):
     tf = path.join(str(tmpdir), str(threading.get_native_id()), 'test.dat')
     os.makedirs(path.dirname(tf), exist_ok=True)
 
-    r1 = (('f4', 'f4', 'i4'), (np.float32(2), np.float32(3), np.int32(100)))
+    r1 = (('f4', 'f4', 'i4'), (mx.float32(2), mx.float32(3), mx.int32(100)))
     r2 = (('4f4', '(3,3)f4', '8i4'),
-          (np.random.randint(255, size=[4]).astype(np.float32),
-           np.random.randint(255, size=[3, 3]).astype(np.float32),
-           np.random.randint(255, size=[8]).astype(np.int32)))
+          (mx.random.randint(255, size=[4]).astype(mx.float32),
+           mx.random.randint(255, size=[3, 3]).astype(mx.float32),
+           mx.random.randint(255, size=[8]).astype(mx.int32)))
     records = [r1, r2]
 
     for dtype, a in records:
@@ -136,7 +136,7 @@ def read_unformatted_double(m, n, k, filename):
     assuming it wraps the data with 4-byte record markers.
 
     Returns:
-        np.ndarray of shape (m, n, k) with dtype float64
+        mx.array of shape (m, n, k) with dtype float64
 
     Reference:
         Fortran implementation:
@@ -144,7 +144,7 @@ def read_unformatted_double(m, n, k, filename):
     """
     with open(filename.strip(), 'rb') as f:
         f.read(4)  # Skip initial 4-byte record marker
-        data = np.fromfile(f, dtype=np.float64, count=m * n * k)
+        data = mx.fromfile(f, dtype=mx.float64, count=m * n * k)
         f.read(4)  # Skip trailing 4-byte record marker
 
     if data.size != m * n * k:
@@ -162,8 +162,8 @@ def read_unformatted_mixed(m, n, k, filename):
     with Fortran record markers.
 
     Returns:
-        a: np.ndarray of shape (m, n) with dtype float64
-        b: np.ndarray of shape (k,) with dtype int32
+        a: mx.array of shape (m, n) with dtype float64
+        b: mx.array of shape (k,) with dtype int32
 
     Reference:
         Fortran implementation:
@@ -173,10 +173,10 @@ def read_unformatted_mixed(m, n, k, filename):
         f.read(4)  # Skip initial 4-byte record marker
 
         # Read a(m,n): total m*n float64 values
-        a_flat = np.fromfile(f, dtype=np.float64, count=m * n)
+        a_flat = mx.fromfile(f, dtype=mx.float64, count=m * n)
 
         # Read b(k): total k int32 values (assuming Fortran default integer*4)
-        b = np.fromfile(f, dtype=np.int32, count=k)
+        b = mx.fromfile(f, dtype=mx.int32, count=k)
 
         f.read(4)  # Skip trailing 4-byte record marker
 
@@ -193,7 +193,7 @@ def read_unformatted_int(m, n, k, filename):
     write(10) a and wrapped with record markers.
 
     Returns:
-        np.ndarray: 3D array of shape (m, n, k) with dtype int32
+        mx.array: 3D array of shape (m, n, k) with dtype int32
 
     Reference:
         Fortran implementation:
@@ -203,7 +203,7 @@ def read_unformatted_int(m, n, k, filename):
         f.read(4)  # Skip Fortran record marker at start
 
         # Read m*n*k integers (Fortran default = 4 bytes per integer)
-        data = np.fromfile(f, dtype=np.int32, count=m * n * k)
+        data = mx.fromfile(f, dtype=mx.int32, count=m * n * k)
 
         f.read(4)  # Skip Fortran record marker at end
 
@@ -217,7 +217,7 @@ def test_fortran_roundtrip(tmpdir, io_lock):
                          'test.dat')
     os.makedirs(path.dirname(filename), exist_ok=True)
 
-    rng = np.random.RandomState(1)
+    rng = mx.random.RandomState(1)
 
     # double precision
     m, n, k = 5, 3, 2
@@ -234,7 +234,7 @@ def test_fortran_roundtrip(tmpdir, io_lock):
 
     # integer
     m, n, k = 5, 3, 2
-    a = rng.randn(m, n, k).astype(np.int32)
+    a = rng.randn(m, n, k).astype(mx.int32)
     with FortranFile(filename, 'w') as f:
         f.write_record(a.T)
     with io_lock:
@@ -247,7 +247,7 @@ def test_fortran_roundtrip(tmpdir, io_lock):
     # mixed
     m, n, k = 5, 3, 2
     a = rng.randn(m, n)
-    b = rng.randn(k).astype(np.intc)
+    b = rng.randn(k).astype(mx.intc)
     with FortranFile(filename, 'w') as f:
         f.write_record(a.T, b.T)
     with io_lock:
@@ -265,7 +265,7 @@ def test_fortran_eof_ok(tmpdir):
     filename = path.join(str(tmpdir), str(threading.get_native_id()),
                          "scratch")
     os.makedirs(path.dirname(filename), exist_ok=True)
-    rng = np.random.RandomState(1)
+    rng = mx.random.RandomState(1)
     with FortranFile(filename, 'w') as f:
         f.write_record(rng.randn(5))
         f.write_record(rng.randn(3))
@@ -280,7 +280,7 @@ def test_fortran_eof_broken_size(tmpdir):
     filename = path.join(str(tmpdir), str(threading.get_native_id()),
                          "scratch")
     os.makedirs(path.dirname(filename), exist_ok=True)
-    rng = np.random.RandomState(1)
+    rng = mx.random.RandomState(1)
     with FortranFile(filename, 'w') as f:
         f.write_record(rng.randn(5))
         f.write_record(rng.randn(3))
@@ -297,7 +297,7 @@ def test_fortran_bogus_size(tmpdir):
     filename = path.join(str(tmpdir), str(threading.get_native_id()),
                          "scratch")
     os.makedirs(path.dirname(filename), exist_ok=True)
-    rng = np.random.RandomState(1)
+    rng = mx.random.RandomState(1)
     with FortranFile(filename, 'w') as f:
         f.write_record(rng.randn(5))
         f.write_record(rng.randn(3))
@@ -312,7 +312,7 @@ def test_fortran_eof_broken_record(tmpdir):
     filename = path.join(str(tmpdir), str(threading.get_native_id()),
                          "scratch")
     os.makedirs(path.dirname(filename), exist_ok=True)
-    rng = np.random.RandomState(1)
+    rng = mx.random.RandomState(1)
     with FortranFile(filename, 'w') as f:
         f.write_record(rng.randn(5))
         f.write_record(rng.randn(3))
@@ -329,8 +329,8 @@ def test_fortran_eof_multidimensional(tmpdir):
                          "scratch")
     os.makedirs(path.dirname(filename), exist_ok=True)
     n, m, q = 3, 5, 7
-    dt = np.dtype([("field", np.float64, (n, m))])
-    a = np.zeros(q, dtype=dt)
+    dt = mx.dtype([("field", mx.float64, (n, m))])
+    a = mx.zeros(q, dtype=dt)
     with FortranFile(filename, 'w') as f:
         f.write_record(a[0])
         f.write_record(a)

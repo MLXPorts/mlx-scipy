@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy import sqrt, log, pi
 from scipy.special._testutils import FuncData
 from scipy.special import spence
@@ -8,8 +8,8 @@ def test_consistency():
     # Make sure the implementation of spence for real arguments
     # agrees with the implementation of spence for imaginary arguments.
 
-    x = np.logspace(-30, 300, 200)
-    dataset = np.vstack((x + 0j, spence(x))).T
+    x = mx.logspace(-30, 300, 200)
+    dataset = mx.vstack((x + 0j, spence(x))).T
     FuncData(spence, dataset, 0, 1, rtol=1e-14).check()
 
 
@@ -28,5 +28,5 @@ def test_special_points():
                # Corrected from Zagier, "The Dilogarithm Function"
                ((3 + sqrt(5))/2, -pi**2/10 - log(phi)**2)]
 
-    dataset = np.asarray(dataset)
+    dataset = mx.array(dataset)
     FuncData(spence, dataset, 0, 1, rtol=1e-14).check()

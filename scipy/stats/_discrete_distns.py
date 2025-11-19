@@ -13,7 +13,7 @@ from scipy.interpolate import interp1d
 
 from numpy import floor, ceil, log, exp, sqrt, log1p, expm1, tanh, cosh, sinh
 
-import numpy as np
+import mlx.core as mx
 
 from ._distn_infrastructure import (rv_discrete, get_distribution_names,
                                     _vectorize_rvs_over_shapes,
@@ -62,7 +62,7 @@ class binom_gen(rv_discrete):
 
     """
     def _shape_info(self):
-        return [_ShapeInfo("n", True, (0, np.inf), (True, False)),
+        return [_ShapeInfo("n", True, (0, mx.inf), (True, False)),
                 _ShapeInfo("p", False, (0, 1), (True, True))]
 
     def _rvs(self, n, p, size=None, random_state=None):
@@ -99,26 +99,26 @@ class binom_gen(rv_discrete):
 
     def _stats(self, n, p, moments='mv'):
         mu = n * p
-        var = mu - n * np.square(p)
+        var = mu - n * mx.square(p)
         g1, g2 = None, None
         if 's' in moments:
-            pq = p - np.square(p)
-            npq_sqrt = np.sqrt(n * pq)
-            t1 = np.reciprocal(npq_sqrt)
+            pq = p - mx.square(p)
+            npq_sqrt = mx.sqrt(n * pq)
+            t1 = mx.reciprocal(npq_sqrt)
             t2 = (2.0 * p) / npq_sqrt
             g1 = t1 - t2
         if 'k' in moments:
-            pq = p - np.square(p)
+            pq = p - mx.square(p)
             npq = n * pq
-            t1 = np.reciprocal(npq)
+            t1 = mx.reciprocal(npq)
             t2 = 6.0/n
             g2 = t1 - t2
         return mu, var, g1, g2
 
     def _entropy(self, n, p):
-        k = np.r_[0:n + 1]
+        k = mx.r_[0:n + 1]
         vals = self._pmf(k, n, p)
-        return np.sum(entr(vals), axis=0)
+        return mx.sum(entr(vals), axis=0)
 
 
 binom = binom_gen(name='binom')
@@ -229,9 +229,9 @@ class betabinom_gen(rv_discrete):
 
     """
     def _shape_info(self):
-        return [_ShapeInfo("n", True, (0, np.inf), (True, False)),
-                _ShapeInfo("a", False, (0, np.inf), (False, False)),
-                _ShapeInfo("b", False, (0, np.inf), (False, False))]
+        return [_ShapeInfo("n", True, (0, mx.inf), (True, False)),
+                _ShapeInfo("a", False, (0, mx.inf), (False, False)),
+                _ShapeInfo("b", False, (0, mx.inf), (False, False))]
 
     def _rvs(self, n, a, b, size=None, random_state=None):
         p = random_state.beta(a, b, size)
@@ -337,7 +337,7 @@ class nbinom_gen(rv_discrete):
 
     """
     def _shape_info(self):
-        return [_ShapeInfo("n", True, (0, np.inf), (True, False)),
+        return [_ShapeInfo("n", True, (0, mx.inf), (True, False)),
                 _ShapeInfo("p", False, (0, 1), (True, True))]
 
     def _rvs(self, n, p, size=None, random_state=None):
@@ -360,17 +360,17 @@ class nbinom_gen(rv_discrete):
 
     def _logcdf(self, x, n, p):
         k = floor(x)
-        k, n, p = np.broadcast_arrays(k, n, p)
+        k, n, p = mx.broadcast_arrays(k, n, p)
         cdf = self._cdf(k, n, p)
         cond = cdf > 0.5
         def f1(k, n, p):
-            return np.log1p(-special.betainc(k + 1, n, 1 - p))
+            return mx.log1p(-special.betainc(k + 1, n, 1 - p))
 
         # do calc in place
         logcdf = cdf
-        with np.errstate(divide='ignore'):
+        with mx.errstate(divide='ignore'):
             logcdf[cond] = f1(k[cond], n[cond], p[cond])
-            logcdf[~cond] = np.log(cdf[~cond])
+            logcdf[~cond] = mx.log(cdf[~cond])
         return logcdf
 
     def _sf(self, x, n, p):
@@ -378,11 +378,11 @@ class nbinom_gen(rv_discrete):
         return scu._nbinom_sf(k, n, p)
 
     def _isf(self, x, n, p):
-        with np.errstate(over='ignore'):  # see gh-17432
+        with mx.errstate(over='ignore'):  # see gh-17432
             return scu._nbinom_isf(x, n, p)
 
     def _ppf(self, q, n, p):
-        with np.errstate(over='ignore'):  # see gh-17432
+        with mx.errstate(over='ignore'):  # see gh-17432
             return scu._nbinom_ppf(q, n, p)
 
     def _stats(self, n, p):
@@ -435,9 +435,9 @@ class betanbinom_gen(rv_discrete):
 
     """
     def _shape_info(self):
-        return [_ShapeInfo("n", True, (0, np.inf), (True, False)),
-                _ShapeInfo("a", False, (0, np.inf), (False, False)),
-                _ShapeInfo("b", False, (0, np.inf), (False, False))]
+        return [_ShapeInfo("n", True, (0, mx.inf), (True, False)),
+                _ShapeInfo("a", False, (0, mx.inf), (False, False)),
+                _ShapeInfo("b", False, (0, mx.inf), (False, False))]
 
     def _rvs(self, n, a, b, size=None, random_state=None):
         p = random_state.beta(a, b, size)
@@ -448,7 +448,7 @@ class betanbinom_gen(rv_discrete):
 
     def _logpmf(self, x, n, a, b):
         k = floor(x)
-        combiln = -np.log(n + k) - betaln(n, k + 1)
+        combiln = -mx.log(n + k) - betaln(n, k + 1)
         return combiln + betaln(a + n, b + k) - betaln(a, b)
 
     def _pmf(self, x, n, a, b):
@@ -459,18 +459,18 @@ class betanbinom_gen(rv_discrete):
         # BetaNegativeBinomialDistribution[a, b, n]
         def mean(n, a, b):
             return n * b / (a - 1.)
-        mu = xpx.apply_where(a > 1, (n, a, b), mean, fill_value=np.inf)
+        mu = xpx.apply_where(a > 1, (n, a, b), mean, fill_value=mx.inf)
         def var(n, a, b):
             return (n * b * (n + a - 1.) * (a + b - 1.)
                     / ((a - 2.) * (a - 1.)**2.))
-        var = xpx.apply_where(a > 2, (n, a, b), var, fill_value=np.inf)
+        var = xpx.apply_where(a > 2, (n, a, b), var, fill_value=mx.inf)
         g1, g2 = None, None
         def skew(n, a, b):
             return ((2 * n + a - 1.) * (2 * b + a - 1.)
                     / (a - 3.) / sqrt(n * b * (n + a - 1.) * (b + a - 1.)
                     / (a - 2.)))
         if 's' in moments:
-            g1 = xpx.apply_where(a > 3, (n, a, b), skew, fill_value=np.inf)
+            g1 = xpx.apply_where(a > 3, (n, a, b), skew, fill_value=mx.inf)
         def kurtosis(n, a, b):
             term = (a - 2.)
             term_2 = ((a - 1.)**2. * (a**2. + a * (6 * b - 1.)
@@ -486,7 +486,7 @@ class betanbinom_gen(rv_discrete):
             # scipy's Fisher kurtosis
             return term * term_2 / denominator - 3.
         if 'k' in moments:
-            g2 = xpx.apply_where(a > 4, (n, a, b), kurtosis, fill_value=np.inf)
+            g2 = xpx.apply_where(a > 4, (n, a, b), kurtosis, fill_value=mx.inf)
         return mu, var, g1, g2
 
 
@@ -513,7 +513,7 @@ class geom_gen(rv_discrete):
     and :math:`1-p` is the probability of a single failure.
 
     Note that when drawing random samples, the probability of observations that exceed
-    ``np.iinfo(np.int64).max`` increases rapidly as $p$ decreases below $10^{-17}$. For
+    ``mx.iinfo(mx.int64).max`` increases rapidly as $p$ decreases below $10^{-17}$. For
     $p < 10^{-20}$, almost all observations would exceed the maximum ``int64``; however,
     the output dtype is always ``int64``, so these values are clipped to the maximum.
 
@@ -534,14 +534,14 @@ class geom_gen(rv_discrete):
         res = random_state.geometric(p, size=size)
         # RandomState.geometric can wrap around to negative values; make behavior
         # consistent with Generator.geometric by replacing with maximum integer.
-        max_int = np.iinfo(res.dtype).max
-        return np.where(res < 0, max_int, res)
+        max_int = mx.iinfo(res.dtype).max
+        return mx.where(res < 0, max_int, res)
 
     def _argcheck(self, p):
         return (p <= 1) & (p > 0)
 
     def _pmf(self, k, p):
-        return np.power(1-p, k-1) * p
+        return mx.power(1-p, k-1) * p
 
     def _logpmf(self, k, p):
         return special.xlog1py(k - 1, -p) + log(p)
@@ -551,7 +551,7 @@ class geom_gen(rv_discrete):
         return -expm1(log1p(-p)*k)
 
     def _sf(self, x, p):
-        return np.exp(self._logsf(x, p))
+        return mx.exp(self._logsf(x, p))
 
     def _logsf(self, x, p):
         k = floor(x)
@@ -560,18 +560,18 @@ class geom_gen(rv_discrete):
     def _ppf(self, q, p):
         vals = ceil(log1p(-q) / log1p(-p))
         temp = self._cdf(vals-1, p)
-        return np.where((temp >= q) & (vals > 0), vals-1, vals)
+        return mx.where((temp >= q) & (vals > 0), vals-1, vals)
 
     def _stats(self, p):
         mu = 1.0/p
         qr = 1.0-p
         var = qr / p / p
         g1 = (2.0-p) / sqrt(qr)
-        g2 = np.polyval([1, -6, 6], p)/(1.0-p)
+        g2 = mx.polyval([1, -6, 6], p)/(1.0-p)
         return mu, var, g1, g2
 
     def _entropy(self, p):
-        return -np.log(p) - np.log1p(-p) * (1.0-p) / p
+        return -mx.log(p) - mx.log1p(-p) * (1.0-p) / p
 
 
 geom = geom_gen(a=1, name='geom', longname="A geometric")
@@ -614,7 +614,7 @@ class hypergeom_gen(rv_discrete):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import hypergeom
     >>> import matplotlib.pyplot as plt
 
@@ -625,7 +625,7 @@ class hypergeom_gen(rv_discrete):
 
     >>> [M, n, N] = [20, 7, 12]
     >>> rv = hypergeom(M, n, N)
-    >>> x = np.arange(0, n+1)
+    >>> x = mx.arange(0, n+1)
     >>> pmf_dogs = rv.pmf(x)
 
     >>> fig = plt.figure()
@@ -652,15 +652,15 @@ class hypergeom_gen(rv_discrete):
 
     """
     def _shape_info(self):
-        return [_ShapeInfo("M", True, (0, np.inf), (True, False)),
-                _ShapeInfo("n", True, (0, np.inf), (True, False)),
-                _ShapeInfo("N", True, (0, np.inf), (True, False))]
+        return [_ShapeInfo("M", True, (0, mx.inf), (True, False)),
+                _ShapeInfo("n", True, (0, mx.inf), (True, False)),
+                _ShapeInfo("N", True, (0, mx.inf), (True, False))]
 
     def _rvs(self, M, n, N, size=None, random_state=None):
         return random_state.hypergeometric(n, M-n, N, size=size)
 
     def _get_support(self, M, n, N):
-        return np.maximum(N-(M-n), 0), np.minimum(n, N)
+        return mx.maximum(N-(M-n), 0), mx.minimum(n, N)
 
     def _argcheck(self, M, n, N):
         cond = (M > 0) & (n >= 0) & (N >= 0)
@@ -700,36 +700,36 @@ class hypergeom_gen(rv_discrete):
         )
 
     def _entropy(self, M, n, N):
-        k = np.r_[N - (M - n):min(n, N) + 1]
+        k = mx.r_[N - (M - n):min(n, N) + 1]
         vals = self.pmf(k, M, n, N)
-        return np.sum(entr(vals), axis=0)
+        return mx.sum(entr(vals), axis=0)
 
     def _sf(self, k, M, n, N):
         return scu._hypergeom_sf(k, n, N, M)
 
     def _logsf(self, k, M, n, N):
         res = []
-        for quant, tot, good, draw in zip(*np.broadcast_arrays(k, M, n, N)):
+        for quant, tot, good, draw in zip(*mx.broadcast_arrays(k, M, n, N)):
             if (quant + 0.5) * (tot + 0.5) < (good - 0.5) * (draw - 0.5):
                 # Less terms to sum if we calculate log(1-cdf)
                 res.append(log1p(-exp(self.logcdf(quant, tot, good, draw))))
             else:
                 # Integration over probability mass function using logsumexp
-                k2 = np.arange(quant + 1, draw + 1)
+                k2 = mx.arange(quant + 1, draw + 1)
                 res.append(logsumexp(self._logpmf(k2, tot, good, draw)))
-        return np.asarray(res)
+        return mx.array(res)
 
     def _logcdf(self, k, M, n, N):
         res = []
-        for quant, tot, good, draw in zip(*np.broadcast_arrays(k, M, n, N)):
+        for quant, tot, good, draw in zip(*mx.broadcast_arrays(k, M, n, N)):
             if (quant + 0.5) * (tot + 0.5) > (good - 0.5) * (draw - 0.5):
                 # Less terms to sum if we calculate log(1-sf)
                 res.append(log1p(-exp(self.logsf(quant, tot, good, draw))))
             else:
                 # Integration over probability mass function using logsumexp
-                k2 = np.arange(0, quant + 1)
+                k2 = mx.arange(0, quant + 1)
                 res.append(logsumexp(self._logpmf(k2, tot, good, draw)))
-        return np.asarray(res)
+        return mx.array(res)
 
 
 hypergeom = hypergeom_gen(name='hypergeom')
@@ -779,7 +779,7 @@ class nhypergeom_gen(rv_discrete):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import nhypergeom
     >>> import matplotlib.pyplot as plt
 
@@ -791,7 +791,7 @@ class nhypergeom_gen(rv_discrete):
 
     >>> M, n, r = [20, 7, 12]
     >>> rv = nhypergeom(M, n, r)
-    >>> x = np.arange(0, n+2)
+    >>> x = mx.arange(0, n+2)
     >>> pmf_dogs = rv.pmf(x)
 
     >>> fig = plt.figure()
@@ -837,9 +837,9 @@ class nhypergeom_gen(rv_discrete):
     """
 
     def _shape_info(self):
-        return [_ShapeInfo("M", True, (0, np.inf), (True, False)),
-                _ShapeInfo("n", True, (0, np.inf), (True, False)),
-                _ShapeInfo("r", True, (0, np.inf), (True, False))]
+        return [_ShapeInfo("M", True, (0, mx.inf), (True, False)),
+                _ShapeInfo("n", True, (0, mx.inf), (True, False)),
+                _ShapeInfo("r", True, (0, mx.inf), (True, False))]
 
     def _get_support(self, M, n, r):
         return 0, n
@@ -855,7 +855,7 @@ class nhypergeom_gen(rv_discrete):
         def _rvs1(M, n, r, size, random_state):
             # invert cdf by calculating all values in support, scalar M, n, r
             a, b = self.support(M, n, r)
-            ks = np.arange(a, b+1)
+            ks = mx.arange(a, b+1)
             cdf = self.cdf(ks, M, n, r)
             ppf = interp1d(cdf, ks, kind='next', fill_value='extrapolate')
             rvs = ppf(random_state.uniform(size=size)).astype(int)
@@ -935,7 +935,7 @@ class logser_gen(rv_discrete):
 
     def _pmf(self, k, p):
         # logser.pmf(k) = - p**k / (k*log(1-p))
-        return -np.power(p, k) * 1.0 / k / special.log1p(-p)
+        return -mx.power(p, k) * 1.0 / k / special.log1p(-p)
 
     def _sf(self, k, p):
         tiny = 1e-100
@@ -943,7 +943,7 @@ class logser_gen(rv_discrete):
         # an unregularized beta function (yet, although we could get it from Boost),
         # and neither technically support `b=0` - despite the function being accurate
         # for `b` super close to zero. See https://github.com/scipy/scipy/issues/3890.
-        return -special.betainc(k+1, tiny, p) * special.beta(k+1, tiny) / np.log1p(-p)
+        return -special.betainc(k+1, tiny, p) * special.beta(k+1, tiny) / mx.log1p(-p)
 
     def _stats(self, p):
         r = special.log1p(-p)
@@ -952,7 +952,7 @@ class logser_gen(rv_discrete):
         var = mu2p - mu*mu
         mu3p = -p / r * (1.0+p) / (1.0 - p)**3
         mu3 = mu3p - 3*mu*mu2p + 2*mu**3
-        g1 = mu3 / np.power(var, 1.5)
+        g1 = mu3 / mx.power(var, 1.5)
 
         mu4p = -p / r * (
             1.0 / (p-1)**2 - 6*p / (p - 1)**3 + 6*p*p / (p-1)**4)
@@ -990,7 +990,7 @@ class poisson_gen(rv_discrete):
     """
 
     def _shape_info(self):
-        return [_ShapeInfo("mu", False, (0, np.inf), (True, False))]
+        return [_ShapeInfo("mu", False, (0, mx.inf), (True, False))]
 
     # Override rv_discrete._argcheck to allow mu=0.
     def _argcheck(self, mu):
@@ -1017,16 +1017,16 @@ class poisson_gen(rv_discrete):
 
     def _ppf(self, q, mu):
         vals = ceil(special.pdtrik(q, mu))
-        vals1 = np.maximum(vals - 1, 0)
+        vals1 = mx.maximum(vals - 1, 0)
         temp = special.pdtr(vals1, mu)
-        return np.where(temp >= q, vals1, vals)
+        return mx.where(temp >= q, vals1, vals)
 
     def _stats(self, mu):
         var = mu
-        tmp = np.asarray(mu)
+        tmp = mx.array(mu)
         mu_nonzero = tmp > 0
-        g1 = xpx.apply_where(mu_nonzero, tmp, lambda x: sqrt(1.0/x), fill_value=np.inf)
-        g2 = xpx.apply_where(mu_nonzero, tmp, lambda x: 1.0/x, fill_value=np.inf)
+        g1 = xpx.apply_where(mu_nonzero, tmp, lambda x: sqrt(1.0/x), fill_value=mx.inf)
+        g2 = xpx.apply_where(mu_nonzero, tmp, lambda x: 1.0/x, fill_value=mx.inf)
         return mu, var, g1, g2
 
 
@@ -1062,7 +1062,7 @@ class planck_gen(rv_discrete):
 
     """
     def _shape_info(self):
-        return [_ShapeInfo("lambda_", False, (0, np.inf), (False, False))]
+        return [_ShapeInfo("lambda_", False, (0, mx.inf), (False, False))]
 
     def _argcheck(self, lambda_):
         return lambda_ > 0
@@ -1085,7 +1085,7 @@ class planck_gen(rv_discrete):
         vals = ceil(-1.0/lambda_ * log1p(-q)-1)
         vals1 = (vals-1).clip(*(self._get_support(lambda_)))
         temp = self._cdf(vals1, lambda_)
-        return np.where(temp >= q, vals1, vals)
+        return mx.where(temp >= q, vals1, vals)
 
     def _rvs(self, lambda_, size=None, random_state=None):
         # use relation to geometric distribution for sampling
@@ -1130,8 +1130,8 @@ class boltzmann_gen(rv_discrete):
 
     """
     def _shape_info(self):
-        return [_ShapeInfo("lambda_", False, (0, np.inf), (False, False)),
-                _ShapeInfo("N", True, (0, np.inf), (False, False))]
+        return [_ShapeInfo("lambda_", False, (0, mx.inf), (False, False)),
+                _ShapeInfo("N", True, (0, mx.inf), (False, False))]
 
     def _argcheck(self, lambda_, N):
         return (lambda_ > 0) & (N > 0) & _isintegral(N)
@@ -1152,9 +1152,9 @@ class boltzmann_gen(rv_discrete):
     def _ppf(self, q, lambda_, N):
         qnew = q*(1-exp(-lambda_*N))
         vals = ceil(-1.0/lambda_ * log(1-qnew)-1)
-        vals1 = (vals-1).clip(0.0, np.inf)
+        vals1 = (vals-1).clip(0.0, mx.inf)
         temp = self._cdf(vals1, lambda_, N)
-        return np.where(temp >= q, vals1, vals)
+        return mx.where(temp >= q, vals1, vals)
 
     def _stats(self, lambda_, N):
         z = exp(-lambda_)
@@ -1196,7 +1196,7 @@ class randint_gen(rv_discrete):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import randint
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(1, 1)
@@ -1208,7 +1208,7 @@ class randint_gen(rv_discrete):
 
     Display the probability mass function (``pmf``):
 
-    >>> x = np.arange(low - 5, high + 5)
+    >>> x = mx.arange(low - 5, high + 5)
     >>> ax.plot(x, randint.pmf(x, low, high), 'bo', ms=8, label='randint pmf')
     >>> ax.vlines(x, 0, randint.pmf(x, low, high), colors='b', lw=5, alpha=0.5)
 
@@ -1227,9 +1227,9 @@ class randint_gen(rv_discrete):
     Check the relationship between the cumulative distribution function
     (``cdf``) and its inverse, the percent point function (``ppf``):
 
-    >>> q = np.arange(low, high)
+    >>> q = mx.arange(low, high)
     >>> p = randint.cdf(q, low, high)
-    >>> np.allclose(q, randint.ppf(p, low, high))
+    >>> mx.allclose(q, randint.ppf(p, low, high))
     True
 
     Generate random numbers:
@@ -1239,8 +1239,8 @@ class randint_gen(rv_discrete):
     """
 
     def _shape_info(self):
-        return [_ShapeInfo("low", True, (-np.inf, np.inf), (False, False)),
-                _ShapeInfo("high", True, (-np.inf, np.inf), (False, False))]
+        return [_ShapeInfo("low", True, (-mx.inf, mx.inf), (False, False)),
+                _ShapeInfo("high", True, (-mx.inf, mx.inf), (False, False))]
 
     def _argcheck(self, low, high):
         return (high > low) & _isintegral(low) & _isintegral(high)
@@ -1250,8 +1250,8 @@ class randint_gen(rv_discrete):
 
     def _pmf(self, k, low, high):
         # randint.pmf(k) = 1./(high - low)
-        p = np.ones_like(k) / (np.asarray(high, dtype=np.int64) - low)
-        return np.where((k >= low) & (k < high), p, 0.)
+        p = mx.ones_like(k) / (mx.array(high, dtype=mx.int64) - low)
+        return mx.where((k >= low) & (k < high), p, 0.)
 
     def _cdf(self, x, low, high):
         k = floor(x)
@@ -1261,10 +1261,10 @@ class randint_gen(rv_discrete):
         vals = ceil(q * (high - low) + low) - 1
         vals1 = (vals - 1).clip(low, high)
         temp = self._cdf(vals1, low, high)
-        return np.where(temp >= q, vals1, vals)
+        return mx.where(temp >= q, vals1, vals)
 
     def _stats(self, low, high):
-        m2, m1 = np.asarray(high), np.asarray(low)
+        m2, m1 = mx.array(high), mx.array(low)
         mu = (m2 + m1 - 1.0) / 2
         d = m2 - m1
         var = (d*d - 1) / 12.0
@@ -1274,7 +1274,7 @@ class randint_gen(rv_discrete):
 
     def _rvs(self, low, high, size=None, random_state=None):
         """An array of *size* random integers >= ``low`` and < ``high``."""
-        if np.asarray(low).size == 1 and np.asarray(high).size == 1:
+        if mx.array(low).size == 1 and mx.array(high).size == 1:
             # no need to vectorize in that case
             return rng_integers(random_state, low, high, size=size)
 
@@ -1283,10 +1283,10 @@ class randint_gen(rv_discrete):
             # Use `broadcast_to()` to extend the shapes of low and high
             # up to size.  Then we can use the numpy.vectorize'd
             # randint without needing to pass it a `size` argument.
-            low = np.broadcast_to(low, size)
-            high = np.broadcast_to(high, size)
-        randint = np.vectorize(partial(rng_integers, random_state),
-                               otypes=[np.dtype(int)])
+            low = mx.broadcast_to(low, size)
+            high = mx.broadcast_to(high, size)
+        randint = mx.vectorize(partial(rng_integers, random_state),
+                               otypes=[mx.dtype(int)])
         return randint(low, high)
 
     def _entropy(self, low, high):
@@ -1334,16 +1334,16 @@ class zipf_gen(rv_discrete):
 
     Confirm that `zipf` is the large `n` limit of `zipfian`.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import zipf, zipfian
-    >>> k = np.arange(11)
-    >>> np.allclose(zipf.pmf(k, a), zipfian.pmf(k, a, n=10000000))
+    >>> k = mx.arange(11)
+    >>> mx.allclose(zipf.pmf(k, a), zipfian.pmf(k, a, n=10000000))
     True
 
     """
 
     def _shape_info(self):
-        return [_ShapeInfo("a", False, (1, np.inf), (False, False))]
+        return [_ShapeInfo("a", False, (1, mx.inf), (False, False))]
 
     def _rvs(self, a, size=None, random_state=None):
         return random_state.zipf(a, size=size)
@@ -1352,7 +1352,7 @@ class zipf_gen(rv_discrete):
         return a > 1
 
     def _pmf(self, k, a):
-        k = k.astype(np.float64)
+        k = k.astype(mx.float64)
         # zipf.pmf(k, a) = 1/(zeta(a) * k**a)
         Pk = 1.0 / special.zeta(a, 1) * k**-a
         return Pk
@@ -1361,7 +1361,7 @@ class zipf_gen(rv_discrete):
         return xpx.apply_where(
             a > n + 1, (a, n),
             lambda a, n: special.zeta(a - n, 1) / special.zeta(a, 1),
-            fill_value=np.inf)
+            fill_value=mx.inf)
 
 
 zipf = zipf_gen(a=1, name='zipf', longname='A Zipf')
@@ -1406,42 +1406,42 @@ class zipfian_gen(rv_discrete):
 
     Confirm that `zipfian` reduces to `zipf` for large `n`, ``a > 1``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import zipf, zipfian
-    >>> k = np.arange(11)
-    >>> np.allclose(zipfian.pmf(k, a=3.5, n=10000000), zipf.pmf(k, a=3.5))
+    >>> k = mx.arange(11)
+    >>> mx.allclose(zipfian.pmf(k, a=3.5, n=10000000), zipf.pmf(k, a=3.5))
     True
 
     """
 
     def _shape_info(self):
-        return [_ShapeInfo("a", False, (0, np.inf), (True, False)),
-                _ShapeInfo("n", True, (0, np.inf), (False, False))]
+        return [_ShapeInfo("a", False, (0, mx.inf), (True, False)),
+                _ShapeInfo("n", True, (0, mx.inf), (False, False))]
 
     def _argcheck(self, a, n):
-        # we need np.asarray here because moment (maybe others) don't convert
-        return (a >= 0) & (n > 0) & (n == np.asarray(n, dtype=np.int_))
+        # we need mx.array here because moment (maybe others) don't convert
+        return (a >= 0) & (n > 0) & (n == mx.array(n, dtype=mx.int_))
 
     def _get_support(self, a, n):
-        return 1, np.floor(n).astype(np.int_)
+        return 1, mx.floor(n).astype(mx.int_)
 
     def _pmf(self, k, a, n):
-        k = np.floor(k).astype(np.int_)
-        n = np.floor(n).astype(np.int_)
+        k = mx.floor(k).astype(mx.int_)
+        n = mx.floor(n).astype(mx.int_)
         return scu._normalized_gen_harmonic(k, k, n, a)
 
     def _cdf(self, k, a, n):
-        k = np.floor(k).astype(np.int_)
-        n = np.floor(n).astype(np.int_)
+        k = mx.floor(k).astype(mx.int_)
+        n = mx.floor(n).astype(mx.int_)
         return scu._normalized_gen_harmonic(1, k, n, a)
 
     def _sf(self, k, a, n):
-        k = np.floor(k).astype(np.int_)
-        n = np.floor(n).astype(np.int_)
+        k = mx.floor(k).astype(mx.int_)
+        n = mx.floor(n).astype(mx.int_)
         return scu._normalized_gen_harmonic(k + 1, n, n, a)
 
     def _stats(self, a, n):
-        n = np.floor(n).astype(np.int_)
+        n = mx.floor(n).astype(mx.int_)
         # see http://www.math.wm.edu/~leemis/chart/UDR/PDFs/Zipf.pdf
         Hna = scu._gen_harmonic(n, a)
         Hna1 = scu._gen_harmonic(n, a-1)
@@ -1486,7 +1486,7 @@ class dlaplace_gen(rv_discrete):
     """
 
     def _shape_info(self):
-        return [_ShapeInfo("a", False, (0, np.inf), (False, False))]
+        return [_ShapeInfo("a", False, (0, mx.inf), (False, False))]
 
     def _pmf(self, k, a):
         # dlaplace.pmf(k) = tanh(a/2) * exp(-a*abs(k))
@@ -1505,11 +1505,11 @@ class dlaplace_gen(rv_discrete):
 
     def _ppf(self, q, a):
         const = 1 + exp(a)
-        vals = ceil(np.where(q < 1.0 / (1 + exp(-a)),
+        vals = ceil(mx.where(q < 1.0 / (1 + exp(-a)),
                              log(q*const) / a - 1,
                              -log((1-q) * const) / a))
         vals1 = vals - 1
-        return np.where(self._cdf(vals1, a) >= q, vals1, vals)
+        return mx.where(self._cdf(vals1, a) >= q, vals1, vals)
 
     def _stats(self, a):
         ea = exp(a)
@@ -1536,13 +1536,13 @@ class dlaplace_gen(rv_discrete):
         # Thus, we can leverage the following:
         #   1) alpha = e^-a
         #   2) probability_of_success = 1 - alpha (Bernoulli trial)
-        probOfSuccess = -np.expm1(-np.asarray(a))
+        probOfSuccess = -mx.expm1(-mx.array(a))
         x = random_state.geometric(probOfSuccess, size=size)
         y = random_state.geometric(probOfSuccess, size=size)
         return x - y
 
 
-dlaplace = dlaplace_gen(a=-np.inf,
+dlaplace = dlaplace_gen(a=-mx.inf,
                         name='dlaplace', longname='A discrete Laplacian')
 
 
@@ -1593,39 +1593,39 @@ class poisson_binom_gen(rv_discrete):
         return []
 
     def _argcheck(self, *args):
-        p = np.stack(args, axis=0)
+        p = mx.stack(args, axis=0)
         conds = (0 <= p) & (p <= 1)
-        return np.all(conds, axis=0)
+        return mx.all(conds, axis=0)
 
     def _rvs(self, *args, size=None, random_state=None):
         # convenient to work along the last axis here to avoid interference with `size`
-        p = np.stack(args, axis=-1)
+        p = mx.stack(args, axis=-1)
         # Size passed by the user is the *shape of the returned array*, so it won't
         # contain the length of the last axis of p.
         size = (p.shape if size is None else
-                (size, 1) if np.isscalar(size) else tuple(size) + (1,))
-        size = np.broadcast_shapes(p.shape, size)
+                (size, 1) if mx.isscalar(size) else tuple(size) + (1,))
+        size = mx.broadcast_shapes(p.shape, size)
         return bernoulli._rvs(p, size=size, random_state=random_state).sum(axis=-1)
 
     def _get_support(self, *args):
         return 0, len(args)
 
     def _pmf(self, k, *args):
-        k = np.atleast_1d(k).astype(np.int64)
-        k, *args = np.broadcast_arrays(k, *args)
-        args = np.asarray(args, dtype=np.float64)
+        k = mx.atleast_1d(k).astype(mx.int64)
+        k, *args = mx.broadcast_arrays(k, *args)
+        args = mx.array(args, dtype=mx.float64)
         return _poisson_binom(k, args, 'pmf')
 
     def _cdf(self, k, *args):
-        k = np.atleast_1d(k).astype(np.int64)
-        k, *args = np.broadcast_arrays(k, *args)
-        args = np.asarray(args, dtype=np.float64)
+        k = mx.atleast_1d(k).astype(mx.int64)
+        k, *args = mx.broadcast_arrays(k, *args)
+        args = mx.array(args, dtype=mx.float64)
         return _poisson_binom(k, args, 'cdf')
 
     def _stats(self, *args, **kwds):
-        p = np.stack(args, axis=0)
-        mean = np.sum(p, axis=0)
-        var = np.sum(p * (1-p), axis=0)
+        p = mx.stack(args, axis=0)
+        mean = mx.sum(p, axis=0)
+        var = mx.sum(p * (1-p), axis=0)
         return (mean, var, None, None)
 
     def __call__(self, *args, **kwds):
@@ -1641,13 +1641,13 @@ poisson_binom = poisson_binom_gen(name='poisson_binom', longname='A Poisson bino
 # like `n` scalar (or arrays of scalar-valued) shape parameters to the infrastructure.
 
 def _parse_args_rvs(self, p, loc=0, size=None):
-    return tuple(np.moveaxis(p, -1, 0)), loc, 1.0, size
+    return tuple(mx.moveaxis(p, -1, 0)), loc, 1.0, size
 
 def _parse_args_stats(self, p, loc=0, moments='mv'):
-    return tuple(np.moveaxis(p, -1, 0)), loc, 1.0, moments
+    return tuple(mx.moveaxis(p, -1, 0)), loc, 1.0, moments
 
 def _parse_args(self, p, loc=0):
-    return tuple(np.moveaxis(p, -1, 0)), loc, 1.0
+    return tuple(mx.moveaxis(p, -1, 0)), loc, 1.0
 
 # The infrastructure manually binds these methods to the instance, so
 # we can only override them by manually binding them, too.
@@ -1711,8 +1711,8 @@ class skellam_gen(rv_discrete):
 
     """
     def _shape_info(self):
-        return [_ShapeInfo("mu1", False, (0, np.inf), (False, False)),
-                _ShapeInfo("mu2", False, (0, np.inf), (False, False))]
+        return [_ShapeInfo("mu1", False, (0, mx.inf), (False, False)),
+                _ShapeInfo("mu2", False, (0, mx.inf), (False, False))]
 
     def _rvs(self, mu1, mu2, size=None, random_state=None):
         n = size
@@ -1720,8 +1720,8 @@ class skellam_gen(rv_discrete):
                 random_state.poisson(mu2, n))
 
     def _pmf(self, x, mu1, mu2):
-        with np.errstate(over='ignore'):  # see gh-17432
-            px = np.where(x < 0,
+        with mx.errstate(over='ignore'):  # see gh-17432
+            px = mx.where(x < 0,
                           scu._ncx2_pdf(2*mu2, 2*(1-x), 2*mu1)*2,
                           scu._ncx2_pdf(2*mu1, 2*(1+x), 2*mu2)*2)
             # ncx2.pdf() returns nan's for extremely low probabilities
@@ -1729,8 +1729,8 @@ class skellam_gen(rv_discrete):
 
     def _cdf(self, x, mu1, mu2):
         x = floor(x)
-        with np.errstate(over='ignore'):  # see gh-17432
-            px = np.where(x < 0,
+        with mx.errstate(over='ignore'):  # see gh-17432
+            px = mx.where(x < 0,
                           special.chndtr(2*mu2, -2*x, 2*mu1),
                           scu._ncx2_sf(2*mu1, 2*(x+1), 2*mu2))
         return px
@@ -1743,7 +1743,7 @@ class skellam_gen(rv_discrete):
         return mean, var, g1, g2
 
 
-skellam = skellam_gen(a=-np.inf, name="skellam", longname='A Skellam')
+skellam = skellam_gen(a=-mx.inf, name="skellam", longname='A Skellam')
 
 
 class yulesimon_gen(rv_discrete):
@@ -1781,7 +1781,7 @@ class yulesimon_gen(rv_discrete):
 
     """
     def _shape_info(self):
-        return [_ShapeInfo("alpha", False, (0, np.inf), (False, False))]
+        return [_ShapeInfo("alpha", False, (0, mx.inf), (False, False))]
 
     def _rvs(self, alpha, size=None, random_state=None):
         E1 = random_state.standard_exponential(size)
@@ -1808,20 +1808,20 @@ class yulesimon_gen(rv_discrete):
         return log(x) + special.betaln(x, alpha + 1)
 
     def _stats(self, alpha):
-        mu = np.where(alpha <= 1, np.inf, alpha / (alpha - 1))
-        mu2 = np.where(alpha > 2,
+        mu = mx.where(alpha <= 1, mx.inf, alpha / (alpha - 1))
+        mu2 = mx.where(alpha > 2,
                        alpha**2 / ((alpha - 2.0) * (alpha - 1)**2),
-                       np.inf)
-        mu2 = np.where(alpha <= 1, np.nan, mu2)
-        g1 = np.where(alpha > 3,
+                       mx.inf)
+        mu2 = mx.where(alpha <= 1, mx.nan, mu2)
+        g1 = mx.where(alpha > 3,
                       sqrt(alpha - 2) * (alpha + 1)**2 / (alpha * (alpha - 3)),
-                      np.inf)
-        g1 = np.where(alpha <= 2, np.nan, g1)
-        g2 = np.where(alpha > 4,
+                      mx.inf)
+        g1 = mx.where(alpha <= 2, mx.nan, g1)
+        g2 = mx.where(alpha > 4,
                       alpha + 3 + ((11 * alpha**3 - 49 * alpha - 22) /
                                    (alpha * (alpha - 4) * (alpha - 3))),
-                      np.inf)
-        g2 = np.where(alpha <= 2, np.nan, g2)
+                      mx.inf)
+        g2 = mx.where(alpha <= 2, mx.nan, g2)
         return mu, mu2, g1, g2
 
 
@@ -1839,24 +1839,24 @@ class _nchypergeom_gen(rv_discrete):
     dist = None
 
     def _shape_info(self):
-        return [_ShapeInfo("M", True, (0, np.inf), (True, False)),
-                _ShapeInfo("n", True, (0, np.inf), (True, False)),
-                _ShapeInfo("N", True, (0, np.inf), (True, False)),
-                _ShapeInfo("odds", False, (0, np.inf), (False, False))]
+        return [_ShapeInfo("M", True, (0, mx.inf), (True, False)),
+                _ShapeInfo("n", True, (0, mx.inf), (True, False)),
+                _ShapeInfo("N", True, (0, mx.inf), (True, False)),
+                _ShapeInfo("odds", False, (0, mx.inf), (False, False))]
 
     def _get_support(self, M, n, N, odds):
         N, m1, n = M, n, N  # follow Wikipedia notation
         m2 = N - m1
-        x_min = np.maximum(0, n - m2)
-        x_max = np.minimum(n, m1)
+        x_min = mx.maximum(0, n - m2)
+        x_max = mx.minimum(n, m1)
         return x_min, x_max
 
     def _argcheck(self, M, n, N, odds):
-        M, n = np.asarray(M), np.asarray(n),
-        N, odds = np.asarray(N), np.asarray(odds)
-        cond1 = (~np.isnan(M)) & (M.astype(int) == M) & (M >= 0)
-        cond2 = (~np.isnan(n)) & (n.astype(int) == n) & (n >= 0)
-        cond3 = (~np.isnan(N)) & (N.astype(int) == N) & (N >= 0)
+        M, n = mx.array(M), mx.array(n),
+        N, odds = mx.array(N), mx.array(odds)
+        cond1 = (~mx.isnan(M)) & (M.astype(int) == M) & (M >= 0)
+        cond2 = (~mx.isnan(n)) & (n.astype(int) == n) & (n >= 0)
+        cond3 = (~mx.isnan(N)) & (N.astype(int) == N) & (N >= 0)
         cond4 = odds > 0
         cond5 = N <= M
         cond6 = n <= M
@@ -1866,9 +1866,9 @@ class _nchypergeom_gen(rv_discrete):
 
         @_vectorize_rvs_over_shapes
         def _rvs1(M, n, N, odds, size, random_state):
-            if np.isnan(M) | np.isnan(n) | np.isnan(N):
-                return np.full(size, np.nan)
-            length = np.prod(size)
+            if mx.isnan(M) | mx.isnan(n) | mx.isnan(N):
+                return mx.full(size, mx.nan)
+            length = mx.prod(size)
             urn = _PyStochasticLib3()
             rv_gen = getattr(urn, self.rvs_name)
             rvs = rv_gen(N, n, M, odds, length, random_state)
@@ -1879,14 +1879,14 @@ class _nchypergeom_gen(rv_discrete):
 
     def _pmf(self, x, M, n, N, odds):
 
-        x, M, n, N, odds = np.broadcast_arrays(x, M, n, N, odds)
-        if x.size == 0:  # np.vectorize doesn't work with zero size input
-            return np.empty_like(x)
+        x, M, n, N, odds = mx.broadcast_arrays(x, M, n, N, odds)
+        if x.size == 0:  # mx.vectorize doesn't work with zero size input
+            return mx.empty_like(x)
 
-        @np.vectorize
+        @mx.vectorize
         def _pmf1(x, M, n, N, odds):
-            if np.isnan(x) | np.isnan(M) | np.isnan(n) | np.isnan(N):
-                return np.nan
+            if mx.isnan(x) | mx.isnan(M) | mx.isnan(n) | mx.isnan(N):
+                return mx.nan
             urn = self.dist(N, n, M, odds, 1e-12)
             return urn.probability(x)
 
@@ -1894,10 +1894,10 @@ class _nchypergeom_gen(rv_discrete):
 
     def _stats(self, M, n, N, odds, moments='mv'):
 
-        @np.vectorize
+        @mx.vectorize
         def _moments1(M, n, N, odds):
-            if np.isnan(M) | np.isnan(n) | np.isnan(N):
-                return np.nan, np.nan
+            if mx.isnan(M) | mx.isnan(n) | mx.isnan(N):
+                return mx.nan, mx.nan
             urn = self.dist(N, n, M, odds, 1e-12)
             return urn.moments()
 

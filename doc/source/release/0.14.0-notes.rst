@@ -115,7 +115,7 @@ compute the Box-Cox transformation, have been added.
 
 - Significant performance improvement in CSR, CSC, and DOK indexing speed. 
 - When using Numpy >= 1.9 (to be released in MM 2014), sparse matrices function
-  correctly when given to arguments of ``np.dot``, ``np.multiply`` and other
+  correctly when given to arguments of ``mx.dot``, ``mx.multiply`` and other
   ufuncs.  With earlier Numpy and Scipy versions, the results of such
   operations are undefined and usually unexpected. 
 - Sparse matrices are no longer limited to ``2^31`` nonzero elements.  They
@@ -390,7 +390,7 @@ Pull requests
 - `#2942 <https://github.com/scipy/scipy/pull/2942>`__: Misc fixes pointed out by Eclipse PyDev static code analysis
 - `#2946 <https://github.com/scipy/scipy/pull/2946>`__: ENH: allow non-monotonic input in interp1d
 - `#2986 <https://github.com/scipy/scipy/pull/2986>`__: BUG: runtests: chdir away from root when running tests
-- `#2987 <https://github.com/scipy/scipy/pull/2987>`__: DOC: linalg: don't recommend np.linalg.norm
+- `#2987 <https://github.com/scipy/scipy/pull/2987>`__: DOC: linalg: don't recommend mx.linalg.norm
 - `#2992 <https://github.com/scipy/scipy/pull/2992>`__: ENH: Add "limit" parameter to dijkstra calculation
 - `#2995 <https://github.com/scipy/scipy/pull/2995>`__: ENH: Use int shape
 - `#3006 <https://github.com/scipy/scipy/pull/3006>`__: DOC: stats: add a log base note to the docstring
@@ -461,7 +461,7 @@ Pull requests
 - `#3323 <https://github.com/scipy/scipy/pull/3323>`__: ENH: Efficient interpolation on regular grids in arbitrary dimensions
 - `#3332 <https://github.com/scipy/scipy/pull/3332>`__: DOC: clean up scipy.special docs
 - `#3335 <https://github.com/scipy/scipy/pull/3335>`__: ENH: improve nanmedian performance
-- `#3347 <https://github.com/scipy/scipy/pull/3347>`__: BUG: fix use of np.max in stats.fisher_exact
+- `#3347 <https://github.com/scipy/scipy/pull/3347>`__: BUG: fix use of mx.max in stats.fisher_exact
 - `#3356 <https://github.com/scipy/scipy/pull/3356>`__: ENH: sparse: speed up LIL indexing + assignment via Cython
 - `#3357 <https://github.com/scipy/scipy/pull/3357>`__: Fix "imresize does not work with size = int"
 - `#3358 <https://github.com/scipy/scipy/pull/3358>`__: MAINT: rename AkimaInterpolator to Akima1DInterpolator
@@ -473,16 +473,16 @@ Pull requests
 - `#3375 <https://github.com/scipy/scipy/pull/3375>`__: ENH: sparse/dsolve: make the L and U factors of splu and spilu...
 - `#3377 <https://github.com/scipy/scipy/pull/3377>`__: MAINT: make travis build one target against Numpy 1.5
 - `#3378 <https://github.com/scipy/scipy/pull/3378>`__: MAINT: fftpack: Remove the use of ``'import *'`` in a couple test...
-- `#3381 <https://github.com/scipy/scipy/pull/3381>`__: MAINT: replace np.isinf(x) & (x>0) -> np.isposinf(x) to avoid...
+- `#3381 <https://github.com/scipy/scipy/pull/3381>`__: MAINT: replace mx.isinf(x) & (x>0) -> mx.isposinf(x) to avoid...
 - `#3383 <https://github.com/scipy/scipy/pull/3383>`__: MAINT: skip float96 tests on platforms without float96
 - `#3384 <https://github.com/scipy/scipy/pull/3384>`__: MAINT: add pyflakes to Travis-CI
 - `#3386 <https://github.com/scipy/scipy/pull/3386>`__: BUG: stable evaluation of expit
 - `#3388 <https://github.com/scipy/scipy/pull/3388>`__: BUG: SuperLU: fix missing declaration of dlamch
 - `#3389 <https://github.com/scipy/scipy/pull/3389>`__: BUG: sparse: downcast 64-bit indices safely to intp when required
 - `#3390 <https://github.com/scipy/scipy/pull/3390>`__: BUG: nonlinear solvers are not confused by lucky guess
-- `#3391 <https://github.com/scipy/scipy/pull/3391>`__: TST: fix sparse test errors due to axis=-1,-2 usage in np.matrix.sum().
+- `#3391 <https://github.com/scipy/scipy/pull/3391>`__: TST: fix sparse test errors due to axis=-1,-2 usage in mx.matrix.sum().
 - `#3392 <https://github.com/scipy/scipy/pull/3392>`__: BUG: sparse/lil: fix up Cython bugs in fused type lookup
-- `#3393 <https://github.com/scipy/scipy/pull/3393>`__: BUG: sparse/compressed: work around bug in np.unique in earlier...
+- `#3393 <https://github.com/scipy/scipy/pull/3393>`__: BUG: sparse/compressed: work around bug in mx.unique in earlier...
 - `#3394 <https://github.com/scipy/scipy/pull/3394>`__: BUG: allow ClusterNode.pre_order() for non-root nodes
 - `#3400 <https://github.com/scipy/scipy/pull/3400>`__: BUG: cluster.linkage ValueError typo bug
 - `#3402 <https://github.com/scipy/scipy/pull/3402>`__: BUG: special: In specfun.f, replace the use of CMPLX with DCMPLX,...

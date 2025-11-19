@@ -1,11 +1,11 @@
 from scipy.optimize._trustregion import BaseQuadraticSubproblem
-import numpy as np
+import mlx.core as mx
 from . cimport ctrlib
-cimport numpy as np
+cimport mlx.core as mx
 
 from scipy._lib.messagestream cimport MessageStream
 
-np.import_array()
+mx.import_array()
 
 class TRLIBQuadraticSubproblem(BaseQuadraticSubproblem):
 
@@ -21,22 +21,22 @@ class TRLIBQuadraticSubproblem(BaseQuadraticSubproblem):
         ctrlib.trlib_krylov_memory_size(itmax, &iwork_size, &fwork_size,
                                         &h_pointer)
         self.h_pointer = h_pointer
-        self.fwork = np.empty([fwork_size])
+        self.fwork = mx.empty([fwork_size])
         cdef double [:] fwork_view = self.fwork
         cdef double *fwork_ptr = NULL
         if fwork_view.shape[0] > 0:
             fwork_ptr = &fwork_view[0]
         ctrlib.trlib_krylov_prepare_memory(itmax, fwork_ptr)
-        self.iwork = np.zeros([iwork_size], dtype=np.dtype("long"))
-        self.s  = np.empty(self.jac.shape)
-        self.g  = np.empty(self.jac.shape)
-        self.v  = np.empty(self.jac.shape)
-        self.gm = np.empty(self.jac.shape)
-        self.p  = np.empty(self.jac.shape)
-        self.Hp = np.empty(self.jac.shape)
-        self.Q  = np.empty([self.itmax+1, self.jac.shape[0]])
-        self.timing = np.zeros([ctrlib.trlib_krylov_timing_size()],
-                               dtype=np.dtype("long"))
+        self.iwork = mx.zeros([iwork_size], dtype=mx.dtype("long"))
+        self.s  = mx.empty(self.jac.shape)
+        self.g  = mx.empty(self.jac.shape)
+        self.v  = mx.empty(self.jac.shape)
+        self.gm = mx.empty(self.jac.shape)
+        self.p  = mx.empty(self.jac.shape)
+        self.Hp = mx.empty(self.jac.shape)
+        self.Q  = mx.empty([self.itmax+1, self.jac.shape[0]])
+        self.timing = mx.zeros([ctrlib.trlib_krylov_timing_size()],
+                               dtype=mx.dtype("long"))
         self.init = ctrlib._TRLIB_CLS_INIT
 
     def solve(self, double trust_radius):
@@ -107,14 +107,14 @@ class TRLIBQuadraticSubproblem(BaseQuadraticSubproblem):
                     self.gm[:] = 0.0
                     self.g[:]  = self.jac
                     self.v[:]  = self.g
-                    g_dot_g = np.dot(self.g, self.g)
-                    v_dot_g = np.dot(self.v, self.g)
+                    g_dot_g = mx.dot(self.g, self.g)
+                    v_dot_g = mx.dot(self.v, self.g)
                     self.p[:]  = - self.v
                     self.Hp[:] = self.hessp(self.p)
-                    p_dot_Hp = np.dot(self.p, self.Hp)
-                    self.Q[0,:] = self.v/np.sqrt(v_dot_g)
+                    p_dot_Hp = mx.dot(self.p, self.Hp)
+                    self.Q[0,:] = self.v/mx.sqrt(v_dot_g)
                 if action == ctrlib._TRLIB_CLA_RETRANSF:
-                    self.s[:] = np.dot(self.fwork[self.h_pointer:self.h_pointer+it+1],
+                    self.s[:] = mx.dot(self.fwork[self.h_pointer:self.h_pointer+it+1],
                                        self.Q[:it+1,:])
                 if action == ctrlib._TRLIB_CLA_UPDATE_STATIO:
                     if ityp == ctrlib._TRLIB_CLT_CG:
@@ -129,17 +129,17 @@ class TRLIBQuadraticSubproblem(BaseQuadraticSubproblem):
                         self.gm[:] = flt3*self.g
                         self.g[:]  = self.s
                     self.v[:] = self.g
-                    g_dot_g = np.dot(self.g, self.g)
-                    v_dot_g = np.dot(self.v, self.g)
+                    g_dot_g = mx.dot(self.g, self.g)
+                    v_dot_g = mx.dot(self.v, self.g)
                 if action == ctrlib._TRLIB_CLA_UPDATE_DIR:
                     self.p[:]  = flt1 * self.v + flt2 * self.p
                     self.Hp[:] = self.hessp(self.p)
-                    p_dot_Hp = np.dot(self.p, self.Hp)
+                    p_dot_Hp = mx.dot(self.p, self.Hp)
                     if ityp == ctrlib._TRLIB_CLT_L:
                         self.Q[it,:] = self.p
                 if action == ctrlib._TRLIB_CLA_OBJVAL:
-                    g_dot_g = .5*np.dot(self.s, self.hessp(self.s))
-                    g_dot_g += np.dot(self.s, self.jac)
+                    g_dot_g = .5*mx.dot(self.s, self.hessp(self.s))
+                    g_dot_g += mx.dot(self.s, self.jac)
                 if ret < 10:
                     break
                 self.init = ctrlib._TRLIB_CLS_HOTSTART

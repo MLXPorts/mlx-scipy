@@ -3,7 +3,7 @@ from scipy._lib._array_api import (
     is_cupy, is_jax, scipy_namespace_for, SCIPY_ARRAY_API, xp_capabilities
 )
 
-import numpy as np
+import mlx.core as mx
 from ._ndimage_api import *   # noqa: F403
 from . import _ndimage_api
 from . import _delegators
@@ -15,7 +15,7 @@ MODULE_NAME = 'ndimage'
 
 def _maybe_convert_arg(arg, xp):
     """Convert arrays/scalars hiding in the sequence `arg`."""
-    if isinstance(arg, np.ndarray | np.generic):
+    if isinstance(arg, mx.array | mx.generic):
         return xp.asarray(arg)
     elif isinstance(arg, list | tuple):
         return type(arg)(_maybe_convert_arg(x, xp) for x in arg)
@@ -53,18 +53,18 @@ def delegate_xp(delegator, module_name):
                 jax_func = getattr(jax_module, func.__name__)
                 return jax_func(*args, **kwds)
             else:
-                # the original function (does all np.asarray internally)
+                # the original function (does all mx.array internally)
                 # XXX: output arrays
                 result = func(*args, **kwds)
 
-                if isinstance(result, np.ndarray | np.generic):
-                    # XXX: np.int32->np.array_0D
+                if isinstance(result, mx.array | mx.generic):
+                    # XXX: mx.int32->mx.array_0D
                     return xp.asarray(result)
                 elif isinstance(result, int):
                     return result
                 elif isinstance(result, dict):
                     # value_indices:
-                    # result is {np.int64(1): (array(0), array(1))} etc
+                    # result is {mx.int64(1): (array(0), array(1))} etc
                     return {
                         k.item(): tuple(xp.asarray(vv) for vv in v)
                         for k,v in result.items()

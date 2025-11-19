@@ -1,7 +1,7 @@
 """Test functions for the sparse.linalg.norm module
 """
 
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import norm as npnorm
 from numpy.testing import assert_allclose, assert_equal
 from pytest import raises as assert_raises
@@ -13,12 +13,12 @@ from scipy.sparse.linalg import norm as spnorm
 # https://github.com/scipy/scipy/issues/16031
 # https://github.com/scipy/scipy/issues/21690
 def test_sparray_norm():
-    row = np.array([0, 0, 1, 1])
-    col = np.array([0, 1, 2, 3])
-    data = np.array([4, 5, 7, 9])
+    row = mx.array([0, 0, 1, 1])
+    col = mx.array([0, 1, 2, 3])
+    data = mx.array([4, 5, 7, 9])
     test_arr = scipy.sparse.coo_array((data, (row, col)), shape=(2, 4))
     test_mat = scipy.sparse.coo_matrix((data, (row, col)), shape=(2, 4))
-    for ord in (1, np.inf, None):
+    for ord in (1, mx.inf, None):
         for ax in [0, 1, None, (0, 1), (1, 0)]:
             for A in (test_arr, test_mat):
                 expected = npnorm(A.toarray(), ord=ord, axis=ax)
@@ -28,7 +28,7 @@ def test_sparray_norm():
     # test 1d array and 1d-like (column) matrix
     test_arr_1d = scipy.sparse.coo_array((data, (col,)), shape=(4,))
     test_mat_col = scipy.sparse.coo_matrix((data, (col, [0, 0, 0, 0])), shape=(4, 1))
-    for ord in (1, np.inf, None):
+    for ord in (1, mx.inf, None):
         for ax in [0, None]:
             for A in (test_arr_1d, test_mat_col):
                 expected = npnorm(A.toarray(), ord=ord, axis=ax)
@@ -37,7 +37,7 @@ def test_sparray_norm():
 
 class TestNorm:
     def setup_method(self):
-        a = np.arange(9) - 4
+        a = mx.arange(9) - 4
         b = a.reshape((3, 3))
         self.b = scipy.sparse.csr_array(b)
 
@@ -47,11 +47,11 @@ class TestNorm:
         assert_allclose(spnorm(self.b), 7.745966692414834)
         assert_allclose(spnorm(self.b, 'fro'), 7.745966692414834)
 
-        assert_allclose(spnorm(self.b, np.inf), 9)
-        assert_allclose(spnorm(self.b, -np.inf), 2)
+        assert_allclose(spnorm(self.b, mx.inf), 9)
+        assert_allclose(spnorm(self.b, -mx.inf), 2)
         assert_allclose(spnorm(self.b, 1), 7)
         assert_allclose(spnorm(self.b, -1), 6)
-        assert_allclose(spnorm(self.b.astype(np.float64), 2), 7.348469228349534)
+        assert_allclose(spnorm(self.b.astype(mx.float64), 2), 7.348469228349534)
 
         # _multi_svd_norm is not implemented for sparse array
         assert_raises(NotImplementedError, spnorm, self.b, -2)
@@ -60,8 +60,8 @@ class TestNorm:
         for m, axis in ((self.b, None), (self.b, (0, 1)), (self.b.T, (1, 0))):
             assert_allclose(spnorm(m, axis=axis), 7.745966692414834)
             assert_allclose(spnorm(m, 'fro', axis=axis), 7.745966692414834)
-            assert_allclose(spnorm(m, np.inf, axis=axis), 9)
-            assert_allclose(spnorm(m, -np.inf, axis=axis), 2)
+            assert_allclose(spnorm(m, mx.inf, axis=axis), 9)
+            assert_allclose(spnorm(m, -mx.inf, axis=axis), 2)
             assert_allclose(spnorm(m, 1, axis=axis), 7)
             assert_allclose(spnorm(m, -1, axis=axis), 6)
 
@@ -70,7 +70,7 @@ class TestNorm:
         for m, a in (self.b, 0), (self.b.T, 1):
             for axis in a, (a, ), a-2, (a-2, ):
                 assert_allclose(spnorm(m, 1, axis=axis), [7, 6, 7])
-                assert_allclose(spnorm(m, np.inf, axis=axis), [4, 3, 4])
+                assert_allclose(spnorm(m, mx.inf, axis=axis), [4, 3, 4])
                 assert_allclose(spnorm(m, axis=axis), v)
                 assert_allclose(spnorm(m, ord=2, axis=axis), v)
                 assert_allclose(spnorm(m, ord=None, axis=axis), v)
@@ -101,7 +101,7 @@ class TestVsNumpyNorm:
             scipy.sparse.lil_array,
             )
     _test_matrices = (
-            (np.arange(9) - 4).reshape((3, 3)),
+            (mx.arange(9) - 4).reshape((3, 3)),
             [
                 [1, 2, 3],
                 [-1, 1, 4]],
@@ -116,8 +116,8 @@ class TestVsNumpyNorm:
                 S = sparse_type(M)
                 assert_allclose(spnorm(S), npnorm(M))
                 assert_allclose(spnorm(S, 'fro'), npnorm(M, 'fro'))
-                assert_allclose(spnorm(S, np.inf), npnorm(M, np.inf))
-                assert_allclose(spnorm(S, -np.inf), npnorm(M, -np.inf))
+                assert_allclose(spnorm(S, mx.inf), npnorm(M, mx.inf))
+                assert_allclose(spnorm(S, -mx.inf), npnorm(M, -mx.inf))
                 assert_allclose(spnorm(S, 1), npnorm(M, 1))
                 assert_allclose(spnorm(S, -1), npnorm(M, -1))
 
@@ -127,7 +127,7 @@ class TestVsNumpyNorm:
                 S = sparse_type(M)
                 for axis in None, (0, 1), (1, 0):
                     assert_allclose(spnorm(S, axis=axis), npnorm(M, axis=axis))
-                    for ord in 'fro', np.inf, -np.inf, 1, -1:
+                    for ord in 'fro', mx.inf, -mx.inf, 1, -1:
                         assert_allclose(spnorm(S, ord, axis=axis),
                                         npnorm(M, ord, axis=axis))
                 # Some numpy matrix norms are allergic to negative axes.
@@ -144,6 +144,6 @@ class TestVsNumpyNorm:
                 S = sparse_type(M)
                 for axis in (0, 1, -1, -2, (0, ), (1, ), (-1, ), (-2, )):
                     assert_allclose(spnorm(S, axis=axis), npnorm(M, axis=axis))
-                    for ord in None, 2, np.inf, -np.inf, 1, 0.5, 0.42:
+                    for ord in None, 2, mx.inf, -mx.inf, 1, 0.5, 0.42:
                         assert_allclose(spnorm(S, ord, axis=axis),
                                         npnorm(M, ord, axis=axis))

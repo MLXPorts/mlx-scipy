@@ -2,7 +2,7 @@ __all__ = ['splrep', 'splprep', 'splev', 'splint', 'sproot', 'spalde',
            'bisplrep', 'bisplev', 'insert', 'splder', 'splantider']
 
 
-import numpy as np
+import mlx.core as mx
 
 # These are in the API for fitpack even if not used in fitpack.py itself.
 from ._fitpack_impl import bisplrep, bisplev, dblint  # noqa: F401
@@ -133,10 +133,10 @@ def splprep(x, w=None, u=None, ub=None, ue=None, k=3, task=0, s=None, t=None,
     --------
     Generate a discretization of a limacon curve in the polar coordinates:
 
-    >>> import numpy as np
-    >>> phi = np.linspace(0, 2.*np.pi, 40)
-    >>> r = 0.5 + np.cos(phi)         # polar coords
-    >>> x, y = r * np.cos(phi), r * np.sin(phi)    # convert to cartesian
+    >>> import mlx.core as mx
+    >>> phi = mx.linspace(0, 2.*mx.pi, 40)
+    >>> r = 0.5 + mx.cos(phi)         # polar coords
+    >>> x, y = r * mx.cos(phi), r * mx.sin(phi)    # convert to cartesian
 
     And interpolate:
 
@@ -289,13 +289,13 @@ def splrep(x, y, w=None, xb=None, xe=None, k=3, task=0, s=None, t=None,
     Further examples are given in
     :ref:`in the tutorial <tutorial-interpolate_splXXX>`.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.interpolate import splev, splrep
-    >>> x = np.linspace(0, 10, 10)
-    >>> y = np.sin(x)
+    >>> x = mx.linspace(0, 10, 10)
+    >>> y = mx.sin(x)
     >>> spl = splrep(x, y)
-    >>> x2 = np.linspace(0, 10, 200)
+    >>> x2 = mx.linspace(0, 10, 200)
     >>> y2 = splev(x2, spl)
     >>> plt.plot(x, y, 'o', x2, y2)
     >>> plt.show()
@@ -344,7 +344,7 @@ def splev(x, tck, der=0, ext=0):
 
     Returns
     -------
-    y : ndarray or list of ndarrays
+    y : array or list of arrays
         An array of values representing the spline function evaluated at
         the points in `x`.  If `tck` was returned from `splprep`, then this
         is a list of arrays representing the curve in an N-D space.
@@ -419,7 +419,7 @@ def splint(a, b, tck, full_output=0):
     -------
     integral : float
         The resulting integral.
-    wrk : ndarray
+    wrk : array
         An array containing the integrals of the normalized B-splines
         defined on the set of knots.
         (Only returned if `full_output` is non-zero)
@@ -490,7 +490,7 @@ def sproot(tck, mest=10):
 
     Returns
     -------
-    zeros : ndarray
+    zeros : array
         An array giving the roots of the spline.
 
     See Also
@@ -582,7 +582,7 @@ def spalde(x, tck):
 
     Returns
     -------
-    results : {ndarray, list of ndarrays}
+    results : {array, list of arrays}
         An array (or a list of arrays) containing all derivatives
         up to order k inclusive for each point `x`, being the first element the 
         spline itself.
@@ -607,7 +607,7 @@ def spalde(x, tck):
     In this example, we will demonstrate that `spalde` is equivalent to
     calling `splev` and `splder`.
     
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.interpolate import BSpline, spalde, splder, splev
     
@@ -619,7 +619,7 @@ def spalde(x, tck):
     >>> # `BSpline` objects are preferred, except for spalde()
     >>> bspl = BSpline(tck[0], tck[1], tck[2])
     >>> # Generate extra points to get a smooth curve
-    >>> x = np.linspace(min(tck[0]), max(tck[0]), 100)
+    >>> x = mx.linspace(min(tck[0]), max(tck[0]), 100)
     
     Evaluate the curve and all derivatives
     
@@ -721,9 +721,9 @@ def insert(x, tck, m=1, per=0):
     You can insert knots into a B-spline.
 
     >>> from scipy.interpolate import splrep, insert
-    >>> import numpy as np
-    >>> x = np.linspace(0, 10, 5)
-    >>> y = np.sin(x)
+    >>> import mlx.core as mx
+    >>> x = mx.linspace(0, 10, 5)
+    >>> y = mx.sin(x)
     >>> tck = splrep(x, y)
     >>> tck[0]
     array([ 0.,  0.,  0.,  0.,  5., 10., 10., 10., 10.])
@@ -752,7 +752,7 @@ def insert(x, tck, m=1, per=0):
         t_, c_, k_ = _impl.insert(x, (t, c, k), m, per)
 
         # and roll the last axis back
-        c_ = np.asarray(c_)
+        c_ = mx.array(c_)
         c_ = c_.transpose((sh[-1],) + sh[:-1])
         return BSpline(t_, c_, k_)
     else:
@@ -800,9 +800,9 @@ def splder(tck, n=1):
     This can be used for finding maxima of a curve:
 
     >>> from scipy.interpolate import splrep, splder, sproot
-    >>> import numpy as np
-    >>> x = np.linspace(0, 10, 70)
-    >>> y = np.sin(x)
+    >>> import mlx.core as mx
+    >>> x = mx.linspace(0, 10, 70)
+    >>> y = mx.sin(x)
     >>> spl = splrep(x, y, k=4)
 
     Now, differentiate the spline and find the zeros of the
@@ -810,7 +810,7 @@ def splder(tck, n=1):
     fit an order 4 spline):
 
     >>> dspl = splder(spl)
-    >>> sproot(dspl) / np.pi
+    >>> sproot(dspl) / mx.pi
     array([ 0.50000001,  1.5       ,  2.49999998])
 
     This agrees well with roots :math:`\\pi/2 + n\\pi` of
@@ -866,9 +866,9 @@ def splantider(tck, n=1):
     Examples
     --------
     >>> from scipy.interpolate import splrep, splder, splantider, splev
-    >>> import numpy as np
-    >>> x = np.linspace(0, np.pi/2, 70)
-    >>> y = 1 / np.sqrt(1 - 0.8*np.sin(x)**2)
+    >>> import mlx.core as mx
+    >>> x = mx.linspace(0, mx.pi/2, 70)
+    >>> y = 1 / mx.sqrt(1 - 0.8*mx.sin(x)**2)
     >>> spl = splrep(x, y)
 
     The derivative is the inverse operation of the antiderivative,
@@ -880,7 +880,7 @@ def splantider(tck, n=1):
     Antiderivative can be used to evaluate definite integrals:
 
     >>> ispl = splantider(spl)
-    >>> splev(np.pi/2, ispl) - splev(0, ispl)
+    >>> splev(mx.pi/2, ispl) - splev(0, ispl)
     2.2572053588768486
 
     This is indeed an approximation to the complete elliptic integral

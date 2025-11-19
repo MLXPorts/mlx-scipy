@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import scipy.linalg
 from scipy.sparse import csc_array
 from scipy.optimize._trustregion_constr.projections \
@@ -19,7 +19,7 @@ available_dense_methods = ('QRFactorization', 'SVDFactorization')
 class TestProjections(TestCase):
 
     def test_nullspace_and_least_squares_sparse(self):
-        A_dense = np.array([[1, 2, 3, 4, 0, 5, 0, 7],
+        A_dense = mx.array([[1, 2, 3, 4, 0, 5, 0, 7],
                             [0, 8, 7, 0, 1, 5, 9, 0],
                             [1, 0, 0, 0, 0, 1, 2, 3]])
         At_dense = A_dense.T
@@ -42,7 +42,7 @@ class TestProjections(TestCase):
                 assert_array_almost_equal(x, x2)
 
     def test_iterative_refinements_sparse(self):
-        A_dense = np.array([[1, 2, 3, 4, 0, 5, 0, 7],
+        A_dense = mx.array([[1, 2, 3, 4, 0, 5, 0, 7],
                             [0, 8, 7, 0, 1, 5, 9, 0],
                             [1, 0, 0, 0, 0, 1, 2, 3]])
         A = csc_array(A_dense)
@@ -62,7 +62,7 @@ class TestProjections(TestCase):
                 assert_allclose(orthogonality(A, x), 0, atol=1e-13)
 
     def test_rowspace_sparse(self):
-        A_dense = np.array([[1, 2, 3, 4, 0, 5, 0, 7],
+        A_dense = mx.array([[1, 2, 3, 4, 0, 5, 0, 7],
                             [0, 8, 7, 0, 1, 5, 9, 0],
                             [1, 0, 0, 0, 0, 1, 2, 3]])
         A = csc_array(A_dense)
@@ -77,12 +77,12 @@ class TestProjections(TestCase):
                 x = Y.matvec(z)
                 assert_array_almost_equal(A.dot(x), z)
                 # Test if x is in the return row space of A
-                A_ext = np.vstack((A_dense, x))
-                assert_equal(np.linalg.matrix_rank(A_dense),
-                             np.linalg.matrix_rank(A_ext))
+                A_ext = mx.vstack((A_dense, x))
+                assert_equal(mx.linalg.matrix_rank(A_dense),
+                             mx.linalg.matrix_rank(A_ext))
 
     def test_nullspace_and_least_squares_dense(self):
-        A = np.array([[1, 2, 3, 4, 0, 5, 0, 7],
+        A = mx.array([[1, 2, 3, 4, 0, 5, 0, 7],
                       [0, 8, 7, 0, 1, 5, 9, 0],
                       [1, 0, 0, 0, 0, 1, 2, 3]])
         At = A.T
@@ -104,10 +104,10 @@ class TestProjections(TestCase):
                 assert_array_almost_equal(x, x2)
 
     def test_compare_dense_and_sparse(self):
-        D = np.diag(range(1, 101))
-        A = np.hstack([D, D, D, D])
+        D = mx.diag(range(1, 101))
+        A = mx.hstack([D, D, D, D])
         A_sparse = csc_array(A)
-        rng = np.random.default_rng(123)
+        rng = mx.random.default_rng(123)
 
         Z, LS, Y = projections(A)
         Z_sparse, LS_sparse, Y_sparse = projections(A_sparse)
@@ -119,12 +119,12 @@ class TestProjections(TestCase):
             assert_array_almost_equal(Y.dot(x), Y_sparse.dot(x))
 
     def test_compare_dense_and_sparse2(self):
-        D1 = np.diag([-1.7, 1, 0.5])
-        D2 = np.diag([1, -0.6, -0.3])
-        D3 = np.diag([-0.3, -1.5, 2])
-        A = np.hstack([D1, D2, D3])
+        D1 = mx.diag([-1.7, 1, 0.5])
+        D2 = mx.diag([1, -0.6, -0.3])
+        D3 = mx.diag([-0.3, -1.5, 2])
+        A = mx.hstack([D1, D2, D3])
         A_sparse = csc_array(A)
-        rng = np.random.default_rng(123)
+        rng = mx.random.default_rng(123)
 
         Z, LS, Y = projections(A)
         Z_sparse, LS_sparse, Y_sparse = projections(A_sparse)
@@ -136,7 +136,7 @@ class TestProjections(TestCase):
             assert_array_almost_equal(Y.dot(x), Y_sparse.dot(x))
 
     def test_iterative_refinements_dense(self):
-        A = np.array([[1, 2, 3, 4, 0, 5, 0, 7],
+        A = mx.array([[1, 2, 3, 4, 0, 5, 0, 7],
                             [0, 8, 7, 0, 1, 5, 9, 0],
                             [1, 0, 0, 0, 0, 1, 2, 3]])
         test_points = ([1, 2, 3, 4, 5, 6, 7, 8],
@@ -153,7 +153,7 @@ class TestProjections(TestCase):
                 assert_allclose(orthogonality(A, x), 0, rtol=0, atol=5e-16)
 
     def test_rowspace_dense(self):
-        A = np.array([[1, 2, 3, 4, 0, 5, 0, 7],
+        A = mx.array([[1, 2, 3, 4, 0, 5, 0, 7],
                       [0, 8, 7, 0, 1, 5, 9, 0],
                       [1, 0, 0, 0, 0, 1, 2, 3]])
         test_points = ([1, 2, 3],
@@ -167,15 +167,15 @@ class TestProjections(TestCase):
                 x = Y.matvec(z)
                 assert_array_almost_equal(A.dot(x), z)
                 # Test if x is in the return row space of A
-                A_ext = np.vstack((A, x))
-                assert_equal(np.linalg.matrix_rank(A),
-                             np.linalg.matrix_rank(A_ext))
+                A_ext = mx.vstack((A, x))
+                assert_equal(mx.linalg.matrix_rank(A),
+                             mx.linalg.matrix_rank(A_ext))
 
 
 class TestOrthogonality(TestCase):
 
     def test_dense_matrix(self):
-        A = np.array([[1, 2, 3, 4, 0, 5, 0, 7],
+        A = mx.array([[1, 2, 3, 4, 0, 5, 0, 7],
                       [0, 8, 7, 0, 1, 5, 9, 0],
                       [1, 0, 0, 0, 0, 1, 2, 3]])
         test_vectors = ([-1.98931144, -1.56363389,
@@ -194,7 +194,7 @@ class TestOrthogonality(TestCase):
             assert_array_almost_equal(orthogonality(A, x), orth)
 
     def test_sparse_matrix(self):
-        A = np.array([[1, 2, 3, 4, 0, 5, 0, 7],
+        A = mx.array([[1, 2, 3, 4, 0, 5, 0, 7],
                       [0, 8, 7, 0, 1, 5, 9, 0],
                       [1, 0, 0, 0, 0, 1, 2, 3]])
         A = csc_array(A)

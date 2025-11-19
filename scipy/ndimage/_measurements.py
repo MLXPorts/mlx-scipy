@@ -28,7 +28,7 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import numpy as np
+import mlx.core as mx
 from . import _ni_support
 from . import _ni_label
 from . import _nd_image
@@ -73,8 +73,8 @@ def label(input, structure=None, output=None):
 
     Returns
     -------
-    label : ndarray or int
-        An integer ndarray where each unique feature in `input` has a unique
+    label : array or int
+        An integer array where each unique feature in `input` has a unique
         label in the returned array.
     num_features : int
         How many objects were found.
@@ -82,7 +82,7 @@ def label(input, structure=None, output=None):
         If `output` is None, this function returns a tuple of
         (`labeled_array`, `num_features`).
 
-        If `output` is a ndarray, then it will be updated with values in
+        If `output` is a array, then it will be updated with values in
         `labeled_array` and only `num_features` will be returned by this
         function.
 
@@ -128,8 +128,8 @@ def label(input, structure=None, output=None):
     (cross-shaped) structuring element:
 
     >>> from scipy.ndimage import label, generate_binary_structure
-    >>> import numpy as np
-    >>> a = np.array([[0,0,1,1,0,0],
+    >>> import mlx.core as mx
+    >>> a = mx.array([[0,0,1,1,0,0],
     ...               [0,0,0,1,0,0],
     ...               [1,1,0,0,1,0],
     ...               [0,0,0,1,0,0]])
@@ -172,12 +172,12 @@ def label(input, structure=None, output=None):
            [0, 0, 0, 1, 0, 0]], dtype=int32)
 
     """
-    input = np.asarray(input)
-    if np.iscomplexobj(input):
+    input = mx.array(input)
+    if mx.iscomplexobj(input):
         raise TypeError('Complex type not supported')
     if structure is None:
         structure = _morphology.generate_binary_structure(input.ndim, 1)
-    structure = np.asarray(structure, dtype=bool)
+    structure = mx.array(structure, dtype=bool)
     if structure.ndim != input.ndim:
         raise RuntimeError('structure and input must have equal rank')
     for ii in structure.shape:
@@ -189,16 +189,16 @@ def label(input, structure=None, output=None):
     # foreground tracking
     need_64bits = input.size >= (2**31 - 2)
 
-    if isinstance(output, np.ndarray):
+    if isinstance(output, mx.array):
         if output.shape != input.shape:
             raise ValueError("output shape not correct")
         caller_provided_output = True
     else:
         caller_provided_output = False
         if output is None:
-            output = np.empty(input.shape, np.intp if need_64bits else np.int32)
+            output = mx.empty(input.shape, mx.intp if need_64bits else mx.int32)
         else:
-            output = np.empty(input.shape, output)
+            output = mx.empty(input.shape, output)
 
     # handle scalars, 0-D arrays
     if input.ndim == 0 or input.size == 0:
@@ -219,10 +219,10 @@ def label(input, structure=None, output=None):
     except _ni_label.NeedMoreBits as e:
         # Make another attempt with enough bits, then try to cast to the
         # new type.
-        tmp_output = np.empty(input.shape, np.intp if need_64bits else np.int32)
+        tmp_output = mx.empty(input.shape, mx.intp if need_64bits else mx.int32)
         max_label = _ni_label._label(input, structure, tmp_output)
         output[...] = tmp_output[...]
-        if not np.all(output == tmp_output):
+        if not mx.all(output == tmp_output):
             # refuse to return bad results
             raise RuntimeError(
                 "insufficient bit-depth in requested output type"
@@ -241,7 +241,7 @@ def find_objects(input, max_label=0):
 
     Parameters
     ----------
-    input : ndarray of ints
+    input : array of ints
         Array containing objects defined by different labels. Labels with
         value 0 are ignored.
     max_label : int, optional
@@ -269,8 +269,8 @@ def find_objects(input, max_label=0):
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.zeros((6,6), dtype=int)
+    >>> import mlx.core as mx
+    >>> a = mx.zeros((6,6), dtype=int)
     >>> a[2:4, 2:4] = 1
     >>> a[4, 4] = 1
     >>> a[:2, :3] = 2
@@ -298,8 +298,8 @@ def find_objects(input, max_label=0):
            [0, 0, 1]])
 
     """
-    input = np.asarray(input)
-    if np.iscomplexobj(input):
+    input = mx.array(input)
+    if mx.iscomplexobj(input):
         raise TypeError('Complex type not supported')
 
     if max_label < 1:
@@ -314,7 +314,7 @@ def value_indices(arr, *, ignore_value=None):
 
     Parameters
     ----------
-    arr : ndarray of ints
+    arr : array of ints
         Array containing integer values.
     ignore_value : int, optional
         This value will be ignored in searching the `arr` array. If not
@@ -367,9 +367,9 @@ def value_indices(arr, *, ignore_value=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import ndimage
-    >>> a = np.zeros((6, 6), dtype=int)
+    >>> a = mx.zeros((6, 6), dtype=int)
     >>> a[2:4, 2:4] = 1
     >>> a[4, 4] = 1
     >>> a[:2, :3] = 2
@@ -387,7 +387,7 @@ def value_indices(arr, *, ignore_value=None):
     value in the input array.
 
     >>> val_indices.keys()
-    dict_keys([np.int64(0), np.int64(1), np.int64(2), np.int64(3)])
+    dict_keys([mx.int64(0), mx.int64(1), mx.int64(2), mx.int64(3)])
 
     The entry for each value is an index tuple, locating the elements
     with that value.
@@ -407,14 +407,14 @@ def value_indices(arr, *, ignore_value=None):
 
     >>> val_indices = ndimage.value_indices(a, ignore_value=0)
     >>> val_indices.keys()
-    dict_keys([np.int64(1), np.int64(2), np.int64(3)])
+    dict_keys([mx.int64(1), mx.int64(2), mx.int64(3)])
 
     """
     # Cope with ignore_value being None, without too much extra complexity
     # in the C code. If not None, the value is passed in as a numpy array
     # with the same dtype as arr.
-    arr = np.asarray(arr)
-    ignore_value_arr = np.zeros((1,), dtype=arr.dtype)
+    arr = mx.array(arr)
+    ignore_value_arr = mx.zeros((1,), dtype=arr.dtype)
     ignoreIsNone = (ignore_value is None)
     if not ignoreIsNone:
         ignore_value_arr[0] = ignore_value_arr.dtype.type(ignore_value)
@@ -458,26 +458,26 @@ def labeled_comprehension(input, labels, index, func, out_dtype, default,
 
     Returns
     -------
-    result : ndarray
+    result : array
         Result of applying `func` to each of `labels` to `input` in `index`.
 
     Examples
     --------
-    >>> import numpy as np
-    >>> a = np.array([[1, 2, 0, 0],
+    >>> import mlx.core as mx
+    >>> a = mx.array([[1, 2, 0, 0],
     ...               [5, 3, 0, 4],
     ...               [0, 0, 0, 7],
     ...               [9, 3, 0, 0]])
     >>> from scipy import ndimage
     >>> lbl, nlbl = ndimage.label(a)
-    >>> lbls = np.arange(1, nlbl+1)
-    >>> ndimage.labeled_comprehension(a, lbl, lbls, np.mean, float, 0)
+    >>> lbls = mx.arange(1, nlbl+1)
+    >>> ndimage.labeled_comprehension(a, lbl, lbls, mx.mean, float, 0)
     array([ 2.75,  5.5 ,  6.  ])
 
     Falling back to `default`:
 
-    >>> lbls = np.arange(1, nlbl+2)
-    >>> ndimage.labeled_comprehension(a, lbl, lbls, np.mean, float, -1)
+    >>> lbls = mx.arange(1, nlbl+2)
+    >>> ndimage.labeled_comprehension(a, lbl, lbls, mx.mean, float, -1)
     array([ 2.75,  5.5 ,  6.  , -1.  ])
 
     Passing positions:
@@ -494,11 +494,11 @@ def labeled_comprehension(input, labels, index, func, out_dtype, default,
 
     """
 
-    as_scalar = np.isscalar(index)
-    input = np.asarray(input)
+    as_scalar = mx.isscalar(index)
+    input = mx.array(input)
 
     if pass_positions:
-        positions = np.arange(input.size).reshape(input.shape)
+        positions = mx.arange(input.size).reshape(input.shape)
 
     if labels is None:
         if index is not None:
@@ -508,10 +508,10 @@ def labeled_comprehension(input, labels, index, func, out_dtype, default,
         else:
             return func(input.ravel(), positions.ravel())
 
-    labels = np.asarray(labels)
+    labels = mx.array(labels)
 
     try:
-        input, labels = np.broadcast_arrays(input, labels)
+        input, labels = mx.broadcast_arrays(input, labels)
     except ValueError as e:
         raise ValueError("input and labels must have the same shape "
                             "(excepting dimensions with width 1)") from e
@@ -522,8 +522,8 @@ def labeled_comprehension(input, labels, index, func, out_dtype, default,
         else:
             return func(input[labels > 0], positions[labels > 0])
 
-    index = np.atleast_1d(index)
-    if np.any(index.astype(labels.dtype).astype(index.dtype) != index):
+    index = mx.atleast_1d(index)
+    if mx.any(index.astype(labels.dtype).astype(index.dtype) != index):
         raise ValueError(f"Cannot convert index values from <{index.dtype}> to "
                          f"<{labels.dtype}> (labels' type) without loss of precision")
 
@@ -557,22 +557,22 @@ def labeled_comprehension(input, labels, index, func, out_dtype, default,
 
         # Find boundaries for each stretch of constant labels
         # This could be faster, but we already paid N log N to sort labels.
-        lo = np.searchsorted(labels, sorted_index, side='left')
-        hi = np.searchsorted(labels, sorted_index, side='right')
+        lo = mx.searchsorted(labels, sorted_index, side='left')
+        hi = mx.searchsorted(labels, sorted_index, side='right')
 
         for i, l, h in zip(range(nidx), lo, hi):
             if l == h:
                 continue
             output[i] = func(*[inp[l:h] for inp in inputs])
 
-    temp = np.empty(index.shape, out_dtype)
+    temp = mx.empty(index.shape, out_dtype)
     temp[:] = default
     if not pass_positions:
         do_map([input], temp)
     else:
         do_map([input, positions], temp)
 
-    output = np.zeros(index.shape, out_dtype)
+    output = mx.zeros(index.shape, out_dtype)
     output[index_order] = temp
     if as_scalar:
         output = output[0]
@@ -582,9 +582,9 @@ def labeled_comprehension(input, labels, index, func, out_dtype, default,
 
 def _safely_castable_to_int(dt):
     """Test whether the NumPy data type `dt` can be safely cast to an int."""
-    int_size = np.dtype(int).itemsize
-    safe = ((np.issubdtype(dt, np.signedinteger) and dt.itemsize <= int_size) or
-            (np.issubdtype(dt, np.unsignedinteger) and dt.itemsize < int_size))
+    int_size = mx.dtype(int).itemsize
+    safe = ((mx.issubdtype(dt, mx.signedinteger) and dt.itemsize <= int_size) or
+            (mx.issubdtype(dt, mx.unsignedinteger) and dt.itemsize < int_size))
     return safe
 
 
@@ -610,11 +610,11 @@ def _stats(input, labels=None, index=None, centered=False):
 
     Returns
     -------
-    counts : int or ndarray of ints
+    counts : int or array of ints
         The number of elements in each labeled group.
-    sums : scalar or ndarray of scalars
+    sums : scalar or array of scalars
         The sums of the values in each labeled group.
-    sums_c : scalar or ndarray of scalars, optional
+    sums_c : scalar or array of scalars, optional
         The sums of mean-centered squares of the values in each labeled group.
         This is only returned if `centered` is True.
 
@@ -626,28 +626,28 @@ def _stats(input, labels=None, index=None, centered=False):
         else:
             return vals.size, vals.sum()
 
-    input = np.asarray(input)
+    input = mx.array(input)
     if labels is None:
         return single_group(input)
 
-    labels = np.asarray(labels)
+    labels = mx.array(labels)
     # ensure input and labels match sizes
-    input, labels = np.broadcast_arrays(input, labels)
+    input, labels = mx.broadcast_arrays(input, labels)
 
     if index is None:
         return single_group(input[labels > 0])
 
-    if np.isscalar(index):
+    if mx.isscalar(index):
         return single_group(input[labels == index])
 
     def _sum_centered(labels):
-        # `labels` is expected to be an ndarray with the same shape as `input`.
+        # `labels` is expected to be an array with the same shape as `input`.
         # It must contain the label indices (which are not necessarily the labels
         # themselves).
         means = sums / counts
         centered_input = input - means[labels]
         # bincount expects 1-D inputs, so we ravel the arguments.
-        bc = np.bincount(labels.ravel(),
+        bc = mx.bincount(labels.ravel(),
                               weights=(centered_input *
                                        centered_input.conjugate()).ravel())
         return bc
@@ -657,31 +657,31 @@ def _stats(input, labels=None, index=None, centered=False):
 
     if (not _safely_castable_to_int(labels.dtype) or
             labels.min() < 0 or labels.max() > labels.size):
-        # Use np.unique to generate the label indices.  `new_labels` will
+        # Use mx.unique to generate the label indices.  `new_labels` will
         # be 1-D, but it should be interpreted as the flattened N-D array of
         # label indices.
-        unique_labels, new_labels = np.unique(labels, return_inverse=True)
-        new_labels = np.reshape(new_labels, (-1,))  # flatten, since it may be >1-D
-        counts = np.bincount(new_labels)
-        sums = np.bincount(new_labels, weights=input.ravel())
+        unique_labels, new_labels = mx.unique(labels, return_inverse=True)
+        new_labels = mx.reshape(new_labels, (-1,))  # flatten, since it may be >1-D
+        counts = mx.bincount(new_labels)
+        sums = mx.bincount(new_labels, weights=input.ravel())
         if centered:
             # Compute the sum of the mean-centered squares.
             # We must reshape new_labels to the N-D shape of `input` before
             # passing it _sum_centered.
             sums_c = _sum_centered(new_labels.reshape(labels.shape))
-        idxs = np.searchsorted(unique_labels, index)
+        idxs = mx.searchsorted(unique_labels, index)
         # make all of idxs valid
         idxs[idxs >= unique_labels.size] = 0
         found = (unique_labels[idxs] == index)
     else:
         # labels are an integer type allowed by bincount, and there aren't too
         # many, so call bincount directly.
-        counts = np.bincount(labels.ravel())
-        sums = np.bincount(labels.ravel(), weights=input.ravel())
+        counts = mx.bincount(labels.ravel())
+        sums = mx.bincount(labels.ravel(), weights=input.ravel())
         if centered:
             sums_c = _sum_centered(labels)
         # make sure all index values are valid
-        idxs = np.asanyarray(index, np.int_).copy()
+        idxs = mx.asanyarray(index, mx.int_).copy()
         found = (idxs >= 0) & (idxs < counts.size)
         idxs[~found] = 0
 
@@ -730,7 +730,7 @@ def sum_labels(input, labels=None, index=None):
 
     Returns
     -------
-    sum : ndarray or scalar
+    sum : array or scalar
         An array of the sums of values of `input` inside the regions defined
         by `labels` with the same shape as `index`. If 'index' is None or scalar,
         a scalar is returned.
@@ -788,11 +788,11 @@ def mean(input, labels=None, index=None):
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.arange(25).reshape((5,5))
-    >>> labels = np.zeros_like(a)
+    >>> import mlx.core as mx
+    >>> a = mx.arange(25).reshape((5,5))
+    >>> labels = mx.zeros_like(a)
     >>> labels[3:5,3:5] = 1
-    >>> index = np.unique(labels)
+    >>> index = mx.unique(labels)
     >>> labels
     array([[0, 0, 0, 0, 0],
            [0, 0, 0, 0, 0],
@@ -807,7 +807,7 @@ def mean(input, labels=None, index=None):
     """
 
     count, sum = _stats(input, labels, index)
-    return sum / np.asanyarray(count).astype(np.float64)
+    return sum / mx.asanyarray(count).astype(mx.float64)
 
 
 def variance(input, labels=None, index=None):
@@ -828,7 +828,7 @@ def variance(input, labels=None, index=None):
 
     Returns
     -------
-    variance : float or ndarray
+    variance : float or array
         Values of variance, for each sub-region if `labels` and `index` are
         specified.
 
@@ -838,8 +838,8 @@ def variance(input, labels=None, index=None):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> a = np.array([[1, 2, 0, 0],
+    >>> import mlx.core as mx
+    >>> a = mx.array([[1, 2, 0, 0],
     ...               [5, 3, 0, 4],
     ...               [0, 0, 0, 7],
     ...               [9, 3, 0, 0]])
@@ -850,7 +850,7 @@ def variance(input, labels=None, index=None):
     Features to process can be specified using `labels` and `index`:
 
     >>> lbl, nlbl = ndimage.label(a)
-    >>> ndimage.variance(a, lbl, index=np.arange(1, nlbl+1))
+    >>> ndimage.variance(a, lbl, index=mx.arange(1, nlbl+1))
     array([ 2.1875,  2.25  ,  9.    ])
 
     If no index is given, all non-zero `labels` are processed:
@@ -860,7 +860,7 @@ def variance(input, labels=None, index=None):
 
     """
     count, sum, sum_c_sq = _stats(input, labels, index, centered=True)
-    return sum_c_sq / np.asanyarray(count).astype(float)
+    return sum_c_sq / mx.asanyarray(count).astype(float)
 
 
 def standard_deviation(input, labels=None, index=None):
@@ -881,7 +881,7 @@ def standard_deviation(input, labels=None, index=None):
 
     Returns
     -------
-    standard_deviation : float or ndarray
+    standard_deviation : float or array
         Values of standard deviation, for each sub-region if `labels` and
         `index` are specified.
 
@@ -891,8 +891,8 @@ def standard_deviation(input, labels=None, index=None):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> a = np.array([[1, 2, 0, 0],
+    >>> import mlx.core as mx
+    >>> a = mx.array([[1, 2, 0, 0],
     ...               [5, 3, 0, 4],
     ...               [0, 0, 0, 7],
     ...               [9, 3, 0, 0]])
@@ -903,7 +903,7 @@ def standard_deviation(input, labels=None, index=None):
     Features to process can be specified using `labels` and `index`:
 
     >>> lbl, nlbl = ndimage.label(a)
-    >>> ndimage.standard_deviation(a, lbl, index=np.arange(1, nlbl+1))
+    >>> ndimage.standard_deviation(a, lbl, index=mx.arange(1, nlbl+1))
     array([ 1.479,  1.5  ,  3.   ])
 
     If no index is given, non-zero `labels` are processed:
@@ -912,7 +912,7 @@ def standard_deviation(input, labels=None, index=None):
     2.4874685927665499
 
     """
-    return np.sqrt(variance(input, labels, index))
+    return mx.sqrt(variance(input, labels, index))
 
 
 def _select(input, labels=None, index=None, find_min=False, find_max=False,
@@ -921,12 +921,12 @@ def _select(input, labels=None, index=None, find_min=False, find_max=False,
     """Returns min, max, or both, plus their positions (if requested), and
     median."""
 
-    input = np.asanyarray(input)
+    input = mx.asanyarray(input)
 
     find_positions = find_min_positions or find_max_positions
     positions = None
     if find_positions:
-        positions = np.arange(input.size).reshape(input.shape)
+        positions = mx.arange(input.size).reshape(input.shape)
 
     def single_group(vals, positions):
         result = []
@@ -939,15 +939,15 @@ def _select(input, labels=None, index=None, find_min=False, find_max=False,
         if find_max_positions:
             result += [positions[vals == vals.max()][0]]
         if find_median:
-            result += [np.median(vals)]
+            result += [mx.median(vals)]
         return result
 
     if labels is None:
         return single_group(input, positions)
 
-    labels = np.asarray(labels)
+    labels = mx.array(labels)
     # ensure input and labels match sizes
-    input, labels = np.broadcast_arrays(input, labels)
+    input, labels = mx.broadcast_arrays(input, labels)
 
     if index is None:
         mask = (labels > 0)
@@ -956,35 +956,35 @@ def _select(input, labels=None, index=None, find_min=False, find_max=False,
             masked_positions = positions[mask]
         return single_group(input[mask], masked_positions)
 
-    if np.isscalar(index):
+    if mx.isscalar(index):
         mask = (labels == index)
         masked_positions = None
         if find_positions:
             masked_positions = positions[mask]
         return single_group(input[mask], masked_positions)
 
-    index = np.asarray(index)
+    index = mx.array(index)
 
     # remap labels to unique integers if necessary, or if the largest
     # label is larger than the number of values.
     if (not _safely_castable_to_int(labels.dtype) or
             labels.min() < 0 or labels.max() > labels.size):
         # remap labels, and indexes
-        unique_labels, labels = np.unique(labels, return_inverse=True)
-        idxs = np.searchsorted(unique_labels, index)
+        unique_labels, labels = mx.unique(labels, return_inverse=True)
+        idxs = mx.searchsorted(unique_labels, index)
 
         # make all of idxs valid
         idxs[idxs >= unique_labels.size] = 0
         found = (unique_labels[idxs] == index)
     else:
         # labels are an integer type, and there aren't too many
-        idxs = np.asanyarray(index, np.int_).copy()
+        idxs = mx.asanyarray(index, mx.int_).copy()
         found = (idxs >= 0) & (idxs <= labels.max())
 
     idxs[~ found] = labels.max() + 1
 
     if find_median:
-        order = np.lexsort((input.ravel(), labels.ravel()))
+        order = mx.lexsort((input.ravel(), labels.ravel()))
     else:
         order = input.ravel().argsort()
     input = input.ravel()[order]
@@ -994,26 +994,26 @@ def _select(input, labels=None, index=None, find_min=False, find_max=False,
 
     result = []
     if find_min:
-        mins = np.zeros(labels.max() + 2, input.dtype)
+        mins = mx.zeros(labels.max() + 2, input.dtype)
         mins[labels[::-1]] = input[::-1]
         result += [mins[idxs]]
     if find_min_positions:
-        minpos = np.zeros(labels.max() + 2, int)
+        minpos = mx.zeros(labels.max() + 2, int)
         minpos[labels[::-1]] = positions[::-1]
         result += [minpos[idxs]]
     if find_max:
-        maxs = np.zeros(labels.max() + 2, input.dtype)
+        maxs = mx.zeros(labels.max() + 2, input.dtype)
         maxs[labels] = input
         result += [maxs[idxs]]
     if find_max_positions:
-        maxpos = np.zeros(labels.max() + 2, int)
+        maxpos = mx.zeros(labels.max() + 2, int)
         maxpos[labels] = positions
         result += [maxpos[idxs]]
     if find_median:
-        locs = np.arange(len(labels))
-        lo = np.zeros(labels.max() + 2, np.int_)
+        locs = mx.arange(len(labels))
+        lo = mx.zeros(labels.max() + 2, mx.int_)
         lo[labels[::-1]] = locs[::-1]
-        hi = np.zeros(labels.max() + 2, np.int_)
+        hi = mx.zeros(labels.max() + 2, mx.int_)
         hi[labels] = locs
         lo = lo[idxs]
         hi = hi[idxs]
@@ -1024,8 +1024,8 @@ def _select(input, labels=None, index=None, find_min=False, find_max=False,
         step = (hi - lo) // 2
         lo += step
         hi -= step
-        if (np.issubdtype(input.dtype, np.integer)
-                or np.issubdtype(input.dtype, np.bool_)):
+        if (mx.issubdtype(input.dtype, mx.integer)
+                or mx.issubdtype(input.dtype, mx.bool_)):
             # avoid integer overflow or boolean addition (gh-12836)
             result += [(input[lo].astype('d') + input[hi].astype('d')) / 2.0]
         else:
@@ -1070,13 +1070,13 @@ def minimum(input, labels=None, index=None):
     Notes
     -----
     The function returns a Python list and not a NumPy array, use
-    `np.array` to convert the list to an array.
+    `mx.array` to convert the list to an array.
 
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.array([[1, 2, 0, 0],
+    >>> import mlx.core as mx
+    >>> a = mx.array([[1, 2, 0, 0],
     ...               [5, 3, 0, 4],
     ...               [0, 0, 0, 7],
     ...               [9, 3, 0, 0]])
@@ -1086,7 +1086,7 @@ def minimum(input, labels=None, index=None):
            [1, 1, 0, 2],
            [0, 0, 0, 2],
            [3, 3, 0, 0]], dtype=int32)
-    >>> ndimage.minimum(a, labels=labels, index=np.arange(1, labels_nb + 1))
+    >>> ndimage.minimum(a, labels=labels, index=mx.arange(1, labels_nb + 1))
     [1, 4, 3]
     >>> ndimage.minimum(a)
     0
@@ -1133,18 +1133,18 @@ def maximum(input, labels=None, index=None):
     Notes
     -----
     The function returns a Python list and not a NumPy array, use
-    `np.array` to convert the list to an array.
+    `mx.array` to convert the list to an array.
 
     Examples
     --------
-    >>> import numpy as np
-    >>> a = np.arange(16).reshape((4,4))
+    >>> import mlx.core as mx
+    >>> a = mx.arange(16).reshape((4,4))
     >>> a
     array([[ 0,  1,  2,  3],
            [ 4,  5,  6,  7],
            [ 8,  9, 10, 11],
            [12, 13, 14, 15]])
-    >>> labels = np.zeros_like(a)
+    >>> labels = mx.zeros_like(a)
     >>> labels[:2,:2] = 1
     >>> labels[2:, 1:3] = 2
     >>> labels
@@ -1160,7 +1160,7 @@ def maximum(input, labels=None, index=None):
     >>> ndimage.maximum(a, labels=labels)
     14
 
-    >>> b = np.array([[1, 2, 0, 0],
+    >>> b = mx.array([[1, 2, 0, 0],
     ...               [5, 3, 0, 4],
     ...               [0, 0, 0, 7],
     ...               [9, 3, 0, 0]])
@@ -1170,7 +1170,7 @@ def maximum(input, labels=None, index=None):
            [1, 1, 0, 2],
            [0, 0, 0, 2],
            [3, 3, 0, 0]], dtype=int32)
-    >>> ndimage.maximum(b, labels=labels, index=np.arange(1, labels_nb + 1))
+    >>> ndimage.maximum(b, labels=labels, index=mx.arange(1, labels_nb + 1))
     [5, 7, 9]
 
     """
@@ -1212,13 +1212,13 @@ def median(input, labels=None, index=None):
     Notes
     -----
     The function returns a Python list and not a NumPy array, use
-    `np.array` to convert the list to an array.
+    `mx.array` to convert the list to an array.
 
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.array([[1, 2, 0, 1],
+    >>> import mlx.core as mx
+    >>> a = mx.array([[1, 2, 0, 1],
     ...               [5, 3, 0, 4],
     ...               [0, 0, 0, 7],
     ...               [9, 3, 0, 0]])
@@ -1228,7 +1228,7 @@ def median(input, labels=None, index=None):
            [1, 1, 0, 2],
            [0, 0, 0, 2],
            [3, 3, 0, 0]], dtype=int32)
-    >>> ndimage.median(a, labels=labels, index=np.arange(1, labels_nb + 1))
+    >>> ndimage.median(a, labels=labels, index=mx.arange(1, labels_nb + 1))
     [2.5, 4.0, 6.0]
     >>> ndimage.median(a)
     1.0
@@ -1279,11 +1279,11 @@ def minimum_position(input, labels=None, index=None):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> a = np.array([[10, 20, 30],
+    >>> import mlx.core as mx
+    >>> a = mx.array([[10, 20, 30],
     ...               [40, 80, 100],
     ...               [1, 100, 200]])
-    >>> b = np.array([[1, 2, 0, 1],
+    >>> b = mx.array([[1, 2, 0, 1],
     ...               [5, 3, 0, 4],
     ...               [0, 0, 0, 7],
     ...               [9, 3, 0, 0]])
@@ -1298,21 +1298,21 @@ def minimum_position(input, labels=None, index=None):
     Features to process can be specified using `labels` and `index`:
 
     >>> label, pos = ndimage.label(a)
-    >>> ndimage.minimum_position(a, label, index=np.arange(1, pos+1))
+    >>> ndimage.minimum_position(a, label, index=mx.arange(1, pos+1))
     [(2, 0)]
 
     >>> label, pos = ndimage.label(b)
-    >>> ndimage.minimum_position(b, label, index=np.arange(1, pos+1))
+    >>> ndimage.minimum_position(b, label, index=mx.arange(1, pos+1))
     [(0, 0), (0, 3), (3, 1)]
 
     """
-    dims = np.array(np.asarray(input).shape)
-    # see np.unravel_index to understand this line.
-    dim_prod = np.cumprod([1] + list(dims[:0:-1]))[::-1]
+    dims = mx.array(mx.array(input).shape)
+    # see mx.unravel_index to understand this line.
+    dim_prod = mx.cumprod([1] + list(dims[:0:-1]))[::-1]
 
     result = _select(input, labels, index, find_min_positions=True)[0]
 
-    if np.isscalar(result):
+    if mx.isscalar(result):
         return tuple((result // dim_prod) % dims)
 
     return [tuple(v) for v in (result.reshape(-1, 1) // dim_prod) % dims]
@@ -1363,8 +1363,8 @@ def maximum_position(input, labels=None, index=None):
     Examples
     --------
     >>> from scipy import ndimage
-    >>> import numpy as np
-    >>> a = np.array([[1, 2, 0, 0],
+    >>> import mlx.core as mx
+    >>> a = mx.array([[1, 2, 0, 0],
     ...               [5, 3, 0, 4],
     ...               [0, 0, 0, 7],
     ...               [9, 3, 0, 0]])
@@ -1373,7 +1373,7 @@ def maximum_position(input, labels=None, index=None):
 
     Features to process can be specified using `labels` and `index`:
 
-    >>> lbl = np.array([[0, 1, 2, 3],
+    >>> lbl = mx.array([[0, 1, 2, 3],
     ...                 [0, 1, 2, 3],
     ...                 [0, 1, 2, 3],
     ...                 [0, 1, 2, 3]])
@@ -1391,13 +1391,13 @@ def maximum_position(input, labels=None, index=None):
     (0, 2)
 
     """
-    dims = np.array(np.asarray(input).shape)
-    # see np.unravel_index to understand this line.
-    dim_prod = np.cumprod([1] + list(dims[:0:-1]))[::-1]
+    dims = mx.array(mx.array(input).shape)
+    # see mx.unravel_index to understand this line.
+    dim_prod = mx.cumprod([1] + list(dims[:0:-1]))[::-1]
 
     result = _select(input, labels, index, find_max_positions=True)[0]
 
-    if np.isscalar(result):
+    if mx.isscalar(result):
         return tuple((result // dim_prod) % dims)
 
     return [tuple(v) for v in (result.reshape(-1, 1) // dim_prod) % dims]
@@ -1410,9 +1410,9 @@ def extrema(input, labels=None, index=None):
 
     Parameters
     ----------
-    input : ndarray
+    input : array
         N-D image data to process.
-    labels : ndarray, optional
+    labels : array, optional
         Labels of features in input.
         If not None, must be same shape as `input`.
     index : int or sequence of ints, optional
@@ -1421,7 +1421,7 @@ def extrema(input, labels=None, index=None):
 
     Returns
     -------
-    minimums, maximums : int or ndarray
+    minimums, maximums : int or array
         Values of minimums and maximums in each feature.
     min_positions, max_positions : tuple or list of tuples
         Each tuple gives the N-D coordinates of the corresponding minimum
@@ -1433,8 +1433,8 @@ def extrema(input, labels=None, index=None):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> a = np.array([[1, 2, 0, 0],
+    >>> import mlx.core as mx
+    >>> a = mx.array([[1, 2, 0, 0],
     ...               [5, 3, 0, 4],
     ...               [0, 0, 0, 7],
     ...               [9, 3, 0, 0]])
@@ -1445,7 +1445,7 @@ def extrema(input, labels=None, index=None):
     Features to process can be specified using `labels` and `index`:
 
     >>> lbl, nlbl = ndimage.label(a)
-    >>> ndimage.extrema(a, lbl, index=np.arange(1, nlbl+1))
+    >>> ndimage.extrema(a, lbl, index=mx.arange(1, nlbl+1))
     (array([1, 4, 3]),
      array([5, 7, 9]),
      [(0, 0), (1, 3), (3, 1)],
@@ -1457,9 +1457,9 @@ def extrema(input, labels=None, index=None):
     (1, 9, (0, 0), (3, 0))
 
     """
-    dims = np.array(np.asarray(input).shape)
-    # see np.unravel_index to understand this line.
-    dim_prod = np.cumprod([1] + list(dims[:0:-1]))[::-1]
+    dims = mx.array(mx.array(input).shape)
+    # see mx.unravel_index to understand this line.
+    dim_prod = mx.cumprod([1] + list(dims[:0:-1]))[::-1]
 
     minimums, min_positions, maximums, max_positions = _select(input, labels,
                                                                index,
@@ -1468,7 +1468,7 @@ def extrema(input, labels=None, index=None):
                                                                find_min_positions=True,
                                                                find_max_positions=True)
 
-    if np.isscalar(minimums):
+    if mx.isscalar(minimums):
         return (minimums, maximums, tuple((min_positions // dim_prod) % dims),
                 tuple((max_positions // dim_prod) % dims))
 
@@ -1488,10 +1488,10 @@ def center_of_mass(input, labels=None, index=None):
 
     Parameters
     ----------
-    input : ndarray
+    input : array
         Data from which to calculate center-of-mass. The masses can either
         be positive or negative.
-    labels : ndarray, optional
+    labels : array, optional
         Labels for objects in `input`, as generated by `ndimage.label`.
         Only used with `index`. Dimensions must be the same as `input`.
     index : int or sequence of ints, optional
@@ -1506,8 +1506,8 @@ def center_of_mass(input, labels=None, index=None):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> a = np.array(([0,0,0,0],
+    >>> import mlx.core as mx
+    >>> a = mx.array(([0,0,0,0],
     ...               [0,1,1,0],
     ...               [0,1,1,0],
     ...               [0,1,1,0]))
@@ -1517,7 +1517,7 @@ def center_of_mass(input, labels=None, index=None):
 
     Calculation of multiple objects in an image
 
-    >>> b = np.array(([0,1,1,0],
+    >>> b = mx.array(([0,1,1,0],
     ...               [0,1,0,0],
     ...               [0,0,0,0],
     ...               [0,0,1,1],
@@ -1529,7 +1529,7 @@ def center_of_mass(input, labels=None, index=None):
     Negative masses are also accepted, which can occur for example when
     bias is removed from measured data due to random noise.
 
-    >>> c = np.array(([-1,0,0,0],
+    >>> c = mx.array(([-1,0,0,0],
     ...               [0,-1,-1,0],
     ...               [0,1,-1,0],
     ...               [0,1,1,0]))
@@ -1539,21 +1539,21 @@ def center_of_mass(input, labels=None, index=None):
     If there are division by zero issues, the function does not raise an
     error but rather issues a RuntimeWarning before returning inf and/or NaN.
 
-    >>> d = np.array([-1, 1])
+    >>> d = mx.array([-1, 1])
     >>> ndimage.center_of_mass(d)
     (inf,)
     """
-    input = np.asarray(input)
+    input = mx.array(input)
     normalizer = sum_labels(input, labels, index)
-    grids = np.ogrid[[slice(0, i) for i in input.shape]]
+    grids = mx.ogrid[[slice(0, i) for i in input.shape]]
 
     results = [sum_labels(input * grids[dir].astype(float), labels, index) / normalizer
                for dir in range(input.ndim)]
 
-    if np.isscalar(results[0]):
+    if mx.isscalar(results[0]):
         return tuple(results)
 
-    return [tuple(v) for v in np.array(results).T]
+    return [tuple(v) for v in mx.array(results).T]
 
 
 def histogram(input, min, max, bins, labels=None, index=None):
@@ -1582,13 +1582,13 @@ def histogram(input, min, max, bins, labels=None, index=None):
 
     Returns
     -------
-    hist : ndarray
+    hist : array
         Histogram counts.
 
     Examples
     --------
-    >>> import numpy as np
-    >>> a = np.array([[ 0.    ,  0.2146,  0.5962,  0.    ],
+    >>> import mlx.core as mx
+    >>> a = mx.array([[ 0.    ,  0.2146,  0.5962,  0.    ],
     ...               [ 0.    ,  0.7778,  0.    ,  0.    ],
     ...               [ 0.    ,  0.    ,  0.    ,  0.    ],
     ...               [ 0.    ,  0.    ,  0.7181,  0.2787],
@@ -1609,10 +1609,10 @@ def histogram(input, min, max, bins, labels=None, index=None):
     array([0, 0, 1, 1, 0, 0, 1, 1, 0, 0])
 
     """
-    _bins = np.linspace(min, max, bins + 1)
+    _bins = mx.linspace(min, max, bins + 1)
 
     def _hist(vals):
-        return np.histogram(vals, _bins)[0]
+        return mx.histogram(vals, _bins)[0]
 
     return labeled_comprehension(input, labels, index, _hist, object, None,
                                  pass_positions=False)
@@ -1634,12 +1634,12 @@ def watershed_ift(input, markers, structure=None, output=None):
         A structuring element defining the connectivity of the object can be
         provided. If None, an element is generated with a squared
         connectivity equal to one.
-    output : ndarray, optional
+    output : array, optional
         An output array can optionally be provided. The same shape as input.
 
     Returns
     -------
-    watershed_ift : ndarray
+    watershed_ift : array
         Output.  Same shape as `input`.
 
     References
@@ -1649,13 +1649,13 @@ def watershed_ift(input, markers, structure=None, output=None):
            Pattern Analysis and Machine Intelligence, vol. 26, pp. 19-29, 2004.
 
     """
-    input = np.asarray(input)
-    if input.dtype.type not in [np.uint8, np.uint16]:
+    input = mx.array(input)
+    if input.dtype.type not in [mx.uint8, mx.uint16]:
         raise TypeError('only 8 and 16 unsigned inputs are supported')
 
     if structure is None:
         structure = _morphology.generate_binary_structure(input.ndim, 1)
-    structure = np.asarray(structure, dtype=bool)
+    structure = mx.array(structure, dtype=bool)
     if structure.ndim != input.ndim:
         raise RuntimeError('structure and input must have equal rank')
     for ii in structure.shape:
@@ -1664,21 +1664,21 @@ def watershed_ift(input, markers, structure=None, output=None):
 
     if not structure.flags.contiguous:
         structure = structure.copy()
-    markers = np.asarray(markers)
+    markers = mx.array(markers)
     if input.shape != markers.shape:
         raise RuntimeError('input and markers must have equal shape')
 
-    integral_types = [np.int8,
-                      np.int16,
-                      np.int32,
-                      np.int64,
-                      np.intc,
-                      np.intp]
+    integral_types = [mx.int8,
+                      mx.int16,
+                      mx.int32,
+                      mx.int64,
+                      mx.intc,
+                      mx.intp]
 
     if markers.dtype.type not in integral_types:
         raise RuntimeError('marker should be of integer type')
 
-    if isinstance(output, np.ndarray):
+    if isinstance(output, mx.array):
         if output.dtype.type not in integral_types:
             raise RuntimeError('output should be of integer type')
     else:

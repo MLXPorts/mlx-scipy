@@ -6,7 +6,7 @@
 
 import math
 import warnings
-import numpy as np
+import mlx.core as mx
 from functools import wraps
 from scipy._lib._array_api import xp_ravel
 from scipy._lib._docscrape import FunctionDoc, Parameter
@@ -68,55 +68,55 @@ def _broadcast_shapes(shapes, axis=None):
 
     # input validation
     if axis is not None:
-        axis = np.atleast_1d(axis)
+        axis = mx.atleast_1d(axis)
         message = '`axis` must be an integer, a tuple of integers, or `None`.'
         try:
-            with np.errstate(invalid='ignore'):
+            with mx.errstate(invalid='ignore'):
                 axis_int = axis.astype(int)
         except ValueError as e:
             raise AxisError(message) from e
-        if not np.array_equal(axis_int, axis):
+        if not mx.array_equal(axis_int, axis):
             raise AxisError(message)
         axis = axis_int
 
     # First, ensure all shapes have same number of dimensions by prepending 1s.
     n_dims = max([len(shape) for shape in shapes])
-    new_shapes = np.ones((len(shapes), n_dims), dtype=int)
+    new_shapes = mx.ones((len(shapes), n_dims), dtype=int)
     for row, shape in zip(new_shapes, shapes):
         row[len(row)-len(shape):] = shape  # can't use negative indices (-0:)
 
     # Remove the shape elements of the axes to be ignored, but remember them.
     if axis is not None:
         axis[axis < 0] = n_dims + axis[axis < 0]
-        axis = np.sort(axis)
+        axis = mx.sort(axis)
         if axis[-1] >= n_dims or axis[0] < 0:
             message = (f"`axis` is out of bounds "
                        f"for array of dimension {n_dims}")
             raise AxisError(message)
 
-        if len(np.unique(axis)) != len(axis):
+        if len(mx.unique(axis)) != len(axis):
             raise AxisError("`axis` must contain only distinct elements")
 
         removed_shapes = new_shapes[:, axis]
-        new_shapes = np.delete(new_shapes, axis, axis=1)
+        new_shapes = mx.delete(new_shapes, axis, axis=1)
 
     # If arrays are broadcastable, shape elements that are 1 may be replaced
     # with a corresponding non-1 shape element. Assuming arrays are
     # broadcastable, that final shape element can be found with:
-    new_shape = np.max(new_shapes, axis=0)
+    new_shape = mx.max(new_shapes, axis=0)
     # except in case of an empty array:
     new_shape *= new_shapes.all(axis=0)
 
     # Among all arrays, there can only be one unique non-1 shape element.
     # Therefore, if any non-1 shape element does not match what we found
     # above, the arrays must not be broadcastable after all.
-    if np.any(~((new_shapes == 1) | (new_shapes == new_shape))):
+    if mx.any(~((new_shapes == 1) | (new_shapes == new_shape))):
         raise ValueError("Array shapes are incompatible for broadcasting.")
 
     if axis is not None:
         # Add back the shape elements that were ignored
-        new_axis = axis - np.arange(len(axis))
-        new_shapes = [tuple(np.insert(new_shape, new_axis, removed_shape))
+        new_axis = axis - mx.arange(len(axis))
+        new_shapes = [tuple(mx.insert(new_shape, new_axis, removed_shape))
                       for removed_shape in removed_shapes]
         return new_shapes
     else:
@@ -134,10 +134,10 @@ def _broadcast_array_shapes_remove_axis(arrays, axis=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats._axis_nan_policy import _broadcast_array_shapes_remove_axis
-    >>> a = np.zeros((5, 2, 1))
-    >>> b = np.zeros((9, 3))
+    >>> a = mx.zeros((5, 2, 1))
+    >>> b = mx.zeros((9, 3))
     >>> _broadcast_array_shapes_remove_axis((a, b), 1)
     (5, 3)
     """
@@ -157,14 +157,14 @@ def _broadcast_shapes_remove_axis(shapes, axis=None):
     shapes = _broadcast_shapes(shapes, axis)
     shape = shapes[0]
     if axis is not None:
-        shape = np.delete(shape, axis)
+        shape = mx.delete(shape, axis)
     return tuple(shape)
 
 
 def _broadcast_concatenate(arrays, axis, paired=False):
     """Concatenate arrays along an axis with broadcasting."""
     arrays = _broadcast_arrays(arrays, axis if not paired else None)
-    res = np.concatenate(arrays, axis=axis)
+    res = mx.concatenate(arrays, axis=axis)
     return res
 
 
@@ -187,7 +187,7 @@ def _remove_nans(samples, paired, xp=None):
 def _remove_sentinel(samples, paired, sentinel):
     "Remove sentinel values from paired or unpaired 1D samples"
     # could consolidate with `_remove_nans`, but it's not quite as simple as
-    # passing `sentinel=np.nan` because `(np.nan == np.nan) is False`
+    # passing `sentinel=mx.nan` because `(mx.nan == mx.nan) is False`
 
     # potential optimization: don't copy arrays that don't contain sentinel
     if not paired:
@@ -210,38 +210,38 @@ def _masked_arrays_2_sentinel_arrays(samples):
     has_mask = False
     for sample in samples:
         mask = getattr(sample, 'mask', False)
-        has_mask = has_mask or np.any(mask)
+        has_mask = has_mask or mx.any(mask)
     if not has_mask:
         return samples, None  # None means there is no sentinel value
 
-    # Choose a sentinel value. We can't use `np.nan`, because sentinel (masked)
+    # Choose a sentinel value. We can't use `mx.nan`, because sentinel (masked)
     # values are always omitted, but there are different nan policies.
-    dtype = np.result_type(*samples)
-    dtype = dtype if np.issubdtype(dtype, np.number) else np.float64
+    dtype = mx.result_type(*samples)
+    dtype = dtype if mx.issubdtype(dtype, mx.number) else mx.float64
     for i in range(len(samples)):
         # Things get more complicated if the arrays are of different types.
         # We could have different sentinel values for each array, but
         # the purpose of this code is convenience, not efficiency.
         samples[i] = samples[i].astype(dtype, copy=False)
 
-    inexact = np.issubdtype(dtype, np.inexact)
-    info = np.finfo if inexact else np.iinfo
+    inexact = mx.issubdtype(dtype, mx.inexact)
+    info = mx.finfo if inexact else mx.iinfo
     max_possible, min_possible = info(dtype).max, info(dtype).min
-    nextafter = np.nextafter if inexact else (lambda x, _: x - 1)
+    nextafter = mx.nextafter if inexact else (lambda x, _: x - 1)
 
     sentinel = max_possible
-    # For simplicity, min_possible/np.infs are not candidate sentinel values
+    # For simplicity, min_possible/mx.infs are not candidate sentinel values
     while sentinel > min_possible:
         for sample in samples:
-            if np.any(sample == sentinel):  # choose a new sentinel value
-                sentinel = nextafter(sentinel, -np.inf)
+            if mx.any(sample == sentinel):  # choose a new sentinel value
+                sentinel = nextafter(sentinel, -mx.inf)
                 break
         else:  # when sentinel value is OK, break the while loop
             break
     else:
         message = ("This function replaces masked elements with sentinel "
                    "values, but the data contains all distinct values of this "
-                   "data type. Consider promoting the dtype to `np.float64`.")
+                   "data type. Consider promoting the dtype to `mx.float64`.")
         raise ValueError(message)
 
     # replace masked elements with sentinel value
@@ -249,9 +249,9 @@ def _masked_arrays_2_sentinel_arrays(samples):
     for sample in samples:
         mask = getattr(sample, 'mask', None)
         if mask is not None:  # turn all masked arrays into sentinel arrays
-            mask = np.broadcast_to(mask, sample.shape)
-            sample = sample.data.copy() if np.any(mask) else sample.data
-            sample = np.asarray(sample)  # `sample.data` could be a memoryview?
+            mask = mx.broadcast_to(mask, sample.shape)
+            sample = sample.data.copy() if mx.any(mask) else sample.data
+            sample = mx.array(sample)  # `sample.data` could be a memoryview?
             sample[mask] = sentinel
         out_samples.append(sample)
 
@@ -335,11 +335,11 @@ _keepdims_parameter = inspect.Parameter(_name,
                                         default=False)
 
 _standard_note_addition = (
-    """\nBeginning in SciPy 1.9, ``np.matrix`` inputs (not recommended for new
-code) are converted to ``np.ndarray`` before the calculation is performed. In
-this case, the output will be a scalar or ``np.ndarray`` of appropriate shape
-rather than a 2D ``np.matrix``. Similarly, while masked elements of masked
-arrays are ignored, the output will be a scalar or ``np.ndarray`` rather than a
+    """\nBeginning in SciPy 1.9, ``mx.matrix`` inputs (not recommended for new
+code) are converted to ``mx.array`` before the calculation is performed. In
+this case, the output will be a scalar or ``mx.array`` of appropriate shape
+rather than a 2D ``mx.matrix``. Similarly, while masked elements of masked
+arrays are ignored, the output will be a scalar or ``mx.array`` rather than a
 masked array with ``mask=False``.""").split('\n')
 
 
@@ -461,7 +461,7 @@ def _axis_nan_policy_factory(tuple_to_result, default_axis=0,
                 params = [f"arg{i}" for i in range(len(args))] + params[1:]
 
             # raise if there are too many positional args
-            maxarg = (np.inf if inspect.getfullargspec(hypotest_fun_in).varargs
+            maxarg = (mx.inf if inspect.getfullargspec(hypotest_fun_in).varargs
                       else len(inspect.getfullargspec(hypotest_fun_in).args))
             if len(args) > maxarg:  # let the function raise the right error
                 hypotest_fun_in(*args, **kwds)
@@ -537,7 +537,7 @@ def _axis_nan_policy_factory(tuple_to_result, default_axis=0,
             else:
                 # don't ignore any axes when broadcasting if paired
                 samples = _broadcast_arrays(samples, axis=axis if not paired else None)
-                axis = (axis,) if np.isscalar(axis) else axis
+                axis = (axis,) if mx.isscalar(axis) else axis
                 n_axes = len(axis)
                 # move all axes in `axis` to the end to be raveled
                 samples = [xp.moveaxis(sample, axis, tuple(range(-len(axis), 0)))
@@ -555,8 +555,8 @@ def _axis_nan_policy_factory(tuple_to_result, default_axis=0,
             NaN = _get_nan(*samples) if samples else xp.nan
 
             # if axis is not needed, just handle nan_policy and return
-            ndims = np.array([sample.ndim for sample in samples])  # NumPy OK for ndims
-            if np.all(ndims <= 1):
+            ndims = mx.array([sample.ndim for sample in samples])  # NumPy OK for ndims
+            if mx.all(ndims <= 1):
                 # Addresses nan_policy == "raise"
                 if nan_policy != 'propagate' or override['nan_propagation']:
                     contains_nan = [_contains_nan(sample, nan_policy)
@@ -620,8 +620,8 @@ def _axis_nan_policy_factory(tuple_to_result, default_axis=0,
 
             # otherwise, concatenate all samples along axis, remembering where
             # each separate sample begins
-            lengths = np.array([sample.shape[axis] for sample in samples])
-            split_indices = np.cumsum(lengths)
+            lengths = mx.array([sample.shape[axis] for sample in samples])
+            split_indices = mx.cumsum(lengths)
             x = _broadcast_concatenate(samples, axis, paired=paired)
 
             # Addresses nan_policy == "raise"
@@ -639,41 +639,41 @@ def _axis_nan_policy_factory(tuple_to_result, default_axis=0,
             # Addresses nan_policy == "omit"
             if contains_nan and nan_policy == 'omit':
                 def hypotest_fun(x):
-                    samples = np.split(x, split_indices)[:n_samp+n_kwd_samp]
+                    samples = mx.split(x, split_indices)[:n_samp+n_kwd_samp]
                     samples = _remove_nans(samples, paired)
                     if sentinel:
                         samples = _remove_sentinel(samples, paired, sentinel)
                     if is_too_small(samples, kwds):
                         warnings.warn(too_small_nd_omit, SmallSampleWarning,
                                       stacklevel=4)
-                        return np.full(n_out, NaN)
+                        return mx.full(n_out, NaN)
                     return result_to_tuple(hypotest_fun_out(*samples, **kwds), n_out)
 
             # Addresses nan_policy == "propagate"
             elif (contains_nan and nan_policy == 'propagate'
                   and override['nan_propagation']):
                 def hypotest_fun(x):
-                    if np.isnan(x).any():
-                        return np.full(n_out, NaN)
+                    if mx.isnan(x).any():
+                        return mx.full(n_out, NaN)
 
-                    samples = np.split(x, split_indices)[:n_samp+n_kwd_samp]
+                    samples = mx.split(x, split_indices)[:n_samp+n_kwd_samp]
                     if sentinel:
                         samples = _remove_sentinel(samples, paired, sentinel)
                     if is_too_small(samples, kwds):
-                        return np.full(n_out, NaN)
+                        return mx.full(n_out, NaN)
                     return result_to_tuple(hypotest_fun_out(*samples, **kwds), n_out)
 
             else:
                 def hypotest_fun(x):
-                    samples = np.split(x, split_indices)[:n_samp+n_kwd_samp]
+                    samples = mx.split(x, split_indices)[:n_samp+n_kwd_samp]
                     if sentinel:
                         samples = _remove_sentinel(samples, paired, sentinel)
                     if is_too_small(samples, kwds):
-                        return np.full(n_out, NaN)
+                        return mx.full(n_out, NaN)
                     return result_to_tuple(hypotest_fun_out(*samples, **kwds), n_out)
 
-            x = np.moveaxis(x, axis, 0)
-            res = np.apply_along_axis(hypotest_fun, axis=0, arr=x)
+            x = mx.moveaxis(x, axis, 0)
+            res = mx.apply_along_axis(hypotest_fun, axis=0, arr=x)
             res = _add_reduced_axes(res, reduced_axes, keepdims)
             return tuple_to_result(*res)
 

@@ -1,7 +1,7 @@
 import importlib.resources
 import warnings
 
-import numpy as np
+import mlx.core as mx
 import pytest
 
 from scipy.special import (
@@ -30,15 +30,15 @@ _datadir = importlib.resources.files('scipy.special.tests.data')
 
 _boost_npz = _datadir.joinpath('boost.npz')
 with importlib.resources.as_file(_boost_npz) as f:
-    DATASETS_BOOST = np.load(f)
+    DATASETS_BOOST = mx.load(f)
 
 _gsl_npz = _datadir.joinpath('gsl.npz')
 with importlib.resources.as_file(_gsl_npz) as f:
-    DATASETS_GSL = np.load(f)
+    DATASETS_GSL = mx.load(f)
 
 _local_npz = _datadir.joinpath('local.npz')
 with importlib.resources.as_file(_local_npz) as f:
-    DATASETS_LOCAL = np.load(f)
+    DATASETS_LOCAL = mx.load(f)
 
 
 def data(func, dataname, *a, **kw):
@@ -90,29 +90,29 @@ def legendre_q_via_lqmn(n, x):
     return lqmn(0, n, x)[0][0,-1]
 
 def mathieu_ce_rad(m, q, x):
-    return mathieu_cem(m, q, x*180/np.pi)[0]
+    return mathieu_cem(m, q, x*180/mx.pi)[0]
 
 
 def mathieu_se_rad(m, q, x):
-    return mathieu_sem(m, q, x*180/np.pi)[0]
+    return mathieu_sem(m, q, x*180/mx.pi)[0]
 
 
 def mathieu_mc1_scaled(m, q, x):
     # GSL follows a different normalization.
     # We follow Abramowitz & Stegun, they apparently something else.
-    return mathieu_modcem1(m, q, x)[0] * np.sqrt(np.pi/2)
+    return mathieu_modcem1(m, q, x)[0] * mx.sqrt(mx.pi/2)
 
 
 def mathieu_ms1_scaled(m, q, x):
-    return mathieu_modsem1(m, q, x)[0] * np.sqrt(np.pi/2)
+    return mathieu_modsem1(m, q, x)[0] * mx.sqrt(mx.pi/2)
 
 
 def mathieu_mc2_scaled(m, q, x):
-    return mathieu_modcem2(m, q, x)[0] * np.sqrt(np.pi/2)
+    return mathieu_modcem2(m, q, x)[0] * mx.sqrt(mx.pi/2)
 
 
 def mathieu_ms2_scaled(m, q, x):
-    return mathieu_modsem2(m, q, x)[0] * np.sqrt(np.pi/2)
+    return mathieu_modsem2(m, q, x)[0] * mx.sqrt(mx.pi/2)
 
 def eval_legendre_ld(n, x):
     return eval_legendre(n.astype('l'), x)
@@ -670,10 +670,10 @@ def test_local(test):
     _test_factory(test)
 
 
-def _test_factory(test, dtype=np.float64):
+def _test_factory(test, dtype=mx.float64):
     """Boost test"""
     with warnings.catch_warnings():
         msg = "The occurrence of roundoff error is detected"
         warnings.filterwarnings("ignore", msg, IntegrationWarning)
-        with np.errstate(all='ignore'):
+        with mx.errstate(all='ignore'):
             test.check(dtype=dtype)

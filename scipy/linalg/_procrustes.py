@@ -37,7 +37,7 @@ def orthogonal_procrustes(A, B, check_finite=True):
 
     Returns
     -------
-    R : (N, N) ndarray
+    R : (N, N) array
         The matrix solution of the orthogonal Procrustes problem.
         Minimizes the Frobenius norm of ``(A @ R) - B``, subject to
         ``R.conj().T @ R = I``.
@@ -64,13 +64,13 @@ def orthogonal_procrustes(A, B, check_finite=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import orthogonal_procrustes
-    >>> A = np.array([[ 2,  0,  1], [-2,  0,  0]])
+    >>> A = mx.array([[ 2,  0,  1], [-2,  0,  0]])
 
     Flip the order of columns and check for the anti-diagonal mapping
 
-    >>> R, sca = orthogonal_procrustes(A, np.fliplr(A))
+    >>> R, sca = orthogonal_procrustes(A, mx.fliplr(A))
     >>> R
     array([[-5.34384992e-17,  0.00000000e+00,  1.00000000e+00],
            [ 0.00000000e+00,  1.00000000e+00,  0.00000000e+00],
@@ -83,17 +83,17 @@ def orthogonal_procrustes(A, B, check_finite=True):
     and their product ``B``.
 
     >>> shape = (4, 4)
-    >>> rng = np.random.default_rng(589234981235)
+    >>> rng = mx.random.default_rng(589234981235)
     >>> A = rng.random(shape) + rng.random(shape)*1j
     >>> Q = rng.random(shape) + rng.random(shape)*1j
-    >>> Q, _ = np.linalg.qr(Q)
+    >>> Q, _ = mx.linalg.qr(Q)
     >>> B = A @ Q
 
     `orthogonal_procrustes` recovers the unitary matrix ``Q``
     from ``A`` and ``B``.
 
     >>> R, _ = orthogonal_procrustes(A, B)
-    >>> np.allclose(R, Q)
+    >>> mx.allclose(R, Q)
     True
 
     """

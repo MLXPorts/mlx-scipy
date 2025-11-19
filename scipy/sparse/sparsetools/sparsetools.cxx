@@ -31,7 +31,7 @@
 #include <vector>
 #include <cstdlib>
 
-#include "numpy/ndarrayobject.h"
+#include "numpy/arrayobject.h"
 
 #include "sparsetools.h"
 #include "util.h"

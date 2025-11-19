@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import matplotlib.pyplot as plt
 from scipy import stats
 
@@ -7,24 +7,24 @@ npointsh = npoints // 2
 npointsf = float(npoints)
 nbound = 4  # bounds for the truncated normal
 normbound = (1 + 1/npointsf) * nbound  # actual bounds of truncated normal
-grid = np.arange(-npointsh, npointsh+2, 1)  # integer grid
+grid = mx.arange(-npointsh, npointsh+2, 1)  # integer grid
 gridlimitsnorm = (grid-0.5) / npointsh * nbound  # bin limits for the truncnorm
 gridlimits = grid - 0.5
 grid = grid[:-1]
-probs = np.diff(stats.truncnorm.cdf(gridlimitsnorm, -normbound, normbound))
+probs = mx.diff(stats.truncnorm.cdf(gridlimitsnorm, -normbound, normbound))
 gridint = grid
 normdiscrete = stats.rv_discrete(
-                        values=(gridint, np.round(probs, decimals=7)),
+                        values=(gridint, mx.round(probs, decimals=7)),
                         name='normdiscrete')
 
 n_sample = 500
-rng = np.random.default_rng()
+rng = mx.random.default_rng()
 rvs = normdiscrete.rvs(size=n_sample, random_state=rng)
-f, l = np.histogram(rvs, bins=gridlimits)
-sfreq = np.vstack([gridint, f, probs*n_sample]).T
+f, l = mx.histogram(rvs, bins=gridlimits)
+sfreq = mx.vstack([gridint, f, probs*n_sample]).T
 fs = sfreq[:,1] / float(n_sample)
 ft = sfreq[:,2] / float(n_sample)
-nd_std = np.sqrt(normdiscrete.stats(moments='v'))
+nd_std = mx.sqrt(normdiscrete.stats(moments='v'))
 
 ind = gridint  # the x locations for the groups
 width = 0.35       # the width of the bars

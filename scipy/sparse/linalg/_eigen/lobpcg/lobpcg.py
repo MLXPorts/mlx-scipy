@@ -18,7 +18,7 @@ References
 """
 
 import warnings
-import numpy as np
+import mlx.core as mx
 from scipy.linalg import (inv, eigh, cho_factor, cho_solve,
                           cholesky, LinAlgError)
 from scipy.sparse.linalg import LinearOperator
@@ -35,7 +35,7 @@ def _report_nonhermitian(M, name):
 
     md = M - M.T.conj()
     nmd = norm(md, 1)
-    tol = 10 * np.finfo(M.dtype).eps
+    tol = 10 * mx.finfo(M.dtype).eps
     tol = max(tol, tol * norm(M, 1))
     if nmd > tol:
         warnings.warn(
@@ -52,7 +52,7 @@ def _as2d(ar):
     if ar.ndim == 2:
         return ar
     else:  # Assume 1!
-        aux = np.asarray(ar).reshape((ar.shape[0], 1))
+        aux = mx.array(ar).reshape((ar.shape[0], 1))
         return aux
 
 
@@ -66,7 +66,7 @@ def _makeMatMat(m):
 
 
 def _matmul_inplace(x, y, verbosityLevel=0):
-    """Perform 'np.matmul' in-place if possible.
+    """Perform 'mx.matmul' in-place if possible.
 
     If some sufficient conditions for inplace matmul are met, do so.
     Otherwise try inplace update and fall back to overwrite if that fails.
@@ -75,13 +75,13 @@ def _matmul_inplace(x, y, verbosityLevel=0):
         # conditions where we can guarantee that inplace updates will work;
         # i.e. x is not a view/slice, x & y have compatible dtypes, and the
         # shape of the result of x @ y matches the shape of x.
-        np.matmul(x, y, out=x)
+        mx.matmul(x, y, out=x)
     else:
         # ideally, we'd have an exhaustive list of conditions above when
         # inplace updates are possible; since we don't, we opportunistically
         # try if it works, and fall back to overwriting if necessary
         try:
-            np.matmul(x, y, out=x)
+            mx.matmul(x, y, out=x)
         except Exception:
             if verbosityLevel:
                 warnings.warn(
@@ -151,7 +151,7 @@ def _b_orthonormalize(B, blockVectorV, blockVectorBV=None,
 
 def _get_indx(_lambda, num, largest):
     """Get `num` indices into `_lambda` depending on `largest` option."""
-    ii = np.argsort(_lambda)
+    ii = mx.argsort(_lambda)
     if largest:
         ii = ii[:-num - 1:-1]
     else:
@@ -187,21 +187,21 @@ def lobpcg(
 
     Parameters
     ----------
-    A : {sparse matrix, ndarray, LinearOperator, callable object}
+    A : {sparse matrix, array, LinearOperator, callable object}
         The Hermitian linear operator of the problem, usually given by a
         sparse matrix.  Often called the "stiffness matrix".
-    X : ndarray, float32 or float64
+    X : array, float32 or float64
         Initial approximation to the ``k`` eigenvectors (non-sparse).
         If `A` has ``shape=(n,n)`` then `X` must have ``shape=(n,k)``.
-    B : {sparse matrix, ndarray, LinearOperator, callable object}
+    B : {sparse matrix, array, LinearOperator, callable object}
         Optional. By default ``B = None``, which is equivalent to identity.
         The right hand side operator in a generalized eigenproblem if present.
         Often called the "mass matrix". Must be Hermitian positive definite.
-    M : {sparse matrix, ndarray, LinearOperator, callable object}
+    M : {sparse matrix, array, LinearOperator, callable object}
         Optional. By default ``M = None``, which is equivalent to identity.
         Preconditioner aiming to accelerate convergence.
-    Y : ndarray, float32 or float64, default: None
-        An ``n-by-sizeY`` ndarray of constraints with ``sizeY < n``.
+    Y : array, float32 or float64, default: None
+        An ``n-by-sizeY`` array of constraints with ``sizeY < n``.
         The iterations will be performed in the ``B``-orthogonal complement
         of the column-space of `Y`. `Y` must be full rank if present.
     tol : scalar, optional
@@ -226,13 +226,13 @@ def lobpcg(
 
     Returns
     -------
-    lambda : ndarray of the shape ``(k, )``.
+    lambda : array of the shape ``(k, )``.
         Array of ``k`` approximate eigenvalues.
-    v : ndarray of the same shape as ``X.shape``.
+    v : array of the same shape as ``X.shape``.
         An array of ``k`` approximate eigenvectors.
-    lambdaHistory : ndarray, optional.
+    lambdaHistory : array, optional.
         The eigenvalue history, if `retLambdaHistory` is ``True``.
-    ResidualNormsHistory : ndarray, optional.
+    ResidualNormsHistory : array, optional.
         The history of residual norms, if `retResidualNormsHistory`
         is ``True``.
 
@@ -244,9 +244,9 @@ def lobpcg(
     now returns the block of iterative vectors with the best accuracy rather
     than the last one iterated, as a cure for possible divergence.
 
-    If ``X.dtype == np.float32`` and user-provided operations/multiplications
-    by `A`, `B`, and `M` all preserve the ``np.float32`` data type,
-    all the calculations and the output are in ``np.float32``.
+    If ``X.dtype == mx.float32`` and user-provided operations/multiplications
+    by `A`, `B`, and `M` all preserve the ``mx.float32`` data type,
+    all the calculations and the output are in ``mx.float32``.
 
     The size of the iteration history output equals to the number of the best
     (limited by `maxit`) iterations plus 3: initial, final, and postprocessing.
@@ -305,7 +305,7 @@ def lobpcg(
     a diagonal matrix by solving the non-generalized eigenvalue problem
     ``A x = lambda x`` without constraints or preconditioning.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import diags_array
     >>> from scipy.sparse.linalg import LinearOperator, aslinearoperator
     >>> from scipy.sparse.linalg import lobpcg
@@ -316,7 +316,7 @@ def lobpcg(
 
     and its diagonal entries are 1, ..., 100 defined by
 
-    >>> vals = np.arange(1, n + 1).astype(np.int16)
+    >>> vals = mx.arange(1, n + 1).astype(mx.int16)
 
     The first mandatory input parameter in this test is
     the sparse diagonal matrix `A`
@@ -339,14 +339,14 @@ def lobpcg(
     If no initial approximations available, randomly oriented vectors
     commonly work best, e.g., with components normally distributed
     around zero or uniformly distributed on the interval [-1 1].
-    Setting the initial approximations to dtype ``np.float32``
-    forces all iterative values to dtype ``np.float32`` speeding up
+    Setting the initial approximations to dtype ``mx.float32``
+    forces all iterative values to dtype ``mx.float32`` speeding up
     the run while still allowing accurate eigenvalue computations.
 
     >>> k = 1
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> X = rng.normal(size=(n, k))
-    >>> X = X.astype(np.float32)
+    >>> X = X.astype(mx.float32)
 
     >>> eigenvalues, _ = lobpcg(A, X, maxiter=60)
     >>> eigenvalues
@@ -358,12 +358,12 @@ def lobpcg(
     ``A @ X`` using the diagonal values ``vals`` only, e.g., by
     element-wise multiplication with broadcasting in the lambda-function
 
-    >>> A_lambda = lambda X: vals[:, np.newaxis] * X
+    >>> A_lambda = lambda X: vals[:, mx.newaxis] * X
 
     or the regular function
 
     >>> def A_matmat(X):
-    ...     return vals[:, np.newaxis] * X
+    ...     return vals[:, mx.newaxis] * X
 
     and use the handle to one of these callables as an input
 
@@ -378,7 +378,7 @@ def lobpcg(
     necessary but still supported as the input to `lobpcg`.
     Specifying ``matmat=A_matmat`` explicitly improves performance. 
 
-    >>> A_lo = LinearOperator((n, n), matvec=A_matmat, matmat=A_matmat, dtype=np.int16)
+    >>> A_lo = LinearOperator((n, n), matvec=A_matmat, matmat=A_matmat, dtype=mx.int16)
     >>> eigenvalues, _ = lobpcg(A_lo, X, maxiter=80)
     >>> eigenvalues
     array([100.], dtype=float32)
@@ -392,7 +392,7 @@ def lobpcg(
     We now switch to computing the three smallest eigenvalues specifying
 
     >>> k = 3
-    >>> X = np.random.default_rng().normal(size=(n, k))
+    >>> X = mx.random.default_rng().normal(size=(n, k))
 
     and ``largest=False`` parameter
 
@@ -407,15 +407,15 @@ def lobpcg(
     Constraints - an optional input parameter is a 2D array comprising
     of column vectors that the eigenvectors must be orthogonal to
 
-    >>> Y = np.eye(n, 3)
+    >>> Y = mx.eye(n, 3)
 
     The preconditioner acts as the inverse of `A` in this example, but
-    in the reduced precision ``np.float32`` even though the initial `X`
-    and thus all iterates and the output are in full ``np.float64``.
+    in the reduced precision ``mx.float32`` even though the initial `X`
+    and thus all iterates and the output are in full ``mx.float64``.
 
     >>> inv_vals = 1./vals
-    >>> inv_vals = inv_vals.astype(np.float32)
-    >>> M = lambda X: inv_vals[:, np.newaxis] * X
+    >>> inv_vals = inv_vals.astype(mx.float32)
+    >>> M = lambda X: inv_vals[:, mx.newaxis] * X
 
     Let us now solve the eigenvalue problem for the matrix `A` first
     without preconditioning requesting 80 iterations
@@ -480,19 +480,19 @@ def lobpcg(
     n, sizeX = blockVectorX.shape
 
     # Data type of iterates, determined by X, must be inexact
-    if not np.issubdtype(blockVectorX.dtype, np.inexact):
+    if not mx.issubdtype(blockVectorX.dtype, mx.inexact):
         warnings.warn(
             f"Data type for argument X is {blockVectorX.dtype}, "
-            f"which is not inexact, so casted to np.float32.",
+            f"which is not inexact, so casted to mx.float32.",
             UserWarning, stacklevel=2
         )
-        blockVectorX = np.asarray(blockVectorX, dtype=np.float32)
+        blockVectorX = mx.array(blockVectorX, dtype=mx.float32)
 
     if retLambdaHistory:
-        lambdaHistory = np.zeros((maxiter + 3, sizeX),
+        lambdaHistory = mx.zeros((maxiter + 3, sizeX),
                                  dtype=blockVectorX.dtype)
     if retResidualNormsHistory:
-        residualNormsHistory = np.zeros((maxiter + 3, sizeX),
+        residualNormsHistory = mx.zeros((maxiter + 3, sizeX),
                                         dtype=blockVectorX.dtype)
 
     if verbosityLevel:
@@ -540,9 +540,9 @@ def lobpcg(
 
         try:
             if isinstance(A, LinearOperator):
-                A = A(np.eye(n, dtype=int))
+                A = A(mx.eye(n, dtype=int))
             elif callable(A):
-                A = A(np.eye(n, dtype=int))
+                A = A(mx.eye(n, dtype=int))
                 if A.shape != (n, n):
                     raise ValueError(
                         f"The shape {A.shape} of the primary matrix\n"
@@ -551,7 +551,7 @@ def lobpcg(
             elif issparse(A):
                 A = A.toarray()
             else:
-                A = np.asarray(A)
+                A = mx.array(A)
         except Exception as e:
             raise Exception(
                 f"Primary MatMul call failed with error\n"
@@ -560,9 +560,9 @@ def lobpcg(
         if B is not None:
             try:
                 if isinstance(B, LinearOperator):
-                    B = B(np.eye(n, dtype=int))
+                    B = B(mx.eye(n, dtype=int))
                 elif callable(B):
-                    B = B(np.eye(n, dtype=int))
+                    B = B(mx.eye(n, dtype=int))
                     if B.shape != (n, n):
                         raise ValueError(
                             f"The shape {B.shape} of the secondary matrix\n"
@@ -571,7 +571,7 @@ def lobpcg(
                 elif issparse(B):
                     B = B.toarray()
                 else:
-                    B = np.asarray(B)
+                    B = mx.array(B)
             except Exception as e:
                 raise Exception(
                     f"Secondary MatMul call failed with error\n"
@@ -595,7 +595,7 @@ def lobpcg(
             )
 
     if (residualTolerance is None) or (residualTolerance <= 0.0):
-        residualTolerance = np.sqrt(np.finfo(blockVectorX.dtype).eps) * n
+        residualTolerance = mx.sqrt(mx.finfo(blockVectorX.dtype).eps) * n
 
     A = _makeMatMat(A)
     B = _makeMatMat(B)
@@ -652,7 +652,7 @@ def lobpcg(
     if retLambdaHistory:
         lambdaHistory[0, :] = _lambda
 
-    eigBlockVector = np.asarray(eigBlockVector[:, ii])
+    eigBlockVector = mx.array(eigBlockVector[:, ii])
     blockVectorX = _matmul_inplace(
         blockVectorX, eigBlockVector,
         verbosityLevel=verbosityLevel
@@ -669,7 +669,7 @@ def lobpcg(
 
     ##
     # Active index set.
-    activeMask = np.ones((sizeX,), dtype=bool)
+    activeMask = mx.ones((sizeX,), dtype=bool)
 
     ##
     # Main iteration loop.
@@ -678,7 +678,7 @@ def lobpcg(
     blockVectorAP = None
     blockVectorBP = None
 
-    smallestResidualNorm = np.abs(np.finfo(blockVectorX.dtype).max)
+    smallestResidualNorm = mx.abs(mx.finfo(blockVectorX.dtype).max)
 
     iterationNumber = -1
     restart = True
@@ -688,17 +688,17 @@ def lobpcg(
         iterationNumber += 1
 
         if B is not None:
-            aux = blockVectorBX * _lambda[np.newaxis, :]
+            aux = blockVectorBX * _lambda[mx.newaxis, :]
         else:
-            aux = blockVectorX * _lambda[np.newaxis, :]
+            aux = blockVectorX * _lambda[mx.newaxis, :]
 
         blockVectorR = blockVectorAX - aux
 
-        aux = np.sum(blockVectorR.conj() * blockVectorR, 0)
-        residualNorms = np.sqrt(np.abs(aux))
+        aux = mx.sum(blockVectorR.conj() * blockVectorR, 0)
+        residualNorms = mx.sqrt(mx.abs(aux))
         if retResidualNormsHistory:
             residualNormsHistory[iterationNumber, :] = residualNorms
-        residualNorm = np.sum(np.abs(residualNorms)) / sizeX
+        residualNorm = mx.sum(mx.abs(residualNorms)) / sizeX
 
         if residualNorm < smallestResidualNorm:
             smallestResidualNorm = residualNorm
@@ -724,7 +724,7 @@ def lobpcg(
                         f"after multiplying by the secondary matrix.\n"
                     )
 
-        ii = np.where(residualNorms > residualTolerance, True, False)
+        ii = mx.where(residualNorms > residualTolerance, True, False)
         activeMask = activeMask & ii
         currentBlockSize = activeMask.sum()
 
@@ -814,7 +814,7 @@ def lobpcg(
         if activeBlockVectorAR.dtype == "float32":
             myeps = 1
         else:
-            myeps = np.sqrt(np.finfo(activeBlockVectorR.dtype).eps)
+            myeps = mx.sqrt(mx.finfo(activeBlockVectorR.dtype).eps)
 
         if residualNorms.max() > myeps and not explicitGramFlag:
             explicitGramFlag = False
@@ -830,44 +830,44 @@ def lobpcg(
                 activeBlockVectorBP = activeBlockVectorP
 
         # Common submatrices:
-        gramXAR = np.dot(blockVectorX.T.conj(), activeBlockVectorAR)
-        gramRAR = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorAR)
+        gramXAR = mx.dot(blockVectorX.T.conj(), activeBlockVectorAR)
+        gramRAR = mx.dot(activeBlockVectorR.T.conj(), activeBlockVectorAR)
 
         gramDtype = activeBlockVectorAR.dtype
         if explicitGramFlag:
             gramRAR = (gramRAR + gramRAR.T.conj()) / 2
-            gramXAX = np.dot(blockVectorX.T.conj(), blockVectorAX)
+            gramXAX = mx.dot(blockVectorX.T.conj(), blockVectorAX)
             gramXAX = (gramXAX + gramXAX.T.conj()) / 2
-            gramXBX = np.dot(blockVectorX.T.conj(), blockVectorBX)
-            gramRBR = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorBR)
-            gramXBR = np.dot(blockVectorX.T.conj(), activeBlockVectorBR)
+            gramXBX = mx.dot(blockVectorX.T.conj(), blockVectorBX)
+            gramRBR = mx.dot(activeBlockVectorR.T.conj(), activeBlockVectorBR)
+            gramXBR = mx.dot(blockVectorX.T.conj(), activeBlockVectorBR)
         else:
-            gramXAX = np.diag(_lambda).astype(gramDtype)
-            gramXBX = np.eye(sizeX, dtype=gramDtype)
-            gramRBR = np.eye(currentBlockSize, dtype=gramDtype)
-            gramXBR = np.zeros((sizeX, currentBlockSize), dtype=gramDtype)
+            gramXAX = mx.diag(_lambda).astype(gramDtype)
+            gramXBX = mx.eye(sizeX, dtype=gramDtype)
+            gramRBR = mx.eye(currentBlockSize, dtype=gramDtype)
+            gramXBR = mx.zeros((sizeX, currentBlockSize), dtype=gramDtype)
 
         if not restart:
-            gramXAP = np.dot(blockVectorX.T.conj(), activeBlockVectorAP)
-            gramRAP = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorAP)
-            gramPAP = np.dot(activeBlockVectorP.T.conj(), activeBlockVectorAP)
-            gramXBP = np.dot(blockVectorX.T.conj(), activeBlockVectorBP)
-            gramRBP = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorBP)
+            gramXAP = mx.dot(blockVectorX.T.conj(), activeBlockVectorAP)
+            gramRAP = mx.dot(activeBlockVectorR.T.conj(), activeBlockVectorAP)
+            gramPAP = mx.dot(activeBlockVectorP.T.conj(), activeBlockVectorAP)
+            gramXBP = mx.dot(blockVectorX.T.conj(), activeBlockVectorBP)
+            gramRBP = mx.dot(activeBlockVectorR.T.conj(), activeBlockVectorBP)
             if explicitGramFlag:
                 gramPAP = (gramPAP + gramPAP.T.conj()) / 2
-                gramPBP = np.dot(activeBlockVectorP.T.conj(),
+                gramPBP = mx.dot(activeBlockVectorP.T.conj(),
                                  activeBlockVectorBP)
             else:
-                gramPBP = np.eye(currentBlockSize, dtype=gramDtype)
+                gramPBP = mx.eye(currentBlockSize, dtype=gramDtype)
 
-            gramA = np.block(
+            gramA = mx.block(
                 [
                     [gramXAX, gramXAR, gramXAP],
                     [gramXAR.T.conj(), gramRAR, gramRAP],
                     [gramXAP.T.conj(), gramRAP.T.conj(), gramPAP],
                 ]
             )
-            gramB = np.block(
+            gramB = mx.block(
                 [
                     [gramXBX, gramXBR, gramXBP],
                     [gramXBR.T.conj(), gramRBR, gramRBP],
@@ -893,8 +893,8 @@ def lobpcg(
                 restart = True
 
         if restart:
-            gramA = np.block([[gramXAX, gramXAR], [gramXAR.T.conj(), gramRAR]])
-            gramB = np.block([[gramXBX, gramXBR], [gramXBR.T.conj(), gramRBR]])
+            gramA = mx.block([[gramXAX, gramXAR], [gramXAR.T.conj(), gramRAR]])
+            gramB = mx.block([[gramXBX, gramXBR], [gramXBR.T.conj(), gramRBR]])
 
             _handle_gramA_gramB_verbosity(gramA, gramB, verbosityLevel)
 
@@ -925,25 +925,25 @@ def lobpcg(
                                                  sizeX + currentBlockSize]
                 eigBlockVectorP = eigBlockVector[sizeX + currentBlockSize:]
 
-                pp = np.dot(activeBlockVectorR, eigBlockVectorR)
-                pp += np.dot(activeBlockVectorP, eigBlockVectorP)
+                pp = mx.dot(activeBlockVectorR, eigBlockVectorR)
+                pp += mx.dot(activeBlockVectorP, eigBlockVectorP)
 
-                app = np.dot(activeBlockVectorAR, eigBlockVectorR)
-                app += np.dot(activeBlockVectorAP, eigBlockVectorP)
+                app = mx.dot(activeBlockVectorAR, eigBlockVectorR)
+                app += mx.dot(activeBlockVectorAP, eigBlockVectorP)
 
-                bpp = np.dot(activeBlockVectorBR, eigBlockVectorR)
-                bpp += np.dot(activeBlockVectorBP, eigBlockVectorP)
+                bpp = mx.dot(activeBlockVectorBR, eigBlockVectorR)
+                bpp += mx.dot(activeBlockVectorBP, eigBlockVectorP)
             else:
                 eigBlockVectorX = eigBlockVector[:sizeX]
                 eigBlockVectorR = eigBlockVector[sizeX:]
 
-                pp = np.dot(activeBlockVectorR, eigBlockVectorR)
-                app = np.dot(activeBlockVectorAR, eigBlockVectorR)
-                bpp = np.dot(activeBlockVectorBR, eigBlockVectorR)
+                pp = mx.dot(activeBlockVectorR, eigBlockVectorR)
+                app = mx.dot(activeBlockVectorAR, eigBlockVectorR)
+                bpp = mx.dot(activeBlockVectorBR, eigBlockVectorR)
 
-            blockVectorX = np.dot(blockVectorX, eigBlockVectorX) + pp
-            blockVectorAX = np.dot(blockVectorAX, eigBlockVectorX) + app
-            blockVectorBX = np.dot(blockVectorBX, eigBlockVectorX) + bpp
+            blockVectorX = mx.dot(blockVectorX, eigBlockVectorX) + pp
+            blockVectorAX = mx.dot(blockVectorAX, eigBlockVectorX) + app
+            blockVectorBX = mx.dot(blockVectorBX, eigBlockVectorX) + bpp
 
             blockVectorP, blockVectorAP, blockVectorBP = pp, app, bpp
 
@@ -954,44 +954,44 @@ def lobpcg(
                                                  sizeX + currentBlockSize]
                 eigBlockVectorP = eigBlockVector[sizeX + currentBlockSize:]
 
-                pp = np.dot(activeBlockVectorR, eigBlockVectorR)
-                pp += np.dot(activeBlockVectorP, eigBlockVectorP)
+                pp = mx.dot(activeBlockVectorR, eigBlockVectorR)
+                pp += mx.dot(activeBlockVectorP, eigBlockVectorP)
 
-                app = np.dot(activeBlockVectorAR, eigBlockVectorR)
-                app += np.dot(activeBlockVectorAP, eigBlockVectorP)
+                app = mx.dot(activeBlockVectorAR, eigBlockVectorR)
+                app += mx.dot(activeBlockVectorAP, eigBlockVectorP)
             else:
                 eigBlockVectorX = eigBlockVector[:sizeX]
                 eigBlockVectorR = eigBlockVector[sizeX:]
 
-                pp = np.dot(activeBlockVectorR, eigBlockVectorR)
-                app = np.dot(activeBlockVectorAR, eigBlockVectorR)
+                pp = mx.dot(activeBlockVectorR, eigBlockVectorR)
+                app = mx.dot(activeBlockVectorAR, eigBlockVectorR)
 
-            blockVectorX = np.dot(blockVectorX, eigBlockVectorX) + pp
-            blockVectorAX = np.dot(blockVectorAX, eigBlockVectorX) + app
+            blockVectorX = mx.dot(blockVectorX, eigBlockVectorX) + pp
+            blockVectorAX = mx.dot(blockVectorAX, eigBlockVectorX) + app
 
             blockVectorP, blockVectorAP = pp, app
 
     if B is not None:
-        aux = blockVectorBX * _lambda[np.newaxis, :]
+        aux = blockVectorBX * _lambda[mx.newaxis, :]
     else:
-        aux = blockVectorX * _lambda[np.newaxis, :]
+        aux = blockVectorX * _lambda[mx.newaxis, :]
 
     blockVectorR = blockVectorAX - aux
 
-    aux = np.sum(blockVectorR.conj() * blockVectorR, 0)
-    residualNorms = np.sqrt(np.abs(aux))
+    aux = mx.sum(blockVectorR.conj() * blockVectorR, 0)
+    residualNorms = mx.sqrt(mx.abs(aux))
     # Use old lambda in case of early loop exit.
     if retLambdaHistory:
         lambdaHistory[iterationNumber + 1, :] = _lambda
     if retResidualNormsHistory:
         residualNormsHistory[iterationNumber + 1, :] = residualNorms
-    residualNorm = np.sum(np.abs(residualNorms)) / sizeX
+    residualNorm = mx.sum(mx.abs(residualNorms)) / sizeX
     if residualNorm < smallestResidualNorm:
         smallestResidualNorm = residualNorm
         bestIterationNumber = iterationNumber + 1
         bestblockVectorX = blockVectorX
 
-    if np.max(np.abs(residualNorms)) > residualTolerance:
+    if mx.max(mx.abs(residualNorms)) > residualTolerance:
         warnings.warn(
             f"Exited at iteration {iterationNumber} with accuracies \n"
             f"{residualNorms}\n"
@@ -1022,7 +1022,7 @@ def lobpcg(
             f"and changed to {blockVectorAX.shape} "
             f"after multiplying by the primary matrix.\n"
         )
-    gramXAX = np.dot(blockVectorX.T.conj(), blockVectorAX)
+    gramXAX = mx.dot(blockVectorX.T.conj(), blockVectorAX)
 
     blockVectorBX = blockVectorX
     if B is not None:
@@ -1035,7 +1035,7 @@ def lobpcg(
                 f"after multiplying by the secondary matrix.\n"
             )
 
-    gramXBX = np.dot(blockVectorX.T.conj(), blockVectorBX)
+    gramXBX = mx.dot(blockVectorX.T.conj(), blockVectorBX)
     _handle_gramA_gramB_verbosity(gramXAX, gramXBX, verbosityLevel)
     gramXAX = (gramXAX + gramXAX.T.conj()) / 2
     gramXBX = (gramXBX + gramXBX.T.conj()) / 2
@@ -1048,21 +1048,21 @@ def lobpcg(
 
     ii = _get_indx(_lambda, sizeX, largest)
     _lambda = _lambda[ii]
-    eigBlockVector = np.asarray(eigBlockVector[:, ii])
+    eigBlockVector = mx.array(eigBlockVector[:, ii])
 
-    blockVectorX = np.dot(blockVectorX, eigBlockVector)
-    blockVectorAX = np.dot(blockVectorAX, eigBlockVector)
+    blockVectorX = mx.dot(blockVectorX, eigBlockVector)
+    blockVectorAX = mx.dot(blockVectorAX, eigBlockVector)
 
     if B is not None:
-        blockVectorBX = np.dot(blockVectorBX, eigBlockVector)
-        aux = blockVectorBX * _lambda[np.newaxis, :]
+        blockVectorBX = mx.dot(blockVectorBX, eigBlockVector)
+        aux = blockVectorBX * _lambda[mx.newaxis, :]
     else:
-        aux = blockVectorX * _lambda[np.newaxis, :]
+        aux = blockVectorX * _lambda[mx.newaxis, :]
 
     blockVectorR = blockVectorAX - aux
 
-    aux = np.sum(blockVectorR.conj() * blockVectorR, 0)
-    residualNorms = np.sqrt(np.abs(aux))
+    aux = mx.sum(blockVectorR.conj() * blockVectorR, 0)
+    residualNorms = mx.sqrt(mx.abs(aux))
 
     if retLambdaHistory:
         lambdaHistory[bestIterationNumber + 1, :] = _lambda
@@ -1076,7 +1076,7 @@ def lobpcg(
         residualNormsHistory = residualNormsHistory[
             : bestIterationNumber + 2, :]
 
-    if np.max(np.abs(residualNorms)) > residualTolerance:
+    if mx.max(mx.abs(residualNorms)) > residualTolerance:
         warnings.warn(
             f"Exited postprocessing with accuracies \n"
             f"{residualNorms}\n"
@@ -1089,12 +1089,12 @@ def lobpcg(
         print(f"Final residual norm(s):\n{residualNorms}")
 
     if retLambdaHistory:
-        lambdaHistory = np.vsplit(lambdaHistory, np.shape(lambdaHistory)[0])
-        lambdaHistory = [np.squeeze(i) for i in lambdaHistory]
+        lambdaHistory = mx.vsplit(lambdaHistory, mx.shape(lambdaHistory)[0])
+        lambdaHistory = [mx.squeeze(i) for i in lambdaHistory]
     if retResidualNormsHistory:
-        residualNormsHistory = np.vsplit(residualNormsHistory,
-                                         np.shape(residualNormsHistory)[0])
-        residualNormsHistory = [np.squeeze(i) for i in residualNormsHistory]
+        residualNormsHistory = mx.vsplit(residualNormsHistory,
+                                         mx.shape(residualNormsHistory)[0])
+        residualNormsHistory = [mx.squeeze(i) for i in residualNormsHistory]
 
     if retLambdaHistory:
         if retResidualNormsHistory:

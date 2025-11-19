@@ -1,6 +1,6 @@
 import math
 import numbers
-import numpy as np
+import mlx.core as mx
 from . import eigsh
 
 from scipy._lib._util import _transition_to_rng
@@ -28,7 +28,7 @@ def _iv(A, k, ncv, tol, which, v0, maxiter,
 
     # input validation/standardization for `A`
     A = aslinearoperator(A)  # this takes care of some input validation
-    if not np.issubdtype(A.dtype, np.number):
+    if not mx.issubdtype(A.dtype, mx.number):
         message = "`A` must be of numeric data type."
         raise ValueError(message)
     if math.prod(A.shape) == 0:
@@ -51,7 +51,7 @@ def _iv(A, k, ncv, tol, which, v0, maxiter,
         ncv = int(ncv)
 
     # input validation/standardization for `tol`
-    if tol < 0 or not np.isfinite(tol):
+    if tol < 0 or not mx.isfinite(tol):
         message = "`tol` must be a non-negative floating point value."
         raise ValueError(message)
     tol = float(tol)
@@ -64,9 +64,9 @@ def _iv(A, k, ncv, tol, which, v0, maxiter,
 
     # input validation/standardization for `v0`
     if v0 is not None:
-        v0 = np.atleast_1d(v0)
-        if not (np.issubdtype(v0.dtype, np.complexfloating)
-                or np.issubdtype(v0.dtype, np.floating)):
+        v0 = mx.atleast_1d(v0)
+        if not (mx.issubdtype(v0.dtype, mx.complexfloating)
+                or mx.issubdtype(v0.dtype, mx.floating)):
             message = ("`v0` must be of floating or complex floating "
                        "data type.")
             raise ValueError(message)
@@ -88,13 +88,13 @@ def _iv(A, k, ncv, tol, which, v0, maxiter,
     if return_singular not in rs_options:
         raise ValueError(f"`return_singular_vectors` must be in {rs_options}.")
 
-    if isinstance(rng, numbers.Integral | np.integer):
-        rng = np.random.default_rng(np.random.RandomState(rng))
-    elif isinstance(rng, np.random.RandomState):
-        rng = np.random.default_rng(rng)
+    if isinstance(rng, numbers.Integral | mx.integer):
+        rng = mx.random.default_rng(mx.random.RandomState(rng))
+    elif isinstance(rng, mx.random.RandomState):
+        rng = mx.random.default_rng(rng)
     elif rng is None:
-        rng = np.random.default_rng()
-    elif isinstance(rng, np.random.Generator):
+        rng = mx.random.default_rng()
+    elif isinstance(rng, mx.random.Generator):
         pass
     else:
         raise ValueError(f"'{rng}' is neither a NumPy Generator nor an integer seed"
@@ -120,7 +120,7 @@ def svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
 
     Parameters
     ----------
-    A : ndarray, sparse matrix, or LinearOperator
+    A : array, sparse matrix, or LinearOperator
         Matrix to decompose of a floating point numeric dtype.
     k : int, default: 6
         Number of singular values and singular vectors to compute.
@@ -136,7 +136,7 @@ def svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
     which : {'LM', 'SM'}
         Which `k` singular values to find: either the largest magnitude ('LM')
         or smallest magnitude ('SM') singular values.
-    v0 : ndarray, optional
+    v0 : array, optional
         The starting vector for iteration; see method-specific
         documentation (:ref:`'arpack' <sparse.linalg.svds-arpack>`,
         :ref:`'lobpcg' <sparse.linalg.svds-lobpcg>`), or
@@ -179,11 +179,11 @@ def svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
 
     Returns
     -------
-    u : ndarray, shape=(M, k)
+    u : array, shape=(M, k)
         Unitary matrix having left singular vectors as columns.
-    s : ndarray, shape=(k,)
+    s : array, shape=(k,)
         The singular values.
-    vh : ndarray, shape=(k, N)
+    vh : array, shape=(k, N)
         Unitary matrix having right singular vectors as rows.
 
     Notes
@@ -204,51 +204,51 @@ def svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
     --------
     Construct a matrix `A` from singular values and vectors.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import sparse, linalg, stats
     >>> from scipy.sparse.linalg import svds, aslinearoperator, LinearOperator
 
     Construct a dense matrix `A` from singular values and vectors.
 
-    >>> rng = np.random.default_rng(258265244568965474821194062361901728911)
+    >>> rng = mx.random.default_rng(258265244568965474821194062361901728911)
     >>> orthogonal = stats.ortho_group.rvs(10, random_state=rng)
     >>> s = [1e-3, 1, 2, 3, 4]  # non-zero singular values
     >>> u = orthogonal[:, :5]         # left singular vectors
     >>> vT = orthogonal[:, 5:].T      # right singular vectors
-    >>> A = u @ np.diag(s) @ vT
+    >>> A = u @ mx.diag(s) @ vT
 
     With only four singular values/vectors, the SVD approximates the original
     matrix.
 
     >>> u4, s4, vT4 = svds(A, k=4)
-    >>> A4 = u4 @ np.diag(s4) @ vT4
-    >>> np.allclose(A4, A, atol=1e-3)
+    >>> A4 = u4 @ mx.diag(s4) @ vT4
+    >>> mx.allclose(A4, A, atol=1e-3)
     True
 
     With all five non-zero singular values/vectors, we can reproduce
     the original matrix more accurately.
 
     >>> u5, s5, vT5 = svds(A, k=5)
-    >>> A5 = u5 @ np.diag(s5) @ vT5
-    >>> np.allclose(A5, A)
+    >>> A5 = u5 @ mx.diag(s5) @ vT5
+    >>> mx.allclose(A5, A)
     True
 
     The singular values match the expected singular values.
 
-    >>> np.allclose(s5, s)
+    >>> mx.allclose(s5, s)
     True
 
     Since the singular values are not close to each other in this example,
     every singular vector matches as expected up to a difference in sign.
 
-    >>> (np.allclose(np.abs(u5), np.abs(u)) and
-    ...  np.allclose(np.abs(vT5), np.abs(vT)))
+    >>> (mx.allclose(mx.abs(u5), mx.abs(u)) and
+    ...  mx.allclose(mx.abs(vT5), mx.abs(vT)))
     True
 
     The singular vectors are also orthogonal.
 
-    >>> (np.allclose(u5.T @ u5, np.eye(5)) and
-    ...  np.allclose(vT5 @ vT5.T, np.eye(5)))
+    >>> (mx.allclose(u5.T @ u5, mx.eye(5)) and
+    ...  mx.allclose(vT5 @ vT5.T, mx.eye(5)))
     True
 
     If there are (nearly) multiple singular values, the corresponding
@@ -256,15 +256,15 @@ def svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
     subspace containing all such singular vectors is computed accurately
     as can be measured by angles between subspaces via 'subspace_angles'.
 
-    >>> rng = np.random.default_rng(178686584221410808734965903901790843963)
+    >>> rng = mx.random.default_rng(178686584221410808734965903901790843963)
     >>> s = [1, 1 + 1e-6]  # non-zero singular values
-    >>> u, _ = np.linalg.qr(rng.standard_normal((99, 2)))
-    >>> v, _ = np.linalg.qr(rng.standard_normal((99, 2)))
+    >>> u, _ = mx.linalg.qr(rng.standard_normal((99, 2)))
+    >>> v, _ = mx.linalg.qr(rng.standard_normal((99, 2)))
     >>> vT = v.T
-    >>> A = u @ np.diag(s) @ vT
-    >>> A = A.astype(np.float32)
+    >>> A = u @ mx.diag(s) @ vT
+    >>> A = A.astype(mx.float32)
     >>> u2, s2, vT2 = svds(A, k=2, rng=rng)
-    >>> np.allclose(s2, s)
+    >>> mx.allclose(s2, s)
     True
 
     The angles between the individual exact and computed singular vectors
@@ -290,9 +290,9 @@ def svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
 
     The next example follows that of 'sklearn.decomposition.TruncatedSVD'.
 
-    >>> rng = np.random.default_rng(0)
+    >>> rng = mx.random.default_rng(0)
     >>> X_dense = rng.random(size=(100, 100))
-    >>> X_dense[:, 2 * np.arange(50)] = 0
+    >>> X_dense[:, 2 * mx.arange(50)] = 0
     >>> X = sparse.csr_array(X_dense)
     >>> _, singular_values, _ = svds(X, k=5, rng=rng)
     >>> print(singular_values)
@@ -301,26 +301,26 @@ def svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
     The function can be called without the transpose of the input matrix
     ever explicitly constructed.
 
-    >>> rng = np.random.default_rng(102524723947864966825913730119128190974)
+    >>> rng = mx.random.default_rng(102524723947864966825913730119128190974)
     >>> G = sparse.random_array((8, 9), density=0.5, rng=rng)
     >>> Glo = aslinearoperator(G)
     >>> _, singular_values_svds, _ = svds(Glo, k=5, rng=rng)
     >>> _, singular_values_svd, _ = linalg.svd(G.toarray())
-    >>> np.allclose(singular_values_svds, singular_values_svd[-4::-1])
+    >>> mx.allclose(singular_values_svds, singular_values_svd[-4::-1])
     True
 
     The most memory efficient scenario is where neither
     the original matrix, nor its transpose, is explicitly constructed.
     Our example computes the smallest singular values and vectors
-    of 'LinearOperator' constructed from the numpy function 'np.diff' used
+    of 'LinearOperator' constructed from the numpy function 'mx.diff' used
     column-wise to be consistent with 'LinearOperator' operating on columns.
 
-    >>> diff0 = lambda a: np.diff(a, axis=0)
+    >>> diff0 = lambda a: mx.diff(a, axis=0)
 
     Let us create the matrix from 'diff0' to be used for validation only.
 
     >>> n = 5  # The dimension of the space.
-    >>> M_from_diff0 = diff0(np.eye(n))
+    >>> M_from_diff0 = diff0(mx.eye(n))
     >>> print(M_from_diff0.astype(int))
     [[-1  1  0  0  0]
      [ 0 -1  1  0  0]
@@ -330,9 +330,9 @@ def svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
     The matrix 'M_from_diff0' is bi-diagonal and could be alternatively
     created directly by
 
-    >>> M = - np.eye(n - 1, n, dtype=int)
-    >>> np.fill_diagonal(M[:,1:], 1)
-    >>> np.allclose(M, M_from_diff0)
+    >>> M = - mx.eye(n - 1, n, dtype=int)
+    >>> mx.fill_diagonal(M[:,1:], 1)
+    >>> mx.allclose(M, M_from_diff0)
     True
 
     Its transpose
@@ -377,8 +377,8 @@ def svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
 
     >>> def diff0t(a):
     ...     if a.ndim == 1:
-    ...         a = a[:,np.newaxis]  # Turn 1D into 2D array
-    ...     d = np.zeros((a.shape[0] + 1, a.shape[1]), dtype=a.dtype)
+    ...         a = a[:,mx.newaxis]  # Turn 1D into 2D array
+    ...     d = mx.zeros((a.shape[0] + 1, a.shape[1]), dtype=a.dtype)
     ...     d[0, :] = - a[0, :]
     ...     d[1:-1, :] = a[0:-1, :] - a[1:, :]
     ...     d[-1, :] = a[-1, :]
@@ -386,7 +386,7 @@ def svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
 
     We check that our function 'diff0t' for the matrix transpose is valid.
 
-    >>> np.allclose(M.T, diff0t(np.eye(n-1)))
+    >>> mx.allclose(M.T, diff0t(mx.eye(n-1)))
     True
 
     Now we setup our matrix-free 'LinearOperator' called 'diff0_func_aslo'
@@ -403,11 +403,11 @@ def svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
 
     And validate both the matrix and its transpose in 'LinearOperator'.
 
-    >>> np.allclose(diff0_func_aslo(np.eye(n)),
-    ...             diff0_matrix_aslo(np.eye(n)))
+    >>> mx.allclose(diff0_func_aslo(mx.eye(n)),
+    ...             diff0_matrix_aslo(mx.eye(n)))
     True
-    >>> np.allclose(diff0_func_aslo.T(np.eye(n-1)),
-    ...             diff0_matrix_aslo.T(np.eye(n-1)))
+    >>> mx.allclose(diff0_func_aslo.T(mx.eye(n-1)),
+    ...             diff0_matrix_aslo.T(mx.eye(n-1)))
     True
 
     Having the 'LinearOperator' setup validated, we run the solver.
@@ -426,12 +426,12 @@ def svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
     ``M @ M.T`` represent the discrete second derivative with the Dirichlet
     boundary conditions. We use these analytic expressions for validation.
 
-    >>> se = 2. * np.sin(np.pi * np.arange(1, 4) / (2. * n))
-    >>> ue = np.sqrt(2 / n) * np.sin(np.pi * np.outer(np.arange(1, n),
-    ...                              np.arange(1, 4)) / n)
-    >>> np.allclose(s, se, atol=1e-3)
+    >>> se = 2. * mx.sin(mx.pi * mx.arange(1, 4) / (2. * n))
+    >>> ue = mx.sqrt(2 / n) * mx.sin(mx.pi * mx.outer(mx.arange(1, n),
+    ...                              mx.arange(1, 4)) / n)
+    >>> mx.allclose(s, se, atol=1e-3)
     True
-    >>> np.allclose(np.abs(u), np.abs(ue), atol=1e-6)
+    >>> mx.allclose(mx.abs(u), mx.abs(ue), atol=1e-6)
     True
 
     """
@@ -458,7 +458,7 @@ def svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
 
         dtype = getattr(A, 'dtype', None)
         if dtype is None:
-            dtype = A.dot(np.zeros([m, 1])).dtype
+            dtype = A.dot(mx.zeros([m, 1])).dtype
 
     def matvec_XH_X(x):
         return XH_dot(X_dot(x))
@@ -475,7 +475,7 @@ def svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
     if solver == 'lobpcg':
 
         if k == 1 and v0 is not None:
-            X = np.reshape(v0, (-1, 1))
+            X = mx.reshape(v0, (-1, 1))
         else:
             X = rng.standard_normal(size=(min(A.shape), k))
 
@@ -515,7 +515,7 @@ def svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
                           ncv=ncv, which=which, v0=v0)
         # arpack do not guarantee exactly orthonormal eigenvectors
         # for clustered eigenvalues, especially in complex arithmetic
-        eigvec, _ = np.linalg.qr(eigvec)
+        eigvec, _ = mx.linalg.qr(eigvec)
 
     # the eigenvectors eigvec must be orthonomal here; see gh-16712
     Av = X_matmat(eigvec)

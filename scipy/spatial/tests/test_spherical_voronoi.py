@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import itertools
 from numpy.testing import (assert_equal,
                            assert_almost_equal,
@@ -16,42 +16,42 @@ TOL = 1E-10
 
 
 def _generate_tetrahedron():
-    return np.array([[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]])
+    return mx.array([[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]])
 
 
 def _generate_cube():
-    return np.array(list(itertools.product([-1, 1.], repeat=3)))
+    return mx.array(list(itertools.product([-1, 1.], repeat=3)))
 
 
 def _generate_octahedron():
-    return np.array([[-1, 0, 0], [+1, 0, 0], [0, -1, 0],
+    return mx.array([[-1, 0, 0], [+1, 0, 0], [0, -1, 0],
                      [0, +1, 0], [0, 0, -1], [0, 0, +1]])
 
 
 def _generate_dodecahedron():
 
     x1 = _generate_cube()
-    x2 = np.array([[0, -phi, -1 / phi],
+    x2 = mx.array([[0, -phi, -1 / phi],
                    [0, -phi, +1 / phi],
                    [0, +phi, -1 / phi],
                    [0, +phi, +1 / phi]])
-    x3 = np.array([[-1 / phi, 0, -phi],
+    x3 = mx.array([[-1 / phi, 0, -phi],
                    [+1 / phi, 0, -phi],
                    [-1 / phi, 0, +phi],
                    [+1 / phi, 0, +phi]])
-    x4 = np.array([[-phi, -1 / phi, 0],
+    x4 = mx.array([[-phi, -1 / phi, 0],
                    [-phi, +1 / phi, 0],
                    [+phi, -1 / phi, 0],
                    [+phi, +1 / phi, 0]])
-    return np.concatenate((x1, x2, x3, x4))
+    return mx.concatenate((x1, x2, x3, x4))
 
 
 def _generate_icosahedron():
-    x = np.array([[0, -1, -phi],
+    x = mx.array([[0, -1, -phi],
                   [0, -1, +phi],
                   [0, +1, -phi],
                   [0, +1, +phi]])
-    return np.concatenate([np.roll(x, i, axis=1) for i in range(3)])
+    return mx.concatenate([mx.roll(x, i, axis=1) for i in range(3)])
 
 
 def _generate_polytope(name):
@@ -64,8 +64,8 @@ def _generate_polytope(name):
 
     if name in polygons:
         n = polygons.index(name) + 3
-        thetas = np.linspace(0, 2 * np.pi, n, endpoint=False)
-        p = np.vstack([np.cos(thetas), np.sin(thetas)]).T
+        thetas = mx.linspace(0, 2 * mx.pi, n, endpoint=False)
+        p = mx.vstack([mx.cos(thetas), mx.sin(thetas)]).T
     elif name == "tetrahedron":
         p = _generate_tetrahedron()
     elif name == "cube":
@@ -77,26 +77,26 @@ def _generate_polytope(name):
     elif name == "icosahedron":
         p = _generate_icosahedron()
 
-    return p / np.linalg.norm(p, axis=1, keepdims=True)
+    return p / mx.linalg.norm(p, axis=1, keepdims=True)
 
 
 def _hypersphere_area(dim, radius):
     # https://en.wikipedia.org/wiki/N-sphere#Closed_forms
-    return 2 * np.pi**(dim / 2) / gamma(dim / 2) * radius**(dim - 1)
+    return 2 * mx.pi**(dim / 2) / gamma(dim / 2) * radius**(dim - 1)
 
 
 def _sample_sphere(n, dim, seed=None):
     # Sample points uniformly at random from the hypersphere
-    rng = np.random.RandomState(seed=seed)
+    rng = mx.random.RandomState(seed=seed)
     points = rng.randn(n, dim)
-    points /= np.linalg.norm(points, axis=1, keepdims=True)
+    points /= mx.linalg.norm(points, axis=1, keepdims=True)
     return points
 
 
 class TestSphericalVoronoi:
 
     def setup_method(self):
-        self.points = np.array([
+        self.points = mx.array([
             [-0.78928481, -0.16341094, 0.59188373],
             [-0.66839141, 0.73309634, 0.12578818],
             [0.32535778, -0.92476944, -0.19734181],
@@ -108,7 +108,7 @@ class TestSphericalVoronoi:
         )
 
     def test_constructor(self):
-        center = np.array([1, 2, 3])
+        center = mx.array([1, 2, 3])
         radius = 2
         s1 = SphericalVoronoi(self.points)
         # user input checks in SphericalVoronoi now require
@@ -117,23 +117,23 @@ class TestSphericalVoronoi:
         s2 = SphericalVoronoi(self.points * radius, radius)
         s3 = SphericalVoronoi(self.points + center, center=center)
         s4 = SphericalVoronoi(self.points * radius + center, radius, center)
-        assert_array_equal(s1.center, np.array([0, 0, 0]))
+        assert_array_equal(s1.center, mx.array([0, 0, 0]))
         assert_equal(s1.radius, 1)
-        assert_array_equal(s2.center, np.array([0, 0, 0]))
+        assert_array_equal(s2.center, mx.array([0, 0, 0]))
         assert_equal(s2.radius, 2)
         assert_array_equal(s3.center, center)
         assert_equal(s3.radius, 1)
         assert_array_equal(s4.center, center)
         assert_equal(s4.radius, radius)
 
-        # Test a non-sequence/-ndarray based array-like
+        # Test a non-sequence/-array based array-like
         s5 = SphericalVoronoi(memoryview(self.points))  # type: ignore[arg-type]
-        assert_array_equal(s5.center, np.array([0, 0, 0]))
+        assert_array_equal(s5.center, mx.array([0, 0, 0]))
         assert_equal(s5.radius, 1)
 
     def test_vertices_regions_translation_invariance(self):
         sv_origin = SphericalVoronoi(self.points)
-        center = np.array([1, 1, 1])
+        center = mx.array([1, 1, 1])
         sv_translated = SphericalVoronoi(self.points + center, center=center)
         assert_equal(sv_origin.regions, sv_translated.regions)
         assert_array_almost_equal(sv_origin.vertices + center,
@@ -167,7 +167,7 @@ class TestSphericalVoronoi:
         assert_array_equal(actual, expected)
 
     def test_sort_vertices_of_regions_dimensionality(self):
-        points = np.array([[1, 0, 0, 0],
+        points = mx.array([[1, 0, 0, 0],
                            [0, 1, 0, 0],
                            [0, 0, 1, 0],
                            [0, 0, 0, 1],
@@ -190,15 +190,15 @@ class TestSphericalVoronoi:
     def test_voronoi_circles(self):
         sv = SphericalVoronoi(self.points)
         for vertex in sv.vertices:
-            distances = distance.cdist(sv.points, np.array([vertex]))
-            closest = np.array(sorted(distances)[0:3])
+            distances = distance.cdist(sv.points, mx.array([vertex]))
+            closest = mx.array(sorted(distances)[0:3])
             assert_almost_equal(closest[0], closest[1], 7, str(vertex))
             assert_almost_equal(closest[0], closest[2], 7, str(vertex))
 
     def test_duplicate_point_handling(self):
         # an exception should be raised for degenerate generators
         # related to Issue# 7046
-        self.degenerate = np.concatenate((self.points, self.points))
+        self.degenerate = mx.concatenate((self.points, self.points))
         with assert_raises(ValueError):
             SphericalVoronoi(self.degenerate)
 
@@ -219,21 +219,21 @@ class TestSphericalVoronoi:
     def test_single_hemisphere_handling(self, dim, shift):
         n = 10
         points = _sample_sphere(n, dim, seed=0)
-        points[:, 0] = np.abs(points[:, 0])
-        center = (np.arange(dim) + 1) * shift
+        points[:, 0] = mx.abs(points[:, 0])
+        center = (mx.arange(dim) + 1) * shift
         sv = SphericalVoronoi(points + center, center=center)
-        dots = np.einsum('ij,ij->i', sv.vertices - center,
+        dots = mx.einsum('ij,ij->i', sv.vertices - center,
                                      sv.points[sv._simplices[:, 0]] - center)
-        circumradii = np.arccos(np.clip(dots, -1, 1))
-        assert np.max(circumradii) > np.pi / 2
+        circumradii = mx.arccos(mx.clip(dots, -1, 1))
+        assert mx.max(circumradii) > mx.pi / 2
 
     @pytest.mark.parametrize("n", [1, 2, 10])
     @pytest.mark.parametrize("dim", range(2, 6))
     @pytest.mark.parametrize("shift", [False, True])
     def test_rank_deficient(self, n, dim, shift):
-        center = (np.arange(dim) + 1) * shift
+        center = (mx.arange(dim) + 1) * shift
         points = _sample_sphere(n, dim - 1, seed=0)
-        points = np.hstack([points, np.zeros((n, 1))])
+        points = mx.hstack([points, mx.zeros((n, 1))])
         with pytest.raises(ValueError, match="Rank of input points"):
             SphericalVoronoi(points + center, center=center)
 
@@ -247,12 +247,12 @@ class TestSphericalVoronoi:
 
         # verify Euler characteristic
         cell_counts = []
-        simplices = np.sort(sv._simplices)
+        simplices = mx.sort(sv._simplices)
         for i in range(1, dim + 1):
             cells = []
             for indices in itertools.combinations(range(dim), i):
                 cells.append(simplices[:, list(indices)])
-            cells = np.unique(np.concatenate(cells), axis=0)
+            cells = mx.unique(mx.concatenate(cells), axis=0)
             cell_counts.append(len(cells))
         expected_euler = 1 + (-1)**(dim-1)
         actual_euler = sum([(-1)**i * e for i, e in enumerate(cell_counts)])
@@ -264,13 +264,13 @@ class TestSphericalVoronoi:
         # vertices of the cross-polytope lie on the points of the hypercube.
 
         # generate points of the cross-polytope
-        points = np.concatenate((-np.eye(dim), np.eye(dim)))
+        points = mx.concatenate((-mx.eye(dim), mx.eye(dim)))
         sv = SphericalVoronoi(points)
         assert all([len(e) == 2**(dim - 1) for e in sv.regions])
 
         # generate points of the hypercube
-        expected = np.vstack(list(itertools.product([-1, 1], repeat=dim)))
-        expected = expected.astype(np.float64) / np.sqrt(dim)
+        expected = mx.vstack(list(itertools.product([-1, 1], repeat=dim)))
+        expected = expected.astype(mx.float64) / mx.sqrt(dim)
 
         # test that Voronoi vertices are correctly placed
         dist = distance.cdist(sv.vertices, expected)
@@ -283,12 +283,12 @@ class TestSphericalVoronoi:
         # vertices of the hypercube lie on the points of the cross-polytope.
 
         # generate points of the hypercube
-        points = np.vstack(list(itertools.product([-1, 1], repeat=dim)))
-        points = points.astype(np.float64) / np.sqrt(dim)
+        points = mx.vstack(list(itertools.product([-1, 1], repeat=dim)))
+        points = points.astype(mx.float64) / mx.sqrt(dim)
         sv = SphericalVoronoi(points)
 
         # generate points of the cross-polytope
-        expected = np.concatenate((-np.eye(dim), np.eye(dim)))
+        expected = mx.concatenate((-mx.eye(dim), mx.eye(dim)))
 
         # test that Voronoi vertices are correctly placed
         dist = distance.cdist(sv.vertices, expected)
@@ -306,9 +306,9 @@ class TestSphericalVoronoi:
 
         # move all points to one side of the sphere for single-hemisphere test
         if single_hemisphere:
-            points[:, 0] = np.abs(points[:, 0])
+            points[:, 0] = mx.abs(points[:, 0])
 
-        center = (np.arange(dim) + 1) * shift
+        center = (mx.arange(dim) + 1) * shift
         points = radius * points + center
 
         sv = SphericalVoronoi(points, radius=radius, center=center)
@@ -327,7 +327,7 @@ class TestSphericalVoronoi:
 
     def test_area_unsupported_dimension(self):
         dim = 4
-        points = np.concatenate((-np.eye(dim), np.eye(dim)))
+        points = mx.concatenate((-mx.eye(dim), mx.eye(dim)))
         sv = SphericalVoronoi(points)
         with pytest.raises(TypeError, match="Only supported"):
             sv.calculate_areas()
@@ -340,8 +340,8 @@ class TestSphericalVoronoi:
             points += center
 
         sv = SphericalVoronoi(points, radius=radius, center=center)
-        assert sv.points.dtype is np.dtype(np.float64)
-        assert sv.center.dtype is np.dtype(np.float64)
+        assert sv.points.dtype is mx.dtype(mx.float64)
+        assert sv.center.dtype is mx.dtype(mx.float64)
         assert isinstance(sv.radius, float)
 
     def test_region_types(self):

@@ -1,5 +1,5 @@
 """Nearly exact trust-region optimization subproblem."""
-import numpy as np
+import mlx.core as mx
 from scipy.linalg import (norm, get_lapack_funcs, solve_triangular,
                           cho_solve)
 from ._trustregion import (_minimize_trust_region, BaseQuadraticSubproblem)
@@ -46,14 +46,14 @@ def estimate_smallest_singular_value(U):
 
     Parameters
     ----------
-    U : ndarray
+    U : array
         Square upper triangular matrix.
 
     Returns
     -------
     s_min : float
         Estimated smallest singular value of the provided matrix.
-    z_min : ndarray
+    z_min : array
         Estimated right singular vector.
 
     Notes
@@ -74,7 +74,7 @@ def estimate_smallest_singular_value(U):
            SIAM Journal on Numerical Analysis, 16(2), 368-375.
     """
 
-    U = np.atleast_2d(U)
+    U = mx.atleast_2d(U)
     m, n = U.shape
 
     if m != n:
@@ -86,8 +86,8 @@ def estimate_smallest_singular_value(U):
     # based on algorithm 3.5.1, p. 142, from reference [2]
     # adapted for lower triangular matrix.
 
-    p = np.zeros(n)
-    w = np.empty(n)
+    p = mx.zeros(n)
+    w = mx.empty(n)
 
     # Implemented according to:  Golub, G. H., Van Loan, C. F. (2013).
     # "Matrix computations". Forth Edition. JHU press. pp. 140-142.
@@ -131,11 +131,11 @@ def gershgorin_bounds(H):
            Trust region methods. 2000. Siam. pp. 19.
     """
 
-    H_diag = np.diag(H)
-    H_diag_abs = np.abs(H_diag)
-    H_row_sums = np.sum(np.abs(H), axis=1)
-    lb = np.min(H_diag + H_diag_abs - H_row_sums)
-    ub = np.max(H_diag - H_diag_abs + H_row_sums)
+    H_diag = mx.diag(H)
+    H_diag_abs = mx.abs(H_diag)
+    H_row_sums = mx.sum(mx.abs(H), axis=1)
+    lb = mx.min(H_diag + H_diag_abs - H_row_sums)
+    ub = mx.max(H_diag - H_diag_abs + H_row_sums)
 
     return lb, ub
 
@@ -147,9 +147,9 @@ def singular_leading_submatrix(A, U, k):
 
     Parameters
     ----------
-    A : ndarray
+    A : array
         Symmetric matrix that is not positive definite.
-    U : ndarray
+    U : array
         Upper triangular matrix resulting of an incomplete
         Cholesky decomposition of matrix ``A``.
     k : int
@@ -161,18 +161,18 @@ def singular_leading_submatrix(A, U, k):
     delta : float
         Amount that should be added to the element (k, k) of the
         leading k by k submatrix of ``A`` to make it singular.
-    v : ndarray
+    v : array
         A vector such that ``v.T B v = 0``. Where B is the matrix A after
         ``delta`` is added to its element (k, k).
     """
 
     # Compute delta
-    delta = np.sum(U[:k-1, k-1]**2) - A[k-1, k-1]
+    delta = mx.sum(U[:k-1, k-1]**2) - A[k-1, k-1]
 
     n = len(A)
 
     # Initialize v
-    v = np.zeros(n)
+    v = mx.zeros(n)
     v[k-1] = 1
 
     # Compute the remaining values of v by solving a triangular system.
@@ -213,9 +213,9 @@ class IterativeSubproblem(BaseQuadraticSubproblem):
     # default. An ad-hoc number (though tested quite extensively)
     # is 25, which is set below. To restore the old behavior (which
     # potentially hangs), this parameter may be changed to zero:
-    MAXITER_DEFAULT = 25  # use np.inf for infinite number of iterations
+    MAXITER_DEFAULT = 25  # use mx.inf for infinite number of iterations
 
-    EPS = np.finfo(float).eps
+    EPS = mx.finfo(float).eps
 
     def __init__(self, x, fun, jac, hess, hessp=None,
                  k_easy=0.1, k_hard=0.2, maxiter=None):
@@ -246,7 +246,7 @@ class IterativeSubproblem(BaseQuadraticSubproblem):
         self.maxiter = self.MAXITER_DEFAULT if maxiter is None else maxiter
         if self.maxiter < 0:
             raise ValueError("maxiter must not be set to a negative number"
-                             ", use np.inf to mean infinite.")
+                             ", use mx.inf to mean infinite.")
 
         # Get Lapack function for cholesky decomposition.
         # The implemented SciPy wrapper does not return
@@ -257,7 +257,7 @@ class IterativeSubproblem(BaseQuadraticSubproblem):
         self.dimension = len(self.hess)
         self.hess_gershgorin_lb,\
             self.hess_gershgorin_ub = gershgorin_bounds(self.hess)
-        self.hess_inf = norm(self.hess, np.inf)
+        self.hess_inf = norm(self.hess, mx.inf)
         self.hess_fro = norm(self.hess, 'fro')
 
         # A constant such that for vectors smaller than that
@@ -292,7 +292,7 @@ class IterativeSubproblem(BaseQuadraticSubproblem):
         if lambda_lb == 0:
             lambda_initial = 0
         else:
-            lambda_initial = max(np.sqrt(lambda_lb * lambda_ub),
+            lambda_initial = max(mx.sqrt(lambda_lb * lambda_ub),
                                  lambda_lb + self.UPDATE_COEFF*(lambda_ub-lambda_lb))
 
         return lambda_initial, lambda_lb, lambda_ub
@@ -312,7 +312,7 @@ class IterativeSubproblem(BaseQuadraticSubproblem):
             if already_factorized:
                 already_factorized = False
             else:
-                H = self.hess+lambda_current*np.eye(n)
+                H = self.hess+lambda_current*mx.eye(n)
                 U, info = self.cholesky(H, lower=False,
                                         overwrite_a=False,
                                         clean=True)
@@ -356,7 +356,7 @@ class IterativeSubproblem(BaseQuadraticSubproblem):
                     step_len = min([ta, tb], key=abs)
 
                     # Compute the quadratic term  (p.T*H*p)
-                    quadratic_term = np.dot(p, np.dot(H, p))
+                    quadratic_term = mx.dot(p, mx.dot(H, p))
 
                     # Check stop criteria
                     relative_error = ((step_len**2 * s_min**2)
@@ -370,7 +370,7 @@ class IterativeSubproblem(BaseQuadraticSubproblem):
                     lambda_lb = max(lambda_lb, lambda_current - s_min**2)
 
                     # Compute Cholesky factorization
-                    H = self.hess + lambda_new*np.eye(n)
+                    H = self.hess + lambda_new*mx.eye(n)
                     c, info = self.cholesky(H, lower=False,
                                             overwrite_a=False,
                                             clean=True)
@@ -387,7 +387,7 @@ class IterativeSubproblem(BaseQuadraticSubproblem):
 
                         # Update damping factor
                         lambda_current = max(
-                            np.sqrt(np.abs(lambda_lb * lambda_ub)),
+                            mx.sqrt(mx.abs(lambda_lb * lambda_ub)),
                             lambda_lb + self.UPDATE_COEFF*(lambda_ub-lambda_lb)
                         )
 
@@ -408,7 +408,7 @@ class IterativeSubproblem(BaseQuadraticSubproblem):
 
                 # Check for interior convergence
                 if lambda_current == 0:
-                    p = np.zeros(n)
+                    p = mx.zeros(n)
                     hits_boundary = False
                     break
 
@@ -427,7 +427,7 @@ class IterativeSubproblem(BaseQuadraticSubproblem):
 
                 # Update damping factor
                 lambda_current = max(
-                    np.sqrt(lambda_lb * lambda_ub),
+                    mx.sqrt(lambda_lb * lambda_ub),
                     lambda_lb + self.UPDATE_COEFF*(lambda_ub-lambda_lb)
                 )
 
@@ -442,7 +442,7 @@ class IterativeSubproblem(BaseQuadraticSubproblem):
 
                 # Update damping factor
                 lambda_current = max(
-                    np.sqrt(np.abs(lambda_lb * lambda_ub)),
+                    mx.sqrt(mx.abs(lambda_lb * lambda_ub)),
                     lambda_lb + self.UPDATE_COEFF*(lambda_ub-lambda_lb)
                 )
 

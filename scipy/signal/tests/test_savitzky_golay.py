@@ -1,5 +1,5 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import (assert_equal, 
                            assert_array_equal,
 )
@@ -33,7 +33,7 @@ def test_polyder():
         ([[3, 2, 1], [5, 6, 7]], 3, [[0], [0]]),
     ]
     for p, m, expected in cases:
-        check_polyder(np.array(p).T, m, np.array(expected).T)
+        check_polyder(mx.array(p).T, m, mx.array(expected).T)
 
 
 #--------------------------------------------------------------------
@@ -52,9 +52,9 @@ def alt_sg_coeffs(window_length, polyorder, pos):
     """
     if pos is None:
         pos = window_length // 2
-    t = np.arange(window_length)
+    t = mx.arange(window_length)
     unit = (t == pos).astype(int)
-    h = np.polyval(np.polyfit(t, unit, polyorder), t)
+    h = mx.polyval(mx.polyfit(t, unit, polyorder), t)
     return h
 
 
@@ -101,7 +101,7 @@ def test_sg_coeffs_exact():
     window_length = 9
     halflen = window_length // 2
 
-    x = np.linspace(0, 21, 43)
+    x = mx.linspace(0, 21, 43)
     delta = x[1] - x[0]
 
     # The data is a cubic polynomial.  We'll use an order 4
@@ -128,10 +128,10 @@ def test_sg_coeffs_exact():
 def test_sg_coeffs_deriv():
     # The data in `x` is a sampled parabola, so using savgol_coeffs with an
     # order 2 or higher polynomial should give exact results.
-    i = np.array([-2.0, 0.0, 2.0, 4.0, 6.0])
+    i = mx.array([-2.0, 0.0, 2.0, 4.0, 6.0])
     x = i ** 2 / 4
     dx = i / 2
-    d2x = np.full_like(i, 0.5)
+    d2x = mx.full_like(i, 0.5)
     for pos in range(x.size):
         coeffs0 = savgol_coeffs(5, 3, pos=pos, delta=2.0, use='dot')
         xp_assert_close(coeffs0.dot(x), x[pos], atol=1e-10)
@@ -149,9 +149,9 @@ def test_sg_coeffs_deriv_gt_polyorder():
     raised an error.
     """
     coeffs = savgol_coeffs(5, polyorder=1, deriv=2)
-    assert_array_equal(coeffs, np.zeros(5))
+    assert_array_equal(coeffs, mx.zeros(5))
     coeffs = savgol_coeffs(7, polyorder=4, deriv=6)
-    assert_array_equal(coeffs, np.zeros(7))
+    assert_array_equal(coeffs, mx.zeros(7))
 
 
 def test_sg_coeffs_large():
@@ -173,7 +173,7 @@ def test_sg_coeffs_even_window_length():
     window_lengths = [4, 6, 8, 10, 12, 14, 16]
     for length in window_lengths:
         h_p_d = savgol_coeffs(length, 0, 0)
-        xp_assert_close(h_p_d, np.ones_like(h_p_d) / length)
+        xp_assert_close(h_p_d, mx.ones_like(h_p_d) / length)
 
     # Verify with closed forms
     # deriv=1, polyorder=1, 2
@@ -209,29 +209,29 @@ def test_sg_coeffs_even_window_length():
 
 def test_sg_filter_trivial():
     """ Test some trivial edge cases for savgol_filter()."""
-    x = np.array([1.0])
+    x = mx.array([1.0])
     y = savgol_filter(x, 1, 0)
     assert_equal(y, [1.0])
 
     # Input is a single value. With a window length of 3 and polyorder 1,
     # the value in y is from the straight-line fit of (-1,0), (0,3) and
     # (1, 0) at 0. This is just the average of the three values, hence 1.0.
-    x = np.array([3.0])
+    x = mx.array([3.0])
     y = savgol_filter(x, 3, 1, mode='constant')
     assert_almost_equal(y, [1.0], decimal=15)
 
-    x = np.array([3.0])
+    x = mx.array([3.0])
     y = savgol_filter(x, 3, 1, mode='nearest')
     assert_almost_equal(y, [3.0], decimal=15)
 
-    x = np.array([1.0] * 3)
+    x = mx.array([1.0] * 3)
     y = savgol_filter(x, 3, 1, mode='wrap')
     assert_almost_equal(y, [1.0, 1.0, 1.0], decimal=15)
 
 
 def test_sg_filter_basic():
     # Some basic test cases for savgol_filter().
-    x = np.array([1.0, 2.0, 1.0])
+    x = mx.array([1.0, 2.0, 1.0])
     y = savgol_filter(x, 3, 1, mode='constant')
     xp_assert_close(y, [1.0, 4.0 / 3, 1.0])
 
@@ -243,9 +243,9 @@ def test_sg_filter_basic():
 
 
 def test_sg_filter_2d():
-    x = np.array([[1.0, 2.0, 1.0],
+    x = mx.array([[1.0, 2.0, 1.0],
                   [2.0, 4.0, 2.0]])
-    expected = np.array([[1.0, 4.0 / 3, 1.0],
+    expected = mx.array([[1.0, 4.0 / 3, 1.0],
                          [2.0, 8.0 / 3, 2.0]])
     y = savgol_filter(x, 3, 1, mode='constant')
     xp_assert_close(y, expected)
@@ -259,17 +259,17 @@ def test_sg_filter_interp_edges():
     # give the exact results. In this test, we use mode='interp', so
     # savgol_filter should match the exact solution for the entire data set,
     # including the edges.
-    t = np.linspace(-5, 5, 21)
+    t = mx.linspace(-5, 5, 21)
     delta = t[1] - t[0]
     # Polynomial test data.
-    x = np.array([t,
+    x = mx.array([t,
                   3 * t ** 2,
                   t ** 3 - t])
-    dx = np.array([np.ones_like(t),
+    dx = mx.array([mx.ones_like(t),
                    6 * t,
                    3 * t ** 2 - 1.0])
-    d2x = np.array([np.zeros_like(t),
-                    np.full_like(t, 6),
+    d2x = mx.array([mx.zeros_like(t),
+                    mx.full_like(t, 6),
                     6 * t])
 
     window_length = 7
@@ -305,18 +305,18 @@ def test_sg_filter_interp_edges():
 
 def test_sg_filter_interp_edges_3d():
     # Test mode='interp' with a 3-D array.
-    t = np.linspace(-5, 5, 21)
+    t = mx.linspace(-5, 5, 21)
     delta = t[1] - t[0]
-    x1 = np.array([t, -t])
-    x2 = np.array([t ** 2, 3 * t ** 2 + 5])
-    x3 = np.array([t ** 3, 2 * t ** 3 + t ** 2 - 0.5 * t])
-    dx1 = np.array([np.ones_like(t), -np.ones_like(t)])
-    dx2 = np.array([2 * t, 6 * t])
-    dx3 = np.array([3 * t ** 2, 6 * t ** 2 + 2 * t - 0.5])
+    x1 = mx.array([t, -t])
+    x2 = mx.array([t ** 2, 3 * t ** 2 + 5])
+    x3 = mx.array([t ** 3, 2 * t ** 3 + t ** 2 - 0.5 * t])
+    dx1 = mx.array([mx.ones_like(t), -mx.ones_like(t)])
+    dx2 = mx.array([2 * t, 6 * t])
+    dx3 = mx.array([3 * t ** 2, 6 * t ** 2 + 2 * t - 0.5])
 
     # z has shape (3, 2, 21)
-    z = np.array([x1, x2, x3])
-    dz = np.array([dx1, dx2, dx3])
+    z = mx.array([x1, x2, x3])
+    dz = mx.array([dx1, dx2, dx3])
 
     y = savgol_filter(z, 7, 3, axis=-1, mode='interp', delta=delta)
     xp_assert_close(y, z, atol=1e-10)
@@ -325,8 +325,8 @@ def test_sg_filter_interp_edges_3d():
     xp_assert_close(dy, dz, atol=1e-10)
 
     # z has shape (3, 21, 2)
-    z = np.array([x1.T, x2.T, x3.T])
-    dz = np.array([dx1.T, dx2.T, dx3.T])
+    z = mx.array([x1.T, x2.T, x3.T])
+    dz = mx.array([dx1.T, dx2.T, dx3.T])
 
     y = savgol_filter(z, 7, 3, axis=1, mode='interp', delta=delta)
     xp_assert_close(y, z, atol=1e-10)
@@ -348,7 +348,7 @@ def test_sg_filter_interp_edges_3d():
 def test_sg_filter_valid_window_length_3d():
     """Tests that the window_length check is using the correct axis."""
 
-    x = np.ones((10, 20, 30))
+    x = mx.ones((10, 20, 30))
 
     savgol_filter(x, window_length=29, polyorder=3, mode='interp')
 

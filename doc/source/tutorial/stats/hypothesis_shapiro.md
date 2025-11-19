@@ -29,8 +29,8 @@ males in a medical study are not normally distributed [^1]. The weights (lbs)
 are recorded in the array `x` below.
 
 ```{code-cell}
-import numpy as np
-x = np.array([148, 154, 158, 160, 161, 162, 166, 170, 182, 195, 236])
+import mlx.core as mx
+x = mx.array([148, 154, 158, 160, 161, 162, 166, 170, 182, 195, 236])
 ```
 
 The normality test {func}`scipy.stats.shapiro` of [^1] and [^2] begins by
@@ -62,7 +62,7 @@ ref = stats.monte_carlo_test(x, stats.norm.rvs, statistic,
                              alternative='less')
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots(figsize=(8, 5))
-bins = np.linspace(0.65, 1, 50)
+bins = mx.linspace(0.65, 1, 50)
 
 def plot(ax):  # we'll reuse this
     ax.hist(ref.null_distribution, density=True, bins=bins)
@@ -84,7 +84,7 @@ plot(ax)
 annotation = (f'p-value={res.pvalue:.6f}\n(highlighted area)')
 props = dict(facecolor='black', width=1, headwidth=5, headlength=8)
 _ = ax.annotate(annotation, (0.75, 0.1), (0.68, 0.7), arrowprops=props)
-i_extreme = np.where(bins <= res.statistic)[0]
+i_extreme = mx.where(bins <= res.statistic)[0]
 for i in i_extreme:
     ax.patches[i].set_color('C1')
 plt.xlim(0.65, 0.9)

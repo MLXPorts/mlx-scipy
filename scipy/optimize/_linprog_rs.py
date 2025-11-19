@@ -17,7 +17,7 @@ References
 """
 # Author: Matt Haberland
 
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import LinAlgError
 
 from scipy.linalg import solve
@@ -71,16 +71,16 @@ def _phase_one(A, b, x0, callback, postsolve_args, maxiter, tol, disp,
     # drive artificial variables out of basis
     # TODO: test redundant row removal better
     # TODO: make solve more efficient with BGLU? This could take a while.
-    keep_rows = np.ones(m, dtype=bool)
+    keep_rows = mx.ones(m, dtype=bool)
     for basis_column in basis[basis >= n]:
         B = A[:, basis]
         try:
-            basis_finder = np.abs(solve(B, A))  # inefficient
-            pertinent_row = np.argmax(basis_finder[:, basis_column])
-            eligible_columns = np.ones(n, dtype=bool)
+            basis_finder = mx.abs(solve(B, A))  # inefficient
+            pertinent_row = mx.argmax(basis_finder[:, basis_column])
+            eligible_columns = mx.ones(n, dtype=bool)
             eligible_columns[basis[basis < n]] = 0
-            eligible_column_indices = np.where(eligible_columns)[0]
-            index = np.argmax(basis_finder[:, :n]
+            eligible_column_indices = mx.where(eligible_columns)[0]
+            index = mx.argmax(basis_finder[:, :n]
                               [pertinent_row, eligible_columns])
             new_basis_column = eligible_column_indices[index]
             if basis_finder[pertinent_row, new_basis_column] < tol:
@@ -107,30 +107,30 @@ def _get_more_basis_columns(A, basis):
     m, n = A.shape
 
     # options for inclusion are those that aren't already in the basis
-    a = np.arange(m+n)
-    bl = np.zeros(len(a), dtype=bool)
+    a = mx.arange(m+n)
+    bl = mx.zeros(len(a), dtype=bool)
     bl[basis] = 1
     options = a[~bl]
     options = options[options < n]  # and they have to be non-artificial
 
     # form basis matrix
-    B = np.zeros((m, m))
+    B = mx.zeros((m, m))
     B[:, 0:len(basis)] = A[:, basis]
 
     if (basis.size > 0 and
-            np.linalg.matrix_rank(B[:, :len(basis)]) < len(basis)):
+            mx.linalg.matrix_rank(B[:, :len(basis)]) < len(basis)):
         raise Exception("Basis has dependent columns")
 
     rank = 0  # just enter the loop
     for i in range(n):  # somewhat arbitrary, but we need another way out
         # permute the options, and take as many as needed
-        new_basis = np.random.permutation(options)[:m-len(basis)]
+        new_basis = mx.random.permutation(options)[:m-len(basis)]
         B[:, len(basis):] = A[:, new_basis]  # update the basis matrix
-        rank = np.linalg.matrix_rank(B)      # check the rank
+        rank = mx.linalg.matrix_rank(B)      # check the rank
         if rank == m:
             break
 
-    return np.concatenate((basis, new_basis))
+    return mx.concatenate((basis, new_basis))
 
 
 def _generate_auxiliary_problem(A, b, x0, tol):
@@ -163,7 +163,7 @@ def _generate_auxiliary_problem(A, b, x0, tol):
     if x0 is not None:
         x = x0
     else:
-        x = np.zeros(n)
+        x = mx.zeros(n)
 
     r = b - A@x  # residual; this must be all zeros for feasibility
 
@@ -176,20 +176,20 @@ def _generate_auxiliary_problem(A, b, x0, tol):
     # But then we would not necessarily have a column singleton in every row.
     # This makes it difficult to find an initial basis.
     if x0 is None:
-        nonzero_constraints = np.arange(m)
+        nonzero_constraints = mx.arange(m)
     else:
-        nonzero_constraints = np.where(r > tol)[0]
+        nonzero_constraints = mx.where(r > tol)[0]
 
     # these are (at least some of) the initial basis columns
-    basis = np.where(np.abs(x) > tol)[0]
+    basis = mx.where(mx.abs(x) > tol)[0]
 
     if len(nonzero_constraints) == 0 and len(basis) <= m:  # already a BFS
-        c = np.zeros(n)
+        c = mx.zeros(n)
         basis = _get_more_basis_columns(A, basis)
         return A, b, c, basis, x, status
     elif (len(nonzero_constraints) > m - len(basis) or
-          np.any(x < 0)):  # can't get trivial BFS
-        c = np.zeros(n)
+          mx.any(x < 0)):  # can't get trivial BFS
+        c = mx.zeros(n)
         status = 6
         return A, b, c, basis, x, status
 
@@ -197,40 +197,40 @@ def _generate_auxiliary_problem(A, b, x0, tol):
     cols, rows = _select_singleton_columns(A, r)
 
     # find the rows we need to zero that we _can_ zero with column singletons
-    i_tofix = np.isin(rows, nonzero_constraints)
+    i_tofix = mx.isin(rows, nonzero_constraints)
     # these columns can't already be in the basis, though
     # we are going to add them to the basis and change the corresponding x val
-    i_notinbasis = np.logical_not(np.isin(cols, basis))
-    i_fix_without_aux = np.logical_and(i_tofix, i_notinbasis)
+    i_notinbasis = mx.logical_not(mx.isin(cols, basis))
+    i_fix_without_aux = mx.logical_and(i_tofix, i_notinbasis)
     rows = rows[i_fix_without_aux]
     cols = cols[i_fix_without_aux]
 
     # indices of the rows we can only zero with auxiliary variable
     # these rows will get a one in each auxiliary column
-    arows = nonzero_constraints[np.logical_not(
-                                np.isin(nonzero_constraints, rows))]
+    arows = nonzero_constraints[mx.logical_not(
+                                mx.isin(nonzero_constraints, rows))]
     n_aux = len(arows)
-    acols = n + np.arange(n_aux)          # indices of auxiliary columns
+    acols = n + mx.arange(n_aux)          # indices of auxiliary columns
 
-    basis_ng = np.concatenate((cols, acols))   # basis columns not from guess
-    basis_ng_rows = np.concatenate((rows, arows))  # rows we need to zero
+    basis_ng = mx.concatenate((cols, acols))   # basis columns not from guess
+    basis_ng_rows = mx.concatenate((rows, arows))  # rows we need to zero
 
     # add auxiliary singleton columns
-    A = np.hstack((A, np.zeros((m, n_aux))))
+    A = mx.hstack((A, mx.zeros((m, n_aux))))
     A[arows, acols] = 1
 
     # generate initial BFS
-    x = np.concatenate((x, np.zeros(n_aux)))
+    x = mx.concatenate((x, mx.zeros(n_aux)))
     x[basis_ng] = r[basis_ng_rows]/A[basis_ng_rows, basis_ng]
 
     # generate costs to minimize infeasibility
-    c = np.zeros(n_aux + n)
+    c = mx.zeros(n_aux + n)
     c[acols] = 1
 
     # basis columns correspond with nonzeros in guess, those with column
     # singletons we used to zero remaining constraints, and any additional
     # columns to get a full set (m columns)
-    basis = np.concatenate((basis, basis_ng))
+    basis = mx.concatenate((basis, basis_ng))
     basis = _get_more_basis_columns(A, basis)  # add columns as needed
 
     return A, b, c, basis, x, status
@@ -245,10 +245,10 @@ def _select_singleton_columns(A, b):
     column and its corresponding row.
     """
     # find indices of all singleton columns and corresponding row indices
-    column_indices = np.nonzero(np.sum(np.abs(A) != 0, axis=0) == 1)[0]
+    column_indices = mx.nonzero(mx.sum(mx.abs(A) != 0, axis=0) == 1)[0]
     columns = A[:, column_indices]          # array of singleton columns
-    row_indices = np.zeros(len(column_indices), dtype=int)
-    nonzero_rows, nonzero_columns = np.nonzero(columns)
+    row_indices = mx.zeros(len(column_indices), dtype=int)
+    nonzero_rows, nonzero_columns = mx.nonzero(columns)
     row_indices[nonzero_columns] = nonzero_rows   # corresponding row indices
 
     # keep only singletons with entries that have same sign as RHS
@@ -263,7 +263,7 @@ def _select_singleton_columns(A, b):
     # variable must be basic.)
 
     # for each row, keep rightmost singleton column with an entry in that row
-    unique_row_indices, first_columns = np.unique(row_indices,
+    unique_row_indices, first_columns = mx.unique(row_indices,
                                                   return_index=True)
     return column_indices[first_columns], unique_row_indices
 
@@ -273,7 +273,7 @@ def _find_nonzero_rows(A, tol):
     Returns logical array indicating the locations of rows with at least
     one nonzero element.
     """
-    return np.any(np.abs(A) > tol, axis=1)
+    return mx.any(mx.abs(A) > tol, axis=1)
 
 
 def _select_enter_pivot(c_hat, bl, a, rule="bland", tol=1e-12):
@@ -282,7 +282,7 @@ def _select_enter_pivot(c_hat, bl, a, rule="bland", tol=1e-12):
     index that has a negative reduced cost - is the default.
     """
     if rule.lower() == "mrc":  # index with minimum reduced cost
-        return a[~bl][np.argmin(c_hat)]
+        return a[~bl][mx.argmin(c_hat)]
     else:  # smallest index w/ negative reduced cost
         return a[~bl][c_hat < -tol][0]
 
@@ -303,10 +303,10 @@ def _display_iter(phase, iteration, slack, con, fun):
     # :<X.Y left aligns Y digits in X digit spaces
     fmt = '{0:<6}{1:<10}{2:<20.13}{3:<20.13}{4:<20.13}'
     try:
-        slack = np.min(slack)
+        slack = mx.min(slack)
     except ValueError:
         slack = "NA"
-    print(fmt.format(phase, iteration, slack, np.linalg.norm(con), fun))
+    print(fmt.format(phase, iteration, slack, mx.linalg.norm(con), fun))
 
 
 def _display_and_callback(phase_one_n, x, postsolve_args, status,
@@ -347,8 +347,8 @@ def _phase_two(c, A, x, b, callback, postsolve_args, maxiter, tol, disp,
     """
     m, n = A.shape
     status = 0
-    a = np.arange(n)                    # indices of columns of A
-    ab = np.arange(m)                   # indices of columns of B
+    a = mx.arange(n)                    # indices of columns of A
+    ab = mx.arange(m)                   # indices of columns of B
     if maxupdate:
         # basis matrix factorization object; similar to B = A[:, b]
         B = BGLU(A, b, maxupdate, mast)
@@ -361,7 +361,7 @@ def _phase_two(c, A, x, b, callback, postsolve_args, maxiter, tol, disp,
             _display_and_callback(phase_one_n, x, postsolve_args, status,
                                   iteration, disp, callback)
 
-        bl = np.zeros(len(a), dtype=bool)
+        bl = mx.zeros(len(a), dtype=bool)
         bl[b] = 1
 
         xb = x[b]       # basic variables
@@ -381,19 +381,19 @@ def _phase_two(c, A, x, b, callback, postsolve_args, maxiter, tol, disp,
         # c_hat = c[~bl] - v.T.dot(N)
         # Can we perform the multiplication only on the nonbasic columns?
 
-        if np.all(c_hat >= -tol):  # all reduced costs positive -> terminate
+        if mx.all(c_hat >= -tol):  # all reduced costs positive -> terminate
             break
 
         j = _select_enter_pivot(c_hat, bl, a, rule=pivot, tol=tol)
         u = B.solve(A[:, j])        # similar to u = solve(B, A[:, j])
 
         i = u > tol                 # if none of the u are positive, unbounded
-        if not np.any(i):
+        if not mx.any(i):
             status = 3
             break
 
         th = xb[i]/u[i]
-        l = np.argmin(th)           # implicitly selects smallest subscript
+        l = mx.argmin(th)           # implicitly selects smallest subscript
         th_star = th[l]             # step size
 
         x[b] = x[b] - th_star*u     # take step
@@ -556,7 +556,7 @@ def _linprog_rs(c, c0, A, b, x0, callback, postsolve_args,
                 ]
 
     if A.size == 0:  # address test_unbounded_below_no_presolve_corrected
-        return np.zeros(c.shape), 5, messages[5], 0
+        return mx.zeros(c.shape), 5, messages[5], 0
 
     x, basis, A, b, residual, status, iteration = (
         _phase_one(A, b, x0, callback, postsolve_args,

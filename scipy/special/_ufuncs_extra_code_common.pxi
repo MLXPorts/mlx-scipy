@@ -1,4 +1,4 @@
-cimport numpy as np
+cimport mlx.core as mx
 from numpy cimport (
     npy_float, npy_double, npy_longdouble,
     npy_cfloat, npy_cdouble, npy_clongdouble,
@@ -23,8 +23,8 @@ cimport libc
 
 from . cimport sf_error
 
-np.import_array()
-np.import_ufunc()
+mx.import_array()
+mx.import_ufunc()
 
 cdef void _set_action(sf_error.sf_error_t code,
                       sf_error.sf_action_t action) noexcept nogil:

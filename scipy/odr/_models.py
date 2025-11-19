@@ -1,6 +1,6 @@
 """ Collection of Model instances for use with the odrpack fitting package.
 """
-import numpy as np
+import mlx.core as mx
 from scipy.odr._odrpack import Model
 
 __all__ = ['Model', 'exponential', 'multilinear', 'unilinear', 'quadratic',
@@ -15,14 +15,14 @@ def _lin_fcn(B, x):
 
 
 def _lin_fjb(B, x):
-    a = np.ones(x.shape[-1], float)
-    res = np.concatenate((a, x.ravel()))
+    a = mx.ones(x.shape[-1], float)
+    res = mx.concatenate((a, x.ravel()))
     return res.reshape((B.shape[-1], x.shape[-1]))
 
 
 def _lin_fjd(B, x):
     b = B[1:]
-    b = np.repeat(b, (x.shape[-1],)*b.shape[-1], axis=0)
+    b = mx.repeat(b, (x.shape[-1],)*b.shape[-1], axis=0)
     return b.reshape(x.shape)
 
 
@@ -36,19 +36,19 @@ def _lin_est(data):
     else:
         m = 1
 
-    return np.ones((m + 1,), float)
+    return mx.ones((m + 1,), float)
 
 
 def _poly_fcn(B, x, powers):
     a, b = B[0], B[1:]
     b = b.reshape((b.shape[0], 1))
 
-    return a + np.sum(b * np.power(x, powers), axis=0)
+    return a + mx.sum(b * mx.power(x, powers), axis=0)
 
 
 def _poly_fjacb(B, x, powers):
-    res = np.concatenate((np.ones(x.shape[-1], float),
-                          np.power(x, powers).flat))
+    res = mx.concatenate((mx.ones(x.shape[-1], float),
+                          mx.power(x, powers).flat))
     return res.reshape((B.shape[-1], x.shape[-1]))
 
 
@@ -58,25 +58,25 @@ def _poly_fjacd(B, x, powers):
 
     b = b * powers
 
-    return np.sum(b * np.power(x, powers-1), axis=0)
+    return mx.sum(b * mx.power(x, powers-1), axis=0)
 
 
 def _exp_fcn(B, x):
-    return B[0] + np.exp(B[1] * x)
+    return B[0] + mx.exp(B[1] * x)
 
 
 def _exp_fjd(B, x):
-    return B[1] * np.exp(B[1] * x)
+    return B[1] * mx.exp(B[1] * x)
 
 
 def _exp_fjb(B, x):
-    res = np.concatenate((np.ones(x.shape[-1], float), x * np.exp(B[1] * x)))
+    res = mx.concatenate((mx.ones(x.shape[-1], float), x * mx.exp(B[1] * x)))
     return res.reshape((2, x.shape[-1]))
 
 
 def _exp_est(data):
     # Eh.
-    return np.array([1., 1.])
+    return mx.array([1., 1.])
 
 
 class _MultilinearModel(Model):
@@ -91,8 +91,8 @@ class _MultilinearModel(Model):
     dimensional linear model:
 
     >>> from scipy import odr
-    >>> import numpy as np
-    >>> x = np.linspace(0.0, 5.0)
+    >>> import mlx.core as mx
+    >>> x = mx.linspace(0.0, 5.0)
     >>> y = 10.0 + 5.0 * x
     >>> data = odr.Data(x, y)
     >>> odr_obj = odr.ODR(data, odr.multilinear)
@@ -136,16 +136,16 @@ def polynomial(order):
     We can fit an input data using orthogonal distance regression (ODR) with
     a polynomial model:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy import odr
-    >>> x = np.linspace(0.0, 5.0)
-    >>> y = np.sin(x)
+    >>> x = mx.linspace(0.0, 5.0)
+    >>> y = mx.sin(x)
     >>> poly_model = odr.polynomial(3)  # using third order polynomial model
     >>> data = odr.Data(x, y)
     >>> odr_obj = odr.ODR(data, poly_model)
     >>> output = odr_obj.run()  # running ODR fitting
-    >>> poly = np.poly1d(output.beta[::-1])
+    >>> poly = mx.poly1d(output.beta[::-1])
     >>> poly_y = poly(x)
     >>> plt.plot(x, y, label="input data")
     >>> plt.plot(x, poly_y, label="polynomial ODR")
@@ -154,17 +154,17 @@ def polynomial(order):
 
     """
 
-    powers = np.asarray(order)
+    powers = mx.array(order)
     if powers.shape == ():
         # Scalar.
-        powers = np.arange(1, powers + 1)
+        powers = mx.arange(1, powers + 1)
 
     powers = powers.reshape((len(powers), 1))
     len_beta = len(powers) + 1
 
     def _poly_est(data, len_beta=len_beta):
         # Eh. Ignore data and return all ones.
-        return np.ones((len_beta,), float)
+        return mx.ones((len_beta,), float)
 
     return Model(_poly_fcn, fjacd=_poly_fjacd, fjacb=_poly_fjacb,
                  estimate=_poly_est, extra_args=(powers,),
@@ -185,9 +185,9 @@ class _ExponentialModel(Model):
     We can calculate orthogonal distance regression with an exponential model:
 
     >>> from scipy import odr
-    >>> import numpy as np
-    >>> x = np.linspace(0.0, 5.0)
-    >>> y = -10.0 + np.exp(0.5*x)
+    >>> import mlx.core as mx
+    >>> x = mx.linspace(0.0, 5.0)
+    >>> y = -10.0 + mx.exp(0.5*x)
     >>> data = odr.Data(x, y)
     >>> odr_obj = odr.ODR(data, odr.exponential)
     >>> output = odr_obj.run()
@@ -212,11 +212,11 @@ def _unilin(B, x):
 
 
 def _unilin_fjd(B, x):
-    return np.ones(x.shape, float) * B[0]
+    return mx.ones(x.shape, float) * B[0]
 
 
 def _unilin_fjb(B, x):
-    _ret = np.concatenate((x, np.ones(x.shape, float)))
+    _ret = mx.concatenate((x, mx.ones(x.shape, float)))
     return _ret.reshape((2,) + x.shape)
 
 
@@ -233,7 +233,7 @@ def _quad_fjd(B, x):
 
 
 def _quad_fjb(B, x):
-    _ret = np.concatenate((x*x, x, np.ones(x.shape, float)))
+    _ret = mx.concatenate((x*x, x, mx.ones(x.shape, float)))
     return _ret.reshape((3,) + x.shape)
 
 
@@ -252,8 +252,8 @@ class _UnilinearModel(Model):
     We can calculate orthogonal distance regression with an unilinear model:
 
     >>> from scipy import odr
-    >>> import numpy as np
-    >>> x = np.linspace(0.0, 5.0)
+    >>> import mlx.core as mx
+    >>> x = mx.linspace(0.0, 5.0)
     >>> y = 1.0 * x + 2.0
     >>> data = odr.Data(x, y)
     >>> odr_obj = odr.ODR(data, odr.unilinear)
@@ -285,8 +285,8 @@ class _QuadraticModel(Model):
     We can calculate orthogonal distance regression with a quadratic model:
 
     >>> from scipy import odr
-    >>> import numpy as np
-    >>> x = np.linspace(0.0, 5.0)
+    >>> import mlx.core as mx
+    >>> x = mx.linspace(0.0, 5.0)
     >>> y = 1.0 * x ** 2 + 2.0 * x + 3.0
     >>> data = odr.Data(x, y)
     >>> odr_obj = odr.ODR(data, odr.quadratic)

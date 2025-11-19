@@ -14,7 +14,7 @@ from .consts import DEBUGGING, EPS, IPRINT_DEFAULT, FTARGET_DEFAULT, \
     CTOL_DEFAULT, CWEIGHT_DEFAULT
 from .present import present
 from warnings import warn
-import numpy as np
+import mlx.core as mx
 
 
 def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
@@ -49,7 +49,7 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
     is_constrained = is_constrained if (present(is_constrained)) else num_constraints > 0
 
     # Validate IPRINT
-    if np.abs(iprint) > 3:
+    if mx.abs(iprint) > 3:
         iprint = IPRINT_DEFAULT
         warn(f'{solver}: Invalid IPRINT; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to {iprint}')
 
@@ -74,7 +74,7 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
     maxhist = min(maxhist, maxfun)  # MAXHIST > MAXFUN is never needed.
 
     # Validate FTARGET
-    if np.isnan(ftarget):
+    if mx.isnan(ftarget):
         ftarget = FTARGET_DEFAULT
         warn(f'{solver}: Invalid FTARGET; it should be a real number; it is set to {ftarget}')
 
@@ -93,9 +93,9 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
             maxfilt = max(MIN_MAXFILT, maxfilt)  # The inputted MAXFILT is too small.
         # Further revise MAXFILT according to MAXHISTMEM.
         if solver.lower() == 'lincoa':
-            unit_memo = (num_vars + 2) * np.dtype(float).itemsize
+            unit_memo = (num_vars + 2) * mx.dtype(float).itemsize
         elif solver.lower() == 'cobyla':
-            unit_memo = (num_constraints + num_vars + 2) * np.dtype(float).itemsize
+            unit_memo = (num_constraints + num_vars + 2) * mx.dtype(float).itemsize
         else:
             unit_memo = 1
         # We cannot simply set MAXFILT = MIN(MAXFILT, MAXHISTMEM/...), as they may not have
@@ -118,11 +118,11 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
     # When the difference between ETA1 and ETA2 is tiny, we force them to equal.
     # See the explanation around RHOBEG and RHOEND for the reason.
     if present(eta1) and present(eta2):
-        if np.abs(eta1 - eta2) < 1.0E2 * EPS * max(np.abs(eta1), 1):
+        if mx.abs(eta1 - eta2) < 1.0E2 * EPS * max(mx.abs(eta1), 1):
             eta2 = eta1
 
     if present(eta1):
-        if np.isnan(eta1):
+        if mx.isnan(eta1):
             # In this case, we take the value hard coded in Powell's original code
             # without any warning. It is useful when interfacing with MATLAB/Python.
             eta1 = ETA1_DEFAULT
@@ -135,7 +135,7 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
             warn(f'{solver}: Invalid ETA1; it should be in the interval [0, 1) and not more than ETA2; it is set to {eta1}')
 
     if present(eta2):
-        if np.isnan(eta2):
+        if mx.isnan(eta2):
             # In this case, we take the value hard coded in Powell's original code
             # without any warning. It is useful when interfacing with MATLAB/Python.
             eta2 = ETA2_DEFAULT
@@ -145,7 +145,7 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
 
     # Validate GAMMA1 and GAMMA2
     if present(gamma1):
-        if np.isnan(gamma1):
+        if mx.isnan(gamma1):
             # In this case, we take the value hard coded in Powell's original code
             # without any warning. It is useful when interfacing with MATLAB/Python.
             gamma1 = GAMMA1_DEFAULT
@@ -154,17 +154,17 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
             warn(f'{solver}: Invalid GAMMA1; it should in the interval (0, 1); it is set to {gamma1}')
 
     if present(gamma2):
-        if np.isnan(gamma2):
+        if mx.isnan(gamma2):
             # In this case, we take the value hard coded in Powell's original code
             # without any warning. It is useful when interfacing with MATLAB/Python.
             gamma2 = GAMMA2_DEFAULT
-        elif gamma2 < 1 or np.isinf(gamma2):
+        elif gamma2 < 1 or mx.isinf(gamma2):
             gamma2 = GAMMA2_DEFAULT
             warn(f'{solver}: Invalid GAMMA2; it should be a real number not less than 1; it is set to {gamma2}')
 
     # Validate RHOBEG and RHOEND
 
-    if np.abs(rhobeg - rhoend) < 1.0e2 * EPS * np.maximum(np.abs(rhobeg), 1):
+    if mx.abs(rhobeg - rhoend) < 1.0e2 * EPS * mx.maximum(mx.abs(rhobeg), 1):
         # When the data is passed from the interfaces (e.g., MEX) to the Fortran code, RHOBEG, and RHOEND
         # may change a bit. It was observed in a MATLAB test that MEX passed 1 to Fortran as
         # 0.99999999999999978. Therefore, if we set RHOEND = RHOBEG in the interfaces, then it may happen
@@ -174,8 +174,8 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
 
     # Revise the default values for RHOBEG/RHOEND according to the solver.
     if solver.lower() == 'bobyqa':
-        rhobeg_default = np.maximum(EPS, np.min(RHOBEG_DEFAULT, np.min(xu - xl) / 4.0))
-        rhoend_default = np.maximum(EPS, np.min(0.1 * rhobeg_default, RHOEND_DEFAULT))
+        rhobeg_default = mx.maximum(EPS, mx.min(RHOBEG_DEFAULT, mx.min(xu - xl) / 4.0))
+        rhoend_default = mx.maximum(EPS, mx.min(0.1 * rhobeg_default, RHOEND_DEFAULT))
     else:
         rhobeg_default = RHOBEG_DEFAULT
         rhoend_default = RHOEND_DEFAULT
@@ -183,21 +183,21 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
     if solver.lower() == 'bobyqa':
         # Do NOT merge the IF below into the ELIF above! Otherwise, XU and XL may be accessed even if
         # the solver is not BOBYQA, because the logical evaluation is not short-circuit.
-        if rhobeg > np.min(xu - xl) / 2:
+        if rhobeg > mx.min(xu - xl) / 2:
             # Do NOT make this revision if RHOBEG not positive or not finite, because otherwise RHOBEG
             # will get a huge value when XU or XL contains huge values that indicate unbounded variables.
-            rhobeg = np.min(xu - xl) / 4.0  # Here, we do not take RHOBEG_DEFAULT.
-            warn(f'{solver}: Invalid RHOBEG; {solver} requires 0 < RHOBEG <= np.min(XU-XL)/2; it is set to np.min(XU-XL)/4')
-    if rhobeg <= 0 or np.isnan(rhobeg) or np.isinf(rhobeg):
+            rhobeg = mx.min(xu - xl) / 4.0  # Here, we do not take RHOBEG_DEFAULT.
+            warn(f'{solver}: Invalid RHOBEG; {solver} requires 0 < RHOBEG <= mx.min(XU-XL)/2; it is set to mx.min(XU-XL)/4')
+    if rhobeg <= 0 or mx.isnan(rhobeg) or mx.isinf(rhobeg):
         # Take RHOEND into account if it has a valid value. We do not do this if the solver is BOBYQA,
         # which requires that RHOBEG <= (XU-XL)/2.
-        if np.isfinite(rhoend) and rhoend > 0 and solver.lower() != 'bobyqa':
+        if mx.isfinite(rhoend) and rhoend > 0 and solver.lower() != 'bobyqa':
             rhobeg = max(10 * rhoend, rhobeg_default)
         else:
             rhobeg = rhobeg_default
         warn(f'{solver}: Invalid RHOBEG; it should be a positive number; it is set to {rhobeg}')
 
-    if rhoend <= 0 or rhobeg < rhoend or np.isnan(rhoend) or np.isinf(rhoend):
+    if rhoend <= 0 or rhobeg < rhoend or mx.isnan(rhoend) or mx.isinf(rhoend):
         rhoend = max(EPS, min(0.1 * rhobeg, rhoend_default))
         warn(f'{solver}: Invalid RHOEND; it should be a positive number and RHOEND <= RHOBEG; it is set to {rhoend}')
 
@@ -206,17 +206,17 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
     if present(honour_x0):
         if honour_x0:
             rhobeg_old = rhobeg;
-            lbx = np.isfinite(xl) & (x0 - xl <= EPS * np.maximum(1, np.abs(xl))) # X0 essentially equals XL
-            ubx = np.isfinite(xu) & (x0 - xu >= -EPS * np.maximum(1, np.abs(xu))) # X0 essentially equals XU
+            lbx = mx.isfinite(xl) & (x0 - xl <= EPS * mx.maximum(1, mx.abs(xl))) # X0 essentially equals XL
+            ubx = mx.isfinite(xu) & (x0 - xu >= -EPS * mx.maximum(1, mx.abs(xu))) # X0 essentially equals XU
             x0[lbx] = xl[lbx]
             x0[ubx] = xu[ubx]
-            rhobeg = max(EPS, np.min([rhobeg, x0[~lbx] - xl[~lbx], xu[~ubx] - x0[~ubx]]))
+            rhobeg = max(EPS, mx.min([rhobeg, x0[~lbx] - xl[~lbx], xu[~ubx] - x0[~ubx]]))
             if rhobeg_old - rhobeg > EPS * max(1, rhobeg_old):
                 rhoend = max(EPS, min(0.1 * rhobeg, rhoend)) # We do not revise RHOEND unless RHOBEG is truly revised.
                 if has_rhobeg:
                     warn(f'{solver}: RHOBEG is revised to {rhobeg} and RHOEND to at most 0.1*RHOBEG so that the distance between X0 and the inactive bounds is at least RHOBEG')
             else:
-                rhoend = np.minimum(rhoend, rhobeg)  # This may update RHOEND slightly.
+                rhoend = mx.minimum(rhoend, rhobeg)  # This may update RHOEND slightly.
         else:
             x0_old = x0  # Recorded to see whether X0 is really revised.
             # N.B.: The following revision is valid only if XL <= X0 <= XU and RHOBEG <= MINVAL(XU-XL)/2,
@@ -231,19 +231,19 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
             x0[ubx] = xu[ubx]
             x0[ubx_minus] = xu[ubx_minus] - rhobeg
 
-            if (any(np.abs(x0_old - x0) > 0)):
+            if (any(mx.abs(x0_old - x0) > 0)):
                 warn(f'{solver}: X0 is revised so that the distance between X0 and the inactive bounds is at least RHOBEG set HONOUR_X0 to .TRUE. if you prefer to keep X0 unchanged')
 
     # Validate CTOL (it can be 0)
     if (present(ctol)):
-        if (np.isnan(ctol) or ctol < 0):
+        if (mx.isnan(ctol) or ctol < 0):
             ctol = CTOL_DEFAULT
             if (is_constrained):
                 warn(f'{solver}: Invalid CTOL; it should be a nonnegative number; it is set to {ctol}')
 
     # Validate CWEIGHT (it can be +Inf)
     if (present(cweight)):
-        if (np.isnan(cweight) or cweight < 0):
+        if (mx.isnan(cweight) or cweight < 0):
             cweight = CWEIGHT_DEFAULT
             if (is_constrained):
                 warn(f'{solver}: Invalid CWEIGHT; it should be a nonnegative number; it is set to {cweight}')
@@ -260,7 +260,7 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
             assert maxfun >= npt + 1
             assert npt >= 3
         if present(maxfilt):
-            assert maxfilt >= np.minimum(MIN_MAXFILT, maxfun) and maxfilt <= maxfun
+            assert maxfilt >= mx.minimum(MIN_MAXFILT, maxfun) and maxfilt <= maxfun
         if present(eta1) and present(eta2):
             assert eta1 >= 0 and eta1 <= eta2 and eta2 < 1
         if present(gamma1) and present(gamma2):
@@ -268,7 +268,7 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
         assert rhobeg >= rhoend and rhoend > 0
         if solver.lower() == 'bobyqa':
             assert all(rhobeg <= (xu - xl) / 2)
-            assert all(np.isfinite(x0))
+            assert all(mx.isfinite(x0))
             assert all(x0 >= xl and (x0 <= xl or x0 >= xl + rhobeg))
             assert all(x0 <= xu and (x0 >= xu or x0 <= xu - rhobeg))
         if present(ctol):

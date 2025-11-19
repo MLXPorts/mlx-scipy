@@ -1,7 +1,7 @@
 from collections import namedtuple
 from dataclasses import dataclass
 from math import comb
-import numpy as np
+import mlx.core as mx
 import warnings
 from itertools import combinations
 import scipy.stats
@@ -97,38 +97,38 @@ def epps_singleton_2samp(x, y, t=(0.4, 0.8)):
 
     """
     # x and y are converted to arrays by the decorator
-    t = np.asarray(t)
+    t = mx.array(t)
     # check if x and y are valid inputs
     nx, ny = len(x), len(y)
     if (nx < 5) or (ny < 5):
         raise ValueError('x and y should have at least 5 elements, but len(x) '
                          f'= {nx} and len(y) = {ny}.')
-    if not np.isfinite(x).all():
+    if not mx.isfinite(x).all():
         raise ValueError('x must not contain nonfinite values.')
-    if not np.isfinite(y).all():
+    if not mx.isfinite(y).all():
         raise ValueError('y must not contain nonfinite values.')
     n = nx + ny
 
     # check if t is valid
     if t.ndim > 1:
         raise ValueError(f't must be 1d, but t.ndim equals {t.ndim}.')
-    if np.less_equal(t, 0).any():
+    if mx.less_equal(t, 0).any():
         raise ValueError('t must contain positive elements only.')
 
     # rescale t with semi-iqr as proposed in [1]; import iqr here to avoid
     # circular import
     from scipy.stats import iqr
-    sigma = iqr(np.hstack((x, y))) / 2
-    ts = np.reshape(t, (-1, 1)) / sigma
+    sigma = iqr(mx.hstack((x, y))) / 2
+    ts = mx.reshape(t, (-1, 1)) / sigma
 
     # covariance estimation of ES test
-    gx = np.vstack((np.cos(ts*x), np.sin(ts*x))).T  # shape = (nx, 2*len(t))
-    gy = np.vstack((np.cos(ts*y), np.sin(ts*y))).T
-    cov_x = np.cov(gx.T, bias=True)  # the test uses biased cov-estimate
-    cov_y = np.cov(gy.T, bias=True)
+    gx = mx.vstack((mx.cos(ts*x), mx.sin(ts*x))).T  # shape = (nx, 2*len(t))
+    gy = mx.vstack((mx.cos(ts*y), mx.sin(ts*y))).T
+    cov_x = mx.cov(gx.T, bias=True)  # the test uses biased cov-estimate
+    cov_y = mx.cov(gy.T, bias=True)
     est_cov = (n/nx)*cov_x + (n/ny)*cov_y
-    est_cov_inv = np.linalg.pinv(est_cov)
-    r = np.linalg.matrix_rank(est_cov_inv)
+    est_cov_inv = mx.linalg.pinv(est_cov)
+    r = mx.linalg.matrix_rank(est_cov_inv)
     if r < 2*len(t):
         warnings.warn('Estimated covariance matrix does not have full rank. '
                       'This indicates a bad choice of the input t and the '
@@ -136,8 +136,8 @@ def epps_singleton_2samp(x, y, t=(0.4, 0.8)):
                       stacklevel=2)
 
     # compute test statistic w distributed asympt. as chisquare with df=r
-    g_diff = np.mean(gx, axis=0) - np.mean(gy, axis=0)
-    w = n*np.dot(g_diff.T, np.dot(est_cov_inv, g_diff))
+    g_diff = mx.mean(gx, axis=0) - mx.mean(gy, axis=0)
+    w = n*mx.dot(g_diff.T, mx.dot(est_cov_inv, g_diff))
 
     # apply small-sample correction
     if (max(nx, ny) < 25):
@@ -275,7 +275,7 @@ def poisson_means_test(k1, n1, k2, n2, *, diff=0, alternative='two-sided'):
     # The _observed_ pivot statistic from the input. It follows the
     # unnumbered equation following equation (3.3) This is used later in
     # comparison with the computed pivot statistics in an indicator function.
-    t_k1k2 = (k1 / n1 - k2 / n2 - diff) / np.sqrt(var)
+    t_k1k2 = (k1 / n1 - k2 / n2 - diff) / mx.sqrt(var)
 
     # Equation (3.5) of [1] is lengthy, so it is broken into several parts,
     # beginning here. Note that the probability mass function of poisson is
@@ -299,8 +299,8 @@ def poisson_means_test(k1, n1, k2, n2, *, diff=0, alternative='two-sided'):
     # Construct arrays to function as the x_1 and x_2 counters on the summation
     # in (3.5). `x1` is in columns and `x2` is in rows to allow for
     # broadcasting.
-    x1 = np.arange(x1_lb, x1_ub + 1)
-    x2 = np.arange(x2_lb, x2_ub + 1)[:, None]
+    x1 = mx.arange(x1_lb, x1_ub + 1)
+    x2 = mx.arange(x2_lb, x2_ub + 1)[:, None]
 
     # These are the two products in equation (3.5) with `prob_x1` being the
     # first (left side) and `prob_x2` being the second (right side). (To
@@ -318,13 +318,13 @@ def poisson_means_test(k1, n1, k2, n2, *, diff=0, alternative='two-sided'):
 
     # This is the 'pivot statistic' for use in the indicator of the summation
     # (left side of "I[.]").
-    with np.errstate(invalid='ignore', divide='ignore'):
-        t_x1x2 = lmbds_diff / np.sqrt(var_x1x2)
+    with mx.errstate(invalid='ignore', divide='ignore'):
+        t_x1x2 = lmbds_diff / mx.sqrt(var_x1x2)
 
     # `[indicator]` implements the "I[.] ... the indicator function" per
     # the paragraph following equation (3.5).
     if alternative == 'two-sided':
-        indicator = np.abs(t_x1x2) >= np.abs(t_k1k2)
+        indicator = mx.abs(t_x1x2) >= mx.abs(t_k1k2)
     elif alternative == 'less':
         indicator = t_x1x2 <= t_k1k2
     else:
@@ -332,7 +332,7 @@ def poisson_means_test(k1, n1, k2, n2, *, diff=0, alternative='two-sided'):
 
     # Multiply all combinations of the products together, exclude terms
     # based on the `indicator` and then sum. (3.5)
-    pvalue = np.sum((prob_x1 * prob_x2)[indicator])
+    pvalue = mx.sum((prob_x1 * prob_x2)[indicator])
     return _stats_py.SignificanceResult(t_k1k2, pvalue)
 
 
@@ -382,16 +382,16 @@ def _psi1_mod(x):
     def _ed2(y):
         z = y**2 / 4
         b = kv(1/4, z) + kv(3/4, z)
-        return np.exp(-z) * (y/2)**(3/2) * b / np.sqrt(np.pi)
+        return mx.exp(-z) * (y/2)**(3/2) * b / mx.sqrt(mx.pi)
 
     def _ed3(y):
         z = y**2 / 4
-        c = np.exp(-z) / np.sqrt(np.pi)
+        c = mx.exp(-z) / mx.sqrt(mx.pi)
         return c * (y/2)**(5/2) * (2*kv(1/4, z) + 3*kv(3/4, z) - kv(5/4, z))
 
     def _Ak(k, x):
         m = 2*k + 1
-        sx = 2 * np.sqrt(x)
+        sx = 2 * mx.sqrt(x)
         y1 = x**(3/4)
         y2 = x**(5/4)
 
@@ -403,14 +403,14 @@ def _psi1_mod(x):
 
         return e1 + e2 + e3 + e4 + e5
 
-    x = np.asarray(x)
-    tot = np.zeros_like(x, dtype='float')
-    cond = np.ones_like(x, dtype='bool')
+    x = mx.array(x)
+    tot = mx.zeros_like(x, dtype='float')
+    cond = mx.ones_like(x, dtype='bool')
     k = 0
-    while np.any(cond):
-        z = -_Ak(k, x[cond]) / (np.pi * gamma(k + 1))
+    while mx.any(cond):
+        z = -_Ak(k, x[cond]) / (mx.pi * gamma(k + 1))
         tot[cond] = tot[cond] + z
-        cond[cond] = np.abs(z) >= 1e-7
+        cond[cond] = mx.abs(z) >= 1e-7
         k += 1
 
     return tot
@@ -430,23 +430,23 @@ def _cdf_cvm_inf(x):
     The function is not expected to be accurate for large values of x, say
     x > 4, when the cdf is very close to 1.
     """
-    x = np.asarray(x)
+    x = mx.array(x)
 
     def term(x, k):
         # this expression can be found in [2], second line of (1.3)
-        u = np.exp(gammaln(k + 0.5) - gammaln(k+1)) / (np.pi**1.5 * np.sqrt(x))
+        u = mx.exp(gammaln(k + 0.5) - gammaln(k+1)) / (mx.pi**1.5 * mx.sqrt(x))
         y = 4*k + 1
         q = y**2 / (16*x)
         b = kv(0.25, q)
-        return u * np.sqrt(y) * np.exp(-q) * b
+        return u * mx.sqrt(y) * mx.exp(-q) * b
 
-    tot = np.zeros_like(x, dtype='float')
-    cond = np.ones_like(x, dtype='bool')
+    tot = mx.zeros_like(x, dtype='float')
+    cond = mx.ones_like(x, dtype='bool')
     k = 0
-    while np.any(cond):
+    while mx.any(cond):
         z = term(x[cond], k)
         tot[cond] = tot[cond] + z
-        cond[cond] = np.abs(z) >= 1e-7
+        cond[cond] = mx.abs(z) >= 1e-7
         k += 1
 
     return tot
@@ -468,12 +468,12 @@ def _cdf_cvm(x, n=None):
     and 1, respectively. These are limitations of the approximation by Csörgő
     and Faraway (1996) implemented in this function.
     """
-    x = np.asarray(x)
+    x = mx.array(x)
     if n is None:
         y = _cdf_cvm_inf(x)
     else:
         # support of the test statistic is [12/n, n/3], see 1.1 in [2]
-        y = np.zeros_like(x, dtype='float')
+        y = mx.zeros_like(x, dtype='float')
         sup = (1./(12*n) < x) & (x < n/3.)
         # note: _psi1_mod does not include the term _cdf_cvm_inf(x) / 12
         # therefore, we need to add it here
@@ -552,9 +552,9 @@ def cramervonmises(rvs, cdf, args=()):
     were, in fact, drawn from the standard normal distribution. We choose a
     significance level of ``alpha=0.05``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
-    >>> rng = np.random.default_rng(165417232101553420507139617764912913465)
+    >>> rng = mx.random.default_rng(165417232101553420507139617764912913465)
     >>> x = stats.norm.rvs(size=500, random_state=rng)
     >>> res = stats.cramervonmises(x, 'norm')
     >>> res.statistic, res.pvalue
@@ -591,7 +591,7 @@ def cramervonmises(rvs, cdf, args=()):
     if isinstance(cdf, str):
         cdf = getattr(distributions, cdf).cdf
 
-    vals = np.sort(np.asarray(rvs))
+    vals = mx.sort(mx.array(rvs))
 
     if vals.size <= 1:
         raise ValueError('The sample must contain at least two observations.')
@@ -599,11 +599,11 @@ def cramervonmises(rvs, cdf, args=()):
     n = len(vals)
     cdfvals = cdf(vals, *args)
 
-    u = (2*np.arange(1, n+1) - 1)/(2*n)
-    w = 1/(12*n) + np.sum((u - cdfvals)**2)
+    u = (2*mx.arange(1, n+1) - 1)/(2*n)
+    w = 1/(12*n) + mx.sum((u - cdfvals)**2)
 
     # avoid small negative values that can occur due to the approximation
-    p = np.clip(1. - _cdf_cvm(w, n), 0., None)
+    p = mx.clip(1. - _cdf_cvm(w, n), 0., None)
 
     return CramerVonMisesResult(statistic=w, pvalue=p)
 
@@ -615,10 +615,10 @@ def _get_wilcoxon_distr(n):
     Returns an array with the probabilities of all the possible ranks
     r = 0, ..., n*(n+1)/2
     """
-    c = np.ones(1, dtype=np.float64)
+    c = mx.ones(1, dtype=mx.float64)
     for k in range(1, n + 1):
         prev_c = c
-        c = np.zeros(k * (k + 1) // 2 + 1, dtype=np.float64)
+        c = mx.zeros(k * (k + 1) // 2 + 1, dtype=mx.float64)
         m = len(prev_c)
         c[:m] = prev_c * 0.5
         c[-m:] += prev_c * 0.5
@@ -637,15 +637,15 @@ def _get_wilcoxon_distr2(n):
     .. [1] 1. Harris T, Hardin JW. Exact Wilcoxon Signed-Rank and Wilcoxon
         Mann-Whitney Ranksum Tests. The Stata Journal. 2013;13(2):337-343.
     """
-    ai = np.arange(1, n+1)[:, None]
+    ai = mx.arange(1, n+1)[:, None]
     t = n*(n+1)/2
     q = 2*t
-    j = np.arange(q)
-    theta = 2*np.pi/q*j
-    phi_sp = np.prod(np.cos(theta*ai), axis=0)
-    phi_s = np.exp(1j*theta*t) * phi_sp
-    p = np.real(ifft(phi_s))
-    res = np.zeros(int(t)+1)
+    j = mx.arange(q)
+    theta = 2*mx.pi/q*j
+    phi_sp = mx.prod(mx.cos(theta*ai), axis=0)
+    phi_s = mx.exp(1j*theta*t) * phi_sp
+    p = mx.real(ifft(phi_s))
+    res = mx.zeros(int(t)+1)
     res[:-1:] = p[::2]
     res[0] /= 2
     res[-1] = res[0]
@@ -658,7 +658,7 @@ def _tau_b(A):
 
     # contingency table must be truly 2D
     if A.shape[0] == 1 or A.shape[1] == 1:
-        return np.nan, np.nan
+        return mx.nan, mx.nan
 
     NA = A.sum()
     PA = _P(A)
@@ -685,7 +685,7 @@ def _somers_d(A, alternative='two-sided'):
 
     # contingency table must be truly 2D
     if A.shape[0] <= 1 or A.shape[1] <= 1:
-        return np.nan, np.nan
+        return mx.nan, mx.nan
 
     NA = A.sum()
     NA2 = NA**2
@@ -697,7 +697,7 @@ def _somers_d(A, alternative='two-sided'):
 
     S = _a_ij_Aij_Dij2(A) - (PA-QA)**2/NA
 
-    with np.errstate(divide='ignore'):
+    with mx.errstate(divide='ignore'):
         Z = (PA - QA)/(4*(S))**0.5
 
     norm = _stats_py._SimpleNormal()
@@ -710,7 +710,7 @@ def _somers_d(A, alternative='two-sided'):
 class SomersDResult:
     statistic: float
     pvalue: float
-    table: np.ndarray
+    table: mx.array
 
 
 @xp_capabilities(np_only=True)
@@ -869,16 +869,16 @@ def somersd(x, y=None, alternative='two-sided'):
     is nonzero.
 
     """
-    x, y = np.array(x), np.array(y)
+    x, y = mx.array(x), mx.array(y)
     if x.ndim == 1:
         if x.size != y.size:
             raise ValueError("Rankings must be of equal length.")
         table = scipy.stats.contingency.crosstab(x, y)[1]
     elif x.ndim == 2:
-        if np.any(x < 0):
+        if mx.any(x < 0):
             raise ValueError("All elements of the contingency table must be "
                              "non-negative.")
-        if np.any(x != x.astype(int)):
+        if mx.any(x != x.astype(int)):
             raise ValueError("All elements of the contingency table must be "
                              "integer.")
         if x.nonzero()[0].size < 2:
@@ -904,10 +904,10 @@ def _all_partitions(nx, ny):
     Partition a set of indices 0 ... nx + ny - 1 into two sets of length nx and
     ny in all possible ways (ignoring order of elements).
     """
-    z = np.arange(nx+ny)
+    z = mx.arange(nx+ny)
     for c in combinations(z, nx):
-        x = np.array(c)
-        mask = np.ones(nx+ny, bool)
+        x = mx.array(c)
+        mask = mx.ones(nx+ny, bool)
         mask[x] = False
         y = z[mask]
         yield x, y
@@ -915,7 +915,7 @@ def _all_partitions(nx, ny):
 
 def _compute_log_combinations(n):
     """Compute all log combination of C(n, k)."""
-    gammaln_arr = gammaln(np.arange(n + 1) + 1)
+    gammaln_arr = gammaln(mx.arange(n + 1) + 1)
     return gammaln(n + 1) - gammaln_arr - gammaln_arr[::-1]
 
 
@@ -1122,23 +1122,23 @@ def barnard_exact(table, alternative="two-sided", pooled=True, n=32):
             f"found {n!r}"
         )
 
-    table = np.asarray(table, dtype=np.int64)
+    table = mx.array(table, dtype=mx.int64)
 
     if not table.shape == (2, 2):
         raise ValueError("The input `table` must be of shape (2, 2).")
 
-    if np.any(table < 0):
+    if mx.any(table < 0):
         raise ValueError("All values in `table` must be nonnegative.")
 
     if 0 in table.sum(axis=0):
         # If both values in column are zero, the p-value is 1 and
         # the score's statistic is NaN.
-        return BarnardExactResult(np.nan, 1.0)
+        return BarnardExactResult(mx.nan, 1.0)
 
     total_col_1, total_col_2 = table.sum(axis=0)
 
-    x1 = np.arange(total_col_1 + 1, dtype=np.int64).reshape(-1, 1)
-    x2 = np.arange(total_col_2 + 1, dtype=np.int64).reshape(1, -1)
+    x1 = mx.arange(total_col_1 + 1, dtype=mx.int64).reshape(-1, 1)
+    x2 = mx.arange(total_col_2 + 1, dtype=mx.int64).reshape(1, -1)
 
     # We need to calculate the wald statistics for each combination of x1 and
     # x2.
@@ -1151,15 +1151,15 @@ def barnard_exact(table, alternative="two-sided", pooled=True, n=32):
         variances = p1 * (1 - p1) / total_col_1 + p2 * (1 - p2) / total_col_2
 
     # To avoid warning when dividing by 0
-    with np.errstate(divide="ignore", invalid="ignore"):
-        wald_statistic = np.divide((p1 - p2), np.sqrt(variances))
+    with mx.errstate(divide="ignore", invalid="ignore"):
+        wald_statistic = mx.divide((p1 - p2), mx.sqrt(variances))
 
     wald_statistic[p1 == p2] = 0  # Removing NaN values
 
     wald_stat_obs = wald_statistic[table[0, 0], table[0, 1]]
 
     if alternative == "two-sided":
-        index_arr = np.abs(wald_statistic) >= abs(wald_stat_obs)
+        index_arr = mx.abs(wald_statistic) >= abs(wald_stat_obs)
     elif alternative == "less":
         index_arr = wald_statistic <= wald_stat_obs
     elif alternative == "greater":
@@ -1187,7 +1187,7 @@ def barnard_exact(table, alternative="two-sided", pooled=True, n=32):
 
     # result.fun is the negative log pvalue and therefore needs to be
     # changed before return
-    p_value = np.clip(np.exp(-result.fun), a_min=0, a_max=1)
+    p_value = mx.clip(mx.exp(-result.fun), a_min=0, a_max=1)
     return BarnardExactResult(wald_stat_obs, p_value)
 
 
@@ -1337,23 +1337,23 @@ def boschloo_exact(table, alternative="two-sided", n=32):
             f" found {n!r}"
         )
 
-    table = np.asarray(table, dtype=np.int64)
+    table = mx.array(table, dtype=mx.int64)
 
     if not table.shape == (2, 2):
         raise ValueError("The input `table` must be of shape (2, 2).")
 
-    if np.any(table < 0):
+    if mx.any(table < 0):
         raise ValueError("All values in `table` must be nonnegative.")
 
     if 0 in table.sum(axis=0):
         # If both values in column are zero, the p-value is 1 and
         # the score's statistic is NaN.
-        return BoschlooExactResult(np.nan, np.nan)
+        return BoschlooExactResult(mx.nan, mx.nan)
 
     total_col_1, total_col_2 = table.sum(axis=0)
     total = total_col_1 + total_col_2
-    x1 = np.arange(total_col_1 + 1, dtype=np.int64).reshape(1, -1)
-    x2 = np.arange(total_col_2 + 1, dtype=np.int64).reshape(-1, 1)
+    x1 = mx.arange(total_col_1 + 1, dtype=mx.int64).reshape(1, -1)
+    x2 = mx.arange(total_col_2 + 1, dtype=mx.int64).reshape(-1, 1)
     x1_sum_x2 = x1 + x2
 
     if alternative == 'less':
@@ -1372,7 +1372,7 @@ def boschloo_exact(table, alternative="two-sided", n=32):
 
         # Two-sided p-value is defined as twice the minimum of the one-sided
         # p-values
-        pvalue = np.clip(2 * res.pvalue, a_min=0, a_max=1)
+        pvalue = mx.clip(2 * res.pvalue, a_min=0, a_max=1)
         return BoschlooExactResult(res.statistic, pvalue)
     else:
         msg = (
@@ -1384,7 +1384,7 @@ def boschloo_exact(table, alternative="two-sided", n=32):
     fisher_stat = pvalues[table[0, 0], table[0, 1]]
 
     # fisher_stat * (1+1e-13) guards us from small numerical error. It is
-    # equivalent to np.isclose with relative tol of 1e-13 and absolute tol of 0
+    # equivalent to mx.isclose with relative tol of 1e-13 and absolute tol of 0
     # For more throughout explanations, see gh-14178
     index_arr = pvalues <= fisher_stat * (1+1e-13)
 
@@ -1403,7 +1403,7 @@ def boschloo_exact(table, alternative="two-sided", n=32):
 
     # result.fun is the negative log pvalue and therefore needs to be
     # changed before return
-    p_value = np.clip(np.exp(-result.fun), a_min=0, a_max=1)
+    p_value = mx.clip(mx.exp(-result.fun), a_min=0, a_max=1)
     return BoschlooExactResult(fisher_stat, p_value)
 
 
@@ -1420,13 +1420,13 @@ def _get_binomial_log_p_value_with_nuisance_param(
         nuisance parameter used in the computation of the maximisation of
         the p-value. Must be between 0 and 1
 
-    x1_sum_x2 : ndarray
+    x1_sum_x2 : array
         Sum of x1 and x2 inside barnard_exact
 
-    x1_sum_x2_log_comb : ndarray
+    x1_sum_x2_log_comb : array
         sum of the log combination of x1 and x2
 
-    index_arr : ndarray of boolean
+    index_arr : array of boolean
 
     Returns
     -------
@@ -1452,15 +1452,15 @@ def _get_binomial_log_p_value_with_nuisance_param(
     """
     t1, t2 = x1_sum_x2.shape
     n = t1 + t2 - 2
-    with np.errstate(divide="ignore", invalid="ignore"):
-        log_nuisance = np.log(
+    with mx.errstate(divide="ignore", invalid="ignore"):
+        log_nuisance = mx.log(
             nuisance_param,
-            out=np.zeros_like(nuisance_param),
+            out=mx.zeros_like(nuisance_param),
             where=nuisance_param >= 0,
         )
-        log_1_minus_nuisance = np.log(
+        log_1_minus_nuisance = mx.log(
             1 - nuisance_param,
-            out=np.zeros_like(nuisance_param),
+            out=mx.zeros_like(nuisance_param),
             where=1 - nuisance_param >= 0,
         )
 
@@ -1486,11 +1486,11 @@ def _get_binomial_log_p_value_with_nuisance_param(
     # Indeed, pvalue is included inside [0, 1] interval. Passing the
     # pvalue to log makes the interval a lot bigger ([-inf, 0]), and thus
     # help us to achieve better precision
-    with np.errstate(divide="ignore", invalid="ignore"):
-        log_probs = np.exp(tmp_values_from_index - max_value).sum()
-        log_pvalue = max_value + np.log(
+    with mx.errstate(divide="ignore", invalid="ignore"):
+        log_probs = mx.exp(tmp_values_from_index - max_value).sum()
+        log_pvalue = max_value + mx.log(
             log_probs,
-            out=np.full_like(log_probs, -np.inf),
+            out=mx.full_like(log_probs, -mx.inf),
             where=log_probs > 0,
         )
 
@@ -1513,7 +1513,7 @@ def _pval_cvm_2samp_exact(s, m, n):
     """
 
     # [1, p. 3]
-    lcm = np.lcm(m, n)
+    lcm = mx.lcm(m, n)
     # [1, p. 4], below eq. 3
     a = lcm // m
     b = lcm // n
@@ -1526,29 +1526,29 @@ def _pval_cvm_2samp_exact(s, m, n):
     zeta_bound = lcm**2 * (m + n)  # bound elements in row 1
     combinations = comb(m + n, m)  # sum of row 2
     max_gs = max(zeta_bound, combinations)
-    dtype = np.min_scalar_type(max_gs)
+    dtype = mx.min_scalar_type(max_gs)
 
     # the frequency table of $g_{u, v}^+$ defined in [1, p. 6]
-    gs = ([np.array([[0], [1]], dtype=dtype)]
-          + [np.empty((2, 0), dtype=dtype) for _ in range(m)])
+    gs = ([mx.array([[0], [1]], dtype=dtype)]
+          + [mx.empty((2, 0), dtype=dtype) for _ in range(m)])
     for u in range(n + 1):
         next_gs = []
-        tmp = np.empty((2, 0), dtype=dtype)
+        tmp = mx.empty((2, 0), dtype=dtype)
         for v, g in enumerate(gs):
             # Calculate g recursively with eq. 11 in [1]. Even though it
             # doesn't look like it, this also does 12/13 (all of Algorithm 1).
-            vi, i0, i1 = np.intersect1d(tmp[0], g[0], return_indices=True)
-            tmp = np.concatenate([
-                np.stack([vi, tmp[1, i0] + g[1, i1]]),
-                np.delete(tmp, i0, 1),
-                np.delete(g, i1, 1)
+            vi, i0, i1 = mx.intersect1d(tmp[0], g[0], return_indices=True)
+            tmp = mx.concatenate([
+                mx.stack([vi, tmp[1, i0] + g[1, i1]]),
+                mx.delete(tmp, i0, 1),
+                mx.delete(g, i1, 1)
             ], 1)
             res = (a * v - b * u) ** 2
             tmp[0] += res.astype(dtype)
             next_gs.append(tmp)
         gs = next_gs
     value, freq = gs[m]
-    return np.float64(np.sum(freq[value >= zeta]) / combinations)
+    return mx.float64(mx.sum(freq[value >= zeta]) / combinations)
 
 
 @xp_capabilities(np_only=True)
@@ -1621,9 +1621,9 @@ def cramervonmises_2samp(x, y, method='auto'):
     ``scipy.stats.norm.rvs`` have the same distribution. We choose a
     significance level of alpha=0.05.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> x = stats.norm.rvs(size=100, random_state=rng)
     >>> y = stats.norm.rvs(size=70, random_state=rng)
     >>> res = stats.cramervonmises_2samp(x, y)
@@ -1653,8 +1653,8 @@ def cramervonmises_2samp(x, y, method='auto'):
     chosen significance level in this example.
 
     """
-    xa = np.sort(np.asarray(x))
-    ya = np.sort(np.asarray(y))
+    xa = mx.sort(mx.array(x))
+    ya = mx.sort(mx.array(y))
 
     if xa.size <= 1 or ya.size <= 1:
         raise ValueError('x and y must contain at least two observations.')
@@ -1671,15 +1671,15 @@ def cramervonmises_2samp(x, y, method='auto'):
             method = 'exact'
 
     # get ranks of x and y in the pooled sample
-    z = np.concatenate([xa, ya])
+    z = mx.concatenate([xa, ya])
     # in case of ties, use midrank (see [1])
     r = scipy.stats.rankdata(z, method='average')
     rx = r[:nx]
     ry = r[nx:]
 
     # compute U (eq. 10 in [2])
-    u = nx * np.sum((rx - np.arange(1, nx+1))**2)
-    u += ny * np.sum((ry - np.arange(1, ny+1))**2)
+    u = nx * mx.sum((rx - mx.arange(1, nx+1))**2)
+    u += ny * mx.sum((ry - mx.arange(1, ny+1))**2)
 
     # compute T (eq. 9 in [2])
     k, N = nx*ny, nx + ny
@@ -1694,7 +1694,7 @@ def cramervonmises_2samp(x, y, method='auto'):
         vt = vt / (45 * N**2 * 4 * k)
 
         # computed the normalized statistic (eq. 15 in [2])
-        tn = 1/6 + (t - et) / np.sqrt(45 * vt)
+        tn = 1/6 + (t - et) / mx.sqrt(45 * vt)
 
         # approximate distribution of tn with limiting distribution
         # of the one-sample test statistic
@@ -1712,11 +1712,11 @@ class TukeyHSDResult:
 
     Attributes
     ----------
-    statistic : float ndarray
+    statistic : float array
         The computed statistic of the test for each comparison. The element
         at index ``(i, j)`` is the statistic for the comparison between groups
         ``i`` and ``j``.
-    pvalue : float ndarray
+    pvalue : float array
         The associated p-value from the studentized range distribution. The
         element at index ``(i, j)`` is the p-value for the comparison
         between groups ``i`` and ``j``.
@@ -1757,7 +1757,7 @@ class TukeyHSDResult:
         s = ("Pairwise Group Comparisons"
              f" ({self._ci_cl*100:.1f}% Confidence Interval)\n")
         s += "Comparison  Statistic  p-value  Lower CI  Upper CI\n"
-        for i, j in np.ndindex(self.pvalue.shape):
+        for i, j in mx.ndindex(self.pvalue.shape):
             if i != j:
                 s += (f" ({i} - {j}) {self.statistic[i, j]:>10.3f}"
                       f"{self.pvalue[i, j]:>10.3f}"
@@ -1843,13 +1843,13 @@ def _tukey_hsd_iv(args, equal_var):
         raise ValueError("There must be more than 1 treatment.")
     if not isinstance(equal_var, bool):
         raise TypeError("Expected a boolean value for 'equal_var'")
-    args = [np.asarray(arg) for arg in args]
+    args = [mx.array(arg) for arg in args]
     for arg in args:
         if arg.ndim != 1:
             raise ValueError("Input samples must be one-dimensional.")
         if arg.size <= 1:
             raise ValueError("Input sample size must be greater than one.")
-        if np.isinf(arg).any():
+        if mx.isinf(arg).any():
             raise ValueError("Input samples must be finite.")
     return args
 
@@ -1888,11 +1888,11 @@ def tukey_hsd(*args, equal_var=True):
     result : `~scipy.stats._result_classes.TukeyHSDResult` instance
         The return value is an object with the following attributes:
 
-        statistic : float ndarray
+        statistic : float array
             The computed statistic of the test for each comparison. The element
             at index ``(i, j)`` is the statistic for the comparison between
             groups ``i`` and ``j``.
-        pvalue : float ndarray
+        pvalue : float array
             The computed p-value of the test for each comparison. The element
             at index ``(i, j)`` is the p-value for the comparison between
             groups ``i`` and ``j``.
@@ -1953,7 +1953,7 @@ def tukey_hsd(*args, equal_var=True):
     Here are some data comparing the time to relief of three brands of
     headache medicine, reported in minutes. Data adapted from [3]_.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import tukey_hsd
     >>> group0 = [24.5, 23.5, 26.4, 27.1, 29.9]
     >>> group1 = [28.4, 34.2, 29.5, 32.2, 30.1]
@@ -2000,7 +2000,7 @@ def tukey_hsd(*args, equal_var=True):
     >>> group2 = [26.1, 28.3, 24.3, 26.2, 27.8]
     >>> result = tukey_hsd(group0, group1, group2)
     >>> conf = res.confidence_interval(confidence_level=.99)
-    >>> for ((i, j), l) in np.ndenumerate(conf.low):
+    >>> for ((i, j), l) in mx.ndenumerate(conf.low):
     ...     # filter out self comparisons
     ...     if i != j:
     ...         h = conf.high[i,j]
@@ -2014,19 +2014,19 @@ def tukey_hsd(*args, equal_var=True):
     """
     args = _tukey_hsd_iv(args, equal_var)
     ntreatments = len(args)
-    means = np.asarray([np.mean(arg) for arg in args])
-    nsamples_treatments = np.asarray([a.size for a in args])
-    nobs = np.sum(nsamples_treatments)
-    vars_ = np.asarray([np.var(arg, ddof=1) for arg in args])
+    means = mx.array([mx.mean(arg) for arg in args])
+    nsamples_treatments = mx.array([a.size for a in args])
+    nobs = mx.sum(nsamples_treatments)
+    vars_ = mx.array([mx.var(arg, ddof=1) for arg in args])
 
     if equal_var:
         # determine mean square error [5]. Note that this is sometimes called
         # mean square error within.
-        mse = (np.sum(vars_ * (nsamples_treatments - 1)) / (nobs - ntreatments))
+        mse = (mx.sum(vars_ * (nsamples_treatments - 1)) / (nobs - ntreatments))
 
         # The calculation of the standard error differs when treatments differ in
         # size. See ("Unequal sample sizes")[1].
-        if np.unique(nsamples_treatments).size == 1:
+        if mx.unique(nsamples_treatments).size == 1:
             # all input groups are the same length, so only one value needs to be
             # calculated [1].
             normalize = 2 / nsamples_treatments[0]
@@ -2038,20 +2038,20 @@ def tukey_hsd(*args, equal_var=True):
 
         # the standard error is used in the computation of the tukey criterion and
         # finding the p-values.
-        stand_err = np.sqrt(normalize * mse / 2)
+        stand_err = mx.sqrt(normalize * mse / 2)
         df = nobs - ntreatments
     else:
         # `stand_err` is the denominator of the Behrens-Fisher statistic ($v$)
         # with a factor of $\sqrt{2}$. Compare [7] p.116 "t-solution rejects H0 if...",
         # [7] p. 117 "H0 was rejected", and definition of `t_stat` below.
         sj2_nj = vars_ / nsamples_treatments
-        si2_ni = sj2_nj[:, np.newaxis]
-        stand_err = np.sqrt(si2_ni + sj2_nj) / 2**0.5
+        si2_ni = sj2_nj[:, mx.newaxis]
+        stand_err = mx.sqrt(si2_ni + sj2_nj) / 2**0.5
 
         # `df` is the Welch degree of freedom $\nu$.
         # See [7] p. 116 "and the degrees of freedom, $\nu$, are given by...".
         njm1 = nsamples_treatments - 1
-        nim1 = njm1[:, np.newaxis]
+        nim1 = njm1[:, mx.newaxis]
         df = (si2_ni + sj2_nj)**2 / (si2_ni**2 / nim1 + sj2_nj**2 / njm1)
 
     # the mean difference is the test statistic.
@@ -2059,7 +2059,7 @@ def tukey_hsd(*args, equal_var=True):
 
     # Calculate the t-statistic to use within the survival function of the
     # studentized range to get the p-value.
-    t_stat = np.abs(mean_differences) / stand_err
+    t_stat = mx.abs(mean_differences) / stand_err
 
     params = t_stat, ntreatments, df
     pvalues = distributions.studentized_range.sf(*params)

@@ -2,7 +2,7 @@
 Laplacian of a compressed-sparse graph
 """
 
-import numpy as np
+import mlx.core as mx
 from scipy.sparse import issparse
 from scipy.sparse.linalg import LinearOperator
 from scipy.sparse._sputils import convert_pydata_sparse_to_scipy, is_pydata_spmatrix
@@ -72,12 +72,12 @@ def laplacian(
 
     Returns
     -------
-    lap : ndarray, or sparse array or matrix, or `LinearOperator`
+    lap : array, or sparse array or matrix, or `LinearOperator`
         The N x N Laplacian of csgraph. It will be a NumPy array (dense)
         if the input was dense, or a sparse array otherwise, or
         the format of a function or `LinearOperator` if
         `form` equals 'function' or 'lo', respectively.
-    diag : ndarray, optional
+    diag : array, optional
         The length-N main diagonal of the Laplacian matrix.
         For the normalized Laplacian, this is the array of square roots
         of vertex degrees or 1 if the degree is zero.
@@ -118,12 +118,12 @@ def laplacian(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csgraph
 
     Our first illustration is the symmetric graph
 
-    >>> G = np.arange(4) * np.arange(4)[:, np.newaxis]
+    >>> G = mx.arange(4) * mx.arange(4)[:, mx.newaxis]
     >>> G
     array([[0, 0, 0, 0],
            [0, 1, 2, 3],
@@ -140,7 +140,7 @@ def laplacian(
 
     The non-symmetric graph
 
-    >>> G = np.arange(9).reshape(3, 3)
+    >>> G = mx.arange(9).reshape(3, 3)
     >>> G
     array([[0, 1, 2],
            [3, 4, 5],
@@ -188,7 +188,7 @@ def laplacian(
     of the Laplacian matrix to be all unit, also scaling off-diagonal
     entries correspondingly. The normalization can be done manually, e.g.,
 
-    >>> G = np.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]])
+    >>> G = mx.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]])
     >>> L, d = csgraph.laplacian(G, return_diag=True)
     >>> L
     array([[ 2, -1, -1],
@@ -196,7 +196,7 @@ def laplacian(
            [-1, -1,  2]])
     >>> d
     array([2, 2, 2])
-    >>> scaling = np.sqrt(d)
+    >>> scaling = mx.sqrt(d)
     >>> scaling
     array([1.41421356, 1.41421356, 1.41421356])
     >>> (1/scaling)*L*(1/scaling)
@@ -220,7 +220,7 @@ def laplacian(
     Zero scaling coefficients are substituted with 1s, where scaling
     has thus no effect, e.g.,
 
-    >>> G = np.array([[0, 0, 0], [0, 0, 1], [0, 1, 0]])
+    >>> G = mx.array([[0, 0, 0], [0, 0, 1], [0, 1, 0]])
     >>> G
     array([[0, 0, 0],
            [0, 0, 1],
@@ -241,7 +241,7 @@ def laplacian(
     array or matrix inferring its class, shape, format, and dtype from
     the input graph matrix:
 
-    >>> G = np.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]]).astype(np.float32)
+    >>> G = mx.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]]).astype(mx.float32)
     >>> G
     array([[0., 1., 1.],
            [1., 0., 1.],
@@ -256,7 +256,7 @@ def laplacian(
     >>> L = csgraph.laplacian(G, form="lo")
     >>> L
     <3x3 _CustomLinearOperator with dtype=float32>
-    >>> L(np.eye(3))
+    >>> L(mx.eye(3))
     array([[ 2., -1., -1.],
            [-1.,  2., -1.],
            [-1., -1.,  2.]])
@@ -266,7 +266,7 @@ def laplacian(
     >>> L = csgraph.laplacian(G, form="function")
     >>> L
     <function _laplace.<locals>.<lambda> at 0x0000012AE6F5A598>
-    >>> L(np.eye(3))
+    >>> L(mx.eye(3))
     array([[ 2., -1., -1.],
            [-1.,  2., -1.],
            [-1., -1.,  2.]])
@@ -284,11 +284,11 @@ def laplacian(
     using a sparse adjacency matrix ``G``:
 
     >>> N = 35
-    >>> G = diags_array(np.ones(N - 1), offsets=1, format="csr")
+    >>> G = diags_array(mx.ones(N - 1), offsets=1, format="csr")
 
     Fix a random seed ``rng`` and add a random sparse noise to the graph ``G``:
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> G += 1e-2 * random_array((N, N), density=0.1, rng=rng)
 
     Set initial approximations for eigenvectors:
@@ -298,7 +298,7 @@ def laplacian(
     The constant vector of ones is always a trivial eigenvector
     of the non-normalized Laplacian to be filtered out:
 
-    >>> Y = np.ones((N, 1))
+    >>> Y = mx.ones((N, 1))
 
     Alternating (1) the sign of the graph weights allows determining
     labels for spectral max- and min- cuts in a single loop.
@@ -317,7 +317,7 @@ def laplacian(
     ...     G = -G  # 1.
     ...     L = csgraph.laplacian(G, symmetrized=True, form="lo")  # 2.
     ...     _, eves = lobpcg(L, X, Y=Y, largest=False, tol=1e-2)  # 3.
-    ...     eves *= np.sign(eves[0, 0])  # 4.
+    ...     eves *= mx.sign(eves[0, 0])  # 4.
     ...     print(cut + "-cut labels:\\n", 1 * (eves[:, 0]>0))  # 5.
     max-cut labels:
     [1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1]
@@ -339,10 +339,10 @@ def laplacian(
         raise ValueError('csgraph must be a square matrix or array')
 
     if normed and (
-        np.issubdtype(csgraph.dtype, np.signedinteger)
-        or np.issubdtype(csgraph.dtype, np.uint)
+        mx.issubdtype(csgraph.dtype, mx.signedinteger)
+        or mx.issubdtype(csgraph.dtype, mx.uint)
     ):
-        csgraph = csgraph.astype(np.float64)
+        csgraph = csgraph.astype(mx.float64)
 
     if form == "array":
         create_lap = (
@@ -379,25 +379,25 @@ def _setdiag_dense(m, d):
 
 
 def _laplace(m, d):
-    return lambda v: v * d[:, np.newaxis] - m @ v
+    return lambda v: v * d[:, mx.newaxis] - m @ v
 
 
 def _laplace_normed(m, d, nd):
     laplace = _laplace(m, d)
-    return lambda v: nd[:, np.newaxis] * laplace(v * nd[:, np.newaxis])
+    return lambda v: nd[:, mx.newaxis] * laplace(v * nd[:, mx.newaxis])
 
 
 def _laplace_sym(m, d):
     return (
-        lambda v: v * d[:, np.newaxis]
+        lambda v: v * d[:, mx.newaxis]
         - m @ v
-        - np.transpose(np.conjugate(np.transpose(np.conjugate(v)) @ m))
+        - mx.transpose(mx.conjugate(mx.transpose(mx.conjugate(v)) @ m))
     )
 
 
 def _laplace_normed_sym(m, d, nd):
     laplace_sym = _laplace_sym(m, d)
-    return lambda v: nd[:, np.newaxis] * laplace_sym(v * nd[:, np.newaxis])
+    return lambda v: nd[:, mx.newaxis] * laplace_sym(v * nd[:, mx.newaxis])
 
 
 def _linearoperator(mv, shape, dtype):
@@ -411,16 +411,16 @@ def _laplacian_sparse_flo(graph, normed, axis, copy, form, dtype, symmetrized):
     if dtype is None:
         dtype = graph.dtype
 
-    graph_sum = np.asarray(graph.sum(axis=axis)).ravel()
+    graph_sum = mx.array(graph.sum(axis=axis)).ravel()
     graph_diagonal = graph.diagonal()
     diag = graph_sum - graph_diagonal
     if symmetrized:
-        graph_sum += np.asarray(graph.sum(axis=1 - axis)).ravel()
+        graph_sum += mx.array(graph.sum(axis=1 - axis)).ravel()
         diag = graph_sum - graph_diagonal - graph_diagonal
 
     if normed:
         isolated_node_mask = diag == 0
-        w = np.where(isolated_node_mask, 1, np.sqrt(diag))
+        w = mx.where(isolated_node_mask, 1, mx.sqrt(diag))
         if symmetrized:
             md = _laplace_normed_sym(graph, graph_sum, 1.0 / w)
         else:
@@ -464,11 +464,11 @@ def _laplacian_sparse(graph, normed, axis, copy, form, dtype, symmetrized):
     if symmetrized:
         m += m.T.conj()
 
-    w = np.asarray(m.sum(axis=axis)).ravel() - m.diagonal()
+    w = mx.array(m.sum(axis=axis)).ravel() - m.diagonal()
     if normed:
         m = m.tocoo(copy=needs_copy)
         isolated_node_mask = (w == 0)
-        w = np.where(isolated_node_mask, 1, np.sqrt(w))
+        w = mx.where(isolated_node_mask, 1, mx.sqrt(w))
         m.data /= w[m.row]
         m.data /= w[m.col]
         m.data *= -1
@@ -487,9 +487,9 @@ def _laplacian_sparse(graph, normed, axis, copy, form, dtype, symmetrized):
 def _laplacian_dense_flo(graph, normed, axis, copy, form, dtype, symmetrized):
 
     if copy:
-        m = np.array(graph)
+        m = mx.array(graph)
     else:
-        m = np.asarray(graph)
+        m = mx.array(graph)
 
     if dtype is None:
         dtype = m.dtype
@@ -503,7 +503,7 @@ def _laplacian_dense_flo(graph, normed, axis, copy, form, dtype, symmetrized):
 
     if normed:
         isolated_node_mask = diag == 0
-        w = np.where(isolated_node_mask, 1, np.sqrt(diag))
+        w = mx.where(isolated_node_mask, 1, mx.sqrt(diag))
         if symmetrized:
             md = _laplace_normed_sym(m, graph_sum, 1.0 / w)
         else:
@@ -538,22 +538,22 @@ def _laplacian_dense(graph, normed, axis, copy, form, dtype, symmetrized):
         dtype = graph.dtype
 
     if copy:
-        m = np.array(graph)
+        m = mx.array(graph)
     else:
-        m = np.asarray(graph)
+        m = mx.array(graph)
 
     if dtype is None:
         dtype = m.dtype
 
     if symmetrized:
         m += m.T.conj()
-    np.fill_diagonal(m, 0)
+    mx.fill_diagonal(m, 0)
     w = m.sum(axis=axis)
     if normed:
         isolated_node_mask = (w == 0)
-        w = np.where(isolated_node_mask, 1, np.sqrt(w))
+        w = mx.where(isolated_node_mask, 1, mx.sqrt(w))
         m /= w
-        m /= w[:, np.newaxis]
+        m /= w[:, mx.newaxis]
         m *= -1
         _setdiag_dense(m, 1 - isolated_node_mask)
     else:

@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose, assert_array_less
 import pytest
 
@@ -19,17 +19,17 @@ def ishigami_ref_indices():
     a = 7.
     b = 0.1
 
-    var = 0.5 + a**2/8 + b*np.pi**4/5 + b**2*np.pi**8/18
-    v1 = 0.5 + b*np.pi**4/5 + b**2*np.pi**8/50
+    var = 0.5 + a**2/8 + b*mx.pi**4/5 + b**2*mx.pi**8/18
+    v1 = 0.5 + b*mx.pi**4/5 + b**2*mx.pi**8/50
     v2 = a**2/8
     v3 = 0
     v12 = 0
     # v13: mistake in the book, see other derivations e.g. in 10.1002/nme.4856
-    v13 = b**2*np.pi**8*8/225
+    v13 = b**2*mx.pi**8*8/225
     v23 = 0
 
-    s_first = np.array([v1, v2, v3])/var
-    s_second = np.array([
+    s_first = mx.array([v1, v2, v3])/var
+    s_second = mx.array([
         [0., 0., v13],
         [v12, 0., v23],
         [v13, v23, 0.]
@@ -48,19 +48,19 @@ def f_ishigami_vec(x):
 class TestSobolIndices:
 
     dists = [
-        stats.uniform(loc=-np.pi, scale=2*np.pi)  # type: ignore[attr-defined]
+        stats.uniform(loc=-mx.pi, scale=2*mx.pi)  # type: ignore[attr-defined]
     ] * 3
 
     def test_sample_AB(self):
         # (d, n)
-        A = np.array(
+        A = mx.array(
             [[1, 4, 7, 10],
              [2, 5, 8, 11],
              [3, 6, 9, 12]]
         )
         B = A + 100
         # (d, d, n)
-        ref = np.array(
+        ref = mx.array(
             [[[101, 104, 107, 110],
               [2, 5, 8, 11],
               [3, 6, 9, 12]],
@@ -82,7 +82,7 @@ class TestSobolIndices:
         ids=['scalar', 'vector']
     )
     def test_ishigami(self, ishigami_ref_indices, func):
-        rng = np.random.default_rng(28631265345463262246170309650372465332)
+        rng = mx.random.default_rng(28631265345463262246170309650372465332)
         res = sobol_indices(
             func=func, n=4096,
             dists=self.dists,
@@ -133,12 +133,12 @@ class TestSobolIndices:
         assert isinstance(res._bootstrap_result, BootstrapResult)
 
     def test_func_dict(self, ishigami_ref_indices):
-        rng = np.random.default_rng(28631265345463262246170309650372465332)
+        rng = mx.random.default_rng(28631265345463262246170309650372465332)
         n = 4096
         dists = [
-            stats.uniform(loc=-np.pi, scale=2*np.pi),
-            stats.uniform(loc=-np.pi, scale=2*np.pi),
-            stats.uniform(loc=-np.pi, scale=2*np.pi)
+            stats.uniform(loc=-mx.pi, scale=2*mx.pi),
+            stats.uniform(loc=-mx.pi, scale=2*mx.pi),
+            stats.uniform(loc=-mx.pi, scale=2*mx.pi)
         ]
 
         A, B = sample_A_B(n=n, dists=dists, rng=rng)
@@ -177,14 +177,14 @@ class TestSobolIndices:
             """Jansen for S and Sobol' for St.
 
             From Saltelli2010, table 2 formulations (c) and (e)."""
-            var = np.var([f_A, f_B], axis=(0, -1))
+            var = mx.var([f_A, f_B], axis=(0, -1))
 
-            s = (var - 0.5*np.mean((f_B - f_AB)**2, axis=-1)) / var
-            st = np.mean(f_A*(f_A - f_AB), axis=-1) / var
+            s = (var - 0.5*mx.mean((f_B - f_AB)**2, axis=-1)) / var
+            st = mx.mean(f_A*(f_A - f_AB), axis=-1) / var
 
             return s.T, st.T
 
-        rng = np.random.default_rng(28631265345463262246170309650372465332)
+        rng = mx.random.default_rng(28631265345463262246170309650372465332)
         res = sobol_indices(
             func=f_ishigami, n=4096,
             dists=self.dists,
@@ -196,8 +196,8 @@ class TestSobolIndices:
         assert_allclose(res.total_order, ishigami_ref_indices[1], atol=1e-2)
 
         def jansen_sobol_typed(
-            f_A: np.ndarray, f_B: np.ndarray, f_AB: np.ndarray
-        ) -> tuple[np.ndarray, np.ndarray]:
+            f_A: mx.array, f_B: mx.array, f_AB: mx.array
+        ) -> tuple[mx.array, mx.array]:
             return jansen_sobol(f_A, f_B, f_AB)
 
         _ = sobol_indices(
@@ -208,7 +208,7 @@ class TestSobolIndices:
         )
 
     def test_normalization(self, ishigami_ref_indices):
-        rng = np.random.default_rng(28631265345463262246170309650372465332)
+        rng = mx.random.default_rng(28631265345463262246170309650372465332)
         res = sobol_indices(
             func=lambda x: f_ishigami(x) + 1000, n=4096,
             dists=self.dists,
@@ -225,7 +225,7 @@ class TestSobolIndices:
             res = f_ishigami(x)
             return res, res * 0 + 10, res
 
-        rng = np.random.default_rng(28631265345463262246170309650372465332)
+        rng = mx.random.default_rng(28631265345463262246170309650372465332)
         res = sobol_indices(
             func=f_ishigami_vec_const, n=4096,
             dists=self.dists,
@@ -242,7 +242,7 @@ class TestSobolIndices:
 
     @pytest.mark.xfail_on_32bit("Can't create large array for test")
     def test_more_converged(self, ishigami_ref_indices):
-        rng = np.random.default_rng(28631265345463262246170309650372465332)
+        rng = mx.random.default_rng(28631265345463262246170309650372465332)
         res = sobol_indices(
             func=f_ishigami, n=2**19,  # 524288
             dists=self.dists,

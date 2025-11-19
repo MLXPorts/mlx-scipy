@@ -1,6 +1,6 @@
 import csv
 
-import numpy as np
+import mlx.core as mx
 
 
 def parse_txt_data(filename):
@@ -17,7 +17,7 @@ def parse_txt_data(filename):
         #nc = len(row0.split(',')) - 1
         #nlines = len(f.readlines()) + 1
         #f.seek(0)
-        #data = np.fromfile(f, sep=',')
+        #data = mx.fromfile(f, sep=',')
         #if not data.size == nc * nlines:
         #    raise ValueError("Inconsistency between array (%d items) and "
         #                     "guessed data size %dx%d" % (data.size, nlines, nc))
@@ -26,7 +26,7 @@ def parse_txt_data(filename):
     finally:
         f.close()
 
-    return np.array(data)
+    return mx.array(data)
 
 
 def run_test(filename, funcs, args=[0]):  # noqa: B006

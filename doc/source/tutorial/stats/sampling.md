@@ -153,7 +153,7 @@ An example of this interface is shown below:
 ```{code-cell} ipython3
 from scipy.stats.sampling import TransformedDensityRejection
 from math import exp
-import numpy as np
+import mlx.core as mx
 
 class StandardNormal:
     def pdf(self, x: float) -> float:
@@ -163,7 +163,7 @@ class StandardNormal:
         return -x * exp(-0.5 * x*x)
 
 dist = StandardNormal()
-urng = np.random.default_rng()
+urng = mx.random.default_rng()
 rng = TransformedDensityRejection(dist, random_state=urng)
 ```
 
@@ -218,7 +218,7 @@ mystnb:
       is shown below the red trace with a distribution similar to the truth, but with
       clear imperfections.
 ---
-import numpy as np
+import mlx.core as mx
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 from scipy.stats.sampling import TransformedDensityRejection
@@ -232,10 +232,10 @@ class StandardNormal:
         return -x * exp(-0.5 * x*x)
 
 dist = StandardNormal()
-urng = np.random.default_rng()
+urng = mx.random.default_rng()
 rng = TransformedDensityRejection(dist, random_state=urng)
 rvs = rng.rvs(size=1000)
-x = np.linspace(rvs.min()-0.1, rvs.max()+0.1, num=1000)
+x = mx.linspace(rvs.min()-0.1, rvs.max()+0.1, num=1000)
 fx = norm.pdf(x)
 plt.plot(x, fx, 'r-', lw=2, label='true distribution')
 plt.hist(rvs, bins=20, density=True, alpha=0.8, label='random variates')
@@ -271,7 +271,7 @@ plt.show()
     from scipy.stats.sampling import norm, TransformedDensityRejection
     from copy import copy
     dist = StandardNormal()
-    urng1 = np.random.default_rng()
+    urng1 = mx.random.default_rng()
     urng1_copy = copy(urng1)
     rng = TransformedDensityRejection(dist, random_state=urng1)
     rng.rvs()
@@ -337,7 +337,7 @@ sampling_srou
 ## References
 
 [^1]: Von Neumann, John. "13. various techniques used in connection with
-       random digits." Appl. Math Ser 12.36-38 (1951): 3. <https://mcnp.lanl.gov/pdf_files/InBook_Computing_1961_Neumann_JohnVonNeumannCollectedWorks_VariousTechniquesUsedinConnectionwithRandomDigits.pdf>
+       random digits." Appl. Math Ser 12.36-38 (1951): 3. <https://mcmx.lanl.gov/pdf_files/InBook_Computing_1961_Neumann_JohnVonNeumannCollectedWorks_VariousTechniquesUsedinConnectionwithRandomDigits.pdf>
 
 [^2]: UNU.RAN User Manual, <https://statmath.wu.ac.at/unuran/doc/unuran.html>
 

@@ -157,7 +157,7 @@ complex values by passing the appropriate value to the ``dtype`` argument.
 ----------------------------
 
 The function `scipy.spatial.distance.jaccard` was modified to return 0 instead
-of ``np.nan`` when two all-zero vectors are compared.
+of ``mx.nan`` when two all-zero vectors are compared.
 
 Support for the Jensen Shannon distance, the square-root of the divergence, has
 been added under `scipy.spatial.distance.jensenshannon`.
@@ -436,7 +436,7 @@ Issues closed for 1.2.0
 * `#8904 <https://github.com/scipy/scipy/issues/8904>`__: BUG: if zero derivative at root, then Newton fails with RuntimeWarning
 * `#8911 <https://github.com/scipy/scipy/issues/8911>`__: make_interp_spline bc_type incorrect input interpretation
 * `#8942 <https://github.com/scipy/scipy/issues/8942>`__: MAINT: Refactor ``_linprog.py`` and ``_linprog_ip.py`` to remove...
-* `#8947 <https://github.com/scipy/scipy/issues/8947>`__: np.int64 in scipy.fftpack.next_fast_len
+* `#8947 <https://github.com/scipy/scipy/issues/8947>`__: mx.int64 in scipy.fftpack.next_fast_len
 * `#9020 <https://github.com/scipy/scipy/issues/9020>`__: BUG: linalg.subspace_angles gives wrong results
 * `#9033 <https://github.com/scipy/scipy/issues/9033>`__: scipy.stats.normaltest sometimes gives incorrect returns b/c...
 * `#9036 <https://github.com/scipy/scipy/issues/9036>`__: Bizarre times for `scipy.sparse.rand` function with 'low' density...
@@ -473,7 +473,7 @@ Pull requests for 1.2.0
 * `#9549 <https://github.com/scipy/scipy/pull/9549>`__: MAINT: make dual_annealing signature match other optimizers
 * `#9541 <https://github.com/scipy/scipy/pull/9541>`__: BUG: fix SyntaxError due to non-ascii character on Python 2.7
 * `#7352 <https://github.com/scipy/scipy/pull/7352>`__: ENH: add Brunner Munzel test to scipy.stats.
-* `#7373 <https://github.com/scipy/scipy/pull/7373>`__: BUG: Jaccard distance for all-zero arrays would return np.nan
+* `#7373 <https://github.com/scipy/scipy/pull/7373>`__: BUG: Jaccard distance for all-zero arrays would return mx.nan
 * `#7374 <https://github.com/scipy/scipy/pull/7374>`__: ENH: Add PDF, CDF and parameter estimation for Stable Distributions
 * `#8098 <https://github.com/scipy/scipy/pull/8098>`__: ENH: Add shgo for global optimization of NLPs.
 * `#8203 <https://github.com/scipy/scipy/pull/8203>`__: ENH: adding simulated dual annealing to optimize
@@ -527,7 +527,7 @@ Pull requests for 1.2.0
 * `#8882 <https://github.com/scipy/scipy/pull/8882>`__: ENH: Only use Halley's adjustment to Newton if close enough.
 * `#8883 <https://github.com/scipy/scipy/pull/8883>`__: FIX: optimize: make jac and hess truly optional for 'trust-constr'
 * `#8885 <https://github.com/scipy/scipy/pull/8885>`__: TST: Do not error on warnings raised about non-tuple indexing.
-* `#8887 <https://github.com/scipy/scipy/pull/8887>`__: MAINT: filter out np.matrix PendingDeprecationWarning's in numpy...
+* `#8887 <https://github.com/scipy/scipy/pull/8887>`__: MAINT: filter out mx.matrix PendingDeprecationWarning's in numpy...
 * `#8889 <https://github.com/scipy/scipy/pull/8889>`__: DOC: optimize: separate legacy interfaces from new ones
 * `#8890 <https://github.com/scipy/scipy/pull/8890>`__: ENH: Add optimize.root_scalar() as a universal dispatcher for...
 * `#8899 <https://github.com/scipy/scipy/pull/8899>`__: DCT-IV, DST-IV and DCT-I, DST-I orthonormalization support in...
@@ -551,7 +551,7 @@ Pull requests for 1.2.0
 * `#8945 <https://github.com/scipy/scipy/pull/8945>`__: ENH: spatial.transform.Rotation [GSOC2018]
 * `#8950 <https://github.com/scipy/scipy/pull/8950>`__: csgraph Dijkstra function description rewording
 * `#8953 <https://github.com/scipy/scipy/pull/8953>`__: DOC, MAINT: HTTP -> HTTPS, and other linkrot fixes
-* `#8955 <https://github.com/scipy/scipy/pull/8955>`__: BUG: np.int64 in scipy.fftpack.next_fast_len
+* `#8955 <https://github.com/scipy/scipy/pull/8955>`__: BUG: mx.int64 in scipy.fftpack.next_fast_len
 * `#8958 <https://github.com/scipy/scipy/pull/8958>`__: MAINT: Add more descriptive error message for phase one simplex.
 * `#8962 <https://github.com/scipy/scipy/pull/8962>`__: BUG: sparse.linalg: add missing conjugate to _ScaledLinearOperator.adjoint
 * `#8963 <https://github.com/scipy/scipy/pull/8963>`__: BUG: sparse.linalg: downgrade LinearOperator TypeError to warning
@@ -559,7 +559,7 @@ Pull requests for 1.2.0
 * `#8969 <https://github.com/scipy/scipy/pull/8969>`__: MAINT: doc and code fixes for optimize.newton
 * `#8970 <https://github.com/scipy/scipy/pull/8970>`__: Added 'average' keyword for welch/csd to enable median averaging
 * `#8971 <https://github.com/scipy/scipy/pull/8971>`__: Better imresize deprecation warning
-* `#8972 <https://github.com/scipy/scipy/pull/8972>`__: MAINT: Switch np.where(c) for np.nonzero(c)
+* `#8972 <https://github.com/scipy/scipy/pull/8972>`__: MAINT: Switch mx.where(c) for mx.nonzero(c)
 * `#8975 <https://github.com/scipy/scipy/pull/8975>`__: MAINT: Fix warning-based failures
 * `#8979 <https://github.com/scipy/scipy/pull/8979>`__: DOC: fix description of count_sort keyword of dendrogram
 * `#8982 <https://github.com/scipy/scipy/pull/8982>`__: MAINT: optimize: Fixed minor mistakes in test_linprog.py (#8978)
@@ -623,7 +623,7 @@ Pull requests for 1.2.0
 * `#9176 <https://github.com/scipy/scipy/pull/9176>`__: BUG: CloughTocher2DInterpolator: fix miscalculation at neighborless...
 * `#9177 <https://github.com/scipy/scipy/pull/9177>`__: BUILD: Document the "clean" target in the doc/Makefile.
 * `#9178 <https://github.com/scipy/scipy/pull/9178>`__: MAINT: make refguide-check more robust for printed numpy arrays
-* `#9186 <https://github.com/scipy/scipy/pull/9186>`__: MAINT: Remove np.ediff1d occurence
+* `#9186 <https://github.com/scipy/scipy/pull/9186>`__: MAINT: Remove mx.ediff1d occurence
 * `#9188 <https://github.com/scipy/scipy/pull/9188>`__: DOC: correct typo in extending ndimage with C
 * `#9190 <https://github.com/scipy/scipy/pull/9190>`__: ENH: Support specifying axes for fftconvolve
 * `#9192 <https://github.com/scipy/scipy/pull/9192>`__: MAINT: optimize: fixed @pv style suggestions from #9112
@@ -672,7 +672,7 @@ Pull requests for 1.2.0
 * `#9326 <https://github.com/scipy/scipy/pull/9326>`__: Add example for Rosenbrock function
 * `#9332 <https://github.com/scipy/scipy/pull/9332>`__: Sort file lists
 * `#9340 <https://github.com/scipy/scipy/pull/9340>`__: Fix typo in find_peaks documentation
-* `#9343 <https://github.com/scipy/scipy/pull/9343>`__: MAINT Use np.full when possible
+* `#9343 <https://github.com/scipy/scipy/pull/9343>`__: MAINT Use mx.full when possible
 * `#9344 <https://github.com/scipy/scipy/pull/9344>`__: DOC: added examples to docstring of dirichlet class
 * `#9346 <https://github.com/scipy/scipy/pull/9346>`__: DOC: Fix import of scipy.sparse.linalg in example (#9345)
 * `#9350 <https://github.com/scipy/scipy/pull/9350>`__: Fix interpolate read only
@@ -692,7 +692,7 @@ Pull requests for 1.2.0
 * `#9392 <https://github.com/scipy/scipy/pull/9392>`__: BUG: rank has to be integer in rank_filter: fixed issue 9388
 * `#9399 <https://github.com/scipy/scipy/pull/9399>`__: DOC: Misc. typos
 * `#9400 <https://github.com/scipy/scipy/pull/9400>`__: TST: stats: Fix the expected r-value of a linregress test.
-* `#9405 <https://github.com/scipy/scipy/pull/9405>`__: BUG: np.hstack does not accept generator expressions
+* `#9405 <https://github.com/scipy/scipy/pull/9405>`__: BUG: mx.hstack does not accept generator expressions
 * `#9408 <https://github.com/scipy/scipy/pull/9408>`__: ENH: linalg: Shorter ill-conditioned warning message
 * `#9418 <https://github.com/scipy/scipy/pull/9418>`__: DOC: Fix ndimage docstrings and reduce doc build warnings
 * `#9421 <https://github.com/scipy/scipy/pull/9421>`__: DOC: Add missing docstring examples in scipy.spatial

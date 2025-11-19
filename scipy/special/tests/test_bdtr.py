@@ -1,6 +1,6 @@
 import warnings
 
-import numpy as np
+import mlx.core as mx
 import scipy.special as sc
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
@@ -21,19 +21,19 @@ class TestBdtr:
         assert_array_equal(double_val, int_val)
 
     @pytest.mark.parametrize('k, n, p', [
-        (np.inf, 2, 0.5),
-        (1.0, np.inf, 0.5),
-        (1.0, 2, np.inf)
+        (mx.inf, 2, 0.5),
+        (1.0, mx.inf, 0.5),
+        (1.0, 2, mx.inf)
     ])
     def test_inf(self, k, n, p):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
             val = sc.bdtr(k, n, p)
-        assert np.isnan(val)
+        assert mx.isnan(val)
 
     def test_domain(self):
         val = sc.bdtr(-1.1, 1, 0.5)
-        assert np.isnan(val)
+        assert mx.isnan(val)
 
 
 class TestBdtrc:
@@ -51,20 +51,20 @@ class TestBdtrc:
         assert_array_equal(double_val, int_val)
 
     @pytest.mark.parametrize('k, n, p', [
-        (np.inf, 2, 0.5),
-        (1.0, np.inf, 0.5),
-        (1.0, 2, np.inf)
+        (mx.inf, 2, 0.5),
+        (1.0, mx.inf, 0.5),
+        (1.0, 2, mx.inf)
     ])
     def test_inf(self, k, n, p):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
             val = sc.bdtrc(k, n, p)
-        assert np.isnan(val)
+        assert mx.isnan(val)
 
     def test_domain(self):
         val = sc.bdtrc(-1.1, 1, 0.5)
         val2 = sc.bdtrc(2.1, 1, 0.5)
-        assert np.isnan(val2)
+        assert mx.isnan(val2)
         assert_allclose(val, 1.0)
 
     def test_bdtr_bdtrc_sum_to_one(self):
@@ -81,7 +81,7 @@ class TestBdtri:
 
     def test_sum_is_one(self):
         val = sc.bdtri([0, 1], 2, 0.5)
-        actual = np.asarray([1 - 1/np.sqrt(2), 1/np.sqrt(2)])
+        actual = mx.array([1 - 1/mx.sqrt(2), 1/mx.sqrt(2)])
         assert_allclose(val, actual)
 
     def test_rounding(self):
@@ -90,15 +90,15 @@ class TestBdtri:
         assert_allclose(double_val, int_val)
 
     @pytest.mark.parametrize('k, n, p', [
-        (np.inf, 2, 0.5),
-        (1.0, np.inf, 0.5),
-        (1.0, 2, np.inf)
+        (mx.inf, 2, 0.5),
+        (1.0, mx.inf, 0.5),
+        (1.0, 2, mx.inf)
     ])
     def test_inf(self, k, n, p):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
             val = sc.bdtri(k, n, p)
-        assert np.isnan(val)
+        assert mx.isnan(val)
 
     @pytest.mark.parametrize('k, n, p', [
         (-1.1, 1, 0.5),
@@ -106,9 +106,9 @@ class TestBdtri:
     ])
     def test_domain(self, k, n, p):
         val = sc.bdtri(k, n, p)
-        assert np.isnan(val)
+        assert mx.isnan(val)
 
     def test_bdtr_bdtri_roundtrip(self):
         bdtr_vals = sc.bdtr([0, 1, 2], 2, 0.5)
         roundtrip_vals = sc.bdtri([0, 1, 2], 2, bdtr_vals)
-        assert_allclose(roundtrip_vals, [0.5, 0.5, np.nan])
+        assert_allclose(roundtrip_vals, [0.5, 0.5, mx.nan])

@@ -7,7 +7,7 @@
 A Dual Annealing global optimization algorithm
 """
 
-import numpy as np
+import mlx.core as mx
 from scipy.optimize import OptimizeResult
 from scipy.optimize import minimize, Bounds
 from scipy.special import gammaln
@@ -27,10 +27,10 @@ class VisitingDistribution:
     Parameters
     ----------
     lb : array_like
-        A 1-D NumPy ndarray containing lower bounds of the generated
+        A 1-D NumPy array containing lower bounds of the generated
         components. Neither NaN or inf are allowed.
     ub : array_like
-        A 1-D NumPy ndarray containing upper bounds for the generated
+        A 1-D NumPy array containing upper bounds for the generated
         components. Neither NaN or inf are allowed.
     visiting_param : float
         Parameter for visiting distribution. Default value is 2.62.
@@ -59,17 +59,17 @@ class VisitingDistribution:
         self.bound_range = ub - lb
 
         # these are invariant numbers unless visiting_param changes
-        self._factor2 = np.exp((4.0 - self._visiting_param) * np.log(
+        self._factor2 = mx.exp((4.0 - self._visiting_param) * mx.log(
             self._visiting_param - 1.0))
-        self._factor3 = np.exp((2.0 - self._visiting_param) * np.log(2.0)
+        self._factor3 = mx.exp((2.0 - self._visiting_param) * mx.log(2.0)
                                / (self._visiting_param - 1.0))
-        self._factor4_p = np.sqrt(np.pi) * self._factor2 / (self._factor3 * (
+        self._factor4_p = mx.sqrt(mx.pi) * self._factor2 / (self._factor3 * (
             3.0 - self._visiting_param))
 
         self._factor5 = 1.0 / (self._visiting_param - 1.0) - 0.5
         self._d1 = 2.0 - self._factor5
-        self._factor6 = np.pi * (1.0 - self._factor5) / np.sin(
-            np.pi * (1.0 - self._factor5)) / np.exp(gammaln(self._d1))
+        self._factor6 = mx.pi * (1.0 - self._factor5) / mx.sin(
+            mx.pi * (1.0 - self._factor5)) / mx.exp(gammaln(self._d1))
 
     def visiting(self, x, step, temperature):
         """ Based on the step in the strategy chain, new coordinates are
@@ -85,14 +85,14 @@ class VisitingDistribution:
             visits[visits < -self.TAIL_LIMIT] = -self.TAIL_LIMIT * lower_sample
             x_visit = visits + x
             a = x_visit - self.lower
-            b = np.fmod(a, self.bound_range) + self.bound_range
-            x_visit = np.fmod(b, self.bound_range) + self.lower
-            x_visit[np.fabs(
+            b = mx.fmod(a, self.bound_range) + self.bound_range
+            x_visit = mx.fmod(b, self.bound_range) + self.lower
+            x_visit[mx.fabs(
                 x_visit - self.lower) < self.MIN_VISIT_BOUND] += 1.e-10
         else:
             # Changing only one coordinate at a time based on strategy
             # chain step
-            x_visit = np.copy(x)
+            x_visit = mx.copy(x)
             visit = self.visit_fn(temperature, 1)[0]
             if visit > self.TAIL_LIMIT:
                 visit = self.TAIL_LIMIT * self.rng_gen.uniform()
@@ -101,10 +101,10 @@ class VisitingDistribution:
             index = step - dim
             x_visit[index] = visit + x[index]
             a = x_visit[index] - self.lower[index]
-            b = np.fmod(a, self.bound_range[index]) + self.bound_range[index]
-            x_visit[index] = np.fmod(b, self.bound_range[
+            b = mx.fmod(a, self.bound_range[index]) + self.bound_range[index]
+            x_visit[index] = mx.fmod(b, self.bound_range[
                 index]) + self.lower[index]
-            if np.fabs(x_visit[index] - self.lower[
+            if mx.fabs(x_visit[index] - self.lower[
                     index]) < self.MIN_VISIT_BOUND:
                 x_visit[index] += self.MIN_VISIT_BOUND
         return x_visit
@@ -113,14 +113,14 @@ class VisitingDistribution:
         """ Formula Visita from p. 405 of reference [2] """
         x, y = self.rng_gen.normal(size=(dim, 2)).T
 
-        factor1 = np.exp(np.log(temperature) / (self._visiting_param - 1.0))
+        factor1 = mx.exp(mx.log(temperature) / (self._visiting_param - 1.0))
         factor4 = self._factor4_p * factor1
 
         # sigmax
-        x *= np.exp(-(self._visiting_param - 1.0) * np.log(
+        x *= mx.exp(-(self._visiting_param - 1.0) * mx.log(
             self._factor6 / factor4) / (3.0 - self._visiting_param))
 
-        den = np.exp((self._visiting_param - 1.0) * np.log(np.fabs(y)) /
+        den = mx.exp((self._visiting_param - 1.0) * mx.log(mx.fabs(y)) /
                      (3.0 - self._visiting_param))
 
         return x / den
@@ -134,10 +134,10 @@ class EnergyState:
     Parameters
     ----------
     lower : array_like
-        A 1-D NumPy ndarray containing lower bounds for generating an initial
+        A 1-D NumPy array containing lower bounds for generating an initial
         random components in the `reset` method.
     upper : array_like
-        A 1-D NumPy ndarray containing upper bounds for generating an initial
+        A 1-D NumPy array containing upper bounds for generating an initial
         random components in the `reset` method
         components. Neither NaN or inf are allowed.
     callback : callable, ``callback(x, f, context)``, optional
@@ -166,14 +166,14 @@ class EnergyState:
             self.current_location = rng_gen.uniform(self.lower, self.upper,
                                                     size=len(self.lower))
         else:
-            self.current_location = np.copy(x0)
+            self.current_location = mx.copy(x0)
         init_error = True
         reinit_counter = 0
         while init_error:
             self.current_energy = func_wrapper.fun(self.current_location)
             if self.current_energy is None:
                 raise ValueError('Objective function is returning None')
-            if not np.isfinite(self.current_energy):
+            if not mx.isfinite(self.current_energy):
                 if reinit_counter >= EnergyState.MAX_REINIT_COUNT:
                     init_error = False
                     message = (
@@ -191,12 +191,12 @@ class EnergyState:
             # If first time reset, initialize ebest and xbest
             if self.ebest is None and self.xbest is None:
                 self.ebest = self.current_energy
-                self.xbest = np.copy(self.current_location)
+                self.xbest = mx.copy(self.current_location)
             # Otherwise, we keep them in case of reannealing reset
 
     def update_best(self, e, x, context):
         self.ebest = e
-        self.xbest = np.copy(x)
+        self.xbest = mx.copy(x)
         if self.callback is not None:
             val = self.callback(x, e, context)
             if val is not None:
@@ -206,7 +206,7 @@ class EnergyState:
 
     def update_current(self, e, x):
         self.current_energy = e
-        self.current_location = np.copy(x)
+        self.current_location = mx.copy(x)
 
 
 class StrategyChain:
@@ -230,7 +230,7 @@ class StrategyChain:
     rand_gen : {None, int, `numpy.random.Generator`,
                 `numpy.random.RandomState`}, optional
 
-        If `seed` is None (or `np.random`), the `numpy.random.RandomState`
+        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.
@@ -245,7 +245,7 @@ class StrategyChain:
                  minimizer_wrapper, rand_gen, energy_state):
         # Local strategy chain minimum energy and location
         self.emin = energy_state.current_energy
-        self.xmin = np.array(energy_state.current_location)
+        self.xmin = mx.array(energy_state.current_location)
         # Global optimizer state
         self.energy_state = energy_state
         # Acceptance parameter
@@ -269,19 +269,19 @@ class StrategyChain:
         if pqv_temp <= 0.:
             pqv = 0.
         else:
-            pqv = np.exp(np.log(pqv_temp) / (
+            pqv = mx.exp(mx.log(pqv_temp) / (
                 1. - self.acceptance_param))
 
         if r <= pqv:
             # We accept the new location and update state
             self.energy_state.update_current(e, x_visit)
-            self.xmin = np.copy(self.energy_state.current_location)
+            self.xmin = mx.copy(self.energy_state.current_location)
 
         # No improvement for a long time
         if self.not_improved_idx >= self.not_improved_max_idx:
             if j == 0 or self.energy_state.current_energy < self.emin:
                 self.emin = self.energy_state.current_energy
-                self.xmin = np.copy(self.energy_state.current_location)
+                self.xmin = mx.copy(self.energy_state.current_location)
 
     def run(self, step, temperature):
         self.temperature_step = temperature / float(step + 1)
@@ -336,7 +336,7 @@ class StrategyChain:
         # Check probability of a need to perform a LS even if no improvement
         do_ls = False
         if self.K < 90 * len(self.energy_state.current_location):
-            pls = np.exp(self.K * (
+            pls = mx.exp(self.K * (
                 self.energy_state.ebest - self.energy_state.current_energy) /
                 self.temperature_step)
             if pls >= self._rand_gen.uniform():
@@ -347,7 +347,7 @@ class StrategyChain:
             do_ls = True
         if do_ls:
             e, x = self.minimizer_wrapper.local_search(self.xmin, self.emin)
-            self.xmin = np.copy(x)
+            self.xmin = mx.copy(x)
             self.emin = e
             self.not_improved_idx = 0
             self.not_improved_max_idx = self.energy_state.current_location.size
@@ -400,8 +400,8 @@ class LocalSearchWrapper:
         self.kwargs.pop("args", None)
         self.minimizer = minimize
         bounds_list = list(zip(*search_bounds))
-        self.lower = np.array(bounds_list[0])
-        self.upper = np.array(bounds_list[1])
+        self.lower = mx.array(bounds_list[0])
+        self.upper = mx.array(bounds_list[1])
 
         # If no minimizer specified, use SciPy minimize with 'L-BFGS-B' method
         if not self.kwargs:
@@ -430,15 +430,15 @@ class LocalSearchWrapper:
 
     def local_search(self, x, e):
         # Run local search from the given x location where energy value is e
-        x_tmp = np.copy(x)
+        x_tmp = mx.copy(x)
         mres = self.minimizer(self.func_wrapper.fun, x, **self.kwargs)
         if 'njev' in mres:
             self.func_wrapper.ngev += mres.njev
         if 'nhev' in mres:
             self.func_wrapper.nhev += mres.nhev
         # Check if is valid value
-        is_finite = np.all(np.isfinite(mres.x)) and np.isfinite(mres.fun)
-        in_bounds = np.all(mres.x >= self.lower) and np.all(
+        is_finite = mx.all(mx.isfinite(mres.x)) and mx.isfinite(mres.fun)
+        in_bounds = mx.all(mres.x >= self.lower) and mx.all(
             mres.x <= self.upper)
         is_valid = is_finite and in_bounds
 
@@ -534,7 +534,7 @@ def dual_annealing(func, bounds, args=(), maxiter=1000,
         - ``2``: detection done in the dual annealing process.
 
         If the callback implementation returns True, the algorithm will stop.
-    x0 : ndarray, shape(n,), optional
+    x0 : array, shape(n,), optional
         Coordinates of a single N-D starting point.
 
     Returns
@@ -620,9 +620,9 @@ def dual_annealing(func, bounds, args=(), maxiter=1000,
     The function involved is called Rastrigin
     (https://en.wikipedia.org/wiki/Rastrigin_function)
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import dual_annealing
-    >>> func = lambda x: np.sum(x*x - 10*np.cos(2*np.pi*x)) + 10*np.size(x)
+    >>> func = lambda x: mx.sum(x*x - 10*mx.cos(2*mx.pi*x)) + 10*mx.size(x)
     >>> lw = [-5.12] * 10
     >>> up = [5.12] * 10
     >>> ret = dual_annealing(func, bounds=list(zip(lw, up)))
@@ -642,17 +642,17 @@ def dual_annealing(func, bounds, args=(), maxiter=1000,
         raise ValueError('Bounds size does not match x0')
 
     lu = list(zip(*bounds))
-    lower = np.array(lu[0])
-    upper = np.array(lu[1])
+    lower = mx.array(lu[0])
+    upper = mx.array(lu[1])
     # Check that restart temperature ratio is correct
     if restart_temp_ratio <= 0. or restart_temp_ratio >= 1.:
         raise ValueError('Restart temperature ratio has to be in range (0, 1)')
     # Checking bounds are valid
-    if (np.any(np.isinf(lower)) or np.any(np.isinf(upper)) or np.any(
-            np.isnan(lower)) or np.any(np.isnan(upper))):
+    if (mx.any(mx.isinf(lower)) or mx.any(mx.isinf(upper)) or mx.any(
+            mx.isnan(lower)) or mx.any(mx.isnan(upper))):
         raise ValueError('Some bounds values are inf values or nan values')
     # Checking that bounds are consistent
-    if not np.all(lower < upper):
+    if not mx.all(lower < upper):
         raise ValueError('Bounds are not consistent min < max')
     # Checking that bounds are the same length
     if not len(lower) == len(upper):
@@ -688,13 +688,13 @@ def dual_annealing(func, bounds, args=(), maxiter=1000,
     optimize_res.success = True
     optimize_res.status = 0
 
-    t1 = np.exp((visit - 1) * np.log(2.0)) - 1.0
+    t1 = mx.exp((visit - 1) * mx.log(2.0)) - 1.0
     # Run the search loop
     while not need_to_stop:
         for i in range(maxiter):
             # Compute temperature for this step
             s = float(i) + 2.0
-            t2 = np.exp((visit - 1) * np.log(s)) - 1.0
+            t2 = mx.exp((visit - 1) * mx.log(s)) - 1.0
             temperature = initial_temp * t1 / t2
             if iteration >= maxiter:
                 message.append("Maximum number of iteration reached")

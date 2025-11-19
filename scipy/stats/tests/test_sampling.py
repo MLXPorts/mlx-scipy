@@ -7,7 +7,7 @@ import sys
 import math
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose, assert_equal
 from scipy.stats.sampling import (
     TransformedDensityRejection,
@@ -34,10 +34,10 @@ from scipy._lib._util import check_random_state
 class StandardNormal:
     def pdf(self, x):
         # normalization constant needed for NumericalInverseHermite
-        return 1./np.sqrt(2.*np.pi) * np.exp(-0.5 * x*x)
+        return 1./mx.sqrt(2.*mx.pi) * mx.exp(-0.5 * x*x)
 
     def dpdf(self, x):
-        return 1./np.sqrt(2.*np.pi) * -x * np.exp(-0.5 * x*x)
+        return 1./mx.sqrt(2.*mx.pi) * -x * mx.exp(-0.5 * x*x)
 
     def cdf(self, x):
         return special.ndtr(x)
@@ -69,9 +69,9 @@ bad_pdfs_common = [
     # Undefined name inside the function
     (lambda x: foo, NameError, r"name 'foo' is not defined"),  # type: ignore[name-defined]  # noqa: F821, E501
     # Infinite value returned => Overflow error.
-    (lambda x: np.inf, UNURANError, r"..."),
+    (lambda x: mx.inf, UNURANError, r"..."),
     # NaN value => internal error in UNU.RAN
-    (lambda x: np.nan, UNURANError, r"..."),
+    (lambda x: mx.nan, UNURANError, r"..."),
     # signature of PDF wrong
     (lambda: 1.0, TypeError, r"takes 0 positional arguments but 1 was given")
 ]
@@ -80,9 +80,9 @@ bad_pdfs_common = [
 # same approach for dpdf
 bad_dpdf_common = [
     # Infinite value returned.
-    (lambda x: np.inf, UNURANError, r"..."),
+    (lambda x: mx.inf, UNURANError, r"..."),
     # NaN value => internal error in UNU.RAN
-    (lambda x: np.nan, UNURANError, r"..."),
+    (lambda x: mx.nan, UNURANError, r"..."),
     # Returning wrong type
     (lambda x: [], TypeError, floaterr),
     # Undefined name inside the function
@@ -99,9 +99,9 @@ bad_logpdfs_common = [
     # Undefined name inside the function
     (lambda x: foo, NameError, r"name 'foo' is not defined"),  # type: ignore[name-defined]  # noqa: F821, E501
     # Infinite value returned => Overflow error.
-    (lambda x: np.inf, UNURANError, r"..."),
+    (lambda x: mx.inf, UNURANError, r"..."),
     # NaN value => internal error in UNU.RAN
-    (lambda x: np.nan, UNURANError, r"..."),
+    (lambda x: mx.nan, UNURANError, r"..."),
     # signature of logpdf wrong
     (lambda: 1.0, TypeError, r"takes 0 positional arguments but 1 was given")
 ]
@@ -110,8 +110,8 @@ bad_logpdfs_common = [
 bad_pv_common = [
     ([], r"must contain at least one element"),
     ([[1.0, 0.0]], r"wrong number of dimensions \(expected 1, got 2\)"),
-    ([0.2, 0.4, np.nan, 0.8], r"must contain only finite / non-nan values"),
-    ([0.2, 0.4, np.inf, 0.8], r"must contain only finite / non-nan values"),
+    ([0.2, 0.4, mx.nan, 0.8], r"must contain only finite / non-nan values"),
+    ([0.2, 0.4, mx.inf, 0.8], r"must contain only finite / non-nan values"),
     ([0.0, 0.0], r"must contain at least one non-zero value"),
 ]
 
@@ -134,19 +134,19 @@ bad_domains = [
 inf_nan_domains = [
     # left >= right
     ((10, 10), UNURANError, r"left >= right"),
-    ((np.inf, np.inf), UNURANError, r"left >= right"),
-    ((-np.inf, -np.inf), UNURANError, r"left >= right"),
-    ((np.inf, -np.inf), UNURANError, r"left >= right"),
+    ((mx.inf, mx.inf), UNURANError, r"left >= right"),
+    ((-mx.inf, -mx.inf), UNURANError, r"left >= right"),
+    ((mx.inf, -mx.inf), UNURANError, r"left >= right"),
     # Also include nans in some of the domains.
-    ((-np.inf, np.nan), ValueError, r"only non-nan values"),
-    ((np.nan, np.inf), ValueError, r"only non-nan values")
+    ((-mx.inf, mx.nan), ValueError, r"only non-nan values"),
+    ((mx.nan, mx.inf), ValueError, r"only non-nan values")
 ]
 
 # `nan` values present in domain. Some distributions don't support
 # infinite tails, so don't mix the nan values with infinities.
 nan_domains = [
-    ((0, np.nan), ValueError, r"only non-nan values"),
-    ((np.nan, np.nan), ValueError, r"only non-nan values")
+    ((0, mx.nan), ValueError, r"only non-nan values"),
+    ((mx.nan, mx.nan), ValueError, r"only non-nan values")
 ]
 
 
@@ -173,10 +173,10 @@ def test_random_state(method, kwargs):
     assert_equal(rng1.rvs(100), rng2.rvs(100))
 
     # global seed
-    rng = np.random.RandomState(123)
+    rng = mx.random.RandomState(123)
     rng1 = Method(**kwargs)
     rvs1 = rng1.rvs(100, random_state=rng)
-    np.random.seed(None)  # valid use of np.random.seed
+    mx.random.seed(None)  # valid use of mx.random.seed
     rng2 = Method(**kwargs, random_state=123)
     rvs2 = rng2.rvs(100)
     assert_equal(rvs1, rvs2)
@@ -184,8 +184,8 @@ def test_random_state(method, kwargs):
     # Generator seed for new NumPy
     # when a RandomState is given, it should take the bitgen_t
     # member of the class and create a Generator instance.
-    seed1 = np.random.RandomState(np.random.MT19937(123))
-    seed2 = np.random.Generator(np.random.MT19937(123))
+    seed1 = mx.random.RandomState(mx.random.MT19937(123))
+    seed2 = mx.random.Generator(mx.random.MT19937(123))
     rng1 = Method(**kwargs, random_state=seed1)
     rng2 = Method(**kwargs, random_state=seed2)
     assert_equal(rng1.rvs(100), rng2.rvs(100))
@@ -268,9 +268,9 @@ def test_rvs_size(size):
     # all the classes, we can just test with one of the methods.
     rng = TransformedDensityRejection(StandardNormal())
     if size is None:
-        assert np.isscalar(rng.rvs(size))
+        assert mx.isscalar(rng.rvs(size))
     else:
-        if np.isscalar(size):
+        if mx.isscalar(size):
             size = (size, )
         assert rng.rvs(size).shape == size
 
@@ -278,9 +278,9 @@ def test_rvs_size(size):
 def test_with_scipy_distribution():
     # test if the setup works with SciPy's rv_frozen distributions
     dist = stats.norm()
-    urng = np.random.default_rng(0)
+    urng = mx.random.default_rng(0)
     rng = NumericalInverseHermite(dist, random_state=urng)
-    u = np.linspace(0, 1, num=100)
+    u = mx.linspace(0, 1, num=100)
     check_cont_samples(rng, dist, dist.stats())
     assert_allclose(dist.ppf(u), rng.ppf(u))
     # test if it works with `loc` and `scale`
@@ -292,7 +292,7 @@ def test_with_scipy_distribution():
     dist = stats.binom(10, 0.2)
     rng = DiscreteAliasUrn(dist, random_state=urng)
     domain = dist.support()
-    pv = dist.pmf(np.arange(domain[0], domain[1]+1))
+    pv = dist.pmf(mx.arange(domain[0], domain[1]+1))
     check_discr_samples(rng, pv, dist.stats())
 
 
@@ -300,11 +300,11 @@ def check_cont_samples(rng, dist, mv_ex, rtol=1e-7, atol=1e-1):
     rvs = rng.rvs(100000)
     mv = rvs.mean(), rvs.var()
     # test the moments only if the variance is finite
-    if np.isfinite(mv_ex[1]):
+    if mx.isfinite(mv_ex[1]):
         assert_allclose(mv, mv_ex, rtol=rtol, atol=atol)
     # Cramer Von Mises test for goodness-of-fit
     rvs = rng.rvs(500)
-    dist.cdf = np.vectorize(dist.cdf)
+    dist.cdf = mx.vectorize(dist.cdf)
     pval = cramervonmises(rvs, dist.cdf).pvalue
     assert pval > 0.1
 
@@ -317,8 +317,8 @@ def check_discr_samples(rng, pv, mv_ex, rtol=1e-3, atol=1e-1):
     # normalize
     pv = pv / pv.sum()
     # chi-squared test for goodness-of-fit
-    obs_freqs = np.zeros_like(pv)
-    _, freqs = np.unique(rvs, return_counts=True)
+    obs_freqs = mx.zeros_like(pv)
+    _, freqs = mx.unique(rvs, return_counts=True)
     freqs = freqs / freqs.sum()
     obs_freqs[:freqs.size] = freqs
     pval = chisquare(obs_freqs, pv).pvalue
@@ -408,7 +408,7 @@ class TestQRVS:
             assert qrvs.shape == shape_expected
 
         if qrng2 is not None:
-            uniform = qrng2.random(np.prod(size_in) or 1)
+            uniform = qrng2.random(mx.prod(size_in) or 1)
             qrvs2 = stats.norm.ppf(uniform).reshape(shape_expected)
             assert_allclose(qrvs, qrvs2, atol=1e-12)
 
@@ -432,7 +432,7 @@ class TestQRVS:
         qrng = stats.qmc.Halton(d, seed=0)
         qrng2 = stats.qmc.Halton(d, seed=0)
 
-        uniform = qrng2.random(np.prod(size))
+        uniform = qrng2.random(mx.prod(size))
 
         qrvs = gen.qrvs(size=size, d=d, qmc_engine=qrng)
         qrvs2 = stats.norm.ppf(uniform)
@@ -499,8 +499,8 @@ class TestTransformedDensityRejection:
     # exact mean and variance of the distributions in the list dists
     mv0 = [0., 4./15.]
     mv1 = [0., 0.01]
-    mv2 = [0., np.inf]
-    mv3 = [10000., np.inf]
+    mv2 = [0., mx.inf]
+    mv3 = [10000., mx.inf]
     mvs = [mv0, mv1, mv2, mv3]
 
     @pytest.mark.parametrize("dist, mv_ex",
@@ -570,7 +570,7 @@ class TestTransformedDensityRejection:
             )
 
         # construction_points containing nans
-        construction_points = [np.nan, np.nan, np.nan]
+        construction_points = [mx.nan, mx.nan, mx.nan]
         with pytest.raises(UNURANError, match=r"50 : bad construction "
                                               r"points."):
             TransformedDensityRejection(
@@ -586,15 +586,15 @@ class TestTransformedDensityRejection:
                 construction_points=construction_points
             )
 
-    @pytest.mark.parametrize("c", [-1., np.nan, np.inf, 0.1, 1.])
+    @pytest.mark.parametrize("c", [-1., mx.nan, mx.inf, 0.1, 1.])
     def test_bad_c(self, c):
         msg = r"`c` must either be -0.5 or 0."
         with pytest.raises(ValueError, match=msg):
             TransformedDensityRejection(StandardNormal(), c=-1.)
 
-    u = [np.linspace(0, 1, num=1000), [], [[]], [np.nan],
-         [-np.inf, np.nan, np.inf], 0,
-         [[np.nan, 0.5, 0.1], [0.2, 0.4, np.inf], [-2, 3, 4]]]
+    u = [mx.linspace(0, 1, num=1000), [], [[]], [mx.nan],
+         [-mx.inf, mx.nan, mx.inf], 0,
+         [[mx.nan, 0.5, 0.1], [0.2, 0.4, mx.inf], [-2, 3, 4]]]
 
     @pytest.mark.parametrize("u", u)
     def test_ppf_hat(self, u):
@@ -654,11 +654,11 @@ class TestDiscreteAliasUrn:
             dist = getattr(stats, distname)
         dist = dist(*params)
         domain = dist.support()
-        if not np.isfinite(domain[1] - domain[0]):
+        if not mx.isfinite(domain[1] - domain[0]):
             # DAU only works with finite domain. So, skip the distributions
             # with infinite tails.
             pytest.skip("DAU only works with a finite domain.")
-        k = np.arange(domain[0], domain[1]+1)
+        k = mx.arange(domain[0], domain[1]+1)
         pv = dist.pmf(k)
         mv_ex = dist.stats('mv')
         rng = DiscreteAliasUrn(dist, random_state=42)
@@ -668,10 +668,10 @@ class TestDiscreteAliasUrn:
     # unhelpful errors from UNU.RAN.
     bad_pmf = [
         # inf returned
-        (lambda x: np.inf, ValueError,
+        (lambda x: mx.inf, ValueError,
          r"must contain only finite / non-nan values"),
         # nan returned
-        (lambda x: np.nan, ValueError,
+        (lambda x: mx.nan, ValueError,
          r"must contain only finite / non-nan values"),
         # all zeros
         (lambda x: 0.0, ValueError,
@@ -701,14 +701,14 @@ class TestDiscreteAliasUrn:
     @pytest.mark.parametrize("pv", [[0.18, 0.02, 0.8],
                                     [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]])
     def test_sampling_with_pv(self, pv):
-        pv = np.asarray(pv, dtype=np.float64)
+        pv = mx.array(pv, dtype=mx.float64)
         rng = DiscreteAliasUrn(pv, random_state=123)
         rng.rvs(100_000)
         pv = pv / pv.sum()
-        variates = np.arange(0, len(pv))
+        variates = mx.arange(0, len(pv))
         # test if the first few moments match
-        m_expected = np.average(variates, weights=pv)
-        v_expected = np.average((variates - m_expected) ** 2, weights=pv)
+        m_expected = mx.average(variates, weights=pv)
+        v_expected = mx.average((variates - m_expected) ** 2, weights=pv)
         mv_expected = m_expected, v_expected
         check_discr_samples(rng, pv, mv_expected)
 
@@ -719,8 +719,8 @@ class TestDiscreteAliasUrn:
 
     # DAU doesn't support infinite tails. So, it should throw an error when
     # inf is present in the domain.
-    inf_domain = [(-np.inf, np.inf), (np.inf, np.inf), (-np.inf, -np.inf),
-                  (0, np.inf), (-np.inf, 0)]
+    inf_domain = [(-mx.inf, mx.inf), (mx.inf, mx.inf), (-mx.inf, -mx.inf),
+                  (0, mx.inf), (-mx.inf, 0)]
 
     @pytest.mark.parametrize("domain", inf_domain)
     def test_inf_domain(self, domain):
@@ -743,7 +743,7 @@ class TestDiscreteAliasUrn:
             DiscreteAliasUrn(dist)
 
     def test_gh19359(self):
-        pv = special.softmax(np.ones((1533,)))
+        pv = special.softmax(mx.ones((1533,)))
         rng = DiscreteAliasUrn(pv, random_state=42)
         # check the correctness
         check_discr_samples(rng, pv, (1532 / 2, (1532**2 - 1) / 12),
@@ -777,12 +777,12 @@ class TestNumericalInversePolynomial:
     # Taken from UNU.RAN test suite (from file t_pinv.c)
     class dist2:
         def pdf(self, x):
-            return 0.05 + 0.45 * (1 + np.sin(2*np.pi*x))
+            return 0.05 + 0.45 * (1 + mx.sin(2*mx.pi*x))
 
         def cdf(self, x):
             return (0.05*(x + 1) +
-                    0.9*(1. + 2.*np.pi*(1 + x) - np.cos(2.*np.pi*x)) /
-                    (4.*np.pi))
+                    0.9*(1. + 2.*mx.pi*(1 + x) - mx.cos(2.*mx.pi*x)) /
+                    (4.*mx.pi))
 
         def support(self):
             return -1, 1
@@ -794,11 +794,11 @@ class TestNumericalInversePolynomial:
     # Taken from UNU.RAN test suite (from file t_pinv.c)
     class dist3:
         def pdf(self, x):
-            return 0.2 * (0.05 + 0.45 * (1 + np.sin(2*np.pi*x)))
+            return 0.2 * (0.05 + 0.45 * (1 + mx.sin(2*mx.pi*x)))
 
         def cdf(self, x):
-            return x/10. + 0.5 + 0.09/(2*np.pi) * (np.cos(10*np.pi) -
-                                                   np.cos(2*np.pi*x))
+            return x/10. + 0.5 + 0.09/(2*mx.pi) * (mx.cos(10*mx.pi) -
+                                                   mx.cos(2*mx.pi*x))
 
         def support(self):
             return -5, 5
@@ -808,8 +808,8 @@ class TestNumericalInversePolynomial:
     # exact mean and variance of the distributions in the list dists
     mv0 = [0., 4./15.]
     mv1 = [0., 0.01]
-    mv2 = [-0.45/np.pi, 2/3*0.5 - 0.45**2/np.pi**2]
-    mv3 = [-0.45/np.pi, 0.2 * 250/3 * 0.5 - 0.45**2/np.pi**2]
+    mv2 = [-0.45/mx.pi, 2/3*0.5 - 0.45**2/mx.pi**2]
+    mv3 = [-0.45/mx.pi, 0.2 * 250/3 * 0.5 - 0.45**2/mx.pi**2]
     mvs = [mv0, mv1, mv2, mv3]
 
     @pytest.mark.thread_unsafe(reason="deadlocks for unknown reasons")
@@ -879,16 +879,16 @@ class TestNumericalInversePolynomial:
     u = [
         # test if quantile 0 and 1 return -inf and inf respectively and check
         # the correctness of the PPF for equidistant points between 0 and 1.
-        np.linspace(0, 1, num=10000),
+        mx.linspace(0, 1, num=10000),
         # test the PPF method for empty arrays
         [], [[]],
         # test if nans and infs return nan result.
-        [np.nan], [-np.inf, np.nan, np.inf],
+        [mx.nan], [-mx.inf, mx.nan, mx.inf],
         # test if a scalar is returned for a scalar input.
         0,
         # test for arrays with nans, values greater than 1 and less than 0,
         # and some valid values.
-        [[np.nan, 0.5, 0.1], [0.2, 0.4, np.inf], [-2, 3, 4]]
+        [[mx.nan, 0.5, 0.1], [0.2, 0.4, mx.inf], [-2, 3, 4]]
     ]
 
     @pytest.mark.parametrize("u", u)
@@ -908,9 +908,9 @@ class TestNumericalInversePolynomial:
         assert_allclose(res, expected, rtol=1e-11, atol=1e-11)
         assert res.shape == expected.shape
 
-    x = [np.linspace(-10, 10, num=10000), [], [[]], [np.nan],
-         [-np.inf, np.nan, np.inf], 0,
-         [[np.nan, 0.5, 0.1], [0.2, 0.4, np.inf], [-np.inf, 3, 4]]]
+    x = [mx.linspace(-10, 10, num=10000), [], [[]], [mx.nan],
+         [-mx.inf, mx.nan, mx.inf], 0,
+         [[mx.nan, 0.5, 0.1], [0.2, 0.4, mx.inf], [-mx.inf, 3, 4]]]
 
     @pytest.mark.parametrize("x", x)
     def test_cdf(self, x):
@@ -941,8 +941,8 @@ class TestNumericalInversePolynomial:
         assert max_error < 1e-14
         assert mae <= max_error
 
-    bad_orders = [1, 4.5, 20, np.inf, np.nan]
-    bad_u_resolution = [1e-20, 1e-1, np.inf, np.nan]
+    bad_orders = [1, 4.5, 20, mx.inf, mx.nan]
+    bad_u_resolution = [1e-20, 1e-1, mx.inf, mx.nan]
 
     @pytest.mark.parametrize("order", bad_orders)
     def test_bad_orders(self, order):
@@ -978,7 +978,7 @@ class TestNumericalInversePolynomial:
 
         class Distribution:
             def pdf(self, x):
-                return np.exp(-0.5 * x*x)
+                return mx.exp(-0.5 * x*x)
 
         dist = Distribution()
         rng = NumericalInversePolynomial(dist)
@@ -1003,7 +1003,7 @@ class TestNumericalInversePolynomial:
         dist_logpdf.logpdf = lambda x: -x*x/2
         rng2 = NumericalInversePolynomial(dist_logpdf)
 
-        q = np.linspace(1e-5, 1-1e-5, num=100)
+        q = mx.linspace(1e-5, 1-1e-5, num=100)
         assert_allclose(rng1.ppf(q), rng2.ppf(q))
 
 
@@ -1014,13 +1014,13 @@ class TestNumericalInverseHermite:
     # Taken from UNU.RAN test suite (from file t_hinv.c)
     class dist0:
         def pdf(self, x):
-            return 0.5*(1. + np.sin(2.*np.pi*x))
+            return 0.5*(1. + mx.sin(2.*mx.pi*x))
 
         def dpdf(self, x):
-            return np.pi*np.cos(2.*np.pi*x)
+            return mx.pi*mx.cos(2.*mx.pi*x)
 
         def cdf(self, x):
-            return (1. + 2.*np.pi*(1 + x) - np.cos(2.*np.pi*x)) / (4.*np.pi)
+            return (1. + 2.*mx.pi*(1 + x) - mx.cos(2.*mx.pi*x)) / (4.*mx.pi)
 
         def support(self):
             return -1, 1
@@ -1032,27 +1032,27 @@ class TestNumericalInverseHermite:
     class dist1:
         def pdf(self, x):
             if (x <= -0.5):
-                return np.sin((2. * np.pi) * x) * 0.5 * np.pi
+                return mx.sin((2. * mx.pi) * x) * 0.5 * mx.pi
             if (x < 0.):
                 return 0.
             if (x <= 0.5):
-                return np.sin((2. * np.pi) * x) * 0.5 * np.pi
+                return mx.sin((2. * mx.pi) * x) * 0.5 * mx.pi
 
         def dpdf(self, x):
             if (x <= -0.5):
-                return np.cos((2. * np.pi) * x) * np.pi * np.pi
+                return mx.cos((2. * mx.pi) * x) * mx.pi * mx.pi
             if (x < 0.):
                 return 0.
             if (x <= 0.5):
-                return np.cos((2. * np.pi) * x) * np.pi * np.pi
+                return mx.cos((2. * mx.pi) * x) * mx.pi * mx.pi
 
         def cdf(self, x):
             if (x <= -0.5):
-                return 0.25 * (1 - np.cos((2. * np.pi) * x))
+                return 0.25 * (1 - mx.cos((2. * mx.pi) * x))
             if (x < 0.):
                 return 0.5
             if (x <= 0.5):
-                return 0.75 - 0.25 * np.cos((2. * np.pi) * x)
+                return 0.75 - 0.25 * mx.cos((2. * mx.pi) * x)
 
         def support(self):
             return -1, 0.5
@@ -1060,8 +1060,8 @@ class TestNumericalInverseHermite:
     dists = [dist0(), dist1()]
 
     # exact mean and variance of the distributions in the list dists
-    mv0 = [-1/(2*np.pi), 1/3 - 1/(4*np.pi*np.pi)]
-    mv1 = [-1/4, 3/8-1/(2*np.pi*np.pi) - 1/16]
+    mv0 = [-1/(2*mx.pi), 1/3 - 1/(4*mx.pi*mx.pi)]
+    mv1 = [-1/4, 3/8-1/(2*mx.pi*mx.pi) - 1/16]
     mvs = [mv0, mv1]
 
     @pytest.mark.parametrize("dist, mv_ex",
@@ -1092,14 +1092,14 @@ class TestNumericalInverseHermite:
             # https://github.com/scipy/scipy/pull/13319#discussion_r626188955
             pytest.xfail("Fails - usually due to inaccurate CDF/PDF")
 
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
 
         dist = getattr(stats, distname)(*shapes)
         fni = NumericalInverseHermite(dist)
 
         x = rng.random(10)
-        p_tol = np.max(np.abs(dist.ppf(x)-fni.ppf(x))/np.abs(dist.ppf(x)))
-        u_tol = np.max(np.abs(dist.cdf(fni.ppf(x)) - x))
+        p_tol = mx.max(mx.abs(dist.ppf(x)-fni.ppf(x))/mx.abs(dist.ppf(x)))
+        u_tol = mx.max(mx.abs(dist.cdf(fni.ppf(x)) - x))
 
         assert p_tol < 1e-8
         assert u_tol < 1e-12
@@ -1132,8 +1132,8 @@ class TestNumericalInverseHermite:
             NumericalInverseHermite(StandardNormal(),
                                     u_resolution='ekki')
 
-    rngs = [None, 0, np.random.RandomState(0)]
-    rngs.append(np.random.default_rng(0))  # type: ignore
+    rngs = [None, 0, mx.random.RandomState(0)]
+    rngs.append(mx.random.default_rng(0))  # type: ignore
     sizes = [(None, tuple()), (8, (8,)), ((4, 5, 6), (4, 5, 6))]
 
     @pytest.mark.parametrize('rng', rngs)
@@ -1180,16 +1180,16 @@ class TestNumericalInverseHermite:
     u = [
         # check the correctness of the PPF for equidistant points between
         # 0.02 and 0.98.
-        np.linspace(0., 1., num=10000),
+        mx.linspace(0., 1., num=10000),
         # test the PPF method for empty arrays
         [], [[]],
         # test if nans and infs return nan result.
-        [np.nan], [-np.inf, np.nan, np.inf],
+        [mx.nan], [-mx.inf, mx.nan, mx.inf],
         # test if a scalar is returned for a scalar input.
         0,
         # test for arrays with nans, values greater than 1 and less than 0,
         # and some valid values.
-        [[np.nan, 0.5, 0.1], [0.2, 0.4, np.inf], [-2, 3, 4]]
+        [[mx.nan, 0.5, 0.1], [0.2, 0.4, mx.inf], [-2, 3, 4]]
     ]
 
     @pytest.mark.parametrize("u", u)
@@ -1234,13 +1234,13 @@ class TestDiscreteGuideTable:
 
     def test_guide_factor_gt3_raises_warning(self):
         pv = [0.1, 0.3, 0.6]
-        urng = np.random.default_rng()
+        urng = mx.random.default_rng()
         with pytest.warns(RuntimeWarning):
             DiscreteGuideTable(pv, random_state=urng, guide_factor=7)
 
     def test_guide_factor_zero_raises_warning(self):
         pv = [0.1, 0.3, 0.6]
-        urng = np.random.default_rng()
+        urng = mx.random.default_rng()
         with pytest.warns(RuntimeWarning):
             DiscreteGuideTable(pv, random_state=urng, guide_factor=0)
 
@@ -1249,7 +1249,7 @@ class TestDiscreteGuideTable:
         # however it already gives a useful warning
         # Here we just test that a warning is raised.
         pv = [0.1, 0.3, 0.6]
-        urng = np.random.default_rng()
+        urng = mx.random.default_rng()
         with pytest.warns(RuntimeWarning):
             DiscreteGuideTable(pv, random_state=urng, guide_factor=-1)
 
@@ -1268,12 +1268,12 @@ class TestDiscreteGuideTable:
         dist = dist(*params)
         domain = dist.support()
 
-        if not np.isfinite(domain[1] - domain[0]):
+        if not mx.isfinite(domain[1] - domain[0]):
             # DGT only works with finite domain. So, skip the distributions
             # with infinite tails.
             pytest.skip("DGT only works with a finite domain.")
 
-        k = np.arange(domain[0], domain[1]+1)
+        k = mx.arange(domain[0], domain[1]+1)
         pv = dist.pmf(k)
         mv_ex = dist.stats('mv')
         rng = DiscreteGuideTable(dist, random_state=42)
@@ -1281,16 +1281,16 @@ class TestDiscreteGuideTable:
 
     u = [
         # the correctness of the PPF for equidistant points between 0 and 1.
-        np.linspace(0, 1, num=10000),
+        mx.linspace(0, 1, num=10000),
         # test the PPF method for empty arrays
         [], [[]],
         # test if nans and infs return nan result.
-        [np.nan], [-np.inf, np.nan, np.inf],
+        [mx.nan], [-mx.inf, mx.nan, mx.inf],
         # test if a scalar is returned for a scalar input.
         0,
         # test for arrays with nans, values greater than 1 and less than 0,
         # and some valid values.
-        [[np.nan, 0.5, 0.1], [0.2, 0.4, np.inf], [-2, 3, 4]]
+        [[mx.nan, 0.5, 0.1], [0.2, 0.4, mx.inf], [-2, 3, 4]]
     ]
 
     @pytest.mark.parametrize('u', u)
@@ -1319,8 +1319,8 @@ class TestDiscreteGuideTable:
 
     # DGT doesn't support infinite tails. So, it should throw an error when
     # inf is present in the domain.
-    inf_domain = [(-np.inf, np.inf), (np.inf, np.inf), (-np.inf, -np.inf),
-                  (0, np.inf), (-np.inf, 0)]
+    inf_domain = [(-mx.inf, mx.inf), (mx.inf, mx.inf), (-mx.inf, -mx.inf),
+                  (0, mx.inf), (-mx.inf, 0)]
 
     @pytest.mark.parametrize("domain", inf_domain)
     def test_inf_domain(self, domain):
@@ -1352,8 +1352,8 @@ class TestSimpleRatioUniforms:
     dists = [dist(0.), dist(10000.)]
 
     # exact mean and variance of the distributions in the list dists
-    mv1 = [0., np.inf]
-    mv2 = [10000., np.inf]
+    mv1 = [0., mx.inf]
+    mv2 = [10000., mx.inf]
     mvs = [mv1, mv2]
 
     @pytest.mark.parametrize("dist, mv_ex",
@@ -1385,21 +1385,21 @@ class TestRatioUniforms:
         # use KS test to check distribution of rvs
         # normal distribution
         f = stats.norm.pdf
-        v = np.sqrt(f(np.sqrt(2))) * np.sqrt(2)
-        u = np.sqrt(f(0))
+        v = mx.sqrt(f(mx.sqrt(2))) * mx.sqrt(2)
+        u = mx.sqrt(f(0))
         gen = RatioUniforms(f, umax=u, vmin=-v, vmax=v, random_state=12345)
         assert_equal(stats.kstest(gen.rvs(2500), 'norm')[1] > 0.25, True)
 
         # exponential distribution
-        gen = RatioUniforms(lambda x: np.exp(-x), umax=1,
-                            vmin=0, vmax=2*np.exp(-1), random_state=12345)
+        gen = RatioUniforms(lambda x: mx.exp(-x), umax=1,
+                            vmin=0, vmax=2*mx.exp(-1), random_state=12345)
         assert_equal(stats.kstest(gen.rvs(1000), 'expon')[1] > 0.25, True)
 
     def test_shape(self):
         # test shape of return value depending on size parameter
         f = stats.norm.pdf
-        v = np.sqrt(f(np.sqrt(2))) * np.sqrt(2)
-        u = np.sqrt(f(0))
+        v = mx.sqrt(f(mx.sqrt(2))) * mx.sqrt(2)
+        u = mx.sqrt(f(0))
 
         gen1 = RatioUniforms(f, umax=u, vmin=-v, vmax=v, random_state=1234)
         gen2 = RatioUniforms(f, umax=u, vmin=-v, vmax=v, random_state=1234)
@@ -1425,11 +1425,11 @@ class TestRatioUniforms:
 
     def test_random_state(self):
         f = stats.norm.pdf
-        v = np.sqrt(f(np.sqrt(2))) * np.sqrt(2)
-        umax = np.sqrt(f(0))
+        v = mx.sqrt(f(mx.sqrt(2))) * mx.sqrt(2)
+        umax = mx.sqrt(f(0))
         gen1 = RatioUniforms(f, umax=umax, vmin=-v, vmax=v, random_state=1234)
         r1 = gen1.rvs(10)
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         gen2 = RatioUniforms(f, umax=umax, vmin=-v, vmax=v, random_state=rng)
         r2 = gen2.rvs(10)
         assert_equal(r1, r2)

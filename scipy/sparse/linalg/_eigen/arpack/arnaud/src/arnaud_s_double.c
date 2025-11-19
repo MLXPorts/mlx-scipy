@@ -1549,7 +1549,7 @@ dsapps(int n, int* kev, int np, double* shift, double* v, int ldv, double* h, in
 
     // Compute column 1 to kev of (V*Q) in backward order
     // taking advantage that Q is an upper triangular matrix
-    // with lower bandwidth np.
+    // with lower bandwidth mx.
     // Place results in v(:,kplusp-kev:kplusp) temporarily.
 
     for (i = 0; i < *kev; i++)

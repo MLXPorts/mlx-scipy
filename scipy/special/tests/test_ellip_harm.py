@@ -4,7 +4,7 @@
 #
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_allclose, assert_
 from scipy.special._testutils import assert_func_equal
 from scipy.special import ellip_harm, ellip_harm_2, ellip_normal
@@ -146,21 +146,21 @@ def test_ellip_norm():
     def _ellip_norm(n, p, h2, k2):
         func = known_funcs[n, p]
         return func(h2, k2)
-    _ellip_norm = np.vectorize(_ellip_norm)
+    _ellip_norm = mx.vectorize(_ellip_norm)
 
     def ellip_normal_known(h2, k2, n, p):
         return _ellip_norm(n, p, h2, k2)
 
     # generate both large and small h2 < k2 pairs
-    np.random.seed(1234)
-    h2 = np.random.pareto(0.5, size=1)
-    k2 = h2 * (1 + np.random.pareto(0.5, size=h2.size))
+    mx.random.seed(1234)
+    h2 = mx.random.pareto(0.5, size=1)
+    k2 = h2 * (1 + mx.random.pareto(0.5, size=h2.size))
 
     points = []
     for n in range(4):
         for p in range(1, 2*n+2):
-            points.append((h2, k2, np.full(h2.size, n), np.full(h2.size, p)))
-    points = np.array(points)
+            points.append((h2, k2, mx.full(h2.size, n), mx.full(h2.size, p)))
+    points = mx.array(points)
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", "The occurrence of roundoff error", IntegrationWarning)
@@ -266,7 +266,7 @@ def test_ellip_harm():
             point_ref.append(func(h2[i], k2[i], s[i]))
         return point_ref
 
-    rng = np.random.RandomState(1234)
+    rng = mx.random.RandomState(1234)
     h2 = rng.pareto(0.5, size=30)
     k2 = h2*(1 + rng.pareto(0.5, size=h2.size))
     s = rng.pareto(0.5, size=h2.size)
@@ -275,7 +275,7 @@ def test_ellip_harm():
         for n in range(4):
             for p in range(1, 2*n+2):
                 points.append((h2[i], k2[i], n, p, s[i]))
-    points = np.array(points)
+    points = mx.array(points)
     assert_func_equal(ellip_harm, ellip_harm_known, points, rtol=1e-12)
 
 
@@ -285,4 +285,4 @@ def test_ellip_harm_invalid_p():
     # Make p > 2*n + 1.
     p = 2*n + 2
     result = ellip_harm(0.5, 2.0, n, p, 0.2)
-    assert np.isnan(result)
+    assert mx.isnan(result)

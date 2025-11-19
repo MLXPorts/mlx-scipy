@@ -1,7 +1,7 @@
 from io import StringIO
 import tempfile
 
-import numpy as np
+import mlx.core as mx
 
 from numpy.testing import assert_equal, \
     assert_array_almost_equal_nulp
@@ -31,7 +31,7 @@ SIMPLE_MATRIX = coo_array(
     ((0.297124379969, 0.366236668288, 0.47869621747, 0.649006864799,
       0.0661749042483, 0.887037034319, 0.419647859016,
       0.564960307211, 0.993442388709, 0.691233499152,),
-     (np.array([[36, 70, 88, 17, 29, 44, 69, 18, 24, 51],
+     (mx.array([[36, 70, 88, 17, 29, 44, 69, 18, 24, 51],
                 [0, 4, 58, 61, 61, 72, 72, 73, 99, 99]]))))
 
 

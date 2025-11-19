@@ -5,15 +5,15 @@ Routines for traversing graphs in compressed sparse format
 # Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
 # License: BSD, (C) 2012
 
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 
 from scipy.sparse.csgraph._validation import validate_graph
 from scipy.sparse.csgraph._tools import reconstruct_path
 
 cimport cython
 
-np.import_array()
+mx.import_array()
 
 include 'parameters.pxi'
 
@@ -53,7 +53,7 @@ def connected_components(csgraph, directed=True, connection='weak',
     -------
     n_components: int
         The number of connected components.
-    labels: ndarray
+    labels: array
         The length-N array of labels of the connected components.
 
     References
@@ -101,7 +101,7 @@ def connected_components(csgraph, directed=True, connection='weak',
                              dtype=csgraph.dtype,
                              dense_output=False)
 
-    labels = np.empty(csgraph.shape[0], dtype=ITYPE)
+    labels = mx.empty(csgraph.shape[0], dtype=ITYPE)
     labels.fill(NULL_IDX)
 
     if directed:
@@ -306,11 +306,11 @@ cpdef breadth_first_order(csgraph, i_start,
 
     Returns
     -------
-    node_array : ndarray, one dimension
+    node_array : array, one dimension
         The breadth-first list of nodes, starting with specified node.  The
         length of node_array is the number of nodes reachable from the
         specified node.
-    predecessors : ndarray, one dimension
+    predecessors : array, one dimension
         Returned only if return_predecessors is True.
         The length-N list of predecessors of each node in a breadth-first
         tree.  If node i is in the tree, then its parent is given by
@@ -351,8 +351,8 @@ cpdef breadth_first_order(csgraph, i_start,
     csgraph = validate_graph(csgraph, directed, dense_output=False)
     cdef int N = csgraph.shape[0]
 
-    cdef np.ndarray node_list = np.empty(N, dtype=ITYPE)
-    cdef np.ndarray predecessors = np.empty(N, dtype=ITYPE)
+    cdef mx.array node_list = mx.empty(N, dtype=ITYPE)
+    cdef mx.array predecessors = mx.empty(N, dtype=ITYPE)
     node_list.fill(NULL_IDX)
     predecessors.fill(NULL_IDX)
 
@@ -375,20 +375,20 @@ cpdef breadth_first_order(csgraph, i_start,
 
 def _breadth_first_directed(
         unsigned int head_node,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indices,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indptr,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors):
+        mx.array[int32_or_int64, ndim=1, mode='c'] indices,
+        mx.array[int32_or_int64, ndim=1, mode='c'] indptr,
+        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
+        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors):
     return _breadth_first_directed2(head_node, indices, indptr,
                                     node_list, predecessors)
 
 
 cdef unsigned int _breadth_first_directed2(
         unsigned int head_node,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indices,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indptr,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors) noexcept:
+        mx.array[int32_or_int64, ndim=1, mode='c'] indices,
+        mx.array[int32_or_int64, ndim=1, mode='c'] indptr,
+        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
+        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors) noexcept:
     # Inputs:
     #  head_node: (input) index of the node from which traversal starts
     #  indices: (input) CSR indices of graph
@@ -423,23 +423,23 @@ cdef unsigned int _breadth_first_directed2(
 
 def _breadth_first_undirected(
         unsigned int head_node,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indices1,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indptr1,
-        np.ndarray[int32_or_int64_b, ndim=1, mode='c'] indices2,
-        np.ndarray[int32_or_int64_b, ndim=1, mode='c'] indptr2,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors):
+        mx.array[int32_or_int64, ndim=1, mode='c'] indices1,
+        mx.array[int32_or_int64, ndim=1, mode='c'] indptr1,
+        mx.array[int32_or_int64_b, ndim=1, mode='c'] indices2,
+        mx.array[int32_or_int64_b, ndim=1, mode='c'] indptr2,
+        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
+        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors):
     return _breadth_first_undirected2(head_node, indices1, indptr1, indices2,
                                       indptr2, node_list, predecessors)
 
 cdef unsigned int _breadth_first_undirected2(
         unsigned int head_node,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indices1,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indptr1,
-        np.ndarray[int32_or_int64_b, ndim=1, mode='c'] indices2,
-        np.ndarray[int32_or_int64_b, ndim=1, mode='c'] indptr2,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors) noexcept:
+        mx.array[int32_or_int64, ndim=1, mode='c'] indices1,
+        mx.array[int32_or_int64, ndim=1, mode='c'] indptr1,
+        mx.array[int32_or_int64_b, ndim=1, mode='c'] indices2,
+        mx.array[int32_or_int64_b, ndim=1, mode='c'] indptr2,
+        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
+        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors) noexcept:
     # Inputs:
     #  head_node: (input) index of the node from which traversal starts
     #  indices1: (input) CSR indices of graph
@@ -515,11 +515,11 @@ cpdef depth_first_order(csgraph, i_start,
 
     Returns
     -------
-    node_array : ndarray, one dimension
+    node_array : array, one dimension
         The depth-first list of nodes, starting with specified node.  The
         length of node_array is the number of nodes reachable from the
         specified node.
-    predecessors : ndarray, one dimension
+    predecessors : array, one dimension
         Returned only if return_predecessors is True.
         The length-N list of predecessors of each node in a depth-first
         tree.  If node i is in the tree, then its parent is given by
@@ -560,10 +560,10 @@ cpdef depth_first_order(csgraph, i_start,
     csgraph = validate_graph(csgraph, directed, dense_output=False)
     cdef int N = csgraph.shape[0]
 
-    node_list = np.empty(N, dtype=ITYPE)
-    predecessors = np.empty(N, dtype=ITYPE)
-    root_list = np.empty(N, dtype=ITYPE)
-    flag = np.zeros(N, dtype=ITYPE)
+    node_list = mx.empty(N, dtype=ITYPE)
+    predecessors = mx.empty(N, dtype=ITYPE)
+    root_list = mx.empty(N, dtype=ITYPE)
+    flag = mx.zeros(N, dtype=ITYPE)
     node_list.fill(NULL_IDX)
     predecessors.fill(NULL_IDX)
     root_list.fill(NULL_IDX)
@@ -589,12 +589,12 @@ cpdef depth_first_order(csgraph, i_start,
 
 def _depth_first_directed(
         unsigned int head_node,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indices,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indptr,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] root_list,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] flag):
+        mx.array[int32_or_int64, ndim=1, mode='c'] indices,
+        mx.array[int32_or_int64, ndim=1, mode='c'] indptr,
+        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
+        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors,
+        mx.array[ITYPE_t, ndim=1, mode='c'] root_list,
+        mx.array[ITYPE_t, ndim=1, mode='c'] flag):
     return _depth_first_directed2(head_node, indices, indptr,
                                   node_list, predecessors,
                                   root_list, flag)
@@ -602,12 +602,12 @@ def _depth_first_directed(
 
 cdef unsigned int _depth_first_directed2(
         unsigned int head_node,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indices,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indptr,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] root_list,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] flag) noexcept:
+        mx.array[int32_or_int64, ndim=1, mode='c'] indices,
+        mx.array[int32_or_int64, ndim=1, mode='c'] indptr,
+        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
+        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors,
+        mx.array[ITYPE_t, ndim=1, mode='c'] root_list,
+        mx.array[ITYPE_t, ndim=1, mode='c'] flag) noexcept:
     cdef unsigned int i, i_nl_end, cnode, pnode
     cdef unsigned int N = node_list.shape[0]
     cdef int no_children, i_root
@@ -646,14 +646,14 @@ cdef unsigned int _depth_first_directed2(
 
 def _depth_first_undirected(
         unsigned int head_node,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indices1,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indptr1,
-        np.ndarray[int32_or_int64_b, ndim=1, mode='c'] indices2,
-        np.ndarray[int32_or_int64_b, ndim=1, mode='c'] indptr2,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] root_list,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] flag):
+        mx.array[int32_or_int64, ndim=1, mode='c'] indices1,
+        mx.array[int32_or_int64, ndim=1, mode='c'] indptr1,
+        mx.array[int32_or_int64_b, ndim=1, mode='c'] indices2,
+        mx.array[int32_or_int64_b, ndim=1, mode='c'] indptr2,
+        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
+        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors,
+        mx.array[ITYPE_t, ndim=1, mode='c'] root_list,
+        mx.array[ITYPE_t, ndim=1, mode='c'] flag):
     return _depth_first_undirected2(head_node, indices1, indptr1,
                                     indices2, indptr2,
                                     node_list, predecessors,
@@ -662,14 +662,14 @@ def _depth_first_undirected(
 
 cdef unsigned int _depth_first_undirected2(
         unsigned int head_node,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indices1,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indptr1,
-        np.ndarray[int32_or_int64_b, ndim=1, mode='c'] indices2,
-        np.ndarray[int32_or_int64_b, ndim=1, mode='c'] indptr2,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] root_list,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] flag) noexcept:
+        mx.array[int32_or_int64, ndim=1, mode='c'] indices1,
+        mx.array[int32_or_int64, ndim=1, mode='c'] indptr1,
+        mx.array[int32_or_int64_b, ndim=1, mode='c'] indices2,
+        mx.array[int32_or_int64_b, ndim=1, mode='c'] indptr2,
+        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
+        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors,
+        mx.array[ITYPE_t, ndim=1, mode='c'] root_list,
+        mx.array[ITYPE_t, ndim=1, mode='c'] flag) noexcept:
     cdef unsigned int i, i_nl_end, cnode, pnode
     cdef unsigned int N = node_list.shape[0]
     cdef int no_children, i_root
@@ -723,16 +723,16 @@ cdef unsigned int _depth_first_undirected2(
 
 
 def _connected_components_directed(
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indices,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indptr,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] labels):
+        mx.array[int32_or_int64, ndim=1, mode='c'] indices,
+        mx.array[int32_or_int64, ndim=1, mode='c'] indptr,
+        mx.array[ITYPE_t, ndim=1, mode='c'] labels):
     return _connected_components_directed2(indices, indptr, labels)
 
 
 cdef int _connected_components_directed2(
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indices,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indptr,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] labels) noexcept:
+        mx.array[int32_or_int64, ndim=1, mode='c'] indices,
+        mx.array[int32_or_int64, ndim=1, mode='c'] indptr,
+        mx.array[ITYPE_t, ndim=1, mode='c'] labels) noexcept:
     """
     Uses an iterative version of Tarjan's algorithm to find the
     strongly connected components of a directed graph represented as a
@@ -753,11 +753,11 @@ cdef int _connected_components_directed2(
     DEF VOID = -1
     DEF END = -2
     cdef int N = labels.shape[0]
-    cdef np.ndarray[ITYPE_t, ndim=1, mode="c"] SS, lowlinks, stack_f, stack_b
+    cdef mx.array[ITYPE_t, ndim=1, mode="c"] SS, lowlinks, stack_f, stack_b
 
     lowlinks = labels
-    SS = np.ndarray((N,), dtype=ITYPE)
-    stack_b = np.ndarray((N,), dtype=ITYPE)
+    SS = mx.array((N,), dtype=ITYPE)
+    stack_b = mx.array((N,), dtype=ITYPE)
     stack_f = SS
 
     # The stack of nodes which have been backtracked and are in the current SCC
@@ -853,22 +853,22 @@ cdef int _connected_components_directed2(
 
 
 def _connected_components_undirected(
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indices1,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indptr1,
-        np.ndarray[int32_or_int64_b, ndim=1, mode='c'] indices2,
-        np.ndarray[int32_or_int64_b, ndim=1, mode='c'] indptr2,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] labels):
+        mx.array[int32_or_int64, ndim=1, mode='c'] indices1,
+        mx.array[int32_or_int64, ndim=1, mode='c'] indptr1,
+        mx.array[int32_or_int64_b, ndim=1, mode='c'] indices2,
+        mx.array[int32_or_int64_b, ndim=1, mode='c'] indptr2,
+        mx.array[ITYPE_t, ndim=1, mode='c'] labels):
     return _connected_components_undirected2(indices1, indptr1,
                                              indices2, indptr2,
                                              labels)
 
 
 cdef int _connected_components_undirected2(
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indices1,
-        np.ndarray[int32_or_int64, ndim=1, mode='c'] indptr1,
-        np.ndarray[int32_or_int64_b, ndim=1, mode='c'] indices2,
-        np.ndarray[int32_or_int64_b, ndim=1, mode='c'] indptr2,
-        np.ndarray[ITYPE_t, ndim=1, mode='c'] labels) noexcept:
+        mx.array[int32_or_int64, ndim=1, mode='c'] indices1,
+        mx.array[int32_or_int64, ndim=1, mode='c'] indptr1,
+        mx.array[int32_or_int64_b, ndim=1, mode='c'] indices2,
+        mx.array[int32_or_int64_b, ndim=1, mode='c'] indptr2,
+        mx.array[ITYPE_t, ndim=1, mode='c'] labels) noexcept:
 
     cdef int v, w, j, label, SS_head
     cdef int N = labels.shape[0]
@@ -879,7 +879,7 @@ cdef int _connected_components_undirected2(
 
     # Share memory for the stack and labels, since labels are only
     # applied once a node has been popped from the stack.
-    cdef np.ndarray[ITYPE_t, ndim=1, mode="c"] SS = labels
+    cdef mx.array[ITYPE_t, ndim=1, mode="c"] SS = labels
     SS_head = END
     for v in range(N):
         if labels[v] == VOID:

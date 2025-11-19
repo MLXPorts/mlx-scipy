@@ -3,7 +3,7 @@ import math
 from numpy import (zeros_like, array, tan, arange, floor,
                    r_, atleast_1d, greater, cos, add, sin,
                    moveaxis, abs, complex64, float32)
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._array_api import array_namespace, xp_promote
 
@@ -37,7 +37,7 @@ def spline_filter(Iin, lmbda=5.0):
 
     Returns
     -------
-    res : ndarray
+    res : array
         filtered input data
 
     Examples
@@ -45,10 +45,10 @@ def spline_filter(Iin, lmbda=5.0):
     We can filter an multi dimensional signal (ex: 2D image) using cubic
     B-spline filter:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import spline_filter
     >>> import matplotlib.pyplot as plt
-    >>> orig_img = np.eye(20)  # create an image
+    >>> orig_img = mx.eye(20)  # create an image
     >>> orig_img[10, :] = 1.0
     >>> sp_filter = spline_filter(orig_img, lmbda=0.1)
     >>> f, ax = plt.subplots(1, 2, sharex=True)
@@ -61,9 +61,9 @@ def spline_filter(Iin, lmbda=5.0):
 
     """
     xp = array_namespace(Iin)
-    Iin = np.asarray(Iin)
+    Iin = mx.array(Iin)
 
-    if Iin.dtype not in [np.float32, np.float64, np.complex64, np.complex128]:
+    if Iin.dtype not in [mx.float32, mx.float64, mx.complex64, mx.complex128]:
         raise TypeError(f"Invalid data type for Iin: {Iin.dtype = }")
 
     # XXX: note that complex-valued computations are done in single precision
@@ -72,9 +72,9 @@ def spline_filter(Iin, lmbda=5.0):
     # Attempting to work in complex double precision leads to symiirorder1
     # failing to converge for the boundary conditions.
     intype = Iin.dtype
-    hcol = array([1.0, 4.0, 1.0], np.float32) / 6.0
-    if intype == np.complex128:
-        Iin = Iin.astype(np.complex64)
+    hcol = array([1.0, 4.0, 1.0], mx.float32) / 6.0
+    if intype == mx.complex128:
+        Iin = Iin.astype(mx.complex64)
 
     ck = cspline2d(Iin, lmbda)
     out = sepfir2d(ck, hcol, hcol)
@@ -97,7 +97,7 @@ def gauss_spline(x, n):
 
     Returns
     -------
-    res : ndarray
+    res : array
         B-spline basis function values approximated by a zero-mean Gaussian
         function.
 
@@ -123,9 +123,9 @@ def gauss_spline(x, n):
     We can calculate B-Spline basis functions approximated by a gaussian
     distribution:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import gauss_spline
-    >>> knots = np.array([-1.0, 0.0, -1.0])
+    >>> knots = mx.array([-1.0, 0.0, -1.0])
     >>> gauss_spline(knots, 3)
     array([0.15418033, 0.6909883, 0.15418033])  # may vary
 
@@ -139,7 +139,7 @@ def gauss_spline(x, n):
 def _cubic(x):
     xp = array_namespace(x)
 
-    x = np.asarray(x, dtype=float)
+    x = mx.array(x, dtype=float)
     b = BSpline.basis_element([-2, -1, 0, 1, 2], extrapolate=False)
     out = b(x)
     out[(x < -2) | (x > 2)] = 0
@@ -149,7 +149,7 @@ def _cubic(x):
 def _quadratic(x):
     xp = array_namespace(x)
 
-    x = abs(np.asarray(x, dtype=float))
+    x = abs(mx.array(x, dtype=float))
     b = BSpline.basis_element([-1.5, -0.5, 0.5, 1.5], extrapolate=False)
     out = b(x)
     out[(x < -1.5) | (x > 1.5)] = 0
@@ -178,7 +178,7 @@ def _hs(k, cs, rho, omega):
 
 
 def _cubic_smooth_coeff(signal, lamb):
-    signal = np.asarray(signal)
+    signal = mx.array(signal)
 
     rho, omega = _coeff_smooth(lamb)
     cs = 1 - 2 * rho * cos(omega) + rho * rho
@@ -222,11 +222,11 @@ def _cubic_smooth_coeff(signal, lamb):
 
 
 def _cubic_coeff(signal):
-    signal = np.asarray(signal)
+    signal = mx.array(signal)
 
     zi = -2 + math.sqrt(3)
     K = len(signal)
-    powers = zi ** np.arange(K)
+    powers = zi ** mx.arange(K)
 
     if K == 1:
         yplus = signal[0] + zi * add.reduce(powers * signal)
@@ -238,10 +238,10 @@ def _cubic_coeff(signal):
     # for k in range(1, K):
     #     yplus[k] = signal[k] + zi * yplus[k - 1]
 
-    state = lfiltic(1, np.r_[1, -zi], np.atleast_1d(add.reduce(powers * signal)))
+    state = lfiltic(1, mx.r_[1, -zi], mx.atleast_1d(add.reduce(powers * signal)))
 
-    b = np.ones(1)
-    a = np.r_[1, -zi]
+    b = mx.ones(1)
+    a = mx.r_[1, -zi]
     yplus, _ = lfilter(b, a, signal, zi=state)
 
     # Reverse filter:
@@ -249,23 +249,23 @@ def _cubic_coeff(signal):
     # for k in range(K - 2, -1, -1):
     #     output[k] = zi * (output[k + 1] - yplus[k])
     out_last = zi / (zi - 1) * yplus[K - 1]
-    state = lfiltic(-zi, r_[1, -zi], np.atleast_1d(out_last))
+    state = lfiltic(-zi, r_[1, -zi], mx.atleast_1d(out_last))
 
-    b = np.asarray([-zi])
+    b = mx.array([-zi])
     output, _ = lfilter(b, a, yplus[-2::-1], zi=state)
-    output = np.r_[output[::-1], out_last]
+    output = mx.r_[output[::-1], out_last]
     return output * 6.0
 
 
 def _quadratic_coeff(signal):
-    signal = np.asarray(signal)
+    signal = mx.array(signal)
 
     zi = -3 + 2 * math.sqrt(2.0)
     K = len(signal)
-    powers = zi ** np.arange(K)
+    powers = zi ** mx.arange(K)
 
     if K == 1:
-        yplus = signal[0] + zi * np.add.reduce(powers * signal)
+        yplus = signal[0] + zi * mx.add.reduce(powers * signal)
         output = zi / (zi - 1) * yplus
         return atleast_1d(output)
 
@@ -274,10 +274,10 @@ def _quadratic_coeff(signal):
     # for k in range(1, K):
     #     yplus[k] = signal[k] + zi * yplus[k - 1]
 
-    state = lfiltic(1, np.r_[1, -zi], np.atleast_1d(np.add.reduce(powers * signal)))
+    state = lfiltic(1, mx.r_[1, -zi], mx.atleast_1d(mx.add.reduce(powers * signal)))
 
-    b = np.ones(1)
-    a = np.r_[1, -zi]
+    b = mx.ones(1)
+    a = mx.r_[1, -zi]
     yplus, _ = lfilter(b, a, signal, zi=state)
 
     # Reverse filter:
@@ -285,11 +285,11 @@ def _quadratic_coeff(signal):
     # for k in range(K - 2, -1, -1):
     #     output[k] = zi * (output[k + 1] - yplus[k])
     out_last = zi / (zi - 1) * yplus[K - 1]
-    state = lfiltic(-zi, r_[1, -zi], np.atleast_1d(out_last))
+    state = lfiltic(-zi, r_[1, -zi], mx.atleast_1d(out_last))
 
-    b = np.asarray([-zi])
+    b = mx.array([-zi])
     output, _ = lfilter(b, a, yplus[-2::-1], zi=state)
-    output = np.r_[output[::-1], out_last]
+    output = mx.r_[output[::-1], out_last]
     return output * 8.0
 
 
@@ -314,14 +314,14 @@ def cspline1d(signal, lamb=0.0):
 
     Parameters
     ----------
-    signal : ndarray
+    signal : array
         A rank-1 array representing samples of a signal.
     lamb : float, optional
         Smoothing coefficient, default is 0.0.
 
     Returns
     -------
-    c : ndarray
+    c : array
         Cubic spline coefficients.
 
     See Also
@@ -333,13 +333,13 @@ def cspline1d(signal, lamb=0.0):
     We can filter a signal to reduce and smooth out high-frequency noise with
     a cubic spline:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.signal import cspline1d, cspline1d_eval
-    >>> rng = np.random.default_rng()
-    >>> sig = np.repeat([0., 1., 0.], 100)
+    >>> rng = mx.random.default_rng()
+    >>> sig = mx.repeat([0., 1., 0.], 100)
     >>> sig += rng.standard_normal(len(sig))*0.05  # add noise
-    >>> time = np.linspace(0, len(sig))
+    >>> time = mx.linspace(0, len(sig))
     >>> filtered = cspline1d_eval(cspline1d(sig), time)
     >>> plt.plot(sig, label="signal")
     >>> plt.plot(time, filtered, label="filtered")
@@ -361,14 +361,14 @@ def qspline1d(signal, lamb=0.0):
 
     Parameters
     ----------
-    signal : ndarray
+    signal : array
         A rank-1 array representing samples of a signal.
     lamb : float, optional
         Smoothing coefficient (must be zero for now).
 
     Returns
     -------
-    c : ndarray
+    c : array
         Quadratic spline coefficients.
 
     See Also
@@ -387,13 +387,13 @@ def qspline1d(signal, lamb=0.0):
     We can filter a signal to reduce and smooth out high-frequency noise with
     a quadratic spline:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.signal import qspline1d, qspline1d_eval
-    >>> rng = np.random.default_rng()
-    >>> sig = np.repeat([0., 1., 0.], 100)
+    >>> rng = mx.random.default_rng()
+    >>> sig = mx.repeat([0., 1., 0.], 100)
     >>> sig += rng.standard_normal(len(sig))*0.05  # add noise
-    >>> time = np.linspace(0, len(sig))
+    >>> time = mx.linspace(0, len(sig))
     >>> filtered = qspline1d_eval(qspline1d(sig), time)
     >>> plt.plot(sig, label="signal")
     >>> plt.plot(time, filtered, label="filtered")
@@ -444,7 +444,7 @@ def qspline2d(signal, lamb=0.0, precision=-1.0):
 
     Parameters
     ----------
-    input : ndarray
+    input : array
         The input signal.
     lamb : float
         Specifies the amount of smoothing in the transfer function.
@@ -454,7 +454,7 @@ def qspline2d(signal, lamb=0.0, precision=-1.0):
 
     Returns
     -------
-    output : ndarray
+    output : array
         The filtered signal.
     """
     if precision < 0.0 or precision >= 1.0:
@@ -485,7 +485,7 @@ def cspline2d(signal, lamb=0.0, precision=-1.0):
 
     Parameters
     ----------
-    input : ndarray
+    input : array
         The input signal.
     lamb : float
         Specifies the amount of smoothing in the transfer function.
@@ -495,14 +495,14 @@ def cspline2d(signal, lamb=0.0, precision=-1.0):
 
     Returns
     -------
-    output : ndarray
+    output : array
         The filtered signal.
     """
     xp = array_namespace(signal)
-    signal = np.asarray(signal)
+    signal = mx.array(signal)
 
     if precision < 0.0 or precision >= 1.0:
-        if signal.dtype in [np.float32, np.complex64]:
+        if signal.dtype in [mx.float32, mx.complex64]:
             precision = 1e-3
         else:
             precision = 1e-6
@@ -537,9 +537,9 @@ def cspline1d_eval(cj, newx, dx=1.0, x0=0):
 
     Parameters
     ----------
-    cj : ndarray
+    cj : array
         cublic spline coefficients
-    newx : ndarray
+    newx : array
         New set of points.
     dx : float, optional
         Old sample-spacing, the default value is 1.0.
@@ -548,7 +548,7 @@ def cspline1d_eval(cj, newx, dx=1.0, x0=0):
 
     Returns
     -------
-    res : ndarray
+    res : array
         Evaluated a cubic spline points.
 
     See Also
@@ -560,13 +560,13 @@ def cspline1d_eval(cj, newx, dx=1.0, x0=0):
     We can filter a signal to reduce and smooth out high-frequency noise with
     a cubic spline:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.signal import cspline1d, cspline1d_eval
-    >>> rng = np.random.default_rng()
-    >>> sig = np.repeat([0., 1., 0.], 100)
+    >>> rng = mx.random.default_rng()
+    >>> sig = mx.repeat([0., 1., 0.], 100)
     >>> sig += rng.standard_normal(len(sig))*0.05  # add noise
-    >>> time = np.linspace(0, len(sig))
+    >>> time = mx.linspace(0, len(sig))
     >>> filtered = cspline1d_eval(cspline1d(sig), time)
     >>> plt.plot(sig, label="signal")
     >>> plt.plot(time, filtered, label="filtered")
@@ -576,8 +576,8 @@ def cspline1d_eval(cj, newx, dx=1.0, x0=0):
     """
     xp = array_namespace(cj, newx)
 
-    newx = (np.asarray(newx) - x0) / float(dx)
-    cj = np.asarray(cj)
+    newx = (mx.array(newx) - x0) / float(dx)
+    cj = mx.array(cj)
 
     if cj.size == 0:
         raise ValueError("Spline coefficients 'cj' must not be empty.")
@@ -610,9 +610,9 @@ def qspline1d_eval(cj, newx, dx=1.0, x0=0):
 
     Parameters
     ----------
-    cj : ndarray
+    cj : array
         Quadratic spline coefficients
-    newx : ndarray
+    newx : array
         New set of points.
     dx : float, optional
         Old sample-spacing, the default value is 1.0.
@@ -621,7 +621,7 @@ def qspline1d_eval(cj, newx, dx=1.0, x0=0):
 
     Returns
     -------
-    res : ndarray
+    res : array
         Evaluated a quadratic spline points.
 
     See Also
@@ -643,13 +643,13 @@ def qspline1d_eval(cj, newx, dx=1.0, x0=0):
     We can filter a signal to reduce and smooth out high-frequency noise with
     a quadratic spline:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.signal import qspline1d, qspline1d_eval
-    >>> rng = np.random.default_rng()
-    >>> sig = np.repeat([0., 1., 0.], 100)
+    >>> rng = mx.random.default_rng()
+    >>> sig = mx.repeat([0., 1., 0.], 100)
     >>> sig += rng.standard_normal(len(sig))*0.05  # add noise
-    >>> time = np.linspace(0, len(sig))
+    >>> time = mx.linspace(0, len(sig))
     >>> filtered = qspline1d_eval(qspline1d(sig), time)
     >>> plt.plot(sig, label="signal")
     >>> plt.plot(time, filtered, label="filtered")
@@ -659,12 +659,12 @@ def qspline1d_eval(cj, newx, dx=1.0, x0=0):
     """
     xp = array_namespace(newx, cj)
 
-    newx = (np.asarray(newx) - x0) / dx
-    res = np.zeros_like(newx)
+    newx = (mx.array(newx) - x0) / dx
+    res = mx.zeros_like(newx)
     if res.size == 0:
         return xp.asarray(res)
 
-    cj = np.asarray(cj)
+    cj = mx.array(cj)
     if cj.size == 0:
         raise ValueError("Spline coefficients 'cj' must not be empty.")
     
@@ -705,7 +705,7 @@ def symiirorder1(signal, c0, z1, precision=-1.0):
 
     Parameters
     ----------
-    signal : ndarray
+    signal : array
         The input signal. If 2D, then the filter will be applied in a batched
         fashion across the last axis.
     c0, z1 : scalar
@@ -716,13 +716,13 @@ def symiirorder1(signal, c0, z1, precision=-1.0):
 
     Returns
     -------
-    output : ndarray
+    output : array
         The filtered signal.
     """
     xp = array_namespace(signal)
     signal = xp_promote(signal, force_floating=True, xp=xp)
     # This function uses C internals
-    signal = np.asarray(signal)
+    signal = mx.array(signal)
 
     if abs(z1) >= 1:
         raise ValueError('|z1| must be less than 1.0')
@@ -738,19 +738,19 @@ def symiirorder1(signal, c0, z1, precision=-1.0):
     y0 = symiirorder1_ic(signal, z1, precision)
 
     # Apply first the system 1 / (1 - z1 * z^-1)
-    b = np.ones(1, dtype=signal.dtype)
-    a = np.r_[1, -z1]
+    b = mx.ones(1, dtype=signal.dtype)
+    a = mx.r_[1, -z1]
     a = a.astype(signal.dtype)
 
     # Compute the initial state for lfilter.
     zii = y0 * z1
 
     y1, _ = lfilter(b, a, axis_slice(signal, 1), zi=zii)
-    y1 = np.c_[y0, y1]
+    y1 = mx.c_[y0, y1]
 
     # Compute backward symmetric condition and apply the system
     # c0 / (1 - z1 * z)
-    b = np.asarray([c0], dtype=signal.dtype)
+    b = mx.array([c0], dtype=signal.dtype)
     out_last = -c0 / (z1 - 1.0) * axis_slice(y1, -1)
 
     # Compute the initial state for lfilter.
@@ -758,7 +758,7 @@ def symiirorder1(signal, c0, z1, precision=-1.0):
 
     # Apply the system c0 / (1 - z1 * z) by reversing the output of the previous stage
     out, _ = lfilter(b, a, axis_slice(y1, -2, step=-1), zi=zii)
-    out = np.c_[axis_reverse(out), out_last]
+    out = mx.c_[axis_reverse(out), out_last]
 
     if squeeze_dim:
         out = out[0]
@@ -786,7 +786,7 @@ def symiirorder2(input, r, omega, precision=-1.0):
 
     Parameters
     ----------
-    input : ndarray
+    input : array
         The input signal.
     r, omega : float
         Parameters in the transfer function.
@@ -796,13 +796,13 @@ def symiirorder2(input, r, omega, precision=-1.0):
 
     Returns
     -------
-    output : ndarray
+    output : array
         The filtered signal.
     """
     xp = array_namespace(input)
     input = xp_promote(input, force_floating=True, xp=xp)
     # This function uses C internals
-    input = np.ascontiguousarray(input)
+    input = mx.ascontiguousarray(input)
 
     if r >= 1.0:
         raise ValueError('r must be less than 1.0')
@@ -819,28 +819,28 @@ def symiirorder2(input, r, omega, precision=-1.0):
     a2 = 2 * r * math.cos(omega)
     a3 = -rsq
     cs = 1 - 2 * r * math.cos(omega) + rsq
-    sos = np.asarray([cs, 0, 0, 1, -a2, -a3], dtype=input.dtype)
+    sos = mx.array([cs, 0, 0, 1, -a2, -a3], dtype=input.dtype)
 
     # Find the starting (forward) conditions.
     ic_fwd = symiirorder2_ic_fwd(input, r, omega, precision)
 
     # Apply first the system cs / (1 - a2 * z^-1 - a3 * z^-2)
     # Compute the initial conditions in the form expected by sosfilt
-    # coef = np.asarray([[a3, a2], [0, a3]], dtype=input.dtype)
-    coef = np.asarray([[a3, a2], [0, a3]], dtype=input.dtype)
-    zi = np.matmul(coef, ic_fwd[:, :, None])[:, :, 0]
+    # coef = mx.array([[a3, a2], [0, a3]], dtype=input.dtype)
+    coef = mx.array([[a3, a2], [0, a3]], dtype=input.dtype)
+    zi = mx.matmul(coef, ic_fwd[:, :, None])[:, :, 0]
 
     y_fwd, _ = sosfilt(sos, axis_slice(input, 2), zi=zi[None])
-    y_fwd = np.c_[ic_fwd, y_fwd]
+    y_fwd = mx.c_[ic_fwd, y_fwd]
 
     # Then compute the symmetric backward starting conditions
     ic_bwd = symiirorder2_ic_bwd(input, r, omega, precision)
 
     # Apply the system cs / (1 - a2 * z^1 - a3 * z^2)
     # Compute the initial conditions in the form expected by sosfilt
-    zi = np.matmul(coef, ic_bwd[:, :, None])[:, :, 0]
+    zi = mx.matmul(coef, ic_bwd[:, :, None])[:, :, 0]
     y, _ = sosfilt(sos, axis_slice(y_fwd, -3, step=-1), zi=zi[None])
-    out = np.c_[axis_reverse(y), axis_reverse(ic_bwd)]
+    out = mx.c_[axis_reverse(y), axis_reverse(ic_bwd)]
 
     if squeeze_dim:
         out = out[0]

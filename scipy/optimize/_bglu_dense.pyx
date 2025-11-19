@@ -1,8 +1,8 @@
 # Author: Matt Haberland
 
 cimport cython
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 from scipy.linalg import (solve, lu_solve, lu_factor, solve_triangular,
                           LinAlgError)
 from scipy.linalg.cython_blas cimport daxpy, dswap
@@ -11,7 +11,7 @@ try:
 except ImportError:
     from time import clock as timer
 
-np.import_array()
+mx.import_array()
 
 __all__ = ['LU', 'BGLU']
 
@@ -66,7 +66,7 @@ cdef void hess_lu(self, double[:, ::1] H, int i, double[:,::1] ops) noexcept:
 
     for k in range(i, m-1):
         j = k-i
-        piv1, piv2 = abs(H[k, k]), abs(H[k+1, k]) # np.abs(H[k:k+2,k])
+        piv1, piv2 = abs(H[k, k]), abs(H[k+1, k]) # mx.abs(H[k:k+2,k])
         swap = float(piv1 < piv2)
         # swap rows to ensure |g| <= 1
         if swap:
@@ -162,7 +162,7 @@ def _consider_refactor(method):
             # record the time it took to call the method
             t0 = timer()
             out = method(self, *args, **kwargs)
-            if isinstance(out, np.ndarray) and np.any(np.isnan(out)):
+            if isinstance(out, mx.array) and mx.any(mx.isnan(out)):
                 raise LinAlgError("Nans in output")
             t1 = timer()
             self.bglu_time += (t1-t0)
@@ -184,9 +184,9 @@ cdef class LU:
     Represents PLU factorization of a basis matrix with naive rank-one updates
     """
 
-    cdef public np.ndarray A
-    cdef public np.ndarray b
-    cdef public np.ndarray B
+    cdef public mx.array A
+    cdef public mx.array b
+    cdef public mx.array B
     cdef public int m
     cdef public int n
 
@@ -220,10 +220,10 @@ cdef class BGLU(LU):
     """
 
     cdef public tuple plu
-    cdef public np.ndarray L
-    cdef public np.ndarray U
-    cdef public np.ndarray pi
-    cdef public np.ndarray pit
+    cdef public mx.array L
+    cdef public mx.array U
+    cdef public mx.array pi
+    cdef public mx.array pit
     cdef public list ops_list
     cdef public double bglu_time
     cdef public int solves
@@ -253,14 +253,14 @@ cdef class BGLU(LU):
         self.U = self.plu[0].copy()  # need to modify without changing L
         # indexing with self.pi is equivalent to PI matrix product
         self.pi = self.perform_perm(self.plu[1])  # permutation indices
-        self.pit = np.zeros(self.m, dtype=int)  # permutation transposed
-        self.pit[self.pi] = np.arange(self.m)
+        self.pit = mx.zeros(self.m, dtype=int)  # permutation transposed
+        self.pit[self.pi] = mx.arange(self.m)
         self.ops_list = []  # elementary row operations in order
 
         self.bglu_time = 0  # cumulative time spent updating and solving
         self.solves = 0     # number of solves since refactoring
         self.updates = 0    # number of updates since refactoring
-        self.average_solve_times = [np.inf, np.inf]  # current and last average solve time
+        self.average_solve_times = [mx.inf, mx.inf]  # current and last average solve time
 
     # ideally should time this, too, but I also want to call this
     # method in update below, which would double-count the time.
@@ -287,7 +287,7 @@ cdef class BGLU(LU):
         H[:, -1] = um  # add column corresponding with j
 
         # convert H to upper triangular, recording elementary row operations
-        ops = np.zeros((self.m-1-i, 2))
+        ops = mx.zeros((self.m-1-i, 2))
         hess_lu(self, H, i, ops) # hess_lu modifies ops in place
         self.ops_list.append(ops)
 
@@ -339,7 +339,7 @@ cdef class BGLU(LU):
         Perform individual row swaps defined in p returned by factor_lu to
         generate final permutation indices pi
         """
-        pi = np.arange(len(p))
+        pi = mx.arange(len(p))
         for i, row in enumerate(p):
             pi[i], pi[row] = pi[row], pi[i]
         return pi

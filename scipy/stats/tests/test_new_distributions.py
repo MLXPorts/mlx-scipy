@@ -1,13 +1,13 @@
 # file for distribution-specific tests with new infrastructure (UnivariateDistribution)
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 from scipy import stats
 
 class TestBinomial:
     def test_gh23708_binomial_logcdf_method_complement(self):
         # gh-23708 found that `logcdf` method='complement' was inaccurate in the tails
-        x = np.asarray([0., 18.])
-        X = stats.Binomial(n=np.asarray([18.]), p=np.asarray(0.71022842))
+        x = mx.array([0., 18.])
+        X = stats.Binomial(n=mx.array([18.]), p=mx.array(0.71022842))
         assert_allclose(X.logcdf(x, method='complement'), X.logcdf(x), rtol=1e-15)
         assert_allclose(X.logccdf(x, method='complement'), X.logccdf(x), rtol=1e-15)
 

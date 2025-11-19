@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from threading import Lock
 
 from ._optimize import _check_unknown_options
@@ -9,7 +9,7 @@ COBYQA_LOCK = Lock()
 
 def _minimize_cobyqa(fun, x0, args=(), bounds=None, constraints=(),
                      callback=None, disp=False, maxfev=None, maxiter=None,
-                     f_target=-np.inf, feasibility_tol=1e-8,
+                     f_target=-mx.inf, feasibility_tol=1e-8,
                      initial_tr_radius=1.0, final_tr_radius=1e-6, scale=False,
                      **unknown_options):
     """

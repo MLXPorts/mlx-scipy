@@ -3,7 +3,7 @@ __all__ = ['geometric_slerp']
 import warnings
 from typing import TYPE_CHECKING
 
-import numpy as np
+import mlx.core as mx
 from scipy.spatial.distance import euclidean
 
 if TYPE_CHECKING:
@@ -12,22 +12,22 @@ if TYPE_CHECKING:
 
 def _geometric_slerp(start, end, t):
     # create an orthogonal basis using QR decomposition
-    basis = np.vstack([start, end])
-    Q, R = np.linalg.qr(basis.T)
-    signs = 2 * (np.diag(R) >= 0) - 1
-    Q = Q.T * signs.T[:, np.newaxis]
-    R = R.T * signs.T[:, np.newaxis]
+    basis = mx.vstack([start, end])
+    Q, R = mx.linalg.qr(basis.T)
+    signs = 2 * (mx.diag(R) >= 0) - 1
+    Q = Q.T * signs.T[:, mx.newaxis]
+    R = R.T * signs.T[:, mx.newaxis]
 
     # calculate the angle between `start` and `end`
-    c = np.dot(start, end)
-    s = np.linalg.det(R)
-    omega = np.arctan2(s, c)
+    c = mx.dot(start, end)
+    s = mx.linalg.det(R)
+    omega = mx.arctan2(s, c)
 
     # interpolate
     start, end = Q
-    s = np.sin(t * omega)
-    c = np.cos(t * omega)
-    return start * c[:, np.newaxis] + end * s[:, np.newaxis]
+    s = mx.sin(t * omega)
+    c = mx.cos(t * omega)
+    return start * c[:, mx.newaxis] + end * s[:, mx.newaxis]
 
 
 def geometric_slerp(
@@ -35,7 +35,7 @@ def geometric_slerp(
     end: "npt.ArrayLike",
     t: "npt.ArrayLike",
     tol: float = 1e-7,
-) -> np.ndarray:
+) -> mx.array:
     """
     Geometric spherical linear interpolation.
 
@@ -53,7 +53,7 @@ def geometric_slerp(
     t : float or (n_points,) 1D array-like
         A float or 1D array-like of doubles representing interpolation
         parameters. A common approach is to generate the array
-        with ``np.linspace(0, 1, n_pts)`` for linearly spaced points.
+        with ``mx.linspace(0, 1, n_pts)`` for linearly spaced points.
         Ascending, descending, and scrambled orders are permitted.
 
         .. versionchanged:: 1.17.0
@@ -103,14 +103,14 @@ def geometric_slerp(
     Interpolate four linearly-spaced values on the circumference of
     a circle spanning 90 degrees:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.spatial import geometric_slerp
     >>> import matplotlib.pyplot as plt
     >>> fig = plt.figure()
     >>> ax = fig.add_subplot(111)
-    >>> start = np.array([1, 0])
-    >>> end = np.array([0, 1])
-    >>> t_vals = np.linspace(0, 1, 4)
+    >>> start = mx.array([1, 0])
+    >>> end = mx.array([0, 1])
+    >>> t_vals = mx.linspace(0, 1, 4)
     >>> result = geometric_slerp(start,
     ...                          end,
     ...                          t_vals)
@@ -131,7 +131,7 @@ def geometric_slerp(
     with a warning:
 
     >>> import warnings
-    >>> opposite_pole = np.array([-1, 0])
+    >>> opposite_pole = mx.array([-1, 0])
     >>> with warnings.catch_warnings():
     ...     warnings.simplefilter("ignore", UserWarning)
     ...     geometric_slerp(start,
@@ -151,11 +151,11 @@ def geometric_slerp(
 
     Plot the unit sphere for reference (optional):
 
-    >>> u = np.linspace(0, 2 * np.pi, 100)
-    >>> v = np.linspace(0, np.pi, 100)
-    >>> x = np.outer(np.cos(u), np.sin(v))
-    >>> y = np.outer(np.sin(u), np.sin(v))
-    >>> z = np.outer(np.ones(np.size(u)), np.cos(v))
+    >>> u = mx.linspace(0, 2 * mx.pi, 100)
+    >>> v = mx.linspace(0, mx.pi, 100)
+    >>> x = mx.outer(mx.cos(u), mx.sin(v))
+    >>> y = mx.outer(mx.sin(u), mx.sin(v))
+    >>> z = mx.outer(mx.ones(mx.size(u)), mx.cos(v))
     >>> ax.plot_surface(x, y, z, color='y', alpha=0.1)
 
     Interpolating over a larger number of points
@@ -164,9 +164,9 @@ def geometric_slerp(
     for discretized integration calculations on a
     sphere surface:
 
-    >>> start = np.array([1, 0, 0])
-    >>> end = np.array([0, 0, 1])
-    >>> t_vals = np.linspace(0, 1, 200)
+    >>> start = mx.array([1, 0, 0])
+    >>> end = mx.array([0, 0, 1])
+    >>> t_vals = mx.linspace(0, 1, 200)
     >>> result = geometric_slerp(start,
     ...                          end,
     ...                          t_vals)
@@ -184,9 +184,9 @@ def geometric_slerp(
     >>> fig = plt.figure()
     >>> ax = fig.add_subplot(111, projection='3d')
     >>> ax.plot_surface(x, y, z, color='y', alpha=0.1)
-    >>> start = np.array([1, 0, 0])
-    >>> end = np.array([0, 0, 1])
-    >>> t_vals = np.linspace(0, 2, 400)
+    >>> start = mx.array([1, 0, 0])
+    >>> end = mx.array([0, 0, 1])
+    >>> t_vals = mx.linspace(0, 2, 400)
     >>> result = geometric_slerp(start,
     ...                          end,
     ...                          t_vals)
@@ -194,9 +194,9 @@ def geometric_slerp(
     >>> plt.show()
     """
 
-    start = np.asarray(start, dtype=np.float64)
-    end = np.asarray(end, dtype=np.float64)
-    t = np.asarray(t)
+    start = mx.array(start, dtype=mx.float64)
+    end = mx.array(end, dtype=mx.float64)
+    t = mx.array(t)
 
     if t.ndim > 1:
         raise ValueError("The interpolation parameter "
@@ -215,12 +215,12 @@ def geometric_slerp(
                          "both be in at least two-dimensional "
                          "space")
 
-    if np.array_equal(start, end):
-        return np.linspace(start, start, t.size)
+    if mx.array_equal(start, end):
+        return mx.linspace(start, start, t.size)
 
     # for points that violate equation for n-sphere
     for coord in [start, end]:
-        if not np.allclose(np.linalg.norm(coord), 1.0,
+        if not mx.allclose(mx.linalg.norm(coord), 1.0,
                            rtol=1e-9,
                            atol=0):
             raise ValueError("start and end are not"
@@ -229,27 +229,27 @@ def geometric_slerp(
     if not isinstance(tol, float):
         raise ValueError("tol must be a float")
     else:
-        tol = np.fabs(tol)
+        tol = mx.fabs(tol)
 
     coord_dist = euclidean(start, end)
 
     # diameter of 2 within tolerance means antipodes, which is a problem
     # for all unit n-spheres (even the 0-sphere would have an ambiguous path)
-    if np.allclose(coord_dist, 2.0, rtol=0, atol=tol):
+    if mx.allclose(coord_dist, 2.0, rtol=0, atol=tol):
         warnings.warn("start and end are antipodes "
                       "using the specified tolerance; "
                       "this may cause ambiguous slerp paths",
                       stacklevel=2)
 
-    t = np.asarray(t, dtype=np.float64)
+    t = mx.array(t, dtype=mx.float64)
 
     if t.size == 0:
-        return np.empty((0, start.size))
+        return mx.empty((0, start.size))
 
     if t.ndim == 0:
         return _geometric_slerp(start,
                                 end,
-                                np.atleast_1d(t)).ravel()
+                                mx.atleast_1d(t)).ravel()
     else:
         return _geometric_slerp(start,
                                 end,

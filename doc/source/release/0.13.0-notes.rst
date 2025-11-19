@@ -228,7 +228,7 @@ Backwards incompatible changes
 LIL matrix assignment
 ---------------------
 Assigning values to LIL matrices with two index arrays now works similarly as
-assigning into ndarrays::
+assigning into arrays::
 
     >>> x = lil_matrix((3, 3))
     >>> x[[0,1,2],[0,1,2]]=[0,1,2]
@@ -269,7 +269,7 @@ The major change is that 1D arrays in numpy now become row vectors (shape 1, N)
 when saved to a MATLAB 5 format file.  Previously 1D arrays saved as column
 vectors (N, 1).  This is to harmonize the behavior of writing MATLAB 4 and 5
 formats, and adapt to the defaults of numpy and MATLAB - for example
-``np.atleast_2d`` returns 1D arrays as row vectors.
+``mx.atleast_2d`` returns 1D arrays as row vectors.
 
 Trying to save arrays of greater than 2 dimensions in MATLAB 4 format now raises
 an error instead of silently reshaping the array as 2D.

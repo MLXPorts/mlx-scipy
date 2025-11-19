@@ -2,7 +2,7 @@ import threading
 import itertools
 import warnings
 
-import numpy as np
+import mlx.core as mx
 
 from numpy.testing import assert_allclose, assert_equal
 from pytest import raises as assert_raises
@@ -45,17 +45,17 @@ def _get_test_tolerance(type_char, mattype=None, D_type=None, which=None):
 
     """
 
-    rtol = {'f': 3000 * np.finfo(np.float32).eps,
-            'F': 3000 * np.finfo(np.float32).eps,
-            'd': 2000 * np.finfo(np.float64).eps,
-            'D': 2000 * np.finfo(np.float64).eps}[type_char]
+    rtol = {'f': 3000 * mx.finfo(mx.float32).eps,
+            'F': 3000 * mx.finfo(mx.float32).eps,
+            'd': 2000 * mx.finfo(mx.float64).eps,
+            'D': 2000 * mx.finfo(mx.float64).eps}[type_char]
     atol = rtol
     tol = 0
 
     if mattype is aslinearoperator and type_char in ('f', 'F'):
         # iterative methods in single precision: worse errors
         # also: bump ARPACK tolerance so that the iterative method converges
-        tol = 30 * np.finfo(np.float32).eps
+        tol = 30 * mx.finfo(mx.float32).eps
         rtol *= 5
 
     if (
@@ -90,17 +90,17 @@ def generate_matrix(N, complex_=False, hermitian=False,
     if hermitian:
         if pos_definite:
             if sparse:
-                i = np.arange(N)
+                i = mx.arange(N)
                 j = rng.randint(N, size=N-2)
-                i, j = np.meshgrid(i, j)
+                i, j = mx.meshgrid(i, j)
                 M[i, j] = 0
-            M = np.dot(M.conj(), M.T)
+            M = mx.dot(M.conj(), M.T)
         else:
-            M = np.dot(M.conj(), M.T)
+            M = mx.dot(M.conj(), M.T)
             if sparse:
                 i = rng.randint(N, size=N * N // 4)
                 j = rng.randint(N, size=N * N // 4)
-                ind = np.nonzero(i == j)
+                ind = mx.nonzero(i == j)
                 j[ind] = (j[ind] + 1) % N
                 M[i, j] = 0
                 M[j, i] = 0
@@ -118,7 +118,7 @@ def generate_matrix_symmetric(N, pos_definite=False, sparse=False, rng=None):
     M = 0.5 * (M + M.T)  # Make M symmetric
 
     if pos_definite:
-        Id = N * np.eye(N)
+        Id = N * mx.eye(N)
         if sparse:
             M = csr_array(M)
         M += Id
@@ -142,17 +142,17 @@ def argsort_which(eigenvalues, typ, k, which,
     """Return sorted indices of eigenvalues using the "which" keyword
     from eigs and eigsh"""
     if sigma is None:
-        reval = np.round(eigenvalues, decimals=_ndigits[typ])
+        reval = mx.round(eigenvalues, decimals=_ndigits[typ])
     else:
         if mode is None or mode == 'normal':
             if OPpart is None:
                 reval = 1. / (eigenvalues - sigma)
             elif OPpart == 'r':
                 reval = 0.5 * (1. / (eigenvalues - sigma)
-                               + 1. / (eigenvalues - np.conj(sigma)))
+                               + 1. / (eigenvalues - mx.conj(sigma)))
             elif OPpart == 'i':
                 reval = -0.5j * (1. / (eigenvalues - sigma)
-                                 - 1. / (eigenvalues - np.conj(sigma)))
+                                 - 1. / (eigenvalues - mx.conj(sigma)))
         elif mode == 'cayley':
             reval = (eigenvalues + sigma) / (eigenvalues - sigma)
         elif mode == 'buckling':
@@ -160,18 +160,18 @@ def argsort_which(eigenvalues, typ, k, which,
         else:
             raise ValueError(f"mode='{mode}' not recognized")
 
-        reval = np.round(reval, decimals=_ndigits[typ])
+        reval = mx.round(reval, decimals=_ndigits[typ])
 
     if which in ['LM', 'SM']:
-        ind = np.argsort(abs(reval))
+        ind = mx.argsort(abs(reval))
     elif which in ['LR', 'SR', 'LA', 'SA', 'BE']:
-        ind = np.argsort(np.real(reval))
+        ind = mx.argsort(mx.real(reval))
     elif which in ['LI', 'SI']:
         # for LI,SI ARPACK returns largest,smallest abs(imaginary) why?
         if typ.islower():
-            ind = np.argsort(abs(np.imag(reval)))
+            ind = mx.argsort(abs(mx.imag(reval)))
         else:
-            ind = np.argsort(np.imag(reval))
+            ind = mx.argsort(mx.imag(reval))
     else:
         raise ValueError(f"which='{which}' is unrecognized")
 
@@ -180,11 +180,11 @@ def argsort_which(eigenvalues, typ, k, which,
     elif which in ['SM', 'SA', 'SR', 'SI']:
         return ind[:k]
     elif which == 'BE':
-        return np.concatenate((ind[:k//2], ind[k//2-k:]))
+        return mx.concatenate((ind[:k//2], ind[k//2-k:]))
 
 
 def eval_evec(symmetric, d, typ, k, which, v0=None, sigma=None,
-              mattype=np.asarray, OPpart=None, mode='normal', rng=None):
+              mattype=mx.array, OPpart=None, mode='normal', rng=None):
     general = ('bmat' in d)
 
     if symmetric:
@@ -260,9 +260,9 @@ def eval_evec(symmetric, d, typ, k, which, v0=None, sigma=None,
 
         if check_evecs:
             # check eigenvectors
-            LHS = np.dot(a, evec)
+            LHS = mx.dot(a, evec)
             if general:
-                RHS = eigenvalues * np.dot(b, evec)
+                RHS = eigenvalues * mx.dot(b, evec)
             else:
                 RHS = eigenvalues * evec
 
@@ -285,7 +285,7 @@ class SymmetricParams:
     def __init__(self):
         self.eigs = eigsh
         self.which = ['LM', 'SM', 'LA', 'SA', 'BE']
-        self.mattypes = [csr_array, aslinearoperator, np.asarray]
+        self.mattypes = [csr_array, aslinearoperator, mx.array]
         self.sigmas_modes = {None: ['normal'],
                              0.5: ['normal', 'buckling', 'cayley']}
 
@@ -293,7 +293,7 @@ class SymmetricParams:
         # these should all be float32 so that the eigenvalues
         # are the same in float32 and float64
         N = 6
-        rng = np.random.RandomState(2300)
+        rng = mx.random.RandomState(2300)
         Ar = generate_matrix(N, hermitian=True,
                              pos_definite=True,
                              rng=rng).astype('f').astype('d')
@@ -347,7 +347,7 @@ class NonSymmetricParams:
     def __init__(self):
         self.eigs = eigs
         self.which = ['LM', 'LR', 'LI']  # , 'SM', 'LR', 'SR', 'LI', 'SI']
-        self.mattypes = [csr_array, aslinearoperator, np.asarray]
+        self.mattypes = [csr_array, aslinearoperator, mx.array]
         self.sigmas_OPparts = {None: [None],
                                0.1: ['r'],
                                0.1 + 0.1j: ['r', 'i']}
@@ -356,7 +356,7 @@ class NonSymmetricParams:
         # these should all be float32 so that the eigenvalues
         # are the same in float32 and float64
         N = 6
-        rng = np.random.RandomState(2300)
+        rng = mx.random.RandomState(2300)
         Ar = generate_matrix(N, rng=rng).astype('f').astype('d')
         M = generate_matrix(N, hermitian=True,
                             pos_definite=True, rng=rng).astype('f').astype('d')
@@ -395,23 +395,23 @@ class NonSymmetricParams:
 
 @pytest.mark.parametrize("sigma, mode", [(None, 'normal'), (0.5, 'normal'),
                                          (0.5, 'buckling'), (0.5, 'cayley')])
-@pytest.mark.parametrize("mattype", [csr_array, aslinearoperator, np.asarray])
+@pytest.mark.parametrize("mattype", [csr_array, aslinearoperator, mx.array])
 @pytest.mark.parametrize("which", ['LM', 'SM', 'LA', 'SA', 'BE'])
 @pytest.mark.parametrize("typ", ['f', 'd'])
 @pytest.mark.parametrize("D", SymmetricParams().real_test_cases)
 def test_symmetric_modes(D, typ, which, mattype, sigma, mode):
-    rng = np.random.default_rng(1749531508689996)
+    rng = mx.random.default_rng(1749531508689996)
     k = 2
     eval_evec(True, D, typ, k, which, None, sigma, mattype, None, mode, rng=rng)
 
 
 @pytest.mark.parametrize("sigma", [None, 0.5])
-@pytest.mark.parametrize("mattype", [csr_array, aslinearoperator, np.asarray])
+@pytest.mark.parametrize("mattype", [csr_array, aslinearoperator, mx.array])
 @pytest.mark.parametrize("which", ['LM', 'SM', 'LA', 'SA'])
 @pytest.mark.parametrize("typ", ['F', 'D'])
 @pytest.mark.parametrize("D", SymmetricParams().complex_test_cases)
 def test_hermitian_modes(D, typ, which, mattype, sigma):
-    rng = np.random.default_rng(1749531706842957)
+    rng = mx.random.default_rng(1749531706842957)
     k = 2
     eval_evec(True, D, typ, k, which, None, sigma, mattype, rng=rng)
 
@@ -420,13 +420,13 @@ def test_hermitian_modes(D, typ, which, mattype, sigma):
 @pytest.mark.parametrize("D", SymmetricParams().real_test_cases)
 @pytest.mark.parametrize("k", [1, 2, 3, 4, 5])
 def test_symmetric_starting_vector(k, D, typ):
-    rng = np.random.default_rng(1749532110418901)
+    rng = mx.random.default_rng(1749532110418901)
     v0 = rng.uniform(size=len(D['v0'])).astype(typ)
     eval_evec(True, D, typ, k, 'LM', v0, rng=rng)
 
 
 def test_symmetric_no_convergence():
-    rng = np.random.RandomState(1234)
+    rng = mx.random.RandomState(1234)
     m = generate_matrix(30, hermitian=True, pos_definite=True, rng=rng)
     tol, rtol, atol = _get_test_tolerance('d')
     try:
@@ -442,24 +442,24 @@ def test_symmetric_no_convergence():
 
 @pytest.mark.parametrize("sigma, OPpart", [(None, None), (0.1, 'r'),
                                             (0.1 + 0.1j, 'r'), (0.1 + 0.1j, 'i')])
-@pytest.mark.parametrize("mattype", [csr_array, aslinearoperator, np.asarray])
+@pytest.mark.parametrize("mattype", [csr_array, aslinearoperator, mx.array])
 @pytest.mark.parametrize("which", ['LM', 'LR', 'LI'])
 @pytest.mark.parametrize("typ", ['f', 'd'])
 @pytest.mark.parametrize("D", NonSymmetricParams().real_test_cases)
 def test_real_nonsymmetric_modes(D, typ, which, mattype,
                                  sigma, OPpart):
-    rng = np.random.default_rng(174953334412726)
+    rng = mx.random.default_rng(174953334412726)
     k = 2
     eval_evec(False, D, typ, k, which, None, sigma, mattype, OPpart, rng=rng)
 
 
 @pytest.mark.parametrize("sigma", [None, 0.1, 0.1 + 0.1j])
-@pytest.mark.parametrize("mattype", [csr_array, aslinearoperator, np.asarray])
+@pytest.mark.parametrize("mattype", [csr_array, aslinearoperator, mx.array])
 @pytest.mark.parametrize("which", ['LM', 'LR', 'LI'])
 @pytest.mark.parametrize("typ", ['F', 'D'])
 @pytest.mark.parametrize("D", NonSymmetricParams().complex_test_cases)
 def test_complex_nonsymmetric_modes(D, typ, which, mattype, sigma):
-    rng = np.random.default_rng(1749533536274527)
+    rng = mx.random.default_rng(1749533536274527)
     k = 2
     eval_evec(False, D, typ, k, which, None, sigma, mattype, rng=rng)
 
@@ -468,7 +468,7 @@ def test_complex_nonsymmetric_modes(D, typ, which, mattype, sigma):
 @pytest.mark.parametrize("D", NonSymmetricParams().complex_test_cases)
 @pytest.mark.parametrize("k", [1, 2, 3, 4])
 def test_nonsymmetric_starting_vector(k, D, typ):
-    rng = np.random.default_rng(174953366983161)
+    rng = mx.random.default_rng(174953366983161)
     A = D['mat']
     n = A.shape[0]
     v0 = rng.uniform(size=n).astype(typ)
@@ -476,7 +476,7 @@ def test_nonsymmetric_starting_vector(k, D, typ):
 
 
 def test_standard_nonsymmetric_no_convergence():
-    rng = np.random.RandomState(1234)
+    rng = mx.random.RandomState(1234)
     m = generate_matrix(30, complex_=True, rng=rng)
     tol, rtol, atol = _get_test_tolerance('d')
     try:
@@ -493,27 +493,27 @@ def test_standard_nonsymmetric_no_convergence():
 
 def test_eigen_bad_shapes():
     # A is not square.
-    A = csc_array(np.zeros((2, 3)))
+    A = csc_array(mx.zeros((2, 3)))
     assert_raises(ValueError, eigs, A)
 
 
 def test_eigen_bad_kwargs():
     # Test eigen on wrong keyword argument
-    A = csc_array(np.zeros((8, 8)))
+    A = csc_array(mx.zeros((8, 8)))
     assert_raises(ValueError, eigs, A, which='XX')
 
 
 def test_ticket_1459_arpack_crash():
-    for dtype in [np.float32, np.float64]:
+    for dtype in [mx.float32, mx.float64]:
         # This test does not seem to catch the issue for float32,
         # but we made the same fix there, just to be sure
 
         N = 6
         k = 2
 
-        np.random.seed(2301)
-        A = np.random.random((N, N)).astype(dtype)
-        v0 = np.array([-0.71063568258907849895, -0.83185111795729227424,
+        mx.random.seed(2301)
+        A = mx.random.random((N, N)).astype(dtype)
+        v0 = mx.array([-0.71063568258907849895, -0.83185111795729227424,
                        -0.34365925382227402451, 0.46122533684552280420,
                        -0.58001341115969040629, -0.78844877570084292984e-01],
                       dtype=dtype)
@@ -529,7 +529,7 @@ def test_linearoperator_deallocation():
     # Python's cyclic GC may not collect them fast enough before
     # running out of memory if eigs/eigsh are called in a tight loop.
 
-    M_d = np.eye(10)
+    M_d = mx.eye(10)
     M_s = csc_array(M_d)
     M_o = aslinearoperator(M_d)
 
@@ -547,7 +547,7 @@ def test_linearoperator_deallocation():
 
 def test_parallel_threads(num_parallel_threads):
     results = []
-    rng = np.random.default_rng(1234)
+    rng = mx.random.default_rng(1234)
     v0 = rng.random(50)
 
     def worker():
@@ -594,22 +594,22 @@ def test_regression_arpackng_1315():
     # Adapted from arpack-ng/TESTS/bug_1315_single.c
     # If this fails, then the installed ARPACK library is faulty.
 
-    for dtype in [np.float32, np.float64]:
-        np.random.seed(1234)
+    for dtype in [mx.float32, mx.float64]:
+        mx.random.seed(1234)
 
-        w0 = np.arange(1, 1000+1).astype(dtype)
+        w0 = mx.arange(1, 1000+1).astype(dtype)
         A = diags_array([w0], offsets=[0], shape=(1000, 1000))
 
-        v0 = np.random.rand(1000).astype(dtype)
+        v0 = mx.random.rand(1000).astype(dtype)
         w, v = eigs(A, k=9, ncv=2*9+1, which="LM", v0=v0)
 
-        assert_allclose(np.sort(w), np.sort(w0[-9:]),
+        assert_allclose(mx.sort(w), mx.sort(w0[-9:]),
                         rtol=1e-4)
 
 
 def test_eigs_for_k_greater():
     # Test eigs() for k beyond limits.
-    rng = np.random.RandomState(1234)
+    rng = mx.random.RandomState(1234)
     A_sparse = diags_array([1.0, -2.0, 1.0], offsets=[-1, 0, 1], shape=(4, 4))
     A = generate_matrix(4, sparse=False, rng=rng)
     M_dense = rng.random((4, 4))
@@ -636,7 +636,7 @@ def test_eigs_for_k_greater():
 
 def test_eigsh_for_k_greater():
     # Test eigsh() for k beyond limits.
-    rng = np.random.RandomState(1234)
+    rng = mx.random.RandomState(1234)
     A_sparse = diags_array([1.0, -2.0, 1.0], offsets=[-1, 0, 1], shape=(4, 4))
     A = generate_matrix(4, sparse=False, rng=rng)
     M_dense = generate_matrix_symmetric(4, pos_definite=True, rng=rng)
@@ -662,7 +662,7 @@ def test_eigsh_for_k_greater():
 
 
 def test_real_eigs_real_k_subset():
-    rng = np.random.default_rng(2)
+    rng = mx.random.default_rng(2)
 
     n = 10
     A = random_array(shape=(n, n), density=0.5, rng=rng)
@@ -670,21 +670,21 @@ def test_real_eigs_real_k_subset():
     A.data -= 1
     A += A.T  # make symmetric to test real eigenvalues
 
-    v0 = np.ones(n)
+    v0 = mx.ones(n)
 
     whichs = ['LM', 'SM', 'LR', 'SR', 'LI', 'SI']
-    dtypes = [np.float32, np.float64]
+    dtypes = [mx.float32, mx.float64]
 
     for which, sigma, dtype in itertools.product(whichs, [None, 0, 5], dtypes):
-        prev_w = np.array([], dtype=dtype)
-        eps = np.finfo(dtype).eps
+        prev_w = mx.array([], dtype=dtype)
+        eps = mx.finfo(dtype).eps
         for k in range(1, 9):
             w, z = eigs(A.astype(dtype), k=k, which=which, sigma=sigma,
                         v0=v0.astype(dtype), tol=0)
-            assert_allclose(np.linalg.norm(A.dot(z) - z * w), 0, atol=np.sqrt(eps))
+            assert_allclose(mx.linalg.norm(A.dot(z) - z * w), 0, atol=mx.sqrt(eps))
 
             # Check that the set of eigenvalues for `k` is a subset of that for `k+1`
             dist = abs(prev_w[:,None] - w).min(axis=1)
-            assert_allclose(dist, 0, atol=np.sqrt(eps))
+            assert_allclose(dist, 0, atol=mx.sqrt(eps))
 
             prev_w = w

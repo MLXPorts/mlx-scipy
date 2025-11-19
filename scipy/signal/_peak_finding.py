@@ -2,7 +2,7 @@
 Functions for identifying peaks in signals.
 """
 import math
-import numpy as np
+import mlx.core as mx
 
 from scipy.signal._wavelets import _cwt, _ricker
 from scipy.stats import scoreatpercentile
@@ -28,7 +28,7 @@ def _boolrelextrema(data, comparator, axis=0, order=1, mode='clip'):
 
     Parameters
     ----------
-    data : ndarray
+    data : array
         Array in which to find the relative extrema.
     comparator : callable
         Function to use to compare two data points.
@@ -45,7 +45,7 @@ def _boolrelextrema(data, comparator, axis=0, order=1, mode='clip'):
 
     Returns
     -------
-    extrema : ndarray
+    extrema : array
         Boolean array of the same shape as `data` that is True at an extrema,
         False otherwise.
 
@@ -55,10 +55,10 @@ def _boolrelextrema(data, comparator, axis=0, order=1, mode='clip'):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal._peak_finding import _boolrelextrema
-    >>> testdata = np.array([1,2,3,2,1])
-    >>> _boolrelextrema(testdata, np.greater, axis=0)
+    >>> testdata = mx.array([1,2,3,2,1])
+    >>> _boolrelextrema(testdata, mx.greater, axis=0)
     array([False, False,  True, False, False], dtype=bool)
 
     """
@@ -66,9 +66,9 @@ def _boolrelextrema(data, comparator, axis=0, order=1, mode='clip'):
         raise ValueError('Order must be an int >= 1')
 
     datalen = data.shape[axis]
-    locs = np.arange(0, datalen)
+    locs = mx.arange(0, datalen)
 
-    results = np.ones(data.shape, dtype=bool)
+    results = mx.ones(data.shape, dtype=bool)
     main = data.take(locs, axis=axis, mode=mode)
     for shift in range(1, order + 1):
         plus = data.take(locs + shift, axis=axis, mode=mode)
@@ -86,7 +86,7 @@ def argrelmin(data, axis=0, order=1, mode='clip'):
 
     Parameters
     ----------
-    data : ndarray
+    data : array
         Array in which to find the relative minima.
     axis : int, optional
         Axis over which to select from `data`. Default is 0.
@@ -101,7 +101,7 @@ def argrelmin(data, axis=0, order=1, mode='clip'):
 
     Returns
     -------
-    extrema : tuple of ndarrays
+    extrema : tuple of arrays
         Indices of the minima in arrays of integers. ``extrema[k]`` is
         the array of indices of axis `k` of `data`. Note that the
         return value is a tuple even when `data` is 1-D.
@@ -112,7 +112,7 @@ def argrelmin(data, axis=0, order=1, mode='clip'):
 
     Notes
     -----
-    This function uses `argrelextrema` with np.less as comparator. Therefore, it
+    This function uses `argrelextrema` with mx.less as comparator. Therefore, it
     requires a strict inequality on both sides of a value to consider it a
     minimum. This means flat minima (more than one sample wide) are not detected.
     In case of 1-D `data` `find_peaks` can be used to detect all
@@ -122,12 +122,12 @@ def argrelmin(data, axis=0, order=1, mode='clip'):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import argrelmin
-    >>> x = np.array([2, 1, 2, 3, 2, 0, 1, 0])
+    >>> x = mx.array([2, 1, 2, 3, 2, 0, 1, 0])
     >>> argrelmin(x)
     (array([1, 5]),)
-    >>> y = np.array([[1, 2, 1, 2],
+    >>> y = mx.array([[1, 2, 1, 2],
     ...               [2, 2, 0, 0],
     ...               [5, 3, 4, 4]])
     ...
@@ -135,7 +135,7 @@ def argrelmin(data, axis=0, order=1, mode='clip'):
     (array([0, 2]), array([2, 1]))
 
     """
-    return argrelextrema(data, np.less, axis, order, mode)
+    return argrelextrema(data, mx.less, axis, order, mode)
 
 
 def argrelmax(data, axis=0, order=1, mode='clip'):
@@ -144,7 +144,7 @@ def argrelmax(data, axis=0, order=1, mode='clip'):
 
     Parameters
     ----------
-    data : ndarray
+    data : array
         Array in which to find the relative maxima.
     axis : int, optional
         Axis over which to select from `data`. Default is 0.
@@ -159,7 +159,7 @@ def argrelmax(data, axis=0, order=1, mode='clip'):
 
     Returns
     -------
-    extrema : tuple of ndarrays
+    extrema : tuple of arrays
         Indices of the maxima in arrays of integers. ``extrema[k]`` is
         the array of indices of axis `k` of `data`. Note that the
         return value is a tuple even when `data` is 1-D.
@@ -170,7 +170,7 @@ def argrelmax(data, axis=0, order=1, mode='clip'):
 
     Notes
     -----
-    This function uses `argrelextrema` with np.greater as comparator. Therefore,
+    This function uses `argrelextrema` with mx.greater as comparator. Therefore,
     it  requires a strict inequality on both sides of a value to consider it a
     maximum. This means flat maxima (more than one sample wide) are not detected.
     In case of 1-D `data` `find_peaks` can be used to detect all
@@ -180,19 +180,19 @@ def argrelmax(data, axis=0, order=1, mode='clip'):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import argrelmax
-    >>> x = np.array([2, 1, 2, 3, 2, 0, 1, 0])
+    >>> x = mx.array([2, 1, 2, 3, 2, 0, 1, 0])
     >>> argrelmax(x)
     (array([3, 6]),)
-    >>> y = np.array([[1, 2, 1, 2],
+    >>> y = mx.array([[1, 2, 1, 2],
     ...               [2, 2, 0, 0],
     ...               [5, 3, 4, 4]])
     ...
     >>> argrelmax(y, axis=1)
     (array([0]), array([1]))
     """
-    return argrelextrema(data, np.greater, axis, order, mode)
+    return argrelextrema(data, mx.greater, axis, order, mode)
 
 
 def argrelextrema(data, comparator, axis=0, order=1, mode='clip'):
@@ -201,7 +201,7 @@ def argrelextrema(data, comparator, axis=0, order=1, mode='clip'):
 
     Parameters
     ----------
-    data : ndarray
+    data : array
         Array in which to find the relative extrema.
     comparator : callable
         Function to use to compare two data points.
@@ -218,7 +218,7 @@ def argrelextrema(data, comparator, axis=0, order=1, mode='clip'):
 
     Returns
     -------
-    extrema : tuple of ndarrays
+    extrema : tuple of arrays
         Indices of the maxima in arrays of integers. ``extrema[k]`` is
         the array of indices of axis `k` of `data`. Note that the
         return value is a tuple even when `data` is 1-D.
@@ -234,22 +234,22 @@ def argrelextrema(data, comparator, axis=0, order=1, mode='clip'):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import argrelextrema
-    >>> x = np.array([2, 1, 2, 3, 2, 0, 1, 0])
-    >>> argrelextrema(x, np.greater)
+    >>> x = mx.array([2, 1, 2, 3, 2, 0, 1, 0])
+    >>> argrelextrema(x, mx.greater)
     (array([3, 6]),)
-    >>> y = np.array([[1, 2, 1, 2],
+    >>> y = mx.array([[1, 2, 1, 2],
     ...               [2, 2, 0, 0],
     ...               [5, 3, 4, 4]])
     ...
-    >>> argrelextrema(y, np.less, axis=1)
+    >>> argrelextrema(y, mx.less, axis=1)
     (array([0, 2]), array([2, 1]))
 
     """
     results = _boolrelextrema(data, comparator,
                               axis, order, mode)
-    return np.nonzero(results)
+    return mx.nonzero(results)
 
 
 def _arg_x_as_expected(value):
@@ -260,10 +260,10 @@ def _arg_x_as_expected(value):
 
     Returns
     -------
-    value : ndarray
+    value : array
         A 1-D C-contiguous array with dtype('float64').
     """
-    value = np.asarray(value, order='C', dtype=np.float64)
+    value = mx.array(value, order='C', dtype=mx.float64)
     if value.ndim != 1:
         raise ValueError('`x` must be a 1-D array')
     return value
@@ -277,16 +277,16 @@ def _arg_peaks_as_expected(value):
 
     Returns
     -------
-    value : ndarray
+    value : array
         A 1-D C-contiguous array with dtype('intp').
     """
-    value = np.asarray(value)
+    value = mx.array(value)
     if value.size == 0:
-        # Empty arrays default to np.float64 but are valid input
-        value = np.array([], dtype=np.intp)
+        # Empty arrays default to mx.float64 but are valid input
+        value = mx.array([], dtype=mx.intp)
     try:
-        # Safely convert to C-contiguous array of type np.intp
-        value = value.astype(np.intp, order='C', casting='safe',
+        # Safely convert to C-contiguous array of type mx.intp
+        value = value.astype(mx.intp, order='C', casting='safe',
                              subok=False, copy=False)
     except TypeError as e:
         raise TypeError("cannot safely cast `peaks` to dtype('intp')") from e
@@ -296,13 +296,13 @@ def _arg_peaks_as_expected(value):
 
 
 def _arg_wlen_as_expected(value):
-    """Ensure argument `wlen` is of type `np.intp` and larger than 1.
+    """Ensure argument `wlen` is of type `mx.intp` and larger than 1.
 
     Used in `peak_prominences` and `peak_widths`.
 
     Returns
     -------
-    value : np.intp
+    value : mx.intp
         The original `value` rounded up to an integer or -1 if `value` was
         None.
     """
@@ -314,7 +314,7 @@ def _arg_wlen_as_expected(value):
         # Round up to a positive integer
         if isinstance(value, float):
             value = math.ceil(value)
-        value = np.intp(value)
+        value = mx.intp(value)
     else:
         raise ValueError(f'`wlen` must be larger than 1, was {value}')
     return value
@@ -342,9 +342,9 @@ def peak_prominences(x, peaks, wlen=None):
 
     Returns
     -------
-    prominences : ndarray
+    prominences : array
         The calculated prominences for each peak in `peaks`.
-    left_bases, right_bases : ndarray
+    left_bases, right_bases : array
         The peaks' bases as indices in `x` to the left and right of each peak.
         The higher base of each pair is a peak's lowest contour line.
 
@@ -408,14 +408,14 @@ def peak_prominences(x, peaks, wlen=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import find_peaks, peak_prominences
     >>> import matplotlib.pyplot as plt
 
     Create a test signal with two overlaid harmonics
 
-    >>> x = np.linspace(0, 6 * np.pi, 1000)
-    >>> x = np.sin(x) + 0.6 * np.sin(2.6 * x)
+    >>> x = mx.linspace(0, 6 * mx.pi, 1000)
+    >>> x = mx.sin(x) + 0.6 * mx.sin(2.6 * x)
 
     Find all peaks and calculate prominences
 
@@ -436,8 +436,8 @@ def peak_prominences(x, peaks, wlen=None):
     Let's evaluate a second example that demonstrates several edge cases for
     one peak at index 5.
 
-    >>> x = np.array([0, 1, 0, 3, 1, 3, 0, 4, 0])
-    >>> peaks = np.array([5])
+    >>> x = mx.array([0, 1, 0, 3, 1, 3, 0, 4, 0])
+    >>> peaks = mx.array([5])
     >>> plt.plot(x)
     >>> plt.plot(peaks, x[peaks], "x")
     >>> plt.show()
@@ -493,11 +493,11 @@ def peak_widths(x, peaks, rel_height=0.5, prominence_data=None, wlen=None):
 
     Returns
     -------
-    widths : ndarray
+    widths : array
         The widths for each peak in samples.
-    width_heights : ndarray
+    width_heights : array
         The height of the contour lines at which the `widths` where evaluated.
-    left_ips, right_ips : ndarray
+    left_ips, right_ips : array
         Interpolated positions of left and right intersection points of a
         horizontal line at the respective evaluation height.
 
@@ -553,14 +553,14 @@ def peak_widths(x, peaks, rel_height=0.5, prominence_data=None, wlen=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import chirp, find_peaks, peak_widths
     >>> import matplotlib.pyplot as plt
 
     Create a test signal with two overlaid harmonics
 
-    >>> x = np.linspace(0, 6 * np.pi, 1000)
-    >>> x = np.sin(x) + 0.6 * np.sin(2.6 * x)
+    >>> x = mx.linspace(0, 6 * mx.pi, 1000)
+    >>> x = mx.sin(x) + 0.6 * mx.sin(2.6 * x)
 
     Find all peaks and calculate their widths at the relative height of 0.5
     (contour line at half the prominence height) and 1 (at the lowest contour
@@ -599,19 +599,19 @@ def _unpack_condition_args(interval, x, peaks):
 
     Parameters
     ----------
-    interval : number or ndarray or sequence
-        Either a number or ndarray or a 2-element sequence of the former. The
+    interval : number or array or sequence
+        Either a number or array or a 2-element sequence of the former. The
         first value is always interpreted as `imin` and the second, if supplied,
         as `imax`.
-    x : ndarray
+    x : array
         The signal with `peaks`.
-    peaks : ndarray
+    peaks : array
         An array with indices used to reduce `imin` and / or `imax` if those are
         arrays.
 
     Returns
     -------
-    imin, imax : number or ndarray or None
+    imin, imax : number or array or None
         Minimal and maximal value in `argument`.
 
     Raises
@@ -631,11 +631,11 @@ def _unpack_condition_args(interval, x, peaks):
         imin, imax = (interval, None)
 
     # Reduce arrays if arrays
-    if isinstance(imin, np.ndarray):
+    if isinstance(imin, mx.array):
         if imin.size != x.size:
             raise ValueError('array size of lower interval border must match x')
         imin = imin[peaks]
-    if isinstance(imax, np.ndarray):
+    if isinstance(imax, mx.array):
         if imax.size != x.size:
             raise ValueError('array size of upper interval border must match x')
         imax = imax[peaks]
@@ -649,12 +649,12 @@ def _select_by_property(peak_properties, pmin, pmax):
 
     Parameters
     ----------
-    peak_properties : ndarray
+    peak_properties : array
         An array with properties for each peak.
-    pmin : None or number or ndarray
+    pmin : None or number or array
         Lower interval boundary for `peak_properties`. ``None`` is interpreted as
         an open border.
-    pmax : None or number or ndarray
+    pmax : None or number or array
         Upper interval boundary for `peak_properties`. ``None`` is interpreted as
         an open border.
 
@@ -673,7 +673,7 @@ def _select_by_property(peak_properties, pmin, pmax):
 
     .. versionadded:: 1.1.0
     """
-    keep = np.ones(peak_properties.size, dtype=bool)
+    keep = mx.ones(peak_properties.size, dtype=bool)
     if pmin is not None:
         keep &= (pmin <= peak_properties)
     if pmax is not None:
@@ -687,12 +687,12 @@ def _select_by_peak_threshold(x, peaks, tmin, tmax):
 
     Parameters
     ----------
-    x : ndarray
+    x : array
         A 1-D array which is indexable by `peaks`.
-    peaks : ndarray
+    peaks : array
         Indices of peaks in `x`.
-    tmin, tmax : scalar or ndarray or None
-         Minimal and / or maximal required thresholds. If supplied as ndarrays
+    tmin, tmax : scalar or array or None
+         Minimal and / or maximal required thresholds. If supplied as arrays
          their size must match `peaks`. ``None`` is interpreted as an open
          border.
 
@@ -701,7 +701,7 @@ def _select_by_peak_threshold(x, peaks, tmin, tmax):
     keep : bool
         A boolean mask evaluating to true where `peaks` fulfill the threshold
         condition.
-    left_thresholds, right_thresholds : ndarray
+    left_thresholds, right_thresholds : array
         Array matching `peak` containing the thresholds of each peak on
         both sides.
 
@@ -713,14 +713,14 @@ def _select_by_peak_threshold(x, peaks, tmin, tmax):
     # Stack thresholds on both sides to make min / max operations easier:
     # tmin is compared with the smaller, and tmax with the greater threshold to
     # each peak's side
-    stacked_thresholds = np.vstack([x[peaks] - x[peaks - 1],
+    stacked_thresholds = mx.vstack([x[peaks] - x[peaks - 1],
                                     x[peaks] - x[peaks + 1]])
-    keep = np.ones(peaks.size, dtype=bool)
+    keep = mx.ones(peaks.size, dtype=bool)
     if tmin is not None:
-        min_thresholds = np.min(stacked_thresholds, axis=0)
+        min_thresholds = mx.min(stacked_thresholds, axis=0)
         keep &= (tmin <= min_thresholds)
     if tmax is not None:
-        max_thresholds = np.max(stacked_thresholds, axis=0)
+        max_thresholds = mx.max(stacked_thresholds, axis=0)
         keep &= (max_thresholds <= tmax)
 
     return keep, stacked_thresholds[0], stacked_thresholds[1]
@@ -740,12 +740,12 @@ def find_peaks(x, height=None, threshold=None, distance=None,
     ----------
     x : sequence
         A signal with peaks.
-    height : number or ndarray or sequence, optional
+    height : number or array or sequence, optional
         Required height of peaks. Either a number, ``None``, an array matching
         `x` or a 2-element sequence of the former. The first element is
         always interpreted as the  minimal and the second, if supplied, as the
         maximal required height.
-    threshold : number or ndarray or sequence, optional
+    threshold : number or array or sequence, optional
         Required threshold of peaks, the vertical distance to its neighboring
         samples. Either a number, ``None``, an array matching `x` or a
         2-element sequence of the former. The first element is always
@@ -755,12 +755,12 @@ def find_peaks(x, height=None, threshold=None, distance=None,
         Required minimal horizontal distance (>= 1) in samples between
         neighbouring peaks. Smaller peaks are removed first until the condition
         is fulfilled for all remaining peaks.
-    prominence : number or ndarray or sequence, optional
+    prominence : number or array or sequence, optional
         Required prominence of peaks. Either a number, ``None``, an array
         matching `x` or a 2-element sequence of the former. The first
         element is always interpreted as the  minimal and the second, if
         supplied, as the maximal required prominence.
-    width : number or ndarray or sequence, optional
+    width : number or array or sequence, optional
         Required width of peaks in samples. Either a number, ``None``, an array
         matching `x` or a 2-element sequence of the former. The first
         element is always interpreted as the  minimal and the second, if
@@ -773,7 +773,7 @@ def find_peaks(x, height=None, threshold=None, distance=None,
         Used for calculation of the peaks width, thus it is only used if `width`
         is given. See argument  `rel_height` in `peak_widths` for a full
         description of its effects.
-    plateau_size : number or ndarray or sequence, optional
+    plateau_size : number or array or sequence, optional
         Required size of the flat top of peaks in samples. Either a number,
         ``None``, an array matching `x` or a 2-element sequence of the former.
         The first element is always interpreted as the minimal and the second,
@@ -783,7 +783,7 @@ def find_peaks(x, height=None, threshold=None, distance=None,
 
     Returns
     -------
-    peaks : ndarray
+    peaks : array
         Indices of peaks in `x` that satisfy all given conditions.
     properties : dict
         A dictionary containing properties of the returned peaks which were
@@ -872,7 +872,7 @@ def find_peaks(x, height=None, threshold=None, distance=None,
     SciPy (see `scipy.datasets.electrocardiogram`). Let's find all peaks (local
     maxima) in `x` whose amplitude lies above 0.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.datasets import electrocardiogram
     >>> from scipy.signal import find_peaks
@@ -880,14 +880,14 @@ def find_peaks(x, height=None, threshold=None, distance=None,
     >>> peaks, _ = find_peaks(x, height=0)
     >>> plt.plot(x)
     >>> plt.plot(peaks, x[peaks], "x")
-    >>> plt.plot(np.zeros_like(x), "--", color="gray")
+    >>> plt.plot(mx.zeros_like(x), "--", color="gray")
     >>> plt.show()
 
     We can select peaks below 0 with ``height=(None, 0)`` or use arrays matching
     `x` in size to reflect a changing condition for different parts of the
     signal.
 
-    >>> border = np.sin(np.linspace(0, 3 * np.pi, x.size))
+    >>> border = mx.sin(mx.linspace(0, 3 * mx.pi, x.size))
     >>> peaks, _ = find_peaks(x, height=(-border, border))
     >>> plt.plot(x)
     >>> plt.plot(-border, "--", color="gray")
@@ -901,7 +901,7 @@ def find_peaks(x, height=None, threshold=None, distance=None,
     at least 150 samples.
 
     >>> peaks, _ = find_peaks(x, distance=150)
-    >>> np.diff(peaks)
+    >>> mx.diff(peaks)
     array([186, 180, 177, 171, 177, 169, 167, 164, 158, 162, 172])
     >>> plt.plot(x)
     >>> plt.plot(peaks, x[peaks], "x")
@@ -1019,7 +1019,7 @@ def _identify_ridge_lines(matr, max_distances, gap_thresh):
 
     Parameters
     ----------
-    matr : 2-D ndarray
+    matr : 2-D array
         Matrix in which to identify ridge lines.
     max_distances : 1-D sequence
         At each row, a ridge line is only connected
@@ -1046,12 +1046,12 @@ def _identify_ridge_lines(matr, max_distances, gap_thresh):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal._peak_finding import _identify_ridge_lines
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> data = rng.random((5,5))
     >>> max_dist = 3
-    >>> max_distances = np.full(20, max_dist)
+    >>> max_distances = mx.full(20, max_dist)
     >>> ridge_lines = _identify_ridge_lines(data, max_distances, 1)
 
     Notes
@@ -1064,9 +1064,9 @@ def _identify_ridge_lines(matr, max_distances, gap_thresh):
         raise ValueError('Max_distances must have at least as many rows '
                          'as matr')
 
-    all_max_cols = _boolrelextrema(matr, np.greater, axis=1, order=1)
+    all_max_cols = _boolrelextrema(matr, mx.greater, axis=1, order=1)
     # Highest row for which there are any relative maxima
-    has_relmax = np.nonzero(all_max_cols.any(axis=1))[0]
+    has_relmax = mx.nonzero(all_max_cols.any(axis=1))[0]
     if len(has_relmax) == 0:
         return []
     start_row = has_relmax[-1]
@@ -1074,10 +1074,10 @@ def _identify_ridge_lines(matr, max_distances, gap_thresh):
     # rows, cols,Gap number
     ridge_lines = [[[start_row],
                    [col],
-                   0] for col in np.nonzero(all_max_cols[start_row])[0]]
+                   0] for col in mx.nonzero(all_max_cols[start_row])[0]]
     final_lines = []
-    rows = np.arange(start_row - 1, -1, -1)
-    cols = np.arange(0, matr.shape[1])
+    rows = mx.arange(start_row - 1, -1, -1)
+    cols = mx.arange(0, matr.shape[1])
     for row in rows:
         this_max_cols = cols[all_max_cols[row]]
 
@@ -1089,7 +1089,7 @@ def _identify_ridge_lines(matr, max_distances, gap_thresh):
         # XXX These should always be all_max_cols[row]
         # But the order might be different. Might be an efficiency gain
         # to make sure the order is the same and avoid this iteration
-        prev_ridge_cols = np.array([line[1][-1] for line in ridge_lines])
+        prev_ridge_cols = mx.array([line[1][-1] for line in ridge_lines])
         # Look through every relative maximum found at current row
         # Attempt to connect them with existing ridge lines.
         for ind, col in enumerate(this_max_cols):
@@ -1098,8 +1098,8 @@ def _identify_ridge_lines(matr, max_distances, gap_thresh):
             # Otherwise start a new one.
             line = None
             if len(prev_ridge_cols) > 0:
-                diffs = np.abs(col - prev_ridge_cols)
-                closest = np.argmin(diffs)
+                diffs = mx.abs(col - prev_ridge_cols)
+                closest = mx.argmin(diffs)
                 if diffs[closest] <= max_distances[row]:
                     line = ridge_lines[closest]
             if line is not None:
@@ -1125,8 +1125,8 @@ def _identify_ridge_lines(matr, max_distances, gap_thresh):
 
     out_lines = []
     for line in (final_lines + ridge_lines):
-        sortargs = np.array(np.argsort(line[0]))
-        rows, cols = np.zeros_like(sortargs), np.zeros_like(sortargs)
+        sortargs = mx.array(mx.argsort(line[0]))
+        rows, cols = mx.zeros_like(sortargs), mx.zeros_like(sortargs)
         rows[sortargs] = line[0]
         cols[sortargs] = line[1]
         out_lines.append([rows, cols])
@@ -1142,7 +1142,7 @@ def _filter_ridge_lines(cwt, ridge_lines, window_size=None, min_length=None,
 
     Parameters
     ----------
-    cwt : 2-D ndarray
+    cwt : 2-D array
         Continuous wavelet transform from which the `ridge_lines` were defined.
     ridge_lines : 1-D sequence
         Each element should contain 2 sequences, the rows and columns
@@ -1171,16 +1171,16 @@ def _filter_ridge_lines(cwt, ridge_lines, window_size=None, min_length=None,
     """
     num_points = cwt.shape[1]
     if min_length is None:
-        min_length = np.ceil(cwt.shape[0] / 4)
+        min_length = mx.ceil(cwt.shape[0] / 4)
     if window_size is None:
-        window_size = np.ceil(num_points / 20)
+        window_size = mx.ceil(num_points / 20)
 
     window_size = int(window_size)
     hf_window, odd = divmod(window_size, 2)
 
     # Filter based on SNR
     row_one = cwt[0, :]
-    noises = np.empty_like(row_one)
+    noises = mx.empty_like(row_one)
     for ind, val in enumerate(row_one):
         window_start = max(ind - hf_window, 0)
         window_end = min(ind + hf_window + odd, num_points)
@@ -1211,7 +1211,7 @@ def find_peaks_cwt(vector, widths, wavelet=None, max_distances=None,
 
     Parameters
     ----------
-    vector : ndarray
+    vector : array
         1-D array in which to find the peaks.
     widths : float or sequence
         Single width or 1-D array-like of widths to use for calculating
@@ -1223,7 +1223,7 @@ def find_peaks_cwt(vector, widths, wavelet=None, max_distances=None,
         of the returned wavelet array, the second parameter is the scale
         (`width`) of the wavelet. Should be normalized and symmetric.
         Default is the ricker wavelet.
-    max_distances : ndarray, optional
+    max_distances : array, optional
         At each row, a ridge line is only connected if the relative max at
         row[n] is within ``max_distances[n]`` from the relative max at
         ``row[n+1]``.  Default value is ``widths/4``.
@@ -1249,7 +1249,7 @@ def find_peaks_cwt(vector, widths, wavelet=None, max_distances=None,
 
     Returns
     -------
-    peaks_indices : ndarray
+    peaks_indices : array
         Indices of the locations in the `vector` where peaks were found.
         The list is sorted.
 
@@ -1281,19 +1281,19 @@ def find_peaks_cwt(vector, widths, wavelet=None, max_distances=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
-    >>> xs = np.arange(0, np.pi, 0.05)
-    >>> data = np.sin(xs)
-    >>> peakind = signal.find_peaks_cwt(data, np.arange(1,10))
+    >>> xs = mx.arange(0, mx.pi, 0.05)
+    >>> data = mx.sin(xs)
+    >>> peakind = signal.find_peaks_cwt(data, mx.arange(1,10))
     >>> peakind, xs[peakind], data[peakind]
     ([32], array([ 1.6]), array([ 0.9995736]))
 
     """
-    widths = np.atleast_1d(np.asarray(widths))
+    widths = mx.atleast_1d(mx.array(widths))
 
     if gap_thresh is None:
-        gap_thresh = np.ceil(widths[0])
+        gap_thresh = mx.ceil(widths[0])
     if max_distances is None:
         max_distances = widths / 4.0
     if wavelet is None:
@@ -1304,7 +1304,7 @@ def find_peaks_cwt(vector, widths, wavelet=None, max_distances=None,
     filtered = _filter_ridge_lines(cwt_dat, ridge_lines, min_length=min_length,
                                    window_size=window_size, min_snr=min_snr,
                                    noise_perc=noise_perc)
-    max_locs = np.asarray([x[1][0] for x in filtered])
+    max_locs = mx.array([x[1][0] for x in filtered])
     max_locs.sort()
 
     return max_locs

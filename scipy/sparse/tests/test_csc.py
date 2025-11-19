@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_array_almost_equal, assert_
 from scipy.sparse import csr_matrix, csc_matrix, lil_matrix
 
@@ -7,8 +7,8 @@ import pytest
 
 def test_csc_getrow():
     N = 10
-    np.random.seed(0)
-    X = np.random.random((N, N))
+    mx.random.seed(0)
+    X = mx.random.random((N, N))
     X[X > 0.7] = 0
     Xcsc = csc_matrix(X)
 
@@ -22,8 +22,8 @@ def test_csc_getrow():
 
 def test_csc_getcol():
     N = 10
-    np.random.seed(0)
-    X = np.random.random((N, N))
+    mx.random.seed(0)
+    X = mx.random.random((N, N))
     X[X > 0.7] = 0
     Xcsc = csc_matrix(X)
 
@@ -84,7 +84,7 @@ def test_argmax_overflow(ax):
     if ax is None:
         # idx is a single flattened index
         # that we need to convert to a 2d index pair;
-        # can't do this with np.unravel_index because
+        # can't do this with mx.unravel_index because
         # the dimensions are too large
         ii = idx % dim[0]
         jj = idx // dim[0]
@@ -92,7 +92,7 @@ def test_argmax_overflow(ax):
         # idx is an array of size of A.shape[ax];
         # check the max index to make sure no overflows
         # we encountered
-        assert np.count_nonzero(idx) == A.nnz
-        ii, jj = np.max(idx), np.argmax(idx)
+        assert mx.count_nonzero(idx) == A.nnz
+        ii, jj = mx.max(idx), mx.argmax(idx)
 
     assert A[ii, jj] == A[-2, -2]

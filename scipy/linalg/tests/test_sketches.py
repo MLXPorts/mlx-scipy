@@ -1,6 +1,6 @@
 """Tests for _sketches.py."""
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_, assert_equal
 from scipy.linalg import clarkson_woodruff_transform
 from scipy.linalg._sketches import cwt_matrix
@@ -13,7 +13,7 @@ class TestClarksonWoodruffTransform:
     Testing the Clarkson Woodruff Transform
     """
     # set seed for generating test matrices
-    rng = np.random.default_rng(1179103485)
+    rng = mx.random.default_rng(1179103485)
 
     # Test matrix parameters
     n_rows = 2000
@@ -44,7 +44,7 @@ class TestClarksonWoodruffTransform:
     ]
 
     # Test vector with norm ~1
-    x = rng.random((n_rows, 1)) / np.sqrt(n_rows)
+    x = rng.random((n_rows, 1)) / mx.sqrt(n_rows)
     del rng  # Not deterministic in pytest-run-parallel
 
     def test_sketch_dimensions(self):
@@ -90,7 +90,7 @@ class TestClarksonWoodruffTransform:
             if issparse(A):
                 true_norm = norm(A)
             else:
-                true_norm = np.linalg.norm(A)
+                true_norm = mx.linalg.norm(A)
             for seed in self.seeds:
                 sketch = clarkson_woodruff_transform(
                     A, self.n_sketch_rows, rng=seed,
@@ -98,22 +98,22 @@ class TestClarksonWoodruffTransform:
                 if issparse(sketch):
                     sketch_norm = norm(sketch)
                 else:
-                    sketch_norm = np.linalg.norm(sketch)
+                    sketch_norm = mx.linalg.norm(sketch)
 
-                if np.abs(true_norm - sketch_norm) > 0.1 * true_norm:
+                if mx.abs(true_norm - sketch_norm) > 0.1 * true_norm:
                     n_errors += 1
         assert_(n_errors == 0)
 
     def test_sketch_preserves_vector_norm(self):
         n_errors = 0
-        n_sketch_rows = int(np.ceil(2. / (0.01 * 0.5**2)))
-        true_norm = np.linalg.norm(self.x)
+        n_sketch_rows = int(mx.ceil(2. / (0.01 * 0.5**2)))
+        true_norm = mx.linalg.norm(self.x)
         for seed in self.seeds:
             sketch = clarkson_woodruff_transform(
                 self.x, n_sketch_rows, rng=seed,
             )
-            sketch_norm = np.linalg.norm(sketch)
+            sketch_norm = mx.linalg.norm(sketch)
 
-            if np.abs(true_norm - sketch_norm) > 0.5 * true_norm:
+            if mx.abs(true_norm - sketch_norm) > 0.5 * true_norm:
                 n_errors += 1
         assert_(n_errors == 0)

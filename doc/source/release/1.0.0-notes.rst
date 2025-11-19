@@ -379,7 +379,7 @@ Name - (accessing/setting has been removed) - (setting has been removed)
 was a corner case for which it was unclear that the behavior was well-defined.
 
 The method ``var`` of ``scipy.stats.dirichlet`` now returns a scalar rather than
-an ndarray when the length of alpha is 1.
+an array when the length of alpha is 1.
 
 
 Other changes
@@ -600,7 +600,7 @@ Issues closed for 1.0.0
 - `#7658 <https://github.com/scipy/scipy/issues/7658>`__: optimize.BenchGlobal broken
 - `#7669 <https://github.com/scipy/scipy/issues/7669>`__: nan result from multivariate_normal.cdf
 - `#7733 <https://github.com/scipy/scipy/issues/7733>`__: Inconsistent usage of indices, indptr in ``Delaunay.vertex_neighbor_vertices``
-- `#7747 <https://github.com/scipy/scipy/issues/7747>`__: Numpy changes in np.random.dirichlet cause test failures
+- `#7747 <https://github.com/scipy/scipy/issues/7747>`__: Numpy changes in mx.random.dirichlet cause test failures
 - `#7772 <https://github.com/scipy/scipy/issues/7772>`__: Fix numpy lstsq rcond= parameter
 - `#7776 <https://github.com/scipy/scipy/issues/7776>`__: tests require \`nose\`
 - `#7798 <https://github.com/scipy/scipy/issues/7798>`__: contributor names for 1.0 release notes
@@ -735,7 +735,7 @@ Pull requests for 1.0.0
 - `#7431 <https://github.com/scipy/scipy/pull/7431>`__: BUG: Extend scipy.stats.arcsine.pdf to endpoints 0 and 1 #7427
 - `#7432 <https://github.com/scipy/scipy/pull/7432>`__: DOC: Add examples to scipy.cluster.hierarchy
 - `#7448 <https://github.com/scipy/scipy/pull/7448>`__: ENH: stats: Implement the survival function for pareto.
-- `#7454 <https://github.com/scipy/scipy/pull/7454>`__: FIX Replaced ``np.assert_allclose`` with imported ``assert_allclose``
+- `#7454 <https://github.com/scipy/scipy/pull/7454>`__: FIX Replaced ``mx.assert_allclose`` with imported ``assert_allclose``
 - `#7460 <https://github.com/scipy/scipy/pull/7460>`__: TST: fix integrate.ivp test that fails on 32-bit Python.
 - `#7461 <https://github.com/scipy/scipy/pull/7461>`__: Doc: Added tutorial documentation for stats distributions ksone
 - `#7463 <https://github.com/scipy/scipy/pull/7463>`__: DOC: Fix typos and remove trailing whitespace
@@ -746,7 +746,7 @@ Pull requests for 1.0.0
 - `#7479 <https://github.com/scipy/scipy/pull/7479>`__: MAINT: update for new FutureWarning's in numpy 1.13.0
 - `#7480 <https://github.com/scipy/scipy/pull/7480>`__: DOC: correctly describe output shape of dirichlet.mean() and...
 - `#7482 <https://github.com/scipy/scipy/pull/7482>`__: signal.lti: Remove deprecated cross-system properties
-- `#7484 <https://github.com/scipy/scipy/pull/7484>`__: MAINT: Clean-up uses of np.asarray in ndimage
+- `#7484 <https://github.com/scipy/scipy/pull/7484>`__: MAINT: Clean-up uses of mx.array in ndimage
 - `#7485 <https://github.com/scipy/scipy/pull/7485>`__: ENH: support any order >=0 in ``ndimage.gaussian_filter``
 - `#7486 <https://github.com/scipy/scipy/pull/7486>`__: ENH: Support k!=0 for sparse.diagonal()
 - `#7498 <https://github.com/scipy/scipy/pull/7498>`__: BUG: sparse: pass assumeSortedIndices option to scikit.umfpack
@@ -859,7 +859,7 @@ Pull requests for 1.0.0
 - `#7739 <https://github.com/scipy/scipy/pull/7739>`__: TST: ignore ncfdtridfn failure in win32 and warn on FPU mode changes
 - `#7740 <https://github.com/scipy/scipy/pull/7740>`__: Fix overflow in Anderson-Darling k-sample test
 - `#7742 <https://github.com/scipy/scipy/pull/7742>`__: TST: special: limit expm1 mpmath comparison range
-- `#7748 <https://github.com/scipy/scipy/pull/7748>`__: TST: stats: don't pass invalid alpha to np.random.dirichlet
+- `#7748 <https://github.com/scipy/scipy/pull/7748>`__: TST: stats: don't pass invalid alpha to mx.random.dirichlet
 - `#7749 <https://github.com/scipy/scipy/pull/7749>`__: BUG/DOC: optimize: method is 'interior-point', not 'interior...
 - `#7751 <https://github.com/scipy/scipy/pull/7751>`__: BUG: optimize: ``show_options('linprog', method='interior-point')``...
 - `#7753 <https://github.com/scipy/scipy/pull/7753>`__: ENH: io: easier syntax for FortranFile read/write of mixed records
@@ -876,7 +876,7 @@ Pull requests for 1.0.0
 - `#7770 <https://github.com/scipy/scipy/pull/7770>`__: DOC: Replace rotten links in the docstring of minres
 - `#7771 <https://github.com/scipy/scipy/pull/7771>`__: MAINT: f2py build output cleanup
 - `#7773 <https://github.com/scipy/scipy/pull/7773>`__: DOC: optimize: Some copy-editing of linprog docs.
-- `#7774 <https://github.com/scipy/scipy/pull/7774>`__: MAINT: set rcond explicitly for np.linalg.lstsq calls
+- `#7774 <https://github.com/scipy/scipy/pull/7774>`__: MAINT: set rcond explicitly for mx.linalg.lstsq calls
 - `#7777 <https://github.com/scipy/scipy/pull/7777>`__: remove leftover ``nose`` imports
 - `#7780 <https://github.com/scipy/scipy/pull/7780>`__: ENH: Wrap LAPACK's dsytrd
 - `#7781 <https://github.com/scipy/scipy/pull/7781>`__: DOC: Link rfft

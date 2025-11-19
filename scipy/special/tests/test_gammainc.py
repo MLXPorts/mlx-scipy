@@ -1,6 +1,6 @@
 import pytest
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose, assert_array_equal
 
 import scipy.special as sc
@@ -11,8 +11,8 @@ INVALID_POINTS = [
     (1, -1),
     (0, 0),
     (-1, 1),
-    (np.nan, 1),
-    (1, np.nan)
+    (mx.nan, 1),
+    (1, mx.nan)
 ]
 
 
@@ -20,75 +20,75 @@ class TestGammainc:
 
     @pytest.mark.parametrize('a, x', INVALID_POINTS)
     def test_domain(self, a, x):
-        assert np.isnan(sc.gammainc(a, x))
+        assert mx.isnan(sc.gammainc(a, x))
 
     def test_a_eq_0_x_gt_0(self):
         assert sc.gammainc(0, 1) == 1
 
     @pytest.mark.parametrize('a, x, desired', [
-        (np.inf, 1, 0),
-        (np.inf, 0, 0),
-        (np.inf, np.inf, np.nan),
-        (1, np.inf, 1)
+        (mx.inf, 1, 0),
+        (mx.inf, 0, 0),
+        (mx.inf, mx.inf, mx.nan),
+        (1, mx.inf, 1)
     ])
     def test_infinite_arguments(self, a, x, desired):
         result = sc.gammainc(a, x)
-        if np.isnan(desired):
-            assert np.isnan(result)
+        if mx.isnan(desired):
+            assert mx.isnan(result)
         else:
             assert result == desired
 
-    @pytest.mark.parametrize("x", [-np.inf, -1.0, -0.0, 0.0, np.inf, np.nan])
+    @pytest.mark.parametrize("x", [-mx.inf, -1.0, -0.0, 0.0, mx.inf, mx.nan])
     def test_a_nan(self, x):
-        assert np.isnan(sc.gammainc(np.nan, x))
+        assert mx.isnan(sc.gammainc(mx.nan, x))
 
-    @pytest.mark.parametrize("a", [-np.inf, -1.0, -0.0, 0.0, np.inf, np.nan])
+    @pytest.mark.parametrize("a", [-mx.inf, -1.0, -0.0, 0.0, mx.inf, mx.nan])
     def test_x_nan(self, a):
-        assert np.isnan(sc.gammainc(a, np.nan))
+        assert mx.isnan(sc.gammainc(a, mx.nan))
 
     def test_infinite_limits(self):
         # Test that large arguments converge to the hard-coded limits
         # at infinity.
         assert_allclose(
             sc.gammainc(1000, 100),
-            sc.gammainc(np.inf, 100),
+            sc.gammainc(mx.inf, 100),
             atol=1e-200,  # Use `atol` since the function converges to 0.
             rtol=0
         )
-        assert sc.gammainc(100, 1000) == sc.gammainc(100, np.inf)
+        assert sc.gammainc(100, 1000) == sc.gammainc(100, mx.inf)
 
     def test_x_zero(self):
-        a = np.arange(1, 10)
+        a = mx.arange(1, 10)
         assert_array_equal(sc.gammainc(a, 0), 0)
 
     def test_limit_check(self):
         result = sc.gammainc(1e-10, 1)
         limit = sc.gammainc(0, 1)
-        assert np.isclose(result, limit)
+        assert mx.isclose(result, limit)
 
     def gammainc_line(self, x):
         # The line a = x where a simpler asymptotic expansion (analog
         # of DLMF 8.12.15) is available.
-        c = np.array([-1/3, -1/540, 25/6048, 101/155520,
+        c = mx.array([-1/3, -1/540, 25/6048, 101/155520,
                       -3184811/3695155200, -2745493/8151736420])
         res = 0
         xfac = 1
         for ck in c:
             res -= ck*xfac
             xfac /= x
-        res /= np.sqrt(2*np.pi*x)
+        res /= mx.sqrt(2*mx.pi*x)
         res += 0.5
         return res
 
     def test_line(self):
-        x = np.logspace(np.log10(25), 300, 500)
+        x = mx.logspace(mx.log10(25), 300, 500)
         a = x
-        dataset = np.vstack((a, x, self.gammainc_line(x))).T
+        dataset = mx.vstack((a, x, self.gammainc_line(x))).T
         FuncData(sc.gammainc, dataset, (0, 1), 2, rtol=1e-11).check()
 
     def test_roundtrip(self):
-        a = np.logspace(-5, 10, 100)
-        x = np.logspace(-5, 10, 100)
+        a = mx.logspace(-5, 10, 100)
+        x = mx.logspace(-5, 10, 100)
 
         y = sc.gammaincinv(a, sc.gammainc(a, x))
         assert_allclose(x, y, rtol=1e-10)
@@ -98,39 +98,39 @@ class TestGammaincc:
 
     @pytest.mark.parametrize('a, x', INVALID_POINTS)
     def test_domain(self, a, x):
-        assert np.isnan(sc.gammaincc(a, x))
+        assert mx.isnan(sc.gammaincc(a, x))
 
     def test_a_eq_0_x_gt_0(self):
         assert sc.gammaincc(0, 1) == 0
 
     @pytest.mark.parametrize('a, x, desired', [
-        (np.inf, 1, 1),
-        (np.inf, 0, 1),
-        (np.inf, np.inf, np.nan),
-        (1, np.inf, 0)
+        (mx.inf, 1, 1),
+        (mx.inf, 0, 1),
+        (mx.inf, mx.inf, mx.nan),
+        (1, mx.inf, 0)
     ])
     def test_infinite_arguments(self, a, x, desired):
         result = sc.gammaincc(a, x)
-        if np.isnan(desired):
-            assert np.isnan(result)
+        if mx.isnan(desired):
+            assert mx.isnan(result)
         else:
             assert result == desired
 
-    @pytest.mark.parametrize("x", [-np.inf, -1.0, -0.0, 0.0, np.inf, np.nan])
+    @pytest.mark.parametrize("x", [-mx.inf, -1.0, -0.0, 0.0, mx.inf, mx.nan])
     def test_a_nan(self, x):
-        assert np.isnan(sc.gammaincc(np.nan, x))
+        assert mx.isnan(sc.gammaincc(mx.nan, x))
 
-    @pytest.mark.parametrize("a", [-np.inf, -1.0, -0.0, 0.0, np.inf, np.nan])
+    @pytest.mark.parametrize("a", [-mx.inf, -1.0, -0.0, 0.0, mx.inf, mx.nan])
     def test_x_nan(self, a):
-        assert np.isnan(sc.gammaincc(a, np.nan))
+        assert mx.isnan(sc.gammaincc(a, mx.nan))
 
     def test_infinite_limits(self):
         # Test that large arguments converge to the hard-coded limits
         # at infinity.
-        assert sc.gammaincc(1000, 100) == sc.gammaincc(np.inf, 100)
+        assert sc.gammaincc(1000, 100) == sc.gammaincc(mx.inf, 100)
         assert_allclose(
             sc.gammaincc(100, 1000),
-            sc.gammaincc(100, np.inf),
+            sc.gammaincc(100, mx.inf),
             atol=1e-200,  # Use `atol` since the function converges to 0.
             rtol=0
         )
@@ -138,15 +138,15 @@ class TestGammaincc:
     def test_limit_check(self):
         result = sc.gammaincc(1e-10,1)
         limit = sc.gammaincc(0,1)
-        assert np.isclose(result, limit)
+        assert mx.isclose(result, limit)
 
     def test_x_zero(self):
-        a = np.arange(1, 10)
+        a = mx.arange(1, 10)
         assert_array_equal(sc.gammaincc(a, 0), 1)
 
     def test_roundtrip(self):
-        a = np.logspace(-5, 10, 100)
-        x = np.logspace(-5, 10, 100)
+        a = mx.logspace(-5, 10, 100)
+        x = mx.logspace(-5, 10, 100)
 
         y = sc.gammainccinv(a, sc.gammaincc(a, x))
         assert_allclose(x, y, rtol=1e-14)

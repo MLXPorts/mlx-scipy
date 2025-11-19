@@ -37,7 +37,7 @@ Issues closed for 1.8.1
 -----------------------
 
 * `#15258 <https://github.com/scipy/scipy/issues/15258>`__: BUG: sparse \`dot\` method should accept scalars
-* `#15433 <https://github.com/scipy/scipy/issues/15433>`__: BUG: optimize: minimize: \`ValueError\` when \`np.all(lb==ub)\`
+* `#15433 <https://github.com/scipy/scipy/issues/15433>`__: BUG: optimize: minimize: \`ValueError\` when \`mx.all(lb==ub)\`
 * `#15539 <https://github.com/scipy/scipy/issues/15539>`__: BUG: Questionable macOS wheel contents
 * `#15543 <https://github.com/scipy/scipy/issues/15543>`__: REL: list contributors using GitHub handles
 * `#15552 <https://github.com/scipy/scipy/issues/15552>`__: BUG: MacOS universal2 wheels have two gfortran shared libraries,...
@@ -51,7 +51,7 @@ Pull requests for 1.8.1
 
 * `#15167 <https://github.com/scipy/scipy/pull/15167>`__: CI: make sure CI stays on VS2019 unless changed explicitly
 * `#15306 <https://github.com/scipy/scipy/pull/15306>`__: Revert "BLD Respect the --skip-build flag in setup.py"
-* `#15504 <https://github.com/scipy/scipy/pull/15504>`__: MAINT: np.all(lb == ub) for optimize.minimize
+* `#15504 <https://github.com/scipy/scipy/pull/15504>`__: MAINT: mx.all(lb == ub) for optimize.minimize
 * `#15530 <https://github.com/scipy/scipy/pull/15530>`__: REL: prep for SciPy 1.8.1
 * `#15531 <https://github.com/scipy/scipy/pull/15531>`__: [BUG] Fix importing scipy.lib._pep440
 * `#15558 <https://github.com/scipy/scipy/pull/15558>`__: CI: re-enable Pythran in Azure Windows CI jobs

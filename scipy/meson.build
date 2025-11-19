@@ -67,11 +67,11 @@ if incdir_numpy == 'not-given'
       '-c',
       '''import os
 os.chdir(os.path.join("..", "tools"))
-import numpy as np
+import mlx.core as mx
 try:
-  incdir = os.path.relpath(np.get_include())
+  incdir = os.path.relpath(mx.get_include())
 except Exception:
-  incdir = np.get_include()
+  incdir = mx.get_include()
 print(incdir)
   '''
     ],

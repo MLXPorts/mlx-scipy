@@ -2,7 +2,7 @@ import contextlib
 import warnings
 
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose, assert_equal
 
 from scipy.sparse import csr_array, dok_array, SparseEfficiencyWarning
@@ -27,7 +27,7 @@ def check_remains_sorted(X):
 @pytest.mark.parametrize("spcreator", formats_for_index1d)
 class TestGetSet1D:
     def test_None_index(self, spcreator):
-        D = np.array([4, 3, 0])
+        D = mx.array([4, 3, 0])
         A = spcreator(D)
 
         N = D.shape[0]
@@ -37,7 +37,7 @@ class TestGetSet1D:
             assert_equal(A[None, None, j].toarray(), D[None, None, j])
 
     def test_getitem_shape(self, spcreator):
-        A = spcreator(np.arange(3 * 4).reshape(3, 4))
+        A = spcreator(mx.arange(3 * 4).reshape(3, 4))
         assert A[1, 2].ndim == 0
         assert A[1, 2:3].shape == (1,)
         assert A[None, 1, 2:3].shape == (1, 1)
@@ -59,7 +59,7 @@ class TestGetSet1D:
             assert A[1:, 1, None, None].shape == (3,1,1)
 
     def test_getelement(self, spcreator):
-        D = np.array([4, 3, 0])
+        D = mx.array([4, 3, 0])
         A = spcreator(D)
 
         N = D.shape[0]
@@ -78,11 +78,11 @@ class TestGetSet1D:
 
     @pytest.mark.parametrize(
         "scalar_container",
-        [lambda x: csr_array(np.array([[x]])), np.array, lambda x: x],
+        [lambda x: csr_array(mx.array([[x]])), mx.array, lambda x: x],
         ids=["sparse", "dense", "scalar"]
     )
     def test_setelement(self, spcreator, scalar_container):
-        dtype = np.float64
+        dtype = mx.float64
         A = spcreator((12,), dtype=dtype)
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -110,7 +110,7 @@ class TestSlicingAndFancy1D:
     #  Int-like Array Index
     #######################
     def test_get_array_index(self, spcreator):
-        D = np.array([4, 3, 0])
+        D = mx.array([4, 3, 0])
         A = spcreator(D)
 
         assert_equal(A[()].toarray(), D[()])
@@ -119,7 +119,7 @@ class TestSlicingAndFancy1D:
                 A.__getitem__(ij)
 
     def test_set_array_index(self, spcreator):
-        dtype = np.float64
+        dtype = mx.float64
         A = spcreator((12,), dtype=dtype)
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -127,15 +127,15 @@ class TestSlicingAndFancy1D:
                 "Changing the sparsity structure of .* is expensive",
                 SparseEfficiencyWarning,
             )
-            A[np.array(6)] = dtype(4.0)  # scalar index
-            A[np.array(6)] = dtype(2.0)  # overwrite with scalar index
+            A[mx.array(6)] = dtype(4.0)  # scalar index
+            A[mx.array(6)] = dtype(2.0)  # overwrite with scalar index
             assert_equal(A.toarray(), [0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0])
 
             for ij in [(13,), (-14,)]:
                 with pytest.raises(IndexError, match='index .* out of (range|bounds)'):
                     A.__setitem__(ij, 123.0)
 
-            for v in [(), (0, 3), [1, 2, 3], np.array([1, 2, 3])]:
+            for v in [(), (0, 3), [1, 2, 3], mx.array([1, 2, 3])]:
                 msg = 'Trying to assign a sequence to an item'
                 with pytest.raises(ValueError, match=msg):
                     A.__setitem__(0, v)
@@ -144,22 +144,22 @@ class TestSlicingAndFancy1D:
     #  1d Slice as index
     ####################
     def test_dtype_preservation(self, spcreator):
-        assert_equal(spcreator((10,), dtype=np.int16)[1:5].dtype, np.int16)
-        assert_equal(spcreator((6,), dtype=np.int32)[0:0:2].dtype, np.int32)
-        assert_equal(spcreator((6,), dtype=np.int64)[:].dtype, np.int64)
+        assert_equal(spcreator((10,), dtype=mx.int16)[1:5].dtype, mx.int16)
+        assert_equal(spcreator((6,), dtype=mx.int32)[0:0:2].dtype, mx.int32)
+        assert_equal(spcreator((6,), dtype=mx.int64)[:].dtype, mx.int64)
 
     def test_get_1d_slice(self, spcreator):
-        B = np.arange(50.)
+        B = mx.arange(50.)
         A = spcreator(B)
         assert_equal(B[:], A[:].toarray())
         assert_equal(B[2:5], A[2:5].toarray())
 
-        C = np.array([4, 0, 6, 0, 0, 0, 0, 0, 1])
+        C = mx.array([4, 0, 6, 0, 0, 0, 0, 0, 1])
         D = spcreator(C)
         assert_equal(C[1:3], D[1:3].toarray())
 
         # Now test slicing when a row contains only zeros
-        E = np.array([0, 0, 0, 0, 0])
+        E = mx.array([0, 0, 0, 0, 0])
         F = spcreator(E)
         assert_equal(E[1:3], F[1:3].toarray())
         assert_equal(E[-2:], F[-2:].toarray())
@@ -167,13 +167,13 @@ class TestSlicingAndFancy1D:
         assert_equal(E[slice(None)], F[slice(None)].toarray())
 
     def test_slicing_idx_slice(self, spcreator):
-        B = np.arange(50)
+        B = mx.arange(50)
         A = spcreator(B)
 
         # [i]
         assert_equal(A[2], B[2])
         assert_equal(A[-1], B[-1])
-        assert_equal(A[np.array(-2)], B[-2])
+        assert_equal(A[mx.array(-2)], B[-2])
 
         # [1:2]
         assert_equal(A[:].toarray(), B[:])
@@ -181,16 +181,16 @@ class TestSlicingAndFancy1D:
         assert_equal(A[5:12:3].toarray(), B[5:12:3])
 
         # int8 slice
-        s = slice(np.int8(2), np.int8(4), None)
+        s = slice(mx.int8(2), mx.int8(4), None)
         assert_equal(A[s].toarray(), B[2:4])
 
-        # np.s_
-        s_ = np.s_
+        # mx.s_
+        s_ = mx.s_
         slices = [s_[:2], s_[1:2], s_[3:], s_[3::2],
                   s_[15:20], s_[3:2],
                   s_[8:3:-1], s_[4::-2], s_[:5:-1],
                   0, 1, s_[:], s_[1:5], -1, -2, -5,
-                  np.array(-1), np.int8(-3)]
+                  mx.array(-1), mx.int8(-3)]
 
         for j, a in enumerate(slices):
             x = A[a]
@@ -204,7 +204,7 @@ class TestSlicingAndFancy1D:
                     assert_equal(x.toarray(), y, repr(a))
 
     def test_ellipsis_1d_slicing(self, spcreator):
-        B = np.arange(50)
+        B = mx.arange(50)
         A = spcreator(B)
         assert_equal(A[...].toarray(), B[...])
         assert_equal(A[...,].toarray(), B[...,])
@@ -214,7 +214,7 @@ class TestSlicingAndFancy1D:
     ##########################
     def test_slice_scalar_assign(self, spcreator):
         A = spcreator((5,))
-        B = np.zeros((5,))
+        B = mx.zeros((5,))
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore",
@@ -241,7 +241,7 @@ class TestSlicingAndFancy1D:
                     SparseEfficiencyWarning,
                 )
                 A[idx] = 1
-            B = np.zeros(shape)
+            B = mx.zeros(shape)
             B[idx] = 1
             msg = f"idx={idx!r}"
             assert_allclose(A.toarray(), B, err_msg=msg)
@@ -266,7 +266,7 @@ class TestSlicingAndFancy1D:
 
             A = B / 10
             B[:] = A[:1]
-            assert_equal(np.zeros((5,)) + A[0], B.toarray())
+            assert_equal(mx.zeros((5,)) + A[0], B.toarray())
 
             A = B / 10
             B[:-1] = A[1:]
@@ -274,7 +274,7 @@ class TestSlicingAndFancy1D:
 
     def test_slice_assignment(self, spcreator):
         B = spcreator((4,))
-        expected = np.array([10, 0, 14, 0])
+        expected = mx.array([10, 0, 14, 0])
         block = [2, 1]
 
         with warnings.catch_warnings():
@@ -293,12 +293,12 @@ class TestSlicingAndFancy1D:
 
     def test_set_slice(self, spcreator):
         A = spcreator((5,))
-        B = np.zeros(5, float)
-        s_ = np.s_
+        B = mx.zeros(5, float)
+        s_ = mx.s_
         slices = [s_[:2], s_[1:2], s_[3:], s_[3::2],
                   s_[8:3:-1], s_[4::-2], s_[:5:-1],
                   0, 1, s_[:], s_[1:5], -1, -2, -5,
-                  np.array(-1), np.int8(-3)]
+                  mx.array(-1), mx.int8(-3)]
 
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -323,7 +323,7 @@ class TestSlicingAndFancy1D:
             A.__setitem__(slice(None), toobig)
 
     def test_assign_empty(self, spcreator):
-        A = spcreator(np.ones(3))
+        A = spcreator(mx.ones(3))
         B = spcreator((2,))
         A[:2] = B
         assert_equal(A.toarray(), [0, 0, 1])
@@ -332,12 +332,12 @@ class TestSlicingAndFancy1D:
     #  1d Fancy Indexing
     ####################
     def test_dtype_preservation_empty_index(self, spcreator):
-        A = spcreator((2,), dtype=np.int16)
-        assert_equal(A[[False, False]].dtype, np.int16)
-        assert_equal(A[[]].dtype, np.int16)
+        A = spcreator((2,), dtype=mx.int16)
+        assert_equal(A[[False, False]].dtype, mx.int16)
+        assert_equal(A[[]].dtype, mx.int16)
 
     def test_bad_index(self, spcreator):
-        A = spcreator(np.zeros(5))
+        A = spcreator(mx.zeros(5))
         with pytest.raises(
             (IndexError, ValueError, TypeError),
             match='Index dimension must be 1 or 2|only integers',
@@ -350,7 +350,7 @@ class TestSlicingAndFancy1D:
             A.__getitem__((2, "foo"))
 
     def test_fancy_indexing_2darray(self, spcreator):
-        B = np.arange(50).reshape((5, 10))
+        B = mx.arange(50).reshape((5, 10))
         A = spcreator(B)
 
         # [i]
@@ -359,39 +359,39 @@ class TestSlicingAndFancy1D:
         # [i,[1,2]]
         assert_equal(A[3, [1, 3]].toarray(), B[3, [1, 3]])
         assert_equal(A[-1, [2, -5]].toarray(), B[-1, [2, -5]])
-        assert_equal(A[np.array(-1), [2, -5]].toarray(), B[-1, [2, -5]])
-        assert_equal(A[-1, np.array([2, -5])].toarray(), B[-1, [2, -5]])
-        assert_equal(A[np.array(-1), np.array([2, -5])].toarray(), B[-1, [2, -5]])
+        assert_equal(A[mx.array(-1), [2, -5]].toarray(), B[-1, [2, -5]])
+        assert_equal(A[-1, mx.array([2, -5])].toarray(), B[-1, [2, -5]])
+        assert_equal(A[mx.array(-1), mx.array([2, -5])].toarray(), B[-1, [2, -5]])
 
         # [1:2,[1,2]]
         assert_equal(A[:, [2, 8, 3, -1]].toarray(), B[:, [2, 8, 3, -1]])
         assert_equal(A[3:4, [9]].toarray(), B[3:4, [9]])
         assert_equal(A[1:4, [-1, -5]].toarray(), B[1:4, [-1, -5]])
-        assert_equal(A[1:4, np.array([-1, -5])].toarray(), B[1:4, [-1, -5]])
+        assert_equal(A[1:4, mx.array([-1, -5])].toarray(), B[1:4, [-1, -5]])
 
         # [[1,2],j]
         assert_equal(A[[1, 3], 3].toarray(), B[[1, 3], 3])
         assert_equal(A[[2, -5], -4].toarray(), B[[2, -5], -4])
-        assert_equal(A[np.array([2, -5]), -4].toarray(), B[[2, -5], -4])
-        assert_equal(A[[2, -5], np.array(-4)].toarray(), B[[2, -5], -4])
-        assert_equal(A[np.array([2, -5]), np.array(-4)].toarray(), B[[2, -5], -4])
+        assert_equal(A[mx.array([2, -5]), -4].toarray(), B[[2, -5], -4])
+        assert_equal(A[[2, -5], mx.array(-4)].toarray(), B[[2, -5], -4])
+        assert_equal(A[mx.array([2, -5]), mx.array(-4)].toarray(), B[[2, -5], -4])
 
         # [[1,2],1:2]
         assert_equal(A[[1, 3], :].toarray(), B[[1, 3], :])
         assert_equal(A[[2, -5], 8:-1].toarray(), B[[2, -5], 8:-1])
-        assert_equal(A[np.array([2, -5]), 8:-1].toarray(), B[[2, -5], 8:-1])
+        assert_equal(A[mx.array([2, -5]), 8:-1].toarray(), B[[2, -5], 8:-1])
 
         # [[1,2],[1,2]]
         assert_equal(toarray(A[[1, 3], [2, 4]]), B[[1, 3], [2, 4]])
         assert_equal(toarray(A[[-1, -3], [2, -4]]), B[[-1, -3], [2, -4]])
         assert_equal(
-            toarray(A[np.array([-1, -3]), [2, -4]]), B[[-1, -3], [2, -4]]
+            toarray(A[mx.array([-1, -3]), [2, -4]]), B[[-1, -3], [2, -4]]
         )
         assert_equal(
-            toarray(A[[-1, -3], np.array([2, -4])]), B[[-1, -3], [2, -4]]
+            toarray(A[[-1, -3], mx.array([2, -4])]), B[[-1, -3], [2, -4]]
         )
         assert_equal(
-            toarray(A[np.array([-1, -3]), np.array([2, -4])]), B[[-1, -3], [2, -4]]
+            toarray(A[mx.array([-1, -3]), mx.array([2, -4])]), B[[-1, -3], [2, -4]]
         )
 
         # [[[1],[2]],[1,2]]
@@ -401,22 +401,22 @@ class TestSlicingAndFancy1D:
             B[[[-1], [-3], [-2]], [2, -4]]
         )
         assert_equal(
-            A[np.array([[-1], [-3], [-2]]), [2, -4]].toarray(),
+            A[mx.array([[-1], [-3], [-2]]), [2, -4]].toarray(),
             B[[[-1], [-3], [-2]], [2, -4]]
         )
         assert_equal(
-            A[[[-1], [-3], [-2]], np.array([2, -4])].toarray(),
+            A[[[-1], [-3], [-2]], mx.array([2, -4])].toarray(),
             B[[[-1], [-3], [-2]], [2, -4]]
         )
         assert_equal(
-            A[np.array([[-1], [-3], [-2]]), np.array([2, -4])].toarray(),
+            A[mx.array([[-1], [-3], [-2]]), mx.array([2, -4])].toarray(),
             B[[[-1], [-3], [-2]], [2, -4]]
         )
 
         # [[1,2]]
         assert_equal(A[[1, 3]].toarray(), B[[1, 3]])
         assert_equal(A[[-1, -3]].toarray(), B[[-1, -3]])
-        assert_equal(A[np.array([-1, -3])].toarray(), B[[-1, -3]])
+        assert_equal(A[mx.array([-1, -3])].toarray(), B[[-1, -3]])
 
         # [[1,2],:][:,[1,2]]
         assert_equal(
@@ -426,7 +426,7 @@ class TestSlicingAndFancy1D:
             A[[-1, -3], :][:, [2, -4]].toarray(), B[[-1, -3], :][:, [2, -4]]
         )
         assert_equal(
-            A[np.array([-1, -3]), :][:, np.array([2, -4])].toarray(),
+            A[mx.array([-1, -3]), :][:, mx.array([2, -4])].toarray(),
             B[[-1, -3], :][:, [2, -4]]
         )
 
@@ -438,34 +438,34 @@ class TestSlicingAndFancy1D:
             A[:, [-1, -3]][[2, -4], :].toarray(), B[:, [-1, -3]][[2, -4], :]
         )
         assert_equal(
-            A[:, np.array([-1, -3])][np.array([2, -4]), :].toarray(),
+            A[:, mx.array([-1, -3])][mx.array([2, -4]), :].toarray(),
             B[:, [-1, -3]][[2, -4], :]
         )
 
     def test_fancy_indexing(self, spcreator):
-        B = np.arange(50)
+        B = mx.arange(50)
         A = spcreator(B)
 
         # [i]
         assert_equal(A[[3]].toarray(), B[[3]])
 
-        # [np.array]
+        # [mx.array]
         assert_equal(A[[1, 3]].toarray(), B[[1, 3]])
         assert_equal(A[[2, -5]].toarray(), B[[2, -5]])
-        assert_equal(A[np.array(-1)], B[-1])
-        assert_equal(A[np.array([-1, 2])].toarray(), B[[-1, 2]])
-        assert_equal(A[np.array(5)], B[np.array(5)])
+        assert_equal(A[mx.array(-1)], B[-1])
+        assert_equal(A[mx.array([-1, 2])].toarray(), B[[-1, 2]])
+        assert_equal(A[mx.array(5)], B[mx.array(5)])
 
         # [[[1],[2]]]
-        ind = np.array([[1], [3]])
+        ind = mx.array([[1], [3]])
         assert_equal(A[ind].toarray(), B[ind])
-        ind = np.array([[-1], [-3], [-2]])
+        ind = mx.array([[-1], [-3], [-2]])
         assert_equal(A[ind].toarray(), B[ind])
 
         # [[1, 2]]
         assert_equal(A[[1, 3]].toarray(), B[[1, 3]])
         assert_equal(A[[-1, -3]].toarray(), B[[-1, -3]])
-        assert_equal(A[np.array([-1, -3])].toarray(), B[[-1, -3]])
+        assert_equal(A[mx.array([-1, -3])].toarray(), B[[-1, -3]])
 
         # [[1, 2]][[1, 2]]
         assert_equal(A[[1, 5, 2, 8]][[1, 3]].toarray(),
@@ -474,20 +474,20 @@ class TestSlicingAndFancy1D:
                      B[[-1, -5, 2, 8]][[1, -4]])
 
     def test_fancy_indexing_boolean(self, spcreator):
-        np.random.seed(1234)  # make runs repeatable
+        mx.random.seed(1234)  # make runs repeatable
 
-        B = np.arange(50)
+        B = mx.arange(50)
         A = spcreator(B)
 
-        I = np.array(np.random.randint(0, 2, size=50), dtype=bool)
+        I = mx.array(mx.random.randint(0, 2, size=50), dtype=bool)
 
         assert_equal(toarray(A[I]), B[I])
         assert_equal(toarray(A[B > 9]), B[B > 9])
 
-        Z1 = np.zeros(51, dtype=bool)
-        Z2 = np.zeros(51, dtype=bool)
+        Z1 = mx.zeros(51, dtype=bool)
+        Z2 = mx.zeros(51, dtype=bool)
         Z2[-1] = True
-        Z3 = np.zeros(51, dtype=bool)
+        Z3 = mx.zeros(51, dtype=bool)
         Z3[0] = True
 
         msg = 'bool index .* has shape|boolean index did not match'
@@ -499,18 +499,18 @@ class TestSlicingAndFancy1D:
             A.__getitem__(Z3)
 
     def test_fancy_indexing_sparse_boolean(self, spcreator):
-        np.random.seed(1234)  # make runs repeatable
+        mx.random.seed(1234)  # make runs repeatable
 
-        B = np.arange(20)
+        B = mx.arange(20)
         A = spcreator(B)
 
-        X = np.array(np.random.randint(0, 2, size=20), dtype=bool)
+        X = mx.array(mx.random.randint(0, 2, size=20), dtype=bool)
         Xsp = csr_array(X)
 
         assert_equal(toarray(A[Xsp]), B[X])
         assert_equal(toarray(A[A > 9]), B[B > 9])
 
-        Y = np.array(np.random.randint(0, 2, size=60), dtype=bool)
+        Y = mx.array(mx.random.randint(0, 2, size=60), dtype=bool)
 
         Ysp = csr_array(Y)
 
@@ -520,28 +520,28 @@ class TestSlicingAndFancy1D:
             A.__getitem__((Xsp, 1))
 
     def test_fancy_indexing_seq_assign(self, spcreator):
-        mat = spcreator(np.array([1, 0]))
+        mat = spcreator(mx.array([1, 0]))
         with pytest.raises(ValueError, match='Trying to assign a sequence to an item'):
-            mat.__setitem__(0, np.array([1, 2]))
+            mat.__setitem__(0, mx.array([1, 2]))
 
     def test_fancy_indexing_empty(self, spcreator):
-        B = np.arange(50)
+        B = mx.arange(50)
         B[3:9] = 0
         B[30] = 0
         A = spcreator(B)
 
-        K = np.array([False] * 50)
+        K = mx.array([False] * 50)
         assert_equal(toarray(A[K]), B[K])
-        K = np.array([], dtype=int)
+        K = mx.array([], dtype=int)
         assert_equal(toarray(A[K]), B[K])
-        J = np.array([0, 1, 2, 3, 4], dtype=int)
+        J = mx.array([0, 1, 2, 3, 4], dtype=int)
         assert_equal(toarray(A[J]), B[J])
 
     ############################
     #  1d Fancy Index Assignment
     ############################
     def test_bad_index_assign(self, spcreator):
-        A = spcreator(np.zeros(5))
+        A = spcreator(mx.zeros(5))
         msg = 'Index dimension must be 1 or 2|only integers'
         with pytest.raises((IndexError, ValueError, TypeError), match=msg):
             A.__setitem__("foo", 2)
@@ -550,10 +550,10 @@ class TestSlicingAndFancy1D:
         M = (5,)
 
         # [1:2]
-        for j in [[2, 3, 4], slice(None, 10, 4), np.arange(3),
+        for j in [[2, 3, 4], slice(None, 10, 4), mx.arange(3),
                      slice(5, -2), slice(2, 5)]:
             A = spcreator(M)
-            B = np.zeros(M)
+            B = mx.zeros(M)
             with warnings.catch_warnings():
                 warnings.filterwarnings(
                     "ignore",
@@ -571,7 +571,7 @@ class TestSlicingAndFancy1D:
 
         i0 = [0, 1, 2]
         i1 = (0, 1, 2)
-        i2 = np.array(i0)
+        i2 = mx.array(i0)
 
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -596,22 +596,22 @@ class TestSlicingAndFancy1D:
 
             # array
             A = spcreator((4,))
-            B = np.zeros(4)
+            B = mx.zeros(4)
             with check_remains_sorted(A):
                 for C in [A, B]:
                     C[[0, 1, 2]] = [4, 5, 6]
             assert_equal(A.toarray(), B)
 
     def test_fancy_assign_empty(self, spcreator):
-        B = np.arange(50)
+        B = mx.arange(50)
         B[2] = 0
         B[[3, 6]] = 0
         A = spcreator(B)
 
-        K = np.array([False] * 50)
+        K = mx.array([False] * 50)
         A[K] = 42
         assert_equal(A.toarray(), B)
 
-        K = np.array([], dtype=int)
+        K = mx.array([], dtype=int)
         A[K] = 42
         assert_equal(A.toarray(), B)

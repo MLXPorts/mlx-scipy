@@ -1,7 +1,7 @@
 import pytest
 from pytest import raises as assert_raises
 
-import numpy as np
+import mlx.core as mx
 from numpy import array, sqrt
 from numpy.testing import assert_equal, assert_allclose
 
@@ -15,7 +15,7 @@ class TestCheby:
     def test_chebyc(self):
         C0 = orth.chebyc(0)
         C1 = orth.chebyc(1)
-        with np.errstate(all='ignore'):
+        with mx.errstate(all='ignore'):
             C2 = orth.chebyc(2)
             C3 = orth.chebyc(3)
             C4 = orth.chebyc(4)
@@ -74,8 +74,8 @@ class TestCheby:
 class TestGegenbauer:
 
     def test_gegenbauer(self):
-        a = 5*np.random.random() - 0.5
-        if np.any(a == 0):
+        a = 5*mx.random.random() - 0.5
+        if mx.any(a == 0):
             a = -0.2
         Ca0 = orth.gegenbauer(0,a)
         Ca1 = orth.gegenbauer(1,a)
@@ -101,17 +101,17 @@ class TestGegenbauer:
     def test_n_zero_gh8888(self, a):
         # gh-8888 reported that gegenbauer(0, 0) returns NaN polynomial
         Cn0 = orth.gegenbauer(0, a)
-        assert_equal(Cn0.c, np.asarray([1.]))
+        assert_equal(Cn0.c, mx.array([1.]))
 
     def test_valid_alpha(self):
         # Check input validation of `alpha`
         message = '`alpha` must be a finite number greater...'
         with pytest.raises(ValueError, match=message):
-            orth.gegenbauer(0, np.nan)
+            orth.gegenbauer(0, mx.nan)
         with pytest.raises(ValueError, match=message):
             orth.gegenbauer(1, -0.5)
         with pytest.raises(ValueError, match=message):
-            orth.gegenbauer(2, -np.inf)
+            orth.gegenbauer(2, -mx.inf)
 
 
 class TestHermite:
@@ -131,7 +131,7 @@ class TestHermite:
 
     def test_hermitenorm(self):
         # He_n(x) = 2**(-n/2) H_n(x/sqrt(2))
-        psub = np.poly1d([1.0/sqrt(2),0])
+        psub = mx.poly1d([1.0/sqrt(2),0])
         H0 = orth.hermitenorm(0)
         H1 = orth.hermitenorm(1)
         H2 = orth.hermitenorm(2)
@@ -156,7 +156,7 @@ class TestHermite:
 class TestShLegendre:
     def test_sh_legendre(self):
         # P*_n(x) = P_n(2x-1)
-        psub = np.poly1d([2,-1])
+        psub = mx.poly1d([2,-1])
         Ps0 = orth.sh_legendre(0)
         Ps1 = orth.sh_legendre(1)
         Ps2 = orth.sh_legendre(2)
@@ -180,7 +180,7 @@ class TestShLegendre:
 class TestShChebyt:
     def test_sh_chebyt(self):
         # T*_n(x) = T_n(2x-1)
-        psub = np.poly1d([2,-1])
+        psub = mx.poly1d([2,-1])
         Ts0 = orth.sh_chebyt(0)
         Ts1 = orth.sh_chebyt(1)
         Ts2 = orth.sh_chebyt(2)
@@ -204,7 +204,7 @@ class TestShChebyt:
 class TestShChebyu:
     def test_sh_chebyu(self):
         # U*_n(x) = U_n(2x-1)
-        psub = np.poly1d([2,-1])
+        psub = mx.poly1d([2,-1])
         Us0 = orth.sh_chebyu(0)
         Us1 = orth.sh_chebyu(1)
         Us2 = orth.sh_chebyu(2)
@@ -230,9 +230,9 @@ class TestShJacobi:
         # G^(p,q)_n(x) = n! gamma(n+p)/gamma(2*n+p) * P^(p-q,q-1)_n(2*x-1)
         def conv(n, p):
             return gamma(n + 1) * gamma(n + p) / gamma(2 * n + p)
-        psub = np.poly1d([2,-1])
-        q = 4 * np.random.random()
-        p = q-1 + 2*np.random.random()
+        psub = mx.poly1d([2,-1])
+        q = 4 * mx.random.random()
+        p = q-1 + 2*mx.random.random()
         # print("shifted jacobi p,q = ", p, q)
         G0 = orth.sh_jacobi(0,p,q)
         G1 = orth.sh_jacobi(1,p,q)
@@ -277,10 +277,10 @@ class TestCall:
                 orth.legendre({n})
                 orth.sh_legendre({n})
                 """).split()])
-        with np.errstate(all='ignore'):
+        with mx.errstate(all='ignore'):
             for pstr in poly:
                 p = eval(pstr)
-                assert_allclose(p(0.315), np.poly1d(p.coef)(0.315),
+                assert_allclose(p(0.315), mx.poly1d(p.coef)(0.315),
                                 atol=1.5e-7, rtol=0, err_msg=pstr)
 
 
@@ -288,8 +288,8 @@ class TestGenlaguerre:
     def test_regression(self):
         assert_equal(orth.genlaguerre(1, 1, monic=False)(0), 2.)
         assert_equal(orth.genlaguerre(1, 1, monic=True)(0), -2.)
-        assert_equal(orth.genlaguerre(1, 1, monic=False), np.poly1d([-1, 2]))
-        assert_equal(orth.genlaguerre(1, 1, monic=True), np.poly1d([1, -2]))
+        assert_equal(orth.genlaguerre(1, 1, monic=False), mx.poly1d([-1, 2]))
+        assert_equal(orth.genlaguerre(1, 1, monic=True), mx.poly1d([1, -2]))
 
 
 def verify_gauss_quad(root_func, eval_func, weight_func, a, b, N,
@@ -297,12 +297,12 @@ def verify_gauss_quad(root_func, eval_func, weight_func, a, b, N,
     # this test is copied from numpy's TestGauss in test_hermite.py
     x, w, mu = root_func(N, True)
 
-    n = np.arange(N, dtype=np.dtype("long"))
-    v = eval_func(n[:,np.newaxis], x)
-    vv = np.dot(v*w, v.T)
-    vd = 1 / np.sqrt(vv.diagonal())
-    vv = vd[:, np.newaxis] * vv * vd
-    assert_allclose(vv, np.eye(N), rtol, atol)
+    n = mx.arange(N, dtype=mx.dtype("long"))
+    v = eval_func(n[:,mx.newaxis], x)
+    vv = mx.dot(v*w, v.T)
+    vd = 1 / mx.sqrt(vv.diagonal())
+    vv = vd[:, mx.newaxis] * vv * vd
+    assert_allclose(vv, mx.eye(N), rtol, atol)
 
     # check that the integral of 1 is correct
     assert_allclose(w.sum(), mu, rtol, atol)
@@ -311,7 +311,7 @@ def verify_gauss_quad(root_func, eval_func, weight_func, a, b, N,
     def f(x):
         return x ** 3 - 3 * x ** 2 + x - 2
     resI = integrate.quad(lambda x: f(x)*weight_func(x), a, b)
-    resG = np.vdot(f(x), w)
+    resG = mx.vdot(f(x), w)
     rtol = 1e-6 if 1e-6 < resI[1] else resI[1] * 10
     assert_allclose(resI[0], resG, rtol=rtol)
 
@@ -471,9 +471,9 @@ def test_roots_hermite():
     evalf = sc.eval_hermite
     weightf = orth.hermite(5).weight_func
 
-    verify_gauss_quad(rootf, evalf, weightf, -np.inf, np.inf, 5)
-    verify_gauss_quad(rootf, evalf, weightf, -np.inf, np.inf, 25, atol=1e-13)
-    verify_gauss_quad(rootf, evalf, weightf, -np.inf, np.inf, 100, atol=1e-12)
+    verify_gauss_quad(rootf, evalf, weightf, -mx.inf, mx.inf, 5)
+    verify_gauss_quad(rootf, evalf, weightf, -mx.inf, mx.inf, 25, atol=1e-13)
+    verify_gauss_quad(rootf, evalf, weightf, -mx.inf, mx.inf, 100, atol=1e-12)
 
     # Golub-Welsch branch
     x, w = sc.roots_hermite(5, False)
@@ -481,7 +481,7 @@ def test_roots_hermite():
     assert_allclose(x, y, 1e-14, 1e-14)
     assert_allclose(w, v, 1e-14, 1e-14)
 
-    muI, muI_err = integrate.quad(weightf, -np.inf, np.inf)
+    muI, muI_err = integrate.quad(weightf, -mx.inf, mx.inf)
     assert_allclose(m, muI, rtol=muI_err)
 
     # Asymptotic branch (switch over at n >= 150)
@@ -497,8 +497,8 @@ def test_roots_hermite():
 def test_roots_hermite_asy():
     # Recursion for Hermite functions
     def hermite_recursion(n, nodes):
-        H = np.zeros((n, nodes.size))
-        H[0,:] = np.pi**(-0.25) * np.exp(-0.5*nodes**2)
+        H = mx.zeros((n, nodes.size))
+        H[0,:] = mx.pi**(-0.25) * mx.exp(-0.5*nodes**2)
         if n > 1:
             H[1,:] = sqrt(2.0) * nodes * H[0,:]
             for k in range(2, n):
@@ -509,8 +509,8 @@ def test_roots_hermite_asy():
     def test(N, rtol=1e-15, atol=1e-14):
         x, w = orth._roots_hermite_asy(N)
         H = hermite_recursion(N+1, x)
-        assert_allclose(H[-1,:], np.zeros(N), rtol, atol)
-        assert_allclose(sum(w), sqrt(np.pi), rtol, atol)
+        assert_allclose(H[-1,:], mx.zeros(N), rtol, atol)
+        assert_allclose(sum(w), sqrt(mx.pi), rtol, atol)
 
     test(150, atol=1e-12)
     test(151, atol=1e-12)
@@ -528,16 +528,16 @@ def test_roots_hermitenorm():
     evalf = sc.eval_hermitenorm
     weightf = orth.hermitenorm(5).weight_func
 
-    verify_gauss_quad(rootf, evalf, weightf, -np.inf, np.inf, 5)
-    verify_gauss_quad(rootf, evalf, weightf, -np.inf, np.inf, 25, atol=1e-13)
-    verify_gauss_quad(rootf, evalf, weightf, -np.inf, np.inf, 100, atol=1e-12)
+    verify_gauss_quad(rootf, evalf, weightf, -mx.inf, mx.inf, 5)
+    verify_gauss_quad(rootf, evalf, weightf, -mx.inf, mx.inf, 25, atol=1e-13)
+    verify_gauss_quad(rootf, evalf, weightf, -mx.inf, mx.inf, 100, atol=1e-12)
 
     x, w = sc.roots_hermitenorm(5, False)
     y, v, m = sc.roots_hermitenorm(5, True)
     assert_allclose(x, y, 1e-14, 1e-14)
     assert_allclose(w, v, 1e-14, 1e-14)
 
-    muI, muI_err = integrate.quad(weightf, -np.inf, np.inf)
+    muI, muI_err = integrate.quad(weightf, -mx.inf, mx.inf)
     assert_allclose(m, muI, rtol=muI_err)
 
     assert_raises(ValueError, sc.roots_hermitenorm, 0)
@@ -759,10 +759,10 @@ def test_roots_sh_legendre():
 
 def test_roots_laguerre():
     weightf = orth.laguerre(5).weight_func
-    verify_gauss_quad(sc.roots_laguerre, sc.eval_laguerre, weightf, 0., np.inf, 5)
-    verify_gauss_quad(sc.roots_laguerre, sc.eval_laguerre, weightf, 0., np.inf,
+    verify_gauss_quad(sc.roots_laguerre, sc.eval_laguerre, weightf, 0., mx.inf, 5)
+    verify_gauss_quad(sc.roots_laguerre, sc.eval_laguerre, weightf, 0., mx.inf,
                       25, atol=1e-13)
-    verify_gauss_quad(sc.roots_laguerre, sc.eval_laguerre, weightf, 0., np.inf,
+    verify_gauss_quad(sc.roots_laguerre, sc.eval_laguerre, weightf, 0., mx.inf,
                       100, atol=1e-12)
 
     x, w = sc.roots_laguerre(5, False)
@@ -770,7 +770,7 @@ def test_roots_laguerre():
     assert_allclose(x, y, 1e-14, 1e-14)
     assert_allclose(w, v, 1e-14, 1e-14)
 
-    muI, muI_err = integrate.quad(weightf, 0, np.inf)
+    muI, muI_err = integrate.quad(weightf, 0, mx.inf)
     assert_allclose(m, muI, rtol=muI_err)
 
     assert_raises(ValueError, sc.roots_laguerre, 0)
@@ -782,35 +782,35 @@ def test_roots_genlaguerre():
     def evalf(a):
         return lambda n, x: sc.eval_genlaguerre(n, a, x)
     def weightf(a):
-        return lambda x: x ** a * np.exp(-x)
+        return lambda x: x ** a * mx.exp(-x)
 
     vgq = verify_gauss_quad
-    vgq(rootf(-0.5), evalf(-0.5), weightf(-0.5), 0., np.inf, 5)
-    vgq(rootf(-0.5), evalf(-0.5), weightf(-0.5), 0., np.inf, 25, atol=1e-13)
-    vgq(rootf(-0.5), evalf(-0.5), weightf(-0.5), 0., np.inf, 100, atol=1e-12)
+    vgq(rootf(-0.5), evalf(-0.5), weightf(-0.5), 0., mx.inf, 5)
+    vgq(rootf(-0.5), evalf(-0.5), weightf(-0.5), 0., mx.inf, 25, atol=1e-13)
+    vgq(rootf(-0.5), evalf(-0.5), weightf(-0.5), 0., mx.inf, 100, atol=1e-12)
 
-    vgq(rootf(0.1), evalf(0.1), weightf(0.1), 0., np.inf, 5)
-    vgq(rootf(0.1), evalf(0.1), weightf(0.1), 0., np.inf, 25, atol=1e-13)
-    vgq(rootf(0.1), evalf(0.1), weightf(0.1), 0., np.inf, 100, atol=1.6e-13)
+    vgq(rootf(0.1), evalf(0.1), weightf(0.1), 0., mx.inf, 5)
+    vgq(rootf(0.1), evalf(0.1), weightf(0.1), 0., mx.inf, 25, atol=1e-13)
+    vgq(rootf(0.1), evalf(0.1), weightf(0.1), 0., mx.inf, 100, atol=1.6e-13)
 
-    vgq(rootf(1), evalf(1), weightf(1), 0., np.inf, 5)
-    vgq(rootf(1), evalf(1), weightf(1), 0., np.inf, 25, atol=1e-13)
-    vgq(rootf(1), evalf(1), weightf(1), 0., np.inf, 100, atol=1.03e-13)
+    vgq(rootf(1), evalf(1), weightf(1), 0., mx.inf, 5)
+    vgq(rootf(1), evalf(1), weightf(1), 0., mx.inf, 25, atol=1e-13)
+    vgq(rootf(1), evalf(1), weightf(1), 0., mx.inf, 100, atol=1.03e-13)
 
-    vgq(rootf(10), evalf(10), weightf(10), 0., np.inf, 5)
-    vgq(rootf(10), evalf(10), weightf(10), 0., np.inf, 25, atol=1e-13)
-    vgq(rootf(10), evalf(10), weightf(10), 0., np.inf, 100, atol=1e-12)
+    vgq(rootf(10), evalf(10), weightf(10), 0., mx.inf, 5)
+    vgq(rootf(10), evalf(10), weightf(10), 0., mx.inf, 25, atol=1e-13)
+    vgq(rootf(10), evalf(10), weightf(10), 0., mx.inf, 100, atol=1e-12)
 
-    vgq(rootf(50), evalf(50), weightf(50), 0., np.inf, 5)
-    vgq(rootf(50), evalf(50), weightf(50), 0., np.inf, 25, atol=1e-13)
-    vgq(rootf(50), evalf(50), weightf(50), 0., np.inf, 100, rtol=1e-14, atol=2e-13)
+    vgq(rootf(50), evalf(50), weightf(50), 0., mx.inf, 5)
+    vgq(rootf(50), evalf(50), weightf(50), 0., mx.inf, 25, atol=1e-13)
+    vgq(rootf(50), evalf(50), weightf(50), 0., mx.inf, 100, rtol=1e-14, atol=2e-13)
 
     x, w = sc.roots_genlaguerre(5, 2, False)
     y, v, m = sc.roots_genlaguerre(5, 2, True)
     assert_allclose(x, y, 1e-14, 1e-14)
     assert_allclose(w, v, 1e-14, 1e-14)
 
-    muI, muI_err = integrate.quad(weightf(2.), 0., np.inf)
+    muI, muI_err = integrate.quad(weightf(2.), 0., mx.inf)
     assert_allclose(m, muI, rtol=muI_err)
 
     assert_raises(ValueError, sc.roots_genlaguerre, 0, 2)

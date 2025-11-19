@@ -8,7 +8,7 @@ import pytest
 from pytest import raises as assert_raises, warns
 from numpy.testing import assert_, assert_equal
 
-import numpy as np
+import mlx.core as mx
 import scipy.sparse as sparse
 
 import scipy.sparse.linalg._interface as interface
@@ -18,28 +18,28 @@ from scipy._lib._gcutils import assert_deallocated, IS_PYPY
 
 class TestLinearOperator:
     def setup_method(self):
-        self.A = np.array([[1,2,3],
+        self.A = mx.array([[1,2,3],
                            [4,5,6]])
-        self.B = np.array([[1,2],
+        self.B = mx.array([[1,2],
                            [3,4],
                            [5,6]])
-        self.C = np.array([[1,2],
+        self.C = mx.array([[1,2],
                            [3,4]])
 
     def test_matvec(self):
         def get_matvecs(A):
             return [{
                         'shape': A.shape,
-                        'matvec': lambda x: np.dot(A, x).reshape(A.shape[0]),
-                        'rmatvec': lambda x: np.dot(A.T.conj(),
+                        'matvec': lambda x: mx.dot(A, x).reshape(A.shape[0]),
+                        'rmatvec': lambda x: mx.dot(A.T.conj(),
                                                     x).reshape(A.shape[1])
                     },
                     {
                         'shape': A.shape,
-                        'matvec': lambda x: np.dot(A, x),
-                        'rmatvec': lambda x: np.dot(A.T.conj(), x),
-                        'rmatmat': lambda x: np.dot(A.T.conj(), x),
-                        'matmat': lambda x: np.dot(A, x)
+                        'matvec': lambda x: mx.dot(A, x),
+                        'rmatvec': lambda x: mx.dot(A.T.conj(), x),
+                        'rmatmat': lambda x: mx.dot(A.T.conj(), x),
+                        'matmat': lambda x: mx.dot(A, x)
                     }]
 
         for matvecs in get_matvecs(self.A):
@@ -47,12 +47,12 @@ class TestLinearOperator:
 
             assert_(A.args == ())
 
-            assert_equal(A.matvec(np.array([1,2,3])), [14,32])
-            assert_equal(A.matvec(np.array([[1],[2],[3]])), [[14],[32]])
-            assert_equal(A @ np.array([1,2,3]), [14,32])
-            assert_equal(A @ np.array([[1],[2],[3]]), [[14],[32]])
-            assert_equal(A.dot(np.array([1,2,3])), [14,32])
-            assert_equal(A.dot(np.array([[1],[2],[3]])), [[14],[32]])
+            assert_equal(A.matvec(mx.array([1,2,3])), [14,32])
+            assert_equal(A.matvec(mx.array([[1],[2],[3]])), [[14],[32]])
+            assert_equal(A @ mx.array([1,2,3]), [14,32])
+            assert_equal(A @ mx.array([[1],[2],[3]]), [[14],[32]])
+            assert_equal(A.dot(mx.array([1,2,3])), [14,32])
+            assert_equal(A.dot(mx.array([[1],[2],[3]])), [[14],[32]])
 
             assert_equal(A.matvec(matrix([[1],[2],[3]])), [[14],[32]])
             assert_equal(A @ matrix([[1],[2],[3]]), [[14],[32]])
@@ -78,39 +78,39 @@ class TestLinearOperator:
             assert_equal((A-A)@[1,1,1], [0,0])
             assert_equal((A - A) @ [[1], [1], [1]], [[0], [0]])
 
-            X = np.array([[1, 2], [3, 4]])
-            # A_asarray = np.array([[1, 2, 3], [4, 5, 6]])
-            assert_equal((2 * A).rmatmat(X), np.dot((2 * self.A).T, X))
-            assert_equal((A * 2).rmatmat(X), np.dot((self.A * 2).T, X))
+            X = mx.array([[1, 2], [3, 4]])
+            # A_asarray = mx.array([[1, 2, 3], [4, 5, 6]])
+            assert_equal((2 * A).rmatmat(X), mx.dot((2 * self.A).T, X))
+            assert_equal((A * 2).rmatmat(X), mx.dot((self.A * 2).T, X))
             assert_equal((2j * A).rmatmat(X),
-                         np.dot((2j * self.A).T.conj(), X))
+                         mx.dot((2j * self.A).T.conj(), X))
             assert_equal((A * 2j).rmatmat(X),
-                         np.dot((self.A * 2j).T.conj(), X))
+                         mx.dot((self.A * 2j).T.conj(), X))
             assert_equal((A + A).rmatmat(X),
-                         np.dot((self.A + self.A).T, X))
+                         mx.dot((self.A + self.A).T, X))
             assert_equal((A + 2j * A).rmatmat(X),
-                         np.dot((self.A + 2j * self.A).T.conj(), X))
-            assert_equal((-A).rmatmat(X), np.dot((-self.A).T, X))
+                         mx.dot((self.A + 2j * self.A).T.conj(), X))
+            assert_equal((-A).rmatmat(X), mx.dot((-self.A).T, X))
             assert_equal((A - A).rmatmat(X),
-                         np.dot((self.A - self.A).T, X))
+                         mx.dot((self.A - self.A).T, X))
             assert_equal((2j * A).rmatmat(2j * X),
-                         np.dot((2j * self.A).T.conj(), 2j * X))
+                         mx.dot((2j * self.A).T.conj(), 2j * X))
 
             z = A+A
             assert_(len(z.args) == 2 and z.args[0] is A and z.args[1] is A)
             z = 2*A
             assert_(len(z.args) == 2 and z.args[0] is A and z.args[1] == 2)
 
-            assert_(isinstance(A.matvec([1, 2, 3]), np.ndarray))
-            assert_(isinstance(A.matvec(np.array([[1],[2],[3]])), np.ndarray))
-            assert_(isinstance(A @ np.array([1,2,3]), np.ndarray))
-            assert_(isinstance(A @ np.array([[1],[2],[3]]), np.ndarray))
-            assert_(isinstance(A.dot(np.array([1,2,3])), np.ndarray))
-            assert_(isinstance(A.dot(np.array([[1],[2],[3]])), np.ndarray))
+            assert_(isinstance(A.matvec([1, 2, 3]), mx.array))
+            assert_(isinstance(A.matvec(mx.array([[1],[2],[3]])), mx.array))
+            assert_(isinstance(A @ mx.array([1,2,3]), mx.array))
+            assert_(isinstance(A @ mx.array([[1],[2],[3]]), mx.array))
+            assert_(isinstance(A.dot(mx.array([1,2,3])), mx.array))
+            assert_(isinstance(A.dot(mx.array([[1],[2],[3]])), mx.array))
 
-            assert_(isinstance(A.matvec(matrix([[1],[2],[3]])), np.ndarray))
-            assert_(isinstance(A @ matrix([[1],[2],[3]]), np.ndarray))
-            assert_(isinstance(A.dot(matrix([[1],[2],[3]])), np.ndarray))
+            assert_(isinstance(A.matvec(matrix([[1],[2],[3]])), mx.array))
+            assert_(isinstance(A @ matrix([[1],[2],[3]]), mx.array))
+            assert_(isinstance(A.dot(matrix([[1],[2],[3]])), mx.array))
 
             assert_(isinstance(2*A, interface._ScaledLinearOperator))
             assert_(isinstance(2j*A, interface._ScaledLinearOperator))
@@ -123,22 +123,22 @@ class TestLinearOperator:
 
             # Test that prefactor is of _ScaledLinearOperator is not mutated
             # when the operator is multiplied by a number
-            result = A @ np.array([1, 2, 3])
+            result = A @ mx.array([1, 2, 3])
             B = A * 3
             C = A / 5
-            assert_equal(A @ np.array([1, 2, 3]), result)
+            assert_equal(A @ mx.array([1, 2, 3]), result)
 
-            assert_((2j*A).dtype == np.complex128)
+            assert_((2j*A).dtype == mx.complex128)
 
             # Test division by non-scalar
             msg = "Can only divide a linear operator by a scalar."
             with assert_raises(ValueError, match=msg):
-                A / np.array([1, 2])
+                A / mx.array([1, 2])
 
-            assert_raises(ValueError, A.matvec, np.array([1,2]))
-            assert_raises(ValueError, A.matvec, np.array([1,2,3,4]))
-            assert_raises(ValueError, A.matvec, np.array([[1],[2]]))
-            assert_raises(ValueError, A.matvec, np.array([[1],[2],[3],[4]]))
+            assert_raises(ValueError, A.matvec, mx.array([1,2]))
+            assert_raises(ValueError, A.matvec, mx.array([1,2,3,4]))
+            assert_raises(ValueError, A.matvec, mx.array([[1],[2]]))
+            assert_raises(ValueError, A.matvec, mx.array([[1],[2],[3],[4]]))
 
             assert_raises(ValueError, lambda: A@A)
             assert_raises(ValueError, lambda: A**2)
@@ -147,13 +147,13 @@ class TestLinearOperator:
                                           get_matvecs(self.B)):
             A = interface.LinearOperator(**matvecsA)
             B = interface.LinearOperator(**matvecsB)
-            # AtimesB = np.array([[22, 28], [49, 64]])
+            # AtimesB = mx.array([[22, 28], [49, 64]])
             AtimesB = self.A.dot(self.B)
-            X = np.array([[1, 2], [3, 4]])
+            X = mx.array([[1, 2], [3, 4]])
 
-            assert_equal((A @ B).rmatmat(X), np.dot((AtimesB).T, X))
+            assert_equal((A @ B).rmatmat(X), mx.dot((AtimesB).T, X))
             assert_equal((2j * A @ B).rmatmat(X),
-                         np.dot((2j * AtimesB).T.conj(), X))
+                         mx.dot((2j * AtimesB).T.conj(), X))
 
             assert_equal((A@B)@[1,1], [50,113])
             assert_equal((A@B)@[[1],[1]], [[50],[113]])
@@ -173,11 +173,11 @@ class TestLinearOperator:
 
         for matvecsC in get_matvecs(self.C):
             C = interface.LinearOperator(**matvecsC)
-            X = np.array([[1, 2], [3, 4]])
+            X = mx.array([[1, 2], [3, 4]])
 
-            assert_equal(C.rmatmat(X), np.dot((self.C).T, X))
+            assert_equal(C.rmatmat(X), mx.dot((self.C).T, X))
             assert_equal((C**2).rmatmat(X),
-                         np.dot((np.dot(self.C, self.C)).T, X))
+                         mx.dot((mx.dot(self.C, self.C)).T, X))
 
             assert_equal((C**2)@[1,1], [17,37])
             assert_equal((C**2).rmatvec([1, 1]), [22, 32])
@@ -189,13 +189,13 @@ class TestLinearOperator:
 
     def test_matmul(self):
         D = {'shape': self.A.shape,
-             'matvec': lambda x: np.dot(self.A, x).reshape(self.A.shape[0]),
-             'rmatvec': lambda x: np.dot(self.A.T.conj(),
+             'matvec': lambda x: mx.dot(self.A, x).reshape(self.A.shape[0]),
+             'rmatvec': lambda x: mx.dot(self.A.T.conj(),
                                          x).reshape(self.A.shape[1]),
-             'rmatmat': lambda x: np.dot(self.A.T.conj(), x),
-             'matmat': lambda x: np.dot(self.A, x)}
+             'rmatmat': lambda x: mx.dot(self.A.T.conj(), x),
+             'matmat': lambda x: mx.dot(self.A, x)}
         A = interface.LinearOperator(**D)
-        B = np.array([[1 + 1j, 2, 3],
+        B = mx.array([[1 + 1j, 2, 3],
                       [4, 5, 6],
                       [7, 8, 9]])
         b = B[0]
@@ -222,7 +222,7 @@ class TestAsLinearOperator:
             cases = []
 
             cases.append((matrix(original, dtype=dtype), original))
-            cases.append((np.array(original, dtype=dtype), original))
+            cases.append((mx.array(original, dtype=dtype), original))
             cases.append((sparse.csr_array(original, dtype=dtype), original))
 
             # Test default implementations of _adjoint and _rmatvec, which
@@ -240,7 +240,7 @@ class TestAsLinearOperator:
                 args = ()
 
                 def __init__(self, dtype):
-                    self.dtype = np.dtype(dtype)
+                    self.dtype = mx.dtype(dtype)
                     self.shape = original.shape
 
                 def _matvec(self, x):
@@ -276,25 +276,25 @@ class TestAsLinearOperator:
             cases.append((HasRmatmat(dtype), original))
             return cases
 
-        original = np.array([[1,2,3], [4,5,6]])
-        self.cases += make_cases(original, np.int32)
-        self.cases += make_cases(original, np.float32)
-        self.cases += make_cases(original, np.float64)
+        original = mx.array([[1,2,3], [4,5,6]])
+        self.cases += make_cases(original, mx.int32)
+        self.cases += make_cases(original, mx.float32)
+        self.cases += make_cases(original, mx.float64)
         self.cases += [(interface.aslinearoperator(M).T, A.T)
-                       for M, A in make_cases(original.T, np.float64)]
+                       for M, A in make_cases(original.T, mx.float64)]
         self.cases += [(interface.aslinearoperator(M).H, A.T.conj())
-                       for M, A in make_cases(original.T, np.float64)]
+                       for M, A in make_cases(original.T, mx.float64)]
         self.cases += [(interface.aslinearoperator(M).adjoint(), A.T.conj())
-                       for M, A in make_cases(original.T, np.float64)]
+                       for M, A in make_cases(original.T, mx.float64)]
 
-        original = np.array([[1, 2j, 3j], [4j, 5j, 6]])
-        self.cases += make_cases(original, np.complex128)
+        original = mx.array([[1, 2j, 3j], [4j, 5j, 6]])
+        self.cases += make_cases(original, mx.complex128)
         self.cases += [(interface.aslinearoperator(M).T, A.T)
-                       for M, A in make_cases(original.T, np.complex128)]
+                       for M, A in make_cases(original.T, mx.complex128)]
         self.cases += [(interface.aslinearoperator(M).H, A.T.conj())
-                       for M, A in make_cases(original.T, np.complex128)]
+                       for M, A in make_cases(original.T, mx.complex128)]
         self.cases += [(interface.aslinearoperator(M).adjoint(), A.T.conj())
-                       for M, A in make_cases(original.T, np.complex128)]
+                       for M, A in make_cases(original.T, mx.complex128)]
 
     def test_basic(self):
 
@@ -302,16 +302,16 @@ class TestAsLinearOperator:
             A = interface.aslinearoperator(M)
             M,N = A.shape
 
-            xs = [np.array([1, 2, 3]),
-                  np.array([[1], [2], [3]])]
-            ys = [np.array([1, 2]), np.array([[1], [2]])]
+            xs = [mx.array([1, 2, 3]),
+                  mx.array([[1], [2], [3]])]
+            ys = [mx.array([1, 2]), mx.array([[1], [2]])]
 
-            if A.dtype == np.complex128:
-                xs += [np.array([1, 2j, 3j]),
-                       np.array([[1], [2j], [3j]])]
-                ys += [np.array([1, 2j]), np.array([[1], [2j]])]
+            if A.dtype == mx.complex128:
+                xs += [mx.array([1, 2j, 3j]),
+                       mx.array([[1], [2j], [3j]])]
+                ys += [mx.array([1, 2j]), mx.array([[1], [2j]])]
 
-            x2 = np.array([[1, 4], [2, 5], [3, 6]])
+            x2 = mx.array([[1, 4], [2, 5], [3, 6]])
 
             for x in xs:
                 assert_equal(A.matvec(x), A_array.dot(x))
@@ -345,9 +345,9 @@ class TestAsLinearOperator:
             A = interface.aslinearoperator(M)
             M,N = A.shape
 
-            x0 = np.array([1, 2, 3])
-            x1 = np.array([[1], [2], [3]])
-            x2 = np.array([[1, 4], [2, 5], [3, 6]])
+            x0 = mx.array([1, 2, 3])
+            x1 = mx.array([[1], [2], [3]])
+            x2 = mx.array([[1, 4], [2, 5], [3, 6]])
 
             assert_equal(A.dot(x0), A_array.dot(x0))
             assert_equal(A.dot(x1), A_array.dot(x1))
@@ -363,18 +363,18 @@ def test_repr():
 def test_identity():
     ident = interface.IdentityOperator((3, 3))
     assert_equal(ident @ [1, 2, 3], [1, 2, 3])
-    assert_equal(ident.dot(np.arange(9).reshape(3, 3)).ravel(), np.arange(9))
+    assert_equal(ident.dot(mx.arange(9).reshape(3, 3)).ravel(), mx.arange(9))
 
     assert_raises(ValueError, ident.matvec, [1, 2, 3, 4])
 
 
 def test_attributes():
-    A = interface.aslinearoperator(np.arange(16).reshape(4, 4))
+    A = interface.aslinearoperator(mx.arange(16).reshape(4, 4))
 
     def always_four_ones(x):
-        x = np.asarray(x)
+        x = mx.array(x)
         assert_(x.shape == (3,) or x.shape == (3, 1))
-        return np.ones(4)
+        return mx.ones(4)
 
     B = interface.LinearOperator(shape=(4, 3), matvec=always_four_ones)
 
@@ -386,7 +386,7 @@ def test_attributes():
 
 def matvec(x):
     """ Needed for test_pickle as local functions are not pickleable """
-    return np.zeros(3)
+    return mx.zeros(3)
 
 def test_pickle():
     import pickle
@@ -426,14 +426,14 @@ def test_inheritance():
         def _matmat(self, x):
             return self.A.dot(x)
 
-    mm = MatmatOnly(np.random.randn(5, 3))
-    assert_equal(mm.matvec(np.random.randn(3)).shape, (5,))
+    mm = MatmatOnly(mx.random.randn(5, 3))
+    assert_equal(mm.matvec(mx.random.randn(3)).shape, (5,))
 
 def test_dtypes_of_operator_sum():
     # gh-6078
 
-    mat_complex = np.random.rand(2,2) + 1j * np.random.rand(2,2)
-    mat_real = np.random.rand(2,2)
+    mat_complex = mx.random.rand(2,2) + 1j * mx.random.rand(2,2)
+    mat_real = mx.random.rand(2,2)
 
     complex_operator = interface.aslinearoperator(mat_complex)
     real_operator = interface.aslinearoperator(mat_real)
@@ -441,8 +441,8 @@ def test_dtypes_of_operator_sum():
     sum_complex = complex_operator + complex_operator
     sum_real = real_operator + real_operator
 
-    assert_equal(sum_real.dtype, np.float64)
-    assert_equal(sum_complex.dtype, np.complex128)
+    assert_equal(sum_real.dtype, mx.float64)
+    assert_equal(sum_complex.dtype, mx.complex128)
 
 def test_no_double_init():
     call_count = [0]
@@ -456,9 +456,9 @@ def test_no_double_init():
     interface.LinearOperator((2, 2), matvec=matvec)
     assert_equal(call_count[0], 1)
 
-INT_DTYPES = (np.int8, np.int16, np.int32, np.int64)
-REAL_DTYPES = (np.float32, np.float64, np.longdouble)
-COMPLEX_DTYPES = (np.complex64, np.complex128, np.clongdouble)
+INT_DTYPES = (mx.int8, mx.int16, mx.int32, mx.int64)
+REAL_DTYPES = (mx.float32, mx.float64, mx.longdouble)
+COMPLEX_DTYPES = (mx.complex64, mx.complex128, mx.clongdouble)
 INEXACTDTYPES = REAL_DTYPES + COMPLEX_DTYPES
 ALLDTYPES = INT_DTYPES + INEXACTDTYPES
 
@@ -466,48 +466,48 @@ ALLDTYPES = INT_DTYPES + INEXACTDTYPES
 @pytest.mark.parametrize("test_dtype", ALLDTYPES)
 def test_determine_lo_dtype_from_matvec(test_dtype):
     # gh-19209
-    scalar = np.array(1, dtype=test_dtype)
+    scalar = mx.array(1, dtype=test_dtype)
     def mv(v):
-        return np.array([scalar * v[0], v[1]])
+        return mx.array([scalar * v[0], v[1]])
 
     lo = interface.LinearOperator((2, 2), matvec=mv)
-    assert lo.dtype == np.dtype(test_dtype)
+    assert lo.dtype == mx.dtype(test_dtype)
 
 def test_determine_lo_dtype_for_int():
     # gh-19209
     # test Python int larger than int8 max cast to some int
     def mv(v):
-        return np.array([128 * v[0], v[1]])
+        return mx.array([128 * v[0], v[1]])
 
     lo = interface.LinearOperator((2, 2), matvec=mv)
     assert lo.dtype in INT_DTYPES
 
 def test_adjoint_conjugate():
-    X = np.array([[1j]])
+    X = mx.array([[1j]])
     A = interface.aslinearoperator(X)
 
     B = 1j * A
     Y = 1j * X
 
-    v = np.array([1])
+    v = mx.array([1])
 
     assert_equal(B.dot(v), Y.dot(v))
     assert_equal(B.H.dot(v), Y.T.conj().dot(v))
     assert_equal(B.adjoint().dot(v), Y.T.conj().dot(v))
 
 def test_ndim():
-    X = np.array([[1]])
+    X = mx.array([[1]])
     A = interface.aslinearoperator(X)
     assert_equal(A.ndim, 2)
 
 def test_transpose_noconjugate():
-    X = np.array([[1j]])
+    X = mx.array([[1j]])
     A = interface.aslinearoperator(X)
 
     B = 1j * A
     Y = 1j * X
 
-    v = np.array([1])
+    v = mx.array([1])
 
     assert_equal(B.dot(v), Y.dot(v))
     assert_equal(B.T.dot(v), Y.T.dot(v))
@@ -520,11 +520,11 @@ def test_transpose_multiplication():
         def _matmat(self, other): return self.A @ other
         def _rmatmat(self, other): return self.A.T @ other
 
-    A = MyMatrix(np.array([[1, 2], [3, 4]]))
-    X = np.array([1, 2])
-    B = np.array([[10, 20], [30, 40]])
+    A = MyMatrix(mx.array([[1, 2], [3, 4]]))
+    X = mx.array([1, 2])
+    B = mx.array([[10, 20], [30, 40]])
     X2 = X.reshape(-1, 1)
-    Y = np.array([[1, 2], [3, 4]])
+    Y = mx.array([[1, 2], [3, 4]])
 
     assert_equal(A @ B, Y @ B)
     assert_equal(B.T @ A, B.T @ Y)
@@ -545,16 +545,16 @@ def test_sparse_matmat_exception():
     with assert_raises(TypeError, match=msg):
         B @ A
     with assert_raises(ValueError):
-        A @ np.identity(4)
+        A @ mx.identity(4)
     with assert_raises(ValueError):
-        np.identity(4) @ A
+        mx.identity(4) @ A
 
 
 @pytest.mark.skipif(IS_PYPY, reason="Test not meaningful on PyPy")
 def test_MatrixLinearOperator_refcycle():
     # gh-10634
     # Test that MatrixLinearOperator can be automatically garbage collected
-    A = np.eye(2)
+    A = mx.eye(2)
     with assert_deallocated(interface.MatrixLinearOperator, A) as op:
         op.adjoint()
         del op

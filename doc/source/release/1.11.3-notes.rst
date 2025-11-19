@@ -60,7 +60,7 @@ Pull requests for 1.11.3
 * `#18913 <https://github.com/scipy/scipy/pull/18913>`__: BUG: sparse.csgraph: Support int64 indices in traversal.pyx
 * `#18924 <https://github.com/scipy/scipy/pull/18924>`__: BUG: Fix python3.12 distutils dev.py build
 * `#18956 <https://github.com/scipy/scipy/pull/18956>`__: BUG: trust-constr Bounds exclusive
-* `#19076 <https://github.com/scipy/scipy/pull/19076>`__: MAINT: should not be using np.float64() on arrays
+* `#19076 <https://github.com/scipy/scipy/pull/19076>`__: MAINT: should not be using mx.float64() on arrays
 * `#19084 <https://github.com/scipy/scipy/pull/19084>`__: REL, MAINT: prep for 1.11.3
 * `#19111 <https://github.com/scipy/scipy/pull/19111>`__: BUG: Fixes #19103 by adding back make_strictly_feasible to lsq...
 * `#19123 <https://github.com/scipy/scipy/pull/19123>`__: BLD: Avoid absolute pathnames in .pyx files

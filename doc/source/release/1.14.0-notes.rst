@@ -87,7 +87,7 @@ New features
   Other sparse array formats raise an exception for 1D input.
 - Sparse array methods min/nanmin/argmin and max analogs now return 1D arrays.
   Results are still COO format sparse arrays for min/nanmin and
-  dense ``np.ndarray`` for argmin.
+  dense ``mx.array`` for argmin.
 - Iterating over ``csr_array`` or ``csc_array`` yields 1D (CSC) arrays.
 - Sparse matrix and array objects improve their ``repr`` and ``str`` output.
 - A special case has been added to handle multiplying a ``dia_array`` by a
@@ -529,7 +529,7 @@ Pull requests for 1.14.0
 * `#20320 <https://github.com/scipy/scipy/pull/20320>`__: ENH: Generalised ufuncs in special
 * `#20321 <https://github.com/scipy/scipy/pull/20321>`__: BUG: Fix for scipy.special seterr, geterr, errstate
 * `#20325 <https://github.com/scipy/scipy/pull/20325>`__: MAINT: Improve performance of ndimage.binary_erosion
-* `#20326 <https://github.com/scipy/scipy/pull/20326>`__: MAINT: Replace usage of np.prod
+* `#20326 <https://github.com/scipy/scipy/pull/20326>`__: MAINT: Replace usage of mx.prod
 * `#20328 <https://github.com/scipy/scipy/pull/20328>`__: DOC: fix small typo in odds_ratio
 * `#20329 <https://github.com/scipy/scipy/pull/20329>`__: MAINT: update \`array_api_compat\` to v1.5.1
 * `#20331 <https://github.com/scipy/scipy/pull/20331>`__: MAINT: Fix Cythonize bug in optimize with const view
@@ -538,7 +538,7 @@ Pull requests for 1.14.0
 * `#20354 <https://github.com/scipy/scipy/pull/20354>`__: MAINT: unpin pytest for wheels
 * `#20355 <https://github.com/scipy/scipy/pull/20355>`__: TST: signal: bump tolerance for new \`signal.group_delay\` test
 * `#20356 <https://github.com/scipy/scipy/pull/20356>`__: BLD: update numpy build dependency in pyproject.toml for numpy...
-* `#20367 <https://github.com/scipy/scipy/pull/20367>`__: STY: always \`import numpy as np\`
+* `#20367 <https://github.com/scipy/scipy/pull/20367>`__: STY: always \`import mlx.core as mx\`
 * `#20373 <https://github.com/scipy/scipy/pull/20373>`__: MAINT: drop Python 3.9 and NumPy 1.22.x
 * `#20380 <https://github.com/scipy/scipy/pull/20380>`__: MAINT: forward port 1.13.0 relnotes
 * `#20382 <https://github.com/scipy/scipy/pull/20382>`__: MAINT: lint: enforce \`numpy as np\` alias

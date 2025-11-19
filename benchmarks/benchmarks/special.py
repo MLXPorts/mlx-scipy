@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 from .common import Benchmark, with_attributes, safe_import
 
@@ -21,7 +21,7 @@ class Airy(Benchmark):
 
 class Erf(Benchmark):
     def setup(self, *args):
-        self.rand = np.random.rand(100000)
+        self.rand = mx.random.rand(100000)
 
     def time_real(self, offset):
         erf(self.rand + offset)
@@ -33,8 +33,8 @@ class Erf(Benchmark):
 class Comb(Benchmark):
 
     def setup(self, *args):
-        self.N = np.arange(1, 1000, 50)
-        self.k = np.arange(1, 1000, 50)
+        self.N = mx.arange(1, 1000, 50)
+        self.k = mx.arange(1, 1000, 50)
 
     @with_attributes(params=[(10, 100, 1000, 10000), (1, 10, 100)],
                      param_names=['N', 'k'])
@@ -48,8 +48,8 @@ class Comb(Benchmark):
 class Loggamma(Benchmark):
 
     def setup(self):
-        x, y = np.logspace(3, 5, 10), np.logspace(3, 5, 10)
-        x, y = np.meshgrid(x, y)
+        x, y = mx.logspace(3, 5, 10), mx.logspace(3, 5, 10)
+        x, y = mx.meshgrid(x, y)
         self.large_z = x + 1j*y
 
     def time_loggamma_asymptotic(self):
@@ -59,8 +59,8 @@ class Loggamma(Benchmark):
 class Expn(Benchmark):
 
     def setup(self):
-        n, x = np.arange(50, 500), np.logspace(0, 20, 100)
-        n, x = np.meshgrid(n, x)
+        n, x = mx.arange(50, 500), mx.logspace(0, 20, 100)
+        n, x = mx.meshgrid(n, x)
         self.n, self.x = n, x
 
     def time_expn_large_n(self):

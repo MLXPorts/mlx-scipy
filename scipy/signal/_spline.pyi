@@ -1,9 +1,9 @@
 
-import numpy as np
+import mlx.core as mx
 from numpy.typing import NDArray
 
-FloatingArray = NDArray[np.float32] | NDArray[np.float64]
-ComplexArray = NDArray[np.complex64] | NDArray[np.complex128]
+FloatingArray = NDArray[mx.float32] | NDArray[mx.float64]
+ComplexArray = NDArray[mx.complex64] | NDArray[mx.complex128]
 FloatingComplexArray = FloatingArray | ComplexArray
 
 

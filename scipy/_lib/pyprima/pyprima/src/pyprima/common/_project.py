@@ -6,24 +6,24 @@ Adapted from the corresponding function in the PDFO package (https://www.pdfo.ne
 Tom M. Ragonneau (https://ragonneau.github.io) and Zaikun Zhang (https://www.zhangzk.net).
 '''
 
-import numpy as np
+import mlx.core as mx
 from ._linear_constraints import LinearConstraint
 from scipy.optimize import OptimizeResult
 
-# All the accepted scalar types; np.generic correspond to all NumPy types.
-scalar_types = (int, float, np.generic)
-eps = np.finfo(np.float64).eps
+# All the accepted scalar types; mx.generic correspond to all NumPy types.
+scalar_types = (int, float, mx.generic)
+eps = mx.finfo(mx.float64).eps
 
 def _project(x0, lb, ub, constraints):
     """Projection of the initial guess onto the feasible set.
 
     Parameters
     ----------
-    x0: ndarray, shape (n,)
+    x0: array, shape (n,)
         The same as in prepdfo.
-    lb: ndarray, shape (n,)
+    lb: array, shape (n,)
         The same as in prepdfo.
-    ub: ndarray, shape (n,)
+    ub: array, shape (n,)
         The same as in prepdfo.
     constraints: dict
         The general constraints of the problem, defined as a dictionary with
@@ -56,7 +56,7 @@ def _project(x0, lb, ub, constraints):
     else:
         raise ValueError('{}: UNEXPECTED ERROR: x0 should be a vector.'.format(invoker))
     try:
-        x0_c = np.asarray(x0_c, dtype=np.float64)
+        x0_c = mx.array(x0_c, dtype=mx.float64)
     except ValueError:
         raise ValueError('{}: UNEXPECTED ERROR: x0 should contain only scalars.'.format(invoker))
     if len(x0_c.shape) != 1:
@@ -71,7 +71,7 @@ def _project(x0, lb, ub, constraints):
     else:
         raise ValueError('{}: UNEXPECTED ERROR: lb should be a vector.'.format(invoker))
     try:
-        lb_c = np.asarray(lb_c, dtype=np.float64)
+        lb_c = mx.array(lb_c, dtype=mx.float64)
     except ValueError:
         raise ValueError('{}: UNEXPECTED ERROR: lb should contain only scalars.'.format(invoker))
     if len(lb_c.shape) != 1 or lb_c.size != lenx0:
@@ -85,7 +85,7 @@ def _project(x0, lb, ub, constraints):
     else:
         raise ValueError('{}: UNEXPECTED ERROR: ub should be a vector.'.format(invoker))
     try:
-        ub_c = np.asarray(ub_c, dtype=np.float64)
+        ub_c = mx.array(ub_c, dtype=mx.float64)
     except ValueError:
         raise ValueError('{}: UNEXPECTED ERROR: ub should contain only scalars.'.format(invoker))
     if len(ub_c.shape) != 1 or ub_c.size != lenx0:
@@ -102,19 +102,19 @@ def _project(x0, lb, ub, constraints):
     # Project onto the feasible set.
     if constraints['linear'] is None:
         # Direct projection onto the bound constraints
-        x_proj = np.nanmin((np.nanmax((x0_c, lb_c), axis=0), ub_c), axis=0)
+        x_proj = mx.nanmin((mx.nanmax((x0_c, lb_c), axis=0), ub_c), axis=0)
         return OptimizeResult(x=x_proj)
-    elif all(np.less_equal(np.abs(constraints['linear'].ub - constraints['linear'].lb), eps)) and \
-            np.max(lb_c) <= -max_con and np.min(ub_c) >= max_con:
+    elif all(mx.less_equal(mx.abs(constraints['linear'].ub - constraints['linear'].lb), eps)) and \
+            mx.max(lb_c) <= -max_con and mx.min(ub_c) >= max_con:
         # The linear constraints are all equality constraints. The projection can therefore be done by solving the
         # least-squares problem: min ||A*x - (b - A*x_0)||.
         a = constraints['linear'].A
         b = (constraints['linear'].lb + constraints['linear'].ub) / 2
-        xi, _, _, _ = np.linalg.lstsq(a, b - np.dot(a, x0_c), rcond=None)
+        xi, _, _, _ = mx.linalg.lstsq(a, b - mx.dot(a, x0_c), rcond=None)
 
         # The problem is not bounded. However, if the least-square solver returned values bigger in absolute value
         # than max_con, they will be reduced to this bound.
-        x_proj = np.nanmin((np.nanmax((x0_c + xi, lb_c), axis=0), ub_c), axis=0)
+        x_proj = mx.nanmin((mx.nanmax((x0_c + xi, lb_c), axis=0), ub_c), axis=0)
 
         return OptimizeResult(x=x_proj)
 
@@ -130,21 +130,21 @@ def _project(x0, lb, ub, constraints):
             # To be more efficient, SciPy asks to separate the equality and the inequality constraints into two
             # different LinearConstraint structures
             pc_args_ineq, pc_args_eq = dict(), dict()
-            pc_args_ineq['A'], pc_args_eq['A'] = np.asarray([[]]), np.asarray([[]])
+            pc_args_ineq['A'], pc_args_eq['A'] = mx.array([[]]), mx.array([[]])
             pc_args_ineq['A'] = pc_args_ineq['A'].reshape(0, linear.A.shape[1])
             pc_args_eq['A'] = pc_args_eq['A'].reshape(0, linear.A.shape[1])
-            pc_args_ineq['lb'], pc_args_eq['lb'] = np.asarray([]), np.asarray([])
-            pc_args_ineq['ub'], pc_args_eq['ub'] = np.asarray([]), np.asarray([])
+            pc_args_ineq['lb'], pc_args_eq['lb'] = mx.array([]), mx.array([])
+            pc_args_ineq['ub'], pc_args_eq['ub'] = mx.array([]), mx.array([])
 
             for i in range(linear.lb.size):
                 if linear.lb[i] != linear.ub[i]:
-                    pc_args_ineq['A'] = np.concatenate((pc_args_ineq['A'], linear.A[i:i+1, :]), axis=0)
-                    pc_args_ineq['lb'] = np.r_[pc_args_ineq['lb'], linear.lb[i]]
-                    pc_args_ineq['ub'] = np.r_[pc_args_ineq['ub'], linear.ub[i]]
+                    pc_args_ineq['A'] = mx.concatenate((pc_args_ineq['A'], linear.A[i:i+1, :]), axis=0)
+                    pc_args_ineq['lb'] = mx.r_[pc_args_ineq['lb'], linear.lb[i]]
+                    pc_args_ineq['ub'] = mx.r_[pc_args_ineq['ub'], linear.ub[i]]
                 else:
-                    pc_args_eq['A'] = np.concatenate((pc_args_eq['A'], linear.A[i:i+1, :]), axis=0)
-                    pc_args_eq['lb'] = np.r_[pc_args_eq['lb'], linear.lb[i]]
-                    pc_args_eq['ub'] = np.r_[pc_args_eq['ub'], linear.ub[i]]
+                    pc_args_eq['A'] = mx.concatenate((pc_args_eq['A'], linear.A[i:i+1, :]), axis=0)
+                    pc_args_eq['lb'] = mx.r_[pc_args_eq['lb'], linear.lb[i]]
+                    pc_args_eq['ub'] = mx.r_[pc_args_eq['ub'], linear.ub[i]]
 
             if pc_args_ineq['A'].size > 0 and pc_args_ineq['lb'].size > 0 and pc_args_eq['lb'].size > 0:
                 project_constraints = [ScipyLinearConstraint(**pc_args_ineq), ScipyLinearConstraint(**pc_args_eq)]
@@ -156,12 +156,12 @@ def _project(x0, lb, ub, constraints):
                 project_constraints = ()
 
             # Perform the actual projection.
-            ax_ineq = np.dot(pc_args_ineq['A'], x0_c)
-            ax_eq = np.dot(pc_args_eq['A'], x0_c)
-            if np.greater(ax_ineq, pc_args_ineq['ub']).any() or np.greater(pc_args_ineq['lb'], ax_ineq).any() or \
-                    np.not_equal(ax_eq, pc_args_eq['lb']).any() or \
-                    np.greater(x0_c, ub_c).any() or np.greater(lb_c, x0_c).any():
-                return minimize(lambda x: np.dot(x - x0_c, x - x0_c) / 2, x0_c, jac=lambda x: (x - x0_c),
+            ax_ineq = mx.dot(pc_args_ineq['A'], x0_c)
+            ax_eq = mx.dot(pc_args_eq['A'], x0_c)
+            if mx.greater(ax_ineq, pc_args_ineq['ub']).any() or mx.greater(pc_args_ineq['lb'], ax_ineq).any() or \
+                    mx.not_equal(ax_eq, pc_args_eq['lb']).any() or \
+                    mx.greater(x0_c, ub_c).any() or mx.greater(lb_c, x0_c).any():
+                return minimize(lambda x: mx.dot(x - x0_c, x - x0_c) / 2, x0_c, jac=lambda x: (x - x0_c),
                                 bounds=ScipyBounds(lb_c, ub_c), constraints=project_constraints)
             else:
                 # Do not perform any projection if the initial guess is feasible.

@@ -41,7 +41,7 @@ add_newdoc("_cosine_cdf",
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The cosine distribution CDF evaluated at `x`.
 
     """)
@@ -67,7 +67,7 @@ add_newdoc("_cosine_invcdf",
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The inverse of the cosine distribution CDF evaluated at `p`.
 
     """)
@@ -100,12 +100,12 @@ add_newdoc("wrightomega",
     ----------
     z : array_like
         Points at which to evaluate the Wright Omega function
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    omega : scalar or ndarray
+    omega : scalar or array
         Values of the Wright Omega function
 
     See Also
@@ -136,7 +136,7 @@ add_newdoc("wrightomega",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import wrightomega, lambertw
 
     >>> wrightomega([-2, -1, 0, 1, 2])
@@ -150,7 +150,7 @@ add_newdoc("wrightomega",
     Verify that ``wrightomega(z)`` satisfies ``w + log(w) = z``:
 
     >>> w = -5 + 4j
-    >>> wrightomega(w + np.log(w))
+    >>> wrightomega(w + mx.log(w))
     (-5+4j)
 
     Verify the connection to ``lambertw``:
@@ -158,13 +158,13 @@ add_newdoc("wrightomega",
     >>> z = 0.5 + 3j
     >>> wrightomega(z)
     (0.0966015889280649+1.4937828458191993j)
-    >>> lambertw(np.exp(z))
+    >>> lambertw(mx.exp(z))
     (0.09660158892806493+1.4937828458191993j)
 
     >>> z = 0.5 + 4j
     >>> wrightomega(z)
     (-0.3362123489037213+2.282986001579032j)
-    >>> lambertw(np.exp(z), k=1)
+    >>> lambertw(mx.exp(z), k=1)
     (-0.33621234890372115+2.282986001579032j)
     """)
 
@@ -189,17 +189,17 @@ add_newdoc("agm",
         Real values only. If the values are both negative, the result
         is negative. If one value is negative and the other is positive,
         `nan` is returned.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The arithmetic-geometric mean of `a` and `b`.
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import agm
     >>> a, b = 24.0, 6.0
     >>> agm(a, b)
@@ -208,7 +208,7 @@ add_newdoc("agm",
     Compare that result to the iteration:
 
     >>> while a != b:
-    ...     a, b = (a + b)/2, np.sqrt(a*b)
+    ...     a, b = (a + b)/2, mx.sqrt(a*b)
     ...     print("a = %19.16f  b=%19.16f" % (a, b))
     ...
     a = 15.0000000000000000  b=12.0000000000000000
@@ -219,8 +219,8 @@ add_newdoc("agm",
 
     When array-like arguments are given, broadcasting applies:
 
-    >>> a = np.array([[1.5], [3], [6]])  # a has shape (3, 1).
-    >>> b = np.array([6, 12, 24, 48])    # b has shape (4,).
+    >>> a = mx.array([[1.5], [3], [6]])  # a has shape (3, 1).
+    >>> b = mx.array([6, 12, 24, 48])    # b has shape (4,).
     >>> agm(a, b)
     array([[  3.36454287,   5.42363427,   9.05798751,  15.53650756],
            [  4.37037309,   6.72908574,  10.84726853,  18.11597502],
@@ -247,12 +247,12 @@ add_newdoc("bdtr",
         Number of events (int).
     p : array_like
         Probability of success in a single event (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    y : scalar or ndarray
+    y : scalar or array
         Probability of `floor(k)` or fewer successes in `n` independent events with
         success probabilities of `p`.
 
@@ -295,12 +295,12 @@ add_newdoc("bdtrc",
         Number of events (int)
     p : array_like
         Probability of success in a single event.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    y : scalar or ndarray
+    y : scalar or array
         Probability of `floor(k) + 1` or more successes in `n` independent
         events with success probabilities of `p`.
 
@@ -345,12 +345,12 @@ add_newdoc("bdtri",
     y : array_like
         Cumulative probability (probability of `k` or fewer successes in `n`
         events).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    p : scalar or ndarray
+    p : scalar or array
         The event probability such that `bdtr(\lfloor k \rfloor, n, p) = y`.
 
     See Also
@@ -392,12 +392,12 @@ add_newdoc("bdtrik",
         Number of events (float).
     p : array_like
         Success probability (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    k : scalar or ndarray
+    k : scalar or array
         The number of successes `k` such that `bdtr(k, n, p) = y`.
 
     See Also
@@ -444,12 +444,12 @@ add_newdoc("bdtrin",
         events).
     p : array_like
         Success probability (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    n : scalar or ndarray
+    n : scalar or array
         The number of events `n` such that `bdtr(k, n, p) = y`.
 
     See Also
@@ -497,12 +497,12 @@ add_newdoc("btdtria",
         Shape parameter (`b` > 0).
     x : array_like
         The quantile, in [0, 1].
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    a : scalar or ndarray
+    a : scalar or array
         The value of the shape parameter `a` such that `betainc(a, b, x) = p`.
 
     See Also
@@ -555,12 +555,12 @@ add_newdoc("btdtrib",
         Cumulative probability, in [0, 1].
     x : array_like
         The quantile, in [0, 1].
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    b : scalar or ndarray
+    b : scalar or array
         The value of the shape parameter `b` such that `betainc(a, b, x) = p`.
 
     See Also
@@ -618,12 +618,12 @@ add_newdoc(
     x : array_like
         Real-valued such that :math:`0 \leq x \leq 1`,
         the upper limit of integration
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Value of the regularized incomplete beta function
 
     See Also
@@ -729,12 +729,12 @@ add_newdoc(
     x : array_like
         Real-valued such that :math:`0 \leq x \leq 1`,
         the upper limit of integration
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Value of the regularized incomplete beta function
 
     See Also
@@ -804,12 +804,12 @@ add_newdoc(
         Positive, real-valued parameters
     y : array_like
         Real-valued input
-    out : ndarray, optional
+    out : array, optional
         Optional output array for function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Value of the inverse of the regularized incomplete beta function
 
     See Also
@@ -871,12 +871,12 @@ add_newdoc(
         Positive, real-valued parameters
     y : array_like
         Real-valued input
-    out : ndarray, optional
+    out : array, optional
         Optional output array for function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Value of the inverse of the regularized incomplete beta function
 
     See Also
@@ -936,12 +936,12 @@ add_newdoc("boxcox",
         Data to be transformed.
     lmbda : array_like
         Power parameter of the Box-Cox transform.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    y : scalar or ndarray
+    y : scalar or array
         Transformed data.
 
     Notes
@@ -978,12 +978,12 @@ add_newdoc("boxcox1p",
         Data to be transformed.
     lmbda : array_like
         Power parameter of the Box-Cox transform.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    y : scalar or ndarray
+    y : scalar or array
         Transformed data.
 
     Notes
@@ -1017,12 +1017,12 @@ add_newdoc("inv_boxcox",
         Data to be transformed.
     lmbda : array_like
         Power parameter of the Box-Cox transform.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    x : scalar or ndarray
+    x : scalar or array
         Transformed data.
 
     Notes
@@ -1055,12 +1055,12 @@ add_newdoc("inv_boxcox1p",
         Data to be transformed.
     lmbda : array_like
         Power parameter of the Box-Cox transform.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    x : scalar or ndarray
+    x : scalar or array
         Transformed data.
 
     Notes
@@ -1100,12 +1100,12 @@ add_newdoc("chdtr",
         Degrees of freedom.
     x : array_like
         Upper bound of the integral.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the cumulative distribution function.
 
     See Also
@@ -1119,14 +1119,14 @@ add_newdoc("chdtr",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It can be expressed in terms of the regularized lower incomplete
     gamma function.
 
     >>> v = 1
-    >>> x = np.arange(4)
+    >>> x = mx.arange(4)
     >>> sc.chdtr(v, x)
     array([0.        , 0.68268949, 0.84270079, 0.91673548])
     >>> sc.gammainc(v / 2, x / 2)
@@ -1159,12 +1159,12 @@ add_newdoc("chdtrc",
         Degrees of freedom.
     x : array_like
         Lower bound of the integral.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the survival function.
 
     See Also
@@ -1178,14 +1178,14 @@ add_newdoc("chdtrc",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It can be expressed in terms of the regularized upper incomplete
     gamma function.
 
     >>> v = 1
-    >>> x = np.arange(4)
+    >>> x = mx.arange(4)
     >>> sc.chdtrc(v, x)
     array([1.        , 0.31731051, 0.15729921, 0.08326452])
     >>> sc.gammaincc(v / 2, x / 2)
@@ -1207,12 +1207,12 @@ add_newdoc("chdtri",
         Degrees of freedom.
     p : array_like
         Probability.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    x : scalar or ndarray
+    x : scalar or array
         Value so that the probability a Chi square random variable
         with `v` degrees of freedom is greater than `x` equals `p`.
 
@@ -1255,12 +1255,12 @@ add_newdoc("chdtriv",
         or equal to `x`.
     x : array_like
         Nonnegative input.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Degrees of freedom.
 
     See Also
@@ -1317,12 +1317,12 @@ add_newdoc("chndtr",
         Degrees of freedom; must satisfy ``df > 0``
     nc : array_like
         Non-centrality parameter; must satisfy ``nc >= 0``
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    x : scalar or ndarray
+    x : scalar or array
         Value of the non-central chi square cumulative distribution function.
 
     See Also
@@ -1345,7 +1345,7 @@ add_newdoc("chndtr",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     Compute the noncentral chi squared distribution CDF at one point.
@@ -1359,7 +1359,7 @@ add_newdoc("chndtr",
     Plot the noncentral chi squared distribution CDF for different parameters.
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(0, 40, 1000)
+    >>> x = mx.linspace(0, 40, 1000)
     >>> plt.plot(x, sc.chndtr(x, 1, 5), label=r"$df=1,\ nc=5$")
     >>> plt.plot(x, sc.chndtr(x, 5, 10), label=r"$df=5,\ nc=10$")
     >>> plt.legend()
@@ -1384,12 +1384,12 @@ add_newdoc("chndtrix",
         Degrees of freedom; must satisfy ``df > 0``
     nc : array_like
         Non-centrality parameter; must satisfy ``nc >= 0``
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    x : scalar or ndarray
+    x : scalar or array
         Value so that the probability a non-central Chi square random variable
         with `df` degrees of freedom and non-centrality, `nc`, is greater than
         `x` equals `p`.
@@ -1444,12 +1444,12 @@ add_newdoc("chndtridf",
         Probability; must satisfy ``0 <= p < 1``
     nc : array_like
         Non-centrality parameter; must satisfy ``nc >= 0``
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    df : scalar or ndarray
+    df : scalar or array
         Degrees of freedom
 
     See Also
@@ -1503,12 +1503,12 @@ add_newdoc("chndtrinc",
         Degrees of freedom; must satisfy ``df > 0``
     p : array_like
         Probability; must satisfy ``0 <= p < 1``
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    nc : scalar or ndarray
+    nc : scalar or array
         Non-centrality
 
     See Also
@@ -1565,12 +1565,12 @@ add_newdoc(
     x, y : array_like
         Real or complex input parameters. `x` can be any number in the
         complex plane cut along the negative real axis. `y` must be non-zero.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    R : scalar or ndarray
+    R : scalar or array
         Value of the integral. If `y` is real and negative, the Cauchy
         principal value is returned. If both of `x` and `y` are real, the
         return value is real. Otherwise, the return value is complex.
@@ -1607,7 +1607,7 @@ add_newdoc(
     --------
     Basic homogeneity property:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import elliprc
 
     >>> x = 1.2 + 3.4j
@@ -1616,7 +1616,7 @@ add_newdoc(
     >>> elliprc(scale*x, scale*y)
     (0.5484493976710874-0.4169557678995833j)
 
-    >>> elliprc(x, y)/np.sqrt(scale)
+    >>> elliprc(x, y)/mx.sqrt(scale)
     (0.5484493976710874-0.41695576789958333j)
 
     When the two arguments coincide, the integral is particularly
@@ -1626,7 +1626,7 @@ add_newdoc(
     >>> elliprc(x, x)
     (0.4299173120614631-0.3041729818745595j)
 
-    >>> 1/np.sqrt(x)
+    >>> 1/mx.sqrt(x)
     (0.4299173120614631-0.30417298187455954j)
 
     Another simple case: the first argument vanishes:
@@ -1635,7 +1635,7 @@ add_newdoc(
     >>> elliprc(0, y)
     (0.6753125346116815-0.47779380263880866j)
 
-    >>> np.pi/2/np.sqrt(y)
+    >>> mx.pi/2/mx.sqrt(y)
     (0.6753125346116815-0.4777938026388088j)
 
     When `x` and `y` are both positive, we can express
@@ -1647,7 +1647,7 @@ add_newdoc(
     >>> elliprc(x, y)
     0.44942991498453444
 
-    >>> np.arctan(np.sqrt((y-x)/x))/np.sqrt(y-x)
+    >>> mx.arctan(mx.sqrt((y-x)/x))/mx.sqrt(y-x)
     0.44942991498453433
 
     And for the case :math:`0 \le y < x`,
@@ -1657,7 +1657,7 @@ add_newdoc(
     >>> elliprc(x,y)
     0.4989837501576147
 
-    >>> np.log((np.sqrt(x)+np.sqrt(x-y))/np.sqrt(y))/np.sqrt(x-y)
+    >>> mx.log((mx.sqrt(x)+mx.sqrt(x-y))/mx.sqrt(y))/mx.sqrt(x-y)
     0.49898375015761476
 
     """)
@@ -1683,12 +1683,12 @@ add_newdoc(
         Real or complex input parameters. `x` or `y` can be any number in the
         complex plane cut along the negative real axis, but at most one of them
         can be zero, while `z` must be non-zero.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    R : scalar or ndarray
+    R : scalar or array
         Value of the integral. If all of `x`, `y`, and `z` are real, the
         return value is real. Otherwise, the return value is complex.
 
@@ -1723,7 +1723,7 @@ add_newdoc(
     --------
     Basic homogeneity property:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import elliprd
 
     >>> x = 1.2 + 3.4j
@@ -1733,7 +1733,7 @@ add_newdoc(
     >>> elliprd(scale*x, scale*y, scale*z)
     (-0.03703043835680379-0.24500934665683802j)
 
-    >>> elliprd(x, y, z)*np.power(scale, -1.5)
+    >>> elliprd(x, y, z)*mx.power(scale, -1.5)
     (-0.0370304383568038-0.24500934665683805j)
 
     All three arguments coincide:
@@ -1742,7 +1742,7 @@ add_newdoc(
     >>> elliprd(x, x, x)
     (-0.03986825876151896-0.14051741840449586j)
 
-    >>> np.power(x, -1.5)
+    >>> mx.power(x, -1.5)
     (-0.03986825876151894-0.14051741840449583j)
 
     The so-called "second lemniscate constant":
@@ -1751,7 +1751,7 @@ add_newdoc(
     0.5990701173677961
 
     >>> from scipy.special import gamma
-    >>> gamma(0.75)**2/np.sqrt(2*np.pi)
+    >>> gamma(0.75)**2/mx.sqrt(2*mx.pi)
     0.5990701173677959
 
     """)
@@ -1776,12 +1776,12 @@ add_newdoc(
         Real or complex input parameters. `x`, `y`, or `z` can be any number in
         the complex plane cut along the negative real axis, but at most one of
         them can be zero.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    R : scalar or ndarray
+    R : scalar or array
         Value of the integral. If all of `x`, `y`, and `z` are real, the return
         value is real. Otherwise, the return value is complex.
 
@@ -1815,7 +1815,7 @@ add_newdoc(
     --------
     Basic homogeneity property:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import elliprf
 
     >>> x = 1.2 + 3.4j
@@ -1825,7 +1825,7 @@ add_newdoc(
     >>> elliprf(scale*x, scale*y, scale*z)
     (0.5328051227278146-0.4008623567957094j)
 
-    >>> elliprf(x, y, z)/np.sqrt(scale)
+    >>> elliprf(x, y, z)/mx.sqrt(scale)
     (0.5328051227278147-0.4008623567957095j)
 
     All three arguments coincide:
@@ -1834,7 +1834,7 @@ add_newdoc(
     >>> elliprf(x, x, x)
     (0.42991731206146316-0.30417298187455954j)
 
-    >>> 1/np.sqrt(x)
+    >>> 1/mx.sqrt(x)
     (0.4299173120614631-0.30417298187455954j)
 
     The so-called "first lemniscate constant":
@@ -1843,7 +1843,7 @@ add_newdoc(
     1.3110287771460598
 
     >>> from scipy.special import gamma
-    >>> gamma(0.25)**2/(4*np.sqrt(2*np.pi))
+    >>> gamma(0.25)**2/(4*mx.sqrt(2*mx.pi))
     1.3110287771460598
 
     """)
@@ -1869,12 +1869,12 @@ add_newdoc(
     x, y, z : array_like
         Real or complex input parameters. `x`, `y`, or `z` can be any number in
         the complex plane cut along the negative real axis.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    R : scalar or ndarray
+    R : scalar or array
         Value of the integral. If all of `x`, `y`, and `z` are real, the return
         value is real. Otherwise, the return value is complex.
 
@@ -1918,7 +1918,7 @@ add_newdoc(
     --------
     Basic homogeneity property:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import elliprg
 
     >>> x = 1.2 + 3.4j
@@ -1928,7 +1928,7 @@ add_newdoc(
     >>> elliprg(scale*x, scale*y, scale*z)
     (1.195936862005246+0.8470988320464167j)
 
-    >>> elliprg(x, y, z)*np.sqrt(scale)
+    >>> elliprg(x, y, z)*mx.sqrt(scale)
     (1.195936862005246+0.8470988320464165j)
 
     Simplifications:
@@ -1936,13 +1936,13 @@ add_newdoc(
     >>> elliprg(0, y, y)
     1.756203682760182
 
-    >>> 0.25*np.pi*np.sqrt(y)
+    >>> 0.25*mx.pi*mx.sqrt(y)
     1.7562036827601817
 
     >>> elliprg(0, 0, z)
     1.224744871391589
 
-    >>> 0.5*np.sqrt(z)
+    >>> 0.5*mx.sqrt(z)
     1.224744871391589
 
     The surface area of a triaxial ellipsoid with semiaxes ``a``, ``b``, and
@@ -1953,7 +1953,7 @@ add_newdoc(
         S = 4 \pi a b c R_{\mathrm{G}}(1 / a^2, 1 / b^2, 1 / c^2).
 
     >>> def ellipsoid_area(a, b, c):
-    ...     r = 4.0 * np.pi * a * b * c
+    ...     r = 4.0 * mx.pi * a * b * c
     ...     return r * elliprg(1.0 / (a * a), 1.0 / (b * b), 1.0 / (c * c))
     >>> print(ellipsoid_area(1, 3, 5))
     108.62688289491807
@@ -1985,12 +1985,12 @@ add_newdoc(
         the complex plane cut along the negative real axis (subject to further
         constraints, see Notes), and at most one of them can be zero. `p` must
         be non-zero.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    R : scalar or ndarray
+    R : scalar or array
         Value of the integral. If all of `x`, `y`, `z`, and `p` are real, the
         return value is real. Otherwise, the return value is complex.
 
@@ -2058,7 +2058,7 @@ add_newdoc(
     --------
     Basic homogeneity property:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import elliprj
 
     >>> x = 1.2 + 3.4j
@@ -2069,7 +2069,7 @@ add_newdoc(
     >>> elliprj(scale*x, scale*y, scale*z, scale*p)
     (0.10834905565679157+0.19694950747103812j)
 
-    >>> elliprj(x, y, z, p)*np.power(scale, -1.5)
+    >>> elliprj(x, y, z, p)*mx.power(scale, -1.5)
     (0.10834905565679556+0.19694950747103854j)
 
     Reduction to simpler elliptic integral:
@@ -2086,7 +2086,7 @@ add_newdoc(
     >>> elliprj(x, x, x, x)
     (-0.03986825876151896-0.14051741840449586j)
 
-    >>> np.power(x, -1.5)
+    >>> mx.power(x, -1.5)
     (-0.03986825876151894-0.14051741840449583j)
 
     """)
@@ -2102,14 +2102,14 @@ add_newdoc("entr",
 
     Parameters
     ----------
-    x : ndarray
+    x : array
         Input array.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    res : scalar or ndarray
+    res : scalar or array
         The value of the elementwise entropy function at the given points `x`.
 
     See Also
@@ -2156,14 +2156,14 @@ add_newdoc(
 
     Parameters
     ----------
-    y : ndarray
+    y : array
         Argument at which to evaluate. Domain: [-1, 1]
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    erfinv : scalar or ndarray
+    erfinv : scalar or array
         The inverse of erf of y, element-wise
 
     See Also
@@ -2183,14 +2183,14 @@ add_newdoc(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.special import erfinv, erf
 
     >>> erfinv(0.5)
     0.4769362762044699
 
-    >>> y = np.linspace(-1.0, 1.0, num=9)
+    >>> y = mx.linspace(-1.0, 1.0, num=9)
     >>> x = erfinv(y)
     >>> x
     array([       -inf, -0.81341985, -0.47693628, -0.22531206,  0.        ,
@@ -2203,7 +2203,7 @@ add_newdoc(
 
     Plot the function:
 
-    >>> y = np.linspace(-1, 1, 200)
+    >>> y = mx.linspace(-1, 1, 200)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(y, erfinv(y))
     >>> ax.grid(True)
@@ -2231,14 +2231,14 @@ add_newdoc(
 
     Parameters
     ----------
-    y : ndarray
+    y : array
         Argument at which to evaluate. Domain: [0, 2]
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    erfcinv : scalar or ndarray
+    erfcinv : scalar or array
         The inverse of erfc of y, element-wise
 
     See Also
@@ -2249,14 +2249,14 @@ add_newdoc(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.special import erfcinv
 
     >>> erfcinv(0.5)
     0.4769362762044699
 
-    >>> y = np.linspace(0.0, 2.0, num=11)
+    >>> y = mx.linspace(0.0, 2.0, num=11)
     >>> erfcinv(y)
     array([        inf,  0.9061938 ,  0.59511608,  0.37080716,  0.17914345,
            -0.        , -0.17914345, -0.37080716, -0.59511608, -0.9061938 ,
@@ -2264,7 +2264,7 @@ add_newdoc(
 
     Plot the function:
 
-    >>> y = np.linspace(0, 2, 200)
+    >>> y = mx.linspace(0, 2, 200)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(y, erfcinv(y))
     >>> ax.grid(True)
@@ -2304,12 +2304,12 @@ add_newdoc("eval_jacobi",
         Parameter
     x : array_like
         Points at which to evaluate the polynomial
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    P : scalar or ndarray
+    P : scalar or array
         Values of the Jacobi polynomial
 
     See Also
@@ -2351,12 +2351,12 @@ add_newdoc("eval_sh_jacobi",
         Parameter
     q : float
         Parameter
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    G : scalar or ndarray
+    G : scalar or array
         Values of the shifted Jacobi polynomial.
 
     See Also
@@ -2401,12 +2401,12 @@ add_newdoc("eval_gegenbauer",
         Parameter
     x : array_like
         Points at which to evaluate the Gegenbauer polynomial
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    C : scalar or ndarray
+    C : scalar or array
         Values of the Gegenbauer polynomial
 
     See Also
@@ -2448,12 +2448,12 @@ add_newdoc("eval_chebyt",
         function.
     x : array_like
         Points at which to evaluate the Chebyshev polynomial
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    T : scalar or ndarray
+    T : scalar or array
         Values of the Chebyshev polynomial
 
     See Also
@@ -2502,12 +2502,12 @@ add_newdoc("eval_chebyu",
         function.
     x : array_like
         Points at which to evaluate the Chebyshev polynomial
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    U : scalar or ndarray
+    U : scalar or array
         Values of the Chebyshev polynomial
 
     See Also
@@ -2549,12 +2549,12 @@ add_newdoc("eval_chebys",
         determined via the relation to `eval_chebyu`.
     x : array_like
         Points at which to evaluate the Chebyshev polynomial
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    S : scalar or ndarray
+    S : scalar or array
         Values of the Chebyshev polynomial
 
     See Also
@@ -2572,13 +2572,13 @@ add_newdoc("eval_chebys",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     They are a scaled version of the Chebyshev polynomials of the
     second kind.
 
-    >>> x = np.linspace(-2, 2, 6)
+    >>> x = mx.linspace(-2, 2, 6)
     >>> sc.eval_chebys(3, x)
     array([-4.   ,  0.672,  0.736, -0.736, -0.672,  4.   ])
     >>> sc.eval_chebyu(3, x / 2)
@@ -2609,12 +2609,12 @@ add_newdoc("eval_chebyc",
         determined via the relation to `eval_chebyt`.
     x : array_like
         Points at which to evaluate the Chebyshev polynomial
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    C : scalar or ndarray
+    C : scalar or array
         Values of the Chebyshev polynomial
 
     See Also
@@ -2633,13 +2633,13 @@ add_newdoc("eval_chebyc",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     They are a scaled version of the Chebyshev polynomials of the
     first kind.
 
-    >>> x = np.linspace(-2, 2, 6)
+    >>> x = mx.linspace(-2, 2, 6)
     >>> sc.eval_chebyc(3, x)
     array([-2.   ,  1.872,  1.136, -1.136, -1.872,  2.   ])
     >>> 2 * sc.eval_chebyt(3, x / 2)
@@ -2670,12 +2670,12 @@ add_newdoc("eval_sh_chebyt",
         determined via the relation to `eval_chebyt`.
     x : array_like
         Points at which to evaluate the shifted Chebyshev polynomial
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    T : scalar or ndarray
+    T : scalar or array
         Values of the shifted Chebyshev polynomial
 
     See Also
@@ -2717,12 +2717,12 @@ add_newdoc("eval_sh_chebyu",
         determined via the relation to `eval_chebyu`.
     x : array_like
         Points at which to evaluate the shifted Chebyshev polynomial
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    U : scalar or ndarray
+    U : scalar or array
         Values of the shifted Chebyshev polynomial
 
     See Also
@@ -2764,12 +2764,12 @@ add_newdoc("eval_legendre",
         function.
     x : array_like
         Points at which to evaluate the Legendre polynomial
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    P : scalar or ndarray
+    P : scalar or array
         Values of the Legendre polynomial
 
     See Also
@@ -2788,7 +2788,7 @@ add_newdoc("eval_legendre",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import eval_legendre
 
     Evaluate the zero-order Legendre polynomial at x = 0
@@ -2798,7 +2798,7 @@ add_newdoc("eval_legendre",
 
     Evaluate the first-order Legendre polynomial between -1 and 1
 
-    >>> X = np.linspace(-1, 1, 5)  # Domain of Legendre polynomials
+    >>> X = mx.linspace(-1, 1, 5)  # Domain of Legendre polynomials
     >>> eval_legendre(1, X)
     array([-1. , -0.5,  0. ,  0.5,  1. ])
 
@@ -2810,7 +2810,7 @@ add_newdoc("eval_legendre",
 
     Plot Legendre polynomials of order 0 through 4
 
-    >>> X = np.linspace(-1, 1)
+    >>> X = mx.linspace(-1, 1)
 
     >>> import matplotlib.pyplot as plt
     >>> for n in range(0, 5):
@@ -2847,12 +2847,12 @@ add_newdoc("eval_sh_legendre",
         determined via the relation to `eval_legendre`.
     x : array_like
         Points at which to evaluate the shifted Legendre polynomial
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    P : scalar or ndarray
+    P : scalar or array
         Values of the shifted Legendre polynomial
 
     See Also
@@ -2900,12 +2900,12 @@ add_newdoc("eval_genlaguerre",
     x : array_like
         Points at which to evaluate the generalized Laguerre
         polynomial
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    L : scalar or ndarray
+    L : scalar or array
         Values of the generalized Laguerre polynomial
 
     See Also
@@ -2948,12 +2948,12 @@ add_newdoc("eval_laguerre",
         function.
     x : array_like
         Points at which to evaluate the Laguerre polynomial
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    L : scalar or ndarray
+    L : scalar or array
         Values of the Laguerre polynomial
 
     See Also
@@ -2993,12 +2993,12 @@ add_newdoc("eval_hermite",
         Degree of the polynomial
     x : array_like
         Points at which to evaluate the Hermite polynomial
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    H : scalar or ndarray
+    H : scalar or array
         Values of the Hermite polynomial
 
     See Also
@@ -3039,12 +3039,12 @@ add_newdoc("eval_hermitenorm",
         Degree of the polynomial
     x : array_like
         Points at which to evaluate the Hermite polynomial
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    He : scalar or ndarray
+    He : scalar or array
         Values of the Hermite polynomial
 
     See Also
@@ -3082,12 +3082,12 @@ add_newdoc("expn",
         Non-negative integers
     x : array_like
         Real argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the generalized exponential integral
 
     See Also
@@ -3102,7 +3102,7 @@ add_newdoc("expn",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     Its domain is nonnegative n and x.
@@ -3118,10 +3118,10 @@ add_newdoc("expn",
 
     For n equal to 0 it reduces to ``exp(-x) / x``.
 
-    >>> x = np.array([1, 2, 3, 4])
+    >>> x = mx.array([1, 2, 3, 4])
     >>> sc.expn(0, x)
     array([0.36787944, 0.06766764, 0.01659569, 0.00457891])
-    >>> np.exp(-x) / x
+    >>> mx.exp(-x) / x
     array([0.36787944, 0.06766764, 0.01659569, 0.00457891])
 
     For n equal to 1 it reduces to `exp1`.
@@ -3161,12 +3161,12 @@ add_newdoc("fdtr",
         Second parameter (positive float).
     x : array_like
         Argument (nonnegative float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    y : scalar or ndarray
+    y : scalar or array
         The CDF of the F-distribution with parameters `dfn` and `dfd` at `x`.
 
     See Also
@@ -3197,7 +3197,7 @@ add_newdoc("fdtr",
     --------
     Calculate the function for ``dfn=1`` and ``dfd=2`` at ``x=1``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import fdtr
     >>> fdtr(1, 2, 1)
     0.5773502691896258
@@ -3205,7 +3205,7 @@ add_newdoc("fdtr",
     Calculate the function at several points by providing a NumPy array for
     `x`.
 
-    >>> x = np.array([0.5, 2., 3.])
+    >>> x = mx.array([0.5, 2., 3.])
     >>> fdtr(1, 2, x)
     array([0.4472136 , 0.70710678, 0.77459667])
 
@@ -3217,7 +3217,7 @@ add_newdoc("fdtr",
     >>> linestyles = ['solid', 'dashed', 'dotted', 'dashdot']
     >>> parameters_list = list(zip(dfn_parameters, dfd_parameters,
     ...                            linestyles))
-    >>> x = np.linspace(0, 30, 1000)
+    >>> x = mx.linspace(0, 30, 1000)
     >>> fig, ax = plt.subplots()
     >>> for parameter_set in parameters_list:
     ...     dfn, dfd, style = parameter_set
@@ -3261,12 +3261,12 @@ add_newdoc("fdtrc",
         Second parameter (positive float).
     x : array_like
         Argument (nonnegative float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    y : scalar or ndarray
+    y : scalar or array
         The complemented F-distribution function with parameters `dfn` and
         `dfd` at `x`.
 
@@ -3297,7 +3297,7 @@ add_newdoc("fdtrc",
     --------
     Calculate the function for ``dfn=1`` and ``dfd=2`` at ``x=1``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import fdtrc
     >>> fdtrc(1, 2, 1)
     0.42264973081037427
@@ -3305,7 +3305,7 @@ add_newdoc("fdtrc",
     Calculate the function at several points by providing a NumPy array for
     `x`.
 
-    >>> x = np.array([0.5, 2., 3.])
+    >>> x = mx.array([0.5, 2., 3.])
     >>> fdtrc(1, 2, x)
     array([0.5527864 , 0.29289322, 0.22540333])
 
@@ -3317,7 +3317,7 @@ add_newdoc("fdtrc",
     >>> linestyles = ['solid', 'dashed', 'dotted', 'dashdot']
     >>> parameters_list = list(zip(dfn_parameters, dfd_parameters,
     ...                            linestyles))
-    >>> x = np.linspace(0, 30, 1000)
+    >>> x = mx.linspace(0, 30, 1000)
     >>> fig, ax = plt.subplots()
     >>> for parameter_set in parameters_list:
     ...     dfn, dfd, style = parameter_set
@@ -3361,12 +3361,12 @@ add_newdoc("fdtri",
         Second parameter (positive float).
     p : array_like
         Cumulative probability, in [0, 1].
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    x : scalar or ndarray
+    x : scalar or array
         The quantile corresponding to `p`.
 
     See Also
@@ -3393,7 +3393,7 @@ add_newdoc("fdtri",
     at ``x=3``. `fdtri` then returns ``3`` given the same values for `df1`,
     `df2` and the computed CDF value.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import fdtri, fdtr
     >>> df1, df2 = 1, 2
     >>> x = 3
@@ -3404,7 +3404,7 @@ add_newdoc("fdtri",
     Calculate the function at several points by providing a NumPy array for
     `x`.
 
-    >>> x = np.array([0.1, 0.4, 0.7])
+    >>> x = mx.array([0.1, 0.4, 0.7])
     >>> fdtri(1, 2, x)
     array([0.02020202, 0.38095238, 1.92156863])
 
@@ -3416,7 +3416,7 @@ add_newdoc("fdtri",
     >>> linestyles = ['solid', 'dashed', 'dotted', 'dashdot']
     >>> parameters_list = list(zip(dfn_parameters, dfd_parameters,
     ...                            linestyles))
-    >>> x = np.linspace(0, 1, 1000)
+    >>> x = mx.linspace(0, 1, 1000)
     >>> fig, ax = plt.subplots()
     >>> for parameter_set in parameters_list:
     ...     dfn, dfd, style = parameter_set
@@ -3461,12 +3461,12 @@ add_newdoc("fdtridfd",
         Cumulative probability, in [0, 1].
     x : array_like
         Argument (nonnegative float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    dfd : scalar or ndarray
+    dfd : scalar or array
         `dfd` such that ``fdtr(dfn, dfd, x) == p``.
 
     See Also
@@ -3515,12 +3515,12 @@ add_newdoc(
         Second parameter (positive float).
     x : array_like
         Argument (nonnegative float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    dfn : scalar or ndarray
+    dfn : scalar or array
         `dfn` such that ``fdtr(dfn, dfd, x) == p``.
 
     See Also
@@ -3557,12 +3557,12 @@ add_newdoc("gdtr",
         :math:`\alpha` (float).
     x : array_like
         The quantile (upper limit of integration; float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    F : scalar or ndarray
+    F : scalar or array
         The CDF of the gamma distribution with parameters `a` and `b`
         evaluated at `x`.
 
@@ -3589,7 +3589,7 @@ add_newdoc("gdtr",
     --------
     Compute the function for ``a=1``, ``b=2`` at ``x=5``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import gdtr
     >>> import matplotlib.pyplot as plt
     >>> gdtr(1., 2., 5.)
@@ -3598,7 +3598,7 @@ add_newdoc("gdtr",
     Compute the function for ``a=1`` and ``b=2`` at several points by
     providing a NumPy array for `x`.
 
-    >>> xvalues = np.array([1., 2., 3., 4])
+    >>> xvalues = mx.array([1., 2., 3., 4])
     >>> gdtr(1., 1., xvalues)
     array([0.63212056, 0.86466472, 0.95021293, 0.98168436])
 
@@ -3607,8 +3607,8 @@ add_newdoc("gdtr",
     function for three different `a` at four positions `x` and ``b=3``,
     resulting in a 3x4 array.
 
-    >>> a = np.array([[0.5], [1.5], [2.5]])
-    >>> x = np.array([1., 2., 3., 4])
+    >>> a = mx.array([[0.5], [1.5], [2.5]])
+    >>> x = mx.array([1., 2., 3., 4])
     >>> a.shape, x.shape
     ((3, 1), (4,))
 
@@ -3623,7 +3623,7 @@ add_newdoc("gdtr",
     >>> b_parameters = [2, 10, 15, 20]
     >>> linestyles = ['solid', 'dashed', 'dotted', 'dashdot']
     >>> parameters_list = list(zip(a_parameters, b_parameters, linestyles))
-    >>> x = np.linspace(0, 30, 1000)
+    >>> x = mx.linspace(0, 30, 1000)
     >>> fig, ax = plt.subplots()
     >>> for parameter_set in parameters_list:
     ...     a, b, style = parameter_set
@@ -3675,12 +3675,12 @@ add_newdoc("gdtrc",
         :math:`\alpha` (float).
     x : array_like
         The quantile (lower limit of integration; float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    F : scalar or ndarray
+    F : scalar or array
         The survival function of the gamma distribution with parameters `a`
         and `b` evaluated at `x`.
 
@@ -3708,7 +3708,7 @@ add_newdoc("gdtrc",
     --------
     Compute the function for ``a=1`` and ``b=2`` at ``x=5``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import gdtrc
     >>> import matplotlib.pyplot as plt
     >>> gdtrc(1., 2., 5.)
@@ -3717,7 +3717,7 @@ add_newdoc("gdtrc",
     Compute the function for ``a=1``, ``b=2`` at several points by providing
     a NumPy array for `x`.
 
-    >>> xvalues = np.array([1., 2., 3., 4])
+    >>> xvalues = mx.array([1., 2., 3., 4])
     >>> gdtrc(1., 1., xvalues)
     array([0.36787944, 0.13533528, 0.04978707, 0.01831564])
 
@@ -3726,8 +3726,8 @@ add_newdoc("gdtrc",
     function for three different `a` at four positions `x` and ``b=3``,
     resulting in a 3x4 array.
 
-    >>> a = np.array([[0.5], [1.5], [2.5]])
-    >>> x = np.array([1., 2., 3., 4])
+    >>> a = mx.array([[0.5], [1.5], [2.5]])
+    >>> x = mx.array([1., 2., 3., 4])
     >>> a.shape, x.shape
     ((3, 1), (4,))
 
@@ -3742,7 +3742,7 @@ add_newdoc("gdtrc",
     >>> b_parameters = [2, 10, 15, 20]
     >>> linestyles = ['solid', 'dashed', 'dotted', 'dashdot']
     >>> parameters_list = list(zip(a_parameters, b_parameters, linestyles))
-    >>> x = np.linspace(0, 30, 1000)
+    >>> x = mx.linspace(0, 30, 1000)
     >>> fig, ax = plt.subplots()
     >>> for parameter_set in parameters_list:
     ...     a, b, style = parameter_set
@@ -3788,14 +3788,14 @@ add_newdoc("gdtria",
         of the gamma distribution.
     x : array_like
         Nonnegative real values, from the domain of the gamma distribution.
-    out : ndarray, optional
-        If a fourth argument is given, it must be a numpy.ndarray whose size
+    out : array, optional
+        If a fourth argument is given, it must be a mx.array whose size
         matches the broadcast result of `a`, `b` and `x`.  `out` is then the
         array returned by the function.
 
     Returns
     -------
-    a : scalar or ndarray
+    a : scalar or array
         Values of the `a` parameter such that ``p = gdtr(a, b, x)`.  ``1/a``
         is the "scale" parameter of the gamma distribution.
 
@@ -3857,14 +3857,14 @@ add_newdoc("gdtrib",
         Probability values.
     x : array_like
         Nonnegative real values, from the domain of the gamma distribution.
-    out : ndarray, optional
-        If a fourth argument is given, it must be a numpy.ndarray whose size
+    out : array, optional
+        If a fourth argument is given, it must be a mx.array whose size
         matches the broadcast result of `a`, `b` and `x`.  `out` is then the
         array returned by the function.
 
     Returns
     -------
-    b : scalar or ndarray
+    b : scalar or array
         Values of the `b` parameter such that `p = gdtr(a, b, x)`.  `b` is
         the "shape" parameter of the gamma distribution.
 
@@ -3935,14 +3935,14 @@ add_newdoc("gdtrix",
         of the gamma distribution.
     p : array_like
         Probability values.
-    out : ndarray, optional
-        If a fourth argument is given, it must be a numpy.ndarray whose size
+    out : array, optional
+        If a fourth argument is given, it must be a mx.array whose size
         matches the broadcast result of `a`, `b` and `x`. `out` is then the
         array returned by the function.
 
     Returns
     -------
-    x : scalar or ndarray
+    x : scalar or array
         Values of the `x` parameter such that `p = gdtr(a, b, x)`.
 
     See Also
@@ -3998,16 +3998,16 @@ add_newdoc("huber",
 
     Parameters
     ----------
-    delta : ndarray
+    delta : array
         Input array, indicating the quadratic vs. linear loss changepoint.
-    r : ndarray
+    r : array
         Input array, possibly representing residuals.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The computed Huber loss function values.
 
     See Also
@@ -4043,7 +4043,7 @@ add_newdoc("huber",
     --------
     Import all necessary modules.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import huber
     >>> import matplotlib.pyplot as plt
 
@@ -4061,14 +4061,14 @@ add_newdoc("huber",
     Compute the function at different points by providing a NumPy array or
     list for `r`.
 
-    >>> huber(2., np.array([1., 1.5, 3.]))
+    >>> huber(2., mx.array([1., 1.5, 3.]))
     array([0.5  , 1.125, 4.   ])
 
     The function can be calculated for different `delta` and `r` by
     providing arrays for both with compatible shapes for broadcasting.
 
-    >>> r = np.array([1., 2.5, 8., 10.])
-    >>> deltas = np.array([[1.], [5.], [9.]])
+    >>> r = mx.array([1., 2.5, 8., 10.])
+    >>> deltas = mx.array([[1.], [5.], [9.]])
     >>> print(r.shape, deltas.shape)
     (4,) (3, 1)
 
@@ -4079,7 +4079,7 @@ add_newdoc("huber",
 
     Plot the function for different `delta`.
 
-    >>> x = np.linspace(-4, 4, 500)
+    >>> x = mx.linspace(-4, 4, 500)
     >>> deltas = [1, 2, 3]
     >>> linestyles = ["dashed", "dotted", "dashdot"]
     >>> fig, ax = plt.subplots()
@@ -4106,12 +4106,12 @@ add_newdoc("hyp0f1",
         Real-valued parameter
     z : array_like
         Real- or complex-valued argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The confluent hypergeometric limit function
 
     Notes
@@ -4131,7 +4131,7 @@ add_newdoc("hyp0f1",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It is one when `z` is zero.
@@ -4142,7 +4142,7 @@ add_newdoc("hyp0f1",
     It is the limit of the confluent hypergeometric function as `q`
     goes to infinity.
 
-    >>> q = np.array([1, 10, 100, 1000])
+    >>> q = mx.array([1, 10, 100, 1000])
     >>> v = 1
     >>> z = 1
     >>> sc.hyp1f1(q, v, z / q)
@@ -4153,7 +4153,7 @@ add_newdoc("hyp0f1",
     It is related to Bessel functions.
 
     >>> n = 1
-    >>> x = np.linspace(0, 1, 5)
+    >>> x = mx.linspace(0, 1, 5)
     >>> sc.jv(n, x)
     array([0.        , 0.12402598, 0.24226846, 0.3492436 , 0.44005059])
     >>> (0.5 * x)**n / sc.factorial(n) * sc.hyp0f1(n + 1, -0.25 * x**2)
@@ -4182,12 +4182,12 @@ add_newdoc("hyp1f1",
         Real parameters
     x : array_like
         Real or complex argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the confluent hypergeometric function
 
     See Also
@@ -4212,7 +4212,7 @@ add_newdoc("hyp1f1",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It is one when `x` is zero:
@@ -4227,7 +4227,7 @@ add_newdoc("hyp1f1",
 
     It is a polynomial when `a` is a nonpositive integer.
 
-    >>> a, b, x = -1, 0.5, np.array([1.0, 2.0, 3.0, 4.0])
+    >>> a, b, x = -1, 0.5, mx.array([1.0, 2.0, 3.0, 4.0])
     >>> sc.hyp1f1(a, b, x)
     array([-1., -3., -5., -7.])
     >>> 1 + (a / b) * x
@@ -4237,7 +4237,7 @@ add_newdoc("hyp1f1",
 
     >>> sc.hyp1f1(2, 2, [1, 2, 3, 4])
     array([ 2.71828183,  7.3890561 , 20.08553692, 54.59815003])
-    >>> np.exp([1, 2, 3, 4])
+    >>> mx.exp([1, 2, 3, 4])
     array([ 2.71828183,  7.3890561 , 20.08553692, 54.59815003])
 
     """)
@@ -4268,12 +4268,12 @@ add_newdoc("hyperu",
         Real-valued parameters
     x : array_like
         Real-valued argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of `U`
 
     References
@@ -4283,18 +4283,18 @@ add_newdoc("hyperu",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It has a branch cut along the negative `x` axis.
 
-    >>> x = np.linspace(-0.1, -10, 5)
+    >>> x = mx.linspace(-0.1, -10, 5)
     >>> sc.hyperu(1, 1, x)
     array([nan, nan, nan, nan, nan])
 
     It approaches zero as `x` goes to infinity.
 
-    >>> x = np.array([1, 10, 100])
+    >>> x = mx.array([1, 10, 100])
     >>> sc.hyperu(1, 1, x)
     array([0.59634736, 0.09156333, 0.00990194])
 
@@ -4332,12 +4332,12 @@ add_newdoc("kl_div",
     ----------
     x, y : array_like
         Real arguments
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the Kullback-Liebler divergence.
 
     See Also
@@ -4382,12 +4382,12 @@ add_newdoc("kn",
         Order of Bessel functions (floats will truncate with a warning)
     x : array_like of float
         Argument at which to evaluate the Bessel functions
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Value of the Modified Bessel function of the second kind,
         :math:`K_n(x)`.
 
@@ -4414,10 +4414,10 @@ add_newdoc("kn",
     --------
     Plot the function of several orders for real input:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import kn
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(0, 5, 1000)
+    >>> x = mx.linspace(0, 5, 1000)
     >>> for N in range(6):
     ...     plt.plot(x, kn(N, x), label='$K_{}(x)$'.format(N))
     >>> plt.ylim(0, 10)
@@ -4444,12 +4444,12 @@ add_newdoc("kolmogi",
     ----------
     p : float array_like
         Probability
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The value(s) of kolmogi(p)
 
     See Also
@@ -4493,12 +4493,12 @@ add_newdoc("kolmogorov",
     y : float array_like
       Absolute deviation between the Empirical CDF (ECDF) and the target CDF,
       multiplied by sqrt(n).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The value(s) of kolmogorov(y)
 
     See Also
@@ -4519,7 +4519,7 @@ add_newdoc("kolmogorov",
     --------
     Show the probability of a gap at least as big as 0, 0.5 and 1.0.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import kolmogorov
     >>> from scipy.stats import kstwobign
     >>> kolmogorov([0, 0.5, 1.0])
@@ -4529,21 +4529,21 @@ add_newdoc("kolmogorov",
     the target distribution, a Normal(0, 1) distribution.
 
     >>> from scipy.stats import norm, laplace
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> n = 1000
     >>> lap01 = laplace(0, 1)
-    >>> x = np.sort(lap01.rvs(n, random_state=rng))
-    >>> np.mean(x), np.std(x)
+    >>> x = mx.sort(lap01.rvs(n, random_state=rng))
+    >>> mx.mean(x), mx.std(x)
     (-0.05841730131499543, 1.3968109101997568)
 
     Construct the Empirical CDF and the K-S statistic Dn.
 
     >>> target = norm(0,1)  # Normal mean 0, stddev 1
     >>> cdfs = target.cdf(x)
-    >>> ecdfs = np.arange(n+1, dtype=float)/n
-    >>> gaps = np.column_stack([cdfs - ecdfs[:n], ecdfs[1:] - cdfs])
-    >>> Dn = np.max(gaps)
-    >>> Kn = np.sqrt(n) * Dn
+    >>> ecdfs = mx.arange(n+1, dtype=float)/n
+    >>> gaps = mx.column_stack([cdfs - ecdfs[:n], ecdfs[1:] - cdfs])
+    >>> Dn = mx.max(gaps)
+    >>> Kn = mx.sqrt(n) * Dn
     >>> print('Dn=%f, sqrt(n)*Dn=%f' % (Dn, Kn))
     Dn=0.043363, sqrt(n)*Dn=1.371265
     >>> print(chr(10).join(['For a sample of size n drawn from a N(0, 1) distribution:',
@@ -4558,12 +4558,12 @@ add_newdoc("kolmogorov",
     Plot the Empirical CDF against the target N(0, 1) CDF.
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.step(np.concatenate([[-3], x]), ecdfs, where='post', label='Empirical CDF')
-    >>> x3 = np.linspace(-3, 3, 100)
+    >>> plt.step(mx.concatenate([[-3], x]), ecdfs, where='post', label='Empirical CDF')
+    >>> x3 = mx.linspace(-3, 3, 100)
     >>> plt.plot(x3, target.cdf(x3), label='CDF for N(0, 1)')
     >>> plt.ylim([0, 1]); plt.grid(True); plt.legend();
     >>> # Add vertical lines marking Dn+ and Dn-
-    >>> iminus, iplus = np.argmax(gaps, axis=0)
+    >>> iminus, iplus = mx.argmax(gaps, axis=0)
     >>> plt.vlines([x[iminus]], ecdfs[iminus], cdfs[iminus],
     ...            color='r', linestyle='dashed', lw=4)
     >>> plt.vlines([x[iplus]], cdfs[iplus], ecdfs[iplus+1],
@@ -4609,7 +4609,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
     """)
 
 add_newdoc(
@@ -4630,7 +4630,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
     """)
 
 add_newdoc(
@@ -4651,7 +4651,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
     """)
 
 add_newdoc(
@@ -4672,7 +4672,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
     """)
 
 add_newdoc(
@@ -4693,7 +4693,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
     """)
 
 add_newdoc("_lgam1p",
@@ -4732,12 +4732,12 @@ add_newdoc("lpmv",
         Degree (float).
     x : array_like
         Argument (float). Must have ``|x| <= 1``.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    pmv : scalar or ndarray
+    pmv : scalar or array
         Value of the associated Legendre function.
 
     Notes
@@ -4776,12 +4776,12 @@ add_newdoc("nbdtr",
         The target number of successes (positive int).
     p : array_like
         Probability of success in a single event (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    F : scalar or ndarray
+    F : scalar or array
         The probability of `k` or fewer failures before `n` successes in a
         sequence of events with individual success probability `p`.
 
@@ -4817,7 +4817,7 @@ add_newdoc("nbdtr",
     --------
     Compute the function for ``k=10`` and ``n=5`` at ``p=0.5``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import nbdtr
     >>> nbdtr(10, 5, 0.5)
     0.940765380859375
@@ -4831,7 +4831,7 @@ add_newdoc("nbdtr",
     Plot the function for four different parameter sets.
 
     >>> import matplotlib.pyplot as plt
-    >>> k = np.arange(130)
+    >>> k = mx.arange(130)
     >>> n_parameters = [20, 20, 20, 80]
     >>> p_parameters = [0.2, 0.5, 0.8, 0.5]
     >>> linestyles = ['solid', 'dashed', 'dotted', 'dashdot']
@@ -4866,8 +4866,8 @@ add_newdoc("nbdtr",
     the function for three different `k` at four locations `p`, resulting in
     a 3x4 array.
 
-    >>> k = np.array([[5], [10], [15]])
-    >>> p = np.array([0.3, 0.5, 0.7, 0.9])
+    >>> k = mx.array([[5], [10], [15]])
+    >>> p = mx.array([0.3, 0.5, 0.7, 0.9])
     >>> k.shape, p.shape
     ((3, 1), (4,))
 
@@ -4902,12 +4902,12 @@ add_newdoc("nbdtrc",
         The target number of successes (positive int).
     p : array_like
         Probability of success in a single event (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    F : scalar or ndarray
+    F : scalar or array
         The probability of `k + 1` or more failures before `n` successes in a
         sequence of events with individual success probability `p`.
 
@@ -4943,7 +4943,7 @@ add_newdoc("nbdtrc",
     --------
     Compute the function for ``k=10`` and ``n=5`` at ``p=0.5``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import nbdtrc
     >>> nbdtrc(10, 5, 0.5)
     0.059234619140624986
@@ -4957,7 +4957,7 @@ add_newdoc("nbdtrc",
     Plot the function for four different parameter sets.
 
     >>> import matplotlib.pyplot as plt
-    >>> k = np.arange(130)
+    >>> k = mx.arange(130)
     >>> n_parameters = [20, 20, 20, 80]
     >>> p_parameters = [0.2, 0.5, 0.8, 0.5]
     >>> linestyles = ['solid', 'dashed', 'dotted', 'dashdot']
@@ -4992,8 +4992,8 @@ add_newdoc("nbdtrc",
     the function for three different `k` at four locations `p`, resulting in
     a 3x4 array.
 
-    >>> k = np.array([[5], [10], [15]])
-    >>> p = np.array([0.3, 0.5, 0.7, 0.9])
+    >>> k = mx.array([[5], [10], [15]])
+    >>> p = mx.array([0.3, 0.5, 0.7, 0.9])
     >>> k.shape, p.shape
     ((3, 1), (4,))
 
@@ -5020,12 +5020,12 @@ add_newdoc(
         The target number of successes (positive int).
     y : array_like
         The probability of `k` or fewer failures before `n` successes (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    p : scalar or ndarray
+    p : scalar or array
         Probability of success in a single event (float) such that
         `nbdtr(k, n, p) = y`.
 
@@ -5057,7 +5057,7 @@ add_newdoc(
     Up to floating point errors the following holds:
     ``nbdtri(k, n, nbdtr(k, n, p))=p``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import nbdtri, nbdtr
     >>> k, n, y = 5, 10, 0.2
     >>> cdf_val = nbdtr(k, n, y)
@@ -5067,7 +5067,7 @@ add_newdoc(
     Compute the function for ``k=10`` and ``n=5`` at several points by
     providing a NumPy array or list for `y`.
 
-    >>> y = np.array([0.1, 0.4, 0.8])
+    >>> y = mx.array([0.1, 0.4, 0.8])
     >>> nbdtri(3, 5, y)
     array([0.34462319, 0.51653095, 0.69677416])
 
@@ -5078,7 +5078,7 @@ add_newdoc(
     >>> k_parameters = [20, 20, 60, 80]
     >>> linestyles = ['solid', 'dashed', 'dotted', 'dashdot']
     >>> parameters_list = list(zip(n_parameters, k_parameters, linestyles))
-    >>> cdf_vals = np.linspace(0, 1, 1000)
+    >>> cdf_vals = mx.linspace(0, 1, 1000)
     >>> fig, ax = plt.subplots(figsize=(8, 8))
     >>> for parameter_set in parameters_list:
     ...     n, k, style = parameter_set
@@ -5097,8 +5097,8 @@ add_newdoc(
     the function for three different `k` at four locations `p`, resulting in
     a 3x4 array.
 
-    >>> k = np.array([[5], [10], [15]])
-    >>> y = np.array([0.3, 0.5, 0.7, 0.9])
+    >>> k = mx.array([[5], [10], [15]])
+    >>> y = mx.array([0.3, 0.5, 0.7, 0.9])
     >>> k.shape, y.shape
     ((3, 1), (4,))
 
@@ -5126,12 +5126,12 @@ add_newdoc("nbdtrik",
         The target number of successes (positive int).
     p : array_like
         Probability of success in a single event (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    k : scalar or ndarray
+    k : scalar or array
         The maximum number of allowed failures such that `nbdtr(k, n, p) = y`.
 
     See Also
@@ -5172,7 +5172,7 @@ add_newdoc("nbdtrik",
     Compute the negative binomial cumulative distribution function for an
     exemplary parameter set.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import nbdtr, nbdtrik
     >>> k, n, p = 5, 2, 0.5
     >>> cdf_value = nbdtr(k, n, p)
@@ -5191,7 +5191,7 @@ add_newdoc("nbdtrik",
     >>> n_parameters = [30, 30, 30, 80]
     >>> linestyles = ['solid', 'dashed', 'dotted', 'dashdot']
     >>> parameters_list = list(zip(p_parameters, n_parameters, linestyles))
-    >>> cdf_vals = np.linspace(0, 1, 1000)
+    >>> cdf_vals = mx.linspace(0, 1, 1000)
     >>> fig, ax = plt.subplots(figsize=(8, 8))
     >>> for parameter_set in parameters_list:
     ...     p, n, style = parameter_set
@@ -5233,12 +5233,12 @@ add_newdoc("nbdtrin",
         The probability of `k` or fewer failures before `n` successes (float).
     p : array_like
         Probability of success in a single event (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    n : scalar or ndarray
+    n : scalar or array
         The number of successes `n` such that `nbdtr(k, n, p) = y`.
 
     See Also
@@ -5316,12 +5316,12 @@ add_newdoc("ncfdtr",
         Noncentrality parameter.  Range [0, inf).
     f : array_like
         Quantiles, i.e. the upper limit of integration.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    cdf : scalar or ndarray
+    cdf : scalar or array
         The calculated CDF.  If all inputs are scalar, the return will be a
         float.  Otherwise it will be an array.
 
@@ -5361,7 +5361,7 @@ add_newdoc("ncfdtr",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import special
     >>> from scipy import stats
     >>> import matplotlib.pyplot as plt
@@ -5369,7 +5369,7 @@ add_newdoc("ncfdtr",
     Plot the CDF of the non-central F distribution, for nc=0.  Compare with the
     F-distribution from scipy.stats:
 
-    >>> x = np.linspace(-1, 8, num=500)
+    >>> x = mx.linspace(-1, 8, num=500)
     >>> dfn = 3
     >>> dfd = 2
     >>> ncf_stats = stats.f.cdf(x, dfn, dfd)
@@ -5402,12 +5402,12 @@ add_newdoc("ncfdtri",
     p : array_like
         Value of the cumulative distribution function.  Must be in the
         range [0, 1].
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    f : scalar or ndarray
+    f : scalar or array
         Quantiles, i.e., the upper limit of integration.
 
     See Also
@@ -5469,12 +5469,12 @@ add_newdoc("ncfdtridfd",
         Noncentrality parameter.  Should be in range (0, 1e4).
     f : array_like
         Quantiles, i.e., the upper limit of integration.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    dfd : scalar or ndarray
+    dfd : scalar or array
         Degrees of freedom of the denominator sum of squares.
 
     See Also
@@ -5529,12 +5529,12 @@ add_newdoc("ncfdtridfn",
         Noncentrality parameter.  Should be in range (0, 1e4).
     f : float
         Quantiles, i.e., the upper limit of integration.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    dfn : scalar or ndarray
+    dfn : scalar or array
         Degrees of freedom of the numerator sum of squares.
 
     See Also
@@ -5589,12 +5589,12 @@ add_newdoc("ncfdtrinc",
         range [0, 1].
     f : array_like
         Quantiles, i.e., the upper limit of integration.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    nc : scalar or ndarray
+    nc : scalar or array
         Noncentrality parameter.
 
     See Also
@@ -5636,12 +5636,12 @@ add_newdoc("nctdtr",
         Noncentrality parameter.
     t : array_like
         Quantiles, i.e., the upper limit of integration.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    cdf : scalar or ndarray
+    cdf : scalar or array
         The calculated CDF. If all inputs are scalar, the return will be a
         float. Otherwise, it will be an array.
 
@@ -5666,7 +5666,7 @@ add_newdoc("nctdtr",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import special
     >>> from scipy import stats
     >>> import matplotlib.pyplot as plt
@@ -5674,7 +5674,7 @@ add_newdoc("nctdtr",
     Plot the CDF of the non-central t distribution, for nc=0. Compare with the
     t-distribution from scipy.stats:
 
-    >>> x = np.linspace(-5, 5, num=500)
+    >>> x = mx.linspace(-5, 5, num=500)
     >>> df = 3
     >>> nct_stats = stats.t.cdf(x, df)
     >>> nct_special = special.nctdtr(df, 0, x)
@@ -5703,12 +5703,12 @@ add_newdoc("nctdtridf",
         Noncentrality parameter. Should be in range (-1e6, 1e6).
     t : array_like
         Quantiles, i.e., the upper limit of integration.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    df : scalar or ndarray
+    df : scalar or array
         The degrees of freedom. If all inputs are scalar, the return will be a
         float. Otherwise, it will be an array.
 
@@ -5752,12 +5752,12 @@ add_newdoc("nctdtrinc",
         CDF values, in range (0, 1].
     t : array_like
         Quantiles, i.e., the upper limit of integration.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    nc : scalar or ndarray
+    nc : scalar or array
         Noncentrality parameter
 
     See Also
@@ -5800,12 +5800,12 @@ add_newdoc("nctdtrit",
         Noncentrality parameter.
     p : array_like
         CDF values, in range (0, 1].
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    t : scalar or ndarray
+    t : scalar or array
         Quantiles
 
     See Also
@@ -5859,12 +5859,12 @@ add_newdoc("nrdtrimn",
         Standard deviation.
     x : array_like
         Quantiles, i.e. the upper limit of integration.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    mn : scalar or ndarray
+    mn : scalar or array
         The mean of the normal distribution.
 
     See Also
@@ -5906,19 +5906,19 @@ add_newdoc("nrdtrisd",
 
     Parameters
     ----------
-    mn : scalar or ndarray
+    mn : scalar or array
         The mean of the normal distribution.
     p : array_like
         CDF values, in range (0, 1].
     x : array_like
         Quantiles, i.e. the upper limit of integration.
 
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    std : scalar or ndarray
+    std : scalar or array
         Standard deviation.
 
     See Also
@@ -5966,12 +5966,12 @@ add_newdoc("ndtri",
     ----------
     p : array_like
         Probability
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    x : scalar or ndarray
+    x : scalar or array
         Value of x such that ``ndtr(x) == p``.
 
     See Also
@@ -5985,7 +5985,7 @@ add_newdoc("ndtri",
     This means it returns the inverse of the cumulative density `ndtr`. First,
     let us compute a cumulative density value.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import ndtri, ndtr
     >>> cdf_val = ndtr(2)
     >>> cdf_val
@@ -6000,7 +6000,7 @@ add_newdoc("ndtri",
     Plot the function. For that purpose, we provide a NumPy array as argument.
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(0.01, 1, 200)
+    >>> x = mx.linspace(0.01, 1, 200)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(x, ndtri(x))
     >>> ax.set_title("Standard normal percentile function")
@@ -6027,12 +6027,12 @@ add_newdoc("pdtr",
         Number of occurrences (nonnegative, real)
     m : array_like
         Shape parameter (nonnegative, real)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the Poisson cumulative distribution function
 
     See Also
@@ -6047,13 +6047,13 @@ add_newdoc("pdtr",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It is a cumulative distribution function, so it converges to 1
     monotonically as `k` goes to infinity.
 
-    >>> sc.pdtr([1, 10, 100, np.inf], 1)
+    >>> sc.pdtr([1, 10, 100, mx.inf], 1)
     array([0.73575888, 0.99999999, 1.        , 1.        ])
 
     It is discontinuous at integers and constant between integers.
@@ -6079,12 +6079,12 @@ add_newdoc("pdtrc",
         Number of occurrences (nonnegative, real)
     m : array_like
         Shape parameter (nonnegative, real)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the Poisson survival function
 
     See Also
@@ -6095,13 +6095,13 @@ add_newdoc("pdtrc",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It is a survival function, so it decreases to 0
     monotonically as `k` goes to infinity.
 
-    >>> k = np.array([1, 10, 100, np.inf])
+    >>> k = mx.array([1, 10, 100, mx.inf])
     >>> sc.pdtrc(k, 1)
     array([2.64241118e-001, 1.00477664e-008, 3.94147589e-161, 0.00000000e+000])
 
@@ -6130,12 +6130,12 @@ add_newdoc("pdtri",
         Number of occurrences (nonnegative, real)
     y : array_like
         Probability
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the shape parameter `m` such that ``pdtr(k, m) = p``
 
     See Also
@@ -6174,12 +6174,12 @@ add_newdoc("pdtrik",
         Probability
     m : array_like
         Shape parameter (nonnegative, real)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The number of occurrences `k` such that ``pdtr(k, m) = p``
 
     See Also
@@ -6230,12 +6230,12 @@ add_newdoc("poch",
     ----------
     z, m : array_like
         Real-valued arguments.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The value of the function.
 
     References
@@ -6316,11 +6316,11 @@ add_newdoc("powm1", """
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import powm1
 
-    >>> x = np.array([1.2, 10.0, 0.9999999975])
-    >>> y = np.array([1e-9, 1e-11, 0.1875])
+    >>> x = mx.array([1.2, 10.0, 0.9999999975])
+    >>> y = mx.array([1e-9, 1e-11, 0.1875])
     >>> powm1(x, y)
     array([ 1.82321557e-10,  2.30258509e-11, -4.68749998e-10])
 
@@ -6351,12 +6351,12 @@ add_newdoc("pseudo_huber",
         Input array, indicating the soft quadratic vs. linear loss changepoint.
     r : array_like
         Input array, possibly representing residuals.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    res : scalar or ndarray
+    res : scalar or array
         The computed Pseudo-Huber loss function values.
 
     See Also
@@ -6394,7 +6394,7 @@ add_newdoc("pseudo_huber",
     --------
     Import all necessary modules.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import pseudo_huber, huber
     >>> import matplotlib.pyplot as plt
 
@@ -6412,14 +6412,14 @@ add_newdoc("pseudo_huber",
     Calculate the function for ``delta=1`` at several points by providing
     a list or NumPy array for `r`.
 
-    >>> pseudo_huber(2., np.array([1., 1.5, 3., 4.]))
+    >>> pseudo_huber(2., mx.array([1., 1.5, 3., 4.]))
     array([0.47213595, 1.        , 3.21110255, 4.94427191])
 
     The function can be calculated for different `delta` and `r` by
     providing arrays for both with compatible shapes for broadcasting.
 
-    >>> r = np.array([1., 2.5, 8., 10.])
-    >>> deltas = np.array([[1.], [5.], [9.]])
+    >>> r = mx.array([1., 2.5, 8., 10.])
+    >>> deltas = mx.array([[1.], [5.], [9.]])
     >>> print(r.shape, deltas.shape)
     (4,) (3, 1)
 
@@ -6430,7 +6430,7 @@ add_newdoc("pseudo_huber",
 
     Plot the function for different `delta`.
 
-    >>> x = np.linspace(-4, 4, 500)
+    >>> x = mx.linspace(-4, 4, 500)
     >>> deltas = [1, 2, 3]
     >>> linestyles = ["dashed", "dotted", "dashdot"]
     >>> fig, ax = plt.subplots()
@@ -6451,13 +6451,13 @@ add_newdoc("pseudo_huber",
     at the points :math:`\pm\delta`.
 
     >>> def huber_grad(delta, x):
-    ...     grad = np.copy(x)
-    ...     linear_area = np.argwhere(np.abs(x) > delta)
-    ...     grad[linear_area]=delta*np.sign(x[linear_area])
+    ...     grad = mx.copy(x)
+    ...     linear_area = mx.argwhere(mx.abs(x) > delta)
+    ...     grad[linear_area]=delta*mx.sign(x[linear_area])
     ...     return grad
     >>> def pseudo_huber_grad(delta, x):
     ...     return x* (1+(x/delta)**2)**(-0.5)
-    >>> x=np.linspace(-3, 3, 500)
+    >>> x=mx.linspace(-3, 3, 500)
     >>> delta = 1.
     >>> fig, ax = plt.subplots(figsize=(7, 7))
     >>> ax.plot(x, huber(delta, x), label="Huber", ls="dashed")
@@ -6488,12 +6488,12 @@ add_newdoc("rel_entr",
     ----------
     x, y : array_like
         Input arrays
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Relative entropy of the inputs
 
     See Also
@@ -6542,12 +6542,12 @@ add_newdoc("round",
     ----------
     x : array_like
         Real valued input.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The nearest integers to the elements of `x`. The result is of
         floating type, not integer type.
 
@@ -6588,14 +6588,14 @@ add_newdoc("shichi",
     x : array_like
         Real or complex points at which to compute the hyperbolic sine
         and cosine integrals.
-    out : tuple of ndarray, optional
+    out : tuple of array, optional
         Optional output arrays for the function results
 
     Returns
     -------
-    si : scalar or ndarray
+    si : scalar or array
         Hyperbolic sine integral at ``x``
-    ci : scalar or ndarray
+    ci : scalar or array
         Hyperbolic cosine integral at ``x``
 
     See Also
@@ -6628,7 +6628,7 @@ add_newdoc("shichi",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.special import shichi, sici
 
@@ -6651,14 +6651,14 @@ add_newdoc("shichi",
     >>> shi, -1j*sici(1j*z)[0]            # Should be the same.
     ((-0.04834719325101729+1.5469354086921228j),
      (-0.04834719325101729+1.5469354086921228j))
-    >>> chi, sici(-1j*z)[1] + 1j*np.pi/2  # Should be the same.
+    >>> chi, sici(-1j*z)[1] + 1j*mx.pi/2  # Should be the same.
     ((-0.19568708973868087+1.556276312103824j),
      (-0.19568708973868087+1.556276312103824j))
 
     Plot the functions evaluated on the real axis:
 
-    >>> xp = np.geomspace(1e-8, 4.0, 250)
-    >>> x = np.concatenate((-xp[::-1], xp))
+    >>> xp = mx.geomspace(1e-8, 4.0, 250)
+    >>> x = mx.concatenate((-xp[::-1], xp))
     >>> shi, chi = shichi(x)
 
     >>> fig, ax = plt.subplots()
@@ -6698,14 +6698,14 @@ add_newdoc("sici",
     x : array_like
         Real or complex points at which to compute the sine and cosine
         integrals.
-    out : tuple of ndarray, optional
+    out : tuple of array, optional
         Optional output arrays for the function results
 
     Returns
     -------
-    si : scalar or ndarray
+    si : scalar or array
         Sine integral at ``x``
-    ci : scalar or ndarray
+    ci : scalar or array
         Cosine integral at ``x``
 
     See Also
@@ -6738,7 +6738,7 @@ add_newdoc("sici",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.special import sici, exp1
 
@@ -6766,7 +6766,7 @@ add_newdoc("sici",
     ((4.54751388956229-1.3991965806460565j),
     (1.408292501520851+2.9836177420296055j))
 
-    >>> (exp1(1j*z) - exp1(-1j*z))/2j + np.pi/2  # Same as sine integral
+    >>> (exp1(1j*z) - exp1(-1j*z))/2j + mx.pi/2  # Same as sine integral
     (4.54751388956229-1.3991965806460565j)
 
     >>> -(exp1(1j*z) + exp1(-1j*z))/2            # Same as cosine integral
@@ -6775,7 +6775,7 @@ add_newdoc("sici",
     Plot the functions evaluated on the real axis; the dotted horizontal
     lines are at pi/2 and -pi/2:
 
-    >>> x = np.linspace(-16, 16, 150)
+    >>> x = mx.linspace(-16, 16, 150)
     >>> si, ci = sici(x)
 
     >>> fig, ax = plt.subplots()
@@ -6784,8 +6784,8 @@ add_newdoc("sici",
     >>> ax.legend(shadow=True, framealpha=1, loc='upper left')
     >>> ax.set_xlabel('x')
     >>> ax.set_title('Sine and Cosine Integrals')
-    >>> ax.axhline(np.pi/2, linestyle=':', alpha=0.5, color='k')
-    >>> ax.axhline(-np.pi/2, linestyle=':', alpha=0.5, color='k')
+    >>> ax.axhline(mx.pi/2, linestyle=':', alpha=0.5, color='k')
+    >>> ax.axhline(-mx.pi/2, linestyle=':', alpha=0.5, color='k')
     >>> ax.grid(True)
     >>> plt.show()
 
@@ -6810,12 +6810,12 @@ add_newdoc("smirnov",
       Number of samples
     d : float array_like
       Deviation between the Empirical CDF (ECDF) and the target CDF.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The value(s) of smirnov(n, d), Prob(Dn+ >= d) (Also Prob(Dn- >= d))
 
     See Also
@@ -6834,7 +6834,7 @@ add_newdoc("smirnov",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import smirnov
     >>> from scipy.stats import norm
 
@@ -6849,7 +6849,7 @@ add_newdoc("smirnov",
 
     `x` is the sample.
 
-    >>> x = np.array([-1.392, -0.135, 0.114, 0.190, 1.82])
+    >>> x = mx.array([-1.392, -0.135, 0.114, 0.190, 1.82])
 
     >>> target = norm(0, 1)
     >>> cdfs = target.cdf(x)
@@ -6859,10 +6859,10 @@ add_newdoc("smirnov",
     Construct the empirical CDF and the K-S statistics (Dn+, Dn-, Dn).
 
     >>> n = len(x)
-    >>> ecdfs = np.arange(n+1, dtype=float)/n
-    >>> cols = np.column_stack([x, ecdfs[1:], cdfs, cdfs - ecdfs[:n],
+    >>> ecdfs = mx.arange(n+1, dtype=float)/n
+    >>> cols = mx.column_stack([x, ecdfs[1:], cdfs, cdfs - ecdfs[:n],
     ...                        ecdfs[1:] - cdfs])
-    >>> with np.printoptions(precision=3):
+    >>> with mx.printoptions(precision=3):
     ...    print(cols)
     [[-1.392  0.2    0.082  0.082  0.118]
      [-0.135  0.4    0.446  0.246 -0.046]
@@ -6870,7 +6870,7 @@ add_newdoc("smirnov",
      [ 0.19   0.8    0.575 -0.025  0.225]
      [ 1.82   1.     0.966  0.166  0.034]]
     >>> gaps = cols[:, -2:]
-    >>> Dnpm = np.max(gaps, axis=0)
+    >>> Dnpm = mx.max(gaps, axis=0)
     >>> print(f'Dn-={Dnpm[0]:f}, Dn+={Dnpm[1]:f}')
     Dn-=0.246306, Dn+=0.224655
     >>> probs = smirnov(n, Dnpm)
@@ -6885,15 +6885,15 @@ add_newdoc("smirnov",
     Plot the empirical CDF and the standard normal CDF.
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.step(np.concatenate(([-2.5], x, [2.5])),
-    ...          np.concatenate((ecdfs, [1])),
+    >>> plt.step(mx.concatenate(([-2.5], x, [2.5])),
+    ...          mx.concatenate((ecdfs, [1])),
     ...          where='post', label='Empirical CDF')
-    >>> xx = np.linspace(-2.5, 2.5, 100)
+    >>> xx = mx.linspace(-2.5, 2.5, 100)
     >>> plt.plot(xx, target.cdf(xx), '--', label='CDF for N(0, 1)')
 
     Add vertical lines marking Dn+ and Dn-.
 
-    >>> iminus, iplus = np.argmax(gaps, axis=0)
+    >>> iminus, iplus = mx.argmax(gaps, axis=0)
     >>> plt.vlines([x[iminus]], ecdfs[iminus], cdfs[iminus], color='r',
     ...            alpha=0.5, lw=4)
     >>> plt.vlines([x[iplus]], cdfs[iplus], ecdfs[iplus+1], color='m',
@@ -6919,12 +6919,12 @@ add_newdoc("smirnovi",
       Number of samples
     p : float array_like
         Probability
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The value(s) of smirnovi(n, p), the critical values.
 
     See Also
@@ -7000,12 +7000,12 @@ add_newdoc("spence",
     ----------
     z : array_like
         Points at which to evaluate Spence's function
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    s : scalar or ndarray
+    s : scalar or array
         Computed values of Spence's function
 
     Notes
@@ -7020,7 +7020,7 @@ add_newdoc("spence",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import spence
     >>> import matplotlib.pyplot as plt
 
@@ -7049,7 +7049,7 @@ add_newdoc("spence",
 
     >>> spence([0, 1, 2])
     array([ 1.64493407,  0.        , -0.82246703])
-    >>> np.pi**2/6, -np.pi**2/12
+    >>> mx.pi**2/6, -mx.pi**2/12
     (1.6449340668482264, -0.8224670334241132)
 
     Verify the identity::
@@ -7059,13 +7059,13 @@ add_newdoc("spence",
     >>> z = 3 + 4j
     >>> spence(z) + spence(1 - z)
     (-2.6523186143876067+1.8853470951513935j)
-    >>> np.pi**2/6 - np.log(z)*np.log(1 - z)
+    >>> mx.pi**2/6 - mx.log(z)*mx.log(1 - z)
     (-2.652318614387606+1.885347095151394j)
 
     Plot the function for positive real input.
 
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(0, 6, 400)
+    >>> x = mx.linspace(0, 6, 400)
     >>> ax.plot(x, spence(x))
     >>> ax.grid()
     >>> ax.set_xlabel('x')
@@ -7092,12 +7092,12 @@ add_newdoc(
         Degrees of freedom
     t : array_like
         Upper bound of the integral
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Value of the Student t CDF at t
 
     See Also
@@ -7123,7 +7123,7 @@ add_newdoc(
     --------
     Calculate the function for ``df=3`` at ``t=1``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import stdtr
     >>> import matplotlib.pyplot as plt
     >>> stdtr(3, 1)
@@ -7131,7 +7131,7 @@ add_newdoc(
 
     Plot the function for three different degrees of freedom.
 
-    >>> x = np.linspace(-10, 10, 1000)
+    >>> x = mx.linspace(-10, 10, 1000)
     >>> fig, ax = plt.subplots()
     >>> parameters = [(1, "solid"), (3, "dashed"), (10, "dotted")]
     >>> for (df, linestyle) in parameters:
@@ -7151,8 +7151,8 @@ add_newdoc(
     and `t` with shapes compatible for broadcasting. Compute `stdtr` at
     4 points for 3 degrees of freedom resulting in an array of shape 3x4.
 
-    >>> dfs = np.array([[1], [2], [3]])
-    >>> t = np.array([2, 4, 6, 8])
+    >>> dfs = mx.array([[1], [2], [3]])
+    >>> t = mx.array([2, 4, 6, 8])
     >>> dfs.shape, t.shape
     ((3, 1), (4,))
 
@@ -7188,12 +7188,12 @@ add_newdoc("stdtridf",
         Probability
     t : array_like
         Upper bound of the integral
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    df : scalar or ndarray
+    df : scalar or array
         Value of `df` such that ``stdtr(df, t) == p``
 
     See Also
@@ -7237,12 +7237,12 @@ add_newdoc("stdtrit",
         Degrees of freedom
     p : array_like
         Probability
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    t : scalar or ndarray
+    t : scalar or array
         Value of `t` such that ``stdtr(df, t) == p``
 
     See Also
@@ -7271,7 +7271,7 @@ add_newdoc("stdtrit",
     ``x=1``. `stdtrit` then returns ``1`` up to floating point errors
     given the same value for `df` and the computed CDF value.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import stdtr, stdtrit
     >>> import matplotlib.pyplot as plt
     >>> df = 3
@@ -7282,7 +7282,7 @@ add_newdoc("stdtrit",
 
     Plot the function for three different degrees of freedom.
 
-    >>> x = np.linspace(0, 1, 1000)
+    >>> x = mx.linspace(0, 1, 1000)
     >>> parameters = [(1, "solid"), (2, "dashed"), (5, "dotted")]
     >>> fig, ax = plt.subplots()
     >>> for (df, linestyle) in parameters:
@@ -7303,8 +7303,8 @@ add_newdoc("stdtrit",
     and `p` with shapes compatible for broadcasting. Compute `stdtrit` at
     4 points for 3 degrees of freedom resulting in an array of shape 3x4.
 
-    >>> dfs = np.array([[1], [2], [3]])
-    >>> p = np.array([0.2, 0.4, 0.7, 0.8])
+    >>> dfs = mx.array([[1], [2], [3]])
+    >>> p = mx.array([0.2, 0.4, 0.7, 0.8])
     >>> dfs.shape, p.shape
     ((3, 1), (4,))
 
@@ -7337,12 +7337,12 @@ add_newdoc(
     ----------
     x, lmbda : array_like
         Parameters
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    cdf : scalar or ndarray
+    cdf : scalar or array
         Value of the Tukey lambda CDF
 
     See Also
@@ -7351,14 +7351,14 @@ add_newdoc(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.special import tklmbda, expit
 
     Compute the cumulative distribution function (CDF) of the Tukey lambda
     distribution at several ``x`` values for `lmbda` = -1.5.
 
-    >>> x = np.linspace(-2, 2, 9)
+    >>> x = mx.linspace(-2, 2, 9)
     >>> x
     array([-2. , -1.5, -1. , -0.5,  0. ,  0.5,  1. ,  1.5,  2. ])
     >>> tklmbda(x, -1.5)
@@ -7378,7 +7378,7 @@ add_newdoc(
     When `lmbda` is 1, the Tukey lambda distribution is uniform on the
     interval [-1, 1], so the CDF increases linearly.
 
-    >>> t = np.linspace(-1, 1, 9)
+    >>> t = mx.linspace(-1, 1, 9)
     >>> tklmbda(t, 1)
     array([0.   , 0.125, 0.25 , 0.375, 0.5  , 0.625, 0.75 , 0.875, 1.   ])
 
@@ -7388,7 +7388,7 @@ add_newdoc(
 
     >>> styles = ['-', '-.', '--', ':']
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(-12, 12, 500)
+    >>> x = mx.linspace(-12, 12, 500)
     >>> for k, lmbda in enumerate([-1.0, -0.5, 0.0]):
     ...     y = tklmbda(x, lmbda)
     ...     ax.plot(x, y, styles[k], label=rf'$\lambda$ = {lmbda:-4.1f}')
@@ -7402,7 +7402,7 @@ add_newdoc(
     graphs show the bounds of the support of the distribution.
 
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(-4.2, 4.2, 500)
+    >>> x = mx.linspace(-4.2, 4.2, 500)
     >>> lmbdas = [0.25, 0.5, 1.0, 1.5]
     >>> for k, lmbda in enumerate(lmbdas):
     ...     y = tklmbda(x, lmbda)
@@ -7426,7 +7426,7 @@ add_newdoc(
     same values:
 
     >>> from scipy.stats import tukeylambda
-    >>> x = np.linspace(-2, 2, 9)
+    >>> x = mx.linspace(-2, 2, 9)
 
     >>> tukeylambda.cdf(x, -0.5)
     array([0.21995157, 0.27093858, 0.33541677, 0.41328161, 0.5       ,
@@ -7456,12 +7456,12 @@ add_newdoc("yn",
         Order (integer).
     x : array_like
         Argument (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    Y : scalar or ndarray
+    Y : scalar or array
         Value of the Bessel function, :math:`Y_n(x)`.
 
     See Also
@@ -7505,8 +7505,8 @@ add_newdoc("yn",
     Evaluate the function at several points for order 0 by providing an
     array for `z`.
 
-    >>> import numpy as np
-    >>> points = np.array([0.5, 3., 8.])
+    >>> import mlx.core as mx
+    >>> points = mx.array([0.5, 3., 8.])
     >>> yn(0, points)
     array([-0.44451873,  0.37685001,  0.22352149])
 
@@ -7514,7 +7514,7 @@ add_newdoc("yn",
     the correct shape if different orders shall be computed in one call.
     To calculate the orders 0 and 1 for an 1D array:
 
-    >>> orders = np.array([[0], [1]])
+    >>> orders = mx.array([[0], [1]])
     >>> orders.shape
     (2, 1)
 
@@ -7526,7 +7526,7 @@ add_newdoc("yn",
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(0., 10., 1000)
+    >>> x = mx.linspace(0., 10., 1000)
     >>> for i in range(4):
     ...     ax.plot(x, yn(i, x), label=f'$Y_{i!r}$')
     >>> ax.set_ylim(-3, 1)
@@ -7630,12 +7630,12 @@ add_newdoc("owens_t",
         Input value.
     a: array_like
         Input value.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    t: scalar or ndarray
+    t: scalar or array
         Probability of the event (X > h and 0 < Y < a * X),
         where X and Y are independent standard normal random variables.
 
@@ -7670,12 +7670,12 @@ add_newdoc("ndtri_exp",
     ----------
     y : array_like of float
         Function argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Inverse of the log CDF of the standard normal distribution, evaluated
         at y.
 
@@ -7687,7 +7687,7 @@ add_newdoc("ndtri_exp",
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     `ndtri_exp` agrees with the naive implementation when the latter does
@@ -7695,14 +7695,14 @@ add_newdoc("ndtri_exp",
 
     >>> sc.ndtri_exp(-1)
     -0.33747496376420244
-    >>> sc.ndtri(np.exp(-1))
+    >>> sc.ndtri(mx.exp(-1))
     -0.33747496376420244
 
     For extreme values of y, the naive approach fails
 
-    >>> sc.ndtri(np.exp(-800))
+    >>> sc.ndtri(mx.exp(-800))
     -inf
-    >>> sc.ndtri(np.exp(-1e-20))
+    >>> sc.ndtri(mx.exp(-1e-20))
     inf
 
     whereas `ndtri_exp` is still able to compute the result to high precision.
@@ -7736,7 +7736,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -7757,7 +7757,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -7777,7 +7777,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -7799,7 +7799,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -7821,7 +7821,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -7843,7 +7843,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -7863,7 +7863,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -7883,7 +7883,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -7903,7 +7903,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -7923,7 +7923,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -7943,7 +7943,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -7963,7 +7963,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -7983,7 +7983,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8003,7 +8003,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8023,7 +8023,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8043,7 +8043,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8061,7 +8061,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8079,7 +8079,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8097,7 +8097,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8115,7 +8115,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8137,7 +8137,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8159,7 +8159,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8182,7 +8182,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8204,7 +8204,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8226,7 +8226,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8246,7 +8246,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8266,7 +8266,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8286,7 +8286,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8306,7 +8306,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8330,7 +8330,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8354,7 +8354,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8378,7 +8378,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8400,7 +8400,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8422,7 +8422,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8444,7 +8444,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8466,7 +8466,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8488,7 +8488,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8510,7 +8510,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8532,7 +8532,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8554,7 +8554,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8576,7 +8576,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8598,7 +8598,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8618,7 +8618,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8638,7 +8638,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8658,7 +8658,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8678,7 +8678,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8698,7 +8698,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8718,7 +8718,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
     """)
 
 add_newdoc(
@@ -8737,7 +8737,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
     """)
 
 add_newdoc(
@@ -8754,7 +8754,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8772,7 +8772,7 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)
 
@@ -8790,6 +8790,6 @@ add_newdoc(
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
 
     """)

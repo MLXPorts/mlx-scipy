@@ -33,10 +33,10 @@ received different drugs, and one group acted as a control. Blood counts (in
 millions of cells per cubic millimeter) were recorded:
 
 ```{code-cell}
-import numpy as np
-control = np.array([7.40, 8.50, 7.20, 8.24, 9.84, 8.32])
-drug_a = np.array([9.76, 8.80, 7.68, 9.36])
-drug_b = np.array([12.80, 9.68, 12.16, 9.20, 10.55])
+import mlx.core as mx
+control = mx.array([7.40, 8.50, 7.20, 8.24, 9.84, 8.32])
+drug_a = mx.array([9.76, 8.80, 7.68, 9.36])
+drug_b = mx.array([12.80, 9.68, 12.16, 9.20, 10.55])
 ```
 
 We would like to see if the means between any of the groups are

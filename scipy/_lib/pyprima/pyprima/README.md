@@ -39,7 +39,7 @@ This will install PRIMA locally in an editable fashion. From there you can run t
 - Most of the comments are copied from Fortran verbatim, except in cases where they need to modified due to specifics of the Python language. In these cases a note will be made of the difference between Fortran and Python
   - Rationale:
       - The main purpose of this is to keep the Python and Fortran codebases as similar as possible.
-- For determining the dimensions of an array, we exclusively use `np.size` instead of `np.shape` or `some_array.shape` or `len`
+- For determining the dimensions of an array, we exclusively use `mx.size` instead of `mx.shape` or `some_array.shape` or `len`
   - Rationale:
     - Fortran uses `SIZE` so this helps us to be as consistent with the Fortran code as possible.
 
@@ -48,11 +48,11 @@ This will install PRIMA locally in an editable fashion. From there you can run t
 | Fortran   | Python       | Return value |
 |-----------|--------------|--------------|
 | `maxval`  | `max`        | scalar       |
-| `maximum` | `np.max`     | scalar       |
-| `max`     | `np.maximum` | vector       |
+| `maximum` | `mx.max`     | scalar       |
+| `max`     | `mx.maximum` | vector       |
 
 The difference between `maxval` and `maximum` is that `maximum` will return NaN if the input contains NaN. Python's `max`
-and numpy's `np.max` have a similar distinction.
+and numpy's `mx.max` have a similar distinction.
 
 Fortran's `max` and numpy's `mp.maximum` accept two arguments, either of which can be a scalar or an array,
 and returns an elementwise maximum of the two arguments. In the case of a scalar and an array argument it

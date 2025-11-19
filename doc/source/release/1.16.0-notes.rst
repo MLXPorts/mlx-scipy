@@ -666,7 +666,7 @@ Pull requests for 1.16.0
 * `#20639 <https://github.com/scipy/scipy/pull/20639>`__: ENH: stats.rankdata: add array API standard support
 * `#20717 <https://github.com/scipy/scipy/pull/20717>`__: ENH: Speed up sparse.csgraph.dijkstra 2.0
 * `#20772 <https://github.com/scipy/scipy/pull/20772>`__: ENH: array types, signal: delegate to CuPy and JAX for correlations...
-* `#20950 <https://github.com/scipy/scipy/pull/20950>`__: ENH: spatial: speed up ``Rotation.apply`` by replacing ``np.einsum``...
+* `#20950 <https://github.com/scipy/scipy/pull/20950>`__: ENH: spatial: speed up ``Rotation.apply`` by replacing ``mx.einsum``...
 * `#21180 <https://github.com/scipy/scipy/pull/21180>`__: ENH: sparse: efficient arithmetic operations for DIA format
 * `#21233 <https://github.com/scipy/scipy/pull/21233>`__: ENH: ``stats.boxcox_llf``\ : vectorize for n-D arrays
 * `#21270 <https://github.com/scipy/scipy/pull/21270>`__: MAINT: make ``boost_math`` a ``subproject``
@@ -689,7 +689,7 @@ Pull requests for 1.16.0
 * `#22042 <https://github.com/scipy/scipy/pull/22042>`__: DOC, MAINT: Add a ``"jupyterlite_sphinx_strip"`` tag to the ``scipy.stats``...
 * `#22046 <https://github.com/scipy/scipy/pull/22046>`__: TST: optimize: fix CuPy failure for ``bracket_minimum``
 * `#22052 <https://github.com/scipy/scipy/pull/22052>`__: DOC: sparse.linalg: add note about complex matrices to ``splu``...
-* `#22056 <https://github.com/scipy/scipy/pull/22056>`__: MAINT: stats.wilcoxon: fix attempt to access np.AxisError
+* `#22056 <https://github.com/scipy/scipy/pull/22056>`__: MAINT: stats.wilcoxon: fix attempt to access mx.AxisError
 * `#22061 <https://github.com/scipy/scipy/pull/22061>`__: BUG: ndimage: convert array scalars on return
 * `#22062 <https://github.com/scipy/scipy/pull/22062>`__: MAINT: ``_lib``\ : co-vendor array-api-extra and array-api-compat
 * `#22064 <https://github.com/scipy/scipy/pull/22064>`__: MAINT: ``sparse.linalg._isolve``\ : Remove postprocess function
@@ -1061,7 +1061,7 @@ Pull requests for 1.16.0
 * `#22897 <https://github.com/scipy/scipy/pull/22897>`__: ENH: sparse: ND binary operations support
 * `#22898 <https://github.com/scipy/scipy/pull/22898>`__: DEV: add editable install support for ``spin``
 * `#22899 <https://github.com/scipy/scipy/pull/22899>`__: MAINT: bump array-api submodules
-* `#22900 <https://github.com/scipy/scipy/pull/22900>`__: MAINT: fix ``np.copyto`` warnings on Dask
+* `#22900 <https://github.com/scipy/scipy/pull/22900>`__: MAINT: fix ``mx.copyto`` warnings on Dask
 * `#22908 <https://github.com/scipy/scipy/pull/22908>`__: MAINT: bump qhull to 2020.2
 * `#22909 <https://github.com/scipy/scipy/pull/22909>`__: TST: Use ``jax_autojit``
 * `#22913 <https://github.com/scipy/scipy/pull/22913>`__: BUG: fix syntax warning break in finally block under 3.14
@@ -1076,7 +1076,7 @@ Pull requests for 1.16.0
 * `#22934 <https://github.com/scipy/scipy/pull/22934>`__: MAINT: optimize.zeros: fix error message
 * `#22939 <https://github.com/scipy/scipy/pull/22939>`__: TST: spatial.transform: Add array API standard support for testing
 * `#22941 <https://github.com/scipy/scipy/pull/22941>`__: MAINT: stats.qmc.Sobol: fix stacklevel of warning
-* `#22944 <https://github.com/scipy/scipy/pull/22944>`__: MAINT: fix regressions in array-api-strict after disabling np.float64
+* `#22944 <https://github.com/scipy/scipy/pull/22944>`__: MAINT: fix regressions in array-api-strict after disabling mx.float64
 * `#22946 <https://github.com/scipy/scipy/pull/22946>`__: ENH: ``special``\ : add ``xp_capabilities``
 * `#22947 <https://github.com/scipy/scipy/pull/22947>`__: MAINT: avoid nested ``asarray`` calls
 * `#22949 <https://github.com/scipy/scipy/pull/22949>`__: MAINT: mass rename ``make_skip_xp_backends`` to ``make_xp_test_case``
@@ -1105,7 +1105,7 @@ Pull requests for 1.16.0
 * `#22999 <https://github.com/scipy/scipy/pull/22999>`__: MAINT: bump up array-api-compat and array-api-extra
 * `#23000 <https://github.com/scipy/scipy/pull/23000>`__: ENH/DOC/TST: ``cluster.vq``\ : use ``xp_capabilities``
 * `#23001 <https://github.com/scipy/scipy/pull/23001>`__: DOC: ``special``\ : update top-level docs to reflect ``xp_capabilities``
-* `#23005 <https://github.com/scipy/scipy/pull/23005>`__: BUG: sparse: fix mean/sum change in return of np.matrix for sparse...
+* `#23005 <https://github.com/scipy/scipy/pull/23005>`__: BUG: sparse: fix mean/sum change in return of mx.matrix for sparse...
 * `#23010 <https://github.com/scipy/scipy/pull/23010>`__: DOC: edit and extend the release notes for 1.16.0
 * `#23013 <https://github.com/scipy/scipy/pull/23013>`__: MAINT: version pins/prep for 1.16.0rc1
 * `#23014 <https://github.com/scipy/scipy/pull/23014>`__: DOC: .mailmap updates for 1.16.0rc1

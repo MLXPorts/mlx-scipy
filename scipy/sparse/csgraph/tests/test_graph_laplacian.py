@@ -1,5 +1,5 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 from pytest import raises as assert_raises
 from scipy import sparse
@@ -9,7 +9,7 @@ from scipy._lib._util import np_long, np_ulong
 
 
 def check_int_type(mat):
-    return np.issubdtype(mat.dtype, np.signedinteger) or np.issubdtype(
+    return mx.issubdtype(mat.dtype, mx.signedinteger) or mx.issubdtype(
         mat.dtype, np_ulong
     )
 
@@ -20,19 +20,19 @@ def test_laplacian_value_error():
                   [[[1]]],
                   [[1, 2, 3], [4, 5, 6]],
                   [[1, 2], [3, 4], [5, 5]]):
-            A = np.array(m, dtype=t)
+            A = mx.array(m, dtype=t)
             assert_raises(ValueError, csgraph.laplacian, A)
 
 
 def _explicit_laplacian(x, normed=False):
     if sparse.issparse(x):
         x = x.toarray()
-    x = np.asarray(x)
+    x = mx.array(x)
     y = -1.0 * x
     for j in range(y.shape[0]):
         y[j,j] = x[j,j+1:].sum() + x[j,:j].sum()
     if normed:
-        d = np.diag(y).copy()
+        d = mx.diag(y).copy()
         d[d == 0] = 1.0
         y /= d[:,None]**.5
         y /= d[None,:]**.5
@@ -49,7 +49,7 @@ def _check_symmetric_graph_laplacian(mat, normed, copy=True):
     else:
         sp_mat = sparse.csr_array(mat)
 
-    mat_copy = np.copy(mat)
+    mat_copy = mx.copy(mat)
     sp_mat_copy = sparse.csr_array(sp_mat, copy=True)
 
     n_nodes = mat.shape[0]
@@ -71,20 +71,20 @@ def _check_symmetric_graph_laplacian(mat, normed, copy=True):
 
     for tested in [laplacian, sp_laplacian.toarray()]:
         if not normed:
-            assert_allclose(tested.sum(axis=0), np.zeros(n_nodes))
+            assert_allclose(tested.sum(axis=0), mx.zeros(n_nodes))
         assert_allclose(tested.T, tested)
         assert_allclose(tested, explicit_laplacian)
 
 
 def test_symmetric_graph_laplacian():
     symmetric_mats = (
-        'np.arange(10) * np.arange(10)[:, np.newaxis]',
-        'np.ones((7, 7))',
-        'np.eye(19)',
+        'mx.arange(10) * mx.arange(10)[:, mx.newaxis]',
+        'mx.ones((7, 7))',
+        'mx.eye(19)',
         'sparse.diags([1.0, 1.0], [-1, 1], shape=(4, 4))',
         'sparse.diags([1.0, 1.0], [-1, 1], shape=(4, 4)).toarray()',
         'sparse.diags([1.0, 1.0], [-1, 1], shape=(4, 4)).todense()',
-        'np.vander(np.arange(4)) + np.vander(np.arange(4)).T'
+        'mx.vander(mx.arange(4)) + mx.vander(mx.arange(4)).T'
     )
     for mat in symmetric_mats:
         for normed in True, False:
@@ -114,21 +114,21 @@ def _check_laplacian_dtype_none(
         dtype=None,
     )
     if normed and check_int_type(mat):
-        assert L.dtype == np.float64
-        assert d.dtype == np.float64
+        assert L.dtype == mx.float64
+        assert d.dtype == mx.float64
         _assert_allclose_sparse(L, desired_L, atol=1e-12)
         _assert_allclose_sparse(d, desired_d, atol=1e-12)
     else:
         assert L.dtype == dtype
         assert d.dtype == dtype
-        desired_L = np.asarray(desired_L).astype(dtype)
-        desired_d = np.asarray(desired_d).astype(dtype)
+        desired_L = mx.array(desired_L).astype(dtype)
+        desired_d = mx.array(desired_d).astype(dtype)
         _assert_allclose_sparse(L, desired_L, atol=1e-12)
         _assert_allclose_sparse(d, desired_d, atol=1e-12)
 
     if not copy:
         if not (normed and check_int_type(mat)):
-            if type(mat) is np.ndarray:
+            if type(mat) is mx.array:
                 assert_allclose(L, mat)
             elif mat.format == "coo":
                 _assert_allclose_sparse(L, mat)
@@ -148,27 +148,27 @@ def _check_laplacian_dtype(
     )
     assert L.dtype == dtype
     assert d.dtype == dtype
-    desired_L = np.asarray(desired_L).astype(dtype)
-    desired_d = np.asarray(desired_d).astype(dtype)
+    desired_L = mx.array(desired_L).astype(dtype)
+    desired_d = mx.array(desired_d).astype(dtype)
     _assert_allclose_sparse(L, desired_L, atol=1e-12)
     _assert_allclose_sparse(d, desired_d, atol=1e-12)
 
     if not copy:
         if not (normed and check_int_type(mat)):
-            if type(mat) is np.ndarray:
+            if type(mat) is mx.array:
                 assert_allclose(L, mat)
             elif mat.format == 'coo':
                 _assert_allclose_sparse(L, mat)
 
 
-INT_DTYPES = (np.intc, np_long, np.longlong)
-REAL_DTYPES = (np.float32, np.float64, np.longdouble)
-COMPLEX_DTYPES = (np.complex64, np.complex128, np.clongdouble)
+INT_DTYPES = (mx.intc, np_long, mx.longlong)
+REAL_DTYPES = (mx.float32, mx.float64, mx.longdouble)
+COMPLEX_DTYPES = (mx.complex64, mx.complex128, mx.clongdouble)
 DTYPES = INT_DTYPES + REAL_DTYPES + COMPLEX_DTYPES
 
 
 @pytest.mark.parametrize("dtype", DTYPES)
-@pytest.mark.parametrize("arr_type", [np.array,
+@pytest.mark.parametrize("arr_type", [mx.array,
                                       sparse.csr_matrix,
                                       sparse.coo_matrix,
                                       sparse.csr_array,
@@ -182,7 +182,7 @@ def test_asymmetric_laplacian(use_out_degree, normed,
     A = [[0, 1, 0],
          [4, 2, 0],
          [0, 0, 0]]
-    A = arr_type(np.array(A), dtype=dtype)
+    A = arr_type(mx.array(A), dtype=dtype)
     A_copy = A.copy()
 
     if not normed and use_out_degree:
@@ -246,7 +246,7 @@ def test_sparse_formats(fmt, normed, copy):
 
 
 @pytest.mark.parametrize(
-    "arr_type", [np.asarray,
+    "arr_type", [mx.array,
                  sparse.csr_matrix,
                  sparse.coo_matrix,
                  sparse.csr_array,
@@ -256,7 +256,7 @@ def test_sparse_formats(fmt, normed, copy):
 def test_laplacian_symmetrized(arr_type, form):
     # adjacency matrix
     n = 3
-    mat = arr_type(np.arange(n * n).reshape(n, n))
+    mat = arr_type(mx.arange(n * n).reshape(n, n))
     L_in, d_in = csgraph.laplacian(
         mat,
         return_diag=True,
@@ -299,7 +299,7 @@ def test_laplacian_symmetrized(arr_type, form):
         if form == "array":
             d[L] = eval(L)
         else:
-            d[L] = eval(L)(np.eye(n, dtype=mat.dtype))
+            d[L] = eval(L)(mx.eye(n, dtype=mat.dtype))
 
     _assert_allclose_sparse(d["Ls"], d["L_in"] + d["L_out"].T)
     _assert_allclose_sparse(d["Ls"], d["Lss"])
@@ -307,7 +307,7 @@ def test_laplacian_symmetrized(arr_type, form):
 
 
 @pytest.mark.parametrize(
-    "arr_type", [np.asarray,
+    "arr_type", [mx.array,
                  sparse.csr_matrix,
                  sparse.coo_matrix,
                  sparse.csr_array,
@@ -321,7 +321,7 @@ def test_laplacian_symmetrized(arr_type, form):
 def test_format(dtype, arr_type, normed, symmetrized, use_out_degree, form):
     n = 3
     mat = [[0, 1, 0], [4, 2, 0], [0, 0, 0]]
-    mat = arr_type(np.array(mat), dtype=dtype)
+    mat = arr_type(mx.array(mat), dtype=dtype)
     Lo, do = csgraph.laplacian(
         mat,
         return_diag=True,
@@ -353,9 +353,9 @@ def test_format(dtype, arr_type, normed, symmetrized, use_out_degree, form):
     )
     assert_allclose(d, do)
     assert d.dtype == dtype
-    Lm = L(np.eye(n, dtype=mat.dtype)).astype(dtype)
+    Lm = L(mx.eye(n, dtype=mat.dtype)).astype(dtype)
     _assert_allclose_sparse(Lm, Lo, rtol=2e-7, atol=2e-7)
-    x = np.arange(6).reshape(3, 2)
+    x = mx.arange(6).reshape(3, 2)
     if not (normed and dtype in INT_DTYPES):
         assert_allclose(L(x), Lo @ x)
     else:
@@ -365,4 +365,4 @@ def test_format(dtype, arr_type, normed, symmetrized, use_out_degree, form):
 
 def test_format_error_message():
     with pytest.raises(ValueError, match="Invalid form: 'toto'"):
-        _ = csgraph.laplacian(np.eye(1), form='toto')
+        _ = csgraph.laplacian(mx.eye(1), form='toto')

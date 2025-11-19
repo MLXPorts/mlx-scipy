@@ -1,5 +1,5 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_allclose
 from scipy.special import log_ndtr, ndtri_exp
 from scipy.special._testutils import assert_func_equal
@@ -11,7 +11,7 @@ def log_ndtr_ndtri_exp(y):
 
 @pytest.fixture(scope="class")
 def uniform_random_points():
-    random_state = np.random.RandomState(1234)
+    random_state = mx.random.RandomState(1234)
     points = random_state.random_sample(1000)
     return points
 
@@ -28,7 +28,7 @@ class TestNdtriExp:
     """
 
     @pytest.mark.parametrize(
-        "test_input", [-1e1, -1e2, -1e10, -1e20, -np.finfo(float).max]
+        "test_input", [-1e1, -1e2, -1e10, -1e20, -mx.finfo(float).max]
     )
     def test_very_small_arg(self, test_input, uniform_random_points):
         scale = test_input
@@ -68,27 +68,27 @@ class TestNdtriExp:
         # where bigneg is a very large negative value, would--with infinite
         # precision--result in bigneg2 == bigneg.  When bigneg is large enough,
         # y is effectively equal to -sqrt(2)*sqrt(-bigneg), and log_ndtr(y) is
-        # effectively -(y/sqrt(2))**2.  If we use bigneg = np.finfo(float).min,
+        # effectively -(y/sqrt(2))**2.  If we use bigneg = mx.finfo(float).min,
         # then by construction, the theoretical value is the most negative
         # finite value that can be represented with 64 bit float point.  This
         # means tiny changes in how the computation proceeds can result in the
         # return value being -inf.  (E.g. changing the constant representation
         # of 1/sqrt(2) from 0.7071067811865475--which is the value returned by
-        # 1/np.sqrt(2)--to 0.7071067811865476--which is the most accurate 64
+        # 1/mx.sqrt(2)--to 0.7071067811865476--which is the most accurate 64
         # bit floating point representation of 1/sqrt(2)--results in the
-        # round-trip that starts with np.finfo(float).min returning -inf.  So
+        # round-trip that starts with mx.finfo(float).min returning -inf.  So
         # we'll move the bigneg value a few ULPs towards 0 to avoid this
         # sensitivity.
         # Use the reduce method to apply nextafter four times.
-        bigneg = np.nextafter.reduce([np.finfo(float).min, 0, 0, 0, 0])
+        bigneg = mx.nextafter.reduce([mx.finfo(float).min, 0, 0, 0, 0])
         # tinyneg is approx. -2.225e-308.
-        tinyneg = -np.finfo(float).tiny
-        x = np.array([tinyneg, bigneg])
+        tinyneg = -mx.finfo(float).tiny
+        x = mx.array([tinyneg, bigneg])
         result = log_ndtr_ndtri_exp(x)
         assert_allclose(result, x, rtol=1e-12)
 
     def test_asymptotes(self):
-        assert_equal(ndtri_exp([-np.inf, 0.0]), [-np.inf, np.inf])
+        assert_equal(ndtri_exp([-mx.inf, 0.0]), [-mx.inf, mx.inf])
 
     def test_outside_domain(self):
-        assert np.isnan(ndtri_exp(1.0))
+        assert mx.isnan(ndtri_exp(1.0))

@@ -416,7 +416,7 @@ Pull requests for 0.16.0
 - `#4253 <https://github.com/scipy/scipy/pull/4253>`__: TST: stop shadowing ellip* tests vs boost data
 - `#4254 <https://github.com/scipy/scipy/pull/4254>`__: MAINT: special: use NPY_PI, not M_PI
 - `#4255 <https://github.com/scipy/scipy/pull/4255>`__: DOC: INSTALL: use Py3-compatible print syntax, and don't mention...
-- `#4256 <https://github.com/scipy/scipy/pull/4256>`__: ENH: spatial: reimplement cdist_cosine using np.dot
+- `#4256 <https://github.com/scipy/scipy/pull/4256>`__: ENH: spatial: reimplement cdist_cosine using mx.dot
 - `#4258 <https://github.com/scipy/scipy/pull/4258>`__: BUG: io.arff #4429 #2088
 - `#4261 <https://github.com/scipy/scipy/pull/4261>`__: MAINT: signal: PEP8 and related style clean up.
 - `#4262 <https://github.com/scipy/scipy/pull/4262>`__: BUG: newton_krylov() was ignoring norm_tol argument, closes #4259
@@ -590,7 +590,7 @@ Pull requests for 0.16.0
 - `#4650 <https://github.com/scipy/scipy/pull/4650>`__: Signal example clean up in Tukey and place_poles
 - `#4652 <https://github.com/scipy/scipy/pull/4652>`__: DOC: Fix the error in convolve for same mode
 - `#4653 <https://github.com/scipy/scipy/pull/4653>`__: improve erf performance
-- `#4655 <https://github.com/scipy/scipy/pull/4655>`__: DEP: deprecate scipy.stats.histogram2 in favour of np.histogram2d
+- `#4655 <https://github.com/scipy/scipy/pull/4655>`__: DEP: deprecate scipy.stats.histogram2 in favour of mx.histogram2d
 - `#4656 <https://github.com/scipy/scipy/pull/4656>`__: DEP: deprecate scipy.stats.signaltonoise
 - `#4660 <https://github.com/scipy/scipy/pull/4660>`__: Avoid extra copy for sparse compressed [:, seq] and [seq, :]...
 - `#4661 <https://github.com/scipy/scipy/pull/4661>`__: Clean, rebase of #4478, adding ?gelsy and ?gelsd wrappers
@@ -613,7 +613,7 @@ Pull requests for 0.16.0
 - `#4701 <https://github.com/scipy/scipy/pull/4701>`__: add Bpoly.antiderivatives / integrals
 - `#4703 <https://github.com/scipy/scipy/pull/4703>`__: Add citation of published paper
 - `#4706 <https://github.com/scipy/scipy/pull/4706>`__: MAINT: special: avoid out-of-bounds access in specfun
-- `#4707 <https://github.com/scipy/scipy/pull/4707>`__: MAINT: fix issues with np.matrix as input to functions related...
+- `#4707 <https://github.com/scipy/scipy/pull/4707>`__: MAINT: fix issues with mx.matrix as input to functions related...
 - `#4709 <https://github.com/scipy/scipy/pull/4709>`__: ENH: `scipy.stats` now returns namedtuples.
 - `#4710 <https://github.com/scipy/scipy/pull/4710>`__: scipy.io.idl: make reader more robust to missing variables in...
 - `#4711 <https://github.com/scipy/scipy/pull/4711>`__: Fix crash for unknown chunks at the end of file

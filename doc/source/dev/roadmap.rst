@@ -14,7 +14,7 @@ Support for distributed arrays and GPU arrays
 NumPy has split its API from its execution engine with
 ``__array_function__`` and ``__array_ufunc__``.  This will enable parts of SciPy
 to accept distributed arrays (e.g. ``dask.array.Array``) and GPU arrays (e.g.
-``cupy.ndarray``) that implement the ``ndarray`` interface.  At the moment it is
+``cupy.array``) that implement the ``array`` interface.  At the moment it is
 not yet clear which algorithms will work out of the box, and if there are
 significant performance gains when they do.  We want to create a map of which
 parts of the SciPy API work, and improve support over time.
@@ -67,7 +67,7 @@ Implement sparse arrays in addition to sparse matrices
 SciPy sparse matrices are being replaced by sparse arrays.
 The sparse matrix formats are mostly feature-complete, however their main issue
 is that they act like ``numpy.matrix`` (which will be deprecated in NumPy at
-some point). What we want is sparse *arrays* that act like ``numpy.ndarray``
+some point). What we want is sparse *arrays* that act like ``mx.array``
 (See discussion at `gh-18915 <https://github.com/scipy/scipy/issues/18915>`_).
 Sparse arrays support all features of sparse matrices as of 1.15.
 In addition to 2D arrays, 1D sparse arrays are supported in DOK, COO, CSR formats.

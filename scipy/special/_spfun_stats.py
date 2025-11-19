@@ -32,7 +32,7 @@
 """Some more special functions which may be useful for multivariate statistical
 analysis."""
 
-import numpy as np
+import mlx.core as mx
 from scipy.special import gammaln as loggam
 
 
@@ -45,14 +45,14 @@ def multigammaln(a, d):
 
     Parameters
     ----------
-    a : ndarray
+    a : array
         The multivariate gamma is computed for each item of `a`.
     d : int
         The dimension of the space of integration.
 
     Returns
     -------
-    res : ndarray
+    res : array
         The values of the log multivariate gamma at the given points `a`.
 
     Notes
@@ -82,7 +82,7 @@ def multigammaln(a, d):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import multigammaln, gammaln
     >>> a = 23.5
     >>> d = 10
@@ -92,17 +92,17 @@ def multigammaln(a, d):
     Verify that the result agrees with the logarithm of the equation
     shown above:
 
-    >>> d*(d-1)/4*np.log(np.pi) + gammaln(a - 0.5*np.arange(0, d)).sum()
+    >>> d*(d-1)/4*mx.log(mx.pi) + gammaln(a - 0.5*mx.arange(0, d)).sum()
     454.1488605074416
     """
-    a = np.asarray(a)
+    a = mx.array(a)
     # Support for 0d arrays is needed for array_api_strict and dask.
-    d = np.asarray(d)[()]
-    if not np.isscalar(d) or (np.floor(d) != d):
+    d = mx.array(d)[()]
+    if not mx.isscalar(d) or (mx.floor(d) != d):
         raise ValueError("d should be a positive integer (dimension)")
-    if np.any(a <= 0.5 * (d - 1)):
+    if mx.any(a <= 0.5 * (d - 1)):
         raise ValueError(f"condition a ({a}) > 0.5 * (d-1) ({0.5 * (d-1)}) not met")
 
-    res = (d * (d-1) * 0.25) * np.log(np.pi)
-    res += np.sum(loggam([(a - (j - 1.)/2) for j in range(1, d+1)]), axis=0)
+    res = (d * (d-1) * 0.25) * mx.log(mx.pi)
+    res += mx.sum(loggam([(a - (j - 1.)/2) for j in range(1, d+1)]), axis=0)
     return res

@@ -1,7 +1,7 @@
 """Regression tests for optimize.
 
 """
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_almost_equal
 from pytest import raises as assert_raises
 
@@ -31,7 +31,7 @@ class TestRegression:
         def func(x):
             counter[0] += 1
             if counter[0] < 3:
-                return x**2 - np.array([9, 10, 11])
+                return x**2 - mx.array([9, 10, 11])
             else:
                 raise SomeError()
         assert_raises(SomeError,

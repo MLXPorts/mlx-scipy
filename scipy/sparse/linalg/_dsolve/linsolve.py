@@ -1,6 +1,6 @@
 from warnings import warn, catch_warnings, simplefilter
 
-import numpy as np
+import mlx.core as mx
 from numpy import asarray
 from scipy.sparse import (issparse, SparseEfficiencyWarning,
                           csr_array, csc_array, eye_array, diags_array)
@@ -79,15 +79,15 @@ def use_solver(**kwargs):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse.linalg import use_solver, spsolve
     >>> from scipy.sparse import csc_array
-    >>> R = np.random.randn(5, 5)
+    >>> R = mx.random.randn(5, 5)
     >>> A = csc_array(R)
-    >>> b = np.random.randn(5)
+    >>> b = mx.random.randn(5)
     >>> use_solver(useUmfpack=False) # enforce superLU over UMFPACK
     >>> x = spsolve(A, b)
-    >>> np.allclose(A.dot(x), b)
+    >>> mx.allclose(A.dot(x), b)
     True
     >>> use_solver(useUmfpack=True) # reset umfPack usage to default
     """
@@ -100,10 +100,10 @@ def use_solver(**kwargs):
 def _get_umf_family(A):
     """Get umfpack family string given the sparse matrix dtype."""
     _families = {
-        (np.float64, np.int32): 'di',
-        (np.complex128, np.int32): 'zi',
-        (np.float64, np.int64): 'dl',
-        (np.complex128, np.int64): 'zl'
+        (mx.float64, mx.int32): 'di',
+        (mx.complex128, mx.int32): 'zi',
+        (mx.float64, mx.int64): 'dl',
+        (mx.complex128, mx.int64): 'zl'
     }
 
     # A.dtype.name can only be "float64" or
@@ -122,12 +122,12 @@ def _get_umf_family(A):
         raise ValueError(msg) from e
 
     # See gh-8278. Considered converting only if
-    # A.shape[0]*A.shape[1] > np.iinfo(np.int32).max,
+    # A.shape[0]*A.shape[1] > mx.iinfo(mx.int32).max,
     # but that didn't always fix the issue.
     family = family[0] + "l"
     A_new = copy.copy(A)
-    A_new.indptr = np.asarray(A.indptr, dtype=np.int64)
-    A_new.indices = np.asarray(A.indices, dtype=np.int64)
+    A_new.indptr = mx.array(A.indptr, dtype=mx.int64)
+    A_new.indices = mx.array(A.indices, dtype=mx.int64)
 
     return family, A_new
 
@@ -136,9 +136,9 @@ def spsolve(A, b, permc_spec=None, use_umfpack=True):
 
     Parameters
     ----------
-    A : ndarray or sparse array or matrix
+    A : array or sparse array or matrix
         The square matrix A will be converted into CSC or CSR form
-    b : ndarray or sparse array or matrix
+    b : array or sparse array or matrix
         The matrix or vector representing the right hand side of the equation.
         If a vector, b.shape must be (n,) or (n, 1).
     permc_spec : str, optional
@@ -157,7 +157,7 @@ def spsolve(A, b, permc_spec=None, use_umfpack=True):
 
     Returns
     -------
-    x : ndarray or sparse array or matrix
+    x : array or sparse array or matrix
         the solution of the sparse linear equation.
         If b is a vector, then x is a vector of size A.shape[1]
         If b is a matrix, then x is a matrix of size (A.shape[1], b.shape[1])
@@ -204,13 +204,13 @@ def spsolve(A, b, permc_spec=None, use_umfpack=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import spsolve
     >>> A = csc_array([[3, 2, 0], [1, -1, 0], [0, 5, 1]], dtype=float)
     >>> B = csc_array([[2, 0], [-1, 0], [2, 0]], dtype=float)
     >>> x = spsolve(A, B)
-    >>> np.allclose(A.dot(x).toarray(), B.toarray())
+    >>> mx.allclose(A.dot(x).toarray(), B.toarray())
     True
     """
     is_pydata_sparse = is_pydata_spmatrix(b)
@@ -232,7 +232,7 @@ def spsolve(A, b, permc_spec=None, use_umfpack=True):
     # sum duplicates for non-canonical format
     A.sum_duplicates()
     A = A._asfptype()  # upcast to a floating point format
-    result_dtype = np.promote_types(A.dtype, b.dtype)
+    result_dtype = mx.promote_types(A.dtype, b.dtype)
     if A.dtype != result_dtype:
         A = A.astype(result_dtype)
     if b.dtype != result_dtype:
@@ -280,14 +280,14 @@ def spsolve(A, b, permc_spec=None, use_umfpack=True):
             else:
                 flag = 0  # CSR format
 
-            indices = A.indices.astype(np.intc, copy=False)
-            indptr = A.indptr.astype(np.intc, copy=False)
+            indices = A.indices.astype(mx.intc, copy=False)
+            indptr = A.indptr.astype(mx.intc, copy=False)
             options = dict(ColPerm=permc_spec)
             x, info = _superlu.gssv(N, A.nnz, A.data, indices, indptr,
                                     b, flag, options=options)
             if info != 0:
                 warn("Matrix is exactly singular", MatrixRankWarning, stacklevel=2)
-                x.fill(np.nan)
+                x.fill(mx.nan)
             if b_is_vector:
                 x = x.ravel()
         else:
@@ -308,15 +308,15 @@ def spsolve(A, b, permc_spec=None, use_umfpack=True):
             for j in range(b.shape[1]):
                 bj = b[:, j].toarray().ravel()
                 xj = Afactsolve(bj)
-                w = np.flatnonzero(xj)
+                w = mx.flatnonzero(xj)
                 segment_length = w.shape[0]
                 row_segs.append(w)
-                col_segs.append(np.full(segment_length, j, dtype=int))
-                data_segs.append(np.asarray(xj[w], dtype=A.dtype))
-            sparse_data = np.concatenate(data_segs)
+                col_segs.append(mx.full(segment_length, j, dtype=int))
+                data_segs.append(mx.array(xj[w], dtype=A.dtype))
+            sparse_data = mx.concatenate(data_segs)
             idx_dtype = get_index_dtype(maxval=max(b.shape))
-            sparse_row = np.concatenate(row_segs, dtype=idx_dtype)
-            sparse_col = np.concatenate(col_segs, dtype=idx_dtype)
+            sparse_row = mx.concatenate(row_segs, dtype=idx_dtype)
+            sparse_col = mx.concatenate(col_segs, dtype=idx_dtype)
             x = A.__class__((sparse_data, (sparse_row, sparse_col)),
                            shape=b.shape, dtype=A.dtype)
 
@@ -384,12 +384,12 @@ def splu(A, permc_spec=None, diag_pivot_thresh=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import splu
     >>> A = csc_array([[1., 0., 0.], [5., 0., 2.], [0., -1., 0.]], dtype=float)
     >>> B = splu(A)
-    >>> x = np.array([1., 2., 3.], dtype=float)
+    >>> x = mx.array([1., 2., 3.], dtype=float)
     >>> B.solve(x)
     array([ 1. , -3. , -1.5])
     >>> A.dot(B.solve(x))
@@ -419,7 +419,7 @@ def splu(A, permc_spec=None, diag_pivot_thresh=None,
     if (M != N):
         raise ValueError("can only factor square matrices")  # is this true?
 
-    indices, indptr = safely_cast_index_arrays(A, np.intc, "SuperLU")
+    indices, indptr = safely_cast_index_arrays(A, mx.intc, "SuperLU")
 
     _options = dict(DiagPivotThresh=diag_pivot_thresh, ColPerm=permc_spec,
                     PanelSize=panel_size, Relax=relax)
@@ -484,12 +484,12 @@ def spilu(A, drop_tol=None, fill_factor=None, drop_rule=None, permc_spec=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import spilu
     >>> A = csc_array([[1., 0., 0.], [5., 0., 2.], [0., -1., 0.]], dtype=float)
     >>> B = spilu(A)
-    >>> x = np.array([1., 2., 3.], dtype=float)
+    >>> x = mx.array([1., 2., 3.], dtype=float)
     >>> B.solve(x)
     array([ 1. , -3. , -1.5])
     >>> A.dot(B.solve(x))
@@ -519,7 +519,7 @@ def spilu(A, drop_tol=None, fill_factor=None, drop_rule=None, permc_spec=None,
     if (M != N):
         raise ValueError("can only factor square matrices")  # is this true?
 
-    indices, indptr = safely_cast_index_arrays(A, np.intc, "SuperLU")
+    indices, indptr = safely_cast_index_arrays(A, mx.intc, "SuperLU")
 
     _options = dict(ILU_DropRule=drop_rule, ILU_DropTol=drop_tol,
                     ILU_FillFactor=fill_factor,
@@ -551,18 +551,18 @@ def factorized(A):
     -------
     solve : callable
         To solve the linear system of equations given in `A`, the `solve`
-        callable should be passed an ndarray of shape (N,).
+        callable should be passed an array of shape (N,).
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse.linalg import factorized
     >>> from scipy.sparse import csc_array
-    >>> A = np.array([[ 3. ,  2. , -1. ],
+    >>> A = mx.array([[ 3. ,  2. , -1. ],
     ...               [ 2. , -2. ,  4. ],
     ...               [-1. ,  0.5, -1. ]])
     >>> solve = factorized(csc_array(A)) # Makes LU decomposition.
-    >>> rhs1 = np.array([1, -2, 0])
+    >>> rhs1 = mx.array([1, -2, 0])
     >>> solve(rhs1) # Uses the LU factors.
     array([ 1., -2., -2.])
 
@@ -595,7 +595,7 @@ def factorized(A):
         umf.numeric(A)
 
         def solve(b):
-            with np.errstate(divide="ignore", invalid="ignore"):
+            with mx.errstate(divide="ignore", invalid="ignore"):
                 # Ignoring warnings with numpy >= 1.23.0, see gh-16523
                 result = umf.solve(umfpack.UMFPACK_A, A, b, autoTranspose=True)
 
@@ -635,7 +635,7 @@ def spsolve_triangular(A, b, lower=True, overwrite_A=False, overwrite_b=False,
 
     Returns
     -------
-    x : (M,) or (M, N) ndarray
+    x : (M,) or (M, N) array
         Solution to the system ``A x = b``. Shape of return matches shape
         of `b`.
 
@@ -652,13 +652,13 @@ def spsolve_triangular(A, b, lower=True, overwrite_A=False, overwrite_b=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import spsolve_triangular
     >>> A = csc_array([[3, 0, 0], [1, -1, 0], [2, 0, 1]], dtype=float)
-    >>> B = np.array([[2, 0], [-1, 0], [2, 0]], dtype=float)
+    >>> B = mx.array([[2, 0], [-1, 0], [2, 0]], dtype=float)
     >>> x = spsolve_triangular(A, B)
-    >>> np.allclose(A.dot(x), B)
+    >>> mx.allclose(A.dot(x), B)
     True
     """
 
@@ -690,7 +690,7 @@ def spsolve_triangular(A, b, lower=True, overwrite_A=False, overwrite_b=False,
             A.setdiag(1)
     else:
         diag = A.diagonal()
-        if np.any(diag == 0):
+        if mx.any(diag == 0):
             raise LinAlgError(
                 'A is singular: zero entry on diagonal.')
         invdiag = 1/diag
@@ -702,7 +702,7 @@ def spsolve_triangular(A, b, lower=True, overwrite_A=False, overwrite_b=False,
     # sum duplicates for non-canonical format
     A.sum_duplicates()
 
-    b = np.asanyarray(b)
+    b = mx.asanyarray(b)
 
     if b.ndim not in [1, 2]:
         raise ValueError(
@@ -714,7 +714,7 @@ def spsolve_triangular(A, b, lower=True, overwrite_A=False, overwrite_b=False,
             f'{A.shape} and the shape of b is {b.shape}.'
         )
 
-    result_dtype = np.promote_types(np.promote_types(A.dtype, np.float32), b.dtype)
+    result_dtype = mx.promote_types(mx.promote_types(A.dtype, mx.float32), b.dtype)
     if A.dtype != result_dtype:
         A = A.astype(result_dtype)
     if b.dtype != result_dtype:
@@ -775,7 +775,7 @@ def is_sptriangular(A):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array, eye_array
     >>> from scipy.sparse.linalg import is_sptriangular
     >>> A = csc_array([[3, 0, 0], [1, -1, 0], [2, 0, 1]], dtype=float)
@@ -815,7 +815,7 @@ def is_sptriangular(A):
         if not upper and not lower:
             return False, False
     # check all cols
-    cols = np.repeat(np.arange(N), np.diff(indptr))
+    cols = mx.repeat(mx.arange(N), mx.diff(indptr))
     rows = indices
     upper = upper and (cols >= rows).all()
     lower = lower and (cols <= rows).all()
@@ -850,7 +850,7 @@ def spbandwidth(A):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse.linalg import spbandwidth
     >>> from scipy.sparse import csc_array, eye_array
     >>> A = csc_array([[3, 0, 0], [1, -1, 0], [2, 0, 1]], dtype=float)
@@ -871,7 +871,7 @@ def spbandwidth(A):
     if A.format in ("csc", "csr"):
         indptr, indices = A.indptr, A.indices
         N = len(indptr) - 1
-        gap = np.repeat(np.arange(N), np.diff(indptr)) - indices
+        gap = mx.repeat(mx.arange(N), mx.diff(indptr)) - indices
         if A.format == 'csr':
             gap = -gap
     elif A.format == "coo":
@@ -879,4 +879,4 @@ def spbandwidth(A):
     elif A.format == "dok":
         gap = [(c - r) for r, c in A.keys()] + [0]
         return -min(gap), max(gap)
-    return max(-np.min(gap).item(), 0), max(np.max(gap).item(), 0)
+    return max(-mx.min(gap).item(), 0), max(mx.max(gap).item(), 0)

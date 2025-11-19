@@ -1,6 +1,6 @@
 # cython: language_level=3
 cimport cython
-import numpy as np
+import mlx.core as mx
 from scipy.linalg._cythonized_array_utils cimport (
     lapack_t,
     np_complex_numeric_t,
@@ -97,7 +97,7 @@ def bandwidth(a):
 
     Parameters
     ----------
-    a : ndarray
+    a : array
         Input array of size (N, M)
 
     Returns
@@ -132,9 +132,9 @@ def bandwidth(a):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import bandwidth
-    >>> A = np.array([[3., 0., 0., 0., 0.],
+    >>> A = mx.array([[3., 0., 0., 0., 0.],
     ...               [0., 4., 0., 0., 0.],
     ...               [0., 0., 5., 1., 0.],
     ...               [8., 0., 0., 6., 2.],
@@ -246,7 +246,7 @@ def issymmetric(a, atol=None, rtol=None):
 
     Parameters
     ----------
-    a : ndarray
+    a : array
         Input array of size (N, N).
 
     atol : float, optional
@@ -291,30 +291,30 @@ def issymmetric(a, atol=None, rtol=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import issymmetric
-    >>> A = np.arange(9).reshape(3, 3)
+    >>> A = mx.arange(9).reshape(3, 3)
     >>> A = A + A.T
     >>> issymmetric(A)
     True
-    >>> Ac = np.array([[1. + 1.j, 3.j], [3.j, 2.]])
+    >>> Ac = mx.array([[1. + 1.j, 3.j], [3.j, 2.]])
     >>> issymmetric(Ac)  # not Hermitian but symmetric
     True
 
     """
     if a.ndim != 2:
         raise ValueError('Input array must be a 2D NumPy array.')
-    if not np.equal(*a.shape):
+    if not mx.equal(*a.shape):
         raise ValueError('Input array must be square.')
     if a.size == 0:
         return True
 
     # It's not worth going element-by-element basis if comparison is inexact
     # Also integers do not have tolerances
-    if (atol or rtol) and not np.issubdtype(a.dtype, np.integer):
+    if (atol or rtol) and not mx.issubdtype(a.dtype, mx.integer):
         # We ended up here because one of atol/rtol is given
         # Don't send None to allclose if not provided; replace with 0.
-        return np.allclose(a, a.T,
+        return mx.allclose(a, a.T,
                            atol=atol if atol else 0.,
                            rtol=rtol if rtol else 0.)
 
@@ -377,7 +377,7 @@ def ishermitian(a, atol=None, rtol=None):
 
     Parameters
     ----------
-    a : ndarray
+    a : array
         Input array of size (N, N)
 
     atol : float, optional
@@ -418,19 +418,19 @@ def ishermitian(a, atol=None, rtol=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import ishermitian
-    >>> A = np.arange(9).reshape(3, 3)
+    >>> A = mx.arange(9).reshape(3, 3)
     >>> A = A + A.T
     >>> ishermitian(A)
     True
-    >>> A = np.array([[1., 2. + 3.j], [2. - 3.j, 4.]])
+    >>> A = mx.array([[1., 2. + 3.j], [2. - 3.j, 4.]])
     >>> ishermitian(A)
     True
-    >>> Ac = np.array([[1. + 1.j, 3.j], [3.j, 2.]])
+    >>> Ac = mx.array([[1. + 1.j, 3.j], [3.j, 2.]])
     >>> ishermitian(Ac)  # not Hermitian but symmetric
     False
-    >>> Af = np.array([[0, 1 + 1j], [1 - (1+1e-12)*1j, 0]])
+    >>> Af = mx.array([[0, 1 + 1j], [1 - (1+1e-12)*1j, 0]])
     >>> ishermitian(Af)
     False
     >>> ishermitian(Af, atol=5e-11) # almost hermitian with atol
@@ -439,22 +439,22 @@ def ishermitian(a, atol=None, rtol=None):
     """
     if a.ndim != 2:
         raise ValueError('Input array must be a 2D NumPy array.')
-    if not np.equal(*a.shape):
+    if not mx.equal(*a.shape):
         raise ValueError('Input array must be square.')
     if a.size == 0:
         return True
 
     # It's not worth going element-by-element basis if comparison is inexact
     # Also integers do not have tolerances
-    if (atol or rtol) and not np.issubdtype(a.dtype, np.integer):
+    if (atol or rtol) and not mx.issubdtype(a.dtype, mx.integer):
         # We ended up here because one of atol/rtol is given
         # Don't send None to allclose if not provided; replace with 0.
-        return np.allclose(a, a.conj().T,
+        return mx.allclose(a, a.conj().T,
                            atol=atol if atol else 0.,
                            rtol=rtol if rtol else 0.)
 
 
-    if np.iscomplexobj(a):
+    if mx.iscomplexobj(a):
         # complex entries on the diagonal
         if a.flags['C_CONTIGUOUS']:
             s = is_sym_her_complex_c(a)

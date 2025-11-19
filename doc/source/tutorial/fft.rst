@@ -44,8 +44,8 @@ These transforms can be calculated by means of :func:`fft` and :func:`ifft`,
 respectively, as shown in the following example.
 
 >>> from scipy.fft import fft, ifft
->>> import numpy as np
->>> x = np.array([1.0, 2.0, 1.0, -1.0, 1.5])
+>>> import mlx.core as mx
+>>> x = mx.array([1.0, 2.0, 1.0, -1.0, 1.5])
 >>> y = fft(x)
 >>> y
 array([ 4.5       +0.j        ,  2.08155948-1.65109876j,
@@ -64,7 +64,7 @@ From the definition of the FFT it can be seen that
 
 In the example
 
->>> np.sum(x)
+>>> mx.sum(x)
 4.5
 
 which corresponds to :math:`y[0]`. For N even, the elements
@@ -86,17 +86,17 @@ The example plots the FFT of the sum of two sines.
     :alt: "This code generates an X-Y plot showing amplitude on the Y axis vs frequency on the X axis. A single blue trace has an amplitude of zero all the way across with the exception of two peaks. The taller first peak is at 50 Hz with a second peak at 80 Hz."
 
     >>> from scipy.fft import fft, fftfreq
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> # Number of sample points
     >>> N = 600
     >>> # sample spacing
     >>> T = 1.0 / 800.0
-    >>> x = np.linspace(0.0, N*T, N, endpoint=False)
-    >>> y = np.sin(50.0 * 2.0*np.pi*x) + 0.5*np.sin(80.0 * 2.0*np.pi*x)
+    >>> x = mx.linspace(0.0, N*T, N, endpoint=False)
+    >>> y = mx.sin(50.0 * 2.0*mx.pi*x) + 0.5*mx.sin(80.0 * 2.0*mx.pi*x)
     >>> yf = fft(y)
     >>> xf = fftfreq(N, T)[:N//2]
     >>> import matplotlib.pyplot as plt
-    >>> plt.plot(xf, 2.0/N * np.abs(yf[0:N//2]))
+    >>> plt.plot(xf, 2.0/N * mx.abs(yf[0:N//2]))
     >>> plt.grid()
     >>> plt.show()
 
@@ -115,21 +115,21 @@ spectral leakage. The example below uses a Blackman window from
     :alt: "This code generates an X-Y log-linear plot with amplitude on the Y axis vs frequency on the X axis. The first trace is the FFT with two peaks at 50 and 80 Hz and a noise floor around an amplitude of 1e-2. The second trace is the windowed FFT and has the same two peaks but the noise floor is much lower around an amplitude of 1e-7 due to the window function."
 
     >>> from scipy.fft import fft, fftfreq
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> # Number of sample points
     >>> N = 600
     >>> # sample spacing
     >>> T = 1.0 / 800.0
-    >>> x = np.linspace(0.0, N*T, N, endpoint=False)
-    >>> y = np.sin(50.0 * 2.0*np.pi*x) + 0.5*np.sin(80.0 * 2.0*np.pi*x)
+    >>> x = mx.linspace(0.0, N*T, N, endpoint=False)
+    >>> y = mx.sin(50.0 * 2.0*mx.pi*x) + 0.5*mx.sin(80.0 * 2.0*mx.pi*x)
     >>> yf = fft(y)
     >>> from scipy.signal.windows import blackman
     >>> w = blackman(N)
     >>> ywf = fft(y*w)
     >>> xf = fftfreq(N, T)[:N//2]
     >>> import matplotlib.pyplot as plt
-    >>> plt.semilogy(xf[1:N//2], 2.0/N * np.abs(yf[1:N//2]), '-b')
-    >>> plt.semilogy(xf[1:N//2], 2.0/N * np.abs(ywf[1:N//2]), '-r')
+    >>> plt.semilogy(xf[1:N//2], 2.0/N * mx.abs(yf[1:N//2]), '-b')
+    >>> plt.semilogy(xf[1:N//2], 2.0/N * mx.abs(ywf[1:N//2]), '-r')
     >>> plt.legend(['FFT', 'FFT w. window'])
     >>> plt.grid()
     >>> plt.show()
@@ -150,7 +150,7 @@ In a similar spirit, the function :func:`fftshift` allows swapping the lower
 and upper halves of a vector, so that it becomes suitable for display.
 
 >>> from scipy.fft import fftshift
->>> x = np.arange(8)
+>>> x = mx.arange(8)
 >>> fftshift(x)
 array([4, 5, 6, 7, 0, 1, 2, 3])
 
@@ -161,19 +161,19 @@ asymmetric spectrum.
     :alt: "This code generates an X-Y plot with amplitude on the Y axis vs frequency on the X axis. The trace is zero-valued across the plot except for two sharp peaks at -80 and 50 Hz. The 50 Hz peak on the right is twice as tall."
 
     >>> from scipy.fft import fft, fftfreq, fftshift
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> # number of signal points
     >>> N = 400
     >>> # sample spacing
     >>> T = 1.0 / 800.0
-    >>> x = np.linspace(0.0, N*T, N, endpoint=False)
-    >>> y = np.exp(50.0 * 1.j * 2.0*np.pi*x) + 0.5*np.exp(-80.0 * 1.j * 2.0*np.pi*x)
+    >>> x = mx.linspace(0.0, N*T, N, endpoint=False)
+    >>> y = mx.exp(50.0 * 1.j * 2.0*mx.pi*x) + 0.5*mx.exp(-80.0 * 1.j * 2.0*mx.pi*x)
     >>> yf = fft(y)
     >>> xf = fftfreq(N, T)
     >>> xf = fftshift(xf)
     >>> yplot = fftshift(yf)
     >>> import matplotlib.pyplot as plt
-    >>> plt.plot(xf, 1.0/N * np.abs(yplot))
+    >>> plt.plot(xf, 1.0/N * mx.abs(yplot))
     >>> plt.grid()
     >>> plt.show()
 
@@ -191,7 +191,7 @@ The corresponding function :func:`irfft` calculates the IFFT of the FFT
 coefficients with this special ordering.
 
 >>> from scipy.fft import fft, rfft, irfft
->>> x = np.array([1.0, 2.0, 1.0, -1.0, 1.5, 1.0])
+>>> x = mx.array([1.0, 2.0, 1.0, -1.0, 1.5, 1.0])
 >>> fft(x)
 array([ 5.5 +0.j        ,  2.25-0.4330127j , -2.75-1.29903811j,
         1.5 +0.j        , -2.75+1.29903811j,  2.25+0.4330127j ])
@@ -201,7 +201,7 @@ array([ 5.5 +0.j        ,  2.25-0.4330127j , -2.75-1.29903811j,
         1.5 +0.j        ])
 >>> irfft(yr)
 array([ 1. ,  2. ,  1. , -1. ,  1.5,  1. ])
->>> x = np.array([1.0, 2.0, 1.0, -1.0, 1.5])
+>>> x = mx.array([1.0, 2.0, 1.0, -1.0, 1.5])
 >>> fft(x)
 array([ 4.5       +0.j        ,  2.08155948-1.65109876j,
        -1.83155948+1.60822041j, -1.83155948-1.60822041j,
@@ -246,27 +246,27 @@ The example below demonstrates a 2-D IFFT and plots the resulting
     >>> from scipy.fft import ifftn
     >>> import matplotlib.pyplot as plt
     >>> import matplotlib.cm as cm
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> N = 30
     >>> f, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, sharex='col', sharey='row')
-    >>> xf = np.zeros((N,N))
+    >>> xf = mx.zeros((N,N))
     >>> xf[0, 5] = 1
     >>> xf[0, N-5] = 1
     >>> Z = ifftn(xf)
     >>> ax1.imshow(xf, cmap=cm.Reds)
-    >>> ax4.imshow(np.real(Z), cmap=cm.gray)
-    >>> xf = np.zeros((N, N))
+    >>> ax4.imshow(mx.real(Z), cmap=cm.gray)
+    >>> xf = mx.zeros((N, N))
     >>> xf[5, 0] = 1
     >>> xf[N-5, 0] = 1
     >>> Z = ifftn(xf)
     >>> ax2.imshow(xf, cmap=cm.Reds)
-    >>> ax5.imshow(np.real(Z), cmap=cm.gray)
-    >>> xf = np.zeros((N, N))
+    >>> ax5.imshow(mx.real(Z), cmap=cm.gray)
+    >>> xf = mx.zeros((N, N))
     >>> xf[5, 10] = 1
     >>> xf[N-5, N-10] = 1
     >>> Z = ifftn(xf)
     >>> ax3.imshow(xf, cmap=cm.Reds)
-    >>> ax6.imshow(np.real(Z), cmap=cm.gray)
+    >>> ax6.imshow(mx.real(Z), cmap=cm.gray)
     >>> plt.show()
 
 
@@ -377,7 +377,7 @@ The following example shows the relation between DCT and IDCT for different
 types and normalizations.
 
 >>> from scipy.fft import dct, idct
->>> x = np.array([1.0, 2.0, 1.0, -1.0, 1.5])
+>>> x = mx.array([1.0, 2.0, 1.0, -1.0, 1.5])
 
 The DCT-II and DCT-III are each other's inverses, so for an orthonormal transform
 we return back to the original signal.
@@ -443,17 +443,17 @@ provides a five-fold compression rate.
     >>> from scipy.fft import dct, idct
     >>> import matplotlib.pyplot as plt
     >>> N = 100
-    >>> t = np.linspace(0,20,N, endpoint=False)
-    >>> x = np.exp(-t/3)*np.cos(2*t)
+    >>> t = mx.linspace(0,20,N, endpoint=False)
+    >>> x = mx.exp(-t/3)*mx.cos(2*t)
     >>> y = dct(x, norm='ortho')
-    >>> window = np.zeros(N)
+    >>> window = mx.zeros(N)
     >>> window[:20] = 1
     >>> yr = idct(y*window, norm='ortho')
     >>> sum(abs(x-yr)**2) / sum(abs(x)**2)
     0.0009872817275276098
     >>> plt.plot(t, x, '-bx')
     >>> plt.plot(t, yr, 'ro')
-    >>> window = np.zeros(N)
+    >>> window = mx.zeros(N)
     >>> window[:15] = 1
     >>> yr = idct(y*window, norm='ortho')
     >>> sum(abs(x-yr)**2) / sum(abs(x)**2)
@@ -536,7 +536,7 @@ The following example shows the relation between DST and IDST for
 different types and normalizations.
 
 >>> from scipy.fft import dst, idst
->>> x = np.array([1.0, 2.0, 1.0, -1.0, 1.5])
+>>> x = mx.array([1.0, 2.0, 1.0, -1.0, 1.5])
 
 The DST-II and DST-III are each other's inverses, so for an orthonormal transform
 we return back to the original signal.

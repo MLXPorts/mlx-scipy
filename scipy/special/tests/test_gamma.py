@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import scipy.special as sc
 
 
@@ -8,5 +8,5 @@ class TestRgamma:
         assert sc.rgamma(-35) == 0
 
     def test_rgamma_zeros(self):
-        x = np.array([0, -10, -100, -1000, -10000])
-        assert np.all(sc.rgamma(x) == 0)
+        x = mx.array([0, -10, -100, -1000, -10000])
+        assert mx.all(sc.rgamma(x) == 0)

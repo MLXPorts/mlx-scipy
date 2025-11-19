@@ -20,7 +20,7 @@ and writing MATLAB files.
 
 .. autosummary::
    :toctree: generated/
-   :template: autosummary/ndarray_subclass.rst
+   :template: autosummary/array_subclass.rst
    :nosignatures:
 
    MatlabObject - Class for a MATLAB object

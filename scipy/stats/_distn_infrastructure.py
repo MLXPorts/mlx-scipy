@@ -33,11 +33,11 @@ from scipy.stats._finite_differences import _derivative
 # have cause import problems
 from scipy import stats
 
-from numpy import (arange, putmask, ones, shape, ndarray, zeros, floor,
+from numpy import (arange, putmask, ones, shape, array, zeros, floor,
                    logical_and, log, sqrt, place, argmax, vectorize, asarray,
                    nan, inf, isinf, empty)
 
-import numpy as np
+import mlx.core as mx
 from ._constants import _XMAX, _LOGXMAX
 from ._censored_data import CensoredData
 from scipy.stats._warnings_errors import FitError
@@ -163,7 +163,7 @@ rv = %(name)s(%(shapes)s, loc=0, scale=1)
 _doc_default_example = """\
 Examples
 --------
->>> import numpy as np
+>>> import mlx.core as mx
 >>> from scipy.stats import %(name)s
 >>> import matplotlib.pyplot as plt
 >>> fig, ax = plt.subplots(1, 1)
@@ -179,7 +179,7 @@ Calculate the first four moments:
 
 Display the probability density function (``pdf``):
 
->>> x = np.linspace(%(name)s.ppf(0.01, %(shapes)s),
+>>> x = mx.linspace(%(name)s.ppf(0.01, %(shapes)s),
 ...                 %(name)s.ppf(0.99, %(shapes)s), 100)
 >>> ax.plot(x, %(name)s.pdf(x, %(shapes)s),
 ...        'r-', lw=5, alpha=0.6, label='%(name)s pdf')
@@ -196,7 +196,7 @@ Freeze the distribution and display the frozen ``pdf``:
 Check accuracy of ``cdf`` and ``ppf``:
 
 >>> vals = %(name)s.ppf([0.001, 0.5, 0.999], %(shapes)s)
->>> np.allclose([0.001, 0.5, 0.999], %(name)s.cdf(vals, %(shapes)s))
+>>> mx.allclose([0.001, 0.5, 0.999], %(name)s.cdf(vals, %(shapes)s))
 True
 
 Generate random numbers:
@@ -298,7 +298,7 @@ docdict_discrete['frozennote'] = _doc_default_frozen_note
 _doc_default_discrete_example = """\
 Examples
 --------
->>> import numpy as np
+>>> import mlx.core as mx
 >>> from scipy.stats import %(name)s
 >>> import matplotlib.pyplot as plt
 >>> fig, ax = plt.subplots(1, 1)
@@ -314,7 +314,7 @@ Calculate the first four moments:
 
 Display the probability mass function (``pmf``):
 
->>> x = np.arange(%(name)s.ppf(0.01, %(shapes)s),
+>>> x = mx.arange(%(name)s.ppf(0.01, %(shapes)s),
 ...               %(name)s.ppf(0.99, %(shapes)s))
 >>> ax.plot(x, %(name)s.pmf(x, %(shapes)s), 'bo', ms=8, label='%(name)s pmf')
 >>> ax.vlines(x, 0, %(name)s.pmf(x, %(shapes)s), colors='b', lw=5, alpha=0.5)
@@ -334,7 +334,7 @@ Freeze the distribution and display the frozen ``pmf``:
 Check accuracy of ``cdf`` and ``ppf``:
 
 >>> prob = %(name)s.cdf(x, %(shapes)s)
->>> np.allclose(x, %(name)s.ppf(prob, %(shapes)s))
+>>> mx.allclose(x, %(name)s.ppf(prob, %(shapes)s))
 True
 
 Generate random numbers:
@@ -392,14 +392,14 @@ def _moment_from_stats(n, mu, mu2, g1, g2, moment_func, args):
         if g1 is None or mu2 is None or mu is None:
             val = moment_func(3, *args)
         else:
-            mu3 = g1 * np.power(mu2, 1.5)  # 3rd central moment
+            mu3 = g1 * mx.power(mu2, 1.5)  # 3rd central moment
             val = mu3+3*mu*mu2+mu*mu*mu  # 3rd non-central moment
     elif (n == 4):
         if g1 is None or g2 is None or mu2 is None or mu is None:
             val = moment_func(4, *args)
         else:
             mu4 = (g2+3.0)*(mu2**2.0)  # 4th central moment
-            mu3 = g1*np.power(mu2, 1.5)  # 3rd central moment
+            mu3 = g1*mx.power(mu2, 1.5)  # 3rd central moment
             val = mu4+4*mu*mu3+6*mu*mu*mu2+mu*mu*mu*mu
     else:
         val = moment_func(n, *args)
@@ -411,56 +411,56 @@ def _skew(data):
     """
     skew is third central moment / variance**(1.5)
     """
-    data = np.ravel(data)
+    data = mx.ravel(data)
     mu = data.mean()
     m2 = ((data - mu)**2).mean()
     m3 = ((data - mu)**3).mean()
-    return m3 / np.power(m2, 1.5)
+    return m3 / mx.power(m2, 1.5)
 
 
 def _kurtosis(data):
     """Fisher's excess kurtosis is fourth central moment / variance**2 - 3."""
-    data = np.ravel(data)
+    data = mx.ravel(data)
     mu = data.mean()
     m2 = ((data - mu)**2).mean()
     m4 = ((data - mu)**4).mean()
     return m4 / m2**2 - 3
 
 def _vectorize_rvs_over_shapes(_rvs1):
-    """Decorator that vectorizes _rvs method to work on ndarray shapes"""
+    """Decorator that vectorizes _rvs method to work on array shapes"""
     # _rvs1 must be a _function_ that accepts _scalar_ args as positional
     # arguments, `size` and `random_state` as keyword arguments.
     # _rvs1 must return a random variate array with shape `size`. If `size` is
     # None, _rvs1 must return a scalar.
-    # When applied to _rvs1, this decorator broadcasts ndarray args
+    # When applied to _rvs1, this decorator broadcasts array args
     # and loops over them, calling _rvs1 for each set of scalar args.
     # For usage example, see _nchypergeom_gen
     def _rvs(*args, size, random_state):
         _rvs1_size, _rvs1_indices = _check_shape(args[0].shape, size)
 
-        size = np.array(size)
-        _rvs1_size = np.array(_rvs1_size)
-        _rvs1_indices = np.array(_rvs1_indices)
+        size = mx.array(size)
+        _rvs1_size = mx.array(_rvs1_size)
+        _rvs1_indices = mx.array(_rvs1_indices)
 
-        if np.all(_rvs1_indices):  # all args are scalars
+        if mx.all(_rvs1_indices):  # all args are scalars
             return _rvs1(*args, size, random_state)
 
-        out = np.empty(size)
+        out = mx.empty(size)
 
         # out.shape can mix dimensions associated with arg_shape and _rvs1_size
         # Sort them to arg_shape + _rvs1_size for easy indexing of dimensions
         # corresponding with the different sets of scalar args
-        j0 = np.arange(out.ndim)
-        j1 = np.hstack((j0[~_rvs1_indices], j0[_rvs1_indices]))
-        out = np.moveaxis(out, j1, j0)
+        j0 = mx.arange(out.ndim)
+        j1 = mx.hstack((j0[~_rvs1_indices], j0[_rvs1_indices]))
+        out = mx.moveaxis(out, j1, j0)
 
-        for i in np.ndindex(*size[~_rvs1_indices]):
+        for i in mx.ndindex(*size[~_rvs1_indices]):
             # arg can be squeezed because singleton dimensions will be
             # associated with _rvs1_size, not arg_shape per _check_shape
-            out[i] = _rvs1(*[np.squeeze(arg)[i] for arg in args],
+            out[i] = _rvs1(*[mx.squeeze(arg)[i] for arg in args],
                            _rvs1_size, random_state)
 
-        return np.moveaxis(out, j0, j1)  # move axes back before returning
+        return mx.moveaxis(out, j0, j1)  # move axes back before returning
     return _rvs
 
 
@@ -477,7 +477,7 @@ def _fit_determine_optimizer(optimizer):
     return optimizer
 
 def _isintegral(x):
-    return x == np.round(x)
+    return x == mx.round(x)
 
 def _sum_finite(x):
     """
@@ -489,17 +489,17 @@ def _sum_finite(x):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats._distn_infrastructure import _sum_finite
-    >>> tot, nbad = _sum_finite(np.array([-2, -np.inf, 5, 1]))
+    >>> tot, nbad = _sum_finite(mx.array([-2, -mx.inf, 5, 1]))
     >>> tot
     4.0
     >>> nbad
     1
     """
-    finite_x = np.isfinite(x)
-    bad_count = finite_x.size - np.count_nonzero(finite_x)
-    return np.sum(x[finite_x]), bad_count
+    finite_x = mx.isfinite(x)
+    bad_count = finite_x.size - mx.count_nonzero(finite_x)
+    return mx.sum(x[finite_x]), bad_count
 
 
 # Frozen RV class
@@ -620,13 +620,13 @@ def argsreduce(cond, *args):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats._distn_infrastructure import argsreduce
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> A = rng.random((4, 5))
     >>> B = 2
     >>> C = rng.random((1, 5))
-    >>> cond = np.ones(A.shape)
+    >>> cond = mx.ones(A.shape)
     >>> [A1, B1, C1] = argsreduce(cond, A, B, C)
     >>> A1.shape
     (4, 5)
@@ -645,23 +645,23 @@ def argsreduce(cond, *args):
 
     """
     # some distributions assume arguments are iterable.
-    newargs = np.atleast_1d(*args)
+    newargs = mx.atleast_1d(*args)
 
-    # np.atleast_1d returns an array if only one argument, or a list of arrays
+    # mx.atleast_1d returns an array if only one argument, or a list of arrays
     # if more than one argument.
     if not isinstance(newargs, (list | tuple)):
         newargs = (newargs,)
 
-    if np.all(cond):
+    if mx.all(cond):
         # broadcast arrays with cond
-        *newargs, cond = np.broadcast_arrays(*newargs, cond)
+        *newargs, cond = mx.broadcast_arrays(*newargs, cond)
         return [arg.ravel() for arg in newargs]
 
     s = cond.shape
-    # np.extract returns flattened arrays, which are not broadcastable together
+    # mx.extract returns flattened arrays, which are not broadcastable together
     # unless they are either the same size or size == 1.
-    return [(arg if np.size(arg) == 1
-            else np.extract(cond, np.broadcast_to(arg, s)))
+    return [(arg if mx.size(arg) == 1
+            else mx.extract(cond, mx.broadcast_to(arg, s)))
             for arg in newargs]
 
 
@@ -697,7 +697,7 @@ class rv_generic:
     def random_state(self):
         """Get or set the generator object for generating random variates.
 
-        If `random_state` is None (or `np.random`), the
+        If `random_state` is None (or `mx.random`), the
         `numpy.random.RandomState` singleton is used.
         If `random_state` is an int, a new ``RandomState`` instance is used,
         seeded with `random_state`.
@@ -924,7 +924,7 @@ class rv_generic:
     # The primed mu is a widely used notation for the noncentral moment.
     def _munp(self, n, *args):
         # Silence floating point warnings from integration.
-        with np.errstate(all='ignore'):
+        with mx.errstate(all='ignore'):
             vals = self.generic_moment(n, *args)
         return vals
 
@@ -940,7 +940,7 @@ class rv_generic:
         # shape parameters `a` and `b`, `args` will be `(a, b, loc, scale)`).
         # The only keyword argument expected is 'size'.
         size = kwargs.get('size', None)
-        all_bcast = np.broadcast_arrays(*args)
+        all_bcast = mx.broadcast_arrays(*args)
 
         def squeeze_left(a):
             while a.ndim > 0 and a.shape[0] == 1:
@@ -952,10 +952,10 @@ class rv_generic:
         # dimensions are effectively ignored.  In other words, when `size`
         # is given, trivial leading dimensions of the broadcast parameters
         # in excess of the number of dimensions  in size are ignored, e.g.
-        #   >>> np.random.normal([[1, 3, 5]], [[[[0.01]]]], size=3)
+        #   >>> mx.random.normal([[1, 3, 5]], [[[[0.01]]]], size=3)
         #   array([ 1.00104267,  3.00422496,  4.99799278])
         # If `size` is not given, the exact broadcast shape is preserved:
-        #   >>> np.random.normal([[1, 3, 5]], [[[[0.01]]]])
+        #   >>> mx.random.normal([[1, 3, 5]], [[[[0.01]]]])
         #   array([[[[ 1.00862899,  3.00061431,  4.99867122]]]])
         #
         all_bcast = [squeeze_left(a) for a in all_bcast]
@@ -965,12 +965,12 @@ class rv_generic:
         if size is None:
             size_ = bcast_shape
         else:
-            size_ = tuple(np.atleast_1d(size))
+            size_ = tuple(mx.atleast_1d(size))
 
         # Check compatibility of size_ with the broadcast shape of all
         # the parameters.  This check is intended to be consistent with
-        # how the numpy random variate generators (e.g. np.random.normal,
-        # np.random.beta) handle their arguments.   The rule is that, if size
+        # how the numpy random variate generators (e.g. mx.random.normal,
+        # mx.random.beta) handle their arguments.   The rule is that, if size
         # is given, it determines the shape of the output.  Broadcasting
         # can't change the output size.
 
@@ -1030,7 +1030,7 @@ class rv_generic:
 
         Returns
         -------
-        a, b : numeric (float, or int or +/-np.inf)
+        a, b : numeric (float, or int or +/-mx.inf)
             end-points of the distribution's support for the specified
             shape parameters.
         """
@@ -1038,12 +1038,12 @@ class rv_generic:
 
     def _support_mask(self, x, *args):
         a, b = self._get_support(*args)
-        with np.errstate(invalid='ignore'):
+        with mx.errstate(invalid='ignore'):
             return (a <= x) & (x <= b)
 
     def _open_support_mask(self, x, *args):
         a, b = self._get_support(*args)
-        with np.errstate(invalid='ignore'):
+        with mx.errstate(invalid='ignore'):
             return (a < x) & (x < b)
 
     def _rvs(self, *args, size=None, random_state=None):
@@ -1058,14 +1058,14 @@ class rv_generic:
         return Y
 
     def _logcdf(self, x, *args):
-        with np.errstate(divide='ignore'):
+        with mx.errstate(divide='ignore'):
             return log(self._cdf(x, *args))
 
     def _sf(self, x, *args):
         return 1.0-self._cdf(x, *args)
 
     def _logsf(self, x, *args):
-        with np.errstate(divide='ignore'):
+        with mx.errstate(divide='ignore'):
             return log(self._sf(x, *args))
 
     def _ppf(self, q, *args):
@@ -1093,7 +1093,7 @@ class rv_generic:
         random_state : {None, int, `numpy.random.Generator`,
                         `numpy.random.RandomState`}, optional
 
-            If `random_state` is None (or `np.random`), the
+            If `random_state` is None (or `mx.random`), the
             `numpy.random.RandomState` singleton is used.
             If `random_state` is an int, a new ``RandomState`` instance is
             used, seeded with `random_state`.
@@ -1102,7 +1102,7 @@ class rv_generic:
 
         Returns
         -------
-        rvs : ndarray or scalar
+        rvs : array or scalar
             Random variates of given `size`.
 
         """
@@ -1110,7 +1110,7 @@ class rv_generic:
         rndm = kwds.pop('random_state', None)
         args, loc, scale, size = self._parse_args_rvs(*args, **kwds)
         cond = logical_and(self._argcheck(*args), (scale >= 0))
-        if not np.all(cond):
+        if not mx.all(cond):
             message = ("Domain error in arguments. The `scale` parameter must "
                        "be positive for all distributions, and many "
                        "distributions have restrictions on shape parameters. "
@@ -1118,7 +1118,7 @@ class rv_generic:
                        "documentation for details.")
             raise ValueError(message)
 
-        if np.all(scale == 0):
+        if mx.all(scale == 0):
             return loc*ones(size, 'd')
 
         # extra gymnastics needed for a custom random_state
@@ -1141,7 +1141,7 @@ class rv_generic:
             if size == ():
                 vals = int(vals)
             else:
-                vals = vals.astype(np.int64)
+                vals = vals.astype(mx.int64)
 
         return vals
 
@@ -1177,10 +1177,10 @@ class rv_generic:
         args = tuple(map(asarray, args))
         cond = self._argcheck(*args) & (scale > 0) & (loc == loc)
         output = []
-        default = np.full(shape(cond), fill_value=self.badvalue)
+        default = mx.full(shape(cond), fill_value=self.badvalue)
 
         # Use only entries that are valid in calculation
-        if np.any(cond):
+        if mx.any(cond):
             goodargs = argsreduce(cond, *(args+(scale, loc)))
             scale, loc, goodargs = goodargs[-2], goodargs[-1], goodargs[:-2]
 
@@ -1203,8 +1203,8 @@ class rv_generic:
                     if mu is None:
                         mu = self._munp(1, *goodargs)
                     # if mean is inf then var is also inf
-                    with np.errstate(invalid='ignore'):
-                        mu2 = np.where(~np.isinf(mu), mu2p - mu**2, np.inf)
+                    with mx.errstate(invalid='ignore'):
+                        mu2 = mx.where(~mx.isinf(mu), mu2p - mu**2, mx.inf)
                 out0 = default.copy()
                 place(out0, cond, mu2 * scale * scale)
                 output.append(out0)
@@ -1216,11 +1216,11 @@ class rv_generic:
                         mu = self._munp(1, *goodargs)
                     if mu2 is None:
                         mu2p = self._munp(2, *goodargs)
-                        with np.errstate(invalid='ignore'):
+                        with mx.errstate(invalid='ignore'):
                             mu2 = mu2p - mu * mu
-                    with np.errstate(invalid='ignore'):
+                    with mx.errstate(invalid='ignore'):
                         mu3 = (-mu*mu - 3*mu2)*mu + mu3p
-                        g1 = mu3 / np.power(mu2, 1.5)
+                        g1 = mu3 / mx.power(mu2, 1.5)
                 out0 = default.copy()
                 place(out0, cond, g1)
                 output.append(out0)
@@ -1232,18 +1232,18 @@ class rv_generic:
                         mu = self._munp(1, *goodargs)
                     if mu2 is None:
                         mu2p = self._munp(2, *goodargs)
-                        with np.errstate(invalid='ignore'):
+                        with mx.errstate(invalid='ignore'):
                             mu2 = mu2p - mu * mu
                     if g1 is None:
                         mu3 = None
                     else:
                         # (mu2**1.5) breaks down for nan and inf
-                        mu3 = g1 * np.power(mu2, 1.5)
+                        mu3 = g1 * mx.power(mu2, 1.5)
                     if mu3 is None:
                         mu3p = self._munp(3, *goodargs)
-                        with np.errstate(invalid='ignore'):
+                        with mx.errstate(invalid='ignore'):
                             mu3 = (-mu * mu - 3 * mu2) * mu + mu3p
-                    with np.errstate(invalid='ignore'):
+                    with mx.errstate(invalid='ignore'):
                         mu4 = ((-mu**2 - 6*mu2) * mu - 4*mu3)*mu + mu4p
                         g2 = mu4 / mu2**2.0 - 3.0
                 out0 = default.copy()
@@ -1275,10 +1275,10 @@ class rv_generic:
         -----
         Entropy is defined base `e`:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.stats._distn_infrastructure import rv_discrete
         >>> drv = rv_discrete(values=((0, 1), (0.5, 0.5)))
-        >>> np.allclose(drv.entropy(), np.log(2.0))
+        >>> mx.allclose(drv.entropy(), mx.log(2.0))
         True
 
         """
@@ -1313,12 +1313,12 @@ class rv_generic:
         """
         n = order
         shapes, loc, scale = self._parse_args(*args, **kwds)
-        args = np.broadcast_arrays(*(*shapes, loc, scale))
+        args = mx.broadcast_arrays(*(*shapes, loc, scale))
         *shapes, loc, scale = args
 
-        i0 = np.logical_and(self._argcheck(*shapes), scale > 0)
-        i1 = np.logical_and(i0, loc == 0)
-        i2 = np.logical_and(i0, loc != 0)
+        i0 = mx.logical_and(self._argcheck(*shapes), scale > 0)
+        i1 = mx.logical_and(i0, loc == 0)
+        i2 = mx.logical_and(i0, loc != 0)
 
         args = argsreduce(i0, *shapes, loc, scale)
         *shapes, loc, scale = args
@@ -1334,7 +1334,7 @@ class rv_generic:
             else:
                 mdict = {}
             mu, mu2, g1, g2 = self._stats(*shapes, **mdict)
-        val = np.empty(loc.shape)  # val needs to be indexed by loc
+        val = mx.empty(loc.shape)  # val needs to be indexed by loc
         val[...] = _moment_from_stats(n, mu, mu2, g1, g2, self._munp, shapes)
 
         # Convert to transformed  X = L + S*Y
@@ -1419,7 +1419,7 @@ class rv_generic:
         """
         kwds['moments'] = 'm'
         res = self.stats(*args, **kwds)
-        if isinstance(res, ndarray) and res.ndim == 0:
+        if isinstance(res, array) and res.ndim == 0:
             return res[()]
         return res
 
@@ -1444,7 +1444,7 @@ class rv_generic:
         """
         kwds['moments'] = 'v'
         res = self.stats(*args, **kwds)
-        if isinstance(res, ndarray) and res.ndim == 0:
+        if isinstance(res, array) and res.ndim == 0:
             return res[()]
         return res
 
@@ -1489,7 +1489,7 @@ class rv_generic:
 
         Returns
         -------
-        a, b : ndarray of float
+        a, b : array of float
             end-points of range that contain ``100 * alpha %`` of the rv's
             possible values.
 
@@ -1509,7 +1509,7 @@ class rv_generic:
         alpha = confidence
 
         alpha = asarray(alpha)
-        if np.any((alpha > 1) | (alpha < 0)):
+        if mx.any((alpha > 1) | (alpha < 0)):
             raise ValueError("alpha must be between 0 and 1 inclusive")
         q1 = (1.0-alpha)/2
         q2 = (1.0+alpha)/2
@@ -1537,7 +1537,7 @@ class rv_generic:
 
         """
         args, loc, scale = self._parse_args(*args, **kwargs)
-        arrs = np.broadcast_arrays(*args, loc, scale)
+        arrs = mx.broadcast_arrays(*args, loc, scale)
         args, loc, scale = arrs[:-2], arrs[-2], arrs[-1]
         cond = self._argcheck(*args) & (scale > 0)
         _a, _b = self._get_support(*args)
@@ -1546,7 +1546,7 @@ class rv_generic:
         elif cond.ndim == 0:
             return self.badvalue, self.badvalue
         # promote bounds to at least float to fill in the badvalue
-        _a, _b = np.asarray(_a).astype('d'), np.asarray(_b).astype('d')
+        _a, _b = mx.array(_a).astype('d'), mx.array(_b).astype('d')
         out_a, out_b = _a * scale + loc, _b * scale + loc
         place(out_a, 1-cond, self.badvalue)
         place(out_b, 1-cond, self.badvalue)
@@ -1564,26 +1564,26 @@ class rv_generic:
             return inf
         x = (asarray(x)-loc) / scale
         n_log_scale = len(x) * log(scale)
-        if np.any(~self._support_mask(x, *args)):
+        if mx.any(~self._support_mask(x, *args)):
             return inf
         return self._nnlf(x, *args) + n_log_scale
 
     def _nnlf(self, x, *args):
-        return -np.sum(self._logpxf(x, *args), axis=0)
+        return -mx.sum(self._logpxf(x, *args), axis=0)
 
     def _nlff_and_penalty(self, x, args, log_fitfun):
         # negative log fit function
         cond0 = ~self._support_mask(x, *args)
-        n_bad = np.count_nonzero(cond0, axis=0)
+        n_bad = mx.count_nonzero(cond0, axis=0)
         if n_bad > 0:
             x = argsreduce(~cond0, x)[0]
         logff = log_fitfun(x, *args)
-        finite_logff = np.isfinite(logff)
-        n_bad += np.sum(~finite_logff, axis=0)
+        finite_logff = mx.isfinite(logff)
+        n_bad += mx.sum(~finite_logff, axis=0)
         if n_bad > 0:
             penalty = n_bad * log(_XMAX) * 100
-            return -np.sum(logff[finite_logff], axis=0) + penalty
-        return -np.sum(logff, axis=0)
+            return -mx.sum(logff[finite_logff], axis=0) + penalty
+        return -mx.sum(logff, axis=0)
 
     def _penalized_nnlf(self, theta, x):
         """Penalized negative loglikelihood function.
@@ -1606,25 +1606,25 @@ class rv_generic:
         loc, scale, args = self._unpack_loc_scale(theta)
         if not self._argcheck(*args) or scale <= 0:
             return inf
-        x = (np.sort(x) - loc)/scale
+        x = (mx.sort(x) - loc)/scale
 
         def log_psf(x, *args):
-            x, lj = np.unique(x, return_counts=True)  # fast for sorted x
+            x, lj = mx.unique(x, return_counts=True)  # fast for sorted x
             cdf_data = self._cdf(x, *args) if x.size else []
             if not (x.size and 1 - cdf_data[-1] <= 0):
-                cdf = np.concatenate(([0], cdf_data, [1]))
-                lj = np.concatenate((lj, [1]))
+                cdf = mx.concatenate(([0], cdf_data, [1]))
+                lj = mx.concatenate((lj, [1]))
             else:
-                cdf = np.concatenate(([0], cdf_data))
+                cdf = mx.concatenate(([0], cdf_data))
             # here we could use logcdf w/ logsumexp trick to take differences,
             # but in the context of the method, it seems unlikely to matter
-            return lj * np.log(np.diff(cdf) / lj)
+            return lj * mx.log(mx.diff(cdf) / lj)
 
         return self._nlff_and_penalty(x, args, log_psf)
 
 
 class _ShapeInfo:
-    def __init__(self, name, integrality=False, domain=(-np.inf, np.inf),
+    def __init__(self, name, integrality=False, domain=(-mx.inf, mx.inf),
                  inclusive=(True, True)):
         self.name = name
         self.integrality = integrality
@@ -1632,10 +1632,10 @@ class _ShapeInfo:
         self.inclusive = inclusive
 
         domain = list(domain)
-        if np.isfinite(domain[0]) and not inclusive[0]:
-            domain[0] = np.nextafter(domain[0], np.inf)
-        if np.isfinite(domain[1]) and not inclusive[1]:
-            domain[1] = np.nextafter(domain[1], -np.inf)
+        if mx.isfinite(domain[0]) and not inclusive[0]:
+            domain[0] = mx.nextafter(domain[0], mx.inf)
+        if mx.isfinite(domain[1]) and not inclusive[1]:
+            domain[1] = mx.nextafter(domain[1], -mx.inf)
         self.domain = domain
 
 
@@ -1687,7 +1687,7 @@ class rv_continuous(rv_generic):
         The tolerance for fixed point calculation for generic ppf.
     badvalue : float, optional
         The value in a result arrays that indicates a value that for which
-        some argument restriction is violated, default is np.nan.
+        some argument restriction is violated, default is mx.nan.
     name : str, optional
         The name of the instance. This string is used to construct the default
         example for distributions.
@@ -1702,7 +1702,7 @@ class rv_continuous(rv_generic):
         the signature of the private methods, ``_pdf`` and ``_cdf`` of the
         instance.
     seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-        If `seed` is None (or `np.random`), the `numpy.random.RandomState`
+        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.
@@ -1845,7 +1845,7 @@ class rv_continuous(rv_generic):
     etc.), any underlying random number generator is deepcopied with it. An
     implication is that if a distribution relies on the singleton RandomState
     before copying, it will rely on a copy of that random state after copying,
-    and ``np.random.seed`` will no longer control the state.
+    and ``mx.random.seed`` will no longer control the state.
 
     Examples
     --------
@@ -1855,7 +1855,7 @@ class rv_continuous(rv_generic):
     >>> class gaussian_gen(rv_continuous):
     ...     "Gaussian distribution"
     ...     def _pdf(self, x):
-    ...         return np.exp(-x**2 / 2.) / np.sqrt(2.0 * np.pi)
+    ...         return mx.exp(-x**2 / 2.) / mx.sqrt(2.0 * mx.pi)
     >>> gaussian = gaussian_gen(name='gaussian')
 
     ``scipy.stats`` distributions are *instances*, so here we subclass
@@ -1975,14 +1975,14 @@ class rv_continuous(rv_generic):
         factor = 10.
         left, right = self._get_support(*args)
 
-        if np.isinf(left):
+        if mx.isinf(left):
             left = min(-factor, right)
             while self._ppf_to_solve(left, q, *args) > 0.:
                 left, right = left * factor, left
             # left is now such that cdf(left) <= q
             # if right has changed, then cdf(right) > q
 
-        if np.isinf(right):
+        if mx.isinf(right):
             right = max(factor, left)
             while self._ppf_to_solve(right, q, *args) < 0.:
                 left, right = right, right * factor
@@ -2013,7 +2013,7 @@ class rv_continuous(rv_generic):
     # Could also define any of these
     def _logpdf(self, x, *args):
         p = self._pdf(x, *args)
-        with np.errstate(divide='ignore'):
+        with mx.errstate(divide='ignore'):
             return log(p)
 
     def _logpxf(self, x, *args):
@@ -2031,19 +2031,19 @@ class rv_continuous(rv_generic):
 
     def _logcdf(self, x, *args):
         median = self._ppf(0.5, *args)
-        with np.errstate(divide='ignore'):
+        with mx.errstate(divide='ignore'):
             return xpx.apply_where(
                 x < median, (x,) + args,
-                lambda x, *args: np.log(self._cdf(x, *args)),
-                lambda x, *args: np.log1p(-self._sf(x, *args)))
+                lambda x, *args: mx.log(self._cdf(x, *args)),
+                lambda x, *args: mx.log1p(-self._sf(x, *args)))
 
     def _logsf(self, x, *args):
         median = self._ppf(0.5, *args)
-        with np.errstate(divide='ignore'):
+        with mx.errstate(divide='ignore'):
             return xpx.apply_where(
                 x > median, (x,) + args,
-                lambda x, *args: np.log(self._sf(x, *args)),
-                lambda x, *args: np.log1p(-self._cdf(x, *args)))
+                lambda x, *args: mx.log(self._sf(x, *args)),
+                lambda x, *args: mx.log1p(-self._cdf(x, *args)))
 
     # generic _argcheck, _sf, _ppf, _isf, _rvs are defined
     # in rv_generic
@@ -2065,21 +2065,21 @@ class rv_continuous(rv_generic):
 
         Returns
         -------
-        pdf : ndarray
+        pdf : array
             Probability density function evaluated at x
 
         """
         args, loc, scale = self._parse_args(*args, **kwds)
         x, loc, scale = map(asarray, (x, loc, scale))
         args = tuple(map(asarray, args))
-        dtyp = np.promote_types(x.dtype, np.float64)
-        x = np.asarray((x - loc)/scale, dtype=dtyp)
+        dtyp = mx.promote_types(x.dtype, mx.float64)
+        x = mx.array((x - loc)/scale, dtype=dtyp)
         cond0 = self._argcheck(*args) & (scale > 0)
         cond1 = self._support_mask(x, *args) & (scale > 0)
         cond = cond0 & cond1
         output = zeros(shape(cond), dtyp)
-        putmask(output, (1-cond0)+np.isnan(x), self.badvalue)
-        if np.any(cond):
+        putmask(output, (1-cond0)+mx.isnan(x), self.badvalue)
+        if mx.any(cond):
             goodargs = argsreduce(cond, *((x,)+args+(scale,)))
             scale, goodargs = goodargs[-1], goodargs[:-1]
             place(output, cond, self._pdf(*goodargs) / scale)
@@ -2113,15 +2113,15 @@ class rv_continuous(rv_generic):
         args, loc, scale = self._parse_args(*args, **kwds)
         x, loc, scale = map(asarray, (x, loc, scale))
         args = tuple(map(asarray, args))
-        dtyp = np.promote_types(x.dtype, np.float64)
-        x = np.asarray((x - loc)/scale, dtype=dtyp)
+        dtyp = mx.promote_types(x.dtype, mx.float64)
+        x = mx.array((x - loc)/scale, dtype=dtyp)
         cond0 = self._argcheck(*args) & (scale > 0)
         cond1 = self._support_mask(x, *args) & (scale > 0)
         cond = cond0 & cond1
         output = empty(shape(cond), dtyp)
         output.fill(-inf)
-        putmask(output, (1-cond0)+np.isnan(x), self.badvalue)
-        if np.any(cond):
+        putmask(output, (1-cond0)+mx.isnan(x), self.badvalue)
+        if mx.any(cond):
             goodargs = argsreduce(cond, *((x,)+args+(scale,)))
             scale, goodargs = goodargs[-1], goodargs[:-1]
             place(output, cond, self._logpdf(*goodargs) - log(scale))
@@ -2147,7 +2147,7 @@ class rv_continuous(rv_generic):
 
         Returns
         -------
-        cdf : ndarray
+        cdf : array
             Cumulative distribution function evaluated at `x`
 
         """
@@ -2155,16 +2155,16 @@ class rv_continuous(rv_generic):
         x, loc, scale = map(asarray, (x, loc, scale))
         args = tuple(map(asarray, args))
         _a, _b = self._get_support(*args)
-        dtyp = np.promote_types(x.dtype, np.float64)
-        x = np.asarray((x - loc)/scale, dtype=dtyp)
+        dtyp = mx.promote_types(x.dtype, mx.float64)
+        x = mx.array((x - loc)/scale, dtype=dtyp)
         cond0 = self._argcheck(*args) & (scale > 0)
         cond1 = self._open_support_mask(x, *args) & (scale > 0)
-        cond2 = (x >= np.asarray(_b)) & cond0
+        cond2 = (x >= mx.array(_b)) & cond0
         cond = cond0 & cond1
         output = zeros(shape(cond), dtyp)
-        place(output, (1-cond0)+np.isnan(x), self.badvalue)
+        place(output, (1-cond0)+mx.isnan(x), self.badvalue)
         place(output, cond2, 1.0)
-        if np.any(cond):  # call only if at least 1 entry
+        if mx.any(cond):  # call only if at least 1 entry
             goodargs = argsreduce(cond, *((x,)+args))
             place(output, cond, self._cdf(*goodargs))
         if output.ndim == 0:
@@ -2196,17 +2196,17 @@ class rv_continuous(rv_generic):
         x, loc, scale = map(asarray, (x, loc, scale))
         args = tuple(map(asarray, args))
         _a, _b = self._get_support(*args)
-        dtyp = np.promote_types(x.dtype, np.float64)
-        x = np.asarray((x - loc)/scale, dtype=dtyp)
+        dtyp = mx.promote_types(x.dtype, mx.float64)
+        x = mx.array((x - loc)/scale, dtype=dtyp)
         cond0 = self._argcheck(*args) & (scale > 0)
         cond1 = self._open_support_mask(x, *args) & (scale > 0)
         cond2 = (x >= _b) & cond0
         cond = cond0 & cond1
         output = empty(shape(cond), dtyp)
         output.fill(-inf)
-        place(output, (1-cond0)*(cond1 == cond1)+np.isnan(x), self.badvalue)
+        place(output, (1-cond0)*(cond1 == cond1)+mx.isnan(x), self.badvalue)
         place(output, cond2, 0.0)
-        if np.any(cond):  # call only if at least 1 entry
+        if mx.any(cond):  # call only if at least 1 entry
             goodargs = argsreduce(cond, *((x,)+args))
             place(output, cond, self._logcdf(*goodargs))
         if output.ndim == 0:
@@ -2238,16 +2238,16 @@ class rv_continuous(rv_generic):
         x, loc, scale = map(asarray, (x, loc, scale))
         args = tuple(map(asarray, args))
         _a, _b = self._get_support(*args)
-        dtyp = np.promote_types(x.dtype, np.float64)
-        x = np.asarray((x - loc)/scale, dtype=dtyp)
+        dtyp = mx.promote_types(x.dtype, mx.float64)
+        x = mx.array((x - loc)/scale, dtype=dtyp)
         cond0 = self._argcheck(*args) & (scale > 0)
         cond1 = self._open_support_mask(x, *args) & (scale > 0)
         cond2 = cond0 & (x <= _a)
         cond = cond0 & cond1
         output = zeros(shape(cond), dtyp)
-        place(output, (1-cond0)+np.isnan(x), self.badvalue)
+        place(output, (1-cond0)+mx.isnan(x), self.badvalue)
         place(output, cond2, 1.0)
-        if np.any(cond):
+        if mx.any(cond):
             goodargs = argsreduce(cond, *((x,)+args))
             place(output, cond, self._sf(*goodargs))
         if output.ndim == 0:
@@ -2274,7 +2274,7 @@ class rv_continuous(rv_generic):
 
         Returns
         -------
-        logsf : ndarray
+        logsf : array
             Log of the survival function evaluated at `x`.
 
         """
@@ -2282,17 +2282,17 @@ class rv_continuous(rv_generic):
         x, loc, scale = map(asarray, (x, loc, scale))
         args = tuple(map(asarray, args))
         _a, _b = self._get_support(*args)
-        dtyp = np.promote_types(x.dtype, np.float64)
-        x = np.asarray((x - loc)/scale, dtype=dtyp)
+        dtyp = mx.promote_types(x.dtype, mx.float64)
+        x = mx.array((x - loc)/scale, dtype=dtyp)
         cond0 = self._argcheck(*args) & (scale > 0)
         cond1 = self._open_support_mask(x, *args) & (scale > 0)
         cond2 = cond0 & (x <= _a)
         cond = cond0 & cond1
         output = empty(shape(cond), dtyp)
         output.fill(-inf)
-        place(output, (1-cond0)+np.isnan(x), self.badvalue)
+        place(output, (1-cond0)+mx.isnan(x), self.badvalue)
         place(output, cond2, 0.0)
-        if np.any(cond):
+        if mx.any(cond):
             goodargs = argsreduce(cond, *((x,)+args))
             place(output, cond, self._logsf(*goodargs))
         if output.ndim == 0:
@@ -2329,14 +2329,14 @@ class rv_continuous(rv_generic):
         cond2 = cond0 & (q == 0)
         cond3 = cond0 & (q == 1)
         cond = cond0 & cond1
-        output = np.full(shape(cond), fill_value=self.badvalue)
+        output = mx.full(shape(cond), fill_value=self.badvalue)
 
         lower_bound = _a * scale + loc
         upper_bound = _b * scale + loc
         place(output, cond2, argsreduce(cond2, lower_bound)[0])
         place(output, cond3, argsreduce(cond3, upper_bound)[0])
 
-        if np.any(cond):  # call only if at least 1 entry
+        if mx.any(cond):  # call only if at least 1 entry
             goodargs = argsreduce(cond, *((q,)+args+(scale, loc)))
             scale, loc, goodargs = goodargs[-2], goodargs[-1], goodargs[:-2]
             place(output, cond, self._ppf(*goodargs) * scale + loc)
@@ -2361,7 +2361,7 @@ class rv_continuous(rv_generic):
 
         Returns
         -------
-        x : ndarray or scalar
+        x : array or scalar
             Quantile corresponding to the upper tail probability q.
 
         """
@@ -2374,14 +2374,14 @@ class rv_continuous(rv_generic):
         cond2 = cond0 & (q == 1)
         cond3 = cond0 & (q == 0)
         cond = cond0 & cond1
-        output = np.full(shape(cond), fill_value=self.badvalue)
+        output = mx.full(shape(cond), fill_value=self.badvalue)
 
         lower_bound = _a * scale + loc
         upper_bound = _b * scale + loc
         place(output, cond2, argsreduce(cond2, lower_bound)[0])
         place(output, cond3, argsreduce(cond3, upper_bound)[0])
 
-        if np.any(cond):
+        if mx.any(cond):
             goodargs = argsreduce(cond, *((q,)+args+(scale, loc)))
             scale, loc, goodargs = goodargs[-2], goodargs[-1], goodargs[:-2]
             place(output, cond, self._isf(*goodargs) * scale + loc)
@@ -2419,11 +2419,11 @@ class rv_continuous(rv_generic):
                 # logsf of the right-censored data.
                 self._logsf(xs._right, *args),
                 # log of probability of the interval-censored data.
-                np.log(self._delta_cdf(i1, i2, *args)),
+                mx.log(self._delta_cdf(i1, i2, *args)),
             ]
         else:
             cond0 = ~self._support_mask(x, *args)
-            n_bad = np.count_nonzero(cond0)
+            n_bad = mx.count_nonzero(cond0)
             if n_bad > 0:
                 x = argsreduce(~cond0, x)[0]
             terms = [self._logpdf(x, *args)]
@@ -2494,8 +2494,8 @@ class rv_continuous(rv_generic):
         method = kwds.pop('method', "mle").lower()
         if method == "mm":
             n_params = len(shapes) + 2 - len(fixedn)
-            exponents = (np.arange(1, n_params+1))[:, np.newaxis]
-            data_moments = np.sum(data[None, :]**exponents/len(data), axis=1)
+            exponents = (mx.arange(1, n_params+1))[:, mx.newaxis]
+            data_moments = mx.sum(data[None, :]**exponents/len(data), axis=1)
 
             def objective(theta, x):
                 return self._moment_error(theta, x, data_moments)
@@ -2536,15 +2536,15 @@ class rv_continuous(rv_generic):
         if not self._argcheck(*args) or scale <= 0:
             return inf
 
-        dist_moments = np.array([self.moment(i+1, *args, loc=loc, scale=scale)
+        dist_moments = mx.array([self.moment(i+1, *args, loc=loc, scale=scale)
                                  for i in range(len(data_moments))])
-        if np.any(np.isnan(dist_moments)):
+        if mx.any(mx.isnan(dist_moments)):
             raise ValueError("Method of moments encountered a non-finite "
                              "distribution moment and cannot continue. "
                              "Consider trying method='MLE'.")
 
         return (((data_moments - dist_moments) /
-                 np.maximum(np.abs(data_moments), 1e-8))**2).sum()
+                 mx.maximum(mx.abs(data_moments), 1e-8))**2).sum()
 
     def fit(self, data, *args, **kwds):
         r"""
@@ -2627,7 +2627,7 @@ class rv_continuous(rv_generic):
         More precisely, the objective function is::
 
             (((data_moments - dist_moments)
-              / np.maximum(np.abs(data_moments), 1e-8))**2).sum()
+              / mx.maximum(mx.abs(data_moments), 1e-8))**2).sum()
 
         where the constant ``1e-8`` avoids division by zero in case of
         vanishing data moments. Typically, this error norm can be reduced to
@@ -2639,7 +2639,7 @@ class rv_continuous(rv_generic):
         For either method,
         the returned answer is not guaranteed to be globally optimal; it
         may only be locally optimal, or the optimization may fail altogether.
-        If the data contain any of ``np.nan``, ``np.inf``, or ``-np.inf``,
+        If the data contain any of ``mx.nan``, ``mx.inf``, or ``-mx.inf``,
         the `fit` method will raise a ``RuntimeError``.
 
         When passing a ``CensoredData`` instance to ``data``, the log-likelihood
@@ -2671,10 +2671,10 @@ class rv_continuous(rv_generic):
         Generate some data to fit: draw random variates from the `beta`
         distribution
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.stats import beta
         >>> a, b = 1., 2.
-        >>> rng = np.random.default_rng(172786373191770012695001057628748821561)
+        >>> rng = mx.random.default_rng(172786373191770012695001057628748821561)
         >>> x = beta.rvs(a, b, size=1000, random_state=rng)
 
         Now we can fit all four parameters (``a``, ``b``, ``loc`` and
@@ -2742,8 +2742,8 @@ class rv_continuous(rv_generic):
         # been validated.
         if not censored:
             # Note: `ravel()` is called for backwards compatibility.
-            data = np.asarray(data).ravel()
-            if not np.isfinite(data).all():
+            data = mx.array(data).ravel()
+            if not mx.isfinite(data).all():
                 raise ValueError("The data contains non-finite values.")
 
         start = [None]*2
@@ -2775,12 +2775,12 @@ class rv_continuous(rv_generic):
         vals = tuple(vals)
 
         loc, scale, shapes = self._unpack_loc_scale(vals)
-        if not (np.all(self._argcheck(*shapes)) and scale > 0):
+        if not (mx.all(self._argcheck(*shapes)) and scale > 0):
             raise FitError("Optimization converged to parameters that are "
                            "outside the range allowed by the distribution.")
 
         if method == 'mm':
-            if not np.isfinite(obj):
+            if not mx.isfinite(obj):
                 raise FitError("Optimization failed: either a data moment "
                                "or fitted distribution moment is "
                                "non-finite.")
@@ -2812,7 +2812,7 @@ class rv_continuous(rv_generic):
             # data, and the mean for the interval-censored data.
             data = data._uncensor()
         else:
-            data = np.asarray(data)
+            data = mx.array(data)
 
         # Estimate location and scale according to the method of moments.
         loc_hat, scale_hat = self.fit_loc_scale(data, *args)
@@ -2833,8 +2833,8 @@ class rv_continuous(rv_generic):
         b_hat = loc_hat + b * scale_hat
 
         # Use the moment-based estimates if they are compatible with the data.
-        data_a = np.min(data)
-        data_b = np.max(data)
+        data_a = mx.min(data)
+        data_b = mx.max(data)
         if a_hat < data_a and data_b < b_hat:
             return loc_hat, scale_hat
 
@@ -2845,15 +2845,15 @@ class rv_continuous(rv_generic):
 
         # For a finite interval, both the location and scale
         # should have interesting values.
-        if support_width < np.inf:
+        if support_width < mx.inf:
             loc_hat = (data_a - a) - margin
             scale_hat = (data_width + 2 * margin) / support_width
             return loc_hat, scale_hat
 
         # For a one-sided interval, use only an interesting location parameter.
-        if a > -np.inf:
+        if a > -mx.inf:
             return (data_a - a) - margin, 1
-        elif b < np.inf:
+        elif b < mx.inf:
             return (data_b - b) + margin, 1
         else:
             raise RuntimeError
@@ -2883,11 +2883,11 @@ class rv_continuous(rv_generic):
         muhat = tmp.mean()
         mu2hat = tmp.var()
         Shat = sqrt(mu2hat / mu2)
-        with np.errstate(invalid='ignore'):
+        with mx.errstate(invalid='ignore'):
             Lhat = muhat - Shat*mu
-        if not np.isfinite(Lhat):
+        if not mx.isfinite(Lhat):
             Lhat = 0
-        if not (np.isfinite(Shat) and (0 < Shat)):
+        if not (mx.isfinite(Shat) and (0 < Shat)):
             Shat = 1
         return Lhat, Shat
 
@@ -2898,19 +2898,19 @@ class rv_continuous(rv_generic):
 
         # upper limit is often inf, so suppress warnings when integrating
         _a, _b = self._get_support(*args)
-        with np.errstate(over='ignore'):
+        with mx.errstate(over='ignore'):
             h = integrate.quad(integ, _a, _b)[0]
 
-        if not np.isnan(h):
+        if not mx.isnan(h):
             return h
         else:
             # try with different limits if integration problems
             low, upp = self.ppf([1e-10, 1. - 1e-10], *args)
-            if np.isinf(_b):
+            if mx.isinf(_b):
                 upper = upp
             else:
                 upper = _b
-            if np.isinf(_a):
+            if mx.isinf(_a):
                 lower = low
             else:
                 lower = _a
@@ -2968,7 +2968,7 @@ class rv_continuous(rv_generic):
         The integration behavior of this function is inherited from
         `scipy.integrate.quad`. Neither this function nor
         `scipy.integrate.quad` can verify whether the integral exists or is
-        finite. For example ``cauchy(0).mean()`` returns ``np.nan`` and
+        finite. For example ``cauchy(0).mean()`` returns ``mx.nan`` and
         ``cauchy(0).expect()`` returns ``0.0``.
 
         Likewise, the accuracy of results is not verified by the function.
@@ -3004,14 +3004,14 @@ class rv_continuous(rv_generic):
         The integrand can be treated as a complex-valued function
         by passing ``complex_func=True`` to `scipy.integrate.quad` .
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.stats import vonmises
-        >>> res = vonmises(loc=2, kappa=1).expect(lambda x: np.exp(1j*x),
+        >>> res = vonmises(loc=2, kappa=1).expect(lambda x: mx.exp(1j*x),
         ...                                       complex_func=True)
         >>> res
         (-0.18576377217422957+0.40590124735052263j)
 
-        >>> np.angle(res)  # location of the (circular) distribution
+        >>> mx.angle(res)  # location of the (circular) distribution
         2.0
 
         """
@@ -3037,7 +3037,7 @@ class rv_continuous(rv_generic):
 
         # split interval to help integrator w/ infinite support; see gh-8928
         alpha = 0.05  # split body from tails at probability mass `alpha`
-        inner_bounds = np.array([alpha, 1-alpha])
+        inner_bounds = mx.array([alpha, 1-alpha])
         cdf_inner_bounds = cdf_bounds[0] + invfac * inner_bounds
         c, d = loc + self._ppf(cdf_inner_bounds, *args) * scale
 
@@ -3049,12 +3049,12 @@ class rv_continuous(rv_generic):
 
         if conditional:
             vals /= invfac
-        return np.array(vals)[()]  # make it a numpy scalar like other methods
+        return mx.array(vals)[()]  # make it a numpy scalar like other methods
 
     def _param_info(self):
         shape_info = self._shape_info()
-        loc_info = _ShapeInfo("loc", False, (-np.inf, np.inf), (False, False))
-        scale_info = _ShapeInfo("scale", False, (0, np.inf), (False, False))
+        loc_info = _ShapeInfo("loc", False, (-mx.inf, mx.inf), (False, False))
+        scale_info = _ShapeInfo("scale", False, (0, mx.inf), (False, False))
         param_info = shape_info + [loc_info, scale_info]
         return param_info
 
@@ -3072,9 +3072,9 @@ class rv_continuous(rv_generic):
         cdf1 = self.cdf(x1, *args, loc=loc, scale=scale)
         # Possible optimizations (needs investigation-these might not be
         # better):
-        # * Use xpx.apply_where instead of np.where
+        # * Use xpx.apply_where instead of mx.where
         # * Instead of cdf1 > 0.5, compare x1 to the median.
-        result = np.where(cdf1 > 0.5,
+        result = mx.where(cdf1 > 0.5,
                           (self.sf(x1, *args, loc=loc, scale=scale)
                            - self.sf(x2, *args, loc=loc, scale=scale)),
                           self.cdf(x2, *args, loc=loc, scale=scale) - cdf1)
@@ -3087,7 +3087,7 @@ class rv_continuous(rv_generic):
 def _drv2_moment(self, n, *args):
     """Non-central moment of discrete distribution."""
     def fun(x):
-        return np.power(x, n) * self._pmf(x, *args)
+        return mx.power(x, n) * self._pmf(x, *args)
 
     _a, _b = self._get_support(*args)
     return _expect(fun, _a, _b, self._ppf(0.5, *args), self.inc)
@@ -3130,12 +3130,12 @@ def _drv2_ppfsingle(self, q, *args):  # Use basic bisection algorithm
     else:
         qa = self._cdf(a, *args)
 
-    if np.isinf(a) or np.isinf(b):
+    if mx.isinf(a) or mx.isinf(b):
         message = "Arguments that bracket the requested quantile could not be found."
         raise RuntimeError(message)
 
     # maximum number of bisections within the normal float64s
-    # maxiter = int(np.log2(finfo.max) - np.log2(finfo.smallest_normal))
+    # maxiter = int(mx.log2(finfo.max) - mx.log2(finfo.smallest_normal))
     maxiter = 2046
     for i in range(maxiter):
         if (qa == q):
@@ -3194,7 +3194,7 @@ class rv_discrete(rv_generic):
         Default is 1. (other values have not been tested)
     badvalue : float, optional
         The value in a result arrays that indicates a value that for which
-        some argument restriction is violated, default is np.nan.
+        some argument restriction is violated, default is mx.nan.
     name : str, optional
         The name of the instance. This string is used to construct the default
         example for distributions.
@@ -3209,7 +3209,7 @@ class rv_discrete(rv_generic):
         the signatures of the private methods, ``_pmf`` and ``_cdf`` of
         the instance.
     seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-        If `seed` is None (or `np.random`), the `numpy.random.RandomState`
+        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.
@@ -3262,7 +3262,7 @@ class rv_discrete(rv_generic):
     - There is no ``scale`` parameter.
     - The default implementations of methods (e.g. ``_cdf``) are not designed
       for distributions with support that is unbounded below (i.e.
-      ``a=-np.inf``), so they must be overridden.
+      ``a=-mx.inf``), so they must be overridden.
 
     To create a new discrete distribution, we would do the following:
 
@@ -3293,15 +3293,15 @@ class rv_discrete(rv_generic):
     etc.), any underlying random number generator is deepcopied with it. An
     implication is that if a distribution relies on the singleton RandomState
     before copying, it will rely on a copy of that random state after copying,
-    and ``np.random.seed`` will no longer control the state.
+    and ``mx.random.seed`` will no longer control the state.
 
     Examples
     --------
     Custom made discrete distribution:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
-    >>> xk = np.arange(7)
+    >>> xk = mx.arange(7)
     >>> pk = (0.1, 0.2, 0.3, 0.1, 0.1, 0.0, 0.2)
     >>> custm = stats.rv_discrete(name='custm', values=(xk, pk))
     >>>
@@ -3439,7 +3439,7 @@ class rv_discrete(rv_generic):
         return self._cdf(k, *args) - self._cdf(k-1, *args)
 
     def _logpmf(self, k, *args):
-        with np.errstate(divide='ignore'):
+        with mx.errstate(divide='ignore'):
             return log(self._pmf(k, *args))
 
     def _logpxf(self, k, *args):
@@ -3460,10 +3460,10 @@ class rv_discrete(rv_generic):
     def _cdf_single(self, k, *args):
         _a, _b = self._get_support(*args)
         m = arange(int(_a), k+1)
-        return np.sum(self._pmf(m, *args), axis=0)
+        return mx.sum(self._pmf(m, *args), axis=0)
 
     def _cdf(self, x, *args):
-        k = floor(x).astype(np.float64)
+        k = floor(x).astype(mx.float64)
         return self._cdfvec(k, *args)
 
     # generic _logcdf, _sf, _logsf, _ppf, _isf, _rvs defined in rv_generic
@@ -3484,7 +3484,7 @@ class rv_discrete(rv_generic):
         random_state : {None, int, `numpy.random.Generator`,
                         `numpy.random.RandomState`}, optional
 
-            If `random_state` is None (or `np.random`), the
+            If `random_state` is None (or `mx.random`), the
             `numpy.random.RandomState` singleton is used.
             If `random_state` is an int, a new ``RandomState`` instance is
             used, seeded with `random_state`.
@@ -3493,7 +3493,7 @@ class rv_discrete(rv_generic):
 
         Returns
         -------
-        rvs : ndarray or scalar
+        rvs : array or scalar
             Random variates of given `size`.
 
         """
@@ -3530,10 +3530,10 @@ class rv_discrete(rv_generic):
             cond1 = cond1 & self._nonzero(k, *args)
         cond = cond0 & cond1
         output = zeros(shape(cond), 'd')
-        place(output, (1-cond0) + np.isnan(k), self.badvalue)
-        if np.any(cond):
+        place(output, (1-cond0) + mx.isnan(k), self.badvalue)
+        if mx.any(cond):
             goodargs = argsreduce(cond, *((k,)+args))
-            place(output, cond, np.clip(self._pmf(*goodargs), 0, 1))
+            place(output, cond, mx.clip(self._pmf(*goodargs), 0, 1))
         if output.ndim == 0:
             return output[()]
         return output
@@ -3569,8 +3569,8 @@ class rv_discrete(rv_generic):
         cond = cond0 & cond1
         output = empty(shape(cond), 'd')
         output.fill(-inf)
-        place(output, (1-cond0) + np.isnan(k), self.badvalue)
-        if np.any(cond):
+        place(output, (1-cond0) + mx.isnan(k), self.badvalue)
+        if mx.any(cond):
             goodargs = argsreduce(cond, *((k,)+args))
             place(output, cond, self._logpmf(*goodargs))
         if output.ndim == 0:
@@ -3592,7 +3592,7 @@ class rv_discrete(rv_generic):
 
         Returns
         -------
-        cdf : ndarray
+        cdf : array
             Cumulative distribution function evaluated at `k`.
 
         """
@@ -3604,17 +3604,17 @@ class rv_discrete(rv_generic):
         cond0 = self._argcheck(*args)
         cond1 = (k >= _a) & (k < _b)
         cond2 = (k >= _b)
-        cond3 = np.isneginf(k)
-        cond = cond0 & cond1 & np.isfinite(k)
+        cond3 = mx.isneginf(k)
+        cond = cond0 & cond1 & mx.isfinite(k)
 
         output = zeros(shape(cond), 'd')
         place(output, cond2*(cond0 == cond0), 1.0)
         place(output, cond3*(cond0 == cond0), 0.0)
-        place(output, (1-cond0) + np.isnan(k), self.badvalue)
+        place(output, (1-cond0) + mx.isnan(k), self.badvalue)
 
-        if np.any(cond):
+        if mx.any(cond):
             goodargs = argsreduce(cond, *((k,)+args))
-            place(output, cond, np.clip(self._cdf(*goodargs), 0, 1))
+            place(output, cond, mx.clip(self._cdf(*goodargs), 0, 1))
         if output.ndim == 0:
             return output[()]
         return output
@@ -3649,10 +3649,10 @@ class rv_discrete(rv_generic):
         cond = cond0 & cond1
         output = empty(shape(cond), 'd')
         output.fill(-inf)
-        place(output, (1-cond0) + np.isnan(k), self.badvalue)
+        place(output, (1-cond0) + mx.isnan(k), self.badvalue)
         place(output, cond2*(cond0 == cond0), 0.0)
 
-        if np.any(cond):
+        if mx.any(cond):
             goodargs = argsreduce(cond, *((k,)+args))
             place(output, cond, self._logcdf(*goodargs))
         if output.ndim == 0:
@@ -3685,14 +3685,14 @@ class rv_discrete(rv_generic):
         k = asarray(k-loc)
         cond0 = self._argcheck(*args)
         cond1 = (k >= _a) & (k < _b)
-        cond2 = ((k < _a) | np.isneginf(k)) & cond0
-        cond = cond0 & cond1 & np.isfinite(k)
+        cond2 = ((k < _a) | mx.isneginf(k)) & cond0
+        cond = cond0 & cond1 & mx.isfinite(k)
         output = zeros(shape(cond), 'd')
-        place(output, (1-cond0) + np.isnan(k), self.badvalue)
+        place(output, (1-cond0) + mx.isnan(k), self.badvalue)
         place(output, cond2, 1.0)
-        if np.any(cond):
+        if mx.any(cond):
             goodargs = argsreduce(cond, *((k,)+args))
-            place(output, cond, np.clip(self._sf(*goodargs), 0, 1))
+            place(output, cond, mx.clip(self._sf(*goodargs), 0, 1))
         if output.ndim == 0:
             return output[()]
         return output
@@ -3715,7 +3715,7 @@ class rv_discrete(rv_generic):
 
         Returns
         -------
-        logsf : ndarray
+        logsf : array
             Log of the survival function evaluated at `k`.
 
         """
@@ -3730,9 +3730,9 @@ class rv_discrete(rv_generic):
         cond = cond0 & cond1
         output = empty(shape(cond), 'd')
         output.fill(-inf)
-        place(output, (1-cond0) + np.isnan(k), self.badvalue)
+        place(output, (1-cond0) + mx.isnan(k), self.badvalue)
         place(output, cond2, 0.0)
-        if np.any(cond):
+        if mx.any(cond):
             goodargs = argsreduce(cond, *((k,)+args))
             place(output, cond, self._logsf(*goodargs))
         if output.ndim == 0:
@@ -3774,12 +3774,12 @@ class rv_discrete(rv_generic):
         cond2 = (q == 0) & cond0
         cond3 = (q == 1) & cond0
         cond = cond0 & cond1
-        output = np.full(shape(cond), fill_value=self.badvalue, dtype='d')
+        output = mx.full(shape(cond), fill_value=self.badvalue, dtype='d')
         # output type 'd' to handle nin and inf
 
         place(output, cond2, argsreduce(cond2, _a-1 + loc)[0])
         place(output, cond3, argsreduce(cond3, _b + loc)[0])
-        if np.any(cond):
+        if mx.any(cond):
             goodargs = argsreduce(cond, *((q,)+args+(loc,)))
             loc, goodargs = goodargs[-1], goodargs[:-1]
             place(output, cond, self._ppf(*goodargs) + loc)
@@ -3803,7 +3803,7 @@ class rv_discrete(rv_generic):
 
         Returns
         -------
-        k : ndarray or scalar
+        k : array or scalar
             Quantile corresponding to the upper tail probability, q.
 
         Notes
@@ -3825,7 +3825,7 @@ class rv_discrete(rv_generic):
         cond = cond0 & cond1
 
         # same problem as with ppf; copied from ppf and changed
-        output = np.full(shape(cond), fill_value=self.badvalue, dtype='d')
+        output = mx.full(shape(cond), fill_value=self.badvalue, dtype='d')
         # output type 'd' to handle nin and inf
         lower_bound = _a - 1 + loc
         upper_bound = _b + loc
@@ -3833,7 +3833,7 @@ class rv_discrete(rv_generic):
         place(output, cond3, argsreduce(cond3, upper_bound)[0])
 
         # call place only if at least 1 valid argument
-        if np.any(cond):
+        if mx.any(cond):
             goodargs = argsreduce(cond, *((q,)+args+(loc,)))
             loc, goodargs = goodargs[-1], goodargs[:-1]
             # PB same as ticket 766
@@ -3946,7 +3946,7 @@ class rv_discrete(rv_generic):
 
     def _param_info(self):
         shape_info = self._shape_info()
-        loc_info = _ShapeInfo("loc", True, (-np.inf, np.inf), (False, False))
+        loc_info = _ShapeInfo("loc", True, (-mx.inf, mx.inf), (False, False))
         param_info = shape_info + [loc_info]
         return param_info
 
@@ -3956,9 +3956,9 @@ def _expect(fun, lb, ub, x0, inc, maxcount=1000, tolerance=1e-10,
     """Helper for computing the expectation value of `fun`."""
     # short-circuit if the support size is small enough
     if (ub - lb) <= chunksize:
-        supp = np.arange(lb, ub+1, inc)
+        supp = mx.arange(lb, ub+1, inc)
         vals = fun(supp)
-        return np.sum(vals)
+        return mx.sum(vals)
 
     # otherwise, iterate starting from x0
     if x0 < lb:
@@ -3970,7 +3970,7 @@ def _expect(fun, lb, ub, x0, inc, maxcount=1000, tolerance=1e-10,
     # iterate over [x0, ub] inclusive
     for x in _iter_chunked(x0, ub+1, chunksize=chunksize, inc=inc):
         count += x.size
-        delta = np.sum(fun(x))
+        delta = mx.sum(fun(x))
         tot += delta
         if abs(delta) < tolerance * x.size:
             break
@@ -3982,7 +3982,7 @@ def _expect(fun, lb, ub, x0, inc, maxcount=1000, tolerance=1e-10,
     # iterate over [lb, x0)
     for x in _iter_chunked(x0-1, lb-1, chunksize=chunksize, inc=-inc):
         count += x.size
-        delta = np.sum(fun(x))
+        delta = mx.sum(fun(x))
         tot += delta
         if abs(delta) < tolerance * x.size:
             break
@@ -4021,11 +4021,11 @@ def _iter_chunked(x0, x1, chunksize=4, inc=1):
     s = 1 if inc > 0 else -1
     stepsize = abs(chunksize * inc)
 
-    x = np.copy(x0)
+    x = mx.copy(x0)
     while (x - x1) * inc < 0:
         delta = min(stepsize, abs(x - x1))
         step = delta * s
-        supp = np.arange(x, x + step, inc)
+        supp = mx.arange(x, x + step, inc)
         x += step
         yield supp
 
@@ -4061,22 +4061,22 @@ class rv_sample(rv_discrete):
 
         xk, pk = values
 
-        if np.shape(xk) != np.shape(pk):
+        if mx.shape(xk) != mx.shape(pk):
             raise ValueError("xk and pk must have the same shape.")
-        if np.less(pk, 0.0).any():
+        if mx.less(pk, 0.0).any():
             raise ValueError("All elements of pk must be non-negative.")
-        if not np.allclose(np.sum(pk), 1):
+        if not mx.allclose(mx.sum(pk), 1):
             raise ValueError("The sum of provided pk is not 1.")
-        if not len(set(np.ravel(xk))) == np.size(xk):
+        if not len(set(mx.ravel(xk))) == mx.size(xk):
             raise ValueError("xk may not contain duplicate values.")
 
-        indx = np.argsort(np.ravel(xk))
-        self.xk = np.take(np.ravel(xk), indx, 0)
-        self.pk = np.take(np.ravel(pk), indx, 0)
+        indx = mx.argsort(mx.ravel(xk))
+        self.xk = mx.take(mx.ravel(xk), indx, 0)
+        self.pk = mx.take(mx.ravel(pk), indx, 0)
         self.a = self.xk[0]
         self.b = self.xk[-1]
 
-        self.qvals = np.cumsum(self.pk, axis=0)
+        self.qvals = mx.cumsum(self.pk, axis=0)
 
         self.shapes = ' '   # bypass inspection
 
@@ -4114,22 +4114,22 @@ class rv_sample(rv_discrete):
 
         Returns
         -------
-        a, b : numeric (float, or int or +/-np.inf)
+        a, b : numeric (float, or int or +/-mx.inf)
             end-points of the distribution's support.
         """
         return self.a, self.b
 
     def _pmf(self, x):
-        return np.select([x == k for k in self.xk],
-                         [np.broadcast_arrays(p, x)[0] for p in self.pk], 0)
+        return mx.select([x == k for k in self.xk],
+                         [mx.broadcast_arrays(p, x)[0] for p in self.pk], 0)
 
     def _cdf(self, x):
-        xx, xxk = np.broadcast_arrays(x[:, None], self.xk)
-        indx = np.argmax(xxk > xx, axis=-1) - 1
+        xx, xxk = mx.broadcast_arrays(x[:, None], self.xk)
+        indx = mx.argmax(xxk > xx, axis=-1) - 1
         return self.qvals[indx]
 
     def _ppf(self, q):
-        qq, sqq = np.broadcast_arrays(q[..., None], self.qvals)
+        qq, sqq = mx.broadcast_arrays(q[..., None], self.qvals)
         indx = argmax(sqq >= qq, axis=-1)
         return self.xk[indx]
 
@@ -4138,7 +4138,7 @@ class rv_sample(rv_discrete):
         # fails due to explicit broadcasting in _ppf
         U = random_state.uniform(size=size)
         if size is None:
-            U = np.array(U, ndmin=1)
+            U = mx.array(U, ndmin=1)
             Y = self._ppf(U)[0]
         else:
             Y = self._ppf(U)
@@ -4149,13 +4149,13 @@ class rv_sample(rv_discrete):
 
     def generic_moment(self, n):
         n = asarray(n)
-        return np.sum(self.xk**n[np.newaxis, ...] * self.pk, axis=0)
+        return mx.sum(self.xk**n[mx.newaxis, ...] * self.pk, axis=0)
 
     def _expect(self, fun, lb, ub, *args, **kwds):
         # ignore all args, just do a brute force summation
         supp = self.xk[(lb <= self.xk) & (self.xk <= ub)]
         vals = fun(supp)
-        return np.sum(vals)
+        return mx.sum(vals)
 
 
 def _check_shape(argshape, size):

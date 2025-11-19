@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import numpy as np
+import mlx.core as mx
 
 aa = [1, 1, 2, 2]  # amplitudes
 taus = [1, 2, 1, 2]  # durations
@@ -12,12 +12,12 @@ axx[2].set(title=r"Amplitude Spectral Density $|X(f)/\sqrt{\tau}|$",
            xlabel="Frequency $f$ in Hertz",)
 
 x_labels, x_ticks = [], []
-f = np.linspace(-2.5, 2.5, 400)
+f = mx.linspace(-2.5, 2.5, 400)
 for c_, (a_, tau_) in enumerate(zip(aa, taus), start=1):
-    aZ_, f_ = abs(a_ * tau_ * np.sinc(tau_ * f) / 2), f + c_ * 5
+    aZ_, f_ = abs(a_ * tau_ * mx.sinc(tau_ * f) / 2), f + c_ * 5
     axx[0].plot(f_, aZ_)
     axx[1].plot(f_, aZ_ / tau_)
-    axx[2].plot(f_, aZ_ / np.sqrt(tau_))
+    axx[2].plot(f_, aZ_ / mx.sqrt(tau_))
     x_labels.append(rf"$a={a_:g}$, $\tau={tau_:g}$")
     x_ticks.append(c_ * 5)
 

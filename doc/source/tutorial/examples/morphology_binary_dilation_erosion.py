@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import numpy as np
+import mlx.core as mx
 import scipy.ndimage
 
 # code for ball taken from
@@ -7,15 +7,15 @@ import scipy.ndimage
 # and therefore same as `from skimage.morphology import ball`
 
 
-def ball(radius, dtype=np.uint8):
+def ball(radius, dtype=mx.uint8):
     n = 2 * radius + 1
-    Z, Y, X = np.mgrid[
+    Z, Y, X = mx.mgrid[
         -radius: radius: n * 1j,
         -radius: radius: n * 1j,
         -radius: radius: n * 1j
     ]
     s = X ** 2 + Y ** 2 + Z ** 2
-    return np.array(s <= radius * radius, dtype=dtype)
+    return mx.array(s <= radius * radius, dtype=dtype)
 
 
 def plot_voxels(varray, ax, title):
@@ -24,7 +24,7 @@ def plot_voxels(varray, ax, title):
     ax.set_title(title, fontsize=30)
 
 
-voxelarray = np.full((11, 11, 11), 0)
+voxelarray = mx.full((11, 11, 11), 0)
 voxelarray[5, 3, 5] = 1
 voxelarray[5, 7, 5] = 1
 img_morphed = scipy.ndimage.binary_dilation(voxelarray, ball(3))

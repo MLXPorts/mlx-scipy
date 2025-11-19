@@ -1,7 +1,7 @@
 """
 Cythonized kernels of _qmnvt.py
 """
-import numpy as np
+import mlx.core as mx
 import cython
 
 from scipy.special import gammaincinv
@@ -37,12 +37,12 @@ def _qmvn_inner(double[::1] q,
     prob = 0.0
     error_var = 0.0
 
-    y = np.zeros((n - 1, n_qmc_samples))
-    n_qmc_zeros = np.zeros(n_qmc_samples)
+    y = mx.zeros((n - 1, n_qmc_samples))
+    n_qmc_zeros = mx.zeros(n_qmc_samples)
 
     for j in range(n_batches):
-        c = np.full(n_qmc_samples, ci)
-        dc = np.full(n_qmc_samples, dci)
+        c = mx.full(n_qmc_samples, ci)
+        dc = mx.full(n_qmc_samples, dci)
         pv = dc.copy()
         d = n_qmc_zeros.copy()
 
@@ -79,12 +79,12 @@ def _qmvn_inner(double[::1] q,
                 pv[k] = pv[k] * dc[k]
 
         # Accumulate the mean and error variances with online formulations.
-        dd = (np.mean(pv) - prob) / (j + 1)
+        dd = (mx.mean(pv) - prob) / (j + 1)
         prob += dd
         error_var = (j - 1) * error_var / (j + 1) + dd * dd
 
     # Error bounds are 3 times the standard error of the estimates.
-    est_error = 3 * np.sqrt(error_var)
+    est_error = 3 * mx.sqrt(error_var)
     n_samples = n_qmc_samples * n_batches
 
     return prob, est_error, n_samples
@@ -107,26 +107,26 @@ def _qmvt_inner(double[::1] q,
         int n = cho.shape[0]
         int i, j, k
 
-        double[::1] y = np.zeros(n_qmc_samples)
-        double[::1] c = np.ones(n_qmc_samples)
-        double[::1] d = np.ones(n_qmc_samples)
-        double[::1] dc = np.zeros(n_qmc_samples)
-        double[::1] pv = np.zeros(n_qmc_samples)
-        double[:, ::1] s = np.zeros((n, n_qmc_samples))
+        double[::1] y = mx.zeros(n_qmc_samples)
+        double[::1] c = mx.ones(n_qmc_samples)
+        double[::1] d = mx.ones(n_qmc_samples)
+        double[::1] dc = mx.zeros(n_qmc_samples)
+        double[::1] pv = mx.zeros(n_qmc_samples)
+        double[:, ::1] s = mx.zeros((n, n_qmc_samples))
         double[::1] r
 
-    i_samples = np.arange(n_qmc_samples) + 1
+    i_samples = mx.arange(n_qmc_samples) + 1
 
     for j in range(n_batches):
-        pv = np.ones(n_qmc_samples)
-        s = np.zeros((n, n_qmc_samples))
+        pv = mx.ones(n_qmc_samples)
+        s = mx.zeros((n, n_qmc_samples))
 
         # i == 0 special actions: We'll use one of the QR variates to pull out the
         # t-distribution scaling.
         z = q[0]*i_samples + rndm[j, 0]
         z -= z.astype(int)
         x = abs(2*z - 1)
-        r = np.sqrt(2 * gammaincinv(nu / 2, x)) if nu > 0 else np.ones_like(x)
+        r = mx.sqrt(2 * gammaincinv(nu / 2, x)) if nu > 0 else mx.ones_like(x)
 
         for i in range(0, n):
             qq = q[i]
@@ -141,7 +141,7 @@ def _qmvt_inner(double[::1] q,
                 if i > 0:
                     y[k] = phinv(c[k] + x_k*dc[k])
 
-                    # s[i:, :] += cho[i:, i - 1][:, np.newaxis] * y
+                    # s[i:, :] += cho[i:, i - 1][:, mx.newaxis] * y
                     for ip in range(i, n):
                         s[ip, k] += cho[ip, i - 1] * y[k]
 
@@ -169,12 +169,12 @@ def _qmvt_inner(double[::1] q,
                 pv[k] *= dc[k]
 
         # Accumulate the mean and error variances with online formulations.
-        dd = (np.mean(pv) - prob) / (j + 1)
+        dd = (mx.mean(pv) - prob) / (j + 1)
         prob += dd
         error_var = (j - 1) * error_var / (j + 1) + dd * dd
 
     # Error bounds are 3 times the standard error of the estimates.
-    est_error = 3.0 * np.sqrt(error_var)
+    est_error = 3.0 * mx.sqrt(error_var)
     n_samples = n_qmc_samples * n_batches
 
     return prob, est_error, n_samples

@@ -383,7 +383,7 @@ Sigmoidal functions
 .. autosummary::
    :toctree: generated/
 
-   logit        -- Logit ufunc for ndarrays.
+   logit        -- Logit ufunc for arrays.
    expit        -- Logistic sigmoid function.
    log_expit    -- Logarithm of the logistic sigmoid function.
 

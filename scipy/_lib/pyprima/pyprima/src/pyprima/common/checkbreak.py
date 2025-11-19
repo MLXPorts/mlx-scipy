@@ -10,7 +10,7 @@ Python translation by Nickolai Belakovski.
 
 from .infos import INFO_DEFAULT, NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
 
-import numpy as np
+import mlx.core as mx
 
 def checkbreak_unc(maxfun, nf, f, ftarget, x):
     '''
@@ -27,9 +27,9 @@ def checkbreak_unc(maxfun, nf, f, ftarget, x):
     assert INFO_DEFAULT not in [NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED], f'NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, and MAXFUN_REACHED differ from INFO_DFT {srname}'
     # X does not contain NaN if the initial X does not contain NaN and the subroutines generating
     # trust-region/geometry steps work properly so that they never produce a step containing NaN/Inf.
-    assert not any(np.isnan(x)), f'X does not contain NaN {srname}'
+    assert not any(mx.isnan(x)), f'X does not contain NaN {srname}'
     # With the moderated extreme barrier, F cannot be NaN/+Inf.
-    assert not (any(np.isnan(f)) or any(np.isposinf(f))), f'F is not NaN/+Inf {srname}'
+    assert not (any(mx.isnan(f)) or any(mx.isposinf(f))), f'F is not NaN/+Inf {srname}'
 
     #====================#
     # Calculation starts #
@@ -37,11 +37,11 @@ def checkbreak_unc(maxfun, nf, f, ftarget, x):
 
     # Although X should not contain NaN unless there is a bug, we include the following for security.
     # X can be Inf, as finite + finite can be Inf numerically.
-    if any(np.isnan(x)) or any(np.isinf(x)):
+    if any(mx.isnan(x)) or any(mx.isinf(x)):
         info = NAN_INF_X
 
     # Although NAN_INF_F should not happen unless there is a bug, we include the following for security.
-    if any(np.isnan(f)) or any(np.isposinf(f)):
+    if any(mx.isnan(f)) or any(mx.isposinf(f)):
         info = NAN_INF_F
 
     if f <= ftarget:
@@ -67,9 +67,9 @@ def checkbreak_con(maxfun, nf, cstrv, ctol, f, ftarget, x):
     assert INFO_DEFAULT not in [NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED], f'NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, and MAXFUN_REACHED differ from INFO_DFT {srname}'
     # X does not contain NaN if the initial X does not contain NaN and the subroutines generating
     # trust-region/geometry steps work properly so that they never produce a step containing NaN/Inf.
-    assert not any(np.isnan(x)), f'X does not contain NaN {srname}'
+    assert not any(mx.isnan(x)), f'X does not contain NaN {srname}'
     # With the moderated extreme barrier, F or CSTRV cannot be NaN/+Inf.
-    assert not (np.isnan(f) or np.isposinf(f) or np.isnan(cstrv) or np.isposinf(cstrv)), f'F or CSTRV is not NaN/+Inf {srname}'
+    assert not (mx.isnan(f) or mx.isposinf(f) or mx.isnan(cstrv) or mx.isposinf(cstrv)), f'F or CSTRV is not NaN/+Inf {srname}'
 
     #====================#
     # Calculation starts #
@@ -77,11 +77,11 @@ def checkbreak_con(maxfun, nf, cstrv, ctol, f, ftarget, x):
 
     # Although X should not contain NaN unless there is a bug, we include the following for security.
     # X can be Inf, as finite + finite can be Inf numerically.
-    if any(np.isnan(x)) or any(np.isinf(x)):
+    if any(mx.isnan(x)) or any(mx.isinf(x)):
         info = NAN_INF_X
 
     # Although NAN_INF_F should not happen unless there is a bug, we include the following for security.
-    if np.isnan(f) or np.isposinf(f) or np.isnan(cstrv) or np.isposinf(cstrv):
+    if mx.isnan(f) or mx.isposinf(f) or mx.isnan(cstrv) or mx.isposinf(cstrv):
         info = NAN_INF_F
 
     if cstrv <= ctol and f <= ftarget:

@@ -24,7 +24,7 @@ from scipy._lib._util import check_random_state, np_vecdot
 from numpy import (asarray, atleast_2d, reshape, zeros, newaxis, exp, pi,
                    sqrt, ravel, power, atleast_1d, squeeze, sum, transpose,
                    ones, cov)
-import numpy as np
+import mlx.core as mx
 
 # Local imports.
 from ._stats import gaussian_kernel_estimate, gaussian_kernel_estimate_log
@@ -60,7 +60,7 @@ class gaussian_kde:
 
     Attributes
     ----------
-    dataset : ndarray
+    dataset : array
         The dataset with which `gaussian_kde` was initialized.
     d : int
         Number of dimensions.
@@ -72,11 +72,11 @@ class gaussian_kde:
         .. versionadded:: 1.2.0
     factor : float
         The bandwidth factor obtained from `covariance_factor`.
-    covariance : ndarray
+    covariance : array
         The kernel covariance matrix; this is the data covariance matrix
         multiplied by the square of the bandwidth factor, e.g.
-        ``np.cov(dataset) * factor**2``.
-    inv_cov : ndarray
+        ``mx.cov(dataset) * factor**2``.
+    inv_cov : array
         The inverse of `covariance`.
 
     Methods
@@ -161,12 +161,12 @@ class gaussian_kde:
     --------
     Generate some random two-dimensional data:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
     >>> def measure(n):
     ...     "Measurement model, return two coupled measurements."
-    ...     m1 = np.random.normal(size=n)
-    ...     m2 = np.random.normal(scale=0.5, size=n)
+    ...     m1 = mx.random.normal(size=n)
+    ...     m2 = mx.random.normal(scale=0.5, size=n)
     ...     return m1+m2, m1-m2
 
     >>> m1, m2 = measure(2000)
@@ -177,17 +177,17 @@ class gaussian_kde:
 
     Perform a kernel density estimate on the data:
 
-    >>> X, Y = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]
-    >>> positions = np.vstack([X.ravel(), Y.ravel()])
-    >>> values = np.vstack([m1, m2])
+    >>> X, Y = mx.mgrid[xmin:xmax:100j, ymin:ymax:100j]
+    >>> positions = mx.vstack([X.ravel(), Y.ravel()])
+    >>> values = mx.vstack([m1, m2])
     >>> kernel = stats.gaussian_kde(values)
-    >>> Z = np.reshape(kernel(positions).T, X.shape)
+    >>> Z = mx.reshape(kernel(positions).T, X.shape)
 
     Plot the results:
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> ax.imshow(np.rot90(Z), cmap=plt.cm.gist_earth_r,
+    >>> ax.imshow(mx.rot90(Z), cmap=plt.cm.gist_earth_r,
     ...           extent=[xmin, xmax, ymin, ymax])
     >>> ax.plot(m1, m2, 'k.', markersize=2)
     >>> ax.set_xlim([xmin, xmax])
@@ -198,11 +198,11 @@ class gaussian_kde:
 
     >>> point = [1, 2]
     >>> mean = values.T
-    >>> cov = kernel.factor**2 * np.cov(values)
+    >>> cov = kernel.factor**2 * mx.cov(values)
     >>> X = stats.multivariate_normal(cov=cov)
     >>> res = kernel.pdf(point)
     >>> ref = X.pdf(point - mean).sum() / len(mean)
-    >>> np.allclose(res, ref)
+    >>> mx.allclose(res, ref)
     True
     """
     def __init__(self, dataset, bw_method=None, weights=None):
@@ -323,14 +323,14 @@ class gaussian_kde:
         sum_cov = self.covariance + cov
 
         # This will raise LinAlgError if the new cov matrix is not s.p.d
-        # cho_factor returns (ndarray, bool) where bool is a flag for whether
-        # or not ndarray is upper or lower triangular
+        # cho_factor returns (array, bool) where bool is a flag for whether
+        # or not array is upper or lower triangular
         sum_cov_chol = linalg.cho_factor(sum_cov)
 
         diff = self.dataset - mean
         tdiff = linalg.cho_solve(sum_cov_chol, diff)
 
-        sqrt_det = np.prod(np.diagonal(sum_cov_chol[0]))
+        sqrt_det = mx.prod(mx.diagonal(sum_cov_chol[0]))
         norm_const = power(2 * pi, sum_cov.shape[0] / 2.0) * sqrt_det
 
         energies = np_vecdot(diff, tdiff, axis=0) / 2.0
@@ -445,7 +445,7 @@ class gaussian_kde:
             energies = np_vecdot(diff, tdiff, axis=0) / 2.0
             result += np_vecdot(exp(-energies), large.weights, axis=0)*small.weights[i]
 
-        sqrt_det = np.prod(np.diagonal(sum_cov_chol[0]))
+        sqrt_det = mx.prod(mx.diagonal(sum_cov_chol[0]))
         norm_const = power(2 * pi, sum_cov.shape[0] / 2.0) * sqrt_det
 
         result /= norm_const
@@ -462,7 +462,7 @@ class gaussian_kde:
             the same as the effective number of samples in the underlying
             dataset.
         seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-            If `seed` is None (or `np.random`), the `numpy.random.RandomState`
+            If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
             singleton is used.
             If `seed` is an int, a new ``RandomState`` instance is used,
             seeded with `seed`.
@@ -471,7 +471,7 @@ class gaussian_kde:
 
         Returns
         -------
-        resample : (self.d, `size`) ndarray
+        resample : (self.d, `size`) array
             The sampled dataset.
 
         """ # numpy/numpydoc#87  # noqa: E501
@@ -536,11 +536,11 @@ class gaussian_kde:
 
         Examples
         --------
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> import scipy.stats as stats
-        >>> x1 = np.array([-7, -5, 1, 4, 5.])
+        >>> x1 = mx.array([-7, -5, 1, 4, 5.])
         >>> kde = stats.gaussian_kde(x1)
-        >>> xs = np.linspace(-10, 10, num=50)
+        >>> xs = mx.linspace(-10, 10, num=50)
         >>> y1 = kde(xs)
         >>> kde.set_bandwidth(bw_method='silverman')
         >>> y2 = kde(xs)
@@ -549,7 +549,7 @@ class gaussian_kde:
 
         >>> import matplotlib.pyplot as plt
         >>> fig, ax = plt.subplots()
-        >>> ax.plot(x1, np.full(x1.shape, 1 / (4. * x1.size)), 'bo',
+        >>> ax.plot(x1, mx.full(x1.shape, 1 / (4. * x1.size)), 'bo',
         ...         label='Data points (rescaled)')
         >>> ax.plot(xs, y1, label='Scott (default)')
         >>> ax.plot(xs, y2, label='Silverman')
@@ -564,7 +564,7 @@ class gaussian_kde:
             self.covariance_factor = self.scotts_factor
         elif bw_method == 'silverman':
             self.covariance_factor = self.silverman_factor
-        elif np.isscalar(bw_method) and not isinstance(bw_method, str):
+        elif mx.isscalar(bw_method) and not isinstance(bw_method, str):
             self._bw_method = 'use constant'
             self.covariance_factor = lambda: bw_method
         elif callable(bw_method):
@@ -591,9 +591,9 @@ class gaussian_kde:
                                                  lower=True)
 
         self.covariance = self._data_covariance * self.factor**2
-        self.cho_cov = (self._data_cho_cov * self.factor).astype(np.float64)
-        self.log_det = 2*np.log(np.diag(self.cho_cov
-                                        * np.sqrt(2*pi))).sum()
+        self.cho_cov = (self._data_cho_cov * self.factor).astype(mx.float64)
+        self.log_det = 2*mx.log(mx.diag(self.cho_cov
+                                        * mx.sqrt(2*pi))).sum()
 
     @property
     def inv_cov(self):
@@ -664,9 +664,9 @@ class gaussian_kde:
 
         """
 
-        dims = np.atleast_1d(dimensions)
+        dims = mx.atleast_1d(dimensions)
 
-        if not np.issubdtype(dims.dtype, np.integer):
+        if not mx.issubdtype(dims.dtype, mx.integer):
             msg = ("Elements of `dimensions` must be integers - the indices "
                    "of the marginal variables being retained.")
             raise ValueError(msg)
@@ -676,12 +676,12 @@ class gaussian_kde:
 
         dims[dims < 0] = n + dims[dims < 0]
 
-        if len(np.unique(dims)) != len(dims):
+        if len(mx.unique(dims)) != len(dims):
             msg = ("All elements of `dimensions` must be unique.")
             raise ValueError(msg)
 
         i_invalid = (dims < 0) | (dims >= n)
-        if np.any(i_invalid):
+        if mx.any(i_invalid):
             msg = (f"Dimensions {original_dims[i_invalid]} are invalid "
                    f"for a distribution in {n} dimensions.")
             raise ValueError(msg)
@@ -716,8 +716,8 @@ def _get_output_dtype(covariance, points):
     This was necessary in order to deal with the fused types in the Cython
     routine `gaussian_kernel_estimate`. See gh-10824 for details.
     """
-    output_dtype = np.common_type(covariance, points)
-    itemsize = np.dtype(output_dtype).itemsize
+    output_dtype = mx.common_type(covariance, points)
+    itemsize = mx.dtype(output_dtype).itemsize
     if itemsize == 4:
         spec = 'float'
     elif itemsize == 8:

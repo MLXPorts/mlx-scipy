@@ -3,7 +3,7 @@ Spectral Algorithm for Nonlinear Equations
 """
 import collections
 
-import numpy as np
+import mlx.core as mx
 from scipy.optimize import OptimizeResult
 from scipy.optimize._optimize import _check_unknown_options
 from ._linesearch import _nonmonotone_line_search_cruz, _nonmonotone_line_search_cheng
@@ -81,7 +81,7 @@ def _root_df_sane(func, x0, args=(), ftol=1e-8, fatol=1e-300, maxfev=1000,
             return f_k**(1.0/nexp)
 
     def fmerit(F):
-        return np.linalg.norm(F)**nexp
+        return mx.linalg.norm(F)**nexp
 
     nfev = [0]
     f, x_k, x_shape, f_k, F_k, is_complex = _wrap_func(func, x0, fmerit,
@@ -120,7 +120,7 @@ def _root_df_sane(func, x0, args=(), ftol=1e-8, fatol=1e-300, maxfev=1000,
 
         # Control spectral parameter, from [2]
         if abs(sigma_k) > 1/sigma_eps:
-            sigma_k = 1/sigma_eps * np.sign(sigma_k)
+            sigma_k = 1/sigma_eps * mx.sign(sigma_k)
         elif abs(sigma_k) < sigma_eps:
             sigma_k = sigma_eps
 
@@ -142,7 +142,7 @@ def _root_df_sane(func, x0, args=(), ftol=1e-8, fatol=1e-300, maxfev=1000,
         # Update spectral parameter
         s_k = xp - x_k
         y_k = Fp - F_k
-        sigma_k = np.vdot(s_k, s_k) / np.vdot(s_k, y_k)
+        sigma_k = mx.vdot(s_k, s_k) / mx.vdot(s_k, y_k)
 
         # Take step
         x_k = xp
@@ -176,7 +176,7 @@ def _wrap_func(func, x0, fmerit, nfev_list, maxfev, args=()):
     ----------
     func : callable
         Function to wrap
-    x0 : ndarray
+    x0 : array
         Initial value
     fmerit : callable
         Merit function fmerit(f) for computing merit value from residual.
@@ -192,23 +192,23 @@ def _wrap_func(func, x0, fmerit, nfev_list, maxfev, args=()):
     wrap_func : callable
         Wrapped function, to be called as
         ``F, fp = wrap_func(x0)``
-    x0_wrap : ndarray of float
+    x0_wrap : array of float
         Wrapped initial value; raveled to 1-D and complex
         values mapped to reals.
     x0_shape : tuple
         Shape of the initial value array
     f : float
         Merit function at F
-    F : ndarray of float
+    F : array of float
         Residual at x0_wrap
     is_complex : bool
         Whether complex values were mapped to reals
 
     """
-    x0 = np.asarray(x0)
+    x0 = mx.array(x0)
     x0_shape = x0.shape
-    F = np.asarray(func(x0, *args)).ravel()
-    is_complex = np.iscomplexobj(x0) or np.iscomplexobj(F)
+    F = mx.array(func(x0, *args)).ravel()
+    is_complex = mx.iscomplexobj(x0) or mx.iscomplexobj(F)
     x0 = x0.ravel()
 
     nfev_list[0] = 1
@@ -219,7 +219,7 @@ def _wrap_func(func, x0, fmerit, nfev_list, maxfev, args=()):
                 raise _NoConvergence()
             nfev_list[0] += 1
             z = _real2complex(x).reshape(x0_shape)
-            v = np.asarray(func(z, *args)).ravel()
+            v = mx.array(func(z, *args)).ravel()
             F = _complex2real(v)
             f = fmerit(F)
             return f, F
@@ -232,7 +232,7 @@ def _wrap_func(func, x0, fmerit, nfev_list, maxfev, args=()):
                 raise _NoConvergence()
             nfev_list[0] += 1
             x = x.reshape(x0_shape)
-            F = np.asarray(func(x, *args)).ravel()
+            F = mx.array(func(x, *args)).ravel()
             f = fmerit(F)
             return f, F
 
@@ -253,8 +253,8 @@ def _wrap_result(result, is_complex, shape=None):
 
 
 def _real2complex(x):
-    return np.ascontiguousarray(x, dtype=float).view(np.complex128)
+    return mx.ascontiguousarray(x, dtype=float).view(mx.complex128)
 
 
 def _complex2real(z):
-    return np.ascontiguousarray(z, dtype=complex).view(np.float64)
+    return mx.ascontiguousarray(z, dtype=complex).view(mx.float64)

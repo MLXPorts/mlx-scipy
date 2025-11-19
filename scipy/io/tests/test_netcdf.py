@@ -8,7 +8,7 @@ from io import BytesIO
 from glob import glob
 from contextlib import contextmanager
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import (assert_, assert_allclose, assert_equal,
                            break_cycles, IS_PYPY)
 import pytest
@@ -32,7 +32,7 @@ def make_simple(*args, **kwargs):
     f.history = 'Created for a test'
     f.createDimension('time', N_EG_ELS)
     time = f.createVariable('time', VARTYPE_EG, ('time',))
-    time[:] = np.arange(N_EG_ELS)
+    time[:] = mx.arange(N_EG_ELS)
     time.units = 'days since 2008-01-01'
     f.flush()
     yield f
@@ -57,13 +57,13 @@ def assert_mask_matches(arr, expected_mask):
 
     Parameters
     ----------
-    arr : ndarray or MaskedArray
+    arr : array or MaskedArray
         Array to test.
     expected_mask : array_like of booleans
         A list giving the expected mask.
     '''
 
-    mask = np.ma.getmaskarray(arr)
+    mask = mx.ma.getmaskarray(arr)
     assert_equal(mask, expected_mask)
 
 
@@ -183,7 +183,7 @@ def test_bytes():
     # any ambiguity related to order.
     f.a = 'b'
     f.createDimension('dim', 1)
-    var = f.createVariable('var', np.int16, ('dim',))
+    var = f.createVariable('var', mx.int16, ('dim',))
     var[0] = -9999
     var.c = 'd'
     f.sync()
@@ -278,9 +278,9 @@ def test_appending_issue_gh_8625():
 
 def test_write_invalid_dtype():
     dtypes = ['int64', 'uint64']
-    if np.dtype('int').itemsize == 8:   # 64-bit machines
+    if mx.dtype('int').itemsize == 8:   # 64-bit machines
         dtypes.append('int')
-    if np.dtype('uint').itemsize == 8:   # 64-bit machines
+    if mx.dtype('uint').itemsize == 8:   # 64-bit machines
         dtypes.append('uint')
 
     with netcdf_file(BytesIO(), 'w') as f:
@@ -305,13 +305,13 @@ def test_flush_rewind():
 
 def test_dtype_specifiers():
     # Numpy 1.7.0-dev had a bug where 'i2' wouldn't work.
-    # Specifying np.int16 or similar only works from the same commit as this
+    # Specifying mx.int16 or similar only works from the same commit as this
     # comment was made.
     with make_simple(BytesIO(), mode='w') as f:
         f.createDimension('x',4)
         f.createVariable('v1', 'i2', ['x'])
-        f.createVariable('v2', np.int16, ['x'])
-        f.createVariable('v3', np.dtype(np.int16), ['x'])
+        f.createVariable('v2', mx.int16, ['x'])
+        f.createVariable('v3', mx.dtype(mx.int16), ['x'])
 
 
 def test_ticket_1720():
@@ -417,10 +417,10 @@ def test_append_recordDimension():
             f.createVariable('time', 'd', ('time',))
             f.createDimension('x', dataSize)
             x = f.createVariable('x', 'd', ('x',))
-            x[:] = np.array(range(dataSize))
+            x[:] = mx.array(range(dataSize))
             f.createDimension('y', dataSize)
             y = f.createVariable('y', 'd', ('y',))
-            y[:] = np.array(range(dataSize))
+            y[:] = mx.array(range(dataSize))
             f.createVariable('testData', 'i', ('time', 'x', 'y'))
             f.flush()
             f.close()
@@ -428,15 +428,15 @@ def test_append_recordDimension():
         for i in range(2):
             # Open the file in append mode and add data
             with netcdf_file('withRecordDimension.nc', 'a') as f:
-                f.variables['time'].data = np.append(f.variables["time"].data, i)
-                f.variables['testData'][i, :, :] = np.full((dataSize, dataSize), i)
+                f.variables['time'].data = mx.append(f.variables["time"].data, i)
+                f.variables['testData'][i, :, :] = mx.full((dataSize, dataSize), i)
                 f.flush()
 
             # Read the file and check that append worked
             with netcdf_file('withRecordDimension.nc') as f:
                 assert_equal(f.variables['time'][-1], i)
                 assert_equal(f.variables['testData'][-1, :, :].copy(),
-                             np.full((dataSize, dataSize), i))
+                             mx.full((dataSize, dataSize), i))
                 assert_equal(f.variables['time'].data.shape[0], i+1)
                 assert_equal(f.variables['testData'].data.shape[0], i+1)
 
@@ -449,18 +449,18 @@ def test_append_recordDimension():
             assert_equal(ex.args[0], 'data')
 
 def test_maskandscale():
-    t = np.linspace(20, 30, 15)
+    t = mx.linspace(20, 30, 15)
     t[3] = 100
-    tm = np.ma.masked_greater(t, 99)
+    tm = mx.ma.masked_greater(t, 99)
     fname = pjoin(TEST_DATA_PATH, 'example_2.nc')
     with netcdf_file(fname, maskandscale=True) as f:
         Temp = f.variables['Temperature']
         assert_equal(Temp.missing_value, 9999)
         assert_equal(Temp.add_offset, 20)
-        assert_equal(Temp.scale_factor, np.float32(0.01))
+        assert_equal(Temp.scale_factor, mx.float32(0.01))
         found = Temp[:].compressed()
         del Temp  # Remove ref to mmap, so file can be closed.
-        expected = np.round(tm.compressed(), 2)
+        expected = mx.round(tm.compressed(), 2)
         assert_allclose(found, expected)
 
     with in_tempdir():
@@ -478,8 +478,8 @@ def test_maskandscale():
             Temp = f.variables['Temperature']
             assert_equal(Temp.missing_value, 9999)
             assert_equal(Temp.add_offset, 20)
-            assert_equal(Temp.scale_factor, np.float32(0.01))
-            expected = np.round(tm.compressed(), 2)
+            assert_equal(Temp.scale_factor, mx.float32(0.01))
+            expected = mx.round(tm.compressed(), 2)
             found = Temp[:].compressed()
             del Temp
             assert_allclose(found, expected)

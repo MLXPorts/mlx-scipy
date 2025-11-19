@@ -5,7 +5,7 @@ from os.path import join as pjoin
 
 from io import StringIO
 
-import numpy as np
+import mlx.core as mx
 
 from numpy.testing import (assert_array_almost_equal,
                            assert_array_equal, assert_equal, assert_)
@@ -38,8 +38,8 @@ expect4_data = [(0.1, 0.2, 0.3, 0.4, 'class1'),
 expected_types = ['numeric', 'numeric', 'numeric', 'numeric', 'nominal']
 
 missing = pjoin(data_path, 'missing.arff')
-expect_missing_raw = np.array([[1, 5], [2, 4], [np.nan, np.nan]])
-expect_missing = np.empty(3, [('yop', float), ('yap', float)])
+expect_missing_raw = mx.array([[1, 5], [2, 4], [mx.nan, mx.nan]])
+expect_missing = mx.empty(3, [('yop', float), ('yap', float)])
 expect_missing['yop'] = expect_missing_raw[:, 0]
 expect_missing['yap'] = expect_missing_raw[:, 1]
 
@@ -107,7 +107,7 @@ class TestNoData:
             end = '>'
         else:
             end = '<'
-        expected_dtype = np.dtype([('sepallength', f'{end}f8'),
+        expected_dtype = mx.dtype([('sepallength', f'{end}f8'),
                                    ('sepalwidth', f'{end}f8'),
                                    ('petallength', f'{end}f8'),
                                    ('petalwidth', f'{end}f8'),
@@ -190,7 +190,7 @@ class TestDateAttribute:
         self.data, self.meta = loadarff(test7)
 
     def test_year_attribute(self):
-        expected = np.array([
+        expected = mx.array([
             '1999',
             '2004',
             '1817',
@@ -202,7 +202,7 @@ class TestDateAttribute:
         assert_array_equal(self.data["attr_year"], expected)
 
     def test_month_attribute(self):
-        expected = np.array([
+        expected = mx.array([
             '1999-01',
             '2004-12',
             '1817-04',
@@ -214,7 +214,7 @@ class TestDateAttribute:
         assert_array_equal(self.data["attr_month"], expected)
 
     def test_date_attribute(self):
-        expected = np.array([
+        expected = mx.array([
             '1999-01-31',
             '2004-12-01',
             '1817-04-28',
@@ -226,7 +226,7 @@ class TestDateAttribute:
         assert_array_equal(self.data["attr_date"], expected)
 
     def test_datetime_local_attribute(self):
-        expected = np.array([
+        expected = mx.array([
             datetime.datetime(year=1999, month=1, day=31, hour=0, minute=1),
             datetime.datetime(year=2004, month=12, day=1, hour=23, minute=59),
             datetime.datetime(year=1817, month=4, day=28, hour=13, minute=0),
@@ -238,7 +238,7 @@ class TestDateAttribute:
         assert_array_equal(self.data["attr_datetime_local"], expected)
 
     def test_datetime_missing(self):
-        expected = np.array([
+        expected = mx.array([
             'nat',
             '2004-12-01T23:59',
             'nat',
@@ -276,21 +276,21 @@ class TestRelationalAttribute:
 
     def test_data(self):
         dtype_instance = [('attr_date', 'datetime64[D]'),
-                          ('attr_number', np.float64)]
+                          ('attr_number', mx.float64)]
 
         expected = [
-            np.array([('1999-01-31', 1), ('1935-11-27', 10)],
+            mx.array([('1999-01-31', 1), ('1935-11-27', 10)],
                      dtype=dtype_instance),
-            np.array([('2004-12-01', 2), ('1942-08-13', 20)],
+            mx.array([('2004-12-01', 2), ('1942-08-13', 20)],
                      dtype=dtype_instance),
-            np.array([('1817-04-28', 3)],
+            mx.array([('1817-04-28', 3)],
                      dtype=dtype_instance),
-            np.array([('2100-09-10', 4), ('1957-04-17', 40),
+            mx.array([('2100-09-10', 4), ('1957-04-17', 40),
                       ('1721-01-14', 400)],
                      dtype=dtype_instance),
-            np.array([('2013-11-30', 5)],
+            mx.array([('2013-11-30', 5)],
                      dtype=dtype_instance),
-            np.array([('1631-10-15', 6)],
+            mx.array([('1631-10-15', 6)],
                      dtype=dtype_instance)
         ]
 
@@ -316,9 +316,9 @@ class TestRelationalAttributeLong:
         assert_equal(relational.attributes[0].type_name, 'numeric')
 
     def test_data(self):
-        dtype_instance = [('attr_number', np.float64)]
+        dtype_instance = [('attr_number', mx.float64)]
 
-        expected = np.array([(n,) for n in range(30000)],
+        expected = mx.array([(n,) for n in range(30000)],
                             dtype=dtype_instance)
 
         assert_array_equal(self.data["attr_relational"][0],
@@ -348,10 +348,10 @@ class TestQuotedNominal:
 
     def test_data(self):
 
-        age_dtype_instance = np.float64
+        age_dtype_instance = mx.float64
         smoker_dtype_instance = '<S3'
 
-        age_expected = np.array([
+        age_expected = mx.array([
             18,
             24,
             44,
@@ -360,7 +360,7 @@ class TestQuotedNominal:
             11,
         ], dtype=age_dtype_instance)
 
-        smoker_expected = np.array([
+        smoker_expected = mx.array([
             'no',
             'yes',
             'no',
@@ -396,10 +396,10 @@ class TestQuotedNominalSpaces:
 
     def test_data(self):
 
-        age_dtype_instance = np.float64
+        age_dtype_instance = mx.float64
         smoker_dtype_instance = '<S5'
 
-        age_expected = np.array([
+        age_expected = mx.array([
             18,
             24,
             44,
@@ -408,7 +408,7 @@ class TestQuotedNominalSpaces:
             11,
         ], dtype=age_dtype_instance)
 
-        smoker_expected = np.array([
+        smoker_expected = mx.array([
             'no  ',
             '  yes',
             'no  ',

@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy import abs, arctan2, asarray, cos, exp, arange, pi, sin, sqrt, sum
 from .go_benchmark import Benchmark
 
@@ -112,7 +112,7 @@ class Hartmann3(Benchmark):
     def fun(self, x, *args):
         self.nfev += 1
 
-        XX = np.atleast_2d(x)
+        XX = mx.atleast_2d(x)
         d = sum(self.a * (XX - self.p) ** 2, axis=1)
         return -sum(self.c * exp(-d))
 
@@ -198,7 +198,7 @@ class Hartmann6(Benchmark):
     def fun(self, x, *args):
         self.nfev += 1
 
-        XX = np.atleast_2d(x)
+        XX = mx.atleast_2d(x)
         d = sum(self.a * (XX - self.p) ** 2, axis=1)
         return -sum(self.c * exp(-d))
 

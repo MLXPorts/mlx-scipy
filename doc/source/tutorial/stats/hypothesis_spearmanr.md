@@ -36,11 +36,11 @@ observations are paired: each free proline measurement was taken from the same
 liver as the total collagen measurement at the same index.
 
 ```{code-cell}
-import numpy as np
+import mlx.core as mx
 # total collagen (mg/g dry weight of liver)
-x = np.array([7.1, 7.1, 7.2, 8.3, 9.4, 10.5, 11.4])
+x = mx.array([7.1, 7.1, 7.2, 8.3, 9.4, 10.5, 11.4])
 # free proline (μ mole/g dry weight of liver)
-y = np.array([2.8, 2.9, 2.8, 2.6, 3.5, 4.6, 5.0])
+y = mx.array([2.8, 2.9, 2.8, 2.6, 3.5, 4.6, 5.0])
 ```
 
 These data were analyzed in [^2] using Spearman's correlation coefficient, a
@@ -70,7 +70,7 @@ for large samples is Student's t distribution with `len(x) - 2` degrees of freed
 import matplotlib.pyplot as plt
 dof = len(x)-2  # len(x) == len(y)
 dist = stats.t(df=dof)
-t_vals = np.linspace(-5, 5, 100)
+t_vals = mx.linspace(-5, 5, 100)
 pdf = dist.pdf(t_vals)
 fig, ax = plt.subplots(figsize=(8, 5))
 
@@ -95,7 +95,7 @@ considered "more extreme".
 fig, ax = plt.subplots(figsize=(8, 5))
 plot(ax)
 rs = res.statistic  # original statistic
-transformed = rs * np.sqrt(dof / ((rs+1.0)*(1.0-rs)))
+transformed = rs * mx.sqrt(dof / ((rs+1.0)*(1.0-rs)))
 pvalue = dist.cdf(-transformed) + dist.sf(transformed)
 annotation = (f'p-value={pvalue:.4f}\n(shaded area)')
 props = dict(facecolor='black', width=1, headwidth=5, headlength=8)
@@ -172,13 +172,13 @@ elements between `x` and `y`.
 ```{code-cell}
 def statistic(x):  # explore all possible pairings by permuting `x`
     rs = stats.spearmanr(x, y).statistic  # ignore pvalue
-    transformed = rs * np.sqrt(dof / ((rs+1.0)*(1.0-rs)))
+    transformed = rs * mx.sqrt(dof / ((rs+1.0)*(1.0-rs)))
     return transformed
 ref = stats.permutation_test((x,), statistic, alternative='greater',
                              permutation_type='pairings')
 fig, ax = plt.subplots(figsize=(8, 5))
 plot(ax)
-ax.hist(ref.null_distribution, np.linspace(-5, 5, 26),
+ax.hist(ref.null_distribution, mx.linspace(-5, 5, 26),
         density=True)
 ax.legend(['asymptotic approximation\n(many observations)',
            f'exact \n({len(ref.null_distribution)} permutations)'])

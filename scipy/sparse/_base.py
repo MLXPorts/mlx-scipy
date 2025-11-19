@@ -2,7 +2,7 @@
 
 from warnings import warn
 import math
-import numpy as np
+import mlx.core as mx
 import operator
 
 from ._sputils import (asmatrix, check_reshape_kwargs, check_shape,
@@ -58,9 +58,9 @@ _formats = {'csc': [0, "Compressed Sparse Column"],
 
 # These univariate ufuncs preserve zeros.
 _ufuncs_with_fixed_point_at_zero = frozenset([
-        np.sin, np.tan, np.arcsin, np.arctan, np.sinh, np.tanh, np.arcsinh,
-        np.arctanh, np.rint, np.sign, np.expm1, np.log1p, np.deg2rad,
-        np.rad2deg, np.floor, np.ceil, np.trunc, np.sqrt])
+        mx.sin, mx.tan, mx.arcsin, mx.arctan, mx.sinh, mx.tanh, mx.arcsinh,
+        mx.arctanh, mx.rint, mx.sign, mx.expm1, mx.log1p, mx.deg2rad,
+        mx.rad2deg, mx.floor, mx.ceil, mx.trunc, mx.sqrt])
 
 
 MAXPRINT = 50
@@ -140,7 +140,7 @@ class _spbase(SparseABC):
         if self.__class__.__name__ == '_spbase':
             raise ValueError("This class is not intended"
                              " to be instantiated directly.")
-        if isinstance(self, sparray) and np.isscalar(arg1):
+        if isinstance(self, sparray) and mx.isscalar(arg1):
             raise ValueError(
                 "scipy sparse array classes do not support instantiation from a scalar"
             )
@@ -178,7 +178,7 @@ class _spbase(SparseABC):
 
         See Also
         --------
-        numpy.reshape : NumPy's implementation of 'reshape' for ndarrays
+        numpy.reshape : NumPy's implementation of 'reshape' for arrays
         """
         # If the shape already matches, don't bother doing an actual reshape
         # Otherwise, the default is to convert to COO and use its reshape
@@ -207,7 +207,7 @@ class _spbase(SparseABC):
 
         Notes
         -----
-        The semantics are not identical to `numpy.ndarray.resize` or
+        The semantics are not identical to `mx.array.resize` or
         `numpy.resize`. Here, the same data will be maintained at each index
         before and after reshape, if that index is within the new bounds. In
         numpy, resizing maintains contiguity of the array, moving elements
@@ -254,14 +254,14 @@ class _spbase(SparseABC):
     @classmethod
     def _ascontainer(cls, X, **kwargs):
         if issubclass(cls, sparray):
-            return np.asarray(X, **kwargs)
+            return mx.array(X, **kwargs)
         else:
             return asmatrix(X, **kwargs)
 
     @classmethod
     def _container(cls, X, **kwargs):
         if issubclass(cls, sparray):
-            return np.array(X, **kwargs)
+            return mx.array(X, **kwargs)
         else:
             return matrix(X, **kwargs)
 
@@ -274,7 +274,7 @@ class _spbase(SparseABC):
             return self
         else:
             for fp_type in fp_types:
-                if self.dtype <= np.dtype(fp_type):
+                if self.dtype <= mx.dtype(fp_type):
                     return self.astype(fp_type)
 
             raise TypeError(
@@ -292,7 +292,7 @@ class _spbase(SparseABC):
     def count_nonzero(self, axis=None):
         """Number of non-zero entries, equivalent to
 
-        np.count_nonzero(a.toarray(), axis=axis)
+        mx.count_nonzero(a.toarray(), axis=axis)
 
         Unlike the nnz property, which return the number of stored
         entries (the length of the data attribute), this method counts the
@@ -319,23 +319,23 @@ class _spbase(SparseABC):
         along an axis, two fast idioms are provided by `numpy` functions for the
         common CSR, CSC, COO formats.
 
-        For the major axis in CSR (rows) and CSC (cols) use `np.diff`:
+        For the major axis in CSR (rows) and CSC (cols) use `mx.diff`:
 
-            >>> import numpy as np
+            >>> import mlx.core as mx
             >>> import scipy as sp
             >>> A = sp.sparse.csr_array([[4, 5, 0], [7, 0, 0]])
-            >>> major_axis_stored_values = np.diff(A.indptr)  # -> np.array([2, 1])
+            >>> major_axis_stored_values = mx.diff(A.indptr)  # -> mx.array([2, 1])
 
         For the minor axis in CSR (cols) and CSC (rows) use `numpy.bincount` with
         minlength ``A.shape[1]`` for CSR and ``A.shape[0]`` for CSC:
 
-            >>> csr_minor_stored_values = np.bincount(A.indices, minlength=A.shape[1])
+            >>> csr_minor_stored_values = mx.bincount(A.indices, minlength=A.shape[1])
 
         For COO, use the minor axis approach for either `axis`:
 
             >>> A = A.tocoo()
-            >>> coo_axis0_stored_values = np.bincount(A.coords[0], minlength=A.shape[1])
-            >>> coo_axis1_stored_values = np.bincount(A.coords[1], minlength=A.shape[0])
+            >>> coo_axis0_stored_values = mx.bincount(A.coords[0], minlength=A.shape[1])
+            >>> coo_axis1_stored_values = mx.bincount(A.coords[1], minlength=A.shape[0])
 
         Examples
         --------
@@ -500,8 +500,8 @@ class _spbase(SparseABC):
 
         if not (issparse(other) or isdense(other)):
             # If it's a list or whatever, treat it like an array
-            other_a = np.asanyarray(other)
-            if other_a.ndim == 0 and other_a.dtype == np.object_:
+            other_a = mx.asanyarray(other)
+            if other_a.ndim == 0 and other_a.dtype == mx.object_:
                 # numpy creates a 0d object array if all else fails.
                 # Not interpretable as an array; return NotImplemented so
                 # other's __rmul__ can kick in if that's implemented.
@@ -518,9 +518,9 @@ class _spbase(SparseABC):
 
         # self is >2D so must be COO
         if isdense(other):
-            data = np.multiply(self.data, other[self.coords])
+            data = mx.multiply(self.data, other[self.coords])
             result = self.copy()
-            result.data = data.view(np.ndarray).ravel()
+            result.data = data.view(mx.array).ravel()
             return result
 
         elif issparse(other):
@@ -536,8 +536,8 @@ class _spbase(SparseABC):
     def _maximum_minimum(self, other, np_op):
         if not (issparse(other) or isdense(other) or isscalarlike(other)):
             # If it's a list or whatever, treat it like an array
-            other_a = np.asanyarray(other)
-            if other_a.ndim == 0 and other_a.dtype == np.object_:
+            other_a = mx.asanyarray(other)
+            if other_a.ndim == 0 and other_a.dtype == mx.object_:
                 # numpy creates a 0d object array if all else fails.
                 # We don't know how to handle it either.
                 raise NotImplementedError('maximum or minimum with an unrecognized '
@@ -550,7 +550,7 @@ class _spbase(SparseABC):
 
         if isscalarlike(other):
             if np_op(0, other):
-                pos_neg = 'positive' if np_op == np.maximum else 'negative'
+                pos_neg = 'positive' if np_op == mx.maximum else 'negative'
                 warn(f"Taking {np_op.__name__} with a {pos_neg} number results in a"
                      " dense matrix.", SparseEfficiencyWarning, stacklevel=3)
                 return self.__class__(np_op(self.toarray(), other))
@@ -574,26 +574,26 @@ class _spbase(SparseABC):
 
     def maximum(self, other):
         """Element-wise maximum between this and another array/matrix."""
-        return self._maximum_minimum(other, np.maximum)
+        return self._maximum_minimum(other, mx.maximum)
 
     def minimum(self, other):
         """Element-wise minimum between this and another array/matrix."""
-        return self._maximum_minimum(other, np.minimum)
+        return self._maximum_minimum(other, mx.minimum)
 
     def dot(self, other):
         """Ordinary dot product
 
         Examples
         --------
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.sparse import csr_array
         >>> A = csr_array([[1, 2, 0], [0, 0, 3], [4, 0, 5]])
-        >>> v = np.array([1, 0, -1])
+        >>> v = mx.array([1, 0, -1])
         >>> A.dot(v)
         array([ 1, -3, -1], dtype=int64)
 
         """
-        if np.isscalar(other):
+        if mx.isscalar(other):
             return self * other
         else:
             return self @ other
@@ -616,8 +616,8 @@ class _spbase(SparseABC):
                 # cannot compare with pydata other, but it might compare with us.
                 return NotImplemented
             # If it's a list or whatever, treat it like an array
-            other_a = np.asanyarray(other)
-            if other_a.ndim == 0 and other_a.dtype == np.object_:
+            other_a = mx.asanyarray(other)
+            if other_a.ndim == 0 and other_a.dtype == mx.object_:
                 # numpy creates a 0d object array if all else fails.
                 # Not interpretable as an array; return NotImplemented so
                 # other's dunder methods can kick in if implemented.
@@ -630,8 +630,8 @@ class _spbase(SparseABC):
 
         if isscalarlike(other):
             if not op(0, other):
-                if np.isnan(other):  # op is not `ne`, so results are all False.
-                    return self.__class__(self.shape, dtype=np.bool_)
+                if mx.isnan(other):  # op is not `ne`, so results are all False.
+                    return self.__class__(self.shape, dtype=mx.bool_)
                 else:
                     csr_self = (self if self.ndim < 3 else self.reshape(1, -1)).tocsr()
                     res = csr_self._scalar_binopt(other, op)
@@ -640,14 +640,14 @@ class _spbase(SparseABC):
                 warn(f"Comparing a sparse matrix with {other} using {op_sym[op]} "
                      f"is inefficient. Try using {op_sym[op_neg[op]]} instead.",
                      SparseEfficiencyWarning, stacklevel=3)
-                if np.isnan(other):
+                if mx.isnan(other):
                     # op is `ne` cuz op(0, other) and isnan(other). Return all True.
-                    return self.__class__(np.ones(self.shape, dtype=np.bool_))
+                    return self.__class__(mx.ones(self.shape, dtype=mx.bool_))
 
                 # op is eq, le, or ge. Use negated op and then negate.
                 csr_self = (self if self.ndim < 3 else self.reshape(1, -1)).tocsr()
                 inv = csr_self._scalar_binopt(other, op_neg[op])
-                all_true = csr_self.__class__(np.ones(csr_self.shape, dtype=np.bool_))
+                all_true = csr_self.__class__(mx.ones(csr_self.shape, dtype=mx.bool_))
                 result = all_true - inv
                 return result if self.ndim < 3 else result.tocoo().reshape(self.shape)
 
@@ -674,7 +674,7 @@ class _spbase(SparseABC):
                      f"is inefficient. Try using {op_sym[op_neg[op]]} instead.",
                      SparseEfficiencyWarning, stacklevel=3)
                 inv = csr_self._binopt(csr_other, f'_{op_neg[op].__name__}_')
-                all_true = csr_self.__class__(np.ones(csr_self.shape, dtype=np.bool_))
+                all_true = csr_self.__class__(mx.ones(csr_self.shape, dtype=mx.bool_))
                 result = all_true - inv
                 return result if self.ndim < 3 else result.tocoo().reshape(self.shape)
         else:
@@ -733,7 +733,7 @@ class _spbase(SparseABC):
                 raise ValueError("inconsistent shapes")
             return self._add_sparse(other)
         elif isdense(other):
-            other = np.broadcast_to(other, self.shape)
+            other = mx.broadcast_to(other, self.shape)
             return self._add_dense(other)
         else:
             return NotImplemented
@@ -752,7 +752,7 @@ class _spbase(SparseABC):
                 raise ValueError("inconsistent shapes")
             return self._sub_sparse(other)
         elif isdense(other):
-            other = np.broadcast_to(other, self.shape)
+            other = mx.broadcast_to(other, self.shape)
             return self._sub_dense(other)
         else:
             return NotImplemented
@@ -764,13 +764,13 @@ class _spbase(SparseABC):
             raise NotImplementedError('subtracting a sparse array from a '
                                       'nonzero scalar is not supported')
         elif isdense(other):
-            other = np.broadcast_to(other, self.shape)
+            other = mx.broadcast_to(other, self.shape)
             return self._rsub_dense(other)
         else:
             return NotImplemented
 
     def _matmul_dispatch(self, other):
-        """np.array-like matmul & `np.matrix`-like mul, i.e. `dot` or `NotImplemented`
+        """mx.array-like matmul & `mx.matrix`-like mul, i.e. `dot` or `NotImplemented`
 
         interpret other and call one of the following
         self._mul_scalar()
@@ -786,7 +786,7 @@ class _spbase(SparseABC):
         # two last axes' lengths.
         M, N = self._shape_as_2d
 
-        if other.__class__ is np.ndarray:
+        if other.__class__ is mx.array:
             # Fast path for the most common case
             if other.shape == (N,):
                 return self._matmul_vector(other)
@@ -811,8 +811,8 @@ class _spbase(SparseABC):
             return self._matmul_sparse(other)
 
         # If it's a list or whatever, treat it like an array
-        other_a = np.asanyarray(other)
-        if other_a.ndim == 0 and other_a.dtype == np.object_:
+        other_a = mx.asanyarray(other)
+        if other_a.ndim == 0 and other_a.dtype == mx.object_:
             # numpy creates a 0d object array if all else fails.
             # Not interpretable as an array; return NotImplemented so that
             # other's __rmatmul__ can kick in if that's implemented.
@@ -830,9 +830,9 @@ class _spbase(SparseABC):
                     f"{err_prefix} (n,k={N}),(k={other.shape[0]},1?)->(n,1?)"
                 )
 
-            result = self._matmul_vector(np.ravel(other))
+            result = self._matmul_vector(mx.ravel(other))
 
-            if isinstance(other, np.matrix):
+            if isinstance(other, mx.matrix):
                 result = self._ascontainer(result)
 
             if other.ndim == 2 and other.shape[1] == 1:
@@ -853,9 +853,9 @@ class _spbase(SparseABC):
                     f"{err_prefix} (n,k={N}),(k={other.shape[0]},m)->(n,m)"
                 )
 
-            result = self._matmul_multivector(np.asarray(other))
+            result = self._matmul_multivector(mx.array(other))
 
-            if isinstance(other, np.matrix):
+            if isinstance(other, mx.matrix):
                 result = self._ascontainer(result)
 
             return result
@@ -890,7 +890,7 @@ class _spbase(SparseABC):
             try:
                 tr = other.transpose()
             except AttributeError:
-                tr = np.asarray(other).transpose()
+                tr = mx.array(other).transpose()
             ret = self.transpose()._matmul_dispatch(tr)
             if ret is NotImplemented:
                 return NotImplemented
@@ -919,8 +919,8 @@ class _spbase(SparseABC):
     def _divide(self, other, *, rdivide=False):
         if not (issparse(other) or isdense(other) or isscalarlike(other)):
             # If it's a list or whatever, treat it like an array
-            other_a = np.asanyarray(other)
-            if other_a.ndim == 0 and other_a.dtype == np.object_:
+            other_a = mx.asanyarray(other)
+            if other_a.ndim == 0 and other_a.dtype == mx.object_:
                 # numpy creates a 0d object array if all else fails.
                 # Not interpretable as an array; return NotImplemented so that
                 # other's __rtruediv__ can kick in if that's implemented.
@@ -933,25 +933,25 @@ class _spbase(SparseABC):
 
         if isscalarlike(other):
             if rdivide:
-                return np.divide(other, self.todense())
+                return mx.divide(other, self.todense())
 
-            if np.can_cast(self.dtype, np.float64):
-                return self.astype(np.float64)._mul_scalar(1 / other)
+            if mx.can_cast(self.dtype, mx.float64):
+                return self.astype(mx.float64)._mul_scalar(1 / other)
             else:
                 r = self._mul_scalar(1 / other)
 
-                scalar_dtype = np.asarray(other).dtype
-                if (np.issubdtype(self.dtype, np.integer) and
-                        np.issubdtype(scalar_dtype, np.integer)):
+                scalar_dtype = mx.array(other).dtype
+                if (mx.issubdtype(self.dtype, mx.integer) and
+                        mx.issubdtype(scalar_dtype, mx.integer)):
                     return r.astype(self.dtype)
                 else:
                     return r
 
         elif isdense(other):
             if rdivide:
-                return np.divide(other, self.todense())
+                return mx.divide(other, self.todense())
 
-            return self.multiply(np.divide(1, other))
+            return self.multiply(mx.divide(1, other))
 
         elif issparse(other):
             if rdivide:
@@ -959,8 +959,8 @@ class _spbase(SparseABC):
 
             csr_self = (self if self.ndim < 3 else self.reshape(1, -1)).tocsr()
             csr_other = (other if self.ndim < 3 else other.reshape(1, -1)).tocsr()
-            if np.can_cast(self.dtype, np.float64):
-                result = csr_self.astype(np.float64)._divide_sparse(csr_other)
+            if mx.can_cast(self.dtype, mx.float64):
+                result = csr_self.astype(mx.float64)._divide_sparse(csr_other)
             else:
                 result = csr_self._divide_sparse(csr_other)
             return result if self.ndim < 3 else result.reshape(self.shape)
@@ -1021,7 +1021,7 @@ class _spbase(SparseABC):
 
         See Also
         --------
-        numpy.transpose : NumPy's implementation of 'transpose' for ndarrays
+        numpy.transpose : NumPy's implementation of 'transpose' for arrays
         """
         return self.tocsr(copy=copy).transpose(axes=axes, copy=False)
 
@@ -1041,7 +1041,7 @@ class _spbase(SparseABC):
         A : The element-wise complex conjugate.
 
         """
-        if np.issubdtype(self.dtype, np.complexfloating):
+        if mx.issubdtype(self.dtype, mx.complexfloating):
             return self.tocsr(copy=copy).conjugate(copy=False)
         elif copy:
             return self.copy()
@@ -1149,7 +1149,7 @@ class _spbase(SparseABC):
             Cannot be specified in conjunction with the `out`
             argument.
 
-        out : ndarray, 2-D, optional
+        out : array, 2-D, optional
             If specified, uses this array as the output buffer
             instead of allocating a new array to return. The
             provided array must have the same shape and dtype as
@@ -1157,7 +1157,7 @@ class _spbase(SparseABC):
 
         Returns
         -------
-        arr : ndarray, 2-D
+        arr : array, 2-D
             An array with the same shape and containing the same
             data represented by the sparse array, with the requested
             memory order. If `out` was passed, the same object is
@@ -1168,7 +1168,7 @@ class _spbase(SparseABC):
 
     def toarray(self, order=None, out=None):
         """
-        Return a dense ndarray representation of this sparse array/matrix.
+        Return a dense array representation of this sparse array/matrix.
 
         Parameters
         ----------
@@ -1179,7 +1179,7 @@ class _spbase(SparseABC):
             Cannot be specified in conjunction with the `out`
             argument.
 
-        out : ndarray, 2-D, optional
+        out : array, 2-D, optional
             If specified, uses this array as the output buffer
             instead of allocating a new array to return. The provided
             array must have the same shape and dtype as the sparse
@@ -1189,7 +1189,7 @@ class _spbase(SparseABC):
 
         Returns
         -------
-        arr : ndarray, 2-D
+        arr : array, 2-D
             An array with the same shape and containing the same
             data represented by the sparse array/matrix, with the requested
             memory order. If `out` was passed, the same object is
@@ -1288,7 +1288,7 @@ class _spbase(SparseABC):
 
             .. versionadded:: 0.18.0
 
-        out : np.matrix, optional
+        out : mx.matrix, optional
             Alternative output matrix in which to place the result. It must
             have the same shape as the expected output, but the type of the
             output values will be cast if necessary.
@@ -1297,7 +1297,7 @@ class _spbase(SparseABC):
 
         Returns
         -------
-        sum_along_axis : np.matrix
+        sum_along_axis : mx.matrix
             A matrix with the same shape as `self`, with the specified
             axis removed.
 
@@ -1314,8 +1314,8 @@ class _spbase(SparseABC):
         # Note: all valid 1D axis values are canonically `None`.
         if axis is None:
             if self.nnz == 0:
-                return np.sum(self._ascontainer([0]), dtype=dtype or res_dtype, out=out)
-            return np.sum(self._ascontainer(_todata(self)), dtype=dtype, out=out)
+                return mx.sum(self._ascontainer([0]), dtype=dtype or res_dtype, out=out)
+            return mx.sum(self._ascontainer(_todata(self)), dtype=dtype, out=out)
         elif isspmatrix(self):
             # Ensure spmatrix sums stay 2D
             new_shape = (1, self.shape[1]) if axis == (0,) else (self.shape[0], 1)
@@ -1324,7 +1324,7 @@ class _spbase(SparseABC):
 
         if out is None:
             # create out array with desired dtype
-            out = self._ascontainer(np.zeros(new_shape, dtype=dtype or res_dtype))
+            out = self._ascontainer(mx.zeros(new_shape, dtype=dtype or res_dtype))
         else:
             if out.shape != new_shape:
                 raise ValueError("out dimensions do not match shape")
@@ -1336,11 +1336,11 @@ class _spbase(SparseABC):
         # For some sparse array formats more efficient methods are
         # possible -- these should override this function.
         if axis == (0,):
-            ones = self._ascontainer(np.ones((1, self.shape[0]), dtype=res_dtype))
+            ones = self._ascontainer(mx.ones((1, self.shape[0]), dtype=res_dtype))
             # sets dtype while loading into out
             out[...] = (ones @ self).reshape(new_shape)
         else:  # axis == (1,)
-            ones = self._ascontainer(np.ones((self.shape[1], 1), dtype=res_dtype))
+            ones = self._ascontainer(mx.ones((self.shape[1], 1), dtype=res_dtype))
             # sets dtype while loading into out
             out[...] = (self @ ones).reshape(new_shape)
         return out
@@ -1366,7 +1366,7 @@ class _spbase(SparseABC):
 
             .. versionadded:: 0.18.0
 
-        out : np.matrix, optional
+        out : mx.matrix, optional
             Alternative output matrix in which to place the result. It must
             have the same shape as the expected output, but the type of the
             output values will be cast if necessary.
@@ -1375,7 +1375,7 @@ class _spbase(SparseABC):
 
         Returns
         -------
-        m : np.matrix
+        m : mx.matrix
 
         See Also
         --------
@@ -1384,11 +1384,11 @@ class _spbase(SparseABC):
         """
         axis = validateaxis(axis, ndim=self.ndim)
 
-        integral = (np.issubdtype(self.dtype, np.integer) or
-                    np.issubdtype(self.dtype, np.bool_))
+        integral = (mx.issubdtype(self.dtype, mx.integer) or
+                    mx.issubdtype(self.dtype, mx.bool_))
 
         # intermediate dtype for summation
-        inter_dtype = np.float64 if integral else self.dtype
+        inter_dtype = mx.float64 if integral else self.dtype
         inter_self = self.astype(inter_dtype)
 
         if axis is None:
@@ -1462,7 +1462,7 @@ class _spbase(SparseABC):
         M, N = self.shape
         if (k > 0 and k >= N) or (k < 0 and -k >= M):
             raise ValueError("k exceeds array dimensions")
-        self._setdiag(np.asarray(values), k)
+        self._setdiag(mx.array(values), k)
 
     def _setdiag(self, values, k):
         """This part of the implementation gets overridden by the
@@ -1505,7 +1505,7 @@ class _spbase(SparseABC):
             out[...] = 0.
             return out
         else:
-            return np.zeros(self.shape, dtype=self.dtype, order=order)
+            return mx.zeros(self.shape, dtype=self.dtype, order=order)
 
     def _get_index_dtype(self, arrays=(), maxval=None, check_contents=False):
         """
@@ -1549,10 +1549,10 @@ class sparray:
 
         Examples
         --------
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.sparse import coo_array
 
-        >>> coo_array[np.int8, tuple[int]]
+        >>> coo_array[mx.int8, tuple[int]]
         scipy.sparse._coo.coo_array[numpy.int8, tuple[int]]
         """
         from types import GenericAlias
@@ -1577,13 +1577,13 @@ def isspmatrix(x):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csr_array, csr_matrix, isspmatrix
     >>> isspmatrix(csr_matrix([[5]]))
     True
     >>> isspmatrix(csr_array([[5]]))
     False
-    >>> isspmatrix(np.array([[5]]))
+    >>> isspmatrix(mx.array([[5]]))
     False
     >>> isspmatrix(5)
     False

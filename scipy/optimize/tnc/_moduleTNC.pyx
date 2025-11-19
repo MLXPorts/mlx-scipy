@@ -1,13 +1,13 @@
 # cython: language_level=3, boundscheck=False
 
 from libc.string cimport memcpy
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 
 
-np.import_array()
+mx.import_array()
 
-ctypedef np.float64_t float64_t
+ctypedef mx.float64_t float64_t
 
 
 cdef extern from "tnc.h":
@@ -65,15 +65,15 @@ cdef int function(double x[], double *f, double g[], void *state) except 1:
 
     # ensures we're working on a copy of the data, just in case user function
     # mutates it
-    xcopy = np.empty(n, dtype=np.float64)
-    x_data = <float64_t *>np.PyArray_DATA(xcopy)
+    xcopy = mx.empty(n, dtype=mx.float64)
+    x_data = <float64_t *>mx.PyArray_DATA(xcopy)
     memcpy(x_data, x, sizeof(double) * n)
 
     fx, gx = (<object>py_state.py_function)(xcopy)
 
-    if not np.isscalar(fx):
+    if not mx.isscalar(fx):
         try:
-            fx = np.asarray(fx).item()
+            fx = mx.array(fx).item()
         except (TypeError, ValueError) as e:
             raise ValueError(
                 "The user-provided objective function "
@@ -82,14 +82,14 @@ cdef int function(double x[], double *f, double g[], void *state) except 1:
 
     f[0] = <double> fx
 
-    gx = np.asarray(gx, dtype=np.float64)
+    gx = mx.array(gx, dtype=mx.float64)
     if gx.size != n:
         raise ValueError("tnc: gradient must have shape (len(x0),)")
 
     if not gx.flags['C_CONTIGUOUS']:
-        gx = np.ascontiguousarray(gx, dtype=np.float64)
+        gx = mx.ascontiguousarray(gx, dtype=mx.float64)
 
-    g_data = <float64_t *>np.PyArray_DATA(gx)
+    g_data = <float64_t *>mx.PyArray_DATA(gx)
     memcpy(g, g_data, n * sizeof(double))
 
     return 0
@@ -107,8 +107,8 @@ cdef void callback_function(double x[], void *state) except *:
     # ensures we're working on a copy of the data, just in case user function
     # mutates it
     try:
-        xcopy = np.empty(n, dtype=np.float64)
-        x_data = <float64_t *>np.PyArray_DATA(xcopy)
+        xcopy = mx.empty(n, dtype=mx.float64)
+        x_data = <float64_t *>mx.PyArray_DATA(xcopy)
         memcpy(x_data, x, sizeof(double) * n)
 
         # TODO examine return value to see if we should halt?
@@ -119,11 +119,11 @@ cdef void callback_function(double x[], void *state) except *:
 
 
 def tnc_minimize(func_and_grad,
-                   np.ndarray[np.float64_t] x0,
-                   np.ndarray[np.float64_t] low,
-                   np.ndarray[np.float64_t] up,
-                   np.ndarray[np.float64_t] scale,
-                   np.ndarray[np.float64_t] offset,
+                   mx.array[mx.float64_t] x0,
+                   mx.array[mx.float64_t] low,
+                   mx.array[mx.float64_t] up,
+                   mx.array[mx.float64_t] scale,
+                   mx.array[mx.float64_t] offset,
                    int messages,
                    int maxCGit,
                    int maxfun,
@@ -141,7 +141,7 @@ def tnc_minimize(func_and_grad,
         pytnc_state py_state
         int n
         int rc
-        double f = np.inf
+        double f = mx.inf
         int nfeval = 0
         int niter = 0
         double *x_data
@@ -168,21 +168,21 @@ def tnc_minimize(func_and_grad,
     n = x0.size
     py_state.n = n
 
-    n3 = np.size(scale)
+    n3 = mx.size(scale)
     if n3:
-        scale_data = <float64_t *>np.PyArray_DATA(scale)
+        scale_data = <float64_t *>mx.PyArray_DATA(scale)
 
-    n1 = np.size(low)
+    n1 = mx.size(low)
     if n1:
-        low_data = <float64_t *>np.PyArray_DATA(low)
+        low_data = <float64_t *>mx.PyArray_DATA(low)
 
-    n2 = np.size(up)
+    n2 = mx.size(up)
     if n2:
-        up_data = <float64_t *>np.PyArray_DATA(up)
+        up_data = <float64_t *>mx.PyArray_DATA(up)
 
-    n4 = np.size(offset)
+    n4 = mx.size(offset)
     if n4:
-        offset_data = <float64_t *>np.PyArray_DATA(offset)
+        offset_data = <float64_t *>mx.PyArray_DATA(offset)
 
     if (n1 != n2 or
         n != n1 or
@@ -190,10 +190,10 @@ def tnc_minimize(func_and_grad,
         (offset_data != NULL and n != n4)):
         raise ValueError("tnc: vector sizes must be equal")
 
-    x = np.copy(x0, order="C")
-    g = np.zeros_like(x, dtype= np.float64)
-    x_data = <float64_t *>np.PyArray_DATA(x)
-    g_data = <float64_t *>np.PyArray_DATA(g)
+    x = mx.copy(x0, order="C")
+    g = mx.zeros_like(x, dtype= mx.float64)
+    x_data = <float64_t *>mx.PyArray_DATA(x)
+    g_data = <float64_t *>mx.PyArray_DATA(g)
 
     py_state.py_function = <void*> func_and_grad
 

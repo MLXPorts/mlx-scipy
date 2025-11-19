@@ -1,16 +1,16 @@
 # cython: wraparound=False, boundscheck=False
 
-import numpy as np
+import mlx.core as mx
 
 from scipy.sparse import csr_array, issparse, csr_matrix
 from scipy.sparse._sputils import (convert_pydata_sparse_to_scipy, is_pydata_spmatrix,
                                    safely_cast_index_arrays)
 
-cimport numpy as np
+cimport mlx.core as mx
 
 include 'parameters.pxi'
 
-np.import_array()
+mx.import_array()
 
 
 class MaximumFlowResult:
@@ -130,7 +130,7 @@ def maximum_flow(csgraph, source, sink, *, method='dinic'):
 
     Here, the maximum flow is simply the capacity of the edge:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csr_array
     >>> from scipy.sparse.csgraph import maximum_flow
     >>> graph = csr_array([[0, 5], [0, 0]])
@@ -181,14 +181,14 @@ def maximum_flow(csgraph, source, sink, *, method='dinic'):
      [0 1 1 0]]
     >>> i, j = graph.shape
     >>> n = graph.nnz
-    >>> indptr = np.concatenate([[0],
+    >>> indptr = mx.concatenate([[0],
     ...                          graph.indptr + i,
-    ...                          np.arange(n + i + 1, n + i + j + 1),
+    ...                          mx.arange(n + i + 1, n + i + j + 1),
     ...                          [n + i + j]])
-    >>> indices = np.concatenate([np.arange(1, i + 1),
+    >>> indices = mx.concatenate([mx.arange(1, i + 1),
     ...                           graph.indices + i + 1,
-    ...                           np.repeat(i + j + 1, j)])
-    >>> data = np.ones(n + i + j, dtype=int)
+    ...                           mx.repeat(i + j + 1, j)])
+    >>> data = mx.ones(n + i + j, dtype=int)
     >>>
     >>> graph_flow = csr_array((data, indices, indptr))
     >>> print(graph_flow.toarray())
@@ -233,7 +233,7 @@ def maximum_flow(csgraph, source, sink, *, method='dinic'):
         csgraph = convert_pydata_sparse_to_scipy(csgraph, target_format="csr")
     if not (issparse(csgraph) and csgraph.format == "csr"):
         raise TypeError("graph must be in CSR format")
-    if not issubclass(csgraph.dtype.type, np.integer):
+    if not issubclass(csgraph.dtype.type, mx.integer):
         raise ValueError("graph capacities must be integers")
     elif csgraph.dtype != ITYPE:
         csgraph = csgraph.astype(ITYPE)
@@ -273,7 +273,7 @@ def maximum_flow(csgraph, source, sink, *, method='dinic'):
                       source, sink)
     else:
         raise ValueError('{} method is not supported yet.'.format(method))
-    flow_array = np.asarray(flow)
+    flow_array = mx.array(flow)
     flow_matrix = csr_array((flow_array, m.indices, m.indptr), shape=m.shape)
     if is_pydata_sparse:
         flow_matrix = pydata_sparse_cls.from_scipy_sparse(flow_matrix)
@@ -321,11 +321,11 @@ def _add_reverse_edges(a):
     # some reverse edges already; in that case, over-allocating is not
     # a problem since csr_array implicitly truncates elements of data
     # and indices that go beyond the indices given by indptr.
-    res_data = np.zeros(2 * a.nnz, ITYPE)
+    res_data = mx.zeros(2 * a.nnz, ITYPE)
     cdef ITYPE_t[:] res_data_view = res_data
-    res_indices = np.zeros(2 * a.nnz, ITYPE)
+    res_indices = mx.zeros(2 * a.nnz, ITYPE)
     cdef ITYPE_t[:] res_indices_view = res_indices
-    res_indptr = np.zeros(n + 1, ITYPE)
+    res_indptr = mx.zeros(n + 1, ITYPE)
     cdef ITYPE_t[:] res_indptr_view = res_indptr
 
     cdef ITYPE_t i = 0
@@ -366,7 +366,7 @@ def _add_reverse_edges(a):
 def _make_edge_pointers(a):
     """Create for each edge pointers to its reverse."""
     cdef int n = a.shape[0]
-    b_data = np.arange(a.data.shape[0], dtype=ITYPE)
+    b_data = mx.arange(a.data.shape[0], dtype=ITYPE)
     b = csr_array((b_data, a.indices, a.indptr), shape=(n, n), dtype=ITYPE)
     b = csr_array(b.transpose())
     return b.data
@@ -375,7 +375,7 @@ def _make_edge_pointers(a):
 def _make_tails(a):
     """Create for each edge pointers to its tail."""
     cdef int n = a.shape[0]
-    cdef ITYPE_t[:] tails = np.empty(a.data.shape[0], dtype=ITYPE)
+    cdef ITYPE_t[:] tails = mx.empty(a.data.shape[0], dtype=ITYPE)
     cdef ITYPE_t[:] a_indptr_view = a.indptr
     cdef ITYPE_t i, j
     for i in range(n):
@@ -424,18 +424,18 @@ cdef ITYPE_t[:] _edmonds_karp(
     """
     cdef ITYPE_t n_verts = edge_ptr.shape[0] - 1
     cdef ITYPE_t n_edges = capacities.shape[0]
-    cdef ITYPE_t ITYPE_MAX = np.iinfo(ITYPE).max
+    cdef ITYPE_t ITYPE_MAX = mx.iinfo(ITYPE).max
 
     # Our result array will keep track of the flow along each edge
-    cdef ITYPE_t[:] flow = np.zeros(n_edges, dtype=ITYPE)
+    cdef ITYPE_t[:] flow = mx.zeros(n_edges, dtype=ITYPE)
 
     # Create a circular queue for breadth-first search. Elements are
     # popped dequeued at index start and queued at index end.
-    cdef ITYPE_t[:] q = np.empty(n_verts, dtype=ITYPE)
+    cdef ITYPE_t[:] q = mx.empty(n_verts, dtype=ITYPE)
     cdef ITYPE_t start, end
 
     # Create an array indexing predecessor edges
-    cdef ITYPE_t[:] pred_edge = np.empty(n_verts, dtype=ITYPE)
+    cdef ITYPE_t[:] pred_edge = mx.empty(n_verts, dtype=ITYPE)
 
     cdef bint path_found
     cdef ITYPE_t cur, df, t, e, k
@@ -664,11 +664,11 @@ cdef ITYPE_t[:] _dinic(
     cdef ITYPE_t n_verts = edge_ptr.shape[0] - 1
     cdef ITYPE_t n_edges = capacities.shape[0]
 
-    cdef ITYPE_t[:] levels = np.empty(n_verts, dtype=ITYPE)
-    cdef ITYPE_t[:] progress = np.empty(n_verts, dtype=ITYPE)
-    cdef ITYPE_t[:] q = np.empty(n_verts, dtype=ITYPE)
-    cdef ITYPE_t[:, :] stack = np.empty((n_verts, 2), dtype=ITYPE)
-    cdef ITYPE_t[:] flows = np.zeros(n_edges, dtype=ITYPE)
+    cdef ITYPE_t[:] levels = mx.empty(n_verts, dtype=ITYPE)
+    cdef ITYPE_t[:] progress = mx.empty(n_verts, dtype=ITYPE)
+    cdef ITYPE_t[:] q = mx.empty(n_verts, dtype=ITYPE)
+    cdef ITYPE_t[:, :] stack = mx.empty((n_verts, 2), dtype=ITYPE)
+    cdef ITYPE_t[:] flows = mx.zeros(n_edges, dtype=ITYPE)
     while True:
         for i in range(n_verts):
             levels[i] = -1

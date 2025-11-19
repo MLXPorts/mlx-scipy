@@ -2,7 +2,7 @@ cimport cython
 from scipy.linalg.cython_lapack cimport dlartg
 from scipy.linalg.cython_blas cimport drot
 
-import numpy as np
+import mlx.core as mx
 
 
 @cython.boundscheck(False)
@@ -40,7 +40,7 @@ def givens_elimination(double[:, ::1] S, double[:] v, const double[:] diag):
     cdef double cs, sn
     cdef int one = 1
 
-    cdef double [:] diag_row = np.empty(n)
+    cdef double [:] diag_row = mx.empty(n)
     cdef double u  # For `v` rotations.
 
     for i in range(n):

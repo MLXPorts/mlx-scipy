@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 from .common import Benchmark
 
@@ -26,11 +26,11 @@ class NdimageInterpolation(Benchmark):
     ]
 
     def setup(self, shape, order, mode):
-        rstate = np.random.RandomState(5)
+        rstate = mx.random.RandomState(5)
         self.x = rstate.standard_normal(shape)
-        self.matrix_2d = np.asarray([[0.8, 0, 1.5],
+        self.matrix_2d = mx.array([[0.8, 0, 1.5],
                                      [0, 1.2, -5.]])
-        self.matrix_3d = np.asarray([[0.8, 0, 0, 1.5],
+        self.matrix_3d = mx.array([[0.8, 0, 0, 1.5],
                                      [0, 1.2, 0, -5.],
                                      [0, 0, 1, 0]])
 
@@ -58,7 +58,7 @@ class NdimageInterpolation(Benchmark):
         geometric_transform(self.x, mapping, order=order, mode=mode)
 
     def time_map_coordinates(self, shape, order, mode):
-        coords = np.meshgrid(*[np.arange(0, s, 2) + 0.3 for s in self.x.shape])
+        coords = mx.meshgrid(*[mx.arange(0, s, 2) + 0.3 for s in self.x.shape])
         map_coordinates(self.x, coords, order=order, mode=mode)
 
     def peakmem_rotate(self, shape, order, mode):

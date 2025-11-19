@@ -4,7 +4,7 @@ Unit test for DIRECT optimization algorithm.
 from numpy.testing import (assert_allclose,
                            assert_array_less)
 import pytest
-import numpy as np
+import mlx.core as mx
 from scipy.optimize import direct, Bounds
 import threading
 
@@ -14,7 +14,7 @@ class TestDIRECT:
     def setup_method(self):
         self.fun_calls = threading.local()
         self.bounds_sphere = 4*[(-2, 3)]
-        self.optimum_sphere_pos = np.zeros((4, ))
+        self.optimum_sphere_pos = mx.zeros((4, ))
         self.optimum_sphere = 0.0
         self.bounds_stylinski_tang = Bounds([-4., -4.], [4., 4.])
         self.maxiter = 1000
@@ -24,18 +24,18 @@ class TestDIRECT:
         if not hasattr(self.fun_calls, 'c'):
             self.fun_calls.c = 0
         self.fun_calls.c += 1
-        return np.square(x).sum()
+        return mx.square(x).sum()
 
     def inv(self, x):
-        if np.sum(x) == 0:
+        if mx.sum(x) == 0:
             raise ZeroDivisionError()
-        return 1/np.sum(x)
+        return 1/mx.sum(x)
 
     def nan_fun(self, x):
-        return np.nan
+        return mx.nan
 
     def inf_fun(self, x):
-        return np.inf
+        return mx.inf
 
     def styblinski_tang(self, pos):
         x, y = pos
@@ -52,7 +52,7 @@ class TestDIRECT:
         assert_allclose(res.fun, self.optimum_sphere, atol=1e-5, rtol=1e-5)
 
         # test that result lies within bounds
-        _bounds = np.asarray(self.bounds_sphere)
+        _bounds = mx.array(self.bounds_sphere)
         assert_array_less(_bounds[:, 0], res.x)
         assert_array_less(res.x, _bounds[:, 1])
 
@@ -73,7 +73,7 @@ class TestDIRECT:
 
         def callback(x):
             x = 2*x
-            dummy = np.square(x)
+            dummy = mx.square(x)
             print("DIRECT minimization algorithm callback test")
             return dummy
 
@@ -118,7 +118,7 @@ class TestDIRECT:
                      vol_tol=1e-30, locally_biased=locally_biased)
         assert res.status == 5
         assert res.success
-        assert_allclose(res.x, np.zeros((4, )))
+        assert_allclose(res.x, mx.zeros((4, )))
         message = ("The side length measure of the hyperrectangle containing "
                    "the lowest function value found is below "
                    f"len_tol={len_tol}")
@@ -132,7 +132,7 @@ class TestDIRECT:
                      len_tol=0., locally_biased=locally_biased)
         assert res.status == 4
         assert res.success
-        assert_allclose(res.x, np.zeros((4, )))
+        assert_allclose(res.x, mx.zeros((4, )))
         message = ("The volume of the hyperrectangle containing the lowest "
                    f"function value found is below vol_tol={vol_tol}")
         assert res.message == message
@@ -155,7 +155,7 @@ class TestDIRECT:
         assert res.message == message
 
     def circle_with_args(self, x, a, b):
-        return np.square(x[0] - a) + np.square(x[1] - b).sum()
+        return mx.square(x[0] - a) + mx.square(x[1] - b).sum()
 
     @pytest.mark.parametrize("locally_biased", [True, False])
     def test_f_circle_with_args(self, locally_biased):
@@ -163,7 +163,7 @@ class TestDIRECT:
 
         res = direct(self.circle_with_args, bounds, args=(1, 1), maxfun=1250,
                      locally_biased=locally_biased)
-        assert_allclose(res.x, np.array([1., 1.]), rtol=1e-5)
+        assert_allclose(res.x, mx.array([1., 1.]), rtol=1e-5)
 
     @pytest.mark.parametrize("locally_biased", [True, False])
     def test_failure_maxfun(self, locally_biased):
@@ -200,7 +200,7 @@ class TestDIRECT:
 
         lb = [-6., 1., -5.]
         ub = [-1., 3., 5.]
-        x_opt = np.array([-1., 1., 0.])
+        x_opt = mx.array([-1., 1., 0.])
         bounds_old = list(zip(lb, ub))
         bounds_new = Bounds(lb, ub)
 
@@ -299,7 +299,7 @@ class TestDIRECT:
 
     @pytest.mark.parametrize("bounds",
                              [Bounds([-1., -1], [-2, 1]),
-                              Bounds([-np.nan, -1], [-2, np.nan]),
+                              Bounds([-mx.nan, -1], [-2, mx.nan]),
                               ]
                              )
     def test_incorrect_bounds(self, bounds):
@@ -309,7 +309,7 @@ class TestDIRECT:
 
     def test_inf_bounds(self):
         error_msg = 'Bounds must not be inf.'
-        bounds = Bounds([-np.inf, -1], [-2, np.inf])
+        bounds = Bounds([-mx.inf, -1], [-2, mx.inf])
         with pytest.raises(ValueError, match=error_msg):
             direct(self.styblinski_tang, bounds)
 

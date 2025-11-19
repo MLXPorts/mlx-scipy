@@ -54,7 +54,7 @@ def ascent():
 
     Returns
     -------
-    ascent : ndarray
+    ascent : array
        convenient image to use for testing and demonstration
 
     Examples
@@ -64,7 +64,7 @@ def ascent():
     >>> ascent.shape
     (512, 512)
     >>> ascent.max()
-    np.uint8(255)
+    mx.uint8(255)
 
     >>> import matplotlib.pyplot as plt
     >>> plt.gray()
@@ -94,7 +94,7 @@ def electrocardiogram():
 
     Returns
     -------
-    ecg : ndarray
+    ecg : array
         The electrocardiogram in millivolt (mV) sampled at 360 Hz.
 
     Notes
@@ -132,10 +132,10 @@ def electrocardiogram():
     E.g., the first few seconds show the electrical activity of a heart in
     normal sinus rhythm as seen below.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> fs = 360
-    >>> time = np.arange(ecg.size) / fs
+    >>> time = mx.arange(ecg.size) / fs
     >>> plt.plot(time, ecg)
     >>> plt.xlabel("time in s")
     >>> plt.ylabel("ECG in mV")
@@ -178,7 +178,7 @@ def electrocardiogram():
     """
     fname = fetch_data("ecg.dat")
     with load(fname) as file:
-        ecg = file["ecg"].astype(int)  # np.uint16 -> int
+        ecg = file["ecg"].astype(int)  # mx.uint16 -> int
     # Convert raw output of ADC to mV: (ecg - adc_zero) / adc_gain
     ecg = (ecg - 1024) / 200.0
     return ecg
@@ -199,7 +199,7 @@ def face(gray=False):
 
     Returns
     -------
-    face : ndarray
+    face : array
         image of a raccoon face
 
     Examples
@@ -209,7 +209,7 @@ def face(gray=False):
     >>> face.shape
     (768, 1024, 3)
     >>> face.max()
-    np.uint8(255)
+    mx.uint8(255)
 
     >>> import matplotlib.pyplot as plt
     >>> plt.gray()

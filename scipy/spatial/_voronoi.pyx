@@ -10,31 +10,31 @@ Spherical Voronoi Cython Code
 # Distributed under the same BSD license as Scipy.
 #
 
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 cimport cython
 
-np.import_array()
+mx.import_array()
 
 __all__ = ['sort_vertices_of_regions']
 
 
 @cython.boundscheck(False)
 def sort_vertices_of_regions(const int[:,::1] simplices, list regions):
-    cdef np.npy_intp n, k, s, i, max_len
-    cdef np.npy_intp num_regions = len(regions)
-    cdef np.npy_intp current_simplex, current_vertex
-    cdef np.npy_intp remaining_size
-    cdef np.npy_intp[:] remaining
-    cdef np.ndarray[np.intp_t, ndim=1] sorted_vertices
+    cdef mx.npy_intp n, k, s, i, max_len
+    cdef mx.npy_intp num_regions = len(regions)
+    cdef mx.npy_intp current_simplex, current_vertex
+    cdef mx.npy_intp remaining_size
+    cdef mx.npy_intp[:] remaining
+    cdef mx.array[mx.intp_t, ndim=1] sorted_vertices
 
     max_len = 0
     for region in regions:
         max_len = max(max_len, len(region))
-    sorted_vertices = np.empty(max_len, dtype=np.intp)
+    sorted_vertices = mx.empty(max_len, dtype=mx.intp)
 
     for n in range(num_regions):
-        remaining = np.asarray(regions[n][:])
+        remaining = mx.array(regions[n][:])
         remaining_size = remaining.shape[0]
         current_simplex = remaining[0]
         for i in range(3):

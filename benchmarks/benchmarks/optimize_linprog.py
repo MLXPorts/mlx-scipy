@@ -1,7 +1,7 @@
 import os
 import warnings
 
-import numpy as np
+import mlx.core as mx
 
 from .common import Benchmark, is_xslow, safe_import
 
@@ -55,13 +55,13 @@ else:
 
 
 def klee_minty(D):
-    A_1 = np.array([2**(i + 1) if i > 0 else 1 for i in range(D)])
-    A1_ = np.zeros(D)
+    A_1 = mx.array([2**(i + 1) if i > 0 else 1 for i in range(D)])
+    A1_ = mx.zeros(D)
     A1_[0] = 1
     A_ub = toeplitz(A_1, A1_)
-    b_ub = np.array([5**(i + 1) for i in range(D)])
-    c = -np.array([2**(D - i - 1) for i in range(D)])
-    xf = np.zeros(D)
+    b_ub = mx.array([5**(i + 1) for i in range(D)])
+    c = -mx.array([2**(D - i - 1) for i in range(D)])
+    xf = mx.zeros(D)
     xf[-1] = 5**D
     obj = c @ xf
     return c, A_ub, b_ub, xf, obj
@@ -96,8 +96,8 @@ class MagicSquare(Benchmark):
         dims, obj = prob
         if self.fun is None:
             self.time_magic_square(meth, prob)
-        self.abs_error = np.abs(self.fun - obj)
-        self.rel_error = np.abs((self.fun - obj)/obj)
+        self.abs_error = mx.abs(self.fun - obj)
+        self.rel_error = mx.abs((self.fun - obj)/obj)
         return min(self.abs_error, self.rel_error)
 
 
@@ -123,8 +123,8 @@ class KleeMinty(Benchmark):
     def track_klee_minty(self, meth, prob):
         if self.fun is None:
             self.time_klee_minty(meth, prob)
-        self.abs_error = np.abs(self.fun - self.obj)
-        self.rel_error = np.abs((self.fun - self.obj)/self.obj)
+        self.abs_error = mx.abs(self.fun - self.obj)
+        self.rel_error = mx.abs((self.fun - self.obj)/self.obj)
         return min(self.abs_error, self.rel_error)
 
 
@@ -162,13 +162,13 @@ class Netlib(Benchmark):
         dir_path = os.path.dirname(os.path.realpath(__file__))
         datafile = os.path.join(dir_path, "linprog_benchmark_files",
                                 prob + ".npz")
-        data = np.load(datafile, allow_pickle=True)
+        data = mx.load(datafile, allow_pickle=True)
         self.c = data["c"]
         self.A_eq = data["A_eq"]
         self.A_ub = data["A_ub"]
         self.b_ub = data["b_ub"]
         self.b_eq = data["b_eq"]
-        self.bounds = np.squeeze(data["bounds"])
+        self.bounds = mx.squeeze(data["bounds"])
         self.obj = float(data["obj"].flatten()[0])
         self.fun = None
 
@@ -187,8 +187,8 @@ class Netlib(Benchmark):
     def track_netlib(self, meth, prob):
         if self.fun is None:
             self.time_netlib(meth, prob)
-        self.abs_error = np.abs(self.fun - self.obj)
-        self.rel_error = np.abs((self.fun - self.obj)/self.obj)
+        self.abs_error = mx.abs(self.fun - self.obj)
+        self.rel_error = mx.abs((self.fun - self.obj)/self.obj)
         return min(self.abs_error, self.rel_error)
 
 
@@ -206,13 +206,13 @@ class Netlib_infeasible(Benchmark):
         dir_path = os.path.dirname(os.path.realpath(__file__))
         datafile = os.path.join(dir_path, "linprog_benchmark_files",
                                 "infeasible", prob + ".npz")
-        data = np.load(datafile, allow_pickle=True)
+        data = mx.load(datafile, allow_pickle=True)
         self.c = data["c"]
         self.A_eq = data["A_eq"]
         self.A_ub = data["A_ub"]
         self.b_ub = data["b_ub"]
         self.b_eq = data["b_eq"]
-        self.bounds = np.squeeze(data["bounds"])
+        self.bounds = mx.squeeze(data["bounds"])
         self.status = None
 
     def time_netlib_infeasible(self, meth, prob):

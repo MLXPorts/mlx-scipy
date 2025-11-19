@@ -1,5 +1,5 @@
 """benchmarks for the scipy.sparse.csgraph module"""
-import numpy as np
+import mlx.core as mx
 import scipy.sparse
 
 from .common import Benchmark, safe_import, is_xslow
@@ -17,12 +17,12 @@ class Dijkstra(Benchmark):
     param_names = ['n', 'min_only', 'format']
 
     def setup(self, n, min_only, format):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         if format == 'random':
             # make a random connectivity matrix
             data = scipy.sparse.rand(n, n, density=0.2, format='lil',
-                                     random_state=42, dtype=np.bool_)
-            data.setdiag(np.zeros(n, dtype=np.bool_))
+                                     random_state=42, dtype=mx.bool_)
+            data.setdiag(mx.zeros(n, dtype=mx.bool_))
             self.data = data
         elif format == 'star':
             rows = [0 for i in range(n - 1)] + [i + 1 for i in range(n - 1)]
@@ -31,7 +31,7 @@ class Dijkstra(Benchmark):
             self.data = scipy.sparse.csr_matrix((weights, (rows, cols)),
                                                 shape=(n, n))
         # choose some random vertices
-        v = np.arange(n)
+        v = mx.arange(n)
         rng.shuffle(v)
         self.indices = v[:int(n*.1)]
 
@@ -58,13 +58,13 @@ class DijkstraDensity(Benchmark):
         if n >= 1000 and not is_xslow():
             raise NotImplementedError("skipped")
 
-        rng = np.random.default_rng(42)
+        rng = mx.random.default_rng(42)
         self.graph = scipy.sparse.random_array(
             shape=(n, n),
             density=density,
             format='csr',
             rng=rng,
-            data_sampler=lambda size: rng.integers(100, size=size, dtype=np.uint32),
+            data_sampler=lambda size: rng.integers(100, size=size, dtype=mx.uint32),
         )
 
 

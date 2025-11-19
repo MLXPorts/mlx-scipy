@@ -2,7 +2,7 @@
 
 from scipy.sparse import linalg, block_array
 from math import copysign
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import norm
 
 __all__ = [
@@ -38,18 +38,18 @@ def eqp_kktfact(H, c, A, b):
     -------
     x : array_like, shape (n,)
         Solution of the KKT problem.
-    lagrange_multipliers : ndarray, shape (m,)
+    lagrange_multipliers : array, shape (m,)
         Lagrange multipliers of the KKT problem.
     """
-    n, = np.shape(c)  # Number of parameters
-    m, = np.shape(b)  # Number of constraints
+    n, = mx.shape(c)  # Number of parameters
+    m, = mx.shape(b)  # Number of constraints
 
     # Karush-Kuhn-Tucker matrix of coefficients.
     # Defined as in Nocedal/Wright "Numerical
     # Optimization" p.452 in Eq. (16.4).
     kkt_matrix = block_array([[H, A.T], [A, None]], format="csc")
     # Vector of coefficients.
-    kkt_vec = np.hstack([-c, -b])
+    kkt_vec = mx.hstack([-c, -b])
 
     # TODO: Use a symmetric indefinite factorization
     #       to solve the system twice as fast (because
@@ -98,24 +98,24 @@ def sphere_intersections(z, d, trust_radius,
     if norm(d) == 0:
         return 0, 0, False
     # Check for inf trust_radius
-    if np.isinf(trust_radius):
+    if mx.isinf(trust_radius):
         if entire_line:
-            ta = -np.inf
-            tb = np.inf
+            ta = -mx.inf
+            tb = mx.inf
         else:
             ta = 0
             tb = 1
         intersect = True
         return ta, tb, intersect
 
-    a = np.dot(d, d)
-    b = 2 * np.dot(z, d)
-    c = np.dot(z, z) - trust_radius**2
+    a = mx.dot(d, d)
+    b = 2 * mx.dot(z, d)
+    c = mx.dot(z, z) - trust_radius**2
     discriminant = b*b - 4*a*c
     if discriminant < 0:
         intersect = False
         return 0, 0, intersect
-    sqrt_discriminant = np.sqrt(discriminant)
+    sqrt_discriminant = mx.sqrt(discriminant)
 
     # The following calculation is mathematically
     # equivalent to:
@@ -185,10 +185,10 @@ def box_intersections(z, d, lb, ub,
         intersection.
     """
     # Make sure it is a numpy array
-    z = np.asarray(z)
-    d = np.asarray(d)
-    lb = np.asarray(lb)
-    ub = np.asarray(ub)
+    z = mx.array(z)
+    d = mx.array(d)
+    lb = mx.array(lb)
+    ub = mx.array(ub)
     # Special case when d=0
     if norm(d) == 0:
         return 0, 0, False
@@ -201,7 +201,7 @@ def box_intersections(z, d, lb, ub,
         intersect = False
         return 0, 0, intersect
     # Remove values for which d is zero
-    not_zero_d = np.logical_not(zero_d)
+    not_zero_d = mx.logical_not(zero_d)
     z = z[not_zero_d]
     d = d[not_zero_d]
     lb = lb[not_zero_d]
@@ -211,8 +211,8 @@ def box_intersections(z, d, lb, ub,
     t_lb = (lb-z) / d
     t_ub = (ub-z) / d
     # Get the intersection of all those intervals.
-    ta = max(np.minimum(t_lb, t_ub))
-    tb = min(np.maximum(t_lb, t_ub))
+    ta = max(mx.minimum(t_lb, t_ub))
+    tb = min(mx.maximum(t_lb, t_ub))
 
     # Check if intersection is feasible
     if ta <= tb:
@@ -287,8 +287,8 @@ def box_sphere_intersections(z, d, lb, ub, trust_radius,
     ta_s, tb_s, intersect_s = sphere_intersections(z, d,
                                                    trust_radius,
                                                    entire_line)
-    ta = np.maximum(ta_b, ta_s)
-    tb = np.minimum(tb_b, tb_s)
+    ta = mx.maximum(ta_b, ta_s)
+    tb = mx.minimum(tb_b, tb_s)
     if intersect_b and intersect_s and ta <= tb:
         intersect = True
     else:
@@ -309,7 +309,7 @@ def inside_box_boundaries(x, lb, ub):
 
 def reinforce_box_boundaries(x, lb, ub):
     """Return clipped value of x"""
-    return np.minimum(np.maximum(x, lb), ub)
+    return mx.minimum(mx.maximum(x, lb), ub)
 
 
 def modified_dogleg(A, Y, b, trust_radius, lb, ub):
@@ -321,10 +321,10 @@ def modified_dogleg(A, Y, b, trust_radius, lb, ub):
 
     Parameters
     ----------
-    A : LinearOperator (or sparse array or ndarray), shape (m, n)
+    A : LinearOperator (or sparse array or array), shape (m, n)
         Matrix ``A`` in the minimization problem. It should have
         dimension ``(m, n)`` such that ``m < n``.
-    Y : LinearOperator (or sparse array or ndarray), shape (n, m)
+    Y : LinearOperator (or sparse array or array), shape (n, m)
         LinearOperator that apply the projection matrix
         ``Q = A.T inv(A A.T)`` to the vector. The obtained vector
         ``y = Q x`` being the minimum norm solution of ``A y = x``.
@@ -372,9 +372,9 @@ def modified_dogleg(A, Y, b, trust_radius, lb, ub):
     # Compute Cauchy point
     # `cauchy_point = g.T g / (g.T A.T A g)``.
     A_g = A.dot(g)
-    cauchy_point = -np.dot(g, g) / np.dot(A_g, A_g) * g
+    cauchy_point = -mx.dot(g, g) / mx.dot(A_g, A_g) * g
     # Origin
-    origin_point = np.zeros_like(cauchy_point)
+    origin_point = mx.zeros_like(cauchy_point)
 
     # Check the segment between cauchy_point and newton_point
     # for a possible solution.
@@ -408,7 +408,7 @@ def modified_dogleg(A, Y, b, trust_radius, lb, ub):
         return x2
 
 
-def projected_cg(H, c, Z, Y, b, trust_radius=np.inf,
+def projected_cg(H, c, Z, Y, b, trust_radius=mx.inf,
                  lb=None, ub=None, tol=None,
                  max_iter=None, max_infeasible_iter=None,
                  return_all=False):
@@ -421,13 +421,13 @@ def projected_cg(H, c, Z, Y, b, trust_radius=np.inf,
 
     Parameters
     ----------
-    H : LinearOperator (or sparse array or ndarray), shape (n, n)
+    H : LinearOperator (or sparse array or array), shape (n, n)
         Operator for computing ``H v``.
     c : array_like, shape (n,)
         Gradient of the quadratic objective function.
-    Z : LinearOperator (or sparse array or ndarray), shape (n, n)
+    Z : LinearOperator (or sparse array or array), shape (n, n)
         Operator for projecting ``x`` into the null space of A.
-    Y : LinearOperator,  sparse array, ndarray, shape (n, m)
+    Y : LinearOperator,  sparse array, array, shape (n, m)
         Operator that, for a given a vector ``b``, compute smallest
         norm solution of ``A x + b = 0``.
     b : array_like, shape (m,)
@@ -490,8 +490,8 @@ def projected_cg(H, c, Z, Y, b, trust_radius=np.inf,
     """
     CLOSE_TO_ZERO = 1e-25
 
-    n, = np.shape(c)  # Number of parameters
-    m, = np.shape(b)  # Number of constraints
+    n, = mx.shape(c)  # Number of parameters
+    m, = mx.shape(b)  # Number of constraints
 
     # Initial Values
     x = Y.dot(-b)
@@ -522,12 +522,12 @@ def projected_cg(H, c, Z, Y, b, trust_radius=np.inf,
 
     # Set default tolerance
     if tol is None:
-        tol = max(min(0.01 * np.sqrt(rt_g), 0.1 * rt_g), CLOSE_TO_ZERO)
+        tol = max(min(0.01 * mx.sqrt(rt_g), 0.1 * rt_g), CLOSE_TO_ZERO)
     # Set default lower and upper bounds
     if lb is None:
-        lb = np.full(n, -np.inf)
+        lb = mx.full(n, -mx.inf)
     if ub is None:
-        ub = np.full(n, np.inf)
+        ub = mx.full(n, mx.inf)
     # Set maximum iterations
     if max_iter is None:
         max_iter = n-m
@@ -539,7 +539,7 @@ def projected_cg(H, c, Z, Y, b, trust_radius=np.inf,
     hits_boundary = False
     stop_cond = 1
     counter = 0
-    last_feasible_x = np.zeros_like(x)
+    last_feasible_x = mx.zeros_like(x)
     k = 0
     for i in range(max_iter):
         # Stop criteria - Tolerance : r.T g < tol
@@ -551,7 +551,7 @@ def projected_cg(H, c, Z, Y, b, trust_radius=np.inf,
         pt_H_p = H_p.dot(p)
         # Stop criteria - Negative curvature
         if pt_H_p <= 0:
-            if np.isinf(trust_radius):
+            if mx.isinf(trust_radius):
                 raise ValueError("Negative curvature not allowed "
                                  "for unrestricted problems.")
             else:
@@ -574,7 +574,7 @@ def projected_cg(H, c, Z, Y, b, trust_radius=np.inf,
         x_next = x + alpha*p
 
         # Stop criteria - Hits boundary
-        if np.linalg.norm(x_next) >= trust_radius:
+        if mx.linalg.norm(x_next) >= trust_radius:
             # Find intersection with box constraints
             _, theta, intersect = box_sphere_intersections(x, alpha*p, lb, ub,
                                                            trust_radius)

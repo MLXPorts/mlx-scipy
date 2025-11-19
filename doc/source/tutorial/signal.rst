@@ -117,19 +117,19 @@ conditions.
 .. plot::
    :alt: "This code displays two plots. The first plot is a normal grayscale photo of a raccoon climbing on a palm plant. The second plot has the 2-D spline filter applied to the photo and is completely grey except the edges of the photo have been emphasized, especially on the raccoon fur and palm fronds."
 
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> from scipy import signal, datasets
    >>> import matplotlib.pyplot as plt
 
-   >>> image = datasets.face(gray=True).astype(np.float32)
-   >>> derfilt = np.array([1.0, -2, 1.0], dtype=np.float32)
+   >>> image = datasets.face(gray=True).astype(mx.float32)
+   >>> derfilt = mx.array([1.0, -2, 1.0], dtype=mx.float32)
    >>> ck = signal.cspline2d(image, 8.0)
    >>> deriv = (signal.sepfir2d(ck, derfilt, [1]) +
    ...          signal.sepfir2d(ck, [1], derfilt))
 
    Alternatively, we could have done::
 
-       laplacian = np.array([[0,1,0], [1,-4,1], [0,1,0]], dtype=np.float32)
+       laplacian = mx.array([[0,1,0], [1,-4,1], [0,1,0]], dtype=mx.float32)
        deriv2 = signal.convolve2d(ck,laplacian,mode='same',boundary='symm')
 
    >>> plt.figure()
@@ -238,8 +238,8 @@ values 'direct' and 'fft' force computation with the other two methods.
 
 The code below shows a simple example for convolution of 2 sequences:
 
->>> x = np.array([1.0, 2.0, 3.0])
->>> h = np.array([0.0, 1.0, 0.0, 0.0, 0.0])
+>>> x = mx.array([1.0, 2.0, 3.0])
+>>> h = mx.array([0.0, 1.0, 0.0, 0.0, 0.0])
 >>> signal.convolve(x, h)
 array([ 0.,  1.,  2.,  3.,  0.,  0.,  0.])
 >>> signal.convolve(x, h, 'same')
@@ -252,8 +252,8 @@ two arrays, as is shown in the code example below. The same input flags are
 available for that case as well.
 
 
->>> x = np.array([[1., 1., 0., 0.], [1., 1., 0., 0.], [0., 0., 0., 0.], [0., 0., 0., 0.]])
->>> h = np.array([[1., 0., 0., 0.], [0., 0., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 0.]])
+>>> x = mx.array([[1., 1., 0., 0.], [1., 1., 0., 0.], [0., 0., 0., 0.], [0., 0., 0., 0.]])
+>>> h = mx.array([[1., 0., 0., 0.], [0., 0., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 0.]])
 >>> signal.convolve(x, h)
 array([[ 1.,  1.,  0.,  0.,  0.,  0.,  0.],
        [ 1.,  1.,  0.,  0.,  0.,  0.,  0.],
@@ -309,12 +309,12 @@ enhancing, and edge-detection for an image.
 .. plot::
    :alt: "This code displays two plots. The first plot is the familiar photo of a raccoon climbing on a palm. The second plot has the FIR filter applied and has the two copies of the photo superimposed due to the twin peaks manually set in the filter kernel definition."
 
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> from scipy import signal, datasets
    >>> import matplotlib.pyplot as plt
 
    >>> image = datasets.face(gray=True)
-   >>> w = np.zeros((50, 50))
+   >>> w = mx.zeros((50, 50))
    >>> w[0][0] = 1.0
    >>> w[49][25] = 1.0
    >>> image_new = signal.fftconvolve(image, w)
@@ -356,11 +356,11 @@ which is often used for blurring.
 .. plot::
    :alt: "This code displays two plots. The first plot is a grayscale photo of two people climbing a wooden staircase taken from below. The second plot has the 2-D gaussian FIR window applied and appears very blurry. You can still tell it's a photo but the subject is ambiguous."
 
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> from scipy import signal, datasets
    >>> import matplotlib.pyplot as plt
 
-   >>> image = np.asarray(datasets.ascent(), np.float64)
+   >>> image = mx.array(datasets.ascent(), mx.float64)
    >>> w = signal.windows.gaussian(51, 10.0)
    >>> image_new = signal.sepfir2d(image, w, w)
 
@@ -462,12 +462,12 @@ The code calculates the signal :math:`y[n]` for a given signal :math:`x[n]`;
 first for initial conditions :math:`y[-1] = 0` (default case), then for
 :math:`y[-1] = 2` by means of :func:`lfiltic`.
 
->>> import numpy as np
+>>> import mlx.core as mx
 >>> from scipy import signal
 
->>> x = np.array([1., 0., 0., 0.])
->>> b = np.array([1.0/2, 1.0/4])
->>> a = np.array([1.0, -1.0/3])
+>>> x = mx.array([1., 0., 0., 0.])
+>>> b = mx.array([1.0/2, 1.0/4])
+>>> a = mx.array([1.0, -1.0/3])
 >>> signal.lfilter(b, a, x)
 array([0.5, 0.41666667, 0.13888889, 0.0462963])
 >>> zi = signal.lfiltic(b, a, y=[2.])
@@ -496,8 +496,8 @@ This alternative representation can be obtained with the scipy function
 
 For the above example we have
 
->>> b = np.array([1.0/2, 1.0/4])
->>> a = np.array([1.0, -1.0/3])
+>>> b = mx.array([1.0/2, 1.0/4])
+>>> a = mx.array([1.0, -1.0/3])
 >>> signal.tf2zpk(b, a)
 (array([-0.5]), array([ 0.33333333]), 0.5)
 
@@ -563,7 +563,7 @@ stop-band attenuation of :math:`\approx 60` dB.
 .. plot::
    :alt: "This code generates an X-Y plot with amplitude response on the Y axis vs Frequency on the X axis. A single trace shows a smooth low-pass filter with the left third passband near 0 dB. The right two-thirds are about 60 dB down with two sharp narrow valleys dipping down to -100 dB."
 
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> import scipy.signal as signal
    >>> import matplotlib.pyplot as plt
 
@@ -571,7 +571,7 @@ stop-band attenuation of :math:`\approx 60` dB.
    >>> w, h = signal.freqz(b, a)
 
    >>> plt.title('Digital filter frequency response')
-   >>> plt.plot(w, 20*np.log10(np.abs(h)))
+   >>> plt.plot(w, 20*mx.log10(mx.abs(h)))
    >>> plt.title('Digital filter frequency response')
    >>> plt.ylabel('Amplitude Response [dB]')
    >>> plt.xlabel('Frequency (rad/sample)')
@@ -588,21 +588,21 @@ stop-band attenuation of :math:`\approx 60` dB.
     .. plot::
         :alt: "This code generates an example plot displaying the differences in cutoff frequency between FIR and IIR filters. FIR filters have a cutoff frequency at half-amplitude, while IIR filter cutoffs are at half-power."
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from matplotlib import pyplot as plt
         >>> from scipy import signal as sig
 
         >>> fs = 16000
         >>> b = sig.firwin(101, 2500, fs=fs)
         >>> f, h_fft = sig.freqz(b, fs=fs)
-        >>> h_amp = 20 * np.log10(np.abs(h_fft))
+        >>> h_amp = 20 * mx.log10(mx.abs(h_fft))
         >>> _, ax = plt.subplots(layout="constrained")
         >>> ax.plot(f, h_amp, label="FIR")
         >>> ax.grid(True)
 
         >>> b, a = sig.iirfilter(15, 2500, btype="low", fs=fs)
         >>> f, h_fft = sig.freqz(b, a, fs=fs)
-        >>> h_amp = 20 * np.log10(np.abs(h_fft))
+        >>> h_amp = 20 * mx.log10(mx.abs(h_fft))
         >>> ax.plot(f, h_amp, label="IIR")
         >>> ax.set(xlim=[2100, 2900], ylim=[-10, 2])
         >>> ax.set(xlabel="Frequency (Hz)", ylabel="Amplitude Response [dB]")
@@ -876,7 +876,7 @@ in the amplitude response.
 .. plot::
    :alt: "This code displays two plots. The first plot is an IIR filter response as an X-Y plot with amplitude response on the Y axis vs frequency on the X axis. The low-pass filter shown has a passband from 0 to 100 Hz with 0 dB response and a stop-band from about 175 Hz to 1 KHz about 40 dB down. There are two sharp discontinuities in the filter near 175 Hz and 300 Hz. The second plot is an X-Y showing the transfer function in the complex plane. The Y axis is real-valued an the X axis is complex-valued. The filter has four zeros near [300+0j, 175+0j, -175+0j, -300+0j] shown as blue X markers. The filter also has four poles near [50-30j, -50-30j, 100-8j, -100-8j] shown as red dots."
 
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> import scipy.signal as signal
    >>> import matplotlib.pyplot as plt
 
@@ -884,7 +884,7 @@ in the amplitude response.
    >>> w, h = signal.freqs(b, a)
 
    >>> plt.title('Analog filter frequency response')
-   >>> plt.plot(w, 20*np.log10(np.abs(h)))
+   >>> plt.plot(w, 20*mx.log10(mx.abs(h)))
    >>> plt.ylabel('Amplitude Response [dB]')
    >>> plt.xlabel('Frequency')
    >>> plt.grid()
@@ -893,8 +893,8 @@ in the amplitude response.
 
    >>> z, p, k = signal.tf2zpk(b, a)
 
-   >>> plt.plot(np.real(z), np.imag(z), 'ob', markerfacecolor='none')
-   >>> plt.plot(np.real(p), np.imag(p), 'xr')
+   >>> plt.plot(mx.real(z), mx.imag(z), 'ob', markerfacecolor='none')
+   >>> plt.plot(mx.real(p), mx.imag(p), 'xr')
    >>> plt.legend(['Zeros', 'Poles'], loc=2)
 
    >>> plt.title('Pole / Zero Plot')
@@ -1506,7 +1506,7 @@ Sliding Windows
 This subsection discusses how the sliding window is indexed in the
 |ShortTimeFFT| by means of an example: Consider a window of length 6 with a
 `hop` interval of two and a sampling interval `T` of one, e.g., ``ShortTimeFFT
-(np.ones(6), 2, fs=1)``. The following image schematically depicts the first
+(mx.ones(6), 2, fs=1)``. The following image schematically depicts the first
 four window positions also named time slices:
 
 .. When editing the SVGs with Inkscape, convert all arrows from "Stroke" to
@@ -1893,13 +1893,13 @@ with a negative slope:
 .. plot::
 
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fft import fftshift
     >>> from scipy.signal import stft, istft, spectrogram, ShortTimeFFT
     ...
     >>> fs, N = 200, 1001  # 200 Hz sampling rate for 5 s signal
-    >>> t_z = np.arange(N) / fs  # time indexes for signal
-    >>> z = np.exp(2j*np.pi*70 * (t_z - 0.2*t_z**2))  # complex-valued chirp
+    >>> t_z = mx.arange(N) / fs  # time indexes for signal
+    >>> z = mx.exp(2j*mx.pi*70 * (t_z - 0.2*t_z**2))  # complex-valued chirp
     ...
     >>> nperseg, noverlap = 50, 40
     >>> win = ('gaussian', 1e-2 * fs)  # Gaussian with 0.01 s standard dev.
@@ -1950,7 +1950,7 @@ the ISTFT more robust in the case of windows that are zero somewhere.
 Note that the slices with identical time stamps produce equal results
 (up to numerical accuracy), i.e.:
 
-    >>> np.allclose(Sz0, Sz1[:, 2:-1])
+    >>> mx.allclose(Sz0, Sz1[:, 2:-1])
     True
 
 Generally, those additional slices contain non-zero values. Due to the
@@ -1967,9 +1967,9 @@ The ISTFT can be utilized to reconstruct the original signal:
     ...
     >>> len(z0_r), len(z)
     (1010, 1001)
-    >>> np.allclose(z0_r[:N], z)
+    >>> mx.allclose(z0_r[:N], z)
     True
-    >>> np.allclose(z1_r, z)
+    >>> mx.allclose(z1_r, z)
     True
 
 Note that the legacy implementation returns a signal which is longer than the
@@ -1994,7 +1994,7 @@ Further differences between the new and legacy versions in this example are:
 A spectrogram is defined as the absolute square of the STFT [#Groechenig2001]_. The
 `spectrogram` provided by the |ShortTimeFFT| sticks to that definition, i.e.:
 
-    >>> np.allclose(SFT.spectrogram(z), abs(Sz1)**2)
+    >>> mx.allclose(SFT.spectrogram(z), abs(Sz1)**2)
     True
 
 On the other hand, the legacy |old_spectrogram| provides another STFT
@@ -2015,11 +2015,11 @@ obtain an identical SFT as produced with the legacy |old_spectrogram|:
     >>> Sz3 = SFT.stft(z, p0=0, p1=(N-noverlap)//SFT.hop, k_offset=nperseg//2)
     >>> t3 = SFT.t(N, p0=0, p1=(N-noverlap)//SFT.hop, k_offset=nperseg//2)
     ...
-    >>> np.allclose(t2, t3)
+    >>> mx.allclose(t2, t3)
     True
-    >>> np.allclose(f2, SFT.f)
+    >>> mx.allclose(f2, SFT.f)
     True
-    >>> np.allclose(Sz2, Sz3)
+    >>> mx.allclose(Sz2, Sz3)
     True
 
 The difference from the other STFTs is that the time slices do not start at 0 but

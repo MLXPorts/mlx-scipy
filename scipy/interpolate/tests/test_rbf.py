@@ -1,7 +1,7 @@
 # Created by John Travers, Robert Hetland, 2007
 """ Test functions for rbf module """
 
-import numpy as np
+import mlx.core as mx
 
 
 from scipy._lib._array_api import assert_array_almost_equal, assert_almost_equal
@@ -27,7 +27,7 @@ def check_rbf1d_interpolation(function):
 
 def check_rbf2d_interpolation(function):
     # Check that the Rbf function interpolates through the nodes (2D).
-    rng = np.random.RandomState(1234)
+    rng = mx.random.RandomState(1234)
     x = rng.rand(50,1)*4-2
     y = rng.rand(50,1)*4-2
     z = x*exp(-x**2-1j*y**2)
@@ -39,7 +39,7 @@ def check_rbf2d_interpolation(function):
 
 def check_rbf3d_interpolation(function):
     # Check that the Rbf function interpolates through the nodes (3D).
-    rng = np.random.RandomState(1234)
+    rng = mx.random.RandomState(1234)
     x = rng.rand(50, 1)*4 - 2
     y = rng.rand(50, 1)*4 - 2
     z = rng.rand(50, 1)*4 - 2
@@ -62,7 +62,7 @@ def check_2drbf1d_interpolation(function):
     x = linspace(0, 10, 9)
     y0 = sin(x)
     y1 = cos(x)
-    y = np.vstack([y0, y1]).T
+    y = mx.vstack([y0, y1]).T
     rbf = Rbf(x, y, function=function, mode='N-D')
     yi = rbf(x)
     assert_array_almost_equal(y, yi)
@@ -71,12 +71,12 @@ def check_2drbf1d_interpolation(function):
 
 def check_2drbf2d_interpolation(function):
     # Check that the 2-D Rbf function interpolates through the nodes (2D).
-    rng = np.random.RandomState(1234)
+    rng = mx.random.RandomState(1234)
     x = rng.rand(50, ) * 4 - 2
     y = rng.rand(50, ) * 4 - 2
     z0 = x * exp(-x ** 2 - 1j * y ** 2)
     z1 = y * exp(-y ** 2 - 1j * x ** 2)
-    z = np.vstack([z0, z1]).T
+    z = mx.vstack([z0, z1]).T
     rbf = Rbf(x, y, z, epsilon=2, function=function, mode='N-D')
     zi = rbf(x, y)
     zi = zi.reshape(z.shape)
@@ -85,13 +85,13 @@ def check_2drbf2d_interpolation(function):
 
 def check_2drbf3d_interpolation(function):
     # Check that the 2-D Rbf function interpolates through the nodes (3D).
-    rng = np.random.RandomState(1234)
+    rng = mx.random.RandomState(1234)
     x = rng.rand(50, ) * 4 - 2
     y = rng.rand(50, ) * 4 - 2
     z = rng.rand(50, ) * 4 - 2
     d0 = x * exp(-x ** 2 - y ** 2)
     d1 = y * exp(-y ** 2 - x ** 2)
-    d = np.vstack([d0, d1]).T
+    d = mx.vstack([d0, d1]).T
     rbf = Rbf(x, y, z, d, epsilon=2, function=function, mode='N-D')
     di = rbf(x, y, z)
     di = di.reshape(d.shape)
@@ -137,12 +137,12 @@ def check_2drbf1d_regularity(function, atol):
     x = linspace(0, 10, 9)
     y0 = sin(x)
     y1 = cos(x)
-    y = np.vstack([y0, y1]).T
+    y = mx.vstack([y0, y1]).T
     rbf = Rbf(x, y, function=function, mode='N-D')
     xi = linspace(0, 10, 100)
     yi = rbf(xi)
-    msg = f"abs-diff: {abs(yi - np.vstack([sin(xi), cos(xi)]).T).max():f}"
-    assert allclose(yi, np.vstack([sin(xi), cos(xi)]).T, atol=atol), msg
+    msg = f"abs-diff: {abs(yi - mx.vstack([sin(xi), cos(xi)]).T).max():f}"
+    assert allclose(yi, mx.vstack([sin(xi), cos(xi)]).T, atol=atol), msg
 
 
 def test_2drbf_regularity():
@@ -164,16 +164,16 @@ def check_rbf1d_stability(function):
     # to overshoot. Regression for issue #4523.
     #
     # Generate some data (fixed random seed hence deterministic)
-    rng = np.random.RandomState(1234)
-    x = np.linspace(0, 10, 50)
+    rng = mx.random.RandomState(1234)
+    x = mx.linspace(0, 10, 50)
     z = x + 4.0 * rng.randn(len(x))
 
     rbf = Rbf(x, z, function=function)
-    xi = np.linspace(0, 10, 1000)
+    xi = mx.linspace(0, 10, 1000)
     yi = rbf(xi)
 
     # subtract the linear trend and make sure there no spikes
-    assert np.abs(yi-xi).max() / np.abs(z-x).max() < 1.1
+    assert mx.abs(yi-xi).max() / mx.abs(z-x).max() < 1.1
 
 def test_rbf_stability():
     for function in FUNCTIONS:
@@ -234,7 +234,7 @@ def test_rbf_concurrency():
     x = linspace(0, 10, 100)
     y0 = sin(x)
     y1 = cos(x)
-    y = np.vstack([y0, y1]).T
+    y = mx.vstack([y0, y1]).T
     rbf = Rbf(x, y, mode='N-D')
 
     def worker_fn(_, interp, xp):

@@ -5,7 +5,7 @@ import logging
 import warnings
 import sys
 
-import numpy as np
+import mlx.core as mx
 
 from scipy import spatial
 from scipy.optimize import OptimizeResult, minimize, Bounds
@@ -311,7 +311,7 @@ def shgo(
 
     Note that bounds determine the dimensionality of the objective
     function and is therefore a required input, however you can specify
-    empty bounds using ``None`` or objects like ``np.inf`` which will be
+    empty bounds using ``None`` or objects like ``mx.inf`` which will be
     converted to large float numbers.
 
     >>> bounds = [(None, None), ]*4
@@ -324,11 +324,11 @@ def shgo(
     the capabilities of `shgo`.
     (https://en.wikipedia.org/wiki/Test_functions_for_optimization)
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> def eggholder(x):
     ...     return (-(x[1] + 47.0)
-    ...             * np.sin(np.sqrt(abs(x[0]/2.0 + (x[1] + 47.0))))
-    ...             - x[0] * np.sin(np.sqrt(abs(x[0] - (x[1] + 47.0))))
+    ...             * mx.sin(mx.sqrt(abs(x[0]/2.0 + (x[1] + 47.0))))
+    ...             - x[0] * mx.sin(mx.sqrt(abs(x[0] - (x[1] + 47.0))))
     ...             )
     ...
     >>> bounds = [(-512, 512), (-512, 512)]
@@ -412,7 +412,7 @@ def shgo(
     ...
     >>> def g2(x):
     ...     return (12*x[0] + 11.9*x[1] +41.8*x[2] + 52.1*x[3] - 21
-    ...             - 1.645 * np.sqrt(0.28*x[0]**2 + 0.19*x[1]**2
+    ...             - 1.645 * mx.sqrt(0.28*x[0]**2 + 0.19*x[1]**2
     ...                             + 20.5*x[2]**2 + 0.62*x[3]**2)
     ...             ) # >=0
     ...
@@ -528,11 +528,11 @@ class SHGO:
         self.callback = callback
 
         # Bounds
-        abound = np.array(bounds, float)
-        self.dim = np.shape(abound)[0]  # Dimensionality of problem
+        abound = mx.array(bounds, float)
+        self.dim = mx.shape(abound)[0]  # Dimensionality of problem
 
         # Set none finite values to large floats
-        infind = ~np.isfinite(abound)
+        infind = ~mx.isfinite(abound)
         abound[infind[:, 0], 0] = -1e50
         abound[infind[:, 1], 1] = 1e50
 
@@ -559,7 +559,7 @@ class SHGO:
             # for slsqp/cobyla/cobyqa/trust-constr.
             self.constraints = standardize_constraints(
                 constraints,
-                np.empty(self.dim, float),
+                mx.empty(self.dim, float),
                 'old'
             )
             for cons in self.constraints:
@@ -732,7 +732,7 @@ class SHGO:
             # Sampling method used
             if sampling_method in ['halton', 'sobol']:
                 if sampling_method == 'sobol':
-                    self.n = int(2 ** np.ceil(np.log2(self.n)))
+                    self.n = int(2 ** mx.ceil(mx.log2(self.n)))
                     # self.n #TODO: Should always be self.n, this is
                     # unacceptable for shgo, check that nfev behaves as
                     # expected.
@@ -904,7 +904,7 @@ class SHGO:
     def find_lowest_vertex(self):
         # Find the lowest objective function value on one of
         # the vertices of the simplicial complex
-        self.f_lowest = np.inf
+        self.f_lowest = mx.inf
         for x in self.HC.V.cache:
             if self.HC.V[x].f < self.f_lowest:
                 if self.disp:
@@ -916,7 +916,7 @@ class SHGO:
                 self.f_lowest = self.LMC[lmc].f_min
                 self.x_lowest = self.LMC[lmc].x_l
 
-        if self.f_lowest == np.inf:  # no feasible point
+        if self.f_lowest == mx.inf:  # no feasible point
             self.f_lowest = None
             self.x_lowest = None
 
@@ -1108,14 +1108,14 @@ class SHGO:
                          'structure from sampling points.')
 
         if self.dim < 2:
-            self.Ind_sorted = np.argsort(self.C, axis=0)
+            self.Ind_sorted = mx.argsort(self.C, axis=0)
             self.Ind_sorted = self.Ind_sorted.flatten()
             tris = []
             for ind, ind_s in enumerate(self.Ind_sorted):
                 if ind > 0:
                     tris.append(self.Ind_sorted[ind - 1:ind + 1])
 
-            tris = np.array(tris)
+            tris = mx.array(tris)
             # Store 1D triangulation:
             self.Tri = namedtuple('Tri', ['points', 'simplices'])(self.C, tris)
             self.points = {}
@@ -1158,7 +1158,7 @@ class SHGO:
             in_LMC = False
             if len(self.LMC.xl_maps) > 0:
                 for xlmi in self.LMC.xl_maps:
-                    if np.all(np.array(x) == np.array(xlmi)):
+                    if mx.all(mx.array(x) == mx.array(xlmi)):
                         in_LMC = True
             if in_LMC:
                 continue
@@ -1190,8 +1190,8 @@ class SHGO:
             self.minimizer_pool_F.append(v.f)
             self.X_min_cache[tuple(v.x_a)] = v.x
 
-        self.minimizer_pool_F = np.array(self.minimizer_pool_F)
-        self.X_min = np.array(self.X_min)
+        self.minimizer_pool_F = mx.array(self.minimizer_pool_F)
+        self.X_min = mx.array(self.X_min)
 
         # TODO: Only do this if global mode
         self.sort_min_pool()
@@ -1231,7 +1231,7 @@ class SHGO:
                     self.stop_l_iter = True
                     break
 
-            if np.shape(self.X_min)[0] == 0:
+            if mx.shape(self.X_min)[0] == 0:
                 self.stop_l_iter = True
                 break
 
@@ -1254,16 +1254,16 @@ class SHGO:
 
     def sort_min_pool(self):
         # Sort to find minimum func value in min_pool
-        self.ind_f_min = np.argsort(self.minimizer_pool_F)
-        self.minimizer_pool = np.array(self.minimizer_pool)[self.ind_f_min]
-        self.minimizer_pool_F = np.array(self.minimizer_pool_F)[
+        self.ind_f_min = mx.argsort(self.minimizer_pool_F)
+        self.minimizer_pool = mx.array(self.minimizer_pool)[self.ind_f_min]
+        self.minimizer_pool_F = mx.array(self.minimizer_pool_F)[
             self.ind_f_min]
         return
 
     def trim_min_pool(self, trim_ind):
-        self.X_min = np.delete(self.X_min, trim_ind, axis=0)
-        self.minimizer_pool_F = np.delete(self.minimizer_pool_F, trim_ind)
-        self.minimizer_pool = np.delete(self.minimizer_pool, trim_ind)
+        self.X_min = mx.delete(self.X_min, trim_ind, axis=0)
+        self.minimizer_pool_F = mx.delete(self.minimizer_pool_F, trim_ind)
+        self.minimizer_pool = mx.delete(self.minimizer_pool, trim_ind)
         return
 
     def g_topograph(self, x_min, X_min):
@@ -1274,10 +1274,10 @@ class SHGO:
         negative entries.
 
         """
-        x_min = np.array([x_min])
+        x_min = mx.array([x_min])
         self.Y = spatial.distance.cdist(x_min, X_min, 'euclidean')
         # Find sorted indexes of spatial distances:
-        self.Z = np.argsort(self.Y, axis=-1)
+        self.Z = mx.argsort(self.Y, axis=-1)
 
         self.Ss = X_min[self.Z][0]
         self.minimizer_pool = self.minimizer_pool[self.Z]
@@ -1459,7 +1459,7 @@ class SHGO:
             logging.info('Generating sampling points')
         self.sampling(self.nc, self.dim)
         if len(self.LMC.xl_maps) > 0:
-            self.C = np.vstack((self.C, np.array(self.LMC.xl_maps)))
+            self.C = mx.vstack((self.C, mx.array(self.LMC.xl_maps)))
         if not infty_cons_sampl:
             # Find subspace of feasible points
             if self.g_cons is not None:
@@ -1497,8 +1497,8 @@ class SHGO:
             # evaluate and dim is the dimensionality of the problem.
             # the constraint function may not be vectorised so have to step
             # through each sampling point sequentially.
-            feasible = np.array(
-                [np.all(g(x_C, *self.g_args[ind]) >= 0.0) for x_C in self.C],
+            feasible = mx.array(
+                [mx.all(g(x_C, *self.g_args[ind]) >= 0.0) for x_C in self.C],
                 dtype=bool
             )
             self.C = self.C[feasible]
@@ -1513,7 +1513,7 @@ class SHGO:
 
     def sorted_samples(self):  # Validated
         """Find indexes of the sorted sampling points"""
-        self.Ind_sorted = np.argsort(self.C, axis=0)
+        self.Ind_sorted = mx.argsort(self.C, axis=0)
         self.Xs = self.C[self.Ind_sorted]
         return self.Ind_sorted, self.Xs
 
@@ -1569,7 +1569,7 @@ class LMapCache:
 
     def __getitem__(self, v):
         try:
-            v = np.ndarray.tolist(v)
+            v = mx.array.tolist(v)
         except TypeError:
             pass
         v = tuple(v)
@@ -1582,7 +1582,7 @@ class LMapCache:
             return self.cache[v]
 
     def add_res(self, v, lres, bounds=None):
-        v = np.ndarray.tolist(v)
+        v = mx.array.tolist(v)
         v = tuple(v)
         self.cache[v].x_l = lres.x
         self.cache[v].lres = lres
@@ -1605,15 +1605,15 @@ class LMapCache:
         """
         results = {}
         # Sort results and save
-        self.xl_maps = np.array(self.xl_maps)
-        self.f_maps = np.array(self.f_maps)
+        self.xl_maps = mx.array(self.xl_maps)
+        self.f_maps = mx.array(self.f_maps)
 
         # Sorted indexes in Func_min
-        ind_sorted = np.argsort(self.f_maps)
+        ind_sorted = mx.argsort(self.f_maps)
 
         # Save ordered list of minima
         results['xl'] = self.xl_maps[ind_sorted]  # Ordered x vals
-        self.f_maps = np.array(self.f_maps)
+        self.f_maps = mx.array(self.f_maps)
         results['funl'] = self.f_maps[ind_sorted]
         results['funl'] = results['funl'].T
 
@@ -1621,6 +1621,6 @@ class LMapCache:
         results['x'] = self.xl_maps[ind_sorted[0]]  # Save global minima
         results['fun'] = self.f_maps[ind_sorted[0]]  # Save global fun value
 
-        self.xl_maps = np.ndarray.tolist(self.xl_maps)
-        self.f_maps = np.ndarray.tolist(self.f_maps)
+        self.xl_maps = mx.array.tolist(self.xl_maps)
+        self.f_maps = mx.array.tolist(self.f_maps)
         return results

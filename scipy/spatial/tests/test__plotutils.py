@@ -1,5 +1,5 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_, assert_array_equal, assert_allclose
 
 try:
@@ -49,7 +49,7 @@ class TestPlotting:
     def test_gh_19653(self):
         # aspect ratio sensitivity of voronoi_plot_2d
         # infinite Voronoi edges
-        points = np.array([[245.059986986012, 10.971011721360075],
+        points = mx.array([[245.059986986012, 10.971011721360075],
                            [320.49044143557785, 10.970258360366753],
                            [239.79023081978914, 13.108487516946218],
                            [263.38325791238833, 12.93241352743668],
@@ -58,7 +58,7 @@ class TestPlotting:
         fig = voronoi_plot_2d(vor)
         ax = fig.gca()
         infinite_segments = ax.collections[1].get_segments()
-        expected_segments = np.array([[[282.77256, -254.76904],
+        expected_segments = mx.array([[[282.77256, -254.76904],
                                        [282.729714, -4544.744698]],
                                       [[282.77256014, -254.76904029],
                                        [430.08561382, 4032.67658742]],
@@ -71,7 +71,7 @@ class TestPlotting:
     def test_gh_19653_smaller_aspect(self):
         # reasonable behavior for less extreme aspect
         # ratio
-        points = np.array([[24.059986986012, 10.971011721360075],
+        points = mx.array([[24.059986986012, 10.971011721360075],
                            [32.49044143557785, 10.970258360366753],
                            [23.79023081978914, 13.108487516946218],
                            [26.38325791238833, 12.93241352743668],
@@ -80,7 +80,7 @@ class TestPlotting:
         fig = voronoi_plot_2d(vor)
         ax = fig.gca()
         infinite_segments = ax.collections[1].get_segments()
-        expected_segments = np.array([[[28.274979, 8.335027],
+        expected_segments = mx.array([[[28.274979, 8.335027],
                                        [28.270463, -42.19763338]],
                                       [[28.27497869, 8.33502697],
                                        [43.73223829, 56.44555501]],

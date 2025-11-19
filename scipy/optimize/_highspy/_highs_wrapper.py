@@ -1,6 +1,6 @@
 from warnings import warn
 
-import numpy as np
+import mlx.core as mx
 import scipy.optimize._highspy._core as _h # type: ignore[import-not-found]
 from scipy.optimize._highspy import _highs_options as hopt  # type: ignore[attr-defined]
 from scipy.optimize import OptimizeWarning
@@ -105,7 +105,7 @@ def _highs_wrapper(c, indptr, indices, data, lhs, rhs, lb, ub, integrality, opti
     '''
     numcol = c.size
     numrow = rhs.size
-    isMip = integrality is not None and np.sum(integrality) > 0
+    isMip = integrality is not None and mx.sum(integrality) > 0
 
     # default "null" return values
     res = {
@@ -263,7 +263,7 @@ def _highs_wrapper(c, indptr, indices, data, lhs, rhs, lb, ub, integrality, opti
     basis = highs.getBasis()
 
     # Lagrangians for bounds based on column statuses
-    marg_bnds = np.zeros((2, numcol))
+    marg_bnds = mx.zeros((2, numcol))
     basis_col_status = basis.col_status
     solution_col_dual = solution.col_dual
     for ii in range(numcol):
@@ -277,12 +277,12 @@ def _highs_wrapper(c, indptr, indices, data, lhs, rhs, lb, ub, integrality, opti
             "status": model_status,
             "message": highs.modelStatusToString(model_status),
             # Primal solution
-            "x": np.array(solution.col_value),
+            "x": mx.array(solution.col_value),
             # Ax + s = b => Ax = b - s
             # Note: this is for all constraints (A_ub and A_eq)
             "slack": rhs - solution.row_value,
             # lambda are the lagrange multipliers associated with Ax=b
-            "lambda": np.array(solution.row_dual),
+            "lambda": mx.array(solution.row_dual),
             "marg_bnds": marg_bnds,
             "fun": info.objective_function_value,
             "simplex_nit": info.simplex_iteration_count,

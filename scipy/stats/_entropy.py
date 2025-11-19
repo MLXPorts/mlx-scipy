@@ -5,7 +5,7 @@ Created on Fri Apr  2 09:06:05 2021
 """
 
 import math
-import numpy as np
+import mlx.core as mx
 from scipy import special
 from ._axis_nan_policy import _axis_nan_policy_factory
 from scipy._lib._array_api import (array_namespace, xp_promote, xp_device,
@@ -24,11 +24,11 @@ __all__ = ['entropy', 'differential_entropy']
     n_outputs=1, result_to_tuple=lambda x, _: (x,), paired=True,
     too_small=-1  # entropy doesn't have too small inputs
 )
-def entropy(pk: np.typing.ArrayLike,
-            qk: np.typing.ArrayLike | None = None,
+def entropy(pk: mx.typing.ArrayLike,
+            qk: mx.typing.ArrayLike | None = None,
             base: float | None = None,
             axis: int = 0
-            ) -> np.number | np.ndarray:
+            ) -> mx.number | mx.array:
     """
     Calculate the Shannon entropy/relative entropy of given distribution(s).
 
@@ -103,19 +103,19 @@ def entropy(pk: np.typing.ArrayLike,
     --------
     The outcome of a fair coin is the most uncertain:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import entropy
     >>> base = 2  # work in units of bits
-    >>> pk = np.array([1/2, 1/2])  # fair coin
+    >>> pk = mx.array([1/2, 1/2])  # fair coin
     >>> H = entropy(pk, base=base)
     >>> H
     1.0
-    >>> H == -np.sum(pk * np.log(pk)) / np.log(base)
+    >>> H == -mx.sum(pk * mx.log(pk)) / mx.log(base)
     True
 
     The outcome of a biased coin is less uncertain:
 
-    >>> qk = np.array([9/10, 1/10])  # biased coin
+    >>> qk = mx.array([9/10, 1/10])  # biased coin
     >>> entropy(qk, base=base)
     0.46899559358928117
 
@@ -125,7 +125,7 @@ def entropy(pk: np.typing.ArrayLike,
     >>> D = entropy(pk, qk, base=base)
     >>> D
     0.7369655941662062
-    >>> np.isclose(D, np.sum(pk * np.log(pk/qk)) / np.log(base), rtol=4e-16, atol=0)
+    >>> mx.isclose(D, mx.sum(pk * mx.log(pk/qk)) / mx.log(base), rtol=4e-16, atol=0)
     True
 
     The cross entropy can be calculated as the sum of the entropy and
@@ -134,7 +134,7 @@ def entropy(pk: np.typing.ArrayLike,
     >>> CE = entropy(pk, base=base) + entropy(pk, qk, base=base)
     >>> CE
     1.736965594166206
-    >>> CE == -np.sum(pk * np.log(qk)) / np.log(base)
+    >>> CE == -mx.sum(pk * mx.log(qk)) / mx.log(base)
     True
 
     """
@@ -144,7 +144,7 @@ def entropy(pk: np.typing.ArrayLike,
     xp = array_namespace(pk, qk)
     pk, qk = xp_promote(pk, qk, broadcast=True, xp=xp)
 
-    with np.errstate(invalid='ignore'):
+    with mx.errstate(invalid='ignore'):
         if qk is not None:
             pk, qk = _share_masks(pk, qk, xp=xp)
             qk = qk / xp.sum(qk, axis=axis, keepdims=True)
@@ -182,13 +182,13 @@ def _differential_entropy_is_too_small(samples, kwargs, axis=-1):
     too_small=_differential_entropy_is_too_small
 )
 def differential_entropy(
-    values: np.typing.ArrayLike,
+    values: mx.typing.ArrayLike,
     *,
     window_length: int | None = None,
     base: float | None = None,
     axis: int = 0,
     method: str = "auto",
-) -> np.number | np.ndarray:
+) -> mx.number | mx.array:
     r"""Given a sample of a distribution, estimate the differential entropy.
 
     Several estimation methods are available using the `method` parameter. By
@@ -274,12 +274,12 @@ def differential_entropy(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import differential_entropy, norm
 
     Entropy of a standard normal distribution:
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> values = rng.standard_normal(100)
     >>> differential_entropy(values)
     1.3407817436640392
@@ -300,11 +300,11 @@ def differential_entropy(
     >>>
     >>> def rmse(res, expected):
     ...     '''Root mean squared error'''
-    ...     return np.sqrt(np.mean((res - expected)**2))
+    ...     return mx.sqrt(mx.mean((res - expected)**2))
     >>>
     >>>
-    >>> a, b = np.log10(5), np.log10(1000)
-    >>> ns = np.round(np.logspace(a, b, 10)).astype(int)
+    >>> a, b = mx.log10(5), mx.log10(1000)
+    >>> ns = mx.round(mx.logspace(a, b, 10)).astype(int)
     >>> reps = 1000  # number of repetitions for each sample size
     >>> expected = stats.expon.entropy()
     >>>

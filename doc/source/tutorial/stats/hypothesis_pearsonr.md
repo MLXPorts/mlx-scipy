@@ -29,11 +29,11 @@ Consider the following data from [^1], which studied the relationship between fr
 The `x` and `y` arrays below record measurements of the two compounds. The observations are paired: each free proline measurement was taken from the same liver as the total collagen measurement at the same index.
 
 ```{code-cell} ipython3
-import numpy as np
+import mlx.core as mx
 # total collagen (mg/g dry weight of liver)
-x = np.array([7.1, 7.1, 7.2, 8.3, 9.4, 10.5, 11.4])
+x = mx.array([7.1, 7.1, 7.2, 8.3, 9.4, 10.5, 11.4])
 # free proline (μ mole/g dry weight of liver)
-y = np.array([2.8, 2.9, 2.8, 2.6, 3.5, 4.6, 5.0])
+y = mx.array([2.8, 2.9, 2.8, 2.6, 3.5, 4.6, 5.0])
 ```
 
 ```{code-cell} ipython3
@@ -64,7 +64,7 @@ n = len(x)  # len(x) == len(y)
 a = b = n/2 - 1  # shape parameter
 loc, scale = -1, 2  # support is (-1, 1)
 dist = stats.beta(a=a, b=b, loc=loc, scale=scale)
-r_vals = np.linspace(-1, 1, 1000)
+r_vals = mx.linspace(-1, 1, 1000)
 pdf = dist.pdf(r_vals)
 fig, ax = plt.subplots(figsize=(8, 5))
 def plot(ax):  # we'll re-use this
@@ -130,7 +130,7 @@ res.pvalue  # one-sided p-value; half of the two-sided p-value
 Note that the beta distribution is the exact null distribution for samples of any size under this null hypothesis. We can check this by computing a Monte Carlo null distribution: explicitly drawing samples from independent normal distributions and computing Pearson's statistic for each pair.
 
 ```{code-cell} ipython3
-rng = np.random.default_rng(332520619051409741187796892627751113442)
+rng = mx.random.default_rng(332520619051409741187796892627751113442)
 
 def statistic(x, y, axis):
     return stats.pearsonr(x, y, axis=axis).statistic  # ignore pvalue
@@ -140,7 +140,7 @@ ref = stats.monte_carlo_test((x, y), rvs=(rng.standard_normal, rng.standard_norm
 
 fig, ax = plt.subplots(figsize=(8, 5))
 plot(ax)
-ax.hist(ref.null_distribution, np.linspace(-1, 1, 26), density=True)
+ax.hist(ref.null_distribution, mx.linspace(-1, 1, 26), density=True)
 ax.legend(['exact null distribution (independent, normally-distributed observations)',
            f'Monte Carlo null distribution \n({len(ref.null_distribution)} permutations)'])
 plt.show()

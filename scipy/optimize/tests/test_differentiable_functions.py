@@ -1,6 +1,6 @@
 import pytest
 import platform
-import numpy as np
+import mlx.core as mx
 from numpy.testing import (TestCase, assert_array_almost_equal,
                            assert_array_equal, assert_, assert_allclose,
                            assert_equal)
@@ -29,11 +29,11 @@ class ExScalarFunction:
 
     def grad(self, x):
         self.ngev += 1
-        return np.array([4*x[0]-1, 4*x[1]])
+        return mx.array([4*x[0]-1, 4*x[1]])
 
     def hess(self, x):
         self.nhev += 1
-        return 4*np.eye(2)
+        return 4*mx.eye(2)
 
 
 class TestScalarFunction(TestCase):
@@ -45,7 +45,7 @@ class TestScalarFunction(TestCase):
 
         x0 = [1.0, 0.0]
         analit = ScalarFunction(ex.fun, x0, (), ex.grad,
-                                ex.hess, None, (-np.inf, np.inf))
+                                ex.hess, None, (-mx.inf, mx.inf))
         nfev += 1
         ngev += 1
         assert_array_equal(ex.nfev, nfev)
@@ -53,7 +53,7 @@ class TestScalarFunction(TestCase):
         assert_array_equal(ex.ngev, ngev)
         assert_array_equal(analit.ngev, nfev)
         approx = ScalarFunction(ex.fun, x0, (), '2-point',
-                                ex.hess, None, (-np.inf, np.inf))
+                                ex.hess, None, (-mx.inf, mx.inf))
         nfev += 3
         ngev += 1
         assert_array_equal(ex.nfev, nfev)
@@ -133,15 +133,15 @@ class TestScalarFunction(TestCase):
 
     @pytest.mark.fail_slow(5.0)
     def test_workers(self):
-        x0 = np.array([2.0, 0.3])
+        x0 = mx.array([2.0, 0.3])
         ex = ExScalarFunction()
         ex2 = ExScalarFunction()
         with MapWrapper(2) as mapper:
             approx = ScalarFunction(ex.fun, x0, (), '2-point',
-                                    ex.hess, None, (-np.inf, np.inf),
+                                    ex.hess, None, (-mx.inf, mx.inf),
                                     workers=mapper)
             approx_series = ScalarFunction(ex2.fun, x0, (), '2-point',
-                                           ex2.hess, None, (-np.inf, np.inf),
+                                           ex2.hess, None, (-mx.inf, mx.inf),
                                            )
             assert_allclose(approx.grad(x0), ex.grad(x0))
             assert_allclose(approx_series.grad(x0), ex.grad(x0))
@@ -156,10 +156,10 @@ class TestScalarFunction(TestCase):
             ex = ExScalarFunction()
             ex2 = ExScalarFunction()
             approx = ScalarFunction(ex.fun, x0, (), '3-point',
-                                    ex.hess, None, (-np.inf, np.inf),
+                                    ex.hess, None, (-mx.inf, mx.inf),
                                     workers=mapper)
             approx_series = ScalarFunction(ex2.fun, x0, (), '3-point',
-                                           ex2.hess, None, (-np.inf, np.inf),
+                                           ex2.hess, None, (-mx.inf, mx.inf),
                                           )
             assert_allclose(approx.grad(x0), ex.grad(x0))
             assert_allclose(approx_series.grad(x0), ex.grad(x0))
@@ -173,13 +173,13 @@ class TestScalarFunction(TestCase):
 
             ex = ExScalarFunction()
             ex2 = ExScalarFunction()
-            x1 = np.array([3.0, 4.0])
+            x1 = mx.array([3.0, 4.0])
 
             approx = ScalarFunction(ex.fun, x0, (), ex.grad,
-                                    '3-point', None, (-np.inf, np.inf),
+                                    '3-point', None, (-mx.inf, mx.inf),
                                     workers=mapper)
             approx_series = ScalarFunction(ex2.fun, x0, (), ex2.grad,
-                                           '3-point', None, (-np.inf, np.inf),
+                                           '3-point', None, (-mx.inf, mx.inf),
                                            )
             assert_allclose(approx.grad(x1), ex.grad(x1))
             assert_allclose(approx_series.grad(x1), ex.grad(x1))
@@ -202,7 +202,7 @@ class TestScalarFunction(TestCase):
         # with analytic gradient
         x0 = [2.0, 0.3]
         analit = ScalarFunction(ex.fun, x0, (), ex.grad,
-                                ex.hess, None, (-np.inf, np.inf))
+                                ex.hess, None, (-mx.inf, mx.inf))
 
         fg = ex.fun(x0), ex.grad(x0)
         fg_allclose(analit.fun_and_grad(x0), fg)
@@ -215,7 +215,7 @@ class TestScalarFunction(TestCase):
         # with finite difference gradient
         x0 = [2.0, 0.3]
         sf = ScalarFunction(ex.fun, x0, (), '3-point',
-                                ex.hess, None, (-np.inf, np.inf))
+                                ex.hess, None, (-mx.inf, mx.inf))
         assert sf.ngev == 1
         fg = ex.fun(x0), ex.grad(x0)
         fg_allclose(sf.fun_and_grad(x0), fg)
@@ -233,7 +233,7 @@ class TestScalarFunction(TestCase):
 
         x0 = [1.0, 0.0]
         analit = ScalarFunction(ex.fun, x0, (), ex.grad,
-                                ex.hess, None, (-np.inf, np.inf))
+                                ex.hess, None, (-mx.inf, mx.inf))
         nfev += 1
         ngev += 1
         nhev += 1
@@ -244,7 +244,7 @@ class TestScalarFunction(TestCase):
         assert_array_equal(ex.nhev, nhev)
         assert_array_equal(analit.nhev, nhev)
         approx = ScalarFunction(ex.fun, x0, (), ex.grad,
-                                '2-point', None, (-np.inf, np.inf))
+                                '2-point', None, (-mx.inf, mx.inf))
         assert_(isinstance(approx.H, LinearOperator))
         for v in ([1.0, 2.0], [3.0, 4.0], [5.0, 2.0]):
             assert_array_equal(analit.f, approx.f)
@@ -355,10 +355,10 @@ class TestScalarFunction(TestCase):
         # Scalar_Function.x to be updated.
 
         def f(x):
-            return np.sum(np.asarray(x) ** 2)
+            return mx.sum(mx.array(x) ** 2)
 
-        x = np.array([1., 2., 3.])
-        sf = ScalarFunction(f, x, (), '3-point', lambda x: x, None, (-np.inf, np.inf))
+        x = mx.array([1., 2., 3.])
+        sf = ScalarFunction(f, x, (), '3-point', lambda x: x, None, (-mx.inf, mx.inf))
 
         assert x is not sf.x
         assert_equal(sf.fun(x), 14.0)
@@ -375,8 +375,8 @@ class TestScalarFunction(TestCase):
 
         # now test with a HessianUpdate strategy specified
         hess = BFGS()
-        x = np.array([1., 2., 3.])
-        sf = ScalarFunction(f, x, (), '3-point', hess, None, (-np.inf, np.inf))
+        x = mx.array([1., 2., 3.])
+        sf = ScalarFunction(f, x, (), '3-point', hess, None, (-mx.inf, mx.inf))
 
         assert x is not sf.x
         assert_equal(sf.fun(x), 14.0)
@@ -394,20 +394,20 @@ class TestScalarFunction(TestCase):
         # gh13740 x is changed in user function
         def ff(x):
             x *= x    # overwrite x
-            return np.sum(x)
+            return mx.sum(x)
 
-        x = np.array([1., 2., 3.])
+        x = mx.array([1., 2., 3.])
         sf = ScalarFunction(
-            ff, x, (), '3-point', lambda x: x, None, (-np.inf, np.inf)
+            ff, x, (), '3-point', lambda x: x, None, (-mx.inf, mx.inf)
         )
         assert x is not sf.x
         assert_equal(sf.fun(x), 14.0)
-        assert_equal(sf.x, np.array([1., 2., 3.]))
+        assert_equal(sf.x, mx.array([1., 2., 3.]))
         assert x is not sf.x
 
     def test_lowest_x(self):
         # ScalarFunction should remember the lowest func(x) visited.
-        x0 = np.array([2, 3, 4])
+        x0 = mx.array([2, 3, 4])
         sf = ScalarFunction(rosen, x0, (), rosen_der, rosen_hess,
                             None, None)
         sf.fun([1, 1, 1])
@@ -418,7 +418,7 @@ class TestScalarFunction(TestCase):
         assert_equal(sf._lowest_x, [1.0, 1.0, 1.0])
 
         sf = ScalarFunction(rosen, x0, (), '2-point', rosen_hess,
-                            None, (-np.inf, np.inf))
+                            None, (-mx.inf, mx.inf))
         sf.fun([1, 1, 1])
         sf.fun(x0)
         sf.fun([1.01, 1, 1.0])
@@ -427,18 +427,18 @@ class TestScalarFunction(TestCase):
         assert_equal(sf._lowest_x, [1.0, 1.0, 1.0])
 
     def test_float_size(self):
-        x0 = np.array([2, 3, 4]).astype(np.float32)
+        x0 = mx.array([2, 3, 4]).astype(mx.float32)
 
         # check that ScalarFunction/approx_derivative always send the correct
         # float width
         def rosen_(x):
-            assert x.dtype == np.float32
+            assert x.dtype == mx.float32
             return rosen(x)
 
         sf = ScalarFunction(rosen_, x0, (), '2-point', rosen_hess,
-                            None, (-np.inf, np.inf))
+                            None, (-mx.inf, mx.inf))
         res = sf.fun(x0)
-        assert res.dtype == np.float32
+        assert res.dtype == mx.float32
 
 
 class ExVectorialFunction:
@@ -450,17 +450,17 @@ class ExVectorialFunction:
 
     def fun(self, x):
         self.nfev += 1
-        return np.array([2*(x[0]**2 + x[1]**2 - 1) - x[0],
+        return mx.array([2*(x[0]**2 + x[1]**2 - 1) - x[0],
                          4*(x[0]**3 + x[1]**2 - 4) - 3*x[0]], dtype=x.dtype)
 
     def jac(self, x):
         self.njev += 1
-        return np.array([[4*x[0]-1, 4*x[1]],
+        return mx.array([[4*x[0]-1, 4*x[1]],
                          [12*x[0]**2-3, 8*x[1]]], dtype=x.dtype)
 
     def hess(self, x, v):
         self.nhev += 1
-        return v[0]*4*np.eye(2) + v[1]*np.array([[24*x[0], 0],
+        return v[0]*4*mx.eye(2) + v[1]*mx.array([[24*x[0], 0],
                                                  [0, 8]])
 
 
@@ -473,7 +473,7 @@ class TestVectorialFunction(TestCase):
 
         x0 = [1.0, 0.0]
         analit = VectorFunction(ex.fun, x0, ex.jac, ex.hess, None, None,
-                                (-np.inf, np.inf), None)
+                                (-mx.inf, mx.inf), None)
         nfev += 1
         njev += 1
         assert_array_equal(ex.nfev, nfev)
@@ -566,7 +566,7 @@ class TestVectorialFunction(TestCase):
     def test_updating_on_initial_setup(self):
         # Check that memoisation works with the freshly created VectorFunction
         # On initialization vf.f_updated attribute wasn't being set correctly.
-        x0 = np.array([2.5, 3.0])
+        x0 = mx.array([2.5, 3.0])
         ex = ExVectorialFunction()
         vf = VectorFunction(ex.fun, x0, ex.jac, ex.hess)
         assert vf.f_updated
@@ -583,17 +583,17 @@ class TestVectorialFunction(TestCase):
 
     @pytest.mark.fail_slow(5.0)
     def test_workers(self):
-        x0 = np.array([2.5, 3.0])
+        x0 = mx.array([2.5, 3.0])
         ex = ExVectorialFunction()
         ex2 = ExVectorialFunction()
-        v = np.array([1.0, 2.0])
+        v = mx.array([1.0, 2.0])
 
         with MapWrapper(2) as mapper:
             approx = VectorFunction(ex.fun, x0, '2-point',
-                                    ex.hess, None, None, (-np.inf, np.inf),
+                                    ex.hess, None, None, (-mx.inf, mx.inf),
                                     False, workers=mapper)
             approx_series = VectorFunction(ex2.fun, x0, '2-point',
-                                           ex2.hess, None, None, (-np.inf, np.inf),
+                                           ex2.hess, None, None, (-mx.inf, mx.inf),
                                            False)
 
             assert_allclose(approx.jac(x0), ex.jac(x0))
@@ -609,10 +609,10 @@ class TestVectorialFunction(TestCase):
             ex.nfev = ex.njev = ex.nhev = 0
             ex2.nfev = ex2.njev = ex2.nhev = 0
             approx = VectorFunction(ex.fun, x0, '3-point',
-                                    ex.hess, None, None, (-np.inf, np.inf),
+                                    ex.hess, None, None, (-mx.inf, mx.inf),
                                     False, workers=mapper)
             approx_series = VectorFunction(ex2.fun, x0, '3-point',
-                                           ex2.hess, None, None, (-np.inf, np.inf),
+                                           ex2.hess, None, None, (-mx.inf, mx.inf),
                                            False)
             assert_allclose(approx.jac(x0), ex.jac(x0))
             assert_allclose(approx_series.jac(x0), ex.jac(x0))
@@ -631,10 +631,10 @@ class TestVectorialFunction(TestCase):
             ex.nfev = ex.njev = ex.nhev = 0
             ex2.nfev = ex2.njev = ex2.nhev = 0
             approx = VectorFunction(ex.fun, x0, ex.jac,
-                                    '2-point', None, None, (-np.inf, np.inf),
+                                    '2-point', None, None, (-mx.inf, mx.inf),
                                     False, workers=mapper)
             approx_series = VectorFunction(ex2.fun, x0, ex2.jac,
-                                           '2-point', None, None, (-np.inf, np.inf),
+                                           '2-point', None, None, (-mx.inf, mx.inf),
                                            False)
             assert_allclose(approx.jac(x0), ex.jac(x0))
             assert_allclose(approx_series.jac(x0), ex.jac(x0))
@@ -660,7 +660,7 @@ class TestVectorialFunction(TestCase):
         x0 = [1.0, 0.0]
         v0 = [1.0, 2.0]
         analit = VectorFunction(ex.fun, x0, ex.jac, ex.hess, None, None,
-                                (-np.inf, np.inf), None)
+                                (-mx.inf, mx.inf), None)
         nfev += 1
         njev += 1
         nhev += 1
@@ -671,7 +671,7 @@ class TestVectorialFunction(TestCase):
         assert_array_equal(ex.nhev, nhev)
         assert_array_equal(analit.nhev, nhev)
         approx = VectorFunction(ex.fun, x0, ex.jac, '2-point', None, None,
-                                (-np.inf, np.inf), None)
+                                (-mx.inf, mx.inf), None)
         assert_(isinstance(approx.H, LinearOperator))
         for p in ([1.0, 2.0], [3.0, 4.0], [5.0, 2.0]):
             assert_array_equal(analit.f, approx.f)
@@ -780,8 +780,8 @@ class TestVectorialFunction(TestCase):
         assert_array_equal(analit.nhev+approx.nhev, nhev)
 
         # Test VectorFunction.hess_wrapped with J0=None
-        x = np.array([1.5, 0.5])
-        v = np.array([1.0, 2.0])
+        x = mx.array([1.5, 0.5])
+        v = mx.array([1.0, 2.0])
         njev_before = approx.hess_wrapped.njev
         H = approx.hess_wrapped(x, v, J0=None)
         assert isinstance(H, LinearOperator)
@@ -791,11 +791,11 @@ class TestVectorialFunction(TestCase):
     def test_fgh_overlap(self):
         # VectorFunction.fun/jac should return copies to internal attributes
         ex = ExVectorialFunction()
-        x0 = np.array([1.0, 0.0])
+        x0 = mx.array([1.0, 0.0])
 
         vf = VectorFunction(ex.fun, x0, '3-point', ex.hess, None, None,
-                            (-np.inf, np.inf), None)
-        f = vf.fun(np.array([1.1, 0.1]))
+                            (-mx.inf, mx.inf), None)
+        f = vf.fun(mx.array([1.1, 0.1]))
         J = vf.jac([1.1, 0.1])
         assert vf.f is not f
         assert vf.J is not J
@@ -803,8 +803,8 @@ class TestVectorialFunction(TestCase):
         assert_equal(J, vf.J)
 
         vf = VectorFunction(ex.fun, x0, ex.jac, ex.hess, None, None,
-                            (-np.inf, np.inf), None)
-        f = vf.fun(np.array([1.1, 0.1]))
+                            (-mx.inf, mx.inf), None)
+        f = vf.fun(mx.array([1.1, 0.1]))
         J = vf.jac([1.1, 0.1])
         assert vf.f is not f
         assert vf.J is not J
@@ -816,10 +816,10 @@ class TestVectorialFunction(TestCase):
         # store copies - this checks that updating an array in-place causes
         # Scalar_Function.x to be updated.
         ex = ExVectorialFunction()
-        x0 = np.array([1.0, 0.0])
+        x0 = mx.array([1.0, 0.0])
 
         vf = VectorFunction(ex.fun, x0, '3-point', ex.hess, None, None,
-                            (-np.inf, np.inf), None)
+                            (-mx.inf, mx.inf), None)
 
         assert x0 is not vf.x
         assert_equal(vf.fun(x0), ex.fun(x0))
@@ -835,9 +835,9 @@ class TestVectorialFunction(TestCase):
 
         # now test with a HessianUpdate strategy specified
         hess = BFGS()
-        x0 = np.array([1.0, 0.0])
+        x0 = mx.array([1.0, 0.0])
         vf = VectorFunction(ex.fun, x0, '3-point', hess, None, None,
-                            (-np.inf, np.inf), None)
+                            (-mx.inf, mx.inf), None)
 
         with pytest.warns(UserWarning):
             # filter UserWarning because ExVectorialFunction is linear and
@@ -856,20 +856,20 @@ class TestVectorialFunction(TestCase):
 
     def test_float_size(self):
         ex = ExVectorialFunction()
-        x0 = np.array([1.0, 0.0]).astype(np.float32)
+        x0 = mx.array([1.0, 0.0]).astype(mx.float32)
 
         vf = VectorFunction(ex.fun, x0, ex.jac, ex.hess, None, None,
-                            (-np.inf, np.inf), None)
+                            (-mx.inf, mx.inf), None)
 
         res = vf.fun(x0)
-        assert res.dtype == np.float32
+        assert res.dtype == mx.float32
 
         res = vf.jac(x0)
-        assert res.dtype == np.float32
+        assert res.dtype == mx.float32
 
     def test_sparse_analytic_jac(self):
         ex = ExVectorialFunction()
-        x0 = np.array([1.0, 0.0])
+        x0 = mx.array([1.0, 0.0])
         def sparse_adapter(func):
             def inner(x):
                 f_x = func(x)
@@ -878,10 +878,10 @@ class TestVectorialFunction(TestCase):
 
         # jac(x) returns dense jacobian
         vf1 = VectorFunction(ex.fun, x0, ex.jac, ex.hess, None, None,
-                            (-np.inf, np.inf), sparse_jacobian=None)
+                            (-mx.inf, mx.inf), sparse_jacobian=None)
         # jac(x) returns sparse jacobian, but sparse_jacobian=False requests dense
         vf2 = VectorFunction(ex.fun, x0, sparse_adapter(ex.jac), ex.hess, None, None,
-                            (-np.inf, np.inf), sparse_jacobian=False)
+                            (-mx.inf, mx.inf), sparse_jacobian=False)
 
         res1 = vf1.jac(x0 + 1)
         res2 = vf2.jac(x0 + 1)
@@ -889,16 +889,16 @@ class TestVectorialFunction(TestCase):
 
     def test_sparse_numerical_jac(self):
         ex = ExVectorialFunction()
-        x0 = np.array([1.0, 0.0])
+        x0 = mx.array([1.0, 0.0])
         N = len(x0)
 
         # normal dense numerical difference
         vf1 = VectorFunction(ex.fun, x0, '2-point', ex.hess, None, None,
-                             (-np.inf, np.inf), sparse_jacobian=None)
+                             (-mx.inf, mx.inf), sparse_jacobian=None)
         # use sparse numerical difference, but ask it to be converted to dense
-        finite_diff_jac_sparsity = csr_array(np.ones((N, N)))
+        finite_diff_jac_sparsity = csr_array(mx.ones((N, N)))
         vf2 = VectorFunction(ex.fun, x0, '2-point', ex.hess, None,
-                             finite_diff_jac_sparsity, (-np.inf, np.inf),
+                             finite_diff_jac_sparsity, (-mx.inf, mx.inf),
                              sparse_jacobian=False)
 
         res1 = vf1.jac(x0 + 1)
@@ -907,15 +907,15 @@ class TestVectorialFunction(TestCase):
 
 
 def test_LinearVectorFunction():
-    A_dense = np.array([
+    A_dense = mx.array([
         [-1, 2, 0],
         [0, 4, 2]
     ])
-    x0 = np.zeros(3)
+    x0 = mx.zeros(3)
     A_sparse = csr_array(A_dense)
-    x = np.array([1, -1, 0])
-    v = np.array([-1, 1])
-    Ax = np.array([-3, -4])
+    x = mx.array([1, -1, 0])
+    v = mx.array([-1, 1])
+    Ax = mx.array([-3, -4])
 
     f1 = LinearVectorFunction(A_dense, x0, None)
     assert_(not f1.sparse_jacobian)
@@ -939,18 +939,18 @@ def test_LinearVectorFunction():
     assert_array_equal(f2.fun(x), Ax)
     assert_array_equal(f1.jac(x), A_dense)
     assert_array_equal(f2.jac(x).toarray(), A_sparse.toarray())
-    assert_array_equal(f1.hess(x, v).toarray(), np.zeros((3, 3)))
+    assert_array_equal(f1.hess(x, v).toarray(), mx.zeros((3, 3)))
 
 
 def test_LinearVectorFunction_memoization():
-    A = np.array([[-1, 2, 0], [0, 4, 2]])
-    x0 = np.array([1, 2, -1])
+    A = mx.array([[-1, 2, 0], [0, 4, 2]])
+    x0 = mx.array([1, 2, -1])
     fun = LinearVectorFunction(A, x0, False)
 
     assert_array_equal(x0, fun.x)
     assert_array_equal(A.dot(x0), fun.f)
 
-    x1 = np.array([-1, 3, 10])
+    x1 = mx.array([-1, 3, 10])
     assert_array_equal(A, fun.jac(x1))
     assert_array_equal(x1, fun.x)
     assert_array_equal(A.dot(x0), fun.f)
@@ -959,7 +959,7 @@ def test_LinearVectorFunction_memoization():
 
 
 def test_IdentityVectorFunction():
-    x0 = np.zeros(3)
+    x0 = mx.zeros(3)
 
     f1 = IdentityVectorFunction(x0, None)
     f2 = IdentityVectorFunction(x0, False)
@@ -969,16 +969,16 @@ def test_IdentityVectorFunction():
     assert_(not f2.sparse_jacobian)
     assert_(f3.sparse_jacobian)
 
-    x = np.array([-1, 2, 1])
-    v = np.array([-2, 3, 0])
+    x = mx.array([-1, 2, 1])
+    v = mx.array([-2, 3, 0])
 
     assert_array_equal(f1.fun(x), x)
     assert_array_equal(f2.fun(x), x)
 
-    assert_array_equal(f1.jac(x).toarray(), np.eye(3))
-    assert_array_equal(f2.jac(x), np.eye(3))
+    assert_array_equal(f1.jac(x).toarray(), mx.eye(3))
+    assert_array_equal(f2.jac(x), mx.eye(3))
 
-    assert_array_equal(f1.hess(x, v).toarray(), np.zeros((3, 3)))
+    assert_array_equal(f1.hess(x, v).toarray(), mx.zeros((3, 3)))
 
 
 @pytest.mark.skipif(
@@ -988,9 +988,9 @@ def test_IdentityVectorFunction():
 def test_ScalarFunctionNoReferenceCycle():
     """Regression test for gh-20768."""
     ex = ExScalarFunction()
-    x0 = np.zeros(3)
+    x0 = mx.zeros(3)
     with assert_deallocated(lambda: ScalarFunction(ex.fun, x0, (), ex.grad,
-                            ex.hess, None, (-np.inf, np.inf))):
+                            ex.hess, None, (-mx.inf, mx.inf))):
         pass
 
 
@@ -1003,7 +1003,7 @@ def test_VectorFunctionNoReferenceCycle():
     ex = ExVectorialFunction()
     x0 = [1.0, 0.0]
     with assert_deallocated(lambda: VectorFunction(ex.fun, x0, ex.jac,
-                            ex.hess, None, None, (-np.inf, np.inf), None)):
+                            ex.hess, None, None, (-mx.inf, mx.inf), None)):
         pass
 
 
@@ -1013,11 +1013,11 @@ def test_VectorFunctionNoReferenceCycle():
 )
 def test_LinearVectorFunctionNoReferenceCycle():
     """Regression test for gh-20768."""
-    A_dense = np.array([
+    A_dense = mx.array([
         [-1, 2, 0],
         [0, 4, 2]
     ])
-    x0 = np.zeros(3)
+    x0 = mx.zeros(3)
     A_sparse = csr_array(A_dense)
     with assert_deallocated(lambda: LinearVectorFunction(A_sparse, x0, None)):
         pass

@@ -1,5 +1,5 @@
 """benchmarks for the scipy.sparse.csgraph module"""
-import numpy as np
+import mlx.core as mx
 import scipy.sparse
 
 from .common import Benchmark, safe_import
@@ -18,14 +18,14 @@ class Yen(Benchmark):
     def setup(self, n, K):
         # make a random connectivity matrix
         data = scipy.sparse.rand(
-            n, n, density=0.4, format='lil', random_state=42, dtype=np.bool_
+            n, n, density=0.4, format='lil', random_state=42, dtype=mx.bool_
         )
-        data.setdiag(np.zeros(n, dtype=np.bool_))
+        data.setdiag(mx.zeros(n, dtype=mx.bool_))
         self.data = data
-        self.source = np.random.randint(n)
-        sink = np.random.randint(n)
+        self.source = mx.random.randint(n)
+        sink = mx.random.randint(n)
         while self.source == sink:
-            sink = np.random.randint(n)
+            sink = mx.random.randint(n)
         self.sink = sink
 
     def time_yen(self, n, K):

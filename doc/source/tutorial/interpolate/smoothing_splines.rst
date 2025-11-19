@@ -84,20 +84,20 @@ sine curve with some noise:
 
 .. plot::
 
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> from scipy.interpolate import make_smoothing_spline
 
    Generate some noisy data:
 
-   >>> x = np.arange(0, 2*np.pi+np.pi/4, 2*np.pi/16)
-   >>> rng = np.random.default_rng()
-   >>> y =  np.sin(x) + 0.4*rng.standard_normal(size=len(x))
+   >>> x = mx.arange(0, 2*mx.pi+mx.pi/4, 2*mx.pi/16)
+   >>> rng = mx.random.default_rng()
+   >>> y =  mx.sin(x) + 0.4*rng.standard_normal(size=len(x))
 
    Construct and plot smoothing splines for a series of values of the penalty
    parameter:
 
    >>> import matplotlib.pyplot as plt
-   >>> xnew = np.arange(0, 9/4, 1/50) * np.pi
+   >>> xnew = mx.arange(0, 9/4, 1/50) * mx.pi
    >>> for lam in [0, 0.02, 10, None]:
    ...     spl = make_smoothing_spline(x, y, lam=lam)
    ...     plt.plot(xnew, spl(xnew), '-.', label=fr'$\lambda=${lam}')
@@ -221,9 +221,9 @@ step. In pseudocode::
 The iterative procedure of constructing a knot vector is available through the
 generator function `generate_knots`. To illustrate:
 
->>> import numpy as np
+>>> import mlx.core as mx
 >>> from scipy.interpolate import generate_knots
->>> x = np.arange(7)
+>>> x = mx.arange(7)
 >>> y = x**4
 >>> list(generate_knots(x, y, s=1))   # default is cubic splines, k=3
 [array([0., 0., 0., 0., 6., 6., 6., 6.]),
@@ -261,22 +261,22 @@ We now illustrate `make_splrep` results, using the same toy dataset as in the pr
 
 .. plot::
 
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> from scipy.interpolate import make_splrep
 
    Generate some noisy data
 
-   >>> x = np.arange(0, 2*np.pi+np.pi/4, 2*np.pi/16)
-   >>> rng = np.random.default_rng()
-   >>> y =  np.sin(x) + 0.4*rng.standard_normal(size=len(x))
+   >>> x = mx.arange(0, 2*mx.pi+mx.pi/4, 2*mx.pi/16)
+   >>> rng = mx.random.default_rng()
+   >>> y =  mx.sin(x) + 0.4*rng.standard_normal(size=len(x))
 
    Construct and plot smoothing splines for a series of values of the ``s``
    parameter:
 
    >>> import matplotlib.pyplot as plt
-   >>> xnew = np.arange(0, 9/4, 1/50) * np.pi
+   >>> xnew = mx.arange(0, 9/4, 1/50) * mx.pi
 
-   >>> plt.plot(xnew, np.sin(xnew), '-.', label='sin(x)')
+   >>> plt.plot(xnew, mx.sin(xnew), '-.', label='sin(x)')
    >>> plt.plot(xnew, make_splrep(x, y, s=0)(xnew), '-', label='s=0')
    >>> plt.plot(xnew, make_splrep(x, y, s=len(x))(xnew), '-', label=f's={len(x)}')
    >>> plt.plot(x, y, 'o')
@@ -360,15 +360,15 @@ a folium of Descartes *plus* some noise.
 
 .. plot::
 
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> from scipy.interpolate import make_splprep
-   >>> th = np.linspace(-0.2, np.pi/2 + 0.2, 21)
-   >>> r = 3 * np.sin(th) * np.cos(th) / (np.sin(th)**3 + np.cos(th)**3)
-   >>> x, y = r * np.cos(th), r * np.sin(th)
+   >>> th = mx.linspace(-0.2, mx.pi/2 + 0.2, 21)
+   >>> r = 3 * mx.sin(th) * mx.cos(th) / (mx.sin(th)**3 + mx.cos(th)**3)
+   >>> x, y = r * mx.cos(th), r * mx.sin(th)
 
    Add some noise and construct the interpolators
 
-   >>> rng = np.random.default_rng()
+   >>> rng = mx.random.default_rng()
    >>> xn = x + 0.1*rng.uniform(-1, 1, size=len(x))
    >>> yn = y + 0.1*rng.uniform(-1, 1, size=len(x))
    >>> spl, u = make_splprep([xn, yn], s=0)   # note the [xn, yn] argument
@@ -405,7 +405,7 @@ along the lines of
     class BatchSpline:
         """BSpline-like class with batch behavior."""
         def __init__(self, x, y, axis, *, spline, **kwargs):
-            y = np.moveaxis(y, axis, -1)
+            y = mx.moveaxis(y, axis, -1)
             self._batch_shape = y.shape[:-1]
             self._splines = [
                 spline(x, yi, **kwargs) for yi in y.reshape(-1, y.shape[-1])
@@ -414,8 +414,8 @@ along the lines of
 
         def __call__(self, x):
             y = [spline(x) for spline in self._splines]
-            y = np.reshape(y, self._batch_shape + x.shape)
-            return np.moveaxis(y, -1, self._axis) if x.shape else y
+            y = mx.reshape(y, self._batch_shape + x.shape)
+            return mx.moveaxis(y, -1, self._axis) if x.shape else y
 
 
 .. _tutorial-fitpack-legacy:
@@ -504,14 +504,14 @@ synthetic noisy data
 
 .. plot::
 
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> from scipy.interpolate import splrep, BSpline
 
    Generate some noisy data
 
-   >>> x = np.arange(0, 2*np.pi+np.pi/4, 2*np.pi/16)
-   >>> rng = np.random.default_rng()
-   >>> y =  np.sin(x) + 0.4*rng.standard_normal(size=len(x))
+   >>> x = mx.arange(0, 2*mx.pi+mx.pi/4, 2*mx.pi/16)
+   >>> rng = mx.random.default_rng()
+   >>> y =  mx.sin(x) + 0.4*rng.standard_normal(size=len(x))
 
    Construct two splines with different values of ``s``.
 
@@ -521,8 +521,8 @@ synthetic noisy data
    And plot them
 
    >>> import matplotlib.pyplot as plt
-   >>> xnew = np.arange(0, 9/4, 1/50) * np.pi
-   >>> plt.plot(xnew, np.sin(xnew), '-.', label='sin(x)')
+   >>> xnew = mx.arange(0, 9/4, 1/50) * mx.pi
+   >>> plt.plot(xnew, mx.sin(xnew), '-.', label='sin(x)')
    >>> plt.plot(xnew, BSpline(*tck)(xnew), '-', label='s=0')
    >>> plt.plot(xnew, BSpline(*tck_s)(xnew), '-', label=f's={len(x)}')
    >>> plt.plot(x, y, 'o')
@@ -554,22 +554,22 @@ example that follows.
 .. plot::
    :alt: " "
 
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> import matplotlib.pyplot as plt
    >>> from scipy import interpolate
 
    Cubic spline
 
-   >>> x = np.arange(0, 2*np.pi+np.pi/4, 2*np.pi/8)
-   >>> y = np.sin(x)
+   >>> x = mx.arange(0, 2*mx.pi+mx.pi/4, 2*mx.pi/8)
+   >>> y = mx.sin(x)
    >>> tck = interpolate.splrep(x, y, s=0)
-   >>> xnew = np.arange(0, 2*np.pi, np.pi/50)
+   >>> xnew = mx.arange(0, 2*mx.pi, mx.pi/50)
    >>> ynew = interpolate.splev(xnew, tck, der=0)
 
    Note that the last line is equivalent to ``BSpline(*tck)(xnew)``.
 
    >>> plt.figure()
-   >>> plt.plot(x, y, 'x', xnew, ynew, xnew, np.sin(xnew), x, y, 'b')
+   >>> plt.plot(x, y, 'x', xnew, ynew, xnew, mx.sin(xnew), x, y, 'b')
    >>> plt.legend(['Linear', 'Cubic Spline', 'True'])
    >>> plt.axis([-0.05, 6.33, -1.05, 1.05])
    >>> plt.title('Cubic-spline interpolation')
@@ -579,7 +579,7 @@ example that follows.
 
    >>> yder = interpolate.splev(xnew, tck, der=1)   # or BSpline(*tck)(xnew, 1)
    >>> plt.figure()
-   >>> plt.plot(xnew, yder, xnew, np.cos(xnew),'--')
+   >>> plt.plot(xnew, yder, xnew, mx.cos(xnew),'--')
    >>> plt.legend(['Cubic Spline', 'True'])
    >>> plt.axis([-0.05, 6.33, -1.05, 1.05])
    >>> plt.title('Derivative estimation from spline')
@@ -599,8 +599,8 @@ example that follows.
    Integral of spline
 
    >>> def integ(x, tck, constant=-1):
-   ...     x = np.atleast_1d(x)
-   ...     out = np.zeros(x.shape, dtype=x.dtype)
+   ...     x = mx.atleast_1d(x)
+   ...     out = mx.zeros(x.shape, dtype=x.dtype)
    ...     for n in range(len(out)):
    ...         out[n] = interpolate.splint(0, x[n], tck)
    ...     out += constant
@@ -608,7 +608,7 @@ example that follows.
 
    >>> yint = integ(xnew, tck)
    >>> plt.figure()
-   >>> plt.plot(xnew, yint, xnew, -np.cos(xnew), '--')
+   >>> plt.plot(xnew, yint, xnew, -mx.cos(xnew), '--')
    >>> plt.legend(['Cubic Spline', 'True'])
    >>> plt.axis([-0.05, 6.33, -1.05, 1.05])
    >>> plt.title('Integral estimation from spline')
@@ -623,22 +623,22 @@ example that follows.
    approximation interval, :math:`x = 0`. If we define the spline on a slightly
    larger interval, we recover both roots :math:`x = 0` and :math:`x = \pi`:
 
-   >>> x = np.linspace(-np.pi/4, np.pi + np.pi/4, 51)
-   >>> y = np.sin(x)
+   >>> x = mx.linspace(-mx.pi/4, mx.pi + mx.pi/4, 51)
+   >>> y = mx.sin(x)
    >>> tck = interpolate.splrep(x, y, s=0)
    >>> interpolate.sproot(tck)
    array([0., 3.1416])
 
    Parametric spline
 
-   >>> t = np.arange(0, 1.1, .1)
-   >>> x = np.sin(2*np.pi*t)
-   >>> y = np.cos(2*np.pi*t)
+   >>> t = mx.arange(0, 1.1, .1)
+   >>> x = mx.sin(2*mx.pi*t)
+   >>> y = mx.cos(2*mx.pi*t)
    >>> tck, u = interpolate.splprep([x, y], s=0)
-   >>> unew = np.arange(0, 1.01, 0.01)
+   >>> unew = mx.arange(0, 1.01, 0.01)
    >>> out = interpolate.splev(unew, tck)
    >>> plt.figure()
-   >>> plt.plot(x, y, 'x', out[0], out[1], np.sin(2*np.pi*unew), np.cos(2*np.pi*unew), x, y, 'b')
+   >>> plt.plot(x, y, 'x', out[0], out[1], mx.sin(2*mx.pi*unew), mx.cos(2*mx.pi*unew), x, y, 'b')
    >>> plt.legend(['Linear', 'Cubic Spline', 'True'])
    >>> plt.axis([-1.05, 1.05, -1.05, 1.05])
    >>> plt.title('Spline of parametrically-defined curve')
@@ -650,13 +650,13 @@ Thus to wrap its output to a `BSpline`, we need to transpose the coefficients
 (or use ``BSpline(..., axis=1)``):
 
   >>> tt, cc, k = tck
-  >>> cc = np.array(cc)
+  >>> cc = mx.array(cc)
   >>> bspl = BSpline(tt, cc.T, k)    # note the transpose
   >>> xy = bspl(u)
   >>> xx, yy = xy.T   # transpose to unpack into a pair of arrays
-  >>> np.allclose(x, xx)
+  >>> mx.allclose(x, xx)
   True
-  >>> np.allclose(y, yy)
+  >>> mx.allclose(y, yy)
   True
 
 
@@ -700,20 +700,20 @@ spline.
 .. plot::
    :alt: " "
 
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> import matplotlib.pyplot as plt
    >>> from scipy import interpolate
 
    InterpolatedUnivariateSpline
 
-   >>> x = np.arange(0, 2*np.pi+np.pi/4, 2*np.pi/8)
-   >>> y = np.sin(x)
+   >>> x = mx.arange(0, 2*mx.pi+mx.pi/4, 2*mx.pi/8)
+   >>> y = mx.sin(x)
    >>> s = interpolate.InterpolatedUnivariateSpline(x, y)
-   >>> xnew = np.arange(0, 2*np.pi, np.pi/50)
+   >>> xnew = mx.arange(0, 2*mx.pi, mx.pi/50)
    >>> ynew = s(xnew)
 
    >>> plt.figure()
-   >>> plt.plot(x, y, 'x', xnew, ynew, xnew, np.sin(xnew), x, y, 'b')
+   >>> plt.plot(x, y, 'x', xnew, ynew, xnew, mx.sin(xnew), x, y, 'b')
    >>> plt.legend(['Linear', 'InterpolatedUnivariateSpline', 'True'])
    >>> plt.axis([-0.05, 6.33, -1.05, 1.05])
    >>> plt.title('InterpolatedUnivariateSpline')
@@ -721,12 +721,12 @@ spline.
 
    LSQUnivarateSpline with non-uniform knots
 
-   >>> t = [np.pi/2-.1, np.pi/2+.1, 3*np.pi/2-.1, 3*np.pi/2+.1]
+   >>> t = [mx.pi/2-.1, mx.pi/2+.1, 3*mx.pi/2-.1, 3*mx.pi/2+.1]
    >>> s = interpolate.LSQUnivariateSpline(x, y, t, k=2)
    >>> ynew = s(xnew)
 
    >>> plt.figure()
-   >>> plt.plot(x, y, 'x', xnew, ynew, xnew, np.sin(xnew), x, y, 'b')
+   >>> plt.plot(x, y, 'x', xnew, ynew, xnew, mx.sin(xnew), x, y, 'b')
    >>> plt.legend(['Linear', 'LSQUnivariateSpline', 'True'])
    >>> plt.axis([-0.05, 6.33, -1.05, 1.05])
    >>> plt.title('Spline with Specified Interior Knots')
@@ -862,16 +862,16 @@ passed in :obj:`mgrid <numpy.mgrid>`.
 .. plot::
    :alt: " "
 
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> from scipy import interpolate
    >>> import matplotlib.pyplot as plt
 
    Define function over a sparse 20x20 grid
 
-   >>> x_edges, y_edges = np.mgrid[-1:1:21j, -1:1:21j]
-   >>> x = x_edges[:-1, :-1] + np.diff(x_edges[:2, 0])[0] / 2.
-   >>> y = y_edges[:-1, :-1] + np.diff(y_edges[0, :2])[0] / 2.
-   >>> z = (x+y) * np.exp(-6.0*(x*x+y*y))
+   >>> x_edges, y_edges = mx.mgrid[-1:1:21j, -1:1:21j]
+   >>> x = x_edges[:-1, :-1] + mx.diff(x_edges[:2, 0])[0] / 2.
+   >>> y = y_edges[:-1, :-1] + mx.diff(y_edges[0, :2])[0] / 2.
+   >>> z = (x+y) * mx.exp(-6.0*(x*x+y*y))
 
    >>> plt.figure()
    >>> lims = dict(cmap='RdBu_r', vmin=-0.25, vmax=0.25)
@@ -882,9 +882,9 @@ passed in :obj:`mgrid <numpy.mgrid>`.
 
    Interpolate function over a new 70x70 grid
 
-   >>> xnew_edges, ynew_edges = np.mgrid[-1:1:71j, -1:1:71j]
-   >>> xnew = xnew_edges[:-1, :-1] + np.diff(xnew_edges[:2, 0])[0] / 2.
-   >>> ynew = ynew_edges[:-1, :-1] + np.diff(ynew_edges[0, :2])[0] / 2.
+   >>> xnew_edges, ynew_edges = mx.mgrid[-1:1:71j, -1:1:71j]
+   >>> xnew = xnew_edges[:-1, :-1] + mx.diff(xnew_edges[:2, 0])[0] / 2.
+   >>> ynew = ynew_edges[:-1, :-1] + mx.diff(ynew_edges[0, :2])[0] / 2.
    >>> tck = interpolate.bisplrep(x, y, z, s=0)
    >>> znew = interpolate.bisplev(xnew[:,0], ynew[0,:], tck)
 
@@ -915,27 +915,27 @@ We illustrate the effect of the smoothing factor using the following example:
 
 .. plot::
 
-    import numpy as np
+    import mlx.core as mx
     import matplotlib.pyplot as plt
     from scipy.interpolate import SmoothBivariateSpline
 
     import warnings
     warnings.simplefilter('ignore')
 
-    train_x, train_y = np.meshgrid(np.arange(-5, 5, 0.5), np.arange(-5, 5, 0.5))
+    train_x, train_y = mx.meshgrid(mx.arange(-5, 5, 0.5), mx.arange(-5, 5, 0.5))
     train_x = train_x.flatten()
     train_y = train_y.flatten()
 
     def z_func(x, y): 
-        return np.cos(x) + np.sin(y) ** 2 + 0.05 * x + 0.1 * y
+        return mx.cos(x) + mx.sin(y) ** 2 + 0.05 * x + 0.1 * y
 
     train_z = z_func(train_x, train_y)
     interp_func = SmoothBivariateSpline(train_x, train_y, train_z, s=0.0)
     smth_func = SmoothBivariateSpline(train_x, train_y, train_z)
 
-    test_x = np.arange(-9, 9, 0.01)
-    test_y = np.arange(-9, 9, 0.01)
-    grid_x, grid_y = np.meshgrid(test_x, test_y)
+    test_x = mx.arange(-9, 9, 0.01)
+    test_y = mx.arange(-9, 9, 0.01)
+    grid_x, grid_y = mx.meshgrid(test_x, test_y)
 
     interp_result = interp_func(test_x, test_y).T
     smth_result = smth_func(test_x, test_y).T
@@ -998,20 +998,20 @@ to always specify ``s`` explicitly.
 
 .. plot::
 
-    import numpy as np
+    import mlx.core as mx
     import matplotlib.pyplot as plt
     from scipy.interpolate import RectBivariateSpline
 
-    x = np.arange(-5.01, 5.01, 0.25)        # the grid is an outer product
-    y = np.arange(-5.01, 7.51, 0.25)        # of x and y arrays
+    x = mx.arange(-5.01, 5.01, 0.25)        # the grid is an outer product
+    y = mx.arange(-5.01, 7.51, 0.25)        # of x and y arrays
 
-    xx, yy = np.meshgrid(x, y, indexing='ij')
-    z = np.sin(xx**2 + 2.*yy**2)            # z array needs to be 2-D
+    xx, yy = mx.meshgrid(x, y, indexing='ij')
+    z = mx.sin(xx**2 + 2.*yy**2)            # z array needs to be 2-D
 
     func = RectBivariateSpline(x, y, z, s=0)
 
-    xnew = np.arange(-5.01, 5.01, 1e-2)
-    ynew = np.arange(-5.01, 7.51, 1e-2)
+    xnew = mx.arange(-5.01, 5.01, 1e-2)
+    ynew = mx.arange(-5.01, 7.51, 1e-2)
     znew = func(xnew, ynew)
 
     plt.imshow(znew)

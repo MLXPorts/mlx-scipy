@@ -4,7 +4,7 @@ Unit tests for optimization routines from _root.py.
 from numpy.testing import assert_, assert_equal
 import pytest
 from pytest import raises as assert_raises, warns as assert_warns
-import numpy as np
+import mlx.core as mx
 
 from scipy.optimize import root
 
@@ -14,11 +14,11 @@ class TestRoot:
         # Check that the minimize() tol= argument does something
         def func(z):
             x, y = z
-            return np.array([x**3 - 1, y**3 - 1])
+            return mx.array([x**3 - 1, y**3 - 1])
 
         def dfunc(z):
             x, y = z
-            return np.array([[3*x**2, 0], [0, 3*y**2]])
+            return mx.array([[3*x**2, 0], [0, 3*y**2]])
 
         for method in ['hybr', 'lm', 'broyden1', 'broyden2', 'anderson',
                        'diagbroyden', 'krylov']:
@@ -52,14 +52,14 @@ class TestRoot:
                        'broyden2',
                        'krylov']:
 
-            root(np.zeros_like, np.zeros(2), method=method,
+            root(mx.zeros_like, mx.zeros(2), method=method,
                 options={"tol_norm": norm})
 
     def test_minimize_scalar_coerce_args_param(self):
         # GitHub issue #3503
         def func(z, f=1):
             x, y = z
-            return np.array([x**3 - 1, y**3 - f])
+            return mx.array([x**3 - 1, y**3 - f])
         root(func, [1.1, 1.1], args=1.5)
 
     def test_f_size(self):
@@ -98,7 +98,7 @@ class TestRoot:
         def fun_grad(x, ignored):
             return fun(x, ignored), grad(x, ignored)
 
-        x0 = np.zeros(2)
+        x0 = mx.zeros(2)
 
         ref = root(fun, x0, args=(1,), method='krylov')
         message = 'Method krylov does not use the jacobian'

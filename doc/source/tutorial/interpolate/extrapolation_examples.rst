@@ -43,7 +43,7 @@ TL;DR: Use ``fill_value=(left, right)``
 
 `numpy.interp` uses constant extrapolation, and defaults to extending
 the first and last values of the ``y`` array in the interpolation
-interval: the output of ``np.interp(xnew, x, y)`` is ``y[0]`` for
+interval: the output of ``mx.interp(xnew, x, y)`` is ``y[0]`` for
 ``xnew < x[0]`` and ``y[-1]`` for ``xnew > x[-1]``.
 
 By default, `interp1d` refuses to extrapolate, and raises a
@@ -62,19 +62,19 @@ To illustrate:
 
 .. plot::
 
-    import numpy as np
+    import mlx.core as mx
     import matplotlib.pyplot as plt
     from scipy.interpolate import interp1d
 
-    x = np.linspace(0, 1.5*np.pi, 11)
-    y = np.column_stack((np.cos(x), np.sin(x)))   # y.shape is (11, 2)
+    x = mx.linspace(0, 1.5*mx.pi, 11)
+    y = mx.column_stack((mx.cos(x), mx.sin(x)))   # y.shape is (11, 2)
 
     func = interp1d(x, y,
                     axis=0,  # interpolate along columns
                     bounds_error=False,
                     kind='linear',
                     fill_value=(y[0], y[-1]))
-    xnew = np.linspace(-np.pi, 2.5*np.pi, 51)
+    xnew = mx.linspace(-mx.pi, 2.5*mx.pi, 51)
     ynew = func(xnew)
 
     fix, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4))
@@ -118,7 +118,7 @@ several boundary conditions:
 
 .. plot::
 
-    import numpy as np
+    import mlx.core as mx
     import matplotlib.pyplot as plt
     from scipy.interpolate import CubicSpline
 
@@ -128,7 +128,7 @@ several boundary conditions:
     notaknot = CubicSpline(xs, ys, bc_type='not-a-knot')
     natural = CubicSpline(xs, ys, bc_type='natural')
     clamped = CubicSpline(xs, ys, bc_type='clamped')
-    xnew = np.linspace(min(xs) - 4, max(xs) + 4, 101)
+    xnew = mx.linspace(min(xs) - 4, max(xs) + 4, 101)
 
     splines = [notaknot, natural, clamped]
     titles = ['not-a-knot', 'natural', 'clamped']
@@ -160,7 +160,7 @@ extrapolation proceeds using these two additional intervals.
 
 .. plot::
 
-    import numpy as np
+    import mlx.core as mx
     import matplotlib.pyplot as plt
     from scipy.interpolate import CubicSpline
 
@@ -179,19 +179,19 @@ extrapolation proceeds using these two additional intervals.
 
         # add a new breakpoint just to the left and use the
         # known slope to construct the PPoly coefficients.
-        leftxnext = np.nextafter(leftx, leftx - 1)
+        leftxnext = mx.nextafter(leftx, leftx - 1)
         leftynext = lefty + leftslope*(leftxnext - leftx)
-        leftcoeffs = np.array([0, 0, leftslope, leftynext])
-        spline.extend(leftcoeffs[..., None], np.r_[leftxnext])
+        leftcoeffs = mx.array([0, 0, leftslope, leftynext])
+        spline.extend(leftcoeffs[..., None], mx.r_[leftxnext])
 
         # repeat with additional knots to the right
         rightx = spline.x[-1]
         righty = spline(rightx)
         rightslope = spline(rightx,nu=1)
-        rightxnext = np.nextafter(rightx, rightx + 1)
+        rightxnext = mx.nextafter(rightx, rightx + 1)
         rightynext = righty + rightslope * (rightxnext - rightx)
-        rightcoeffs = np.array([0, 0, rightslope, rightynext])
-        spline.extend(rightcoeffs[..., None], np.r_[rightxnext])
+        rightcoeffs = mx.array([0, 0, rightslope, rightynext])
+        spline.extend(rightcoeffs[..., None], mx.r_[rightxnext])
 
     xs = [1, 2, 3, 4, 5, 6, 7, 8]
     ys = [4.5, 3.6, 1.6, 0.0, -3.3, -3.1, -1.8, -1.7]
@@ -207,7 +207,7 @@ extrapolation proceeds using these two additional intervals.
     # extend the clamped spline with constant extrapolating knots
     add_boundary_knots(clamped)
 
-    xnew = np.linspace(min(xs) - 5, max(xs) + 5, 201)
+    xnew = mx.linspace(min(xs) - 5, max(xs) + 5, 201)
 
     fig, axs = plt.subplots(3, 3,figsize=(12,12))
 
@@ -252,20 +252,20 @@ Solving this equation *once* is straightforward:
 
 .. plot::
 
-    import numpy as np
+    import mlx.core as mx
     import matplotlib.pyplot as plt
     from scipy.optimize import brentq
 
     def f(x, a):
-        return a*x - 1/np.tan(x)
+        return a*x - 1/mx.tan(x)
 
     a = 3
-    x0 = brentq(f, 1e-16, np.pi/2, args=(a,))   # here we shift the left edge
+    x0 = brentq(f, 1e-16, mx.pi/2, args=(a,))   # here we shift the left edge
                                                 # by a machine epsilon to avoid
                                                 # a division by zero at x=0
-    xx = np.linspace(0.2, np.pi/2, 101)
+    xx = mx.linspace(0.2, mx.pi/2, 101)
     plt.plot(xx, a*xx, '--')
-    plt.plot(xx, 1/np.tan(xx), '--')
+    plt.plot(xx, 1/mx.tan(xx), '--')
     plt.plot(x0, a*x0, 'o', ms=12)
     plt.text(0.1, 0.9, fr'$x_0 = {x0:.3f}$',
                    transform=plt.gca().transAxes, fontsize=16)
@@ -288,27 +288,27 @@ derivatives of the tabulated function. We will use
 
 .. plot::
 
-    import numpy as np
+    import mlx.core as mx
     import matplotlib.pyplot as plt
     from scipy.interpolate import BPoly
 
     def f(x, a):
-        return a*x - 1/np.tan(x)
+        return a*x - 1/mx.tan(x)
 
-    xleft, xright = 0.2, np.pi/2
-    x = np.linspace(xleft, xright, 11)
+    xleft, xright = 0.2, mx.pi/2
+    x = mx.linspace(xleft, xright, 11)
 
     fig, ax = plt.subplots(1, 2, figsize=(12, 4))
 
     for j, a in enumerate([3, 93]):
         y = f(x, a)
-        dydx = a + 1./np.sin(x)**2    # d(ax - 1/tan(x)) / dx
+        dydx = a + 1./mx.sin(x)**2    # d(ax - 1/tan(x)) / dx
         dxdy = 1 / dydx               # dx/dy = 1 / (dy/dx)
 
-        xdx = np.c_[x, dxdy]
+        xdx = mx.c_[x, dxdy]
         spl = BPoly.from_derivatives(y, xdx)   # inverse interpolation
 
-        yy = np.linspace(f(xleft, a), f(xright, a), 51)
+        yy = mx.linspace(f(xleft, a), f(xright, a), 51)
         ax[j].plot(yy, spl(yy), '--')
         ax[j].plot(y, x, 'o')
         ax[j].set_xlabel(r'$y$')
@@ -354,21 +354,21 @@ implementation may look like this
         def __init__(self, a):
         
             # construct the interpolant
-            xleft, xright = 0.2, np.pi/2
-            x = np.linspace(xleft, xright, 11)
+            xleft, xright = 0.2, mx.pi/2
+            x = mx.linspace(xleft, xright, 11)
 
             y = f(x, a)
-            dydx = a + 1./np.sin(x)**2    # d(ax - 1/tan(x)) / dx
+            dydx = a + 1./mx.sin(x)**2    # d(ax - 1/tan(x)) / dx
             dxdy = 1 / dydx               # dx/dy = 1 / (dy/dx)
 
             # inverse interpolation
-            self.spl = BPoly.from_derivatives(y, np.c_[x, dxdy])
+            self.spl = BPoly.from_derivatives(y, mx.c_[x, dxdy])
             self.a = a
 
         def root(self):
             out = self.spl(0)
-            asympt = 1./np.sqrt(self.a)
-            return np.where(spl.x.min() < asympt, out, asympt)
+            asympt = 1./mx.sqrt(self.a)
+            return mx.where(spl.x.min() < asympt, out, asympt)
 
 And then
 
@@ -418,7 +418,7 @@ whole dataset using NumPy broadcasting.
 
 .. plot::
 
-    import numpy as np
+    import mlx.core as mx
     import matplotlib.pyplot as plt
     from scipy.interpolate import CloughTocher2DInterpolator as CT
 
@@ -427,9 +427,9 @@ whole dataset using NumPy broadcasting.
 
         Parameters
         ----------
-        xy : ndarray, shape (npoints, ndim)
+        xy : array, shape (npoints, ndim)
             Coordinates of data points
-        z : ndarray, shape (npoints)
+        z : array, shape (npoints)
             Values at data points
 
         Returns
@@ -447,11 +447,11 @@ whole dataset using NumPy broadcasting.
         def new_f(xx, yy):
             # evaluate the CT interpolator. Out-of-bounds values are nan.
             zz = f(xx, yy)
-            nans = np.isnan(zz)
+            nans = mx.isnan(zz)
 
             if nans.any():
                 # for each nan point, find its nearest neighbor
-                inds = np.argmin(
+                inds = mx.argmin(
                     (x[:, None] - xx[nans])**2 +
                     (y[:, None] - yy[nans])**2
                     , axis=0)
@@ -464,17 +464,17 @@ whole dataset using NumPy broadcasting.
     # Now illustrate the difference between the original ``CT`` interpolant
     # and ``my_CT`` on a small example:
 
-    x = np.array([1, 1, 1, 2, 2, 2, 4, 4, 4])
-    y = np.array([1, 2, 3, 1, 2, 3, 1, 2, 3])
-    z = np.array([0, 7, 8, 3, 4, 7, 1, 3, 4])
+    x = mx.array([1, 1, 1, 2, 2, 2, 4, 4, 4])
+    y = mx.array([1, 2, 3, 1, 2, 3, 1, 2, 3])
+    z = mx.array([0, 7, 8, 3, 4, 7, 1, 3, 4])
 
-    xy = np.c_[x, y]
+    xy = mx.c_[x, y]
     lut = CT(xy, z)
     lut2 = my_CT(xy, z)
 
-    X = np.linspace(min(x) - 0.5, max(x) + 0.5, 71)
-    Y = np.linspace(min(y) - 0.5, max(y) + 0.5, 71)
-    X, Y = np.meshgrid(X, Y)
+    X = mx.linspace(min(x) - 0.5, max(x) + 0.5, 71)
+    Y = mx.linspace(min(y) - 0.5, max(y) + 0.5, 71)
+    X, Y = mx.meshgrid(X, Y)
 
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')

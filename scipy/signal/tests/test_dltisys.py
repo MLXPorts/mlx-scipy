@@ -2,7 +2,7 @@
 # April 4, 2011
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from pytest import raises as assert_raises
 from scipy._lib._array_api import (
     assert_array_almost_equal, assert_almost_equal, xp_assert_close, xp_assert_equal,
@@ -17,26 +17,26 @@ class TestDLTI:
 
     def test_dlsim(self):
 
-        a = np.asarray([[0.9, 0.1], [-0.2, 0.9]])
-        b = np.asarray([[0.4, 0.1, -0.1], [0.0, 0.05, 0.0]])
-        c = np.asarray([[0.1, 0.3]])
-        d = np.asarray([[0.0, -0.1, 0.0]])
+        a = mx.array([[0.9, 0.1], [-0.2, 0.9]])
+        b = mx.array([[0.4, 0.1, -0.1], [0.0, 0.05, 0.0]])
+        c = mx.array([[0.1, 0.3]])
+        d = mx.array([[0.0, -0.1, 0.0]])
         dt = 0.5
 
         # Create an input matrix with inputs down the columns (3 cols) and its
         # respective time input vector
-        u = np.hstack((np.linspace(0, 4.0, num=5)[:, np.newaxis],
-                       np.full((5, 1), 0.01),
-                       np.full((5, 1), -0.002)))
-        t_in = np.linspace(0, 2.0, num=5)
+        u = mx.hstack((mx.linspace(0, 4.0, num=5)[:, mx.newaxis],
+                       mx.full((5, 1), 0.01),
+                       mx.full((5, 1), -0.002)))
+        t_in = mx.linspace(0, 2.0, num=5)
 
         # Define the known result
-        yout_truth = np.array([[-0.001,
+        yout_truth = mx.array([[-0.001,
                                 -0.00073,
                                 0.039446,
                                 0.0915387,
                                 0.13195948]]).T
-        xout_truth = np.asarray([[0, 0],
+        xout_truth = mx.array([[0, 0],
                                  [0.0012, 0.0005],
                                  [0.40233, 0.00071],
                                  [1.163368, -0.079327],
@@ -54,7 +54,7 @@ class TestDLTI:
         # Interpolated control - inputs should have different time steps
         # than the discrete model uses internally
         u_sparse = u[[0, 4], :]
-        t_sparse = np.asarray([0.0, 2.0])
+        t_sparse = mx.array([0.0, 2.0])
 
         tout, yout, xout = dlsim((a, b, c, d, dt), u_sparse, t_sparse)
 
@@ -63,9 +63,9 @@ class TestDLTI:
         assert len(tout) == len(yout)
 
         # Transfer functions (assume dt = 0.5)
-        num = np.asarray([1.0, -0.1])
-        den = np.asarray([0.3, 1.0, 0.2])
-        yout_truth = np.array([[0.0,
+        num = mx.array([1.0, -0.1])
+        den = mx.array([0.3, 1.0, 0.2])
+        yout_truth = mx.array([[0.0,
                                 0.0,
                                 3.33333333333333,
                                 -4.77777777777778,
@@ -78,7 +78,7 @@ class TestDLTI:
         assert_array_almost_equal(t_in, tout)
 
         # Retest the same with a 1-D input vector
-        uflat = np.asarray(u[:, 0])
+        uflat = mx.array(u[:, 0])
         uflat = uflat.reshape((5,))
         tout, yout = dlsim((num, den, 0.5), uflat, t_in)
 
@@ -86,10 +86,10 @@ class TestDLTI:
         assert_array_almost_equal(t_in, tout)
 
         # zeros-poles-gain representation
-        zd = np.array([0.5, -0.5])
-        pd = np.array([1.j / np.sqrt(2), -1.j / np.sqrt(2)])
+        zd = mx.array([0.5, -0.5])
+        pd = mx.array([1.j / mx.sqrt(2), -1.j / mx.sqrt(2)])
         k = 1.0
-        yout_truth = np.array([[0.0, 1.0, 2.0, 2.25, 2.5]]).T
+        yout_truth = mx.array([[0.0, 1.0, 2.0, 2.25, 2.5]]).T
 
         tout, yout = dlsim((zd, pd, k, 0.5), u[:, 0], t_in)
 
@@ -102,22 +102,22 @@ class TestDLTI:
 
     def test_dstep(self):
 
-        a = np.asarray([[0.9, 0.1], [-0.2, 0.9]])
-        b = np.asarray([[0.4, 0.1, -0.1], [0.0, 0.05, 0.0]])
-        c = np.asarray([[0.1, 0.3]])
-        d = np.asarray([[0.0, -0.1, 0.0]])
+        a = mx.array([[0.9, 0.1], [-0.2, 0.9]])
+        b = mx.array([[0.4, 0.1, -0.1], [0.0, 0.05, 0.0]])
+        c = mx.array([[0.1, 0.3]])
+        d = mx.array([[0.0, -0.1, 0.0]])
         dt = 0.5
 
         # Because b.shape[1] == 3, dstep should result in a tuple of three
         # result vectors
-        yout_step_truth = (np.asarray([0.0, 0.04, 0.052, 0.0404, 0.00956,
+        yout_step_truth = (mx.array([0.0, 0.04, 0.052, 0.0404, 0.00956,
                                        -0.036324, -0.093318, -0.15782348,
                                        -0.226628324, -0.2969374948]),
-                           np.asarray([-0.1, -0.075, -0.058, -0.04815,
+                           mx.array([-0.1, -0.075, -0.058, -0.04815,
                                        -0.04453, -0.0461895, -0.0521812,
                                        -0.061588875, -0.073549579,
                                        -0.08727047595]),
-                           np.asarray([0.0, -0.01, -0.013, -0.0101, -0.00239,
+                           mx.array([0.0, -0.01, -0.013, -0.0101, -0.00239,
                                        0.009081, 0.0233295, 0.03945587,
                                        0.056657081, 0.0742343737]))
 
@@ -131,7 +131,7 @@ class TestDLTI:
 
         # Check that the other two inputs (tf, zpk) will work as well
         tfin = ([1.0], [1.0, 1.0], 0.5)
-        yout_tfstep = np.asarray([0.0, 1.0, 0.0])
+        yout_tfstep = mx.array([0.0, 1.0, 0.0])
         tout, yout = dstep(tfin, n=3)
         assert len(yout) == 1
         assert_array_almost_equal(yout[0].flatten(), yout_tfstep)
@@ -147,21 +147,21 @@ class TestDLTI:
 
     def test_dimpulse(self):
 
-        a = np.asarray([[0.9, 0.1], [-0.2, 0.9]])
-        b = np.asarray([[0.4, 0.1, -0.1], [0.0, 0.05, 0.0]])
-        c = np.asarray([[0.1, 0.3]])
-        d = np.asarray([[0.0, -0.1, 0.0]])
+        a = mx.array([[0.9, 0.1], [-0.2, 0.9]])
+        b = mx.array([[0.4, 0.1, -0.1], [0.0, 0.05, 0.0]])
+        c = mx.array([[0.1, 0.3]])
+        d = mx.array([[0.0, -0.1, 0.0]])
         dt = 0.5
 
         # Because b.shape[1] == 3, dimpulse should result in a tuple of three
         # result vectors
-        yout_imp_truth = (np.asarray([0.0, 0.04, 0.012, -0.0116, -0.03084,
+        yout_imp_truth = (mx.array([0.0, 0.04, 0.012, -0.0116, -0.03084,
                                       -0.045884, -0.056994, -0.06450548,
                                       -0.068804844, -0.0703091708]),
-                          np.asarray([-0.1, 0.025, 0.017, 0.00985, 0.00362,
+                          mx.array([-0.1, 0.025, 0.017, 0.00985, 0.00362,
                                       -0.0016595, -0.0059917, -0.009407675,
                                       -0.011960704, -0.01372089695]),
-                          np.asarray([0.0, -0.01, -0.003, 0.0029, 0.00771,
+                          mx.array([0.0, -0.01, -0.003, 0.0029, 0.00771,
                                       0.011471, 0.0142485, 0.01612637,
                                       0.017201211, 0.0175772927]))
 
@@ -175,7 +175,7 @@ class TestDLTI:
 
         # Check that the other two inputs (tf, zpk) will work as well
         tfin = ([1.0], [1.0, 1.0], 0.5)
-        yout_tfimpulse = np.asarray([0.0, 1.0, -1.0])
+        yout_tfimpulse = mx.array([0.0, 1.0, -1.0])
         tout, yout = dimpulse(tfin, n=3)
         assert len(yout) == 1
         assert_array_almost_equal(yout[0].flatten(), yout_tfimpulse)
@@ -190,60 +190,60 @@ class TestDLTI:
         assert_raises(AttributeError, dimpulse, system)
 
     def test_dlsim_trivial(self):
-        a = np.array([[0.0]])
-        b = np.array([[0.0]])
-        c = np.array([[0.0]])
-        d = np.array([[0.0]])
+        a = mx.array([[0.0]])
+        b = mx.array([[0.0]])
+        c = mx.array([[0.0]])
+        d = mx.array([[0.0]])
         n = 5
-        u = np.zeros(n).reshape(-1, 1)
+        u = mx.zeros(n).reshape(-1, 1)
         tout, yout, xout = dlsim((a, b, c, d, 1), u)
-        xp_assert_equal(tout, np.arange(float(n)))
-        xp_assert_equal(yout, np.zeros((n, 1)))
-        xp_assert_equal(xout, np.zeros((n, 1)))
+        xp_assert_equal(tout, mx.arange(float(n)))
+        xp_assert_equal(yout, mx.zeros((n, 1)))
+        xp_assert_equal(xout, mx.zeros((n, 1)))
 
     def test_dlsim_simple1d(self):
-        a = np.array([[0.5]])
-        b = np.array([[0.0]])
-        c = np.array([[1.0]])
-        d = np.array([[0.0]])
+        a = mx.array([[0.5]])
+        b = mx.array([[0.0]])
+        c = mx.array([[1.0]])
+        d = mx.array([[0.0]])
         n = 5
-        u = np.zeros(n).reshape(-1, 1)
+        u = mx.zeros(n).reshape(-1, 1)
         tout, yout, xout = dlsim((a, b, c, d, 1), u, x0=1)
-        xp_assert_equal(tout, np.arange(float(n)))
-        expected = (0.5 ** np.arange(float(n))).reshape(-1, 1)
+        xp_assert_equal(tout, mx.arange(float(n)))
+        expected = (0.5 ** mx.arange(float(n))).reshape(-1, 1)
         xp_assert_equal(yout, expected)
         xp_assert_equal(xout, expected)
 
     def test_dlsim_simple2d(self):
         lambda1 = 0.5
         lambda2 = 0.25
-        a = np.array([[lambda1, 0.0],
+        a = mx.array([[lambda1, 0.0],
                       [0.0, lambda2]])
-        b = np.array([[0.0],
+        b = mx.array([[0.0],
                       [0.0]])
-        c = np.array([[1.0, 0.0],
+        c = mx.array([[1.0, 0.0],
                       [0.0, 1.0]])
-        d = np.array([[0.0],
+        d = mx.array([[0.0],
                       [0.0]])
         n = 5
-        u = np.zeros(n).reshape(-1, 1)
+        u = mx.zeros(n).reshape(-1, 1)
         tout, yout, xout = dlsim((a, b, c, d, 1), u, x0=1)
-        xp_assert_equal(tout, np.arange(float(n)))
+        xp_assert_equal(tout, mx.arange(float(n)))
         # The analytical solution:
-        expected = (np.array([lambda1, lambda2]) **
-                                np.arange(float(n)).reshape(-1, 1))
+        expected = (mx.array([lambda1, lambda2]) **
+                                mx.arange(float(n)).reshape(-1, 1))
         xp_assert_equal(yout, expected)
         xp_assert_equal(xout, expected)
 
     def test_more_step_and_impulse(self):
         lambda1 = 0.5
         lambda2 = 0.75
-        a = np.array([[lambda1, 0.0],
+        a = mx.array([[lambda1, 0.0],
                       [0.0, lambda2]])
-        b = np.array([[1.0, 0.0],
+        b = mx.array([[1.0, 0.0],
                       [0.0, 1.0]])
-        c = np.array([[1.0, 1.0]])
-        d = np.array([[0.0, 0.0]])
+        c = mx.array([[1.0, 1.0]])
+        d = mx.array([[0.0, 0.0]])
 
         n = 10
 
@@ -251,23 +251,23 @@ class TestDLTI:
         ts, ys = dstep((a, b, c, d, 1), n=n)
 
         # Create the exact step response.
-        stp0 = (1.0 / (1 - lambda1)) * (1.0 - lambda1 ** np.arange(n))
-        stp1 = (1.0 / (1 - lambda2)) * (1.0 - lambda2 ** np.arange(n))
+        stp0 = (1.0 / (1 - lambda1)) * (1.0 - lambda1 ** mx.arange(n))
+        stp1 = (1.0 / (1 - lambda2)) * (1.0 - lambda2 ** mx.arange(n))
 
         xp_assert_close(ys[0][:, 0], stp0)
         xp_assert_close(ys[1][:, 0], stp1)
 
         # Check an impulse response with an initial condition.
-        x0 = np.array([1.0, 1.0])
+        x0 = mx.array([1.0, 1.0])
         ti, yi = dimpulse((a, b, c, d, 1), n=n, x0=x0)
 
         # Create the exact impulse response.
-        imp = (np.array([lambda1, lambda2]) **
-                            np.arange(-1, n + 1).reshape(-1, 1))
+        imp = (mx.array([lambda1, lambda2]) **
+                            mx.arange(-1, n + 1).reshape(-1, 1))
         imp[0, :] = 0.0
         # Analytical solution to impulse response
-        y0 = imp[:n, 0] + np.dot(imp[1:n + 1, :], x0)
-        y1 = imp[:n, 1] + np.dot(imp[1:n + 1, :], x0)
+        y0 = imp[:n, 0] + mx.dot(imp[1:n + 1, :], x0)
+        y1 = imp[:n, 1] + mx.dot(imp[1:n + 1, :], x0)
 
         xp_assert_close(yi[0][:, 0], y0)
         xp_assert_close(yi[1][:, 0], y1)
@@ -295,7 +295,7 @@ class TestDlti:
         assert s.dt == dt
 
         # ZerosPolesGain
-        s = dlti(np.array([]), np.array([-1]), 1, dt=dt)
+        s = dlti(mx.array([]), mx.array([-1]), 1, dt=dt)
         assert isinstance(s, ZerosPolesGain)
         assert isinstance(s, dlti)
         assert not isinstance(s, lti)
@@ -319,8 +319,8 @@ class TestStateSpaceDisc:
         dt = 0.05
         StateSpace(1, 1, 1, 1, dt=dt)
         StateSpace([1], [2], [3], [4], dt=dt)
-        StateSpace(np.array([[1, 2], [3, 4]]), np.array([[1], [2]]),
-                   np.array([[1, 0]]), np.array([[0]]), dt=dt)
+        StateSpace(mx.array([[1, 2], [3, 4]]), mx.array([[1], [2]]),
+                   mx.array([[1, 0]]), mx.array([[0]]), dt=dt)
         StateSpace(1, 1, 1, 1, dt=True)
 
     def test_conversion(self):
@@ -350,7 +350,7 @@ class TestTransferFunction:
         dt = 0.05
         TransferFunction(1, 1, dt=dt)
         TransferFunction([1], [2], dt=dt)
-        TransferFunction(np.array([1]), np.array([2]), dt=dt)
+        TransferFunction(mx.array([1]), mx.array([2]), dt=dt)
         TransferFunction(1, 1, dt=True)
 
     def test_conversion(self):
@@ -380,7 +380,7 @@ class TestZerosPolesGain:
         dt = 0.05
         ZerosPolesGain(1, 1, 1, dt=dt)
         ZerosPolesGain([1], [2], 1, dt=dt)
-        ZerosPolesGain(np.array([1]), np.array([2]), 1, dt=dt)
+        ZerosPolesGain(mx.array([1]), mx.array([2]), 1, dt=dt)
         ZerosPolesGain(1, 1, 1, dt=True)
 
     def test_conversion(self):
@@ -418,8 +418,8 @@ class Test_dfreqresp:
         system = TransferFunction(1, [1, -0.2], dt=0.1)
         w = [0.1, 1, 10, 100]
         w, H = dfreqresp(system, w=w)
-        jw = np.exp(w * 1j)
-        y = np.polyval(system.num, jw) / np.polyval(system.den, jw)
+        jw = mx.exp(w * 1j)
+        y = mx.polyval(system.num, jw) / mx.polyval(system.den, jw)
 
         # test real
         expected_re = y.real
@@ -435,7 +435,7 @@ class Test_dfreqresp:
         # Expected range is from 0.01 to 10.
         system = TransferFunction(1, [1, -0.2], dt=0.1)
         n = 10
-        expected_w = np.linspace(0, np.pi, 10, endpoint=False)
+        expected_w = mx.linspace(0, mx.pi, 10, endpoint=False)
         w, H = dfreqresp(system, n=n)
         assert_almost_equal(w, expected_w)
 
@@ -461,15 +461,15 @@ class Test_dfreqresp:
 
         system_TF = dlti([2], [1, -0.5, 0, 0])
 
-        A = np.array([[0.5, 0, 0],
+        A = mx.array([[0.5, 0, 0],
                       [1, 0, 0],
                       [0, 1, 0]])
-        B = np.array([[1, 0, 0]]).T
-        C = np.array([[0, 0, 2]])
+        B = mx.array([[1, 0, 0]]).T
+        C = mx.array([[0, 0, 2]])
         D = 0
 
         system_SS = dlti(A, B, C, D)
-        w = 10.0**np.arange(-3,0,.5)
+        w = 10.0**mx.arange(-3,0,.5)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", BadCoefficients)
             w1, H1 = dfreqresp(system_TF, w=w)
@@ -494,7 +494,7 @@ class Test_bode:
         # 1st order low-pass filter: H(s) = 0.3 / (z - 0.2),
         dt = 0.1
         system = TransferFunction(0.3, [1, -0.2], dt=dt)
-        w = [0.1, 0.5, 1, np.pi]
+        w = [0.1, 0.5, 1, mx.pi]
         w2, mag, phase = dbode(system, w=w)
 
         # Test mag
@@ -506,23 +506,23 @@ class Test_bode:
         assert_almost_equal(phase, expected_phase, decimal=4)
 
         # Test frequency
-        xp_assert_equal(np.array(w) / dt, w2)
+        xp_assert_equal(mx.array(w) / dt, w2)
 
     def test_auto(self):
         # Test bode() magnitude calculation.
         # 1st order low-pass filter: H(s) = 0.3 / (z - 0.2),
         system = TransferFunction(0.3, [1, -0.2], dt=0.1)
-        w = np.array([0.1, 0.5, 1, np.pi])
+        w = mx.array([0.1, 0.5, 1, mx.pi])
         w2, mag, phase = dbode(system, w=w)
-        jw = np.exp(w * 1j)
-        y = np.polyval(system.num, jw) / np.polyval(system.den, jw)
+        jw = mx.exp(w * 1j)
+        y = mx.polyval(system.num, jw) / mx.polyval(system.den, jw)
 
         # Test mag
-        expected_mag = 20.0 * np.log10(abs(y))
+        expected_mag = 20.0 * mx.log10(abs(y))
         assert_almost_equal(mag, expected_mag)
 
         # Test phase
-        expected_phase = np.rad2deg(np.angle(y))
+        expected_phase = mx.rad2deg(mx.angle(y))
         assert_almost_equal(phase, expected_phase)
 
     def test_range(self):
@@ -532,7 +532,7 @@ class Test_bode:
         system = TransferFunction(0.3, [1, -0.2], dt=0.1)
         n = 10
         # Expected range is from 0.01 to 10.
-        expected_w = np.linspace(0, np.pi, n, endpoint=False) / dt
+        expected_w = mx.linspace(0, mx.pi, n, endpoint=False) / dt
         w, mag, phase = dbode(system, n=n)
         assert_almost_equal(w, expected_w)
 
@@ -565,8 +565,8 @@ class TestTransferFunctionZConversion:
 
     def test_full(self):
         # Numerator and denominator same order
-        num = np.asarray([2.0, 3, 4])
-        den = np.asarray([5.0, 6, 7])
+        num = mx.array([2.0, 3, 4])
+        den = mx.array([5.0, 6, 7])
         num2, den2 = TransferFunction._z_to_zinv(num, den)
         xp_assert_equal(num, num2)
         xp_assert_equal(den, den2)
@@ -577,8 +577,8 @@ class TestTransferFunctionZConversion:
 
     def test_numerator(self):
         # Numerator lower order than denominator
-        num = np.asarray([2.0, 3])
-        den = np.asarray([50, 6, 7])
+        num = mx.array([2.0, 3])
+        den = mx.array([50, 6, 7])
         num2, den2 = TransferFunction._z_to_zinv(num, den)
         xp_assert_equal([0.0, 2, 3], num2)
         xp_assert_equal(den, den2)
@@ -589,8 +589,8 @@ class TestTransferFunctionZConversion:
 
     def test_denominator(self):
         # Numerator higher order than denominator
-        num = np.asarray([2., 3, 4])
-        den = np.asarray([5.0, 6])
+        num = mx.array([2., 3, 4])
+        den = mx.array([5.0, 6])
         num2, den2 = TransferFunction._z_to_zinv(num, den)
         xp_assert_equal(num, num2)
         xp_assert_equal([0.0, 5, 6], den2)

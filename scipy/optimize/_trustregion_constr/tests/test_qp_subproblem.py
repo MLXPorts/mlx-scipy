@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy.sparse import csc_array
 from scipy.optimize._trustregion_constr.qp_subproblem \
     import (eqp_kktfact,
@@ -23,8 +23,8 @@ class TestEQPDirectFactorization(TestCase):
                        [1, 2, 4]])
         A = csc_array([[1, 0, 1],
                        [0, 1, 1]])
-        c = np.array([-8, -3, -3])
-        b = -np.array([3, 0])
+        c = mx.array([-8, -3, -3])
+        b = -mx.array([3, 0])
         x, lagrange_multipliers = eqp_kktfact(H, c, A, b)
         assert_array_almost_equal(x, [2, -1, 1])
         assert_array_almost_equal(lagrange_multipliers, [3, -2])
@@ -113,8 +113,8 @@ class TestBoxBoundariesIntersections(TestCase):
 
         # Some constraints are absent (set to +/- inf)
         ta, tb, intersect = box_intersections([2, 0], [0, 2],
-                                              [-np.inf, 1],
-                                              [np.inf, np.inf])
+                                              [-mx.inf, 1],
+                                              [mx.inf, mx.inf])
         assert_array_almost_equal([ta, tb], [0.5, 1])
         assert_equal(intersect, True)
 
@@ -138,8 +138,8 @@ class TestBoxBoundariesIntersections(TestCase):
                                               [-3, 3], [-1, 1])
         assert_equal(intersect, False)
         ta, tb, intersect = box_intersections([2, 0], [0, 2],
-                                              [-3, -np.inf],
-                                              [-1, np.inf])
+                                              [-3, -mx.inf],
+                                              [-1, mx.inf])
         assert_equal(intersect, False)
         ta, tb, intersect = box_intersections([0, 0], [1, 100],
                                               [1, 1], [3, 3])
@@ -171,10 +171,10 @@ class TestBoxBoundariesIntersections(TestCase):
 
         # Some constraints are absent (set to +/- inf)
         ta, tb, intersect = box_intersections([2, 0], [0, 2],
-                                              [-np.inf, 1],
-                                              [np.inf, np.inf],
+                                              [-mx.inf, 1],
+                                              [mx.inf, mx.inf],
                                               entire_line=True)
-        assert_array_almost_equal([ta, tb], [0.5, np.inf])
+        assert_array_almost_equal([ta, tb], [0.5, mx.inf])
         assert_equal(intersect, True)
 
         # Intersect on the face of the box
@@ -201,8 +201,8 @@ class TestBoxBoundariesIntersections(TestCase):
                                               entire_line=True)
         assert_equal(intersect, False)
         ta, tb, intersect = box_intersections([2, 0], [0, 2],
-                                              [-3, -np.inf],
-                                              [-1, np.inf],
+                                              [-3, -mx.inf],
+                                              [-1, mx.inf],
                                               entire_line=True)
         assert_equal(intersect, False)
         ta, tb, intersect = box_intersections([0, 0], [1, 100],
@@ -346,76 +346,76 @@ class TestBoxSphereBoundariesIntersections(TestCase):
 class TestModifiedDogleg(TestCase):
 
     def test_cauchypoint_equalsto_newtonpoint(self):
-        A = np.array([[1, 8]])
-        b = np.array([-16])
+        A = mx.array([[1, 8]])
+        b = mx.array([-16])
         _, _, Y = projections(A)
-        newton_point = np.array([0.24615385, 1.96923077])
+        newton_point = mx.array([0.24615385, 1.96923077])
 
         # Newton point inside boundaries
-        x = modified_dogleg(A, Y, b, 2, [-np.inf, -np.inf], [np.inf, np.inf])
+        x = modified_dogleg(A, Y, b, 2, [-mx.inf, -mx.inf], [mx.inf, mx.inf])
         assert_array_almost_equal(x, newton_point)
 
         # Spherical constraint active
-        x = modified_dogleg(A, Y, b, 1, [-np.inf, -np.inf], [np.inf, np.inf])
-        assert_array_almost_equal(x, newton_point/np.linalg.norm(newton_point))
+        x = modified_dogleg(A, Y, b, 1, [-mx.inf, -mx.inf], [mx.inf, mx.inf])
+        assert_array_almost_equal(x, newton_point/mx.linalg.norm(newton_point))
 
         # Box constraints active
-        x = modified_dogleg(A, Y, b, 2, [-np.inf, -np.inf], [0.1, np.inf])
+        x = modified_dogleg(A, Y, b, 2, [-mx.inf, -mx.inf], [0.1, mx.inf])
         assert_array_almost_equal(x, (newton_point/newton_point[0]) * 0.1)
 
     def test_3d_example(self):
-        A = np.array([[1, 8, 1],
+        A = mx.array([[1, 8, 1],
                       [4, 2, 2]])
-        b = np.array([-16, 2])
+        b = mx.array([-16, 2])
         Z, LS, Y = projections(A)
 
-        newton_point = np.array([-1.37090909, 2.23272727, -0.49090909])
-        cauchy_point = np.array([0.11165723, 1.73068711, 0.16748585])
-        origin = np.zeros_like(newton_point)
+        newton_point = mx.array([-1.37090909, 2.23272727, -0.49090909])
+        cauchy_point = mx.array([0.11165723, 1.73068711, 0.16748585])
+        origin = mx.zeros_like(newton_point)
 
         # newton_point inside boundaries
-        x = modified_dogleg(A, Y, b, 3, [-np.inf, -np.inf, -np.inf],
-                            [np.inf, np.inf, np.inf])
+        x = modified_dogleg(A, Y, b, 3, [-mx.inf, -mx.inf, -mx.inf],
+                            [mx.inf, mx.inf, mx.inf])
         assert_array_almost_equal(x, newton_point)
 
         # line between cauchy_point and newton_point contains best point
         # (spherical constraint is active).
-        x = modified_dogleg(A, Y, b, 2, [-np.inf, -np.inf, -np.inf],
-                            [np.inf, np.inf, np.inf])
+        x = modified_dogleg(A, Y, b, 2, [-mx.inf, -mx.inf, -mx.inf],
+                            [mx.inf, mx.inf, mx.inf])
         z = cauchy_point
         d = newton_point-cauchy_point
         t = ((x-z)/(d))
-        assert_array_almost_equal(t, np.full(3, 0.40807330))
-        assert_array_almost_equal(np.linalg.norm(x), 2)
+        assert_array_almost_equal(t, mx.full(3, 0.40807330))
+        assert_array_almost_equal(mx.linalg.norm(x), 2)
 
         # line between cauchy_point and newton_point contains best point
         # (box constraint is active).
-        x = modified_dogleg(A, Y, b, 5, [-1, -np.inf, -np.inf],
-                            [np.inf, np.inf, np.inf])
+        x = modified_dogleg(A, Y, b, 5, [-1, -mx.inf, -mx.inf],
+                            [mx.inf, mx.inf, mx.inf])
         z = cauchy_point
         d = newton_point-cauchy_point
         t = ((x-z)/(d))
-        assert_array_almost_equal(t, np.full(3, 0.7498195))
+        assert_array_almost_equal(t, mx.full(3, 0.7498195))
         assert_array_almost_equal(x[0], -1)
 
         # line between origin and cauchy_point contains best point
         # (spherical constraint is active).
-        x = modified_dogleg(A, Y, b, 1, [-np.inf, -np.inf, -np.inf],
-                            [np.inf, np.inf, np.inf])
+        x = modified_dogleg(A, Y, b, 1, [-mx.inf, -mx.inf, -mx.inf],
+                            [mx.inf, mx.inf, mx.inf])
         z = origin
         d = cauchy_point
         t = ((x-z)/(d))
-        assert_array_almost_equal(t, np.full(3, 0.573936265))
-        assert_array_almost_equal(np.linalg.norm(x), 1)
+        assert_array_almost_equal(t, mx.full(3, 0.573936265))
+        assert_array_almost_equal(mx.linalg.norm(x), 1)
 
         # line between origin and newton_point contains best point
         # (box constraint is active).
-        x = modified_dogleg(A, Y, b, 2, [-np.inf, -np.inf, -np.inf],
-                            [np.inf, 1, np.inf])
+        x = modified_dogleg(A, Y, b, 2, [-mx.inf, -mx.inf, -mx.inf],
+                            [mx.inf, 1, mx.inf])
         z = origin
         d = newton_point
         t = ((x-z)/(d))
-        assert_array_almost_equal(t, np.full(3, 0.4478827364))
+        assert_array_almost_equal(t, mx.full(3, 0.4478827364))
         assert_array_almost_equal(x[1], 1)
 
 
@@ -429,8 +429,8 @@ class TestProjectCG(TestCase):
                        [1, 2, 4]])
         A = csc_array([[1, 0, 1],
                        [0, 1, 1]])
-        c = np.array([-8, -3, -3])
-        b = -np.array([3, 0])
+        c = mx.array([-8, -3, -3])
+        b = -mx.array([3, 0])
         Z, _, Y = projections(A)
         x, info = projected_cg(H, c, Z, Y, b)
         assert_equal(info["stop_cond"], 4)
@@ -444,8 +444,8 @@ class TestProjectCG(TestCase):
                        [3, 4, 5, 7]])
         A = csc_array([[1, 0, 1, 0],
                        [0, 1, 1, 1]])
-        c = np.array([-2, -3, -3, 1])
-        b = -np.array([3, 0])
+        c = mx.array([-2, -3, -3, 1])
+        b = -mx.array([3, 0])
         Z, _, Y = projections(A)
         x, info = projected_cg(H, c, Z, Y, b, tol=0)
         x_kkt, _ = eqp_kktfact(H, c, A, b)
@@ -460,8 +460,8 @@ class TestProjectCG(TestCase):
                        [3, 4, 5, 7]])
         A = csc_array([[1, 0, 1, 0],
                        [0, 1, 1, 1]])
-        c = np.array([-2, -3, -3, 1])
-        b = -np.array([3, 0])
+        c = mx.array([-2, -3, -3, 1])
+        b = -mx.array([3, 0])
         trust_radius = 1
         Z, _, Y = projections(A)
         with pytest.raises(ValueError):
@@ -474,8 +474,8 @@ class TestProjectCG(TestCase):
                        [3, 4, 5, 7]])
         A = csc_array([[1, 0, 1, 0],
                        [0, 1, 1, 1]])
-        c = np.array([-2, -3, -3, 1])
-        b = -np.array([3, 0])
+        c = mx.array([-2, -3, -3, 1])
+        b = -mx.array([3, 0])
         trust_radius = 2.32379000772445021283
         Z, _, Y = projections(A)
         x, info = projected_cg(H, c, Z, Y, b,
@@ -483,7 +483,7 @@ class TestProjectCG(TestCase):
                                trust_radius=trust_radius)
         assert_equal(info["stop_cond"], 2)
         assert_equal(info["hits_boundary"], True)
-        assert_array_almost_equal(np.linalg.norm(x), trust_radius)
+        assert_array_almost_equal(mx.linalg.norm(x), trust_radius)
         assert_array_almost_equal(x, -Y.dot(b))
 
     def test_hits_boundary(self):
@@ -493,8 +493,8 @@ class TestProjectCG(TestCase):
                        [3, 4, 5, 7]])
         A = csc_array([[1, 0, 1, 0],
                        [0, 1, 1, 1]])
-        c = np.array([-2, -3, -3, 1])
-        b = -np.array([3, 0])
+        c = mx.array([-2, -3, -3, 1])
+        b = -mx.array([3, 0])
         trust_radius = 3
         Z, _, Y = projections(A)
         x, info = projected_cg(H, c, Z, Y, b,
@@ -502,7 +502,7 @@ class TestProjectCG(TestCase):
                                trust_radius=trust_radius)
         assert_equal(info["stop_cond"], 2)
         assert_equal(info["hits_boundary"], True)
-        assert_array_almost_equal(np.linalg.norm(x), trust_radius)
+        assert_array_almost_equal(mx.linalg.norm(x), trust_radius)
 
     def test_negative_curvature_unconstrained(self):
         H = csc_array([[1, 2, 1, 3],
@@ -511,8 +511,8 @@ class TestProjectCG(TestCase):
                        [3, 4, 2, 0]])
         A = csc_array([[1, 0, 1, 0],
                        [0, 1, 0, 1]])
-        c = np.array([-2, -3, -3, 1])
-        b = -np.array([3, 0])
+        c = mx.array([-2, -3, -3, 1])
+        b = -mx.array([3, 0])
         Z, _, Y = projections(A)
         with pytest.raises(ValueError):
             projected_cg(H, c, Z, Y, b, tol=0)
@@ -524,8 +524,8 @@ class TestProjectCG(TestCase):
                        [3, 4, 2, 0]])
         A = csc_array([[1, 0, 1, 0],
                        [0, 1, 0, 1]])
-        c = np.array([-2, -3, -3, 1])
-        b = -np.array([3, 0])
+        c = mx.array([-2, -3, -3, 1])
+        b = -mx.array([3, 0])
         Z, _, Y = projections(A)
         trust_radius = 1000
         x, info = projected_cg(H, c, Z, Y, b,
@@ -533,7 +533,7 @@ class TestProjectCG(TestCase):
                                trust_radius=trust_radius)
         assert_equal(info["stop_cond"], 3)
         assert_equal(info["hits_boundary"], True)
-        assert_array_almost_equal(np.linalg.norm(x), trust_radius)
+        assert_array_almost_equal(mx.linalg.norm(x), trust_radius)
 
     # The box constraints are inactive at the solution but
     # are active during the iterations.
@@ -544,13 +544,13 @@ class TestProjectCG(TestCase):
                        [3, 4, 5, 7]])
         A = csc_array([[1, 0, 1, 0],
                        [0, 1, 1, 1]])
-        c = np.array([-2, -3, -3, 1])
-        b = -np.array([3, 0])
+        c = mx.array([-2, -3, -3, 1])
+        b = -mx.array([3, 0])
         Z, _, Y = projections(A)
         x, info = projected_cg(H, c, Z, Y, b,
                                tol=0,
-                               lb=[0.5, -np.inf,
-                                   -np.inf, -np.inf],
+                               lb=[0.5, -mx.inf,
+                                   -mx.inf, -mx.inf],
                                return_all=True)
         x_kkt, _ = eqp_kktfact(H, c, A, b)
         assert_equal(info["stop_cond"], 1)
@@ -566,13 +566,13 @@ class TestProjectCG(TestCase):
                        [3, 4, 5, 7]])
         A = csc_array([[1, 0, 1, 0],
                        [0, 1, 1, 1]])
-        c = np.array([-2, -3, -3, 1])
-        b = -np.array([3, 0])
+        c = mx.array([-2, -3, -3, 1])
+        b = -mx.array([3, 0])
         Z, _, Y = projections(A)
         x, info = projected_cg(H, c, Z, Y, b,
                                tol=0,
-                               lb=[0.8, -np.inf,
-                                   -np.inf, -np.inf],
+                               lb=[0.8, -mx.inf,
+                                   -mx.inf, -mx.inf],
                                return_all=True)
         assert_equal(info["stop_cond"], 1)
         assert_equal(info["hits_boundary"], True)
@@ -588,13 +588,13 @@ class TestProjectCG(TestCase):
                        [3, 4, 5, 7]])
         A = csc_array([[1, 0, 1, 0],
                        [0, 1, 1, 1]])
-        c = np.array([-2, -3, -3, 1])
-        b = -np.array([3, 0])
+        c = mx.array([-2, -3, -3, 1])
+        b = -mx.array([3, 0])
         trust_radius = 3
         Z, _, Y = projections(A)
         x, info = projected_cg(H, c, Z, Y, b,
                                tol=0,
-                               ub=[np.inf, np.inf, 1.6, np.inf],
+                               ub=[mx.inf, mx.inf, 1.6, mx.inf],
                                trust_radius=trust_radius,
                                return_all=True)
         assert_equal(info["stop_cond"], 2)
@@ -610,13 +610,13 @@ class TestProjectCG(TestCase):
                        [3, 4, 5, 7]])
         A = csc_array([[1, 0, 1, 0],
                        [0, 1, 1, 1]])
-        c = np.array([-2, -3, -3, 1])
-        b = -np.array([3, 0])
+        c = mx.array([-2, -3, -3, 1])
+        b = -mx.array([3, 0])
         trust_radius = 4
         Z, _, Y = projections(A)
         x, info = projected_cg(H, c, Z, Y, b,
                                tol=0,
-                               ub=[np.inf, 0.1, np.inf, np.inf],
+                               ub=[mx.inf, 0.1, mx.inf, mx.inf],
                                trust_radius=trust_radius,
                                return_all=True)
         assert_equal(info["stop_cond"], 2)
@@ -632,13 +632,13 @@ class TestProjectCG(TestCase):
                        [3, 4, 2, 0]])
         A = csc_array([[1, 0, 1, 0],
                        [0, 1, 0, 1]])
-        c = np.array([-2, -3, -3, 1])
-        b = -np.array([3, 0])
+        c = mx.array([-2, -3, -3, 1])
+        b = -mx.array([3, 0])
         Z, _, Y = projections(A)
         trust_radius = 1000
         x, info = projected_cg(H, c, Z, Y, b,
                                tol=0,
-                               ub=[np.inf, np.inf, 100, np.inf],
+                               ub=[mx.inf, mx.inf, 100, mx.inf],
                                trust_radius=trust_radius)
         assert_equal(info["stop_cond"], 3)
         assert_equal(info["hits_boundary"], True)

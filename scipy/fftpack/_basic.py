@@ -15,7 +15,7 @@ def fft(x, n=None, axis=-1, overwrite_x=False):
 
     The returned complex array contains ``y(0), y(1),..., y(n-1)``, where
 
-    ``y(j) = (x * exp(-2*pi*sqrt(-1)*j*np.arange(n)/n)).sum()``.
+    ``y(j) = (x * exp(-2*pi*sqrt(-1)*j*mx.arange(n)/n)).sum()``.
 
     Parameters
     ----------
@@ -33,7 +33,7 @@ def fft(x, n=None, axis=-1, overwrite_x=False):
 
     Returns
     -------
-    z : complex ndarray
+    z : complex array
         with the elements::
 
             [y(0),y(1),..,y(n/2),y(1-n/2),...,y(-1)]        if n is even
@@ -78,10 +78,10 @@ def fft(x, n=None, axis=-1, overwrite_x=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fftpack import fft, ifft
-    >>> x = np.arange(5)
-    >>> np.allclose(fft(ifft(x)), x, atol=1e-15)  # within numerical accuracy.
+    >>> x = mx.arange(5)
+    >>> mx.allclose(fft(ifft(x)), x, atol=1e-15)  # within numerical accuracy.
     True
 
     """
@@ -94,7 +94,7 @@ def ifft(x, n=None, axis=-1, overwrite_x=False):
 
     The returned complex array contains ``y(0), y(1),..., y(n-1)``, where
 
-    ``y(j) = (x * exp(2*pi*sqrt(-1)*j*np.arange(n)/n)).mean()``.
+    ``y(j) = (x * exp(2*pi*sqrt(-1)*j*mx.arange(n)/n)).mean()``.
 
     Parameters
     ----------
@@ -112,7 +112,7 @@ def ifft(x, n=None, axis=-1, overwrite_x=False):
 
     Returns
     -------
-    ifft : ndarray of floats
+    ifft : array of floats
         The inverse discrete Fourier transform.
 
     See Also
@@ -135,9 +135,9 @@ def ifft(x, n=None, axis=-1, overwrite_x=False):
     Examples
     --------
     >>> from scipy.fftpack import fft, ifft
-    >>> import numpy as np
-    >>> x = np.arange(5)
-    >>> np.allclose(ifft(fft(x)), x, atol=1e-15)  # within numerical accuracy.
+    >>> import mlx.core as mx
+    >>> x = mx.arange(5)
+    >>> mx.allclose(ifft(fft(x)), x, atol=1e-15)  # within numerical accuracy.
     True
 
     """
@@ -165,7 +165,7 @@ def rfft(x, n=None, axis=-1, overwrite_x=False):
 
     Returns
     -------
-    z : real ndarray
+    z : real array
         The returned real array contains::
 
           [y(0),Re(y(1)),Im(y(1)),...,Re(y(n/2))]              if n is even
@@ -229,7 +229,7 @@ def irfft(x, n=None, axis=-1, overwrite_x=False):
 
     Returns
     -------
-    irfft : ndarray of floats
+    irfft : array of floats
         The inverse discrete Fourier transform.
 
     See Also
@@ -326,10 +326,10 @@ def fftn(x, shape=None, axes=None, overwrite_x=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fftpack import fftn, ifftn
-    >>> y = (-np.arange(16), 8 - np.arange(16), np.arange(16))
-    >>> np.allclose(y, fftn(ifftn(y)))
+    >>> y = (-mx.arange(16), 8 - mx.arange(16), mx.arange(16))
+    >>> mx.allclose(y, fftn(ifftn(y)))
     True
 
     """
@@ -359,9 +359,9 @@ def ifftn(x, shape=None, axes=None, overwrite_x=False):
     Examples
     --------
     >>> from scipy.fftpack import fftn, ifftn
-    >>> import numpy as np
-    >>> y = (-np.arange(16), 8 - np.arange(16), np.arange(16))
-    >>> np.allclose(y, ifftn(fftn(y)))
+    >>> import mlx.core as mx
+    >>> y = (-mx.arange(16), 8 - mx.arange(16), mx.arange(16))
+    >>> mx.allclose(y, ifftn(fftn(y)))
     True
 
     """
@@ -382,16 +382,16 @@ def fft2(x, shape=None, axes=(-2,-1), overwrite_x=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fftpack import fft2, ifft2
-    >>> y = np.mgrid[:5, :5][0]
+    >>> y = mx.mgrid[:5, :5][0]
     >>> y
     array([[0, 0, 0, 0, 0],
            [1, 1, 1, 1, 1],
            [2, 2, 2, 2, 2],
            [3, 3, 3, 3, 3],
            [4, 4, 4, 4, 4]])
-    >>> np.allclose(y, ifft2(fft2(y)))
+    >>> mx.allclose(y, ifft2(fft2(y)))
     True
     """
     return fftn(x,shape,axes,overwrite_x)
@@ -412,16 +412,16 @@ def ifft2(x, shape=None, axes=(-2,-1), overwrite_x=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fftpack import fft2, ifft2
-    >>> y = np.mgrid[:5, :5][0]
+    >>> y = mx.mgrid[:5, :5][0]
     >>> y
     array([[0, 0, 0, 0, 0],
            [1, 1, 1, 1, 1],
            [2, 2, 2, 2, 2],
            [3, 3, 3, 3, 3],
            [4, 4, 4, 4, 4]])
-    >>> np.allclose(y, fft2(ifft2(y)))
+    >>> mx.allclose(y, fft2(ifft2(y)))
     True
 
     """

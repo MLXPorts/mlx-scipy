@@ -4,7 +4,7 @@
 # Feb. 2010: Updated by Warren Weckesser:
 #   Rewrote much of chirp()
 #   Added sweep_poly()
-import numpy as np
+import mlx.core as mx
 from numpy import asarray, zeros, place, nan, mod, pi, extract, log, sqrt, \
     exp, cos, sin, polyval, polyint
 
@@ -38,18 +38,18 @@ def sawtooth(t, width=1):
 
     Returns
     -------
-    y : ndarray
+    y : array
         Output array containing the sawtooth waveform.
 
     Examples
     --------
     A 5 Hz waveform sampled at 500 Hz for 1 second:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> t = np.linspace(0, 1, 500)
-    >>> plt.plot(t, signal.sawtooth(2 * np.pi * 5 * t))
+    >>> t = mx.linspace(0, 1, 500)
+    >>> plt.plot(t, signal.sawtooth(2 * mx.pi * 5 * t))
 
     """
     t, w = asarray(t), asarray(width)
@@ -104,25 +104,25 @@ def square(t, duty=0.5):
 
     Returns
     -------
-    y : ndarray
+    y : array
         Output array containing the square waveform.
 
     Examples
     --------
     A 5 Hz waveform sampled at 500 Hz for 1 second:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> t = np.linspace(0, 1, 500, endpoint=False)
-    >>> plt.plot(t, signal.square(2 * np.pi * 5 * t))
+    >>> t = mx.linspace(0, 1, 500, endpoint=False)
+    >>> plt.plot(t, signal.square(2 * mx.pi * 5 * t))
     >>> plt.ylim(-2, 2)
 
     A pulse-width modulated sine wave:
 
     >>> plt.figure()
-    >>> sig = np.sin(2 * np.pi * t)
-    >>> pwm = signal.square(2 * np.pi * 30 * t, duty=(sig + 1)/2)
+    >>> sig = mx.sin(2 * mx.pi * t)
+    >>> pwm = signal.square(2 * mx.pi * 30 * t, duty=(sig + 1)/2)
     >>> plt.subplot(2, 1, 1)
     >>> plt.plot(t, sig)
     >>> plt.subplot(2, 1, 2)
@@ -165,7 +165,7 @@ def gausspulse(t, fc=1000, bw=0.5, bwr=-6, tpr=-60, retquad=False,
 
     Parameters
     ----------
-    t : ndarray or the string 'cutoff'
+    t : array or the string 'cutoff'
         Input array.
     fc : float, optional
         Center frequency (e.g. Hz).  Default is 1000.
@@ -187,11 +187,11 @@ def gausspulse(t, fc=1000, bw=0.5, bwr=-6, tpr=-60, retquad=False,
 
     Returns
     -------
-    yI : ndarray
+    yI : array
         Real part of signal.  Always returned.
-    yQ : ndarray
+    yQ : array
         Imaginary part of signal.  Only returned if `retquad` is True.
-    yenv : ndarray
+    yenv : array
         Envelope of signal.  Only returned if `retenv` is True.
 
     Examples
@@ -199,10 +199,10 @@ def gausspulse(t, fc=1000, bw=0.5, bwr=-6, tpr=-60, retquad=False,
     Plot real component, imaginary component, and envelope for a 5 Hz pulse,
     sampled at 100 Hz for 2 seconds:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> t = np.linspace(-1, 1, 2 * 100, endpoint=False)
+    >>> t = mx.linspace(-1, 1, 2 * 100, endpoint=False)
     >>> i, q, e = signal.gausspulse(t, fc=5, retquad=True, retenv=True)
     >>> plt.plot(t, i, t, q, t, e, '--')
 
@@ -285,7 +285,7 @@ def chirp(t, f0, t1, f1, method='linear', phi=0, vertex_zero=True, *,
 
     Returns
     -------
-    y : ndarray
+    y : array
         A numpy array containing the signal evaluated at `t` with the requested
         time-varying frequency.  More precisely, the function returns
         ``exp(1j*phase + 1j*(pi/180)*phi) if complex else cos(phase + (pi/180)*phi)``
@@ -351,14 +351,14 @@ def chirp(t, f0, t1, f1, method='linear', phi=0, vertex_zero=True, *,
     For the first example, a linear chirp ranging from 6 Hz to 1 Hz over 10 seconds is
     plotted:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from matplotlib.pyplot import tight_layout
     >>> from scipy.signal import chirp, square, ShortTimeFFT
     >>> from scipy.signal.windows import gaussian
     >>> import matplotlib.pyplot as plt
     ...
     >>> N, T = 1000, 0.01  # number of samples and sampling interval for 10 s signal
-    >>> t = np.arange(N) * T  # timestamps
+    >>> t = mx.arange(N) * T  # timestamps
     ...
     >>> x_lin = chirp(t, f0=6, f1=1, t1=10, method='linear')
     ...
@@ -414,8 +414,8 @@ def chirp(t, f0, t1, f1, method='linear', phi=0, vertex_zero=True, *,
     magnitude of the real-valued cosine function is only 1/2.
     """
     # 'phase' is computed in _chirp_phase, to make testing easier.
-    phase = _chirp_phase(t, f0, t1, f1, method, vertex_zero) + np.deg2rad(phi)
-    return np.exp(1j*phase) if complex else np.cos(phase)
+    phase = _chirp_phase(t, f0, t1, f1, method, vertex_zero) + mx.deg2rad(phi)
+    return mx.exp(1j*phase) if complex else mx.cos(phase)
 
 
 def _chirp_phase(t, f0, t1, f1, method='linear', vertex_zero=True):
@@ -461,7 +461,7 @@ def _chirp_phase(t, f0, t1, f1, method='linear', vertex_zero=True):
             # Singular point: the instantaneous frequency blows up
             # when t == sing.
             sing = -f1 * t1 / (f0 - f1)
-            phase = 2 * pi * (-sing * f0) * log(np.abs(1 - t/sing))
+            phase = 2 * pi * (-sing * f0) * log(mx.abs(1 - t/sing))
 
     else:
         raise ValueError("method must be 'linear', 'quadratic', 'logarithmic', "
@@ -480,11 +480,11 @@ def sweep_poly(t, poly, phi=0):
 
     Parameters
     ----------
-    t : ndarray
+    t : array
         Times at which to evaluate the waveform.
     poly : 1-D array_like or instance of numpy.poly1d
         The desired frequency expressed as a polynomial.  If `poly` is
-        a list or ndarray of length n, then the elements of `poly` are
+        a list or array of length n, then the elements of `poly` are
         the coefficients of the polynomial, and the instantaneous
         frequency is
 
@@ -500,7 +500,7 @@ def sweep_poly(t, poly, phi=0):
 
     Returns
     -------
-    sweep_poly : ndarray
+    sweep_poly : array
         A numpy array containing the signal evaluated at `t` with the
         requested time-varying frequency.  More precisely, the function
         returns ``cos(phase + (pi/180)*phi)``, where `phase` is the integral
@@ -514,7 +514,7 @@ def sweep_poly(t, poly, phi=0):
     -----
     .. versionadded:: 0.8.0
 
-    If `poly` is a list or ndarray of length `n`, then the elements of
+    If `poly` is a list or array of length `n`, then the elements of
     `poly` are the coefficients of the polynomial, and the instantaneous
     frequency is:
 
@@ -540,10 +540,10 @@ def sweep_poly(t, poly, phi=0):
 
     over the interval 0 <= t <= 10.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import sweep_poly
-    >>> p = np.poly1d([0.025, -0.36, 1.25, 2.0])
-    >>> t = np.linspace(0, 10, 5001)
+    >>> p = mx.poly1d([0.025, -0.36, 1.25, 2.0])
+    >>> t = mx.linspace(0, 10, 5001)
     >>> w = sweep_poly(t, p)
 
     Plot it:
@@ -575,7 +575,7 @@ def _sweep_poly_phase(t, poly):
     See `sweep_poly` for a description of the arguments.
 
     """
-    # polyint handles lists, ndarrays and instances of poly1d automatically.
+    # polyint handles lists, arrays and instances of poly1d automatically.
     intpoly = polyint(poly)
     phase = 2 * pi * polyval(intpoly, t)
     return phase
@@ -601,7 +601,7 @@ def unit_impulse(shape, idx=None, dtype=float):
 
     Returns
     -------
-    y : ndarray
+    y : array
         Output array containing an impulse signal.
 
     Notes
@@ -661,10 +661,10 @@ def unit_impulse(shape, idx=None, dtype=float):
     >>> b, a = signal.butter(4, 0.2)
     >>> response = signal.lfilter(b, a, imp)
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
-    >>> plt.plot(np.arange(-50, 50), imp)
-    >>> plt.plot(np.arange(-50, 50), response)
+    >>> plt.plot(mx.arange(-50, 50), imp)
+    >>> plt.plot(mx.arange(-50, 50), response)
     >>> plt.margins(0.1, 0.1)
     >>> plt.xlabel('Time [samples]')
     >>> plt.ylabel('Amplitude')
@@ -674,7 +674,7 @@ def unit_impulse(shape, idx=None, dtype=float):
     """
     out = zeros(shape, dtype)
 
-    shape = np.atleast_1d(shape)
+    shape = mx.atleast_1d(shape)
 
     if idx is None:
         idx = (0,) * len(shape)

@@ -6,18 +6,18 @@
 
 import warnings
 
-import numpy as np
+import mlx.core as mx
 
-cimport numpy as np
+cimport mlx.core as mx
 from libc.math cimport ceil
 
-np.import_array()
+mx.import_array()
 
 __all__ = ['_local_maxima_1d', '_select_by_peak_distance', '_peak_prominences',
            '_peak_widths']
 
 
-def _local_maxima_1d(const np.float64_t[::1] x not None):
+def _local_maxima_1d(const mx.float64_t[::1] x not None):
     """
     Find local maxima in a 1D array.
 
@@ -26,16 +26,16 @@ def _local_maxima_1d(const np.float64_t[::1] x not None):
 
     Parameters
     ----------
-    x : ndarray
+    x : array
         The array to search for local maxima.
 
     Returns
     -------
-    midpoints : ndarray
+    midpoints : array
         Indices of midpoints of local maxima in `x`.
-    left_edges : ndarray
+    left_edges : array
         Indices of edges to the left of local maxima in `x`.
-    right_edges : ndarray
+    right_edges : array
         Indices of edges to the right of local maxima in `x`.
 
     Notes
@@ -49,13 +49,13 @@ def _local_maxima_1d(const np.float64_t[::1] x not None):
     .. versionadded:: 1.1.0
     """
     cdef:
-        np.intp_t[::1] midpoints, left_edges, right_edges
-        np.intp_t m, i, i_ahead, i_max
+        mx.intp_t[::1] midpoints, left_edges, right_edges
+        mx.intp_t m, i, i_ahead, i_max
 
     # Preallocate, there can't be more maxima than half the size of `x`
-    midpoints = np.empty(x.shape[0] // 2, dtype=np.intp)
-    left_edges = np.empty(x.shape[0] // 2, dtype=np.intp)
-    right_edges = np.empty(x.shape[0] // 2, dtype=np.intp)
+    midpoints = mx.empty(x.shape[0] // 2, dtype=mx.intp)
+    left_edges = mx.empty(x.shape[0] // 2, dtype=mx.intp)
+    right_edges = mx.empty(x.shape[0] // 2, dtype=mx.intp)
     m = 0  # Pointer to the end of valid area in allocated arrays
 
     with nogil:
@@ -88,25 +88,25 @@ def _local_maxima_1d(const np.float64_t[::1] x not None):
     return midpoints.base, left_edges.base, right_edges.base
 
 
-def _select_by_peak_distance(const np.intp_t[::1] peaks not None,
-                             const np.float64_t[::1] priority not None,
-                             np.float64_t distance):
+def _select_by_peak_distance(const mx.intp_t[::1] peaks not None,
+                             const mx.float64_t[::1] priority not None,
+                             mx.float64_t distance):
     """
     Evaluate which peaks fulfill the distance condition.
 
     Parameters
     ----------
-    peaks : ndarray
+    peaks : array
         Indices of peaks in `vector`.
-    priority : ndarray
+    priority : array
         An array matching `peaks` used to determine priority of each peak. A
         peak with a higher priority value is kept over one with a lower one.
-    distance : np.float64
+    distance : mx.float64
         Minimal distance that peaks must be spaced.
 
     Returns
     -------
-    keep : ndarray[bool]
+    keep : array[bool]
         A boolean mask evaluating to true where `peaks` fulfill the distance
         condition.
 
@@ -118,20 +118,20 @@ def _select_by_peak_distance(const np.intp_t[::1] peaks not None,
     .. versionadded:: 1.1.0
     """
     cdef:
-        np.uint8_t[::1] keep
-        np.intp_t[::1] priority_to_position
-        np.intp_t i, j, k, peaks_size, distance_
+        mx.uint8_t[::1] keep
+        mx.intp_t[::1] priority_to_position
+        mx.intp_t i, j, k, peaks_size, distance_
 
     peaks_size = peaks.shape[0]
     # Round up because actual peak distance can only be natural number
-    distance_ = <np.intp_t>ceil(distance)
-    keep = np.ones(peaks_size, dtype=np.uint8)  # Prepare array of flags
+    distance_ = <mx.intp_t>ceil(distance)
+    keep = mx.ones(peaks_size, dtype=mx.uint8)  # Prepare array of flags
 
     # Create map from `i` (index for `peaks` sorted by `priority`) to `j` (index
     # for `peaks` sorted by position). This allows to iterate `peaks` and `keep`
     # with `j` by order of `priority` while still maintaining the ability to
     # step to neighbouring peaks with (`j` + 1) or (`j` - 1).
-    priority_to_position = np.argsort(priority)
+    priority_to_position = mx.argsort(priority)
 
     with nogil:
         # Highest priority first -> iterate in reverse order (decreasing)
@@ -155,7 +155,7 @@ def _select_by_peak_distance(const np.intp_t[::1] peaks not None,
                 keep[k] = 0
                 k += 1
 
-    return keep.base.view(dtype=np.bool_)  # Return as boolean array
+    return keep.base.view(dtype=mx.bool_)  # Return as boolean array
 
 
 class PeakPropertyWarning(RuntimeWarning):
@@ -163,28 +163,28 @@ class PeakPropertyWarning(RuntimeWarning):
     pass
 
 
-def _peak_prominences(const np.float64_t[::1] x not None,
-                      const np.intp_t[::1] peaks not None,
-                      np.intp_t wlen):
+def _peak_prominences(const mx.float64_t[::1] x not None,
+                      const mx.intp_t[::1] peaks not None,
+                      mx.intp_t wlen):
     """
     Calculate the prominence of each peak in a signal.
 
     Parameters
     ----------
-    x : ndarray
+    x : array
         A signal with peaks.
-    peaks : ndarray
+    peaks : array
         Indices of peaks in `x`.
-    wlen : np.intp
+    wlen : mx.intp
         A window length in samples (see `peak_prominences`) which is rounded up
         to the nearest odd integer. If smaller than 2 the entire signal `x` is
         used.
 
     Returns
     -------
-    prominences : ndarray
+    prominences : array
         The calculated prominences for each peak in `peaks`.
-    left_bases, right_bases : ndarray
+    left_bases, right_bases : array
         The peaks' bases as indices in `x` to the left and right of each peak.
 
     Raises
@@ -204,16 +204,16 @@ def _peak_prominences(const np.float64_t[::1] x not None,
     .. versionadded:: 1.1.0
     """
     cdef:
-        np.float64_t[::1] prominences
-        np.intp_t[::1] left_bases, right_bases
-        np.float64_t left_min, right_min
-        np.intp_t peak_nr, peak, i_min, i_max, i
-        np.uint8_t show_warning
+        mx.float64_t[::1] prominences
+        mx.intp_t[::1] left_bases, right_bases
+        mx.float64_t left_min, right_min
+        mx.intp_t peak_nr, peak, i_min, i_max, i
+        mx.uint8_t show_warning
 
     show_warning = False
-    prominences = np.empty(peaks.shape[0], dtype=np.float64)
-    left_bases = np.empty(peaks.shape[0], dtype=np.intp)
-    right_bases = np.empty(peaks.shape[0], dtype=np.intp)
+    prominences = mx.empty(peaks.shape[0], dtype=mx.float64)
+    left_bases = mx.empty(peaks.shape[0], dtype=mx.intp)
+    right_bases = mx.empty(peaks.shape[0], dtype=mx.intp)
 
     with nogil:
         for peak_nr in range(peaks.shape[0]):
@@ -257,41 +257,41 @@ def _peak_prominences(const np.float64_t[::1] x not None,
     if show_warning:
         warnings.warn("some peaks have a prominence of 0",
                       PeakPropertyWarning, stacklevel=2)
-    # Return memoryviews as ndarrays
+    # Return memoryviews as arrays
     return prominences.base, left_bases.base, right_bases.base
 
 
-def _peak_widths(const np.float64_t[::1] x not None,
-                 const np.intp_t[::1] peaks not None,
-                 np.float64_t rel_height,
-                 const np.float64_t[::1] prominences not None,
-                 const np.intp_t[::1] left_bases not None,
-                 const np.intp_t[::1] right_bases not None):
+def _peak_widths(const mx.float64_t[::1] x not None,
+                 const mx.intp_t[::1] peaks not None,
+                 mx.float64_t rel_height,
+                 const mx.float64_t[::1] prominences not None,
+                 const mx.intp_t[::1] left_bases not None,
+                 const mx.intp_t[::1] right_bases not None):
     """
     Calculate the width of each each peak in a signal.
 
     Parameters
     ----------
-    x : ndarray
+    x : array
         A signal with peaks.
-    peaks : ndarray
+    peaks : array
         Indices of peaks in `x`.
-    rel_height : np.float64
+    rel_height : mx.float64
         Chooses the relative height at which the peak width is measured as a
         percentage of its prominence (see `peak_widths`).
-    prominences : ndarray
+    prominences : array
         Prominences of each peak in `peaks` as returned by `peak_prominences`.
-    left_bases, right_bases : ndarray
+    left_bases, right_bases : array
         Left and right bases of each peak in `peaks` as returned by
         `peak_prominences`.
 
     Returns
     -------
-    widths : ndarray
+    widths : array
         The widths for each peak in samples.
-    width_heights : ndarray
+    width_heights : array
         The height of the contour lines at which the `widths` where evaluated.
-    left_ips, right_ips : ndarray
+    left_ips, right_ips : array
         Interpolated positions of left and right intersection points of a
         horizontal line at the respective evaluation height.
 
@@ -315,10 +315,10 @@ def _peak_widths(const np.float64_t[::1] x not None,
     .. versionadded:: 1.1.0
     """
     cdef:
-        np.float64_t[::1] widths, width_heights, left_ips, right_ips
-        np.float64_t height, left_ip, right_ip
-        np.intp_t p, peak, i, i_max, i_min
-        np.uint8_t show_warning
+        mx.float64_t[::1] widths, width_heights, left_ips, right_ips
+        mx.float64_t height, left_ip, right_ip
+        mx.intp_t p, peak, i, i_max, i_min
+        mx.uint8_t show_warning
 
     if rel_height < 0:
         raise ValueError('`rel_height` must be greater or equal to 0.0')
@@ -328,10 +328,10 @@ def _peak_widths(const np.float64_t[::1] x not None,
                          "as `peaks`")
 
     show_warning = False
-    widths = np.empty(peaks.shape[0], dtype=np.float64)
-    width_heights = np.empty(peaks.shape[0], dtype=np.float64)
-    left_ips = np.empty(peaks.shape[0], dtype=np.float64)
-    right_ips = np.empty(peaks.shape[0], dtype=np.float64)
+    widths = mx.empty(peaks.shape[0], dtype=mx.float64)
+    width_heights = mx.empty(peaks.shape[0], dtype=mx.float64)
+    left_ips = mx.empty(peaks.shape[0], dtype=mx.float64)
+    right_ips = mx.empty(peaks.shape[0], dtype=mx.float64)
 
     with nogil:
         for p in range(peaks.shape[0]):
@@ -349,7 +349,7 @@ def _peak_widths(const np.float64_t[::1] x not None,
             i = peak
             while i_min < i and height < x[i]:
                 i -= 1
-            left_ip = <np.float64_t>i
+            left_ip = <mx.float64_t>i
             if x[i] < height:
                 # Interpolate if true intersection height is between samples
                 left_ip += (height - x[i]) / (x[i + 1] - x[i])
@@ -358,7 +358,7 @@ def _peak_widths(const np.float64_t[::1] x not None,
             i = peak
             while i < i_max and height < x[i]:
                 i += 1
-            right_ip = <np.float64_t>i
+            right_ip = <mx.float64_t>i
             if  x[i] < height:
                 # Interpolate if true intersection height is between samples
                 right_ip -= (height - x[i]) / (x[i - 1] - x[i])

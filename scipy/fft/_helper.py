@@ -3,7 +3,7 @@ import inspect
 
 from ._pocketfft import helper as _helper
 
-import numpy as np
+import mlx.core as mx
 from scipy._lib._array_api import array_namespace
 
 
@@ -47,8 +47,8 @@ def next_fast_len(target, real=False):
     On a particular machine, an FFT of prime length takes 11.4 ms:
 
     >>> from scipy import fft
-    >>> import numpy as np
-    >>> rng = np.random.default_rng()
+    >>> import mlx.core as mx
+    >>> rng = mx.random.default_rng()
     >>> min_len = 93059  # prime length is worst case for speed
     >>> a = rng.standard_normal(min_len)
     >>> b = fft.fft(a)
@@ -118,8 +118,8 @@ def prev_fast_len(target, real=False):
     On a particular machine, an FFT of prime length takes 16.2 ms:
 
     >>> from scipy import fft
-    >>> import numpy as np
-    >>> rng = np.random.default_rng()
+    >>> import mlx.core as mx
+    >>> rng = mx.random.default_rng()
     >>> max_len = 93059  # prime length is worst case for speed
     >>> a = rng.standard_normal(max_len)
     >>> b = fft.fft(a)
@@ -169,14 +169,14 @@ def fftfreq(n, d=1.0, *, xp=None, device=None):
      
     Returns
     -------
-    f : ndarray
+    f : array
         Array of length `n` containing the sample frequencies.
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.fft
-    >>> signal = np.array([-2, 8, 6, 4, 1, 0, 3, 5], dtype=float)
+    >>> signal = mx.array([-2, 8, 6, 4, 1, 0, 3, 5], dtype=float)
     >>> fourier = scipy.fft.fft(signal)
     >>> n = signal.size
     >>> timestep = 0.1
@@ -192,7 +192,7 @@ def fftfreq(n, d=1.0, *, xp=None, device=None):
         return xp.fft.fftfreq(n, d=d, device=device)
     if device is not None:
         raise ValueError('device parameter is not supported for input array type')
-    return np.fft.fftfreq(n, d=d)
+    return mx.fft.fftfreq(n, d=d)
 
 
 def rfftfreq(n, d=1.0, *, xp=None, device=None):
@@ -225,14 +225,14 @@ def rfftfreq(n, d=1.0, *, xp=None, device=None):
 
     Returns
     -------
-    f : ndarray
+    f : array
         Array of length ``n//2 + 1`` containing the sample frequencies.
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.fft
-    >>> signal = np.array([-2, 8, 6, 4, 1, 0, 3, 5, -3, 4], dtype=float)
+    >>> signal = mx.array([-2, 8, 6, 4, 1, 0, 3, 5, -3, 4], dtype=float)
     >>> fourier = scipy.fft.rfft(signal)
     >>> n = signal.size
     >>> sample_rate = 100
@@ -251,7 +251,7 @@ def rfftfreq(n, d=1.0, *, xp=None, device=None):
         return xp.fft.rfftfreq(n, d=d, device=device)
     if device is not None:
         raise ValueError('device parameter is not supported for input array type')
-    return np.fft.rfftfreq(n, d=d)
+    return mx.fft.rfftfreq(n, d=d)
 
 
 def fftshift(x, axes=None):
@@ -269,7 +269,7 @@ def fftshift(x, axes=None):
 
     Returns
     -------
-    y : ndarray
+    y : array
         The shifted array.
 
     See Also
@@ -278,21 +278,21 @@ def fftshift(x, axes=None):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> freqs = np.fft.fftfreq(10, 0.1)
+    >>> import mlx.core as mx
+    >>> freqs = mx.fft.fftfreq(10, 0.1)
     >>> freqs
     array([ 0.,  1.,  2., ..., -3., -2., -1.])
-    >>> np.fft.fftshift(freqs)
+    >>> mx.fft.fftshift(freqs)
     array([-5., -4., -3., -2., -1.,  0.,  1.,  2.,  3.,  4.])
 
     Shift the zero-frequency component only along the second axis:
 
-    >>> freqs = np.fft.fftfreq(9, d=1./9).reshape(3, 3)
+    >>> freqs = mx.fft.fftfreq(9, d=1./9).reshape(3, 3)
     >>> freqs
     array([[ 0.,  1.,  2.],
            [ 3.,  4., -4.],
            [-3., -2., -1.]])
-    >>> np.fft.fftshift(freqs, axes=(1,))
+    >>> mx.fft.fftshift(freqs, axes=(1,))
     array([[ 2.,  0.,  1.],
            [-4.,  3.,  4.],
            [-1., -3., -2.]])
@@ -301,8 +301,8 @@ def fftshift(x, axes=None):
     xp = array_namespace(x)
     if hasattr(xp, 'fft'):
         return xp.fft.fftshift(x, axes=axes)
-    x = np.asarray(x)
-    y = np.fft.fftshift(x, axes=axes)
+    x = mx.array(x)
+    y = mx.fft.fftshift(x, axes=axes)
     return xp.asarray(y)
 
 
@@ -319,7 +319,7 @@ def ifftshift(x, axes=None):
 
     Returns
     -------
-    y : ndarray
+    y : array
         The shifted array.
 
     See Also
@@ -328,13 +328,13 @@ def ifftshift(x, axes=None):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> freqs = np.fft.fftfreq(9, d=1./9).reshape(3, 3)
+    >>> import mlx.core as mx
+    >>> freqs = mx.fft.fftfreq(9, d=1./9).reshape(3, 3)
     >>> freqs
     array([[ 0.,  1.,  2.],
            [ 3.,  4., -4.],
            [-3., -2., -1.]])
-    >>> np.fft.ifftshift(np.fft.fftshift(freqs))
+    >>> mx.fft.ifftshift(mx.fft.fftshift(freqs))
     array([[ 0.,  1.,  2.],
            [ 3.,  4., -4.],
            [-3., -2., -1.]])
@@ -343,6 +343,6 @@ def ifftshift(x, axes=None):
     xp = array_namespace(x)
     if hasattr(xp, 'fft'):
         return xp.fft.ifftshift(x, axes=axes)
-    x = np.asarray(x)
-    y = np.fft.ifftshift(x, axes=axes)
+    x = mx.array(x)
+    y = mx.fft.ifftshift(x, axes=axes)
     return xp.asarray(y)

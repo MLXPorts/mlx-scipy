@@ -51,12 +51,12 @@ Adapted for SciPy by Stefan van der Walt.
 
 __all__ = ['lsqr']
 
-import numpy as np
+import mlx.core as mx
 from math import sqrt
 from scipy.sparse.linalg._interface import aslinearoperator
 from scipy.sparse._sputils import convert_pydata_sparse_to_scipy
 
-eps = np.finfo(np.float64).eps
+eps = mx.finfo(mx.float64).eps
 
 
 def _sym_ortho(a, b):
@@ -78,17 +78,17 @@ def _sym_ortho(a, b):
 
     """
     if b == 0:
-        return np.sign(a), 0, abs(a)
+        return mx.sign(a), 0, abs(a)
     elif a == 0:
-        return 0, np.sign(b), abs(b)
+        return 0, mx.sign(b), abs(b)
     elif abs(b) > abs(a):
         tau = a / b
-        s = np.sign(b) / sqrt(1 + tau * tau)
+        s = mx.sign(b) / sqrt(1 + tau * tau)
         c = s * tau
         r = b / s
     else:
         tau = b / a
-        c = np.sign(a) / sqrt(1+tau*tau)
+        c = mx.sign(a) / sqrt(1+tau*tau)
         s = c * tau
         r = a / c
     return c, s, r
@@ -118,7 +118,7 @@ def lsqr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
     Parameters
     ----------
-    A : {sparse array, ndarray, LinearOperator}
+    A : {sparse array, array, LinearOperator}
         Representation of an m-by-n matrix.
         Alternatively, ``A`` can be a linear operator which can
         produce ``Ax`` and ``A^T x`` using, e.g.,
@@ -166,7 +166,7 @@ def lsqr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
     Returns
     -------
-    x : ndarray of float
+    x : array of float
         The final solution.
     istop : int
         Gives the reason for termination.
@@ -187,7 +187,7 @@ def lsqr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         Estimate of ``norm(A'@r - damp^2*(x - x0))``.
     xnorm : float
         ``norm(x)``
-    var : ndarray of float
+    var : array of float
         If ``calc_var`` is True, estimates all diagonals of
         ``(A'A)^{-1}`` (if ``damp == 0``) or more generally ``(A'A +
         damp^2*I)^{-1}``.  This is well defined if A has full column
@@ -268,14 +268,14 @@ def lsqr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import lsqr
     >>> A = csc_array([[1., 0.], [1., 1.], [0., 1.]], dtype=float)
 
     The first example has the trivial solution ``[0, 0]``
 
-    >>> b = np.array([0., 0., 0.], dtype=float)
+    >>> b = mx.array([0., 0., 0.], dtype=float)
     >>> x, istop, itn, normr = lsqr(A, b)[:4]
     >>> istop
     0
@@ -286,7 +286,7 @@ def lsqr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
     found as a solution. The returned solution `x` indeed contains
     ``[0., 0.]``. The next example has a non-trivial solution:
 
-    >>> b = np.array([1., 0., -1.], dtype=float)
+    >>> b = mx.array([1., 0., -1.], dtype=float)
     >>> x, istop, itn, r1norm = lsqr(A, b)[:4]
     >>> istop
     1
@@ -305,7 +305,7 @@ def lsqr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
     The final example demonstrates the behavior in the case where there is no
     solution for the equation:
 
-    >>> b = np.array([1., 0.01, -1.], dtype=float)
+    >>> b = mx.array([1., 0.01, -1.], dtype=float)
     >>> x, istop, itn, r1norm = lsqr(A, b)[:4]
     >>> istop
     2
@@ -322,14 +322,14 @@ def lsqr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
     """
     A = convert_pydata_sparse_to_scipy(A)
     A = aslinearoperator(A)
-    b = np.atleast_1d(b)
+    b = mx.atleast_1d(b)
     if b.ndim > 1:
         b = b.squeeze()
 
     m, n = A.shape
     if iter_lim is None:
         iter_lim = 2 * n
-    var = np.zeros(n)
+    var = mx.zeros(n)
 
     msg = ('The exact solution is  x = 0                              ',
            'Ax - b is small enough, given atol, btol                  ',
@@ -371,20 +371,20 @@ def lsqr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
     # Set up the first vectors u and v for the bidiagonalization.
     # These satisfy  beta*u = b - A@x,  alfa*v = A'@u.
     u = b
-    bnorm = np.linalg.norm(b)
+    bnorm = mx.linalg.norm(b)
 
     if x0 is None:
-        x = np.zeros(n)
+        x = mx.zeros(n)
         beta = bnorm.copy()
     else:
-        x = np.asarray(x0)
+        x = mx.array(x0)
         u = u - A.matvec(x)
-        beta = np.linalg.norm(u)
+        beta = mx.linalg.norm(u)
 
     if beta > 0:
         u = (1/beta) * u
         v = A.rmatvec(u)
-        alfa = np.linalg.norm(v)
+        alfa = mx.linalg.norm(v)
     else:
         v = x.copy()
         alfa = 0
@@ -428,13 +428,13 @@ def lsqr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         #     beta*u  =  a@v   -  alfa*u,
         #     alfa*v  =  A'@u  -  beta*v.
         u = A.matvec(v) - alfa * u
-        beta = np.linalg.norm(u)
+        beta = mx.linalg.norm(u)
 
         if beta > 0:
             u = (1/beta) * u
             anorm = sqrt(anorm**2 + alfa**2 + beta**2 + dampsq)
             v = A.rmatvec(u) - beta * v
-            alfa = np.linalg.norm(v)
+            alfa = mx.linalg.norm(v)
             if alfa > 0:
                 v = (1 / alfa) * v
 
@@ -468,7 +468,7 @@ def lsqr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
         x = x + t1 * w
         w = v + t2 * w
-        ddnorm = ddnorm + np.linalg.norm(dk)**2
+        ddnorm = ddnorm + mx.linalg.norm(dk)**2
 
         if calc_var:
             var = var + dk**2

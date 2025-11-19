@@ -1,5 +1,5 @@
 import os
-import numpy as np
+import mlx.core as mx
 import tempfile
 
 import pytest
@@ -35,17 +35,17 @@ def _check_save_and_load(dense_matrix):
 
 def test_save_and_load_random():
     N = 10
-    np.random.seed(0)
-    dense_matrix = np.random.random((N, N))
+    mx.random.seed(0)
+    dense_matrix = mx.random.random((N, N))
     dense_matrix[dense_matrix > 0.7] = 0
     _check_save_and_load(dense_matrix)
 
 def test_save_and_load_empty():
-    dense_matrix = np.zeros((4,6))
+    dense_matrix = mx.zeros((4,6))
     _check_save_and_load(dense_matrix)
 
 def test_save_and_load_one_entry():
-    dense_matrix = np.zeros((4,6))
+    dense_matrix = mx.zeros((4,6))
     dense_matrix[1,2] = 1
     _check_save_and_load(dense_matrix)
 
@@ -99,7 +99,7 @@ def test_malicious_load():
     fd, tmpfile = tempfile.mkstemp(suffix='.npz')
     os.close(fd)
     try:
-        np.savez(tmpfile, format=Executor())
+        mx.savez(tmpfile, format=Executor())
 
         # Should raise a ValueError, not execute code
         assert_raises(ValueError, load_npz, tmpfile)

@@ -15,18 +15,18 @@ that do not form a regular grid.
 
     Suppose we want to interpolate the 2-D function
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> def func(x, y):
-    ...     return x*(1-x)*np.cos(4*np.pi*x) * np.sin(4*np.pi*y**2)**2
+    ...     return x*(1-x)*mx.cos(4*mx.pi*x) * mx.sin(4*mx.pi*y**2)**2
 
     on a grid in [0, 1]x[0, 1]
 
-    >>> grid_x, grid_y = np.meshgrid(np.linspace(0, 1, 100),
-    ...                              np.linspace(0, 1, 200), indexing='ij')
+    >>> grid_x, grid_y = mx.meshgrid(mx.linspace(0, 1, 100),
+    ...                              mx.linspace(0, 1, 200), indexing='ij')
 
     but we only know its values at 1000 data points:
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> points = rng.random((1000, 2))
     >>> values = func(points[:,0], points[:,1])
 
@@ -102,14 +102,14 @@ classes from the `scipy.interpolate` module.
 .. plot::
     :alt: " "
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.interpolate import RBFInterpolator, InterpolatedUnivariateSpline
     >>> import matplotlib.pyplot as plt
 
     >>> # setup data
-    >>> x = np.linspace(0, 10, 9).reshape(-1, 1)
-    >>> y = np.sin(x)
-    >>> xi = np.linspace(0, 10, 101).reshape(-1, 1)
+    >>> x = mx.linspace(0, 10, 9).reshape(-1, 1)
+    >>> y = mx.sin(x)
+    >>> xi = mx.linspace(0, 10, 101).reshape(-1, 1)
 
     >>> # use fitpack2 method
     >>> ius = InterpolatedUnivariateSpline(x, y)
@@ -118,7 +118,7 @@ classes from the `scipy.interpolate` module.
     >>> fix, (ax1, ax2) = plt.subplots(2, 1)
     >>> ax1.plot(x, y, 'bo')
     >>> ax1.plot(xi, yi, 'g')
-    >>> ax1.plot(xi, np.sin(xi), 'r')
+    >>> ax1.plot(xi, mx.sin(xi), 'r')
     >>> ax1.set_title('Interpolation using univariate spline')
 
     >>> # use RBF method
@@ -127,7 +127,7 @@ classes from the `scipy.interpolate` module.
 
     >>> ax2.plot(x, y, 'bo')
     >>> ax2.plot(xi, fi, 'g')
-    >>> ax2.plot(xi, np.sin(xi), 'r')
+    >>> ax2.plot(xi, mx.sin(xi), 'r')
     >>> ax2.set_title('Interpolation using RBF - multiquadrics')
     >>> plt.tight_layout()
     >>> plt.show()
@@ -142,20 +142,20 @@ This example shows how to interpolate scattered 2-D data:
 .. plot::
     :alt: " "
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.interpolate import RBFInterpolator
     >>> import matplotlib.pyplot as plt
 
     >>> # 2-d tests - setup scattered data
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> xy = rng.random((100, 2))*4.0-2.0
-    >>> z = xy[:, 0]*np.exp(-xy[:, 0]**2-xy[:, 1]**2)
-    >>> edges = np.linspace(-2.0, 2.0, 101)
-    >>> centers = edges[:-1] + np.diff(edges[:2])[0] / 2.
-    >>> x_i, y_i = np.meshgrid(centers, centers)
+    >>> z = xy[:, 0]*mx.exp(-xy[:, 0]**2-xy[:, 1]**2)
+    >>> edges = mx.linspace(-2.0, 2.0, 101)
+    >>> centers = edges[:-1] + mx.diff(edges[:2])[0] / 2.
+    >>> x_i, y_i = mx.meshgrid(centers, centers)
     >>> x_i = x_i.reshape(-1, 1)
     >>> y_i = y_i.reshape(-1, 1)
-    >>> xy_i = np.concatenate([x_i, y_i], axis=1)
+    >>> xy_i = mx.concatenate([x_i, y_i], axis=1)
 
     >>> # use RBF
     >>> rbf = RBFInterpolator(xy, z, epsilon=2)
@@ -163,7 +163,7 @@ This example shows how to interpolate scattered 2-D data:
 
     >>> # plot the result
     >>> fig, ax = plt.subplots()
-    >>> X_edges, Y_edges = np.meshgrid(edges, edges)
+    >>> X_edges, Y_edges = mx.meshgrid(edges, edges)
     >>> lims = dict(cmap='RdBu_r', vmin=-0.4, vmax=0.4)
     >>> mapping = ax.pcolormesh(
     ...     X_edges, Y_edges, z_i.reshape(100, 100),

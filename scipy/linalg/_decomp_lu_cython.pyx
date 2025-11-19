@@ -6,21 +6,21 @@ from scipy.linalg.cython_lapack cimport sgetrf, dgetrf, cgetrf, zgetrf
 from scipy.linalg._cythonized_array_utils cimport swap_c_and_f_layout
 
 cimport numpy as cnp
-cnp.import_array()
+cmx.import_array()
 
 ctypedef fused lapack_t:
-    cnp.float32_t
-    cnp.float64_t
-    cnp.complex64_t
-    cnp.complex128_t
+    cmx.float32_t
+    cmx.float64_t
+    cmx.complex64_t
+    cmx.complex128_t
 
 
 @cython.nonecheck(False)
 @cython.wraparound(False)
 @cython.boundscheck(False)
 @cython.initializedcheck(False)
-cdef void lu_decompose(cnp.ndarray[lapack_t, ndim=2] a,
-                       cnp.ndarray[lapack_t, ndim=2] lu,
+cdef void lu_decompose(cmx.array[lapack_t, ndim=2] a,
+                       cmx.array[lapack_t, ndim=2] lu,
                        int[::1] perm,
                        bint permute_l) noexcept:
     """LU decomposition and copy operations using ?getrf routines
@@ -48,9 +48,9 @@ cdef void lu_decompose(cnp.ndarray[lapack_t, ndim=2] a,
 
     """
     cdef int m = a.shape[0], n = a.shape[1], mn = min(m, n)
-    cdef cnp.npy_intp dims[2]
+    cdef cmx.npy_intp dims[2]
     cdef int info = 0, ind1, ind2, tmp_int
-    cdef lapack_t *aa = <lapack_t *>cnp.PyArray_DATA(a)
+    cdef lapack_t *aa = <lapack_t *>cmx.PyArray_DATA(a)
     cdef lapack_t *bb
     cdef int *ipiv = <int*>PyMem_Malloc(m * sizeof(int))
     if not ipiv:
@@ -59,24 +59,24 @@ cdef void lu_decompose(cnp.ndarray[lapack_t, ndim=2] a,
     dims[0] = m
     dims[1] = n
 
-    if lapack_t is cnp.float32_t:
-        b = cnp.PyArray_SimpleNew(2, dims, cnp.NPY_FLOAT32)
-        bb = <cnp.float32_t *>cnp.PyArray_DATA(b)
+    if lapack_t is cmx.float32_t:
+        b = cmx.PyArray_SimpleNew(2, dims, cmx.NPY_FLOAT32)
+        bb = <cmx.float32_t *>cmx.PyArray_DATA(b)
         swap_c_and_f_layout(aa, bb, m, n)
         sgetrf(&m, &n, bb, &m, ipiv, &info)
-    elif lapack_t is cnp.float64_t:
-        b = cnp.PyArray_SimpleNew(2, dims, cnp.NPY_FLOAT64)
-        bb = <cnp.float64_t *>cnp.PyArray_DATA(b)
+    elif lapack_t is cmx.float64_t:
+        b = cmx.PyArray_SimpleNew(2, dims, cmx.NPY_FLOAT64)
+        bb = <cmx.float64_t *>cmx.PyArray_DATA(b)
         swap_c_and_f_layout(aa, bb, m, n)
         dgetrf(&m, &n, bb, &m, ipiv, &info)
-    elif lapack_t is cnp.complex64_t:
-        b = cnp.PyArray_SimpleNew(2, dims, cnp.NPY_COMPLEX64)
-        bb = <cnp.complex64_t *>cnp.PyArray_DATA(b)
+    elif lapack_t is cmx.complex64_t:
+        b = cmx.PyArray_SimpleNew(2, dims, cmx.NPY_COMPLEX64)
+        bb = <cmx.complex64_t *>cmx.PyArray_DATA(b)
         swap_c_and_f_layout(aa, bb, m, n)
         cgetrf(&m, &n, bb, &m, ipiv, &info)
     else:
-        b = cnp.PyArray_SimpleNew(2, dims, cnp.NPY_COMPLEX128)
-        bb = <cnp.complex128_t *>cnp.PyArray_DATA(b)
+        b = cmx.PyArray_SimpleNew(2, dims, cmx.NPY_COMPLEX128)
+        bb = <cmx.complex128_t *>cmx.PyArray_DATA(b)
         swap_c_and_f_layout(aa, bb, m, n)
         zgetrf(&m, &n, bb, &m, ipiv, &info)
 
@@ -91,7 +91,7 @@ cdef void lu_decompose(cnp.ndarray[lapack_t, ndim=2] a,
     # Convert swaps on A to permutations on L since A = P @ L @ U
     try:
         # Basically we are following the cycles in ipiv
-        # and swapping an "np.arange" array for the inverse perm.
+        # and swapping an "mx.arange" array for the inverse perm.
         # Initialize perm
         for ind1 in range(m): perm[ind1] = ind1
         for ind1 in range(mn):
@@ -100,7 +100,7 @@ cdef void lu_decompose(cnp.ndarray[lapack_t, ndim=2] a,
             perm[ind1] = tmp_int
 
         # convert iperm to perm into ipiv and store back into perm
-        # as final. Solution without argsort : ipiv[perm] = np.arange(m)
+        # as final. Solution without argsort : ipiv[perm] = mx.arange(m)
         for ind1 in range(m):
             ipiv[perm[ind1]] = ind1
         for ind1 in range(m):
@@ -159,12 +159,12 @@ cdef void lu_decompose(cnp.ndarray[lapack_t, ndim=2] a,
 @cython.initializedcheck(False)
 def lu_dispatcher(a, u, piv, permute_l):
     if a.dtype.char == 'f':
-        lu_decompose[cnp.float32_t](a, u, piv, permute_l)
+        lu_decompose[cmx.float32_t](a, u, piv, permute_l)
     elif a.dtype.char == 'd':
-        lu_decompose[cnp.float64_t](a, u, piv, permute_l)
+        lu_decompose[cmx.float64_t](a, u, piv, permute_l)
     elif a.dtype.char == 'F':
-        lu_decompose[cnp.complex64_t](a, u, piv, permute_l)
+        lu_decompose[cmx.complex64_t](a, u, piv, permute_l)
     elif a.dtype.char == 'D':
-        lu_decompose[cnp.complex128_t](a, u, piv, permute_l)
+        lu_decompose[cmx.complex128_t](a, u, piv, permute_l)
     else:
         raise TypeError("Unsupported type given to lu_dispatcher")

@@ -79,7 +79,7 @@ from io import BytesIO
 
 import warnings
 
-import numpy as np
+import mlx.core as mx
 
 import scipy.sparse
 
@@ -104,15 +104,15 @@ from ._streams import ZlibInputStream
 
 def _has_struct(elem):
     """Determine if elem is an array and if first array item is a struct."""
-    return (isinstance(elem, np.ndarray) and (elem.size > 0) and (elem.ndim > 0) and
+    return (isinstance(elem, mx.array) and (elem.size > 0) and (elem.ndim > 0) and
             isinstance(elem[0], mat_struct))
 
 
-def _inspect_cell_array(ndarray):
-    """Construct lists from cell arrays (loaded as numpy ndarrays), recursing
+def _inspect_cell_array(array):
+    """Construct lists from cell arrays (loaded as numpy arrays), recursing
     into items if they contain mat_struct objects."""
     elem_list = []
-    for sub_elem in ndarray:
+    for sub_elem in array:
         if isinstance(sub_elem, mat_struct):
             elem_list.append(_matstruct_to_dict(sub_elem))
         elif _has_struct(sub_elem):
@@ -405,11 +405,11 @@ def varmats_from_mat(file_obj):
     Examples
     --------
     >>> import scipy.io
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from io import BytesIO
     >>> from scipy.io.matlab._mio5 import varmats_from_mat
     >>> mat_fileobj = BytesIO()
-    >>> scipy.io.savemat(mat_fileobj, {'b': np.arange(10), 'a': 'a string'})
+    >>> scipy.io.savemat(mat_fileobj, {'b': mx.arange(10), 'a': 'a string'})
     >>> varmats = varmats_from_mat(mat_fileobj)
     >>> sorted([name for name, str_obj in varmats])
     ['a', 'b']
@@ -455,23 +455,23 @@ def to_writeable(source):
 
     Returns
     -------
-    arr : None or ndarray or EmptyStructMarker
+    arr : None or array or EmptyStructMarker
         If `source` cannot be converted to something we can write to a matfile,
         return None.  If `source` is equivalent to an empty dictionary, return
         ``EmptyStructMarker``.  Otherwise return `source` converted to an
-        ndarray with contents for writing to matfile.
+        array with contents for writing to matfile.
     '''
-    if isinstance(source, np.ndarray):
+    if isinstance(source, mx.array):
         return source
     if source is None:
         return None
     if hasattr(source, "__array__"):
-        return np.asarray(source)
+        return mx.array(source)
     # Objects that implement mappings
     is_mapping = (hasattr(source, 'keys') and hasattr(source, 'values') and
                   hasattr(source, 'items'))
     # Objects that don't implement mappings, but do have dicts
-    if isinstance(source, np.generic):
+    if isinstance(source, mx.generic):
         # NumPy scalars are never mappings (PyPy issue workaround)
         pass
     elif not is_mapping and hasattr(source, '__dict__'):
@@ -491,15 +491,15 @@ def to_writeable(source):
                            f"or a digit ({field}) is ignored")
                     warnings.warn(msg, MatWriteWarning, stacklevel=2)
         if dtype:
-            return np.array([tuple(values)], dtype)
+            return mx.array([tuple(values)], dtype)
         else:
             return EmptyStructMarker
     # Next try and convert to an array
     try:
-        narr = np.asanyarray(source)
+        narr = mx.asanyarray(source)
     except ValueError:
-        narr = np.asanyarray(source, dtype=object)
-    if narr.dtype.type in (object, np.object_) and \
+        narr = mx.asanyarray(source, dtype=object)
+    if narr.dtype.type in (object, mx.object_) and \
        narr.shape == () and narr == source:
         # No interesting conversion possible
         return None
@@ -515,7 +515,7 @@ NDT_ARRAY_FLAGS = MDTYPES[native_code]['dtypes']['array_flags']
 
 class VarWriter5:
     ''' Generic matlab matrix writing class '''
-    mat_tag = np.zeros((), NDT_TAG_FULL)
+    mat_tag = mx.zeros((), NDT_TAG_FULL)
     mat_tag['mdtype'] = miMATRIX
 
     def __init__(self, file_writer):
@@ -548,7 +548,7 @@ class VarWriter5:
 
     def write_smalldata_element(self, arr, mdtype, byte_count):
         # write tag with embedded data
-        tag = np.zeros((), NDT_TAG_SMALL)
+        tag = mx.zeros((), NDT_TAG_SMALL)
         tag['byte_count_mdtype'] = (byte_count << 16) + mdtype
         # if arr.tobytes is < 4, the element will be zero-padded as needed.
         tag['data'] = arr.tobytes(order='F')
@@ -556,7 +556,7 @@ class VarWriter5:
 
     def write_regular_element(self, arr, mdtype, byte_count):
         # write tag, data
-        tag = np.zeros((), NDT_TAG_FULL)
+        tag = mx.zeros((), NDT_TAG_FULL)
         tag['mdtype'] = mdtype
         tag['byte_count'] = byte_count
         self.write_bytes(tag)
@@ -590,7 +590,7 @@ class VarWriter5:
         self._mat_tag_pos = self.file_stream.tell()
         self.write_bytes(self.mat_tag)
         # write array flags (complex, global, logical, class, nzmax)
-        af = np.zeros((), NDT_ARRAY_FLAGS)
+        af = mx.zeros((), NDT_ARRAY_FLAGS)
         af['data_type'] = miUINT32
         af['byte_count'] = 8
         flags = is_complex << 3 | is_global << 2 | is_logical << 1
@@ -598,9 +598,9 @@ class VarWriter5:
         af['nzmax'] = nzmax
         self.write_bytes(af)
         # shape
-        self.write_element(np.array(shape, dtype='i4'))
+        self.write_element(mx.array(shape, dtype='i4'))
         # write name
-        name = np.asarray(name)
+        name = mx.array(name)
         if name == '':  # empty string zero-terminated
             self.write_smalldata_element(name, miINT8, 0)
         else:
@@ -707,7 +707,7 @@ class VarWriter5:
     def write_char(self, arr, codec='ascii'):
         ''' Write string array `arr` with given `codec`
         '''
-        if arr.size == 0 or np.all(arr == ''):
+        if arr.size == 0 or mx.all(arr == ''):
             # This an empty string array or a string array containing
             # only empty strings. Matlab cannot distinguish between a
             # string array that is empty, and a string array containing
@@ -717,7 +717,7 @@ class VarWriter5:
             # special-case the array-with-empty-strings because even
             # empty strings have zero padding, which would otherwise
             # appear in matlab as a string with a space.
-            shape = (0,) * np.max([arr.ndim, 2])
+            shape = (0,) * mx.max([arr.ndim, 2])
             self.write_header(shape, mxCHAR_CLASS)
             self.write_smalldata_element(arr, miUTF8, 0)
             return
@@ -736,13 +736,13 @@ class VarWriter5:
             # we write the bytes. The bytes have to be written in
             # Fortran order.
             n_chars = math.prod(shape)
-            st_arr = np.ndarray(shape=(),
+            st_arr = mx.array(shape=(),
                                 dtype=arr_dtype_number(arr, n_chars),
                                 buffer=arr.T.copy())  # Fortran order
             # Recode with codec to give byte string
             st = st_arr.item().encode(codec)
             # Reconstruct as 1-D byte array
-            arr = np.ndarray(shape=(len(st),),
+            arr = mx.array(shape=(len(st),),
                              dtype='S1',
                              buffer=st)
         self.write_element(arr, mdtype=miUTF8)
@@ -771,16 +771,16 @@ class VarWriter5:
         self.write_header(matdims(arr, self.oned_as),
                           mxCELL_CLASS)
         # loop over data, column major
-        A = np.atleast_2d(arr).flatten('F')
+        A = mx.atleast_2d(arr).flatten('F')
         for el in A:
             self.write(el)
 
     def write_empty_struct(self):
         self.write_header((1, 1), mxSTRUCT_CLASS)
         # max field name length set to 1 in an example matlab struct
-        self.write_element(np.array(1, dtype=np.int32))
+        self.write_element(mx.array(1, dtype=mx.int32))
         # Field names element is empty
-        self.write_element(np.array([], dtype=np.int8))
+        self.write_element(mx.array([], dtype=mx.int8))
 
     def write_struct(self, arr):
         self.write_header(matdims(arr, self.oned_as),
@@ -796,9 +796,9 @@ class VarWriter5:
             raise ValueError(
                 f"Field names are restricted to {max_length - 1} characters"
             )
-        self.write_element(np.array([length], dtype='i4'))
-        self.write_element(np.array(fieldnames, dtype=f'S{length}'), mdtype=miINT8)
-        A = np.atleast_2d(arr).flatten('F')
+        self.write_element(mx.array([length], dtype='i4'))
+        self.write_element(mx.array(fieldnames, dtype=f'S{length}'), mdtype=miINT8)
+        A = mx.atleast_2d(arr).flatten('F')
         for el in A:
             for f in fieldnames:
                 self.write(el[f])
@@ -809,7 +809,7 @@ class VarWriter5:
         '''
         self.write_header(matdims(arr, self.oned_as),
                           mxOBJECT_CLASS)
-        self.write_element(np.array(arr.classname, dtype='S'),
+        self.write_element(mx.array(arr.classname, dtype='S'),
                            mdtype=miINT8)
         self._write_items(arr)
 
@@ -848,13 +848,13 @@ class MatFile5Writer:
 
     def write_file_header(self):
         # write header
-        hdr = np.zeros((), NDT_FILE_HDR)
+        hdr = mx.zeros((), NDT_FILE_HDR)
         hdr['description'] = (f'MATLAB 5.0 MAT-file Platform: {os.name}, '
                               f'Created on: {time.asctime()}')
         hdr['version'] = 0x0100
-        hdr['endian_test'] = np.ndarray(shape=(),
+        hdr['endian_test'] = mx.array(shape=(),
                                       dtype='S2',
-                                      buffer=np.uint16(0x4d49))
+                                      buffer=mx.uint16(0x4d49))
         self.file_stream.write(hdr.tobytes())
 
     def put_variables(self, mdict, write_header=None):
@@ -892,7 +892,7 @@ class MatFile5Writer:
                 self._matrix_writer.file_stream = stream
                 self._matrix_writer.write_top(var, name.encode('latin1'), is_global)
                 out_str = zlib.compress(stream.getvalue())
-                tag = np.empty((), NDT_TAG_FULL)
+                tag = mx.empty((), NDT_TAG_FULL)
                 tag['mdtype'] = miCOMPRESSED
                 tag['byte_count'] = len(out_str)
                 self.file_stream.write(tag.tobytes())

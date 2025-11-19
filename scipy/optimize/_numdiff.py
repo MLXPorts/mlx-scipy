@@ -1,6 +1,6 @@
 """Routines for numerical differentiation."""
 import functools
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import norm
 
 from scipy.sparse.linalg import LinearOperator
@@ -16,9 +16,9 @@ def _adjust_scheme_to_bounds(x0, h, num_steps, scheme, lb, ub):
 
     Parameters
     ----------
-    x0 : ndarray, shape (n,)
+    x0 : array, shape (n,)
         Point at which we wish to estimate derivative.
-    h : ndarray, shape (n,)
+    h : array, shape (n,)
         Desired absolute finite difference steps.
     num_steps : int
         Number of `h` steps in one direction required to implement finite
@@ -28,29 +28,29 @@ def _adjust_scheme_to_bounds(x0, h, num_steps, scheme, lb, ub):
         Whether steps in one or both directions are required. In other
         words '1-sided' applies to forward and backward schemes, '2-sided'
         applies to center schemes.
-    lb : ndarray, shape (n,)
+    lb : array, shape (n,)
         Lower bounds on independent variables.
-    ub : ndarray, shape (n,)
+    ub : array, shape (n,)
         Upper bounds on independent variables.
 
     Returns
     -------
-    h_adjusted : ndarray, shape (n,)
+    h_adjusted : array, shape (n,)
         Adjusted absolute step sizes. Step size decreases only if a sign flip
         or switching to one-sided scheme doesn't allow to take a full step.
-    use_one_sided : ndarray of bool, shape (n,)
+    use_one_sided : array of bool, shape (n,)
         Whether to switch to one-sided scheme. Informative only for
         ``scheme='2-sided'``.
     """
     if scheme == '1-sided':
-        use_one_sided = np.ones_like(h, dtype=bool)
+        use_one_sided = mx.ones_like(h, dtype=bool)
     elif scheme == '2-sided':
-        h = np.abs(h)
-        use_one_sided = np.zeros_like(h, dtype=bool)
+        h = mx.abs(h)
+        use_one_sided = mx.zeros_like(h, dtype=bool)
     else:
         raise ValueError("`scheme` must be '1-sided' or '2-sided'.")
 
-    if np.all((lb == -np.inf) & (ub == np.inf)):
+    if mx.all((lb == -mx.inf) & (ub == mx.inf)):
         return h, use_one_sided
 
     h_total = h * num_steps
@@ -62,7 +62,7 @@ def _adjust_scheme_to_bounds(x0, h, num_steps, scheme, lb, ub):
     if scheme == '1-sided':
         x = x0 + h_total
         violated = (x < lb) | (x > ub)
-        fitting = np.abs(h_total) <= np.maximum(lower_dist, upper_dist)
+        fitting = mx.abs(h_total) <= mx.maximum(lower_dist, upper_dist)
         h_adjusted[violated & fitting] *= -1
 
         forward = (upper_dist >= lower_dist) & ~fitting
@@ -73,17 +73,17 @@ def _adjust_scheme_to_bounds(x0, h, num_steps, scheme, lb, ub):
         central = (lower_dist >= h_total) & (upper_dist >= h_total)
 
         forward = (upper_dist >= lower_dist) & ~central
-        h_adjusted[forward] = np.minimum(
+        h_adjusted[forward] = mx.minimum(
             h[forward], 0.5 * upper_dist[forward] / num_steps)
         use_one_sided[forward] = True
 
         backward = (upper_dist < lower_dist) & ~central
-        h_adjusted[backward] = -np.minimum(
+        h_adjusted[backward] = -mx.minimum(
             h[backward], 0.5 * lower_dist[backward] / num_steps)
         use_one_sided[backward] = True
 
-        min_dist = np.minimum(upper_dist, lower_dist) / num_steps
-        adjusted_central = (~central & (np.abs(h_adjusted) <= min_dist))
+        min_dist = mx.minimum(upper_dist, lower_dist) / num_steps
+        adjusted_central = (~central & (mx.abs(h_adjusted) <= min_dist))
         h_adjusted[adjusted_central] = min_dist[adjusted_central]
         use_one_sided[adjusted_central] = False
 
@@ -100,10 +100,10 @@ def _eps_for_method(x0_dtype, f0_dtype, method):
 
     Parameters
     ----------
-    f0_dtype: np.dtype
+    f0_dtype: mx.dtype
         dtype of function evaluation
 
-    x0_dtype: np.dtype
+    x0_dtype: mx.dtype
         dtype of parameter vector
 
     method: {'2-point', '3-point', 'cs'}
@@ -111,29 +111,29 @@ def _eps_for_method(x0_dtype, f0_dtype, method):
     Returns
     -------
     EPS: float
-        relative step size. May be np.float16, np.float32, np.float64
+        relative step size. May be mx.float16, mx.float32, mx.float64
 
     Notes
     -----
-    The default relative step will be np.float64. However, if x0 or f0 are
-    smaller floating point types (np.float16, np.float32), then the smallest
+    The default relative step will be mx.float64. However, if x0 or f0 are
+    smaller floating point types (mx.float16, mx.float32), then the smallest
     floating point type is chosen.
     """
     # the default EPS value
-    EPS = np.finfo(np.float64).eps
+    EPS = mx.finfo(mx.float64).eps
 
     x0_is_fp = False
-    if np.issubdtype(x0_dtype, np.inexact):
+    if mx.issubdtype(x0_dtype, mx.inexact):
         # if you're a floating point type then over-ride the default EPS
-        EPS = np.finfo(x0_dtype).eps
-        x0_itemsize = np.dtype(x0_dtype).itemsize
+        EPS = mx.finfo(x0_dtype).eps
+        x0_itemsize = mx.dtype(x0_dtype).itemsize
         x0_is_fp = True
 
-    if np.issubdtype(f0_dtype, np.inexact):
-        f0_itemsize = np.dtype(f0_dtype).itemsize
+    if mx.issubdtype(f0_dtype, mx.inexact):
+        f0_itemsize = mx.dtype(f0_dtype).itemsize
         # choose the smallest itemsize between x0 and f0
         if x0_is_fp and f0_itemsize < x0_itemsize:
-            EPS = np.finfo(f0_dtype).eps
+            EPS = mx.finfo(f0_dtype).eps
 
     if method in ["2-point", "cs"]:
         return EPS**0.5
@@ -153,9 +153,9 @@ def _compute_absolute_step(rel_step, x0, f0, method):
     ----------
     rel_step: None or array-like
         Relative step for the finite difference calculation
-    x0 : np.ndarray
+    x0 : mx.array
         Parameter vector
-    f0 : np.ndarray or scalar
+    f0 : mx.array or scalar
     method : {'2-point', '3-point', 'cs'}
 
     Returns
@@ -165,29 +165,29 @@ def _compute_absolute_step(rel_step, x0, f0, method):
 
     Notes
     -----
-    `h` will always be np.float64. However, if `x0` or `f0` are
-    smaller floating point dtypes (e.g. np.float32), then the absolute
+    `h` will always be mx.float64. However, if `x0` or `f0` are
+    smaller floating point dtypes (e.g. mx.float32), then the absolute
     step size will be calculated from the smallest floating point size.
     """
-    # this is used instead of np.sign(x0) because we need
+    # this is used instead of mx.sign(x0) because we need
     # sign_x0 to be 1 when x0 == 0.
     sign_x0 = (x0 >= 0).astype(float) * 2 - 1
 
     rstep = _eps_for_method(x0.dtype, f0.dtype, method)
 
     if rel_step is None:
-        abs_step = rstep * sign_x0 * np.maximum(1.0, np.abs(x0))
+        abs_step = rstep * sign_x0 * mx.maximum(1.0, mx.abs(x0))
     else:
         # User has requested specific relative steps.
         # Don't multiply by max(1, abs(x0) because if x0 < 1 then their
         # requested step is not used.
-        abs_step = rel_step * sign_x0 * np.abs(x0)
+        abs_step = rel_step * sign_x0 * mx.abs(x0)
 
         # however we don't want an abs_step of 0, which can happen if
         # rel_step is 0, or x0 is 0. Instead, substitute a realistic step
         dx = ((x0 + abs_step) - x0)
-        abs_step = np.where(dx == 0,
-                            rstep * sign_x0 * np.maximum(1.0, np.abs(x0)),
+        abs_step = mx.where(dx == 0,
+                            rstep * sign_x0 * mx.maximum(1.0, mx.abs(x0)),
                             abs_step)
 
     return abs_step
@@ -197,19 +197,19 @@ def _prepare_bounds(bounds, x0):
     """
     Prepares new-style bounds from a two-tuple specifying the lower and upper
     limits for values in x0. If a value is not bound then the lower/upper bound
-    will be expected to be -np.inf/np.inf.
+    will be expected to be -mx.inf/mx.inf.
 
     Examples
     --------
-    >>> _prepare_bounds([(0, 1, 2), (1, 2, np.inf)], [0.5, 1.5, 2.5])
+    >>> _prepare_bounds([(0, 1, 2), (1, 2, mx.inf)], [0.5, 1.5, 2.5])
     (array([0., 1., 2.]), array([ 1.,  2., inf]))
     """
-    lb, ub = (np.asarray(b, dtype=float) for b in bounds)
+    lb, ub = (mx.array(b, dtype=float) for b in bounds)
     if lb.ndim == 0:
-        lb = np.resize(lb, x0.shape)
+        lb = mx.resize(lb, x0.shape)
 
     if ub.ndim == 0:
-        ub = np.resize(ub, x0.shape)
+        ub = mx.resize(ub, x0.shape)
 
     return lb, ub
 
@@ -232,7 +232,7 @@ def group_columns(A, order=0):
 
     Returns
     -------
-    groups : ndarray of int, shape (n,)
+    groups : array of int, shape (n,)
         Contains values from 0 to n_groups-1, where n_groups is the number
         of found groups. Each value ``groups[i]`` is an index of a group to
         which ith column assigned. The procedure was helpful only if
@@ -247,19 +247,19 @@ def group_columns(A, order=0):
     if issparse(A):
         A = csc_array(A)
     else:
-        A = np.atleast_2d(A)
-        A = (A != 0).astype(np.int32)
+        A = mx.atleast_2d(A)
+        A = (A != 0).astype(mx.int32)
 
     if A.ndim != 2:
         raise ValueError("`A` must be 2-dimensional.")
 
     m, n = A.shape
 
-    if order is None or np.isscalar(order):
-        rng = np.random.RandomState(order)
+    if order is None or mx.isscalar(order):
+        rng = mx.random.RandomState(order)
         order = rng.permutation(n)
     else:
-        order = np.asarray(order)
+        order = mx.array(order)
         if order.shape != (n,):
             raise ValueError("`order` has incorrect shape.")
 
@@ -276,7 +276,7 @@ def group_columns(A, order=0):
 
 
 def approx_derivative(fun, x0, method='3-point', rel_step=None, abs_step=None,
-                      f0=None, bounds=(-np.inf, np.inf), sparsity=None,
+                      f0=None, bounds=(-mx.inf, mx.inf), sparsity=None,
                       as_linear_operator=False, args=(), kwargs=None,
                       full_output=False, workers=None):
     """Compute finite difference approximation of the derivatives of a
@@ -290,7 +290,7 @@ def approx_derivative(fun, x0, method='3-point', rel_step=None, abs_step=None,
     ----------
     fun : callable
         Function of which to estimate the derivatives. The argument x
-        passed to this function is ndarray of shape (n,) (never a scalar
+        passed to this function is array of shape (n,) (never a scalar
         even if n=1). It must return 1-D array_like of shape (m,) or a scalar.
     x0 : array_like of shape (n,) or float
         Point at which to estimate the derivatives. Float will be converted
@@ -374,16 +374,16 @@ def approx_derivative(fun, x0, method='3-point', rel_step=None, abs_step=None,
 
     Returns
     -------
-    J : {ndarray, sparse array, LinearOperator}
+    J : {array, sparse array, LinearOperator}
         Finite difference approximation of the Jacobian matrix.
         If `as_linear_operator` is True returns a LinearOperator
         with shape (m, n). Otherwise it returns a dense array or sparse
         array depending on how `sparsity` is defined. If `sparsity`
-        is None then a ndarray with shape (m, n) is returned. If
+        is None then a array with shape (m, n) is returned. If
         `sparsity` is not None returns a csr_array or csr_matrix with
         shape (m, n) following the array/matrix type of the incoming structure.
         For sparse arrays and linear operators it is always returned as
-        a 2-D structure. For ndarrays, if m=1 it is returned
+        a 2-D structure. For arrays, if m=1 it is returned
         as a 1-D gradient array with shape (n,).
 
     info_dict : dict
@@ -403,7 +403,7 @@ def approx_derivative(fun, x0, method='3-point', rel_step=None, abs_step=None,
     -----
     If `rel_step` is not provided, it assigned as ``EPS**(1/s)``, where EPS is
     determined from the smallest floating point dtype of `x0` or `fun(x0)`,
-    ``np.finfo(x0.dtype).eps``, s=2 for '2-point' method and
+    ``mx.finfo(x0.dtype).eps``, s=2 for '2-point' method and
     s=3 for '3-point' method. Such relative step approximately minimizes a sum
     of truncation and round-off errors, see [1]_. Relative steps are used by
     default. However, absolute steps are used when ``abs_step is not None``.
@@ -422,7 +422,7 @@ def approx_derivative(fun, x0, method='3-point', rel_step=None, abs_step=None,
     on the other hand when n=1 Jacobian is returned with a shape (m, 1).
     Our motivation is the following: a) It handles a case of gradient
     computation (m=1) in a conventional way. b) It clearly separates these two
-    different cases. b) In all cases np.atleast_2d can be called to get 2-D
+    different cases. b) In all cases mx.atleast_2d can be called to get 2-D
     Jacobian with correct dimensions.
 
     References
@@ -439,14 +439,14 @@ def approx_derivative(fun, x0, method='3-point', rel_step=None, abs_step=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize._numdiff import approx_derivative
     >>>
     >>> def f(x, c1, c2):
-    ...     return np.array([x[0] * np.sin(c1 * x[1]),
-    ...                      x[0] * np.cos(c2 * x[1])])
+    ...     return mx.array([x[0] * mx.sin(c1 * x[1]),
+    ...                      x[0] * mx.cos(c2 * x[1])])
     ...
-    >>> x0 = np.array([1.0, 0.5 * np.pi])
+    >>> x0 = mx.array([1.0, 0.5 * mx.pi])
     >>> approx_derivative(f, x0, args=(1, 2))
     array([[ 1.,  0.],
            [-1.,  0.]])
@@ -458,9 +458,9 @@ def approx_derivative(fun, x0, method='3-point', rel_step=None, abs_step=None,
     ...     return x**2 if x >= 1 else x
     ...
     >>> x0 = 1.0
-    >>> approx_derivative(g, x0, bounds=(-np.inf, 1.0))
+    >>> approx_derivative(g, x0, bounds=(-mx.inf, 1.0))
     array([ 1.])
-    >>> approx_derivative(g, x0, bounds=(1.0, np.inf))
+    >>> approx_derivative(g, x0, bounds=(1.0, mx.inf))
     array([ 2.])
 
     We can also parallelize the derivative calculation using the workers
@@ -472,7 +472,7 @@ def approx_derivative(fun, x0, method='3-point', rel_step=None, abs_step=None,
     ...     time.sleep(0.002)
     ...     return rosen(x)
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> x0 = rng.uniform(high=10, size=(2000,))
     >>> f0 = rosen(x0)
 
@@ -486,8 +486,8 @@ def approx_derivative(fun, x0, method='3-point', rel_step=None, abs_step=None,
     ...         approx_derivative(fun2, x0, workers=workers.map, f0=f0)
     ...         et = time.perf_counter()
     ...         elapsed.append(et - t)
-    >>> np.mean(elapsed)    # may vary
-    np.float64(1.442545195999901)
+    >>> mx.mean(elapsed)    # may vary
+    mx.float64(1.442545195999901)
 
     Create a map-like vectorized version. `x` is a generator, so first of all
     a 2-D array, `xx`, is reconstituted. Here `xx` has shape `(Y, N)` where `Y`
@@ -496,7 +496,7 @@ def approx_derivative(fun, x0, method='3-point', rel_step=None, abs_step=None,
     requires `xx` to have shape `(N, Y)`, so a transpose is required.
 
     >>> def fun(f, x, *args, **kwds):
-    ...     xx = np.r_[[xs for xs in x]]
+    ...     xx = mx.r_[[xs for xs in x]]
     ...     return f(xx.T)
     >>> %timeit approx_derivative(fun2, x0, workers=fun, f0=f0)    # may vary
     91.8 ms ± 755 μs per loop (mean ± std. dev. of 7 runs, 10 loops each)
@@ -524,8 +524,8 @@ def approx_derivative(fun, x0, method='3-point', rel_step=None, abs_step=None,
     if lb.shape != x0.shape or ub.shape != x0.shape:
         raise ValueError("Inconsistent shapes between bounds and `x0`.")
 
-    if as_linear_operator and not (np.all(np.isinf(lb))
-                                   and np.all(np.isinf(ub))):
+    if as_linear_operator and not (mx.all(mx.isinf(lb))
+                                   and mx.all(mx.isinf(ub))):
         raise ValueError("Bounds not supported when "
                          "`as_linear_operator` is True.")
 
@@ -547,11 +547,11 @@ def approx_derivative(fun, x0, method='3-point', rel_step=None, abs_step=None,
         f0 = fun_wrapped(x0)
         nfev = 1
     else:
-        f0 = np.atleast_1d(f0)
+        f0 = mx.atleast_1d(f0)
         if f0.ndim > 1:
             raise ValueError("`f0` passed has more than 1 dimension.")
 
-    if np.any((x0 < lb) | (x0 > ub)):
+    if mx.any((x0 < lb) | (x0 > ub)):
         raise ValueError("`x0` violates bound constraints.")
 
     if as_linear_operator:
@@ -572,9 +572,9 @@ def approx_derivative(fun, x0, method='3-point', rel_step=None, abs_step=None,
             # cannot have a zero step. This might happen if x0 is very large
             # or small. In which case fall back to relative step.
             dx = ((x0 + h) - x0)
-            h = np.where(dx == 0,
+            h = mx.where(dx == 0,
                          _eps_for_method(x0.dtype, f0.dtype, method) *
-                         sign_x0 * np.maximum(1.0, np.abs(x0)),
+                         sign_x0 * mx.maximum(1.0, mx.abs(x0)),
                          h)
 
         if method == '2-point':
@@ -603,8 +603,8 @@ def approx_derivative(fun, x0, method='3-point', rel_step=None, abs_step=None,
                 if issparse(structure):
                     structure = structure.tocsc()
                 else:
-                    structure = np.atleast_2d(structure)
-                groups = np.atleast_1d(groups)
+                    structure = mx.atleast_2d(structure)
+                groups = mx.atleast_1d(groups)
                 J, _nfev = _sparse_difference(fun_wrapped, x0, f0, h,
                                              use_one_sided, structure,
                                              groups, method, mf)
@@ -624,8 +624,8 @@ def _linear_operator_difference(fun, x0, f0, h, method):
     if method == '2-point':
         # nfev = 1
         def matvec(p):
-            if np.array_equal(p, np.zeros_like(p)):
-                return np.zeros(m)
+            if mx.array_equal(p, mx.zeros_like(p)):
+                return mx.zeros(m)
             dx = h / norm(p)
             x = x0 + dx*p
             df = fun(x) - f0
@@ -634,8 +634,8 @@ def _linear_operator_difference(fun, x0, f0, h, method):
     elif method == '3-point':
         # nfev = 2
         def matvec(p):
-            if np.array_equal(p, np.zeros_like(p)):
-                return np.zeros(m)
+            if mx.array_equal(p, mx.zeros_like(p)):
+                return mx.zeros(m)
             dx = 2*h / norm(p)
             x1 = x0 - (dx/2)*p
             x2 = x0 + (dx/2)*p
@@ -647,8 +647,8 @@ def _linear_operator_difference(fun, x0, f0, h, method):
     elif method == 'cs':
         # nfev = 1
         def matvec(p):
-            if np.array_equal(p, np.zeros_like(p)):
-                return np.zeros(m)
+            if mx.array_equal(p, mx.zeros_like(p)):
+                return mx.zeros(m)
             dx = h / norm(p)
             x = x0 + dx*p*1.j
             f1 = fun(x)
@@ -663,7 +663,7 @@ def _linear_operator_difference(fun, x0, f0, h, method):
 def _dense_difference(fun, x0, f0, h, use_one_sided, method, workers):
     m = f0.size
     n = x0.size
-    J_transposed = np.empty((n, m))
+    J_transposed = mx.empty((n, m))
     nfev = 0
 
     if method == '2-point':
@@ -675,7 +675,7 @@ def _dense_difference(fun, x0, f0, h, use_one_sided, method, workers):
                 # I also considered creating all the vectors at once, but that
                 # means assembling a very large N x N array. It's therefore a
                 # trade-off between N array copies or creating an NxN array.
-                x1 = np.copy(x0)
+                x1 = mx.copy(x0)
                 x1[i] = x0[i] + h[i]
                 yield x1
 
@@ -690,8 +690,8 @@ def _dense_difference(fun, x0, f0, h, use_one_sided, method, workers):
     elif method == '3-point':
         def x_generator3(x0, h, use_one_sided):
             for i, one_sided in enumerate(use_one_sided):
-                x1 = np.copy(x0)
-                x2 = np.copy(x0)
+                x1 = mx.copy(x0)
+                x2 = mx.copy(x0)
                 if one_sided:
                     x1[i] = x0[i] + h[i]
                     x2[i] = x0[i] + 2*h[i]
@@ -738,7 +738,7 @@ def _dense_difference(fun, x0, f0, h, use_one_sided, method, workers):
         J_transposed[i] = v
 
     if m == 1:
-        J_transposed = np.ravel(J_transposed)
+        J_transposed = mx.ravel(J_transposed)
 
     return J_transposed.T, nfev
 
@@ -751,13 +751,13 @@ def _sparse_difference(fun, x0, f0, h, use_one_sided,
     col_indices = []
     fractions = []
 
-    n_groups = np.max(groups) + 1
+    n_groups = mx.max(groups) + 1
     nfev = 0
 
     def e_generator():
         # Perturb variables which are in the same group simultaneously.
         for group in range(n_groups):
-            yield np.equal(group, groups)
+            yield mx.equal(group, groups)
 
     def x_generator2():
         e_gen = e_generator()
@@ -802,7 +802,7 @@ def _sparse_difference(fun, x0, f0, h, use_one_sided,
     for e in e_generator():
         # The result is written to columns which correspond to perturbed
         # variables.
-        cols, = np.nonzero(e)
+        cols, = mx.nonzero(e)
         # Find all non-zero elements in selected columns of Jacobian.
         i, j, _ = find(structure[:, cols])
         # Restore column indices in the full array.
@@ -821,7 +821,7 @@ def _sparse_difference(fun, x0, f0, h, use_one_sided,
             mask_1 = use_one_sided & e
             mask_2 = ~use_one_sided & e
 
-            dx = np.zeros(n)
+            dx = mx.zeros(n)
             dx[mask_1] = x2[mask_1] - x0[mask_1]
             dx[mask_2] = x2[mask_2] - x1[mask_2]
 
@@ -830,7 +830,7 @@ def _sparse_difference(fun, x0, f0, h, use_one_sided,
             nfev += 2
 
             mask = use_one_sided[j]
-            df = np.empty(m)
+            df = mx.empty(m)
 
             rows = i[mask]
             df[rows] = -3 * f0[rows] + 4 * f1[rows] - f2[rows]
@@ -851,9 +851,9 @@ def _sparse_difference(fun, x0, f0, h, use_one_sided,
         col_indices.append(j)
         fractions.append(df[i] / dx[j])
 
-    row_indices = np.hstack(row_indices)
-    col_indices = np.hstack(col_indices)
-    fractions = np.hstack(fractions)
+    row_indices = mx.hstack(row_indices)
+    col_indices = mx.hstack(col_indices)
+    fractions = mx.hstack(fractions)
 
     if isspmatrix(structure):
         return csr_matrix((fractions, (row_indices, col_indices)), shape=(m, n)), nfev
@@ -876,14 +876,14 @@ class _Fun_Wrapper:
         if xp.isdtype(x.dtype, "real floating"):
             x = xp.astype(x, self.x0.dtype)
 
-        f = np.atleast_1d(self.fun(x, *self.args, **self.kwargs))
+        f = mx.atleast_1d(self.fun(x, *self.args, **self.kwargs))
         if f.ndim > 1:
             raise RuntimeError("`fun` return value has "
                                "more than 1 dimension.")
         return f
 
 
-def check_derivative(fun, jac, x0, bounds=(-np.inf, np.inf), args=(),
+def check_derivative(fun, jac, x0, bounds=(-mx.inf, mx.inf), args=(),
                      kwargs=None):
     """Check correctness of a function computing derivatives (Jacobian or
     gradient) by comparison with a finite difference approximation.
@@ -892,7 +892,7 @@ def check_derivative(fun, jac, x0, bounds=(-np.inf, np.inf), args=(),
     ----------
     fun : callable
         Function of which to estimate the derivatives. The argument x
-        passed to this function is ndarray of shape (n,) (never a scalar
+        passed to this function is array of shape (n,) (never a scalar
         even if n=1). It must return 1-D array_like of shape (m,) or a scalar.
     jac : callable
         Function which computes Jacobian matrix of `fun`. It must work with
@@ -925,22 +925,22 @@ def check_derivative(fun, jac, x0, bounds=(-np.inf, np.inf), args=(),
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize._numdiff import check_derivative
     >>>
     >>>
     >>> def f(x, c1, c2):
-    ...     return np.array([x[0] * np.sin(c1 * x[1]),
-    ...                      x[0] * np.cos(c2 * x[1])])
+    ...     return mx.array([x[0] * mx.sin(c1 * x[1]),
+    ...                      x[0] * mx.cos(c2 * x[1])])
     ...
     >>> def jac(x, c1, c2):
-    ...     return np.array([
-    ...         [np.sin(c1 * x[1]),  c1 * x[0] * np.cos(c1 * x[1])],
-    ...         [np.cos(c2 * x[1]), -c2 * x[0] * np.sin(c2 * x[1])]
+    ...     return mx.array([
+    ...         [mx.sin(c1 * x[1]),  c1 * x[0] * mx.cos(c1 * x[1])],
+    ...         [mx.cos(c2 * x[1]), -c2 * x[0] * mx.sin(c2 * x[1])]
     ...     ])
     ...
     >>>
-    >>> x0 = np.array([1.0, 0.5 * np.pi])
+    >>> x0 = mx.array([1.0, 0.5 * mx.pi])
     >>> check_derivative(f, jac, x0, args=(1, 2))
     2.4492935982947064e-16
     """
@@ -953,11 +953,11 @@ def check_derivative(fun, jac, x0, bounds=(-np.inf, np.inf), args=(),
         J_to_test = csr_array(J_to_test)
         abs_err = J_to_test - J_diff
         i, j, abs_err_data = find(abs_err)
-        J_diff_data = np.asarray(J_diff[i, j]).ravel()
-        return np.max(np.abs(abs_err_data) /
-                      np.maximum(1, np.abs(J_diff_data)))
+        J_diff_data = mx.array(J_diff[i, j]).ravel()
+        return mx.max(mx.abs(abs_err_data) /
+                      mx.maximum(1, mx.abs(J_diff_data)))
     else:
         J_diff = approx_derivative(fun, x0, bounds=bounds,
                                    args=args, kwargs=kwargs)
-        abs_err = np.abs(J_to_test - J_diff)
-        return np.max(abs_err / np.maximum(1, np.abs(J_diff)))
+        abs_err = mx.abs(J_to_test - J_diff)
+        return mx.max(abs_err / mx.maximum(1, mx.abs(J_diff)))

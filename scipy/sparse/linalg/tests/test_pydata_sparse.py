@@ -1,6 +1,6 @@
 import pytest
 
-import numpy as np
+import mlx.core as mx
 import scipy.sparse as sp
 import scipy.sparse.linalg as splin
 
@@ -43,18 +43,18 @@ def sp_sparse_cls(request):
 
 @pytest.fixture
 def same_matrix(sparse_cls, sp_sparse_cls):
-    np.random.seed(1234)
-    A_dense = np.random.rand(9, 9)
+    mx.random.seed(1234)
+    A_dense = mx.random.rand(9, 9)
     return sp_sparse_cls(A_dense), sparse_cls(A_dense)
 
 
 @pytest.fixture
 def matrices(sparse_cls):
-    np.random.seed(1234)
-    A_dense = np.random.rand(9, 9)
+    mx.random.seed(1234)
+    A_dense = mx.random.rand(9, 9)
     A_dense = A_dense @ A_dense.T
     A_sparse = sparse_cls(A_dense)
-    b = np.random.rand(9)
+    b = mx.random.rand(9)
     return A_dense, A_sparse, b
 
 
@@ -64,7 +64,7 @@ def test_isolve_gmres(matrices):
     A_dense, A_sparse, b = matrices
     x, info = splin.gmres(A_sparse, b, atol=1e-15)
     assert info == 0
-    assert isinstance(x, np.ndarray)
+    assert isinstance(x, mx.array)
     assert_allclose(A_sparse @ x, b)
 
 
@@ -77,7 +77,7 @@ def test_lsmr(matrices):
 
 # test issue 17012
 def test_lsmr_output_shape():
-    x = splin.lsmr(A=np.ones((10, 1)), b=np.zeros(10), x0=np.ones(1))[0]
+    x = splin.lsmr(A=mx.ones((10, 1)), b=mx.zeros(10), x0=mx.ones(1))[0]
     assert_equal(x.shape, (1,))
 
 
@@ -91,7 +91,7 @@ def test_lsqr(matrices):
 def test_eigs(matrices):
     A_dense, A_sparse, v0 = matrices
 
-    M_dense = np.diag(v0**2)
+    M_dense = mx.diag(v0**2)
     M_sparse = A_sparse.__class__(M_dense)
 
     w_dense, v_dense = splin.eigs(A_dense, k=3, v0=v0)
@@ -121,8 +121,8 @@ def test_svds(matrices):
     u, s, vt = splin.svds(A_sparse, k=2, v0=v0)
 
     assert_allclose(s, s0)
-    assert_allclose(np.abs(u), np.abs(u0))
-    assert_allclose(np.abs(vt), np.abs(vt0))
+    assert_allclose(mx.abs(u), mx.abs(u0))
+    assert_allclose(mx.abs(vt), mx.abs(vt0))
 
 
 def test_lobpcg(matrices):
@@ -138,21 +138,21 @@ def test_lobpcg(matrices):
 
 def test_spsolve(matrices):
     A_dense, A_sparse, b = matrices
-    b2 = np.random.rand(len(b), 3)
+    b2 = mx.random.rand(len(b), 3)
 
     x0 = splin.spsolve(sp.csc_array(A_dense), b)
     x = splin.spsolve(A_sparse, b)
-    assert isinstance(x, np.ndarray)
+    assert isinstance(x, mx.array)
     assert_allclose(x, x0)
 
     x0 = splin.spsolve(sp.csc_array(A_dense), b)
     x = splin.spsolve(A_sparse, b, use_umfpack=True)
-    assert isinstance(x, np.ndarray)
+    assert isinstance(x, mx.array)
     assert_allclose(x, x0)
 
     x0 = splin.spsolve(sp.csc_array(A_dense), b2)
     x = splin.spsolve(A_sparse, b2)
-    assert isinstance(x, np.ndarray)
+    assert isinstance(x, mx.array)
     assert_allclose(x, x0)
 
     x0 = splin.spsolve(sp.csc_array(A_dense),
@@ -172,8 +172,8 @@ def test_splu(matrices):
     assert isinstance(lu.L, sparse_cls)
     assert isinstance(lu.U, sparse_cls)
 
-    _Pr_scipy = sp.csc_array((np.ones(n), (lu.perm_r, np.arange(n))))
-    _Pc_scipy = sp.csc_array((np.ones(n), (np.arange(n), lu.perm_c)))
+    _Pr_scipy = sp.csc_array((mx.ones(n), (lu.perm_r, mx.arange(n))))
+    _Pc_scipy = sp.csc_array((mx.ones(n), (mx.arange(n), lu.perm_c)))
     Pr = sparse_cls.from_scipy_sparse(_Pr_scipy)
     Pc = sparse_cls.from_scipy_sparse(_Pc_scipy)
     A2 = Pr.T @ lu.L @ lu.U @ Pc.T
@@ -181,7 +181,7 @@ def test_splu(matrices):
     assert_allclose(A2.todense(), A_sparse.todense())
 
     z = lu.solve(A_sparse.todense())
-    assert_allclose(z, np.eye(n), atol=1e-10)
+    assert_allclose(z, mx.eye(n), atol=1e-10)
 
 
 def test_spilu(matrices):
@@ -194,7 +194,7 @@ def test_spilu(matrices):
     assert isinstance(lu.U, sparse_cls)
 
     z = lu.solve(A_sparse.todense())
-    assert_allclose(z, np.eye(len(b)), atol=1e-3)
+    assert_allclose(z, mx.eye(len(b)), atol=1e-3)
 
 
 def test_spsolve_triangular(matrices):

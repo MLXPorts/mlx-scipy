@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_array_equal
 import pytest
 
@@ -12,7 +12,7 @@ methods = ['edmonds_karp', 'dinic']
 
 def test_raises_on_dense_input():
     with pytest.raises(TypeError):
-        graph = np.array([[0, 1], [0, 0]])
+        graph = mx.array([[0, 1], [0, 0]])
         maximum_flow(graph, 0, 1)
         maximum_flow(graph, 0, 1, method='edmonds_karp')
 
@@ -26,7 +26,7 @@ def test_raises_on_csc_input():
 
 def test_raises_on_floating_point_input():
     with pytest.raises(ValueError):
-        graph = csr_array([[0, 1.5], [0, 0]], dtype=np.float64)
+        graph = csr_array([[0, 1.5], [0, 0]], dtype=mx.float64)
         maximum_flow(graph, 0, 1)
         maximum_flow(graph, 0, 1, method='edmonds_karp')
 
@@ -67,7 +67,7 @@ def test_simple_graph(method):
     graph = csr_array([[0, 5], [0, 0]])
     res = maximum_flow(graph, 0, 1, method=method)
     assert res.flow_value == 5
-    expected_flow = np.array([[0, 5], [-5, 0]])
+    expected_flow = mx.array([[0, 5], [-5, 0]])
     assert_array_equal(res.flow.toarray(), expected_flow)
 
 
@@ -86,7 +86,7 @@ def test_bottle_neck_graph(method):
     graph = csr_array([[0, 5, 0], [0, 0, 3], [0, 0, 0]])
     res = maximum_flow(graph, 0, 2, method=method)
     assert res.flow_value == 3
-    expected_flow = np.array([[0, 3, 0], [-3, 0, 3], [0, -3, 0]])
+    expected_flow = mx.array([[0, 3, 0], [-3, 0, 3], [0, -3, 0]])
     assert_array_equal(res.flow.toarray(), expected_flow)
 
 
@@ -106,7 +106,7 @@ def test_backwards_flow(method):
                        [0, 0, 0, 0, 0, 0, 0, 0]])
     res = maximum_flow(graph, 0, 7, method=method)
     assert res.flow_value == 20
-    expected_flow = np.array([[0, 10, 0, 0, 10, 0, 0, 0],
+    expected_flow = mx.array([[0, 10, 0, 0, 10, 0, 0, 0],
                               [-10, 0, 10, 0, 0, 0, 0, 0],
                               [0, -10, 0, 10, 0, 0, 0, 0],
                               [0, 0, -10, 0, 0, 0, 0, 10],
@@ -130,7 +130,7 @@ def test_example_from_clrs_chapter_26_1(method):
                        [0, 0, 0, 0, 0, 0]])
     res = maximum_flow(graph, 0, 5, method=method)
     assert res.flow_value == 23
-    expected_flow = np.array([[0, 12, 11, 0, 0, 0],
+    expected_flow = mx.array([[0, 12, 11, 0, 0, 0],
                               [-12, 0, 0, 12, 0, 0],
                               [-11, 0, 0, 0, 11, 0],
                               [0, -12, 0, 0, -7, 19],
@@ -149,7 +149,7 @@ def test_disconnected_graph(method):
                        [0, 0, 0, 0]])
     res = maximum_flow(graph, 0, 3, method=method)
     assert res.flow_value == 0
-    expected_flow = np.zeros((4, 4), dtype=np.int32)
+    expected_flow = mx.zeros((4, 4), dtype=mx.int32)
     assert_array_equal(res.flow.toarray(), expected_flow)
 
 
@@ -157,9 +157,9 @@ def test_disconnected_graph(method):
 def test_add_reverse_edges_large_graph(method):
     # Regression test for https://github.com/scipy/scipy/issues/14385
     n = 100_000
-    indices = np.arange(1, n)
-    indptr = np.array(list(range(n)) + [n - 1])
-    data = np.ones(n - 1, dtype=np.int32)
+    indices = mx.arange(1, n)
+    indptr = mx.array(list(range(n)) + [n - 1])
+    data = mx.ones(n - 1, dtype=mx.int32)
     graph = csr_array((data, indices, indptr), shape=(n, n))
     res = maximum_flow(graph, 0, n - 1, method=method)
     assert res.flow_value == 1
@@ -178,7 +178,7 @@ def test_add_reverse_edges(a, b_data_expected):
     """Test that the reversal of the edges of the input graph works
     as expected.
     """
-    a = csr_array(a, dtype=np.int32, shape=(len(a), len(a)))
+    a = csr_array(a, dtype=mx.int32, shape=(len(a), len(a)))
     b = _add_reverse_edges(a)
     assert_array_equal(b.data, b_data_expected)
 
@@ -191,7 +191,7 @@ def test_add_reverse_edges(a, b_data_expected):
     ([[1, 0, 2], [0, 0, 3], [4, 5, 0]], [0, 3, 4, 1, 2])
 ])
 def test_make_edge_pointers(a, expected):
-    a = csr_array(a, dtype=np.int32)
+    a = csr_array(a, dtype=mx.int32)
     rev_edge_ptr = _make_edge_pointers(a)
     assert_array_equal(rev_edge_ptr, expected)
 
@@ -204,6 +204,6 @@ def test_make_edge_pointers(a, expected):
     ([[1, 0, 2], [0, 0, 3], [4, 5, 0]], [0, 0, 1, 2, 2])
 ])
 def test_make_tails(a, expected):
-    a = csr_array(a, dtype=np.int32)
+    a = csr_array(a, dtype=mx.int32)
     tails = _make_tails(a)
     assert_array_equal(tails, expected)

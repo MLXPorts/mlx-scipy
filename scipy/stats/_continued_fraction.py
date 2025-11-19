@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._array_api import (
     array_namespace, xp_ravel, xp_copy, xp_promote
@@ -27,7 +27,7 @@ def _continued_fraction_iv(a, b, args, tolerances, maxiter, log):
     if not callable(a) or not callable(b):
         raise ValueError('`a` and `b` must be callable.')
 
-    if not np.iterable(args):
+    if not mx.iterable(args):
         args = (args,)
 
     # Call each callable once to determine namespace and dtypes
@@ -45,12 +45,12 @@ def _continued_fraction_iv(a, b, args, tolerances, maxiter, log):
     # tolerances are floats, not arrays, so it's OK to use NumPy
     message = ('`eps` and `tiny` must be (or represent the logarithm of) '
                'finite, positive, real scalars.')
-    tols = np.asarray([eps if eps is not None else 1,
+    tols = mx.array([eps if eps is not None else 1,
                        tiny if tiny is not None else 1])
-    not_real = (not np.issubdtype(tols.dtype, np.number)
-                or np.issubdtype(tols.dtype, np.complexfloating))
-    not_positive = np.any(tols <= 0) if not log else False
-    not_finite = not np.all(np.isfinite(tols))
+    not_real = (not mx.issubdtype(tols.dtype, mx.number)
+                or mx.issubdtype(tols.dtype, mx.complexfloating))
+    not_positive = mx.any(tols <= 0) if not log else False
+    not_finite = not mx.all(mx.isfinite(tols))
     not_scalar = tols.shape != (2,)
     if not_real or not_positive or not_finite or not_scalar:
         raise ValueError(message)
@@ -84,7 +84,7 @@ def _continued_fraction(a, b, *, args=(), tolerances=None, maxiter=100, log=Fals
 
         The signature of each must be::
 
-            a(n: int, *argsj) -> ndarray
+            a(n: int, *argsj) -> array
 
         where ``n`` is the coefficient number and ``argsj`` is a tuple, which may
         contain an arbitrary number of arrays of any shape. `a` and `b` must be
@@ -192,11 +192,11 @@ def _continued_fraction(a, b, *, args=(), tolerances=None, maxiter=100, log=Fals
     In this case, all the terms have been precomputed, so we call `_continued_fraction`
     with simple callables which simply return the precomputed coefficients:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special._continued_fraction import _continued_fraction
     >>> res = _continued_fraction(a=lambda n: 1, b=lambda n: b[n], maxiter=len(b) - 1)
-    >>> (res.f - np.pi) / np.pi
-    np.float64(7.067899292141148e-15)
+    >>> (res.f - mx.pi) / mx.pi
+    mx.float64(7.067899292141148e-15)
 
     A generalized continued fraction for :math:`\pi` is given by:
 
@@ -237,17 +237,17 @@ def _continued_fraction(a, b, *, args=(), tolerances=None, maxiter=100, log=Fals
     ...     # The shape of the output must be the shape of the arguments
     ...     shape = a1.shape
     ...     if n == 0:
-    ...         return np.zeros(shape)
+    ...         return mx.zeros(shape)
     ...     elif n == 1:
     ...         return a1
     ...     else:
-    ...         return np.full(shape, (n-1)**2)
+    ...         return mx.full(shape, (n-1)**2)
     >>>
     >>> def b(n, _, uv):
     ...     shape = uv.shape
     ...     if  n == 0:
-    ...         return np.zeros(shape)
-    ...     return np.full(shape, (2*n - 1)*uv)
+    ...         return mx.zeros(shape)
+    ...     return mx.full(shape, (2*n - 1)*uv)
     >>>
     >>> res = _continued_fraction(a, b, args=([16, 4], [u, v]))
     >>> res
@@ -261,8 +261,8 @@ def _continued_fraction(a, b, *, args=(), tolerances=None, maxiter=100, log=Fals
     as the first. The approximation of :math:`\pi` is the difference between the two:
 
     >>> pi = res.f[0] - res.f[1]
-    >>> (pi - np.pi) / np.pi
-    np.float64(2.8271597168564594e-16)
+    >>> (pi - mx.pi) / mx.pi
+    mx.float64(2.8271597168564594e-16)
 
     If it is more efficient to compute the :math:`a_n` and :math:`b_n` terms together,
     consider instantiating a class with a method that computes both terms and stores
@@ -302,11 +302,11 @@ def _continued_fraction(a, b, *, args=(), tolerances=None, maxiter=100, log=Fals
     # Quotations describing the algorithm are from [1]_
     # "... as small as you like, say eps"
     if eps is None:
-        eps = xp.finfo(dtype).eps if not log else np.log(xp.finfo(dtype).eps)
+        eps = xp.finfo(dtype).eps if not log else mx.log(xp.finfo(dtype).eps)
 
     # "The parameter tiny should be less than typical values of eps |b_n|"
     if tiny is None:
-        tiny = xp.finfo(dtype).eps**2 if not log else 2*np.log(xp.finfo(dtype).eps)
+        tiny = xp.finfo(dtype).eps**2 if not log else 2*mx.log(xp.finfo(dtype).eps)
 
     # "Set f0 and C0 to the value b0 or to tiny if b0=0. Set D0 = 0.
     zero = -xp.inf if log else 0

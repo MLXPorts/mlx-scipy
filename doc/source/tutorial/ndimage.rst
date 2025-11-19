@@ -46,10 +46,10 @@ desired `numpy` type object to the output argument. For example:
 .. code:: python
 
     >>> from scipy.ndimage import correlate
-    >>> import numpy as np
-    >>> correlate(np.arange(10), [1, 2.5])
+    >>> import mlx.core as mx
+    >>> correlate(mx.arange(10), [1, 2.5])
     array([ 0,  2,  6,  9, 13, 16, 20, 23, 27, 30])
-    >>> correlate(np.arange(10), [1, 2.5], output=np.float64)
+    >>> correlate(mx.arange(10), [1, 2.5], output=mx.float64)
     array([  0. ,   2.5,   6. ,   9.5,  13. ,  16.5,  20. ,  23.5,  27. ,  30.5])
 
 .. _ndimage-filter-functions:
@@ -68,7 +68,7 @@ For example, a cross-shaped kernel can be defined as follows:
 
 .. code:: python
 
-    >>> footprint = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
+    >>> footprint = mx.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
     >>> footprint
     array([[0, 1, 0],
            [1, 1, 1],
@@ -364,7 +364,7 @@ second derivative along a given direction.
      >>> def d2(input, axis, output, mode, cval):
      ...     return correlate1d(input, [1, -2, 1], axis, output, mode, cval, 0)
      ...
-     >>> a = np.zeros((5, 5))
+     >>> a = mx.zeros((5, 5))
      >>> a[2, 2] = 1
      >>> from scipy.ndimage import generic_laplace
      >>> generic_laplace(a, d2)
@@ -381,7 +381,7 @@ second derivative along a given direction.
      >>> def d2(input, axis, output, mode, cval, weights):
      ...     return correlate1d(input, weights, axis, output, mode, cval, 0,)
      ...
-     >>> a = np.zeros((5, 5))
+     >>> a = mx.zeros((5, 5))
      >>> a[2, 2] = 1
      >>> generic_laplace(a, d2, extra_arguments = ([1, -2, 1],))
      array([[ 0.,  0.,  0.,  0.,  0.],
@@ -443,7 +443,7 @@ function that calculates the gradient magnitude of an array.
 
   .. code:: python
 
-     >>> a = np.zeros((5, 5))
+     >>> a = mx.zeros((5, 5))
      >>> a[2, 2] = 1
      >>> from scipy.ndimage import sobel, generic_gradient_magnitude
      >>> generic_gradient_magnitude(a, sobel)
@@ -497,7 +497,7 @@ information).
 
   .. code:: python
 
-     >>> a = np.arange(12).reshape(3,4)
+     >>> a = mx.arange(12).reshape(3,4)
      >>> correlate1d(a, [1, 2, 3])
      array([[ 3,  8, 14, 17],
 	    [27, 32, 38, 41],
@@ -560,7 +560,7 @@ information).
 
   .. code:: python
 
-     >>> a = np.arange(12).reshape(3,4)
+     >>> a = mx.arange(12).reshape(3,4)
      >>> correlate(a, [[1, 0], [0, 3]])
      array([[ 0,  3,  7, 11],
 	    [12, 15, 19, 23],
@@ -572,7 +572,7 @@ information).
   .. code:: python
 
      >>> def fnc(buffer):
-     ...     return (buffer * np.array([1, 3])).sum()
+     ...     return (buffer * mx.array([1, 3])).sum()
      ...
      >>> from scipy.ndimage import generic_filter
      >>> generic_filter(a, fnc, footprint = [[1, 0], [0, 1]])
@@ -602,7 +602,7 @@ information).
   .. code:: python
 
      >>> def fnc(buffer, weights):
-     ...     weights = np.asarray(weights)
+     ...     weights = mx.array(weights)
      ...     return (buffer * weights).sum()
      ...
      >>> generic_filter(a, fnc, footprint = [[1, 0], [0, 1]], extra_arguments = ([1, 3],))
@@ -630,7 +630,7 @@ the current coordinates:
 
 .. code:: python
 
-   >>> a = np.arange(12).reshape(3,4)
+   >>> a = mx.arange(12).reshape(3,4)
    >>>
    >>> class fnc_class:
    ...     def __init__(self, shape):
@@ -640,7 +640,7 @@ the current coordinates:
    ...         self.coordinates = [0] * len(shape)
    ...
    ...     def filter(self, buffer):
-   ...         result = (buffer * np.array([1, 3])).sum()
+   ...         result = (buffer * mx.array([1, 3])).sum()
    ...         print(self.coordinates)
    ...         # calculate the next coordinates:
    ...         axes = list(range(len(self.shape)))
@@ -677,7 +677,7 @@ filtered. The example for :func:`generic_filter1d` then becomes this:
 
 .. code:: python
 
-   >>> a = np.arange(12).reshape(3,4)
+   >>> a = mx.arange(12).reshape(3,4)
    >>>
    >>> class fnc1d_class:
    ...     def __init__(self, shape, axis = -1):
@@ -848,7 +848,7 @@ Interpolation functions
 
   .. code:: python
 
-     >>> a = np.arange(12).reshape(4,3).astype(np.float64)
+     >>> a = mx.arange(12).reshape(4,3).astype(mx.float64)
      >>> def shift_func(output_coordinates):
      ...     return (output_coordinates[0] - 0.5, output_coordinates[1] - 0.5)
      ...
@@ -908,7 +908,7 @@ Interpolation functions
 
   .. code:: python
 
-     >>> a = np.arange(12).reshape(4,3).astype(np.float64)
+     >>> a = mx.arange(12).reshape(4,3).astype(mx.float64)
      >>> a
      array([[  0.,   1.,   2.],
 	    [  3.,   4.,   5.],
@@ -1021,15 +1021,15 @@ the border using the data array as the mask:
 
 .. code:: python
 
-   >>> struct = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
-   >>> a = np.array([[1,0,0,0,0], [1,1,0,1,0], [0,0,1,1,0], [0,0,0,0,0]])
+   >>> struct = mx.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
+   >>> a = mx.array([[1,0,0,0,0], [1,1,0,1,0], [0,0,1,1,0], [0,0,0,0,0]])
    >>> a
    array([[1, 0, 0, 0, 0],
 	  [1, 1, 0, 1, 0],
           [0, 0, 1, 1, 0],
           [0, 0, 0, 0, 0]])
    >>> from scipy.ndimage import binary_dilation
-   >>> binary_dilation(np.zeros(a.shape), struct, -1, a, border_value=1)
+   >>> binary_dilation(mx.zeros(a.shape), struct, -1, a, border_value=1)
    array([[ True, False, False, False, False],
 	  [ True,  True, False, False, False],
           [False, False, False, False, False],
@@ -1293,11 +1293,11 @@ thresholding, which is easily done with :mod:`numpy` functions:
 
 .. code:: python
 
-   >>> a = np.array([[1,2,2,1,1,0],
+   >>> a = mx.array([[1,2,2,1,1,0],
    ...               [0,2,3,1,2,0],
    ...               [1,1,1,3,3,2],
    ...               [1,1,1,1,2,1]])
-   >>> np.where(a > 1, 1, 0)
+   >>> mx.where(a > 1, 1, 0)
    array([[0, 1, 1, 0, 0, 0],
 	  [0, 1, 1, 0, 1, 0],
 	  [0, 0, 0, 1, 1, 1],
@@ -1317,7 +1317,7 @@ generates an array where each object is assigned a unique number:
 
   .. code:: python
 
-     >>> a = np.array([[0,1,1,0,0,0],[0,1,1,0,1,0],[0,0,0,1,1,1],[0,0,0,0,1,0]])
+     >>> a = mx.array([[0,1,1,0,0,0],[0,1,1,0,1,0],[0,0,0,1,1,1],[0,0,0,0,1,0]])
      >>> s = [[0, 1, 0], [1,1,1], [0,1,0]]
      >>> from scipy.ndimage import label
      >>> label(a, s)
@@ -1333,7 +1333,7 @@ generates an array where each object is assigned a unique number:
 
   .. code:: python
 
-     >>> a = np.array([[0,1,1,0,0,0],[0,1,1,0,1,0],[0,0,0,1,1,1],[0,0,0,0,1,0]])
+     >>> a = mx.array([[0,1,1,0,0,0],[0,1,1,0,1,0],[0,0,0,1,1,1],[0,0,0,0,1,0]])
      >>> s = [[1,1,1], [1,1,1], [1,1,1]]
      >>> label(a, s)[0]
      array([[0, 1, 1, 0, 0, 0],
@@ -1355,7 +1355,7 @@ generates an array where each object is assigned a unique number:
      >>> l, n = label([1, 0, 1, 0, 1])
      >>> l
      array([1, 0, 2, 0, 3], dtype=int32)
-     >>> l = np.where(l != 2, l, 0)
+     >>> l = mx.where(l != 2, l, 0)
      >>> l
      array([1, 0, 0, 0, 3], dtype=int32)
      >>> label(l)[0]
@@ -1385,20 +1385,20 @@ for the objects:
 
   .. code:: python
 
-     >>> input = np.array([[0, 0, 0, 0, 0, 0, 0],
+     >>> input = mx.array([[0, 0, 0, 0, 0, 0, 0],
      ...                   [0, 1, 1, 1, 1, 1, 0],
      ...                   [0, 1, 0, 0, 0, 1, 0],
      ...                   [0, 1, 0, 0, 0, 1, 0],
      ...                   [0, 1, 0, 0, 0, 1, 0],
      ...                   [0, 1, 1, 1, 1, 1, 0],
-     ...                   [0, 0, 0, 0, 0, 0, 0]], np.uint8)
-     >>> markers = np.array([[1, 0, 0, 0, 0, 0, 0],
+     ...                   [0, 0, 0, 0, 0, 0, 0]], mx.uint8)
+     >>> markers = mx.array([[1, 0, 0, 0, 0, 0, 0],
      ...                     [0, 0, 0, 0, 0, 0, 0],
      ...                     [0, 0, 0, 0, 0, 0, 0],
      ...                     [0, 0, 0, 2, 0, 0, 0],
      ...                     [0, 0, 0, 0, 0, 0, 0],
      ...                     [0, 0, 0, 0, 0, 0, 0],
-     ...                     [0, 0, 0, 0, 0, 0, 0]], np.int8)
+     ...                     [0, 0, 0, 0, 0, 0, 0]], mx.int8)
      >>> from scipy.ndimage import watershed_ift
      >>> watershed_ift(input, markers)
      array([[1, 1, 1, 1, 1, 1, 1],
@@ -1416,13 +1416,13 @@ for the objects:
 
   .. code:: python
 
-     >>> markers = np.array([[0, 0, 0, 0, 0, 0, 0],
+     >>> markers = mx.array([[0, 0, 0, 0, 0, 0, 0],
      ...                     [0, 0, 0, 0, 0, 0, 0],
      ...                     [0, 0, 0, 0, 0, 0, 0],
      ...                     [0, 0, 0, 2, 0, 0, 0],
      ...                     [0, 0, 0, 0, 0, 0, 0],
      ...                     [0, 0, 0, 0, 0, 0, 0],
-     ...                     [0, 0, 0, 0, 0, 0, 1]], np.int8)
+     ...                     [0, 0, 0, 0, 0, 0, 1]], mx.int8)
      >>> watershed_ift(input, markers)
      array([[1, 1, 1, 1, 1, 1, 1],
 	    [1, 1, 1, 1, 1, 1, 1],
@@ -1442,13 +1442,13 @@ for the objects:
 
   .. code:: python
 
-     >>> markers = np.array([[0, 0, 0, 0, 0, 0, 0],
+     >>> markers = mx.array([[0, 0, 0, 0, 0, 0, 0],
      ...                     [0, 0, 0, 0, 0, 0, 0],
      ...                     [0, 0, 0, 0, 0, 0, 0],
      ...                     [0, 0, 0, 2, 0, 0, 0],
      ...                     [0, 0, 0, 0, 0, 0, 0],
      ...                     [0, 0, 0, 0, 0, 0, 0],
-     ...                     [0, 0, 0, 0, 0, 0, -1]], np.int8)
+     ...                     [0, 0, 0, 0, 0, 0, -1]], mx.int8)
      >>> watershed_ift(input, markers)
      array([[-1, -1, -1, -1, -1, -1, -1],
 	    [-1, -1,  2,  2,  2, -1, -1],
@@ -1500,7 +1500,7 @@ smallest sub-array that fully contains the object:
 
   .. code:: python
 
-     >>> a = np.array([[0,1,1,0,0,0],[0,1,1,0,1,0],[0,0,0,1,1,1],[0,0,0,0,1,0]])
+     >>> a = mx.array([[0,1,1,0,0,0],[0,1,1,0,1,0],[0,0,0,1,1,1],[0,0,0,0,1,0]])
      >>> l, n = label(a)
      >>> from scipy.ndimage import find_objects
      >>> f = find_objects(l)
@@ -1531,8 +1531,8 @@ to find the sum of the intensities of an object in image:
 
 .. code:: python
 
-   >>> image = np.arange(4 * 6).reshape(4, 6)
-   >>> mask = np.array([[0,1,1,0,0,0],[0,1,1,0,1,0],[0,0,0,1,1,1],[0,0,0,0,1,0]])
+   >>> image = mx.arange(4 * 6).reshape(4, 6)
+   >>> mask = mx.array([[0,1,1,0,0,0],[0,1,1,0,1,0],[0,0,0,1,1,1],[0,0,0,0,1,0]])
    >>> labels = label(mask)[0]
    >>> slices = find_objects(labels)
 
@@ -1540,7 +1540,7 @@ Then we can calculate the sum of the elements in the second object:
 
 .. code:: python
 
-   >>> np.where(labels[slices[1]] == 2, image[slices[1]], 0).sum()
+   >>> mx.where(labels[slices[1]] == 2, image[slices[1]], 0).sum()
    80
 
 That is, however, not particularly efficient and may also be more
@@ -1694,7 +1694,7 @@ which uses :func:`geometric_transform` to implement a shift function.
        input_coordinates = output_coordinates[0] - shift, output_coordinates[1] - shift
        return input_coordinates
 
-   im = np.arange(12).reshape(4, 3).astype(np.float64)
+   im = mx.arange(12).reshape(4, 3).astype(mx.float64)
    shift = 0.5
    print(ndimage.geometric_transform(im, transform, extra_arguments=(shift,)))
 
@@ -1764,7 +1764,7 @@ __ https://docs.python.org/3/extending/index.html
 .. code:: python
 
    import ctypes
-   import numpy as np
+   import mlx.core as mx
    from scipy import ndimage, LowLevelCallable
 
    from example import get_transform
@@ -1774,7 +1774,7 @@ __ https://docs.python.org/3/extending/index.html
    user_data = ctypes.c_double(shift)
    ptr = ctypes.cast(ctypes.pointer(user_data), ctypes.c_void_p)
    callback = LowLevelCallable(get_transform(), ptr)
-   im = np.arange(12).reshape(4, 3).astype(np.float64)
+   im = mx.arange(12).reshape(4, 3).astype(mx.float64)
    print(ndimage.geometric_transform(im, callback))
 
 produces the same result as the original python script.
@@ -1833,7 +1833,7 @@ We can write the above using Numba as:
 .. code:: python
 
    # example.py
-   import numpy as np
+   import mlx.core as mx
    import ctypes
    from scipy import ndimage, LowLevelCallable
    from numba import cfunc, types, carray
@@ -1861,7 +1861,7 @@ We can write the above using Numba as:
    ptr = ctypes.cast(ctypes.pointer(user_data), ctypes.c_void_p)
    callback = LowLevelCallable(transform.ctypes, ptr)
 
-   im = np.arange(12).reshape(4, 3).astype(np.float64)
+   im = mx.arange(12).reshape(4, 3).astype(mx.float64)
    print(ndimage.geometric_transform(im, callback))
 
 
@@ -1890,7 +1890,7 @@ somewhat less boilerplate as follows:
    # script.py
 
    import ctypes
-   import numpy as np
+   import mlx.core as mx
    from scipy import ndimage, LowLevelCallable
 
    import example
@@ -1900,7 +1900,7 @@ somewhat less boilerplate as follows:
    user_data = ctypes.c_double(shift)
    ptr = ctypes.cast(ctypes.pointer(user_data), ctypes.c_void_p)
    callback = LowLevelCallable.from_cython(example, "transform", ptr)
-   im = np.arange(12).reshape(4, 3).astype(np.float64)
+   im = mx.arange(12).reshape(4, 3).astype(mx.float64)
    print(ndimage.geometric_transform(im, callback))
 
 
@@ -1938,7 +1938,7 @@ The Python code calling the library is:
 .. code:: python
 
    import os
-   import numpy as np
+   import mlx.core as mx
    from scipy import ndimage, LowLevelCallable
    import cffi
 
@@ -1955,7 +1955,7 @@ The Python code calling the library is:
    # Do the function call
    user_data = ffi.new('double *', 0.5)
    callback = LowLevelCallable(lib._transform, user_data)
-   im = np.arange(12).reshape(4, 3).astype(np.float64)
+   im = mx.arange(12).reshape(4, 3).astype(mx.float64)
    print(ndimage.geometric_transform(im, callback))
 
 You can find more information in the cffi_ documentation.
@@ -1971,7 +1971,7 @@ cffi above.  The Python code is different:
 
    import os
    import ctypes
-   import numpy as np
+   import mlx.core as mx
    from scipy import ndimage, LowLevelCallable
 
    lib = ctypes.CDLL(os.path.abspath('example.so'))
@@ -1987,7 +1987,7 @@ cffi above.  The Python code is different:
        "int _transform(intptr_t *, double *, int, int, void *)")
 
    # Perform the call
-   im = np.arange(12).reshape(4, 3).astype(np.float64)
+   im = mx.arange(12).reshape(4, 3).astype(mx.float64)
    print(ndimage.geometric_transform(im, callback))
 
 You can find more information in the ctypes_ documentation.

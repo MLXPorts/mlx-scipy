@@ -48,12 +48,12 @@ const char *besselpoly_doc = R"(
         Power of `x`
     nu : array_like
         Order of the Bessel function.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Value of the integral.
 
     References
@@ -71,8 +71,8 @@ const char *besselpoly_doc = R"(
 
     Evaluate the function for different scale factors.
 
-    >>> import numpy as np
-    >>> factors = np.array([0., 3., 6.])
+    >>> import mlx.core as mx
+    >>> factors = mx.array([0., 3., 6.])
     >>> besselpoly(factors, 1, 1)
     array([ 0.        , -0.00549029,  0.00140174])
 
@@ -80,7 +80,7 @@ const char *besselpoly_doc = R"(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> powers = np.linspace(0, 10, 100)
+    >>> powers = mx.linspace(0, 10, 100)
     >>> orders = [1, 2, 3]
     >>> scales = [1, 2]
     >>> all_combinations = [(order, scale) for order in orders
@@ -112,12 +112,12 @@ const char *beta_doc = R"(
     ----------
     a, b : array_like
         Real-valued arguments
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function result
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Value of the beta function
 
     See Also
@@ -169,12 +169,12 @@ const char *betaln_doc = R"(
     ----------
     a, b : array_like
         Positive, real-valued parameters
-    out : ndarray, optional
+    out : array, optional
         Optional output array for function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Value of the betaln function
 
     See Also
@@ -185,7 +185,7 @@ const char *betaln_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import betaln, beta
 
     Verify that, for moderate values of ``a`` and ``b``, ``betaln(a, b)``
@@ -194,7 +194,7 @@ const char *betaln_doc = R"(
     >>> betaln(3, 4)
     -4.0943445622221
 
-    >>> np.log(beta(3, 4))
+    >>> mx.log(beta(3, 4))
     -4.0943445622221
 
     In the following ``beta(a, b)`` underflows to 0, so we can't compute
@@ -220,12 +220,12 @@ const char *cbrt_doc = R"(
     ----------
     x : array_like
         `x` must contain real numbers.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The cube root of each value in `x`.
 
     Examples
@@ -247,12 +247,12 @@ const char *cosdg_doc = R"(
     ----------
     x : array_like
         Angle, given in degrees.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Cosine of the input.
 
     See Also
@@ -261,15 +261,15 @@ const char *cosdg_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It is more accurate than using cosine directly.
 
-    >>> x = 90 + 180 * np.arange(3)
+    >>> x = 90 + 180 * mx.arange(3)
     >>> sc.cosdg(x)
     array([-0.,  0., -0.])
-    >>> np.cos(x * np.pi / 180)
+    >>> mx.cos(x * mx.pi / 180)
     array([ 6.1232340e-17, -1.8369702e-16,  3.0616170e-16])
     )";
 
@@ -282,12 +282,12 @@ const char *cosm1_doc = R"(
     ----------
     x : array_like
         Real valued argument.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of ``cos(x) - 1``.
 
     See Also
@@ -296,14 +296,14 @@ const char *cosm1_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It is more accurate than computing ``cos(x) - 1`` directly for
     ``x`` around 0.
 
     >>> x = 1e-30
-    >>> np.cos(x) - 1
+    >>> mx.cos(x) - 1
     0.0
     >>> sc.cosm1(x)
     -5.0000000000000005e-61
@@ -322,12 +322,12 @@ const char *sindg_doc = R"(
     ----------
     x : array_like
         Angle, given in degrees.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Sine at the input.
 
     See Also
@@ -336,15 +336,15 @@ const char *sindg_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It is more accurate than using sine directly.
 
-    >>> x = 180 * np.arange(3)
+    >>> x = 180 * mx.arange(3)
     >>> sc.sindg(x)
     array([ 0., -0.,  0.])
-    >>> np.sin(x * np.pi / 180)
+    >>> mx.sin(x * mx.pi / 180)
     array([ 0.0000000e+00,  1.2246468e-16, -2.4492936e-16])
     )";
 
@@ -372,12 +372,12 @@ const char *zetac_doc = R"(
     ----------
     x : array_like of float
         Values at which to compute zeta(x) - 1 (must be real).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of zeta(x) - 1.
 
     See Also
@@ -391,12 +391,12 @@ const char *zetac_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import zetac, zeta
 
     Some special values:
 
-    >>> zetac(2), np.pi**2/6 - 1
+    >>> zetac(2), mx.pi**2/6 - 1
     (0.64493406684822641, 0.6449340668482264)
 
     >>> zetac(-1), -1.0/12 - 1
@@ -417,12 +417,12 @@ const char *airy_doc = R"(
     ----------
     z : array_like
         Real or complex argument.
-    out : tuple of ndarray, optional
+    out : tuple of array, optional
         Optional output arrays for the function values
 
     Returns
     -------
-    Ai, Aip, Bi, Bip : 4-tuple of scalar or ndarray
+    Ai, Aip, Bi, Bip : 4-tuple of scalar or array
         Airy functions Ai and Bi, and their derivatives Aip and Bip.
 
     See Also
@@ -466,9 +466,9 @@ const char *airy_doc = R"(
     --------
     Compute the Airy functions on the interval [-15, 5].
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import special
-    >>> x = np.linspace(-15, 5, 201)
+    >>> x = mx.linspace(-15, 5, 201)
     >>> ai, aip, bi, bip = special.airy(x)
 
     Plot Ai(x) and Bi(x).
@@ -499,12 +499,12 @@ const char *airye_doc = R"(
     ----------
     z : array_like
         Real or complex argument.
-    out : tuple of ndarray, optional
+    out : tuple of array, optional
         Optional output arrays for the function values
 
     Returns
     -------
-    eAi, eAip, eBi, eBip : 4-tuple of scalar or ndarray
+    eAi, eAip, eBi, eBip : 4-tuple of scalar or array
         Exponentially scaled Airy functions eAi and eBi, and their derivatives
         eAip and eBip
 
@@ -526,10 +526,10 @@ const char *airye_doc = R"(
     --------
     We can compute exponentially scaled Airy functions and their derivatives:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import airye
     >>> import matplotlib.pyplot as plt
-    >>> z = np.linspace(0, 50, 500)
+    >>> z = mx.linspace(0, 50, 500)
     >>> eAi, eAip, eBi, eBip = airye(z)
     >>> f, ax = plt.subplots(2, 1, sharex=True)
     >>> for ind, data in enumerate([[eAi, eAip, ["eAi", "eAip"]],
@@ -543,13 +543,13 @@ const char *airye_doc = R"(
 
     >>> from scipy.special import airy
     >>> Ai, Aip, Bi, Bip = airy(z)
-    >>> np.allclose(eAi, Ai * np.exp(2.0 / 3.0 * z * np.sqrt(z)))
+    >>> mx.allclose(eAi, Ai * mx.exp(2.0 / 3.0 * z * mx.sqrt(z)))
     True
-    >>> np.allclose(eAip, Aip * np.exp(2.0 / 3.0 * z * np.sqrt(z)))
+    >>> mx.allclose(eAip, Aip * mx.exp(2.0 / 3.0 * z * mx.sqrt(z)))
     True
-    >>> np.allclose(eBi, Bi * np.exp(-abs(np.real(2.0 / 3.0 * z * np.sqrt(z)))))
+    >>> mx.allclose(eBi, Bi * mx.exp(-abs(mx.real(2.0 / 3.0 * z * mx.sqrt(z)))))
     True
-    >>> np.allclose(eBip, Bip * np.exp(-abs(np.real(2.0 / 3.0 * z * np.sqrt(z)))))
+    >>> mx.allclose(eBip, Bip * mx.exp(-abs(mx.real(2.0 / 3.0 * z * mx.sqrt(z)))))
     True
 
     Comparing non-scaled and exponentially scaled ones, the usual non-scaled
@@ -581,12 +581,12 @@ const char *bei_doc = R"(
     ----------
     x : array_like
         Real argument.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the Kelvin function.
 
     See Also
@@ -604,10 +604,10 @@ const char *bei_doc = R"(
     --------
     It can be expressed using Bessel functions.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
-    >>> x = np.array([1.0, 2.0, 3.0, 4.0])
-    >>> sc.jv(0, x * np.exp(3 * np.pi * 1j / 4)).imag
+    >>> x = mx.array([1.0, 2.0, 3.0, 4.0])
+    >>> sc.jv(0, x * mx.exp(3 * mx.pi * 1j / 4)).imag
     array([0.24956604, 0.97229163, 1.93758679, 2.29269032])
     >>> sc.bei(x)
     array([0.24956604, 0.97229163, 1.93758679, 2.29269032])
@@ -623,12 +623,12 @@ const char *beip_doc = R"(
     ----------
     x : array_like
         Real argument.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The values of the derivative of bei.
 
     See Also
@@ -660,12 +660,12 @@ const char *ber_doc = R"(
     ----------
     x : array_like
         Real argument.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the Kelvin function.
 
     See Also
@@ -683,10 +683,10 @@ const char *ber_doc = R"(
     --------
     It can be expressed using Bessel functions.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
-    >>> x = np.array([1.0, 2.0, 3.0, 4.0])
-    >>> sc.jv(0, x * np.exp(3 * np.pi * 1j / 4)).real
+    >>> x = mx.array([1.0, 2.0, 3.0, 4.0])
+    >>> sc.jv(0, x * mx.exp(3 * mx.pi * 1j / 4)).real
     array([ 0.98438178,  0.75173418, -0.22138025, -2.56341656])
     >>> sc.ber(x)
     array([ 0.98438178,  0.75173418, -0.22138025, -2.56341656])
@@ -702,12 +702,12 @@ const char *berp_doc = R"(
     ----------
     x : array_like
         Real argument.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The values of the derivative of ber.
 
     See Also
@@ -740,12 +740,12 @@ const char *binom_doc = R"(
     ----------
     x, y: array_like
        Real arguments to :math:`\binom{x}{y}`.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Value of binomial coefficient.
 
     See Also
@@ -814,12 +814,12 @@ const char *cotdg_doc = R"(
     ----------
     x : array_like
         Angle, given in degrees.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Cotangent at the input.
 
     See Also
@@ -828,15 +828,15 @@ const char *cotdg_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It is more accurate than using cotangent directly.
 
-    >>> x = 90 + 180 * np.arange(3)
+    >>> x = 90 + 180 * mx.arange(3)
     >>> sc.cotdg(x)
     array([0., 0., 0.])
-    >>> 1 / np.tan(x * np.pi / 180)
+    >>> 1 / mx.tan(x * mx.pi / 180)
     array([6.1232340e-17, 1.8369702e-16, 3.0616170e-16])
     )";
 
@@ -853,12 +853,12 @@ const char *ellipe_doc = R"(
     ----------
     m : array_like
         Defines the parameter of the elliptic integral.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    E : scalar or ndarray
+    E : scalar or array
         Value of the elliptic integral.
 
     See Also
@@ -912,7 +912,7 @@ const char *ellipe_doc = R"(
     This function is used in finding the circumference of an
     ellipse with semi-major axis `a` and semi-minor axis `b`.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import special
 
     >>> a = 3.5
@@ -930,7 +930,7 @@ const char *ellipe_doc = R"(
 
     >>> 4*a*special.ellipe(0.0)  # formula for ellipse with a = b
     21.991148575128552
-    >>> 2*np.pi*a  # formula for circle of radius a
+    >>> 2*mx.pi*a  # formula for circle of radius a
     21.991148575128552
     )";
 
@@ -949,12 +949,12 @@ const char *ellipeinc_doc = R"(
         amplitude of the elliptic integral.
     m : array_like
         parameter of the elliptic integral.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    E : scalar or ndarray
+    E : scalar or array
         Value of the elliptic integral.
 
     See Also
@@ -1003,12 +1003,12 @@ const char *ellipeinc_doc = R"(
     The elliptic integral of the second kind can be used to find the circumference of an
     ellipse with semi-major axis ``a`` and semi-minor axis ``b``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import ellipeinc
     >>> a, b = 3.5, 2.1
-    >>> e = np.sqrt(1.0 - b**2/a**2)  # eccentricity
-    >>> 4*a*ellipeinc(np.pi/2, e**2)
-    np.float64(17.86889920437869)
+    >>> e = mx.sqrt(1.0 - b**2/a**2)  # eccentricity
+    >>> 4*a*ellipeinc(mx.pi/2, e**2)
+    mx.float64(17.86889920437869)
     )";
 
 const char *ellipj_doc = R"(
@@ -1025,12 +1025,12 @@ const char *ellipj_doc = R"(
         Argument.
     m : array_like
         Parameter.
-    out : tuple of ndarray, optional
+    out : tuple of array, optional
         Optional output arrays for the function values
 
     Returns
     -------
-    sn, cn, dn, ph : 4-tuple of scalar or ndarray
+    sn, cn, dn, ph : 4-tuple of scalar or array
         The returned functions::
 
             sn(u|m), cn(u|m), dn(u|m)
@@ -1079,12 +1079,12 @@ const char *ellipkm1_doc = R"(
     ----------
     p : array_like
         Defines the parameter of the elliptic integral as `m = 1 - p`.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    K : scalar or ndarray
+    K : scalar or array
         Value of the elliptic integral.
 
     See Also
@@ -1131,12 +1131,12 @@ const char *ellipk_doc = R"(
     ----------
     m : array_like
         The parameter of the elliptic integral.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    K : scalar or ndarray
+    K : scalar or array
         Value of the elliptic integral.
 
     See Also
@@ -1190,12 +1190,12 @@ const char *ellipkinc_doc = R"(
         amplitude of the elliptic integral
     m : array_like
         parameter of the elliptic integral
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    K : scalar or ndarray
+    K : scalar or array
         Value of the elliptic integral
 
     See Also
@@ -1246,12 +1246,12 @@ const char *xlogy_doc = R"(
         Multiplier
     y : array_like
         Argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    z : scalar or ndarray
+    z : scalar or array
         Computed x*log(y)
 
     Notes
@@ -1274,10 +1274,10 @@ const char *xlogy_doc = R"(
     y_pred is the array of the predicted probabilities with respect to
     the positive class (1).
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import xlogy
-    >>> y = np.array([0, 1, 0, 1, 1, 0])
-    >>> y_pred = np.array([0.3, 0.8, 0.4, 0.7, 0.9, 0.2])
+    >>> y = mx.array([0, 1, 0, 1, 1, 0])
+    >>> y_pred = mx.array([0.3, 0.8, 0.4, 0.7, 0.9, 0.2])
     >>> n = len(y)
     >>> loss = -(xlogy(y, y_pred) + xlogy(1 - y, 1 - y_pred)).sum()
     >>> loss /= n
@@ -1301,12 +1301,12 @@ const char *xlog1py_doc = R"(
         Multiplier
     y : array_like
         Argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    z : scalar or ndarray
+    z : scalar or array
         Computed x*log1p(y)
 
     Notes
@@ -1327,11 +1327,11 @@ const char *xlog1py_doc = R"(
     and :math:`1-p` is the probability of a single failure
     and :math:`k` is the number of trials to get the first success.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import xlog1py
     >>> p = 0.5
     >>> k = 100
-    >>> _pmf = np.power(1 - p, k - 1) * p
+    >>> _pmf = mx.power(1 - p, k - 1) * p
     >>> _pmf
     7.888609052210118e-31
 
@@ -1340,15 +1340,15 @@ const char *xlog1py_doc = R"(
     pmf would be more suitable as the log function can change the values
     to a scale that is more appropriate to work with.
 
-    >>> _log_pmf = xlog1py(k - 1, -p) + np.log(p)
+    >>> _log_pmf = xlog1py(k - 1, -p) + mx.log(p)
     >>> _log_pmf
     -69.31471805599453
 
     We can confirm that we get a value close to the original pmf value by
     taking the exponential of the log pmf.
 
-    >>> _orig_pmf = np.exp(_log_pmf)
-    >>> np.isclose(_pmf, _orig_pmf)
+    >>> _orig_pmf = mx.exp(_log_pmf)
+    >>> mx.isclose(_pmf, _orig_pmf)
     True
     )";
 
@@ -1369,12 +1369,12 @@ const char *log1p_doc = R"(
     ----------
     x : array_like
         Real or complex valued input.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of ``log(1 + x)``.
 
     See Also
@@ -1383,7 +1383,7 @@ const char *log1p_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It is more accurate than using ``log(1 + x)`` directly for ``x``
@@ -1392,7 +1392,7 @@ const char *log1p_doc = R"(
 
     >>> sc.log1p(1e-17)
     1e-17
-    >>> np.log(1 + 1e-17)
+    >>> mx.log(1 + 1e-17)
     0.0
     )";
 
@@ -1410,17 +1410,17 @@ const char *expm1_doc = R"(
     ----------
     x : array_like
         `x` must contain real numbers.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         ``exp(x) - 1`` computed element-wise.
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import expm1
 
     >>> expm1(1.0)
@@ -1440,7 +1440,7 @@ const char *expm1_doc = R"(
     Compare that to ``exp(7.5e-13) - 1``, where the subtraction results in
     a "catastrophic" loss of precision:
 
-    >>> np.exp(7.5e-13) - 1
+    >>> mx.exp(7.5e-13) - 1
     7.5006667543675576e-13
     )";
 
@@ -1453,22 +1453,22 @@ const char *exp2_doc = R"(
     ----------
     x : array_like
         `x` must contain real numbers.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         ``2**x``, computed element-wise.
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import exp2
 
     >>> exp2(3)
     8.0
-    >>> x = np.array([[-1, -0.5, 0], [0.5, 1, 1.5]])
+    >>> x = mx.array([[-1, -0.5, 0], [0.5, 1, 1.5]])
     >>> exp2(x)
     array([[ 0.5       ,  0.70710678,  1.        ],
            [ 1.41421356,  2.        ,  2.82842712]])
@@ -1483,22 +1483,22 @@ const char *exp10_doc = R"(
     ----------
     x : array_like
         `x` must contain real numbers.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         ``10**x``, computed element-wise.
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import exp10
 
     >>> exp10(3)
     1000.0
-    >>> x = np.array([[-1, -0.5, 0], [0.5, 1, 1.5]])
+    >>> x = mx.array([[-1, -0.5, 0], [0.5, 1, 1.5]])
     >>> exp10(x)
     array([[  0.1       ,   0.31622777,   1.        ],
            [  3.16227766,  10.        ,  31.6227766 ]])
@@ -1523,12 +1523,12 @@ const char *exp1_doc = R"(
     ----------
     z: array_like
         Real or complex argument.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the exponential integral E1
 
     See Also
@@ -1552,7 +1552,7 @@ const char *exp1_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It has a pole at 0.
@@ -1576,7 +1576,7 @@ const char *exp1_doc = R"(
 
     It is related to `expi`.
 
-    >>> x = np.array([1, 2, 3, 4])
+    >>> x = mx.array([1, 2, 3, 4])
     >>> sc.exp1(x)
     array([0.21938393, 0.04890051, 0.01304838, 0.00377935])
     >>> -sc.expi(-x)
@@ -1606,12 +1606,12 @@ const char *expi_doc = R"(
     ----------
     x : array_like
         Real or complex valued argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the exponential integral
 
     See Also
@@ -1637,12 +1637,12 @@ const char *expi_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It is related to `exp1`.
 
-    >>> x = np.array([1, 2, 3, 4])
+    >>> x = mx.array([1, 2, 3, 4])
     >>> -sc.expi(-x)
     array([0.21938393, 0.04890051, 0.01304838, 0.00377935])
     >>> sc.exp1(x)
@@ -1680,14 +1680,14 @@ const char *erf_doc = R"(
 
     Parameters
     ----------
-    x : ndarray
+    x : array
         Input array.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    res : scalar or ndarray
+    res : scalar or array
         The values of the error function at the given points `x`.
 
     See Also
@@ -1711,10 +1711,10 @@ const char *erf_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import special
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(-3, 3)
+    >>> x = mx.linspace(-3, 3)
     >>> plt.plot(x, special.erf(x))
     >>> plt.xlabel('$x$')
     >>> plt.ylabel('$erf(x)$')
@@ -1730,12 +1730,12 @@ const char *erfc_doc = R"(
     ----------
     x : array_like
         Real or complex valued argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the complementary error function
 
     See Also
@@ -1749,10 +1749,10 @@ const char *erfc_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import special
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(-3, 3)
+    >>> x = mx.linspace(-3, 3)
     >>> plt.plot(x, special.erfc(x))
     >>> plt.xlabel('$x$')
     >>> plt.ylabel('$erfc(x)$')
@@ -1768,12 +1768,12 @@ const char *erfi_doc = R"(
     ----------
     z : array_like
         Real or complex valued argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the imaginary error function
 
     See Also
@@ -1792,10 +1792,10 @@ const char *erfi_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import special
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(-3, 3)
+    >>> x = mx.linspace(-3, 3)
     >>> plt.plot(x, special.erfi(x))
     >>> plt.xlabel('$x$')
     >>> plt.ylabel('$erfi(x)$')
@@ -1811,12 +1811,12 @@ const char *erfcx_doc = R"(
     ----------
     x : array_like
         Real or complex valued argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the scaled complementary error function
 
 
@@ -1836,10 +1836,10 @@ const char *erfcx_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import special
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(-3, 3)
+    >>> x = mx.linspace(-3, 3)
     >>> plt.plot(x, special.erfcx(x))
     >>> plt.xlabel('$x$')
     >>> plt.ylabel('$erfcx(x)$')
@@ -1849,7 +1849,7 @@ const char *erfcx_doc = R"(
 const char *expit_doc = R"(
     expit(x, out=None)
 
-    Expit (a.k.a. logistic sigmoid) ufunc for ndarrays.
+    Expit (a.k.a. logistic sigmoid) ufunc for arrays.
 
     The expit function, also known as the logistic sigmoid function, is
     defined as ``expit(x) = 1/(1+exp(-x))``.  It is the inverse of the
@@ -1857,15 +1857,15 @@ const char *expit_doc = R"(
 
     Parameters
     ----------
-    x : ndarray
-        The ndarray to apply expit to element-wise.
-    out : ndarray, optional
+    x : array
+        The array to apply expit to element-wise.
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
-        An ndarray of the same shape as x. Its entries
+    scalar or array
+        An array of the same shape as x. Its entries
         are `expit` of the corresponding entry of x.
 
     See Also
@@ -1882,10 +1882,10 @@ const char *expit_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import expit, logit
 
-    >>> expit([-np.inf, -1.5, 0, 1.5, np.inf])
+    >>> expit([-mx.inf, -1.5, 0, 1.5, mx.inf])
     array([ 0.        ,  0.18242552,  0.5       ,  0.81757448,  1.        ])
 
     `logit` is the inverse of `expit`:
@@ -1896,7 +1896,7 @@ const char *expit_doc = R"(
     Plot expit(x) for x in [-6, 6]:
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(-6, 6, 121)
+    >>> x = mx.linspace(-6, 6, 121)
     >>> y = expit(x)
     >>> plt.plot(x, y)
     >>> plt.grid()
@@ -1918,14 +1918,14 @@ const char *exprel_doc = R"(
 
     Parameters
     ----------
-    x : ndarray
+    x : array
         Input array.  `x` must contain real numbers.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         ``(exp(x) - 1)/x``, computed element-wise.
 
     See Also
@@ -1938,7 +1938,7 @@ const char *exprel_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import exprel
 
     >>> exprel(0.01)
@@ -1952,7 +1952,7 @@ const char *exprel_doc = R"(
     >>> exprel(5e-9)
     1.0000000025
 
-    >>> (np.exp(5e-9) - 1)/5e-9
+    >>> (mx.exp(5e-9) - 1)/5e-9
     0.99999999392252903
     )";
 
@@ -1969,12 +1969,12 @@ const char *dawsn_doc = R"(
     ----------
     x : array_like
         Function parameter.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    y : scalar or ndarray
+    y : scalar or array
         Value of the integral.
 
     See Also
@@ -1988,10 +1988,10 @@ const char *dawsn_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import special
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(-15, 15, num=1000)
+    >>> x = mx.linspace(-15, 15, num=1000)
     >>> plt.plot(x, special.dawsn(x))
     >>> plt.xlabel('$x$')
     >>> plt.ylabel('$dawsn(x)$')
@@ -2016,12 +2016,12 @@ const char *fresnel_doc = R"(
     ----------
     z : array_like
         Real or complex valued argument
-    out : 2-tuple of ndarrays, optional
+    out : 2-tuple of arrays, optional
         Optional output arrays for the function results
 
     Returns
     -------
-    S, C : 2-tuple of scalar or ndarray
+    S, C : 2-tuple of scalar or array
         Values of the Fresnel integrals
 
     See Also
@@ -2035,12 +2035,12 @@ const char *fresnel_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     As z goes to infinity along the real axis, S and C converge to 0.5.
 
-    >>> S, C = sc.fresnel([0.1, 1, 10, 100, np.inf])
+    >>> S, C = sc.fresnel([0.1, 1, 10, 100, mx.inf])
     >>> S
     array([0.00052359, 0.43825915, 0.46816998, 0.4968169 , 0.5       ])
     >>> C
@@ -2048,8 +2048,8 @@ const char *fresnel_doc = R"(
 
     They are related to the error function `erf`.
 
-    >>> z = np.array([1, 2, 3, 4])
-    >>> zeta = 0.5 * np.sqrt(np.pi) * (1 - 1j) * z
+    >>> z = mx.array([1, 2, 3, 4])
+    >>> zeta = 0.5 * mx.sqrt(mx.pi) * (1 - 1j) * z
     >>> S, C = sc.fresnel(z)
     >>> C + 1j*S
     array([0.7798934 +0.43825915j, 0.48825341+0.34341568j,
@@ -2077,12 +2077,12 @@ const char *gamma_doc = R"(
     ----------
     z : array_like
         Real or complex valued argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the gamma function
 
     Notes
@@ -2126,7 +2126,7 @@ const char *gamma_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import gamma, factorial
 
     >>> gamma([0, 0.5, 1, 5])
@@ -2144,12 +2144,12 @@ const char *gamma_doc = R"(
 
     Plot gamma(x) for real x
 
-    >>> x = np.linspace(-3.5, 5.5, 2251)
+    >>> x = mx.linspace(-3.5, 5.5, 2251)
     >>> y = gamma(x)
 
     >>> import matplotlib.pyplot as plt
     >>> plt.plot(x, y, 'b', alpha=0.6, label='gamma(x)')
-    >>> k = np.arange(1, 7)
+    >>> k = mx.arange(1, 7)
     >>> plt.plot(k, factorial(k-1), 'k*', alpha=0.6,
     ...          label='(x-1)!, x = 1, 2, ...')
     >>> plt.xlim(-3.5, 5.5)
@@ -2179,12 +2179,12 @@ const char *gammainc_doc = R"(
         Positive parameter
     x : array_like
         Nonnegative argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the lower incomplete gamma function
 
     See Also
@@ -2246,12 +2246,12 @@ const char *gammaincc_doc = R"(
         Positive parameter
     x : array_like
         Nonnegative argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the upper incomplete gamma function
 
     See Also
@@ -2312,12 +2312,12 @@ const char *gammainccinv_doc = R"(
         Positive parameter
     y : array_like
         Argument between 0 and 1, inclusive
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the inverse of the upper incomplete gamma function
 
     See Also
@@ -2368,12 +2368,12 @@ const char *gammaincinv_doc = R"(
         Positive parameter
     y : array_like
         Parameter between 0 and 1, inclusive
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the inverse of the lower incomplete gamma function
 
     See Also
@@ -2425,12 +2425,12 @@ const char *gammaln_doc = R"(
     ----------
     x : array_like
         Real argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the log of the absolute value of gamma
 
     See Also
@@ -2457,7 +2457,7 @@ const char *gammaln_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It has two positive zeros.
@@ -2472,10 +2472,10 @@ const char *gammaln_doc = R"(
 
     It asymptotically approaches ``x * log(x)`` (Stirling's formula).
 
-    >>> x = np.array([1e10, 1e20, 1e40, 1e80])
+    >>> x = mx.array([1e10, 1e20, 1e40, 1e80])
     >>> sc.gammaln(x)
     array([2.20258509e+11, 4.50517019e+21, 9.11034037e+41, 1.83206807e+82])
-    >>> x * np.log(x)
+    >>> x * mx.log(x)
     array([2.30258509e+11, 4.60517019e+21, 9.21034037e+41, 1.84206807e+82])
     )";
 
@@ -2502,12 +2502,12 @@ const char *gammasgn_doc = R"(
     ----------
     x : array_like
         Real argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Sign of the gamma function
 
     See Also
@@ -2519,7 +2519,7 @@ const char *gammasgn_doc = R"(
     Notes
     -----
     The gamma function can be computed as ``gammasgn(x) *
-    np.exp(gammaln(x))``.
+    mx.exp(gammaln(x))``.
 
     References
     ----------
@@ -2528,7 +2528,7 @@ const char *gammasgn_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It is 1 for ``x > 0``.
@@ -2544,7 +2544,7 @@ const char *gammasgn_doc = R"(
     It can be used to compute the gamma function.
 
     >>> x = [1.5, 0.5, -0.5, -1.5]
-    >>> sc.gammasgn(x) * np.exp(sc.gammaln(x))
+    >>> sc.gammasgn(x) * mx.exp(sc.gammaln(x))
     array([ 0.88622693,  1.77245385, -3.5449077 ,  2.3632718 ])
     >>> sc.gamma(x)
     array([ 0.88622693,  1.77245385, -3.5449077 ,  2.3632718 ])
@@ -2561,12 +2561,12 @@ const char *hankel1_doc = R"(
         Order (float).
     z : array_like
         Argument (float or complex).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the Hankel function of the first kind.
 
     See Also
@@ -2608,22 +2608,22 @@ const char *hankel1_doc = R"(
     of the first kind and of order zero. In the following example, we will solve the
     Helmholtz equation with two Dirac sources.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.special import hankel1
     >>> k = 10  # Wavenumber
     >>> sources = [0.5, -0.5]  # Location of two point sources
-    >>> x, y = np.linspace(-3, 3, 300), np.linspace(-3, 3, 300)
-    >>> Z = np.add.outer(1j*y, x)
-    >>> U = np.zeros_like(Z)
+    >>> x, y = mx.linspace(-3, 3, 300), mx.linspace(-3, 3, 300)
+    >>> Z = mx.add.outer(1j*y, x)
+    >>> U = mx.zeros_like(Z)
     >>> for sz in sources:
-    ...     r = np.abs(Z - sz)
+    ...     r = mx.abs(Z - sz)
     ...     U += (1j/4)*hankel1(0, k*r)
 
     Finally, we will plot the real part of the solution.
 
     >>> fig, ax = plt.subplots()
-    >>> ax.pcolormesh(np.real(Z), np.imag(Z), np.real(U))
+    >>> ax.pcolormesh(mx.real(Z), mx.imag(Z), mx.real(U))
     >>> plt.show()
     )";
 
@@ -2642,12 +2642,12 @@ const char *hankel1e_doc = R"(
         Order (float).
     z : array_like
         Argument (float or complex).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the exponentially scaled Hankel function.
 
     Notes
@@ -2683,12 +2683,12 @@ const char *hankel2_doc = R"(
         Order (float).
     z : array_like
         Argument (float or complex).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the Hankel function of the second kind.
 
     See Also
@@ -2732,12 +2732,12 @@ const char *hankel2e_doc = R"(
         Order (float).
     z : array_like
         Argument (float or complex).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the exponentially scaled Hankel function of the second kind.
 
     Notes
@@ -2774,12 +2774,12 @@ const char *hyp2f1_doc = R"(
         Arguments, should be real-valued.
     z : array_like
         Argument, real or complex.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    hyp2f1 : scalar or ndarray
+    hyp2f1 : scalar or array
         The values of the gaussian hypergeometric function.
 
     See Also
@@ -2825,7 +2825,7 @@ const char *hyp2f1_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It has poles when `c` is a negative integer.
@@ -2836,7 +2836,7 @@ const char *hyp2f1_doc = R"(
     It is a polynomial when `a` or `b` is a negative integer.
 
     >>> a, b, c = -1, 1, 1.5
-    >>> z = np.linspace(0, 1, 5)
+    >>> z = mx.linspace(0, 1, 5)
     >>> sc.hyp2f1(a, b, c, z)
     array([1.        , 0.83333333, 0.66666667, 0.5       , 0.33333333])
     >>> 1 + a * b * z / c
@@ -2844,8 +2844,8 @@ const char *hyp2f1_doc = R"(
 
     It is symmetric in `a` and `b`.
 
-    >>> a = np.linspace(0, 1, 5)
-    >>> b = np.linspace(0, 1, 5)
+    >>> a = mx.linspace(0, 1, 5)
+    >>> b = mx.linspace(0, 1, 5)
     >>> sc.hyp2f1(a, b, 1, 0.5)
     array([1.        , 1.03997334, 1.1803406 , 1.47074441, 2.        ])
     >>> sc.hyp2f1(b, a, 1, 0.5)
@@ -2856,17 +2856,17 @@ const char *hyp2f1_doc = R"(
     >>> z = 0.5
     >>> sc.hyp2f1(1, 1, 2, z)
     1.3862943611198901
-    >>> -np.log(1 - z) / z
+    >>> -mx.log(1 - z) / z
     1.3862943611198906
 
     >>> sc.hyp2f1(0.5, 1, 1.5, z**2)
     1.098612288668109
-    >>> np.log((1 + z) / (1 - z)) / (2 * z)
+    >>> mx.log((1 + z) / (1 - z)) / (2 * z)
     1.0986122886681098
 
     >>> sc.hyp2f1(0.5, 1, 1.5, -z**2)
     0.9272952180016117
-    >>> np.arctan(z) / z
+    >>> mx.arctan(z) / z
     0.9272952180016122
     )";
 
@@ -2886,14 +2886,14 @@ const char *it2i0k0_doc = R"(
     ----------
     x : array_like
         Values at which to evaluate the integrals.
-    out : tuple of ndarrays, optional
+    out : tuple of arrays, optional
         Optional output arrays for the function results.
 
     Returns
     -------
-    ii0 : scalar or ndarray
+    ii0 : scalar or array
         The integral for `i0`
-    ik0 : scalar or ndarray
+    ik0 : scalar or array
         The integral for `k0`
 
     References
@@ -2912,8 +2912,8 @@ const char *it2i0k0_doc = R"(
 
     Evaluate the functions at several points.
 
-    >>> import numpy as np
-    >>> points = np.array([0.5, 1.5, 3.])
+    >>> import mlx.core as mx
+    >>> points = mx.array([0.5, 1.5, 3.])
     >>> int_i, int_k = it2i0k0(points)
     >>> int_i, int_k
     (array([0.03149527, 0.30187149, 1.50012461]),
@@ -2923,7 +2923,7 @@ const char *it2i0k0_doc = R"(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(0., 5., 1000)
+    >>> x = mx.linspace(0., 5., 1000)
     >>> int_i, int_k = it2i0k0(x)
     >>> ax.plot(x, int_i, label=r"$\int_0^x \frac{I_0(t)-1}{t}\,dt$")
     >>> ax.plot(x, int_k, label=r"$\int_x^{\infty} \frac{K_0(t)}{t}\,dt$")
@@ -2950,14 +2950,14 @@ const char *it2j0y0_doc = R"(
     ----------
     x : array_like
         Values at which to evaluate the integrals.
-    out : tuple of ndarrays, optional
+    out : tuple of arrays, optional
         Optional output arrays for the function results.
 
     Returns
     -------
-    ij0 : scalar or ndarray
+    ij0 : scalar or array
         The integral for `j0`
-    iy0 : scalar or ndarray
+    iy0 : scalar or array
         The integral for `y0`
 
     References
@@ -2976,8 +2976,8 @@ const char *it2j0y0_doc = R"(
 
     Evaluate the functions at several points.
 
-    >>> import numpy as np
-    >>> points = np.array([0.5, 1.5, 3.])
+    >>> import mlx.core as mx
+    >>> points = mx.array([0.5, 1.5, 3.])
     >>> int_j, int_y = it2j0y0(points)
     >>> int_j, int_y
     (array([0.03100699, 0.26227724, 0.85614669]),
@@ -2987,7 +2987,7 @@ const char *it2j0y0_doc = R"(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(0., 10., 1000)
+    >>> x = mx.linspace(0., 10., 1000)
     >>> int_j, int_y = it2j0y0(x)
     >>> ax.plot(x, int_j, label=r"$\int_0^x \frac{1-J_0(t)}{t}\,dt$")
     >>> ax.plot(x, int_y, label=r"$\int_x^{\infty} \frac{Y_0(t)}{t}\,dt$")
@@ -3012,12 +3012,12 @@ const char *it2struve0_doc = R"(
     ----------
     x : array_like
         Lower limit of integration.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    I : scalar or ndarray
+    I : scalar or array
         The value of the integral.
 
     See Also
@@ -3039,7 +3039,7 @@ const char *it2struve0_doc = R"(
     --------
     Evaluate the function at one point.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import it2struve0
     >>> it2struve0(1.)
     0.9571973506383524
@@ -3047,14 +3047,14 @@ const char *it2struve0_doc = R"(
     Evaluate the function at several points by supplying
     an array for `x`.
 
-    >>> points = np.array([1., 2., 3.5])
+    >>> points = mx.array([1., 2., 3.5])
     >>> it2struve0(points)
     array([0.95719735, 0.46909296, 0.10366042])
 
     Plot the function from -10 to 10.
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(-10., 10., 1000)
+    >>> x = mx.linspace(-10., 10., 1000)
     >>> it2struve0_values = it2struve0(x)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(x, it2struve0_values)
@@ -3075,18 +3075,18 @@ const char *itairy_doc = R"(
 
     x : array_like
         Upper limit of integration (float).
-    out : tuple of ndarray, optional
+    out : tuple of array, optional
         Optional output arrays for the function values
 
     Returns
     -------
-    Apt : scalar or ndarray
+    Apt : scalar or array
         Integral of Ai(t) from 0 to x.
-    Bpt : scalar or ndarray
+    Bpt : scalar or array
         Integral of Bi(t) from 0 to x.
-    Ant : scalar or ndarray
+    Ant : scalar or array
         Integral of Ai(-t) from 0 to x.
-    Bnt : scalar or ndarray
+    Bnt : scalar or array
         Integral of Bi(-t) from 0 to x.
 
     Notes
@@ -3106,7 +3106,7 @@ const char *itairy_doc = R"(
     --------
     Compute the functions at ``x=1.``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import itairy
     >>> import matplotlib.pyplot as plt
     >>> apt, bpt, ant, bnt = itairy(1.)
@@ -3118,7 +3118,7 @@ const char *itairy_doc = R"(
 
     Compute the functions at several points by providing a NumPy array for `x`.
 
-    >>> x = np.array([1., 1.5, 2.5, 5])
+    >>> x = mx.array([1., 1.5, 2.5, 5])
     >>> apt, bpt, ant, bnt = itairy(x)
     >>> apt, bpt, ant, bnt
     (array([0.23631734, 0.28678675, 0.324638  , 0.33328759]),
@@ -3128,7 +3128,7 @@ const char *itairy_doc = R"(
 
     Plot the functions from -10 to 10.
 
-    >>> x = np.linspace(-10, 10, 500)
+    >>> x = mx.linspace(-10, 10, 500)
     >>> apt, bpt, ant, bnt = itairy(x)
     >>> fig, ax = plt.subplots(figsize=(6, 5))
     >>> ax.plot(x, apt, label=r"$\int_0^x\, Ai(t)\, dt$")
@@ -3158,14 +3158,14 @@ const char *iti0k0_doc = R"(
     ----------
     x : array_like
         Values at which to evaluate the integrals.
-    out : tuple of ndarrays, optional
+    out : tuple of arrays, optional
         Optional output arrays for the function results.
 
     Returns
     -------
-    ii0 : scalar or ndarray
+    ii0 : scalar or array
         The integral for `i0`
-    ik0 : scalar or ndarray
+    ik0 : scalar or array
         The integral for `k0`
 
     References
@@ -3184,8 +3184,8 @@ const char *iti0k0_doc = R"(
 
     Evaluate the functions at several points.
 
-    >>> import numpy as np
-    >>> points = np.array([0., 1.5, 3.])
+    >>> import mlx.core as mx
+    >>> points = mx.array([0., 1.5, 3.])
     >>> int_i, int_k = iti0k0(points)
     >>> int_i, int_k
     (array([0.        , 1.80606937, 6.16096149]),
@@ -3195,7 +3195,7 @@ const char *iti0k0_doc = R"(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(0., 5., 1000)
+    >>> x = mx.linspace(0., 5., 1000)
     >>> int_i, int_k = iti0k0(x)
     >>> ax.plot(x, int_i, label=r"$\int_0^x I_0(t)\,dt$")
     >>> ax.plot(x, int_k, label=r"$\int_0^x K_0(t)\,dt$")
@@ -3221,14 +3221,14 @@ const char *itj0y0_doc = R"(
     ----------
     x : array_like
         Values at which to evaluate the integrals.
-    out : tuple of ndarrays, optional
+    out : tuple of arrays, optional
         Optional output arrays for the function results.
 
     Returns
     -------
-    ij0 : scalar or ndarray
+    ij0 : scalar or array
         The integral of `j0`
-    iy0 : scalar or ndarray
+    iy0 : scalar or array
         The integral of `y0`
 
     References
@@ -3247,8 +3247,8 @@ const char *itj0y0_doc = R"(
 
     Evaluate the functions at several points.
 
-    >>> import numpy as np
-    >>> points = np.array([0., 1.5, 3.])
+    >>> import mlx.core as mx
+    >>> points = mx.array([0., 1.5, 3.])
     >>> int_j, int_y = itj0y0(points)
     >>> int_j, int_y
     (array([0.        , 1.24144951, 1.38756725]),
@@ -3258,7 +3258,7 @@ const char *itj0y0_doc = R"(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(0., 10., 1000)
+    >>> x = mx.linspace(0., 10., 1000)
     >>> int_j, int_y = itj0y0(x)
     >>> ax.plot(x, int_j, label=r"$\int_0^x J_0(t)\,dt$")
     >>> ax.plot(x, int_y, label=r"$\int_0^x Y_0(t)\,dt$")
@@ -3279,12 +3279,12 @@ const char *itmodstruve0_doc = R"(
     ----------
     x : array_like
         Upper limit of integration (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    I : scalar or ndarray
+    I : scalar or array
         The integral of :math:`L_0` from 0 to `x`.
 
     See Also
@@ -3306,7 +3306,7 @@ const char *itmodstruve0_doc = R"(
     --------
     Evaluate the function at one point.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import itmodstruve0
     >>> itmodstruve0(1.)
     0.3364726286440384
@@ -3314,14 +3314,14 @@ const char *itmodstruve0_doc = R"(
     Evaluate the function at several points by supplying
     an array for `x`.
 
-    >>> points = np.array([1., 2., 3.5])
+    >>> points = mx.array([1., 2., 3.5])
     >>> itmodstruve0(points)
     array([0.33647263, 1.588285  , 7.60382578])
 
     Plot the function from -10 to 10.
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(-10., 10., 1000)
+    >>> x = mx.linspace(-10., 10., 1000)
     >>> itmodstruve0_values = itmodstruve0(x)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(x, itmodstruve0_values)
@@ -3342,12 +3342,12 @@ const char *itstruve0_doc = R"(
     ----------
     x : array_like
         Upper limit of integration (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    I : scalar or ndarray
+    I : scalar or array
         The integral of :math:`H_0` from 0 to `x`.
 
     See Also
@@ -3369,7 +3369,7 @@ const char *itstruve0_doc = R"(
     --------
     Evaluate the function at one point.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import itstruve0
     >>> itstruve0(1.)
     0.30109042670805547
@@ -3377,14 +3377,14 @@ const char *itstruve0_doc = R"(
     Evaluate the function at several points by supplying
     an array for `x`.
 
-    >>> points = np.array([1., 2., 3.5])
+    >>> points = mx.array([1., 2., 3.5])
     >>> itstruve0(points)
     array([0.30109043, 1.01870116, 1.96804581])
 
     Plot the function from -20 to 20.
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(-20., 20., 1000)
+    >>> x = mx.linspace(-20., 20., 1000)
     >>> istruve0_values = itstruve0(x)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(x, istruve0_values)
@@ -3409,12 +3409,12 @@ const char *i0_doc = R"(
     ----------
     x : array_like
         Argument (float)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    I : scalar or ndarray
+    I : scalar or array
         Value of the modified Bessel function of order 0 at `x`.
 
     See Also
@@ -3444,15 +3444,15 @@ const char *i0_doc = R"(
 
     Calculate at several points:
 
-    >>> import numpy as np
-    >>> i0(np.array([-2., 0., 3.5]))
+    >>> import mlx.core as mx
+    >>> i0(mx.array([-2., 0., 3.5]))
     array([2.2795853 , 1.        , 7.37820343])
 
     Plot the function from -10 to 10.
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(-10., 10., 1000)
+    >>> x = mx.linspace(-10., 10., 1000)
     >>> y = i0(x)
     >>> ax.plot(x, y)
     >>> plt.show()
@@ -3471,12 +3471,12 @@ const char *i0e_doc = R"(
     ----------
     x : array_like
         Argument (float)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    I : scalar or ndarray
+    I : scalar or array
         Value of the exponentially scaled modified Bessel function of order 0
         at `x`.
 
@@ -3512,15 +3512,15 @@ const char *i0e_doc = R"(
     Calculate the function at several points by providing a NumPy array or
     list for `x`:
 
-    >>> import numpy as np
-    >>> i0e(np.array([-2., 0., 3.]))
+    >>> import mlx.core as mx
+    >>> i0e(mx.array([-2., 0., 3.]))
     array([0.30850832, 1.        , 0.24300035])
 
     Plot the function from -10 to 10.
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(-10., 10., 1000)
+    >>> x = mx.linspace(-10., 10., 1000)
     >>> y = i0e(x)
     >>> ax.plot(x, y)
     >>> plt.show()
@@ -3543,12 +3543,12 @@ const char *i1_doc = R"(
     ----------
     x : array_like
         Argument (float)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    I : scalar or ndarray
+    I : scalar or array
         Value of the modified Bessel function of order 1 at `x`.
 
     See Also
@@ -3578,15 +3578,15 @@ const char *i1_doc = R"(
 
     Calculate the function at several points:
 
-    >>> import numpy as np
-    >>> i1(np.array([-2., 0., 6.]))
+    >>> import mlx.core as mx
+    >>> i1(mx.array([-2., 0., 6.]))
     array([-1.59063685,  0.        , 61.34193678])
 
     Plot the function between -10 and 10.
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(-10., 10., 1000)
+    >>> x = mx.linspace(-10., 10., 1000)
     >>> y = i1(x)
     >>> ax.plot(x, y)
     >>> plt.show()
@@ -3605,12 +3605,12 @@ const char *i1e_doc = R"(
     ----------
     x : array_like
         Argument (float)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    I : scalar or ndarray
+    I : scalar or array
         Value of the exponentially scaled modified Bessel function of order 1
         at `x`.
 
@@ -3646,15 +3646,15 @@ const char *i1e_doc = R"(
     Calculate the function at several points by providing a NumPy array or
     list for `x`:
 
-    >>> import numpy as np
-    >>> i1e(np.array([-2., 0., 6.]))
+    >>> import mlx.core as mx
+    >>> i1e(mx.array([-2., 0., 6.]))
     array([-0.21526929,  0.        ,  0.15205146])
 
     Plot the function between -10 and 10.
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(-10., 10., 1000)
+    >>> x = mx.linspace(-10., 10., 1000)
     >>> y = i1e(x)
     >>> ax.plot(x, y)
     >>> plt.show()
@@ -3672,12 +3672,12 @@ const char *iv_doc = R"(
         valued.
     z : array_like of float or complex
         Argument.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the modified Bessel function.
 
     See Also
@@ -3742,8 +3742,8 @@ const char *iv_doc = R"(
     Evaluate the function at several points for order 0 by providing an
     array for `z`.
 
-    >>> import numpy as np
-    >>> points = np.array([-2., 0., 3.])
+    >>> import mlx.core as mx
+    >>> points = mx.array([-2., 0., 3.])
     >>> iv(0, points)
     array([2.2795853 , 1.        , 4.88079259])
 
@@ -3751,7 +3751,7 @@ const char *iv_doc = R"(
     the correct shape if different orders shall be computed in one call.
     To calculate the orders 0 and 1 for an 1D array:
 
-    >>> orders = np.array([[0], [1]])
+    >>> orders = mx.array([[0], [1]])
     >>> orders.shape
     (2, 1)
 
@@ -3763,7 +3763,7 @@ const char *iv_doc = R"(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(-5., 5., 1000)
+    >>> x = mx.linspace(-5., 5., 1000)
     >>> for i in range(4):
     ...     ax.plot(x, iv(i, x), label=f'$I_{i!r}$')
     >>> ax.legend()
@@ -3784,12 +3784,12 @@ const char *iv_ratio_doc = R"(
         Order.  Must be `>= 0.5`.  May be `+inf` if `x` is finite.
     x : array_like of float
         Argument.  Must be `>= 0`.  May be `+inf` if `v` is finite.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Ratio between modified Bessel function of the first kind of adjacent
         orders.  The returned value is between `0` and `1`, inclusive.
 
@@ -3862,12 +3862,12 @@ const char *ive_doc = R"(
         Order.
     z : array_like of float or complex
         Argument.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the exponentially scaled modified Bessel function.
 
     See Also
@@ -3914,7 +3914,7 @@ const char *ive_doc = R"(
     a finite number.
 
     >>> from scipy.special import iv, ive
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> iv(3, 1000.), ive(3, 1000.)
     (inf, 0.01256056218254712)
@@ -3928,7 +3928,7 @@ const char *ive_doc = R"(
     Evaluate the function at several points for order 0 by providing an
     array for `z`.
 
-    >>> points = np.array([-2., 0., 3.])
+    >>> points = mx.array([-2., 0., 3.])
     >>> ive(0, points)
     array([0.30850832, 1.        , 0.24300035])
 
@@ -3945,7 +3945,7 @@ const char *ive_doc = R"(
     Plot the functions of order 0 to 3 from -5 to 5.
 
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(-5., 5., 1000)
+    >>> x = mx.linspace(-5., 5., 1000)
     >>> for i in range(4):
     ...     ax.plot(x, ive(i, x), label=fr'$I_{i!r}(z)\cdot e^{{-|z|}}$')
     >>> ax.legend()
@@ -3962,12 +3962,12 @@ const char *j0_doc = R"(
     ----------
     x : array_like
         Argument (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    J : scalar or ndarray
+    J : scalar or array
         Value of the Bessel function of the first kind of order 0 at `x`.
 
     See Also
@@ -4010,15 +4010,15 @@ const char *j0_doc = R"(
 
     Calculate the function at several points:
 
-    >>> import numpy as np
-    >>> j0(np.array([-2., 0., 4.]))
+    >>> import mlx.core as mx
+    >>> j0(mx.array([-2., 0., 4.]))
     array([ 0.22389078,  1.        , -0.39714981])
 
     Plot the function from -20 to 20.
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(-20., 20., 1000)
+    >>> x = mx.linspace(-20., 20., 1000)
     >>> y = j0(x)
     >>> ax.plot(x, y)
     >>> plt.show()
@@ -4033,12 +4033,12 @@ const char *j1_doc = R"(
     ----------
     x : array_like
         Argument (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    J : scalar or ndarray
+    J : scalar or array
         Value of the Bessel function of the first kind of order 1 at `x`.
 
     See Also
@@ -4072,15 +4072,15 @@ const char *j1_doc = R"(
 
     Calculate the function at several points:
 
-    >>> import numpy as np
-    >>> j1(np.array([-2., 0., 4.]))
+    >>> import mlx.core as mx
+    >>> j1(mx.array([-2., 0., 4.]))
     array([-0.57672481,  0.        , -0.06604333])
 
     Plot the function from -20 to 20.
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(-20., 20., 1000)
+    >>> x = mx.linspace(-20., 20., 1000)
     >>> y = j1(x)
     >>> ax.plot(x, y)
     >>> plt.show()
@@ -4097,12 +4097,12 @@ const char *jv_doc = R"(
         Order (float).
     z : array_like
         Argument (float or complex).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    J : scalar or ndarray
+    J : scalar or array
         Value of the Bessel function, :math:`J_v(z)`.
 
     See Also
@@ -4162,8 +4162,8 @@ const char *jv_doc = R"(
     Evaluate the function at several points for order 0 by providing an
     array for `z`.
 
-    >>> import numpy as np
-    >>> points = np.array([-2., 0., 3.])
+    >>> import mlx.core as mx
+    >>> points = mx.array([-2., 0., 3.])
     >>> jv(0, points)
     array([ 0.22389078,  1.        , -0.26005195])
 
@@ -4171,7 +4171,7 @@ const char *jv_doc = R"(
     the correct shape if different orders shall be computed in one call.
     To calculate the orders 0 and 1 for an 1D array:
 
-    >>> orders = np.array([[0], [1]])
+    >>> orders = mx.array([[0], [1]])
     >>> orders.shape
     (2, 1)
 
@@ -4183,7 +4183,7 @@ const char *jv_doc = R"(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(-10., 10., 1000)
+    >>> x = mx.linspace(-10., 10., 1000)
     >>> for i in range(4):
     ...     ax.plot(x, jv(i, x), label=f'$J_{i!r}$')
     >>> ax.legend()
@@ -4206,12 +4206,12 @@ const char *jve_doc = R"(
         Order (float).
     z : array_like
         Argument (float or complex).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    J : scalar or ndarray
+    J : scalar or array
         Value of the exponentially scaled Bessel function.
 
     See Also
@@ -4253,7 +4253,7 @@ const char *jve_doc = R"(
     by computing their values for order ``v=1`` at ``z=1000j``. We see that
     `jv` overflows but `jve` returns a finite number:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import jv, jve
     >>> v = 1
     >>> z = 1000j
@@ -4276,7 +4276,7 @@ const char *jve_doc = R"(
     In the same way, the function can be evaluated at several points in one
     call by providing a list or NumPy array for `z`:
 
-    >>> jve(1, np.array([1j, 2j, 3j]))
+    >>> jve(1, mx.array([1j, 2j, 3j]))
     array([1.27308412e-17+0.20791042j, 1.31814423e-17+0.21526929j,
            1.20521602e-17+0.19682671j])
 
@@ -4285,8 +4285,8 @@ const char *jve_doc = R"(
     compatible shapes for broadcasting. Compute `jve` for two different orders
     `v` and three points `z` resulting in a 2x3 array.
 
-    >>> v = np.array([[1], [3]])
-    >>> z = np.array([1j, 2j, 3j])
+    >>> v = mx.array([[1], [3]])
+    >>> z = mx.array([1j, 2j, 3j])
     >>> v.shape, z.shape
     ((2, 1), (3,))
 
@@ -4315,12 +4315,12 @@ const char *kei_doc = R"(
     ----------
     x : array_like
         Real argument.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the Kelvin function.
 
     See Also
@@ -4339,10 +4339,10 @@ const char *kei_doc = R"(
     It can be expressed using the modified Bessel function of the
     second kind.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
-    >>> x = np.array([1.0, 2.0, 3.0, 4.0])
-    >>> sc.kv(0, x * np.exp(np.pi * 1j / 4)).imag
+    >>> x = mx.array([1.0, 2.0, 3.0, 4.0])
+    >>> sc.kv(0, x * mx.exp(mx.pi * 1j / 4)).imag
     array([-0.49499464, -0.20240007, -0.05112188,  0.0021984 ])
     >>> sc.kei(x)
     array([-0.49499464, -0.20240007, -0.05112188,  0.0021984 ])
@@ -4358,12 +4358,12 @@ const char *keip_doc = R"(
     ----------
     x : array_like
         Real argument.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The values of the derivative of kei.
 
     See Also
@@ -4386,12 +4386,12 @@ const char *kelvin_doc = R"(
     ----------
     x : array_like
         Argument
-    out : tuple of ndarray, optional
+    out : tuple of array, optional
         Optional output arrays for the function values
 
     Returns
     -------
-    Be, Ke, Bep, Kep : 4-tuple of scalar or ndarray
+    Be, Ke, Bep, Kep : 4-tuple of scalar or array
         The tuple (Be, Ke, Bep, Kep) contains complex numbers
         representing the real and imaginary Kelvin functions and their
         derivatives evaluated at `x`.  For example, kelvin(x)[0].real =
@@ -4417,12 +4417,12 @@ const char *ker_doc = R"(
     ----------
     x : array_like
         Real argument.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the Kelvin function.
 
     See Also
@@ -4441,10 +4441,10 @@ const char *ker_doc = R"(
     It can be expressed using the modified Bessel function of the
     second kind.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
-    >>> x = np.array([1.0, 2.0, 3.0, 4.0])
-    >>> sc.kv(0, x * np.exp(np.pi * 1j / 4)).real
+    >>> x = mx.array([1.0, 2.0, 3.0, 4.0])
+    >>> sc.kv(0, x * mx.exp(mx.pi * 1j / 4)).real
     array([ 0.28670621, -0.04166451, -0.06702923, -0.03617885])
     >>> sc.ker(x)
     array([ 0.28670621, -0.04166451, -0.06702923, -0.03617885])
@@ -4460,12 +4460,12 @@ const char *kerp_doc = R"(
     ----------
     x : array_like
         Real argument.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the derivative of ker.
 
     See Also
@@ -4491,12 +4491,12 @@ const char *k0_doc = R"(
     ----------
     x : array_like
         Argument (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    K : scalar or ndarray
+    K : scalar or array
         Value of the modified Bessel function :math:`K_0` at `x`.
 
     See Also
@@ -4526,15 +4526,15 @@ const char *k0_doc = R"(
 
     Calculate the function at several points:
 
-    >>> import numpy as np
-    >>> k0(np.array([0.5, 2., 3.]))
+    >>> import mlx.core as mx
+    >>> k0(mx.array([0.5, 2., 3.]))
     array([0.92441907, 0.11389387, 0.0347395 ])
 
     Plot the function from 0 to 10.
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(0., 10., 1000)
+    >>> x = mx.linspace(0., 10., 1000)
     >>> y = k0(x)
     >>> ax.plot(x, y)
     >>> plt.show()
@@ -4553,12 +4553,12 @@ const char *k0e_doc = R"(
     ----------
     x : array_like
         Argument (float)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    K : scalar or ndarray
+    K : scalar or array
         Value of the exponentially scaled modified Bessel function K of order
         0 at `x`.
 
@@ -4592,15 +4592,15 @@ const char *k0e_doc = R"(
     Calculate the function at several points by providing a NumPy array or
     list for `x`:
 
-    >>> import numpy as np
-    >>> k0e(np.array([0.5, 2., 3.]))
+    >>> import mlx.core as mx
+    >>> k0e(mx.array([0.5, 2., 3.]))
     array([1.52410939, 0.84156822, 0.6977616 ])
 
     Plot the function from 0 to 10.
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(0., 10., 1000)
+    >>> x = mx.linspace(0., 10., 1000)
     >>> y = k0e(x)
     >>> ax.plot(x, y)
     >>> plt.show()
@@ -4615,12 +4615,12 @@ const char *k1_doc = R"(
     ----------
     x : array_like
         Argument (float)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    K : scalar or ndarray
+    K : scalar or array
         Value of the modified Bessel function K of order 1 at `x`.
 
     See Also
@@ -4650,15 +4650,15 @@ const char *k1_doc = R"(
 
     Calculate the function at several points:
 
-    >>> import numpy as np
-    >>> k1(np.array([0.5, 2., 3.]))
+    >>> import mlx.core as mx
+    >>> k1(mx.array([0.5, 2., 3.]))
     array([1.65644112, 0.13986588, 0.04015643])
 
     Plot the function from 0 to 10.
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(0., 10., 1000)
+    >>> x = mx.linspace(0., 10., 1000)
     >>> y = k1(x)
     >>> ax.plot(x, y)
     >>> plt.show()
@@ -4677,12 +4677,12 @@ const char *k1e_doc = R"(
     ----------
     x : array_like
         Argument (float)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    K : scalar or ndarray
+    K : scalar or array
         Value of the exponentially scaled modified Bessel function K of order
         1 at `x`.
 
@@ -4715,15 +4715,15 @@ const char *k1e_doc = R"(
     Calculate the function at several points by providing a NumPy array or
     list for `x`:
 
-    >>> import numpy as np
-    >>> k1e(np.array([0.5, 2., 3.]))
+    >>> import mlx.core as mx
+    >>> k1e(mx.array([0.5, 2., 3.]))
     array([2.73100971, 1.03347685, 0.80656348])
 
     Plot the function from 0 to 10.
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(0., 10., 1000)
+    >>> x = mx.linspace(0., 10., 1000)
     >>> y = k1e(x)
     >>> ax.plot(x, y)
     >>> plt.show()
@@ -4752,12 +4752,12 @@ const char *kv_doc = R"(
         Order of Bessel functions
     z : array_like of complex
         Argument at which to evaluate the Bessel functions
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The results. Note that input must be of complex type to get complex
         output, e.g. ``kv(3, -2+0j)`` instead of ``kv(3, -2)``.
 
@@ -4786,11 +4786,11 @@ const char *kv_doc = R"(
     --------
     Plot the function of several orders for real input:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import kv
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(0, 5, 1000)
-    >>> for N in np.linspace(0, 6, 5):
+    >>> x = mx.linspace(0, 5, 1000)
+    >>> for N in mx.linspace(0, 6, 5):
     ...     plt.plot(x, kv(N, x), label='$K_{{{}}}(x)$'.format(N))
     >>> plt.ylim(0, 10)
     >>> plt.legend()
@@ -4821,12 +4821,12 @@ const char *kve_doc = R"(
         Order of Bessel functions
     z : array_like of complex
         Argument at which to evaluate the Bessel functions
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The exponentially scaled modified Bessel function of the second kind.
 
     See Also
@@ -4854,7 +4854,7 @@ const char *kve_doc = R"(
     In the following example `kv` returns 0 whereas `kve` still returns
     a useful finite number.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import kv, kve
     >>> import matplotlib.pyplot as plt
     >>> kv(3, 1000.), kve(3, 1000.)
@@ -4869,7 +4869,7 @@ const char *kve_doc = R"(
     Evaluate the function at several points for order 0 by providing an
     array for `z`.
 
-    >>> points = np.array([1., 3., 10.])
+    >>> points = mx.array([1., 3., 10.])
     >>> kve(0, points)
     array([1.14446308, 0.6977616 , 0.39163193])
 
@@ -4886,7 +4886,7 @@ const char *kve_doc = R"(
     Plot the functions of order 0 to 3 from 0 to 5.
 
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(0., 5., 1000)
+    >>> x = mx.linspace(0., 5., 1000)
     >>> for i in range(4):
     ...     ax.plot(x, kve(i, x), label=fr'$K_{i!r}(z)\cdot e^z$')
     >>> ax.legend()
@@ -4965,12 +4965,12 @@ const char *lambertw_doc = R"(
     --------
     The Lambert W function is the inverse of ``w exp(w)``:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import lambertw
     >>> w = lambertw(1)
     >>> w
     (0.56714329040978384+0j)
-    >>> w * np.exp(w)
+    >>> w * mx.exp(w)
     (1.0+0j)
 
     Any branch gives a valid inverse:
@@ -4978,7 +4978,7 @@ const char *lambertw_doc = R"(
     >>> w = lambertw(1, k=3)
     >>> w
     (-2.8535817554090377+17.113535539412148j)
-    >>> w*np.exp(w)
+    >>> w*mx.exp(w)
     (1.0000000000000002+1.609823385706477e-15j)
 
     **Applications to equation-solving**
@@ -5013,13 +5013,13 @@ const char *lambertw_doc = R"(
 
     The solution to :math:`x = a + b e^{c x}` is:
 
-    >>> x = a - lambertw(-b*c*np.exp(a*c))/c
+    >>> x = a - lambertw(-b*c*mx.exp(a*c))/c
     >>> x
     (3.3707498368978794+0j)
 
     Verify that it solves the equation:
 
-    >>> a + b*np.exp(c*x)
+    >>> a + b*mx.exp(c*x)
     (3.37074983689788+0j)
 
     The Lambert W function may also be used find the value of the infinite
@@ -5032,7 +5032,7 @@ const char *lambertw_doc = R"(
     ...
     >>> tower(0.5, 100)
     0.641185744504986
-    >>> -lambertw(-np.log(0.5)) / np.log(0.5)
+    >>> -lambertw(-mx.log(0.5)) / mx.log(0.5)
     (0.64118574450498589+0j)
     )";
 
@@ -5051,12 +5051,12 @@ const char *loggamma_doc = R"(
     ----------
     z : array_like
         Values in the complex plane at which to compute ``loggamma``
-    out : ndarray, optional
+    out : array, optional
         Output array for computed values of ``loggamma``
 
     Returns
     -------
-    loggamma : scalar or ndarray
+    loggamma : scalar or array
         Values of ``loggamma`` at z.
 
     See Also
@@ -5095,32 +5095,32 @@ const char *loggamma_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import loggamma, gamma
 
     >>> z = 1.5 + 2j
     >>> loggamma(z)
-    np.complex128(-1.4991963725850939+0.7332806816909994j)
+    mx.complex128(-1.4991963725850939+0.7332806816909994j)
 
     Verify :math:`\exp(\log \Gamma(z)) = \Gamma(z)`:
 
-    >>> np.exp(loggamma(z))
-    np.complex128(0.165915108938991+0.14946347326641998j)
+    >>> mx.exp(loggamma(z))
+    mx.complex128(0.165915108938991+0.14946347326641998j)
     >>> gamma(z)
-    np.complex128(0.165915108938991+0.14946347326641998j)
+    mx.complex128(0.165915108938991+0.14946347326641998j)
 
     Verify the recurrence :math:`\log \Gamma(z+1) = \log(z) + \log \Gamma(z)`:
 
     >>> loggamma(z + 1)
-    np.complex128(-0.5829056407109388+1.6605758996926108j)
-    >>> np.log(z) + loggamma(z)
-    np.complex128(-0.5829056407109388+1.6605758996926117j)
+    mx.complex128(-0.5829056407109388+1.6605758996926108j)
+    >>> mx.log(z) + loggamma(z)
+    mx.complex128(-0.5829056407109388+1.6605758996926117j)
     )";
 
 const char *logit_doc = R"(
     logit(x, out=None)
 
-    Logit ufunc for ndarrays.
+    Logit ufunc for arrays.
 
     The logit function is defined as logit(p) = log(p/(1-p)).
     Note that logit(0) = -inf, logit(1) = inf, and logit(p)
@@ -5128,15 +5128,15 @@ const char *logit_doc = R"(
 
     Parameters
     ----------
-    x : ndarray
-        The ndarray to apply logit to element-wise.
-    out : ndarray, optional
+    x : array
+        The array to apply logit to element-wise.
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
-        An ndarray of the same shape as x. Its entries
+    scalar or array
+        An array of the same shape as x. Its entries
         are logit of the corresponding entry of x.
 
     See Also
@@ -5153,7 +5153,7 @@ const char *logit_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import logit, expit
 
     >>> logit([0, 0.25, 0.5, 0.75, 1])
@@ -5167,7 +5167,7 @@ const char *logit_doc = R"(
     Plot logit(x) for x in [0, 1]:
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(0, 1, 501)
+    >>> x = mx.linspace(0, 1, 501)
     >>> y = logit(x)
     >>> plt.plot(x, y)
     >>> plt.grid()
@@ -5193,13 +5193,13 @@ const char *log_expit_doc = R"(
     ----------
     x : array_like
         The values to apply ``log_expit`` to element-wise.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    out : scalar or ndarray
-        The computed values, an ndarray of the same shape as ``x``.
+    out : scalar or array
+        The computed values, an array of the same shape as ``x``.
 
     See Also
     --------
@@ -5215,7 +5215,7 @@ const char *log_expit_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import log_expit, expit
 
     >>> log_expit([-3.0, 0.25, 2.5, 5.0])
@@ -5236,7 +5236,7 @@ const char *log_expit_doc = R"(
 
     Compare that to the naive implementation:
 
-    >>> np.log(expit([29, 120, 400]))
+    >>> mx.log(expit([29, 120, 400]))
     array([-2.54463117e-13,  0.00000000e+00,  0.00000000e+00])
 
     The first value is accurate to only 3 digits, and the larger inputs
@@ -5257,12 +5257,12 @@ const char *log_ndtr_doc = R"(
     ----------
     x : array_like, real or complex
         Argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The value of the log of the normal CDF evaluated at `x`
 
     See Also
@@ -5274,14 +5274,14 @@ const char *log_ndtr_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import log_ndtr, ndtr
 
     The benefit of ``log_ndtr(x)`` over the naive implementation
-    ``np.log(ndtr(x))`` is most evident with moderate to large positive
+    ``mx.log(ndtr(x))`` is most evident with moderate to large positive
     values of ``x``:
 
-    >>> x = np.array([6, 7, 9, 12, 15, 25])
+    >>> x = mx.array([6, 7, 9, 12, 15, 25])
     >>> log_ndtr(x)
     array([-9.86587646e-010, -1.27981254e-012, -1.12858841e-019,
            -1.77648211e-033, -3.67096620e-051, -3.05669671e-138])
@@ -5290,7 +5290,7 @@ const char *log_ndtr_doc = R"(
     have only 5 or 6 correct significant digits. For values of ``x``
     greater than approximately 8.3, the naive expression returns 0:
 
-    >>> np.log(ndtr(x))
+    >>> mx.log(ndtr(x))
     array([-9.86587701e-10, -1.27986510e-12,  0.00000000e+00,
             0.00000000e+00,  0.00000000e+00,  0.00000000e+00])
     )";
@@ -5309,12 +5309,12 @@ const char *log_wright_bessel_doc = R"(
         b >= 0
     x : array_like of float
         x >= 0
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Value of the logarithm of Wright's generalized Bessel function
 
     Notes
@@ -5343,12 +5343,12 @@ const char *mathieu_a_doc = R"(
         Order of the function
     q : array_like
         Parameter of the function
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Characteristic value for the even solution, ``ce_m(z, q)``, of
         Mathieu's equation.
 
@@ -5369,12 +5369,12 @@ const char *mathieu_b_doc = R"(
         Order of the function
     q : array_like
         Parameter of the function
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Characteristic value for the odd solution, ``se_m(z, q)``, of Mathieu's
         equation.
 
@@ -5401,14 +5401,14 @@ const char *mathieu_cem_doc = R"(
         Parameter of the function
     x : array_like
         Argument of the function, *given in degrees, not radians*
-    out : tuple of ndarray, optional
+    out : tuple of array, optional
         Optional output arrays for the function results
 
     Returns
     -------
-    y : scalar or ndarray
+    y : scalar or array
         Value of the function
-    yp : scalar or ndarray
+    yp : scalar or array
         Value of the derivative vs x
 
     See Also
@@ -5436,12 +5436,12 @@ const char *mathieu_cem_doc = R"(
     --------
     Plot even Mathieu functions of orders ``2`` and ``4``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import special
     >>> import matplotlib.pyplot as plt
-    >>> m = np.asarray([2, 4])
+    >>> m = mx.array([2, 4])
     >>> q = 50
-    >>> x = np.linspace(-180, 180, 300)[:, np.newaxis]
+    >>> x = mx.linspace(-180, 180, 300)[:, mx.newaxis]
     >>> y, _ = special.mathieu_cem(m, q, x)
     >>> plt.plot(x, y)
     >>> plt.xlabel('x (degrees)')
@@ -5470,14 +5470,14 @@ const char *mathieu_modcem1_doc = R"(
         Parameter of the function
     x : array_like
         Argument of the function, *given in degrees, not radians*
-    out : tuple of ndarray, optional
+    out : tuple of array, optional
         Optional output arrays for the function results
 
     Returns
     -------
-    y : scalar or ndarray
+    y : scalar or array
         Value of the function
-    yp : scalar or ndarray
+    yp : scalar or array
         Value of the derivative vs x
 
     See Also
@@ -5503,14 +5503,14 @@ const char *mathieu_modcem2_doc = R"(
         Parameter of the function
     x : array_like
         Argument of the function, *given in degrees, not radians*
-    out : tuple of ndarray, optional
+    out : tuple of array, optional
         Optional output arrays for the function results
 
     Returns
     -------
-    y : scalar or ndarray
+    y : scalar or array
         Value of the function
-    yp : scalar or ndarray
+    yp : scalar or array
         Value of the derivative vs x
 
     See Also
@@ -5536,14 +5536,14 @@ const char *mathieu_modsem1_doc = R"(
         Parameter of the function
     x : array_like
         Argument of the function, *given in degrees, not radians*
-    out : tuple of ndarray, optional
+    out : tuple of array, optional
         Optional output arrays for the function results
 
     Returns
     -------
-    y : scalar or ndarray
+    y : scalar or array
         Value of the function
-    yp : scalar or ndarray
+    yp : scalar or array
         Value of the derivative vs x
 
     See Also
@@ -5569,14 +5569,14 @@ const char *mathieu_modsem2_doc = R"(
         Parameter of the function
     x : array_like
         Argument of the function, *given in degrees, not radians*
-    out : tuple of ndarray, optional
+    out : tuple of array, optional
         Optional output arrays for the function results
 
     Returns
     -------
-    y : scalar or ndarray
+    y : scalar or array
         Value of the function
-    yp : scalar or ndarray
+    yp : scalar or array
         Value of the derivative vs x
 
     See Also
@@ -5602,14 +5602,14 @@ const char *mathieu_sem_doc = R"(
         Parameter of the function
     x : array_like
         Argument of the function, *given in degrees, not radians*.
-    out : tuple of ndarray, optional
+    out : tuple of array, optional
         Optional output arrays for the function results
 
     Returns
     -------
-    y : scalar or ndarray
+    y : scalar or array
         Value of the function
-    yp : scalar or ndarray
+    yp : scalar or array
         Value of the derivative vs x
 
     See Also
@@ -5637,12 +5637,12 @@ const char *mathieu_sem_doc = R"(
     --------
     Plot odd Mathieu functions of orders ``2`` and ``4``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import special
     >>> import matplotlib.pyplot as plt
-    >>> m = np.asarray([2, 4])
+    >>> m = mx.array([2, 4])
     >>> q = 50
-    >>> x = np.linspace(-180, 180, 300)[:, np.newaxis]
+    >>> x = mx.linspace(-180, 180, 300)[:, mx.newaxis]
     >>> y, _ = special.mathieu_sem(m, q, x)
     >>> plt.plot(x, y)
     >>> plt.xlabel('x (degrees)')
@@ -5663,14 +5663,14 @@ const char *modfresnelm_doc = R"(
     ----------
     x : array_like
         Function argument
-    out : tuple of ndarray, optional
+    out : tuple of array, optional
         Optional output arrays for the function results
 
     Returns
     -------
-    fm : scalar or ndarray
+    fm : scalar or array
         Integral ``F_-(x)``: ``integral(exp(-1j*t*t), t=x..inf)``
-    km : scalar or ndarray
+    km : scalar or array
         Integral ``K_-(x)``: ``1/sqrt(pi)*exp(1j*(x*x+pi/4))*fm``
 
     See Also
@@ -5688,14 +5688,14 @@ const char *modfresnelp_doc = R"(
     ----------
     x : array_like
         Function argument
-    out : tuple of ndarray, optional
+    out : tuple of array, optional
         Optional output arrays for the function results
 
     Returns
     -------
-    fp : scalar or ndarray
+    fp : scalar or array
         Integral ``F_+(x)``: ``integral(exp(1j*t*t), t=x..inf)``
-    kp : scalar or ndarray
+    kp : scalar or array
         Integral ``K_+(x)``: ``1/sqrt(pi)*exp(-1j*(x*x+pi/4))*fp``
 
     See Also
@@ -5723,14 +5723,14 @@ const char *obl_ang1_doc = R"(
         Spheroidal parameter
     x : array_like
         Parameter x (``|x| < 1.0``)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    s : scalar or ndarray
+    s : scalar or array
         Value of the function
-    sp : scalar or ndarray
+    sp : scalar or array
         Value of the derivative vs x
 
     See Also
@@ -5755,12 +5755,12 @@ const char *ndtr_doc = R"(
     ----------
     x : array_like, real or complex
         Argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The value of the normal CDF evaluated at `x`
 
     See Also
@@ -5775,7 +5775,7 @@ const char *ndtr_doc = R"(
     --------
     Evaluate `ndtr` at one point.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import ndtr
     >>> ndtr(0.5)
     0.6914624612740131
@@ -5789,7 +5789,7 @@ const char *ndtr_doc = R"(
     Plot the function.
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(-5, 5, 100)
+    >>> x = mx.linspace(-5, 5, 100)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(x, ndtr(x))
     >>> ax.set_title(r"Standard normal cumulative distribution function $\Phi$")
@@ -5818,14 +5818,14 @@ const char *obl_ang1_cv_doc = R"(
         Characteristic value
     x : array_like
         Parameter x (``|x| < 1.0``)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    s : scalar or ndarray
+    s : scalar or array
         Value of the function
-    sp : scalar or ndarray
+    sp : scalar or array
         Value of the derivative vs x
 
     See Also
@@ -5850,12 +5850,12 @@ const char *obl_cv_doc = R"(
         Mode parameter n (>= m)
     c : array_like
         Spheroidal parameter
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    cv : scalar or ndarray
+    cv : scalar or array
         Characteristic value
 
     )";
@@ -5879,14 +5879,14 @@ const char *obl_rad1_doc = R"(
         Spheroidal parameter
     x : array_like
         Parameter x (``x >= 0.0``)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    s : scalar or ndarray
+    s : scalar or array
         Value of the function
-    sp : scalar or ndarray
+    sp : scalar or array
         Value of the derivative vs x
 
     See Also
@@ -5917,14 +5917,14 @@ const char *obl_rad1_cv_doc = R"(
         Characteristic value
     x : array_like
         Parameter x (``x >= 0.0``)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    s : scalar or ndarray
+    s : scalar or array
         Value of the function
-    sp : scalar or ndarray
+    sp : scalar or array
         Value of the derivative vs x
 
     See Also
@@ -5952,14 +5952,14 @@ const char *obl_rad2_doc = R"(
         Spheroidal parameter
     x : array_like
         Parameter x (``x >= 0.0``)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    s : scalar or ndarray
+    s : scalar or array
         Value of the function
-    sp : scalar or ndarray
+    sp : scalar or array
         Value of the derivative vs x
 
     See Also
@@ -5990,14 +5990,14 @@ const char *obl_rad2_cv_doc = R"(
         Characteristic value
     x : array_like
         Parameter x (``x >= 0.0``)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    s : scalar or ndarray
+    s : scalar or array
         Value of the function
-    sp : scalar or ndarray
+    sp : scalar or array
         Value of the derivative vs x
 
     See Also
@@ -6019,14 +6019,14 @@ const char *pbdv_doc = R"(
         Real parameter
     x : array_like
         Real argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    d : scalar or ndarray
+    d : scalar or array
         Value of the function
-    dp : scalar or ndarray
+    dp : scalar or array
         Value of the derivative vs x
     )";
 
@@ -6044,14 +6044,14 @@ const char *pbvv_doc = R"(
         Real parameter
     x : array_like
         Real argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    v : scalar or ndarray
+    v : scalar or array
         Value of the function
-    vp : scalar or ndarray
+    vp : scalar or array
         Value of the derivative vs x
     )";
 
@@ -6074,14 +6074,14 @@ const char *pbwa_doc = R"(
         Real parameter
     x : array_like
         Real argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    w : scalar or ndarray
+    w : scalar or array
         Value of the function
-    wp : scalar or ndarray
+    wp : scalar or array
         Value of the derivative in x
 
     Notes
@@ -6118,14 +6118,14 @@ const char *pro_ang1_doc = R"(
         Spheroidal parameter
     x : array_like
         Real parameter (``|x| < 1.0``)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    s : scalar or ndarray
+    s : scalar or array
         Value of the function
-    sp : scalar or ndarray
+    sp : scalar or array
         Value of the derivative vs x
     )";
 
@@ -6151,14 +6151,14 @@ const char *pro_ang1_cv_doc = R"(
         Characteristic value
     x : array_like
         Real parameter (``|x| < 1.0``)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    s : scalar or ndarray
+    s : scalar or array
         Value of the function
-    sp : scalar or ndarray
+    sp : scalar or array
         Value of the derivative vs x
     )";
 
@@ -6178,12 +6178,12 @@ const char *pro_cv_doc = R"(
         Mode parameter n (>= m)
     c : array_like
         Spheroidal parameter
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    cv : scalar or ndarray
+    cv : scalar or array
         Characteristic value
     )";
 
@@ -6206,14 +6206,14 @@ const char *pro_rad1_doc = R"(
         Spheroidal parameter
     x : array_like
         Real parameter (``x > 1.0``)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    s : scalar or ndarray
+    s : scalar or array
         Value of the function
-    sp : scalar or ndarray
+    sp : scalar or array
         Value of the derivative vs x
     )";
 
@@ -6239,14 +6239,14 @@ const char *pro_rad1_cv_doc = R"(
         Characteristic value
     x : array_like
         Real parameter (``x > 1.0``)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    s : scalar or ndarray
+    s : scalar or array
         Value of the function
-    sp : scalar or ndarray
+    sp : scalar or array
         Value of the derivative vs x
     )";
 
@@ -6269,14 +6269,14 @@ const char *pro_rad2_doc = R"(
         Spheroidal parameter
     x : array_like
         Real parameter (``x > 1.0``)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    s : scalar or ndarray
+    s : scalar or array
         Value of the function
-    sp : scalar or ndarray
+    sp : scalar or array
         Value of the derivative vs x
     )";
 
@@ -6302,14 +6302,14 @@ const char *pro_rad2_cv_doc = R"(
         Characteristic value
     x : array_like
         Real parameter (``x > 1.0``)
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    s : scalar or ndarray
+    s : scalar or array
         Value of the function
-    sp : scalar or ndarray
+    sp : scalar or array
         Value of the derivative vs x
     )";
 
@@ -6324,12 +6324,12 @@ const char *psi_doc = R"(
     ----------
     z : array_like
         Real or complex argument.
-    out : ndarray, optional
+    out : array, optional
         Array for the computed values of ``psi``.
 
     Returns
     -------
-    digamma : scalar or ndarray
+    digamma : scalar or array
         Computed values of ``psi``.
 
     Notes
@@ -6385,12 +6385,12 @@ const char *radian_doc = R"(
         Minutes, can be real-valued.
     s : array_like
         Seconds, can be real-valued.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the inputs in radians.
 
     Examples
@@ -6426,12 +6426,12 @@ const char *rgamma_doc = R"(
     ----------
     z : array_like
         Real or complex valued input
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Function results
 
     See Also
@@ -6507,12 +6507,12 @@ const char *scaled_exp1_doc = R"(
         The input values. Must be real.  The implementation is limited to
         double precision floating point, so other types will be cast to
         to double precision.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Values of the scaled exponential integral.
 
     See Also
@@ -6566,12 +6566,12 @@ const char *tandg_doc = R"(
     ----------
     x : array_like
         Angle, given in degrees.
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results.
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Tangent at the input.
 
     See Also
@@ -6580,15 +6580,15 @@ const char *tandg_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.special as sc
 
     It is more accurate than using tangent directly.
 
-    >>> x = 180 * np.arange(3)
+    >>> x = 180 * mx.arange(3)
     >>> sc.tandg(x)
     array([0., 0., 0.])
-    >>> np.tan(x * np.pi / 180)
+    >>> mx.tan(x * mx.pi / 180)
     array([ 0.0000000e+00, -1.2246468e-16, -2.4492936e-16])
     )";
 
@@ -6613,12 +6613,12 @@ const char *struve_h_doc = R"(
     x : array_like
         Argument of the Struve function (float; must be positive unless `v` is
         an integer).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    H : scalar or ndarray
+    H : scalar or array
         Value of the Struve function of order `v` at `x`.
 
     See Also
@@ -6645,7 +6645,7 @@ const char *struve_h_doc = R"(
     --------
     Calculate the Struve function of order 1 at 2.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import struve
     >>> import matplotlib.pyplot as plt
     >>> struve(1, 2.)
@@ -6660,7 +6660,7 @@ const char *struve_h_doc = R"(
     Calculate the Struve function of order 1 for several points by providing
     an array for `x`.
 
-    >>> points = np.array([2., 5., 8.])
+    >>> points = mx.array([2., 5., 8.])
     >>> struve(1, points)
     array([0.64676373, 0.80781195, 0.48811605])
 
@@ -6668,7 +6668,7 @@ const char *struve_h_doc = R"(
     providing arrays for `v` and `z`. The arrays have to be broadcastable
     to the correct shapes.
 
-    >>> orders = np.array([[1], [2], [3]])
+    >>> orders = mx.array([[1], [2], [3]])
     >>> points.shape, orders.shape
     ((3,), (3, 1))
 
@@ -6680,7 +6680,7 @@ const char *struve_h_doc = R"(
     Plot the Struve functions of order 0 to 3 from -10 to 10.
 
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(-10., 10., 1000)
+    >>> x = mx.linspace(-10., 10., 1000)
     >>> for i in range(4):
     ...     ax.plot(x, struve(i, x), label=f'$H_{i!r}$')
     >>> ax.legend(ncol=2)
@@ -6709,12 +6709,12 @@ const char *struve_l_doc = R"(
     x : array_like
         Argument of the Struve function (float; must be positive unless `v` is
         an integer).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    L : scalar or ndarray
+    L : scalar or array
         Value of the modified Struve function of order `v` at `x`.
 
     See Also
@@ -6741,7 +6741,7 @@ const char *struve_l_doc = R"(
     --------
     Calculate the modified Struve function of order 1 at 2.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import modstruve
     >>> import matplotlib.pyplot as plt
     >>> modstruve(1, 2.)
@@ -6756,7 +6756,7 @@ const char *struve_l_doc = R"(
     Calculate the modified Struve function of order 1 for several points
     by providing an array for `x`.
 
-    >>> points = np.array([2., 5., 8.])
+    >>> points = mx.array([2., 5., 8.])
     >>> modstruve(1, points)
     array([  1.10275979,  23.72821578, 399.24709139])
 
@@ -6764,7 +6764,7 @@ const char *struve_l_doc = R"(
     points by providing arrays for `v` and `z`. The arrays have to be
     broadcastable to the correct shapes.
 
-    >>> orders = np.array([[1], [2], [3]])
+    >>> orders = mx.array([[1], [2], [3]])
     >>> points.shape, orders.shape
     ((3,), (3, 1))
 
@@ -6776,7 +6776,7 @@ const char *struve_l_doc = R"(
     Plot the modified Struve functions of order 0 to 3 from -5 to 5.
 
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(-5., 5., 1000)
+    >>> x = mx.linspace(-5., 5., 1000)
     >>> for i in range(4):
     ...     ax.plot(x, modstruve(i, x), label=f'$L_{i!r}$')
     >>> ax.legend(ncol=2)
@@ -6807,12 +6807,12 @@ const char *voigt_profile_doc = R"(
         The standard deviation of the Normal distribution part
     gamma : array_like
         The half-width at half-maximum of the Cauchy distribution part
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function values
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         The Voigt profile at the given arguments
 
     See Also
@@ -6837,7 +6837,7 @@ const char *voigt_profile_doc = R"(
     Calculate the function at point 2 for ``sigma=1`` and ``gamma=1``.
 
     >>> from scipy.special import voigt_profile
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> voigt_profile(2, 1., 1.)
     0.09071519942627544
@@ -6845,14 +6845,14 @@ const char *voigt_profile_doc = R"(
     Calculate the function at several points by providing a NumPy array
     for `x`.
 
-    >>> values = np.array([-2., 0., 5])
+    >>> values = mx.array([-2., 0., 5])
     >>> voigt_profile(values, 1., 1.)
     array([0.0907152 , 0.20870928, 0.01388492])
 
     Plot the function for different parameter sets.
 
     >>> fig, ax = plt.subplots(figsize=(8, 8))
-    >>> x = np.linspace(-10, 10, 500)
+    >>> x = mx.linspace(-10, 10, 500)
     >>> parameters_list = [(1.5, 0., "solid"), (1.3, 0.5, "dashed"),
     ...                    (0., 1.8, "dotted"), (1., 1., "dashdot")]
     >>> for params in parameters_list:
@@ -6867,11 +6867,11 @@ const char *voigt_profile_doc = R"(
     of a normal and a Cauchy distribution.
 
     >>> from scipy.signal import convolve
-    >>> x, dx = np.linspace(-10, 10, 500, retstep=True)
+    >>> x, dx = mx.linspace(-10, 10, 500, retstep=True)
     >>> def gaussian(x, sigma):
-    ...     return np.exp(-0.5 * x**2/sigma**2)/(sigma * np.sqrt(2*np.pi))
+    ...     return mx.exp(-0.5 * x**2/sigma**2)/(sigma * mx.sqrt(2*mx.pi))
     >>> def cauchy(x, gamma):
-    ...     return gamma/(np.pi * (np.square(x)+gamma**2))
+    ...     return gamma/(mx.pi * (mx.square(x)+gamma**2))
     >>> sigma = 2
     >>> gamma = 1
     >>> gauss_profile = gaussian(x, sigma)
@@ -6902,12 +6902,12 @@ const char *wofz_doc = R"(
     ----------
     z : array_like
         complex argument
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Value of the Faddeeva function
 
     See Also
@@ -6921,11 +6921,11 @@ const char *wofz_doc = R"(
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import special
     >>> import matplotlib.pyplot as plt
 
-    >>> x = np.linspace(-3, 3)
+    >>> x = mx.linspace(-3, 3)
     >>> z = special.wofz(x)
 
     >>> plt.plot(x, z.real, label='wofz(x).real')
@@ -6955,12 +6955,12 @@ const char *wright_bessel_doc = R"(
         b >= 0
     x : array_like of float
         x >= 0
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    scalar or ndarray
+    scalar or array
         Value of the Wright's generalized Bessel function
 
     Notes
@@ -6999,12 +6999,12 @@ const char *y0_doc = R"(
     ----------
     x : array_like
         Argument (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    Y : scalar or ndarray
+    Y : scalar or array
         Value of the Bessel function of the second kind of order 0 at `x`.
 
     See Also
@@ -7044,15 +7044,15 @@ const char *y0_doc = R"(
 
     Calculate at several points:
 
-    >>> import numpy as np
-    >>> y0(np.array([0.5, 2., 3.]))
+    >>> import mlx.core as mx
+    >>> y0(mx.array([0.5, 2., 3.]))
     array([-0.44451873,  0.51037567,  0.37685001])
 
     Plot the function from 0 to 10.
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(0., 10., 1000)
+    >>> x = mx.linspace(0., 10., 1000)
     >>> y = y0(x)
     >>> ax.plot(x, y)
     >>> plt.show()
@@ -7067,12 +7067,12 @@ const char *y1_doc = R"(
     ----------
     x : array_like
         Argument (float).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    Y : scalar or ndarray
+    Y : scalar or array
         Value of the Bessel function of the second kind of order 1 at `x`.
 
     See Also
@@ -7106,15 +7106,15 @@ const char *y1_doc = R"(
 
     Calculate at several points:
 
-    >>> import numpy as np
-    >>> y1(np.array([0.5, 2., 3.]))
+    >>> import mlx.core as mx
+    >>> y1(mx.array([0.5, 2., 3.]))
     array([-1.47147239, -0.10703243,  0.32467442])
 
     Plot the function from 0 to 10.
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(0., 10., 1000)
+    >>> x = mx.linspace(0., 10., 1000)
     >>> y = y1(x)
     >>> ax.plot(x, y)
     >>> plt.show()
@@ -7131,12 +7131,12 @@ const char *yv_doc = R"(
         Order (float).
     z : array_like
         Argument (float or complex).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    Y : scalar or ndarray
+    Y : scalar or array
         Value of the Bessel function of the second kind, :math:`Y_v(x)`.
 
     See Also
@@ -7190,8 +7190,8 @@ const char *yv_doc = R"(
     Evaluate the function at several points for order 0 by providing an
     array for `z`.
 
-    >>> import numpy as np
-    >>> points = np.array([0.5, 3., 8.])
+    >>> import mlx.core as mx
+    >>> points = mx.array([0.5, 3., 8.])
     >>> yv(0, points)
     array([-0.44451873,  0.37685001,  0.22352149])
 
@@ -7199,7 +7199,7 @@ const char *yv_doc = R"(
     the correct shape if different orders shall be computed in one call.
     To calculate the orders 0 and 1 for an 1D array:
 
-    >>> orders = np.array([[0], [1]])
+    >>> orders = mx.array([[0], [1]])
     >>> orders.shape
     (2, 1)
 
@@ -7211,7 +7211,7 @@ const char *yv_doc = R"(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> x = np.linspace(0., 10., 1000)
+    >>> x = mx.linspace(0., 10., 1000)
     >>> for i in range(4):
     ...     ax.plot(x, yv(i, x), label=f'$Y_{i!r}$')
     >>> ax.set_ylim(-3, 1)
@@ -7236,12 +7236,12 @@ const char *yve_doc = R"(
         Order (float).
     z : array_like
         Argument (float or complex).
-    out : ndarray, optional
+    out : array, optional
         Optional output array for the function results
 
     Returns
     -------
-    Y : scalar or ndarray
+    Y : scalar or array
         Value of the exponentially scaled Bessel function.
 
     See Also
@@ -7280,7 +7280,7 @@ const char *yve_doc = R"(
     by computing their values for order ``v=1`` at ``z=1000j``. We see that
     `yv` returns nan but `yve` returns a finite number:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import yv, yve
     >>> v = 1
     >>> z = 1000j
@@ -7304,7 +7304,7 @@ const char *yve_doc = R"(
     In the same way, the function can be evaluated at several points in one
     call by providing a list or NumPy array for `z`:
 
-    >>> yve(1, np.array([1j, 2j, 3j]))
+    >>> yve(1, mx.array([1j, 2j, 3j]))
     array([-0.20791042+0.14096627j, -0.21526929+0.01205044j,
            -0.19682671+0.00127278j])
 
@@ -7313,8 +7313,8 @@ const char *yve_doc = R"(
     broadcasting compatible shapes. Compute `yve` for two different orders
     `v` and three points `z` resulting in a 2x3 array.
 
-    >>> v = np.array([[1], [2]])
-    >>> z = np.array([3j, 4j, 5j])
+    >>> v = mx.array([[1], [2]])
+    >>> z = mx.array([3j, 4j, 5j])
     >>> v.shape, z.shape
     ((2, 1), (3,))
 

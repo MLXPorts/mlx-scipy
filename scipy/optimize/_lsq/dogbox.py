@@ -40,7 +40,7 @@ References
             Mathematics, Corfu, Greece, 2004.
 .. [NumOpt] J. Nocedal and S. J. Wright, "Numerical optimization, 2nd edition".
 """
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import lstsq, norm
 
 from scipy.sparse.linalg import LinearOperator, aslinearoperator, lsmr
@@ -81,26 +81,26 @@ def find_intersection(x, tr_bounds, lb, ub):
 
     Returns
     -------
-    lb_total, ub_total : ndarray with shape of x
+    lb_total, ub_total : array with shape of x
         Lower and upper bounds of the intersection region.
-    orig_l, orig_u : ndarray of bool with shape of x
+    orig_l, orig_u : array of bool with shape of x
         True means that an original bound is taken as a corresponding bound
         in the intersection region.
-    tr_l, tr_u : ndarray of bool with shape of x
+    tr_l, tr_u : array of bool with shape of x
         True means that a trust-region bound is taken as a corresponding bound
         in the intersection region.
     """
     lb_centered = lb - x
     ub_centered = ub - x
 
-    lb_total = np.maximum(lb_centered, -tr_bounds)
-    ub_total = np.minimum(ub_centered, tr_bounds)
+    lb_total = mx.maximum(lb_centered, -tr_bounds)
+    ub_total = mx.minimum(ub_centered, tr_bounds)
 
-    orig_l = np.equal(lb_total, lb_centered)
-    orig_u = np.equal(ub_total, ub_centered)
+    orig_l = mx.equal(lb_total, lb_centered)
+    orig_u = mx.equal(ub_total, ub_centered)
 
-    tr_l = np.equal(lb_total, -tr_bounds)
-    tr_u = np.equal(ub_total, tr_bounds)
+    tr_l = mx.equal(lb_total, -tr_bounds)
+    tr_u = mx.equal(ub_total, tr_bounds)
 
     return lb_total, ub_total, orig_l, orig_u, tr_l, tr_u
 
@@ -110,9 +110,9 @@ def dogleg_step(x, newton_step, g, a, b, tr_bounds, lb, ub):
 
     Returns
     -------
-    step : ndarray, shape (n,)
+    step : array, shape (n,)
         Computed dogleg step.
-    bound_hits : ndarray of int, shape (n,)
+    bound_hits : array of int, shape (n,)
         Each component shows whether a corresponding variable hits the
         initial bound after the step is taken:
             *  0 - a variable doesn't hit the bound.
@@ -124,12 +124,12 @@ def dogleg_step(x, newton_step, g, a, b, tr_bounds, lb, ub):
     lb_total, ub_total, orig_l, orig_u, tr_l, tr_u = find_intersection(
         x, tr_bounds, lb, ub
     )
-    bound_hits = np.zeros_like(x, dtype=int)
+    bound_hits = mx.zeros_like(x, dtype=int)
 
     if in_bounds(newton_step, lb_total, ub_total):
         return newton_step, bound_hits, False
 
-    to_bounds, _ = step_size_to_bound(np.zeros_like(x), -g, lb_total, ub_total)
+    to_bounds, _ = step_size_to_bound(mx.zeros_like(x), -g, lb_total, ub_total)
 
     # The classical dogleg algorithm would check if Cauchy step fits into
     # the bounds, and just return it constrained version if not. But in a
@@ -143,7 +143,7 @@ def dogleg_step(x, newton_step, g, a, b, tr_bounds, lb, ub):
                                          lb_total, ub_total)
     bound_hits[(hits < 0) & orig_l] = -1
     bound_hits[(hits > 0) & orig_u] = 1
-    tr_hit = np.any((hits < 0) & tr_l | (hits > 0) & tr_u)
+    tr_hit = mx.any((hits < 0) & tr_l | (hits > 0) & tr_u)
 
     return cauchy_step + step_size * step_diff, bound_hits, tr_hit
 
@@ -159,10 +159,10 @@ def dogbox(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev, x_scale,
 
     if loss_function is not None:
         rho = loss_function(f)
-        cost = 0.5 * np.sum(rho[0])
+        cost = 0.5 * mx.sum(rho[0])
         J, f = scale_for_robust_loss_function(J, f, rho)
     else:
-        cost = 0.5 * np.dot(f, f)
+        cost = 0.5 * mx.dot(f, f)
 
     g = compute_grad(J, f)
 
@@ -172,16 +172,16 @@ def dogbox(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev, x_scale,
     else:
         scale, scale_inv = x_scale, 1 / x_scale
 
-    Delta = norm(x0 * scale_inv, ord=np.inf)
+    Delta = norm(x0 * scale_inv, ord=mx.inf)
     if Delta == 0:
         Delta = 1.0
 
-    on_bound = np.zeros_like(x0, dtype=int)
-    on_bound[np.equal(x0, lb)] = -1
-    on_bound[np.equal(x0, ub)] = 1
+    on_bound = mx.zeros_like(x0, dtype=int)
+    on_bound[mx.equal(x0, lb)] = -1
+    on_bound[mx.equal(x0, ub)] = 1
 
     x = x0
-    step = np.empty_like(x0)
+    step = mx.empty_like(x0)
 
     if max_nfev is None:
         max_nfev = x0.size * 100
@@ -202,7 +202,7 @@ def dogbox(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev, x_scale,
         g_full = g.copy()
         g[active_set] = 0
 
-        g_norm = norm(g, ord=np.inf)
+        g_norm = norm(g, ord=mx.inf)
         if g_norm < gtol:
             termination_status = 1
 
@@ -263,14 +263,14 @@ def dogbox(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev, x_scale,
                 predicted_reduction = -evaluate_quadratic(Jop, g, step)
 
             # gh11403 ensure that solution is fully within bounds.
-            x_new = np.clip(x + step, lb, ub)
+            x_new = mx.clip(x + step, lb, ub)
 
             f_new = fun(x_new)
             nfev += 1
 
-            step_h_norm = norm(step * scale_inv, ord=np.inf)
+            step_h_norm = norm(step * scale_inv, ord=mx.inf)
 
-            if not np.all(np.isfinite(f_new)):
+            if not mx.all(mx.isfinite(f_new)):
                 Delta = 0.25 * step_h_norm
                 continue
 
@@ -278,7 +278,7 @@ def dogbox(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev, x_scale,
             if loss_function is not None:
                 cost_new = loss_function(f_new, cost_only=True)
             else:
-                cost_new = 0.5 * np.dot(f_new, f_new)
+                cost_new = 0.5 * mx.dot(f_new, f_new)
             actual_reduction = cost - cost_new
 
             Delta, ratio = update_tr_radius(

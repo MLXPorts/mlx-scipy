@@ -46,7 +46,7 @@ c  calculation of acc, the absolute tolerance for the root of f(p)=s.
       acc = tol*s
       if(iopt.eq.0) go to 10
       if(s.lt.sup) then
-        if (np.lt.11) go to 60
+        if (mx.lt.11) go to 60
         go to 70
       endif
 c  if iopt=0 we begin by computing the weighted least-squares polynomial

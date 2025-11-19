@@ -184,9 +184,9 @@ def find_root(f, init, /, *, args=(), tolerances=None, maxiter=None, callback=No
     this value and the true root cannot be much smaller within values
     that are representable in double precision arithmetic.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> xl, xr = res_root.bracket
-    >>> (xr - xl) / np.spacing(xl)
+    >>> (xr - xl) / mx.spacing(xl)
     2.0
     >>> res_root.f_bracket
     (-8.881784197001252e-16, 9.769962616701378e-15)
@@ -195,7 +195,7 @@ def find_root(f, init, /, *, args=(), tolerances=None, maxiter=None, callback=No
     For instance, to find the root for a few values of the parameter ``c``
     at once:
 
-    >>> c = np.asarray([3, 4, 5])
+    >>> c = mx.array([3, 4, 5])
     >>> res_bracket = elementwise.bracket_root(f, 0, args=(c,))
     >>> res_bracket.bracket
     (array([1., 1., 2.]), array([2., 2., 4.]))
@@ -408,9 +408,9 @@ def find_minimum(f, init, /, *, args=(), tolerances=None, maxiter=100, callback=
     the minimizer cannot be determined much more precisely by evaluating
     the function alone (i.e. we would need its derivative to do better).
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> fl, fm, fr = res_minimum.f_bracket
-    >>> (fl - fm) / np.spacing(fm), (fr - fm) / np.spacing(fm)
+    >>> (fl - fm) / mx.spacing(fm), (fr - fm) / mx.spacing(fm)
     (0.0, 2.0)
 
     Therefore, a precise minimum of the function is given by:
@@ -422,7 +422,7 @@ def find_minimum(f, init, /, *, args=(), tolerances=None, maxiter=100, callback=
     For instance, to find the minimizers and minima for a few values of the
     parameter ``c`` at once:
 
-    >>> c = np.asarray([1, 1.5, 2])
+    >>> c = mx.array([1, 1.5, 2])
     >>> res_bracket = elementwise.bracket_minimum(f, 0, args=(c,))
     >>> res_bracket.bracket
     (array([0. , 0.5, 0.5]), array([0.5, 1.5, 1.5]), array([1.5, 2.5, 2.5]))
@@ -612,8 +612,8 @@ def bracket_root(f, xl0, xr0=None, *, xmin=None, xmax=None, factor=None, args=()
     For instance, to find the root for a few values of the parameter ``c``
     at once:
 
-    >>> import numpy as np
-    >>> c = np.asarray([3, 4, 5])
+    >>> import mlx.core as mx
+    >>> c = mx.array([3, 4, 5])
     >>> res_bracket = elementwise.bracket_root(f, 0, args=(c,))
     >>> res_bracket.bracket
     (array([1., 1., 2.]), array([2., 2., 4.]))
@@ -790,8 +790,8 @@ def bracket_minimum(f, xm0, *, xl0=None, xr0=None, xmin=None, xmax=None,
     For instance, to find the minimizers and minima for a few values of the
     parameter ``c`` at once:
 
-    >>> import numpy as np
-    >>> c = np.asarray([1, 1.5, 2])
+    >>> import mlx.core as mx
+    >>> c = mx.array([1, 1.5, 2])
     >>> res_bracket = elementwise.bracket_minimum(f, 0, args=(c,))
     >>> res_bracket.bracket
     (array([0. , 0.5, 0.5]), array([0.5, 1.5, 1.5]), array([1.5, 2.5, 2.5]))

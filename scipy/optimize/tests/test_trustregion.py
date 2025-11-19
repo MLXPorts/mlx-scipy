@@ -3,7 +3,7 @@ Unit tests for trust-region optimization routines.
 
 """
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_, assert_equal, assert_allclose
 from scipy.optimize import (minimize, rosen, rosen_der, rosen_hess,
                             rosen_hess_prod)
@@ -18,7 +18,7 @@ class Accumulator:
     def __call__(self, x):
         self.count += 1
         if self.accum is None:
-            self.accum = np.array(x)
+            self.accum = mx.array(x)
         else:
             self.accum += x
 

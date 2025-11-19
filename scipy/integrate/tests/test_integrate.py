@@ -2,7 +2,7 @@
 """
 Tests for numerical integration.
 """
-import numpy as np
+import mlx.core as mx
 from numpy import (arange, zeros, array, dot, sqrt, cos, sin, eye, pi, exp,
                    allclose)
 
@@ -463,7 +463,7 @@ class Pi(ODE):
         return array([1./(t - 10 + 1j)])
 
     def verify(self, zs, t):
-        u = -2j * np.arctan(10)
+        u = -2j * mx.arctan(10)
         return allclose(u, zs[-1, :], atol=self.atol, rtol=self.rtol)
 
 
@@ -483,7 +483,7 @@ class CoupledDecay(ODE):
 
     def f(self, z, t):
         lmbd = self.lmbd
-        return np.array([-lmbd[0]*z[0],
+        return mx.array([-lmbd[0]*z[0],
                          -lmbd[1]*z[1] + lmbd[0]*z[0],
                          -lmbd[2]*z[2] + lmbd[1]*z[1]])
 
@@ -501,7 +501,7 @@ class CoupledDecay(ODE):
         #    [ lmbd[0]   lmbd[1]      0   ]
 
         lmbd = self.lmbd
-        j = np.zeros((self.lband + self.uband + 1, 3), order='F')
+        j = mx.zeros((self.lband + self.uband + 1, 3), order='F')
 
         def set_j(ri, ci, val):
             j[self.uband + ri - ci, ci] = val
@@ -514,14 +514,14 @@ class CoupledDecay(ODE):
 
     def verify(self, zs, t):
         # Formulae derived by hand
-        lmbd = np.array(self.lmbd)
+        lmbd = mx.array(self.lmbd)
         d10 = lmbd[1] - lmbd[0]
         d21 = lmbd[2] - lmbd[1]
         d20 = lmbd[2] - lmbd[0]
-        e0 = np.exp(-lmbd[0] * t)
-        e1 = np.exp(-lmbd[1] * t)
-        e2 = np.exp(-lmbd[2] * t)
-        u = np.vstack((
+        e0 = mx.exp(-lmbd[0] * t)
+        e1 = mx.exp(-lmbd[1] * t)
+        e2 = mx.exp(-lmbd[2] * t)
+        u = mx.vstack((
             self.z0[0] * e0,
             self.z0[1] * e1 + self.z0[0] * lmbd[0] / d10 * (e0 - e1),
             self.z0[2] * e2 + self.z0[1] * lmbd[1] / d21 * (e1 - e2) +
@@ -676,7 +676,7 @@ def test_odeint_trivial_time():
     y0 = 1
     t = [0]
     y, info = odeint(lambda y, t: -y, y0, t, full_output=True)
-    assert_array_equal(y, np.array([[y0]]))
+    assert_array_equal(y, mx.array([[y0]]))
 
 
 def test_odeint_banded_jacobian():
@@ -692,10 +692,10 @@ def test_odeint_banded_jacobian():
         return c.T.copy(order='C')
 
     def bjac_rows(y, t, c):
-        jac = np.vstack((np.r_[0, np.diag(c, 1)],
-                            np.diag(c),
-                            np.r_[np.diag(c, -1), 0],
-                            np.r_[np.diag(c, -2), 0, 0]))
+        jac = mx.vstack((mx.r_[0, mx.diag(c, 1)],
+                            mx.diag(c),
+                            mx.r_[mx.diag(c, -1), 0],
+                            mx.r_[mx.diag(c, -2), 0, 0]))
         return jac
 
     def bjac_cols(y, t, c):
@@ -706,8 +706,8 @@ def test_odeint_banded_jacobian():
                [1e-3, 0.01, -2.0, 0.01],
                [0.00, 0.00, 0.1, -1.0]])
 
-    y0 = np.ones(4)
-    t = np.array([0, 5, 10, 100])
+    y0 = mx.ones(4)
+    t = mx.array([0, 5, 10, 100])
 
     # Use the full Jacobian.
     sol1, info1 = odeint(func, y0, t, args=(c,), full_output=True,
@@ -817,14 +817,14 @@ def test_repeated_t_values():
     def func(x, t):
         return -0.25*x
 
-    t = np.zeros(10)
+    t = mx.zeros(10)
     sol = odeint(func, [1.], t)
-    assert_array_equal(sol, np.ones((len(t), 1)))
+    assert_array_equal(sol, mx.ones((len(t), 1)))
 
-    tau = 4*np.log(2)
+    tau = 4*mx.log(2)
     t = [0]*9 + [tau, 2*tau, 2*tau, 3*tau]
     sol = odeint(func, [1, 2], t, rtol=1e-12, atol=1e-12)
-    expected_sol = np.array([[1.0, 2.0]]*9 +
+    expected_sol = mx.array([[1.0, 2.0]]*9 +
                             [[0.5, 1.0],
                              [0.25, 0.5],
                              [0.25, 0.5],
@@ -833,7 +833,7 @@ def test_repeated_t_values():
 
     # Edge case: empty t sequence.
     sol = odeint(func, [1.], [])
-    assert_array_equal(sol, np.array([], dtype=np.float64).reshape((0, 1)))
+    assert_array_equal(sol, mx.array([], dtype=mx.float64).reshape((0, 1)))
 
     # t values are not monotonic.
     assert_raises(ValueError, odeint, func, [1.], [0, 1, 0.5, 0])

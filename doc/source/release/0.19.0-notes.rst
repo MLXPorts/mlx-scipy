@@ -136,8 +136,8 @@ of the array is small (<1k samples or so) along the axis to be filtered.
 `scipy.fftpack` improvements
 ----------------------------
 
-Fast Fourier transform routines now accept `np.float16` inputs and upcast
-them to `np.float32`. Previously, they would raise an error.
+Fast Fourier transform routines now accept `mx.float16` inputs and upcast
+them to `mx.float32`. Previously, they would raise an error.
 
 `scipy.cluster` improvements
 ----------------------------
@@ -212,7 +212,7 @@ consistent with FITPACK, so that one can do, for example::
 
     >>> t, c, k = splrep(x, y, s=0)
     >>> spl = BSpline(t, c, k)
-    >>> np.allclose(spl(x), y)
+    >>> mx.allclose(spl(x), y)
 
 ``spl*`` functions, `scipy.interpolate.splev`, `scipy.interpolate.splint`,
 `scipy.interpolate.splder` and `scipy.interpolate.splantider`, accept both
@@ -698,7 +698,7 @@ Pull requests for 0.19.0
 - `#6834 <https://github.com/scipy/scipy/pull/6834>`__: DOC: Added reference for skewtest function. See #6829
 - `#6836 <https://github.com/scipy/scipy/pull/6836>`__: DOC: Added mode='mirror' in the docstring for the functions accepting...
 - `#6838 <https://github.com/scipy/scipy/pull/6838>`__: MAINT: sparse: start removing old BSR methods
-- `#6844 <https://github.com/scipy/scipy/pull/6844>`__: handle incompatible dimensions when input is not an ndarray in...
+- `#6844 <https://github.com/scipy/scipy/pull/6844>`__: handle incompatible dimensions when input is not an array in...
 - `#6847 <https://github.com/scipy/scipy/pull/6847>`__: Added maxiter to golden search.
 - `#6850 <https://github.com/scipy/scipy/pull/6850>`__: BUG: added check for optional param scipy.stats.spearmanr
 - `#6858 <https://github.com/scipy/scipy/pull/6858>`__: MAINT: Removing redundant tests
@@ -758,7 +758,7 @@ Pull requests for 0.19.0
 - `#7009 <https://github.com/scipy/scipy/pull/7009>`__: BUG: Fix problem in passing drop_rule to scipy.sparse.linalg.spilu
 - `#7012 <https://github.com/scipy/scipy/pull/7012>`__: speed improvment in _distn_infrastructure.py
 - `#7014 <https://github.com/scipy/scipy/pull/7014>`__: Fix Typo: add a single quotation mark to fix a slight typo
-- `#7021 <https://github.com/scipy/scipy/pull/7021>`__: MAINT: stats: use machine constants from np.finfo, not machar
+- `#7021 <https://github.com/scipy/scipy/pull/7021>`__: MAINT: stats: use machine constants from mx.finfo, not machar
 - `#7026 <https://github.com/scipy/scipy/pull/7026>`__: MAINT: update .mailmap
 - `#7032 <https://github.com/scipy/scipy/pull/7032>`__: Fix layout of rv_histogram docs
 - `#7035 <https://github.com/scipy/scipy/pull/7035>`__: DOC: update 0.19.0 release notes

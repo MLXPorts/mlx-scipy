@@ -1,5 +1,5 @@
 from scipy._lib._array_api import array_namespace
-import numpy as np
+import mlx.core as mx
 from . import _pocketfft
 
 __all__ = ['dct', 'idct', 'dst', 'idst', 'dctn', 'idctn', 'dstn', 'idstn']
@@ -8,7 +8,7 @@ __all__ = ['dct', 'idct', 'dst', 'idst', 'dctn', 'idctn', 'dstn', 'idstn']
 def _execute(pocketfft_func, x, type, s, axes, norm, 
              overwrite_x, workers, orthogonalize):
     xp = array_namespace(x)
-    x = np.asarray(x)
+    x = mx.array(x)
     y = pocketfft_func(x, type, s, axes, norm,
                        overwrite_x=overwrite_x, workers=workers,
                        orthogonalize=orthogonalize)

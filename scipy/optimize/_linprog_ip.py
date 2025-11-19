@@ -18,7 +18,7 @@ References
 """
 # Author: Matt Haberland
 
-import numpy as np
+import mlx.core as mx
 import scipy as sp
 import scipy.sparse as sps
 from warnings import warn
@@ -282,7 +282,7 @@ def _get_delta(A, b, c, x, y, z, tau, kappa, gamma, eta, sparse=False,
                 # [4] Equation 8.29
                 u, v = _sym_solve(Dinv, A, rhatd -
                                   (1 / x) * rhatxs, rhatp, solve)
-                if np.any(np.isnan(p)) or np.any(np.isnan(q)):
+                if mx.any(mx.isnan(p)) or mx.any(mx.isnan(q)):
                     raise LinAlgError
                 solved = True
             except (LinAlgError, ValueError, TypeError) as e:
@@ -383,11 +383,11 @@ def _get_step(x, d_x, z, d_z, tau, d_tau, kappa, d_kappa, alpha0):
     # the value 1 is used in Mehrota corrector and initial point correction
     i_x = d_x < 0
     i_z = d_z < 0
-    alpha_x = alpha0 * np.min(x[i_x] / -d_x[i_x]) if np.any(i_x) else 1
+    alpha_x = alpha0 * mx.min(x[i_x] / -d_x[i_x]) if mx.any(i_x) else 1
     alpha_tau = alpha0 * tau / -d_tau if d_tau < 0 else 1
-    alpha_z = alpha0 * np.min(z[i_z] / -d_z[i_z]) if np.any(i_z) else 1
+    alpha_z = alpha0 * mx.min(z[i_z] / -d_z[i_z]) if mx.any(i_z) else 1
     alpha_kappa = alpha0 * kappa / -d_kappa if d_kappa < 0 else 1
-    alpha = np.min([1, alpha_x, alpha_tau, alpha_z, alpha_kappa])
+    alpha = mx.min([1, alpha_x, alpha_tau, alpha_z, alpha_kappa])
     return alpha
 
 
@@ -461,9 +461,9 @@ def _get_blind_start(shape):
 
     """
     m, n = shape
-    x0 = np.ones(n)
-    y0 = np.zeros(m)
-    z0 = np.ones(n)
+    x0 = mx.ones(n)
+    y0 = mx.zeros(m)
+    z0 = mx.ones(n)
     tau0 = 1
     kappa0 = 1
     return x0, y0, z0, tau0, kappa0
@@ -496,14 +496,14 @@ def _indicators(A, b, c, c0, x, y, z, tau, kappa):
     def r_g(x, y, kappa):
         return kappa + c.dot(x) - b.dot(y)
 
-    # np.dot unpacks if they are arrays of size one
+    # mx.dot unpacks if they are arrays of size one
     def mu(x, tau, z, kappa):
-        return (x.dot(z) + np.dot(tau, kappa)) / (len(x) + 1)
+        return (x.dot(z) + mx.dot(tau, kappa)) / (len(x) + 1)
 
     obj = c.dot(x / tau) + c0
 
     def norm(a):
-        return np.linalg.norm(a)
+        return mx.linalg.norm(a)
 
     # See [4], Section 4.5 - The Stopping Criteria
     r_p0 = r_p(x0, tau0)
@@ -754,7 +754,7 @@ def _ip_hsd(A, b, c, c0, alpha0, beta, maxiter, disp, tol, sparse, lstsq,
             # gamma = 0 in predictor step according to [4] 4.1
             # if predictor/corrector is off, use mean of complementarity [6]
             # 5.1 / [4] Below Figure 10-4
-            gamma = 0 if pc else beta * np.mean(z * x)
+            gamma = 0 if pc else beta * mx.mean(z * x)
             # [4] Section 4.1
 
             def eta(g=gamma):

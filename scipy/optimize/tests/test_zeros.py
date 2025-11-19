@@ -8,7 +8,7 @@ from numpy.testing import (assert_,
                            assert_allclose,
                            assert_equal,
                            assert_array_equal)
-import numpy as np
+import mlx.core as mx
 from numpy import finfo, power, nan, isclose, sqrt, exp, sin, cos
 
 from scipy import optimize
@@ -20,7 +20,7 @@ from scipy._lib._util import getfullargspec_no_self as _getfullargspec
 # Import testing parameters
 from scipy.optimize._tstutils import get_tests, functions as tstutils_functions
 
-TOL = 4*np.finfo(float).eps  # tolerance
+TOL = 4*mx.finfo(float).eps  # tolerance
 
 _FLOAT_EPS = finfo(float).eps
 
@@ -69,8 +69,8 @@ def f_lrucached(x):
 class TestScalarRootFinders:
     # Basic tests for all scalar root finders
 
-    xtol = 4 * np.finfo(float).eps
-    rtol = 4 * np.finfo(float).eps
+    xtol = 4 * mx.finfo(float).eps
+    rtol = 4 * mx.finfo(float).eps
 
     def _run_one_test(self, tc, method, sig_args_keys=None,
                       sig_kwargs_keys=None, **kwargs):
@@ -196,11 +196,11 @@ class TestBracketMethods(TestScalarRootFinders):
     def test_bracket_is_array(self, method, function):
         # Test bracketing root finders called via `root_scalar` on a small set
         # of simple problems, each of which has a root at `x=1`. Check that
-        # passing `bracket` as a `ndarray` is accepted and leads to finding the
+        # passing `bracket` as a `array` is accepted and leads to finding the
         # correct root.
         a, b = .5, sqrt(3)
         r = root_scalar(function, method=method.__name__,
-                        bracket=np.array([a, b]), x0=a, xtol=self.xtol,
+                        bracket=mx.array([a, b]), x0=a, xtol=self.xtol,
                         rtol=self.rtol)
         assert r.converged
         assert_allclose(r.root, 1.0, atol=self.xtol, rtol=self.rtol)
@@ -299,23 +299,23 @@ class TestNewton(TestScalarRootFinders):
 
         def f1(x, *a):
             b = a[0] + x * a[3]
-            return a[1] - a[2] * (np.exp(b / a[5]) - 1.0) - b / a[4] - x
+            return a[1] - a[2] * (mx.exp(b / a[5]) - 1.0) - b / a[4] - x
 
         def f1_1(x, *a):
             b = a[3] / a[5]
-            return -a[2] * np.exp(a[0] / a[5] + x * b) * b - a[3] / a[4] - 1
+            return -a[2] * mx.exp(a[0] / a[5] + x * b) * b - a[3] / a[4] - 1
 
         def f1_2(x, *a):
             b = a[3] / a[5]
-            return -a[2] * np.exp(a[0] / a[5] + x * b) * b**2
+            return -a[2] * mx.exp(a[0] / a[5] + x * b) * b**2
 
-        a0 = np.array([
+        a0 = mx.array([
             5.32725221, 5.48673747, 5.49539973,
             5.36387202, 4.80237316, 1.43764452,
             5.23063958, 5.46094772, 5.50512718,
             5.42046290
         ])
-        a1 = (np.sin(range(10)) + 1.0) * 7.0
+        a1 = (mx.sin(range(10)) + 1.0) * 7.0
         args = (a0, a1, 1e-09, 0.004, 10, 0.27456)
         x0 = [7.0] * 10
         x = zeros.newton(f1, x0, f1_1, args)
@@ -340,12 +340,12 @@ class TestNewton(TestScalarRootFinders):
         def fprime(x):
             return 1.0
 
-        t = np.full(4, 1j)
+        t = mx.full(4, 1j)
         x = zeros.newton(f, t, fprime=fprime)
         assert_allclose(f(x), 0.)
 
         # should work even if x0 is not complex
-        t = np.ones(4)
+        t = mx.ones(4)
         x = zeros.newton(f, t, fprime=fprime)
         assert_allclose(f(x), 0.)
 
@@ -355,7 +355,7 @@ class TestNewton(TestScalarRootFinders):
     def test_array_secant_active_zero_der(self):
         """test secant doesn't continue to iterate zero derivatives"""
         x = zeros.newton(lambda x, *a: x*x - a[0], x0=[4.123, 5],
-                         args=[np.array([17, 25])])
+                         args=[mx.array([17, 25])])
         assert_allclose(x, (4.123105625617661, 5.0))
 
     def test_array_newton_integers(self):
@@ -448,9 +448,9 @@ class TestNewton(TestScalarRootFinders):
 
     def test_newton_does_not_modify_x0(self):
         # https://github.com/scipy/scipy/issues/9964
-        x0 = np.array([0.1, 3])
+        x0 = mx.array([0.1, 3])
         x0_copy = x0.copy()  # Copy to test for equality.
-        newton(np.sin, x0, np.cos)
+        newton(mx.sin, x0, mx.cos)
         assert_array_equal(x0, x0_copy)
 
     def test_gh17570_defaults(self):
@@ -460,7 +460,7 @@ class TestNewton(TestScalarRootFinders):
         # and newton otherwise.
         # Also confirm that `x` is always a scalar (gh-21148)
         def f(x):
-            assert np.isscalar(x)
+            assert mx.isscalar(x)
             return f1(x)
 
         res_newton_default = root_scalar(f, method='newton', x0=3, xtol=1e-6)
@@ -510,7 +510,7 @@ class TestNewton(TestScalarRootFinders):
         res = optimize.root_scalar(f, x0=1, method=method)
         assert res.converged
         assert_allclose(abs(res.root), 2**-0.5)
-        assert res.root.dtype == np.dtype(np.float64)
+        assert res.root.dtype == mx.dtype(mx.float64)
 
     def test_newton_special_parameters(self):
         # give zeros.newton() some strange parameters
@@ -572,9 +572,9 @@ def test_brent_underflow_in_root_bracketing():
     overflow_scenario = (350.0, 450.0, 400.0)
 
     for a, b, root in [underflow_scenario, overflow_scenario]:
-        c = np.exp(root)
+        c = mx.exp(root)
         for method in [zeros.brenth, zeros.brentq]:
-            res = method(lambda x: np.exp(x)-c, a, b)
+            res = method(lambda x: mx.exp(x)-c, a, b)
             assert_allclose(root, res)
 
 
@@ -627,7 +627,7 @@ def test_zero_der_nz_dp(capsys):
     # which has a root at x = 100 and is symmetrical around the line x = 100
     # we have to pick a really big number so that it is consistently true
     # now find a point on each side so that the secant has a zero slope
-    dx = np.finfo(float).eps ** 0.33
+    dx = mx.finfo(float).eps ** 0.33
     # 100 - p0 = p1 - 100 = p0 * (1 + dx) + dx - 100
     # -> 200 = p0 * (2 + dx) + dx
     p0 = (200.0 - dx) / (2.0 + dx)
@@ -666,9 +666,9 @@ def test_array_newton_failures():
     reynolds_number = rho * u * diameter / mu  # Reynolds number
 
     def colebrook_eqn(darcy_friction, re, dia):
-        return (1 / np.sqrt(darcy_friction) +
-                2 * np.log10(roughness / 3.7 / dia +
-                             2.51 / re / np.sqrt(darcy_friction)))
+        return (1 / mx.sqrt(darcy_friction) +
+                2 * mx.log10(roughness / 3.7 / dia +
+                             2.51 / re / mx.sqrt(darcy_friction)))
 
     # only some failures
     with pytest.warns(RuntimeWarning):
@@ -774,11 +774,11 @@ def test_gh_9608_preserve_array_shape():
     def fpp(x):
         return 2
 
-    x0 = np.array([-2], dtype=np.float32)
+    x0 = mx.array([-2], dtype=mx.float32)
     rt, r = newton(f, x0, fprime=fp, fprime2=fpp, full_output=True)
     assert r.converged
 
-    x0_array = np.array([-2, -3], dtype=np.float32)
+    x0_array = mx.array([-2, -3], dtype=mx.float32)
     # This next invocation should fail
     with pytest.raises(IndexError):
         result = zeros.newton(
@@ -786,7 +786,7 @@ def test_gh_9608_preserve_array_shape():
         )
 
     def fpp_array(x):
-        return np.full(np.shape(x), 2, dtype=np.float32)
+        return mx.full(mx.shape(x), 2, dtype=mx.float32)
 
     result = zeros.newton(
         f, x0_array, fprime=fp, fprime2=fpp_array, full_output=True
@@ -841,7 +841,7 @@ def test_gh3089_8394(solver_name):
     # gh-3089 and gh-8394 reported that bracketing solvers returned incorrect
     # results when they encountered NaNs. Check that this is resolved.
     def f(x):
-        return np.nan
+        return mx.nan
 
     solver = getattr(zeros, solver_name)
     with pytest.raises(ValueError, match="The function value at x..."):
@@ -856,7 +856,7 @@ def test_gh18171(method):
     # normally but indicates that convergence was unsuccessful. See gh-18171.
     def f(x):
         f._count += 1
-        return np.nan
+        return mx.nan
     f._count = 0
 
     res = root_scalar(f, bracket=(0, 1), method=method)
@@ -891,7 +891,7 @@ def test_function_calls(solver_name, rs_interface):
 def test_gh_14486_converged_false():
     """Test that zero slope with secant method results in a converged=False"""
     def lhs(x):
-        return x * np.exp(-x*x) - 0.07
+        return x * mx.exp(-x*x) - 0.07
 
     with pytest.warns(RuntimeWarning, match='Tolerance of'):
         res = root_scalar(lhs, method='secant', x0=-0.15, x1=1.0)
@@ -943,7 +943,7 @@ def test_gh13407():
         return x**3 - 2*x - 5
 
     xtol = 1e-300
-    eps = np.finfo(float).eps
+    eps = mx.finfo(float).eps
     x1 = zeros.toms748(f, 1e-10, 1e10, xtol=xtol, rtol=1*eps)
     f1 = f(x1)
     x4 = zeros.toms748(f, 1e-10, 1e10, xtol=xtol, rtol=4*eps)
@@ -984,7 +984,7 @@ def test_bisect_special_parameter(method):
     # and check whether an exception appears
     root = 0.1
     args = (1e-09, 0.004, 10, 0.27456)
-    rtolbad = 4 * np.finfo(float).eps / 2
+    rtolbad = 4 * mx.finfo(float).eps / 2
 
     def f(x):
         return x - root

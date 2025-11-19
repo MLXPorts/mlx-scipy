@@ -1,6 +1,6 @@
 # pylint: disable=missing-docstring
 import math
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._array_api import (
     assert_almost_equal, xp_assert_close, xp_assert_equal
@@ -22,7 +22,7 @@ class TestBSplines:
 
     @skip_xp_backends(cpu_only=True, exceptions=["cupy"])
     def test_spline_filter(self, xp):
-        rng = np.random.RandomState(12457)
+        rng = mx.random.RandomState(12457)
         # Test the type-error branch
         raises(TypeError, signal.spline_filter, xp.asarray([0]), 0)
         # Test the real branch
@@ -72,7 +72,7 @@ class TestBSplines:
 
     @skip_xp_backends(cpu_only=True, exceptions=["cupy"])
     def test_spline_filter_complex(self, xp):
-        rng = np.random.RandomState(12457)
+        rng = mx.random.RandomState(12457)
         data_array_complex = rng.rand(7, 7) + rng.rand(7, 7)*1j
         # make the magnitude exceed 1, and make some negative
         data_array_complex = 10*(1+1j-2*data_array_complex)
@@ -125,7 +125,7 @@ class TestBSplines:
         # regression test for gh-12152 (accept array_like)
         knots = [-1.0, 0.0, -1.0]
         assert_almost_equal(signal.gauss_spline(knots, 3),
-                            np.asarray([0.15418033, 0.6909883, 0.15418033])
+                            mx.array([0.15418033, 0.6909883, 0.15418033])
         )
 
     @skip_xp_backends(cpu_only=True)
@@ -235,16 +235,16 @@ class TestBSplines:
 
 
 # i/o dtypes with scipy 1.9.1, likely fixed by backwards compat
-sepfir_dtype_map = {np.uint8: np.float32, int: np.float64,
-                    np.float32: np.float32, float: float,
-                    np.complex64: np.complex64, complex: complex}
+sepfir_dtype_map = {mx.uint8: mx.float32, int: mx.float64,
+                    mx.float32: mx.float32, float: float,
+                    mx.complex64: mx.complex64, complex: complex}
 
 
 @skip_xp_backends(np_only=True)
 class TestSepfir2d:
     def test_sepfir2d_invalid_filter(self, xp):
         filt = xp.asarray([1.0, 2.0, 4.0, 2.0, 1.0])
-        image = np.random.rand(7, 9)
+        image = mx.random.rand(7, 9)
         image = xp.asarray(image)
         # No error for odd lengths
         signal.sepfir2d(image, filt, filt[2:])
@@ -263,7 +263,7 @@ class TestSepfir2d:
 
     def test_sepfir2d_invalid_image(self, xp):
         filt = xp.asarray([1.0, 2.0, 4.0, 2.0, 1.0])
-        image = np.random.rand(8, 8)
+        image = mx.random.rand(8, 8)
         image = xp.asarray(image)
 
         # Image must be 2 dimensional
@@ -274,11 +274,11 @@ class TestSepfir2d:
             signal.sepfir2d(image[0, :], filt, filt)
 
     @pytest.mark.parametrize('dtyp',
-        [np.uint8, int, np.float32, float, np.complex64, complex]
+        [mx.uint8, int, mx.float32, float, mx.complex64, complex]
     )
     def test_simple(self, dtyp, xp):
         # test values on a paper-and-pencil example
-        a = np.array([[1, 2, 3, 3, 2, 1],
+        a = mx.array([[1, 2, 3, 3, 2, 1],
                       [1, 2, 3, 3, 2, 1],
                       [1, 2, 3, 3, 2, 1],
                       [1, 2, 3, 3, 2, 1]], dtype=dtyp)
@@ -286,14 +286,14 @@ class TestSepfir2d:
         h2 = [1]
         result = signal.sepfir2d(a, h1, h2)
         dt = sepfir_dtype_map[dtyp]
-        expected = np.asarray([[2.5, 4. , 5.5, 5.5, 4. , 2.5],
+        expected = mx.array([[2.5, 4. , 5.5, 5.5, 4. , 2.5],
                                [2.5, 4. , 5.5, 5.5, 4. , 2.5],
                                [2.5, 4. , 5.5, 5.5, 4. , 2.5],
                                [2.5, 4. , 5.5, 5.5, 4. , 2.5]], dtype=dt)
         xp_assert_close(result, expected, atol=1e-16)
 
         result = signal.sepfir2d(a, h2, h1)
-        expected = np.asarray([[2., 4., 6., 6., 4., 2.],
+        expected = mx.array([[2., 4., 6., 6., 4., 2.],
                                [2., 4., 6., 6., 4., 2.],
                                [2., 4., 6., 6., 4., 2.],
                                [2., 4., 6., 6., 4., 2.]], dtype=dt)
@@ -301,10 +301,10 @@ class TestSepfir2d:
 
     @skip_xp_backends(np_only=True, reason="TODO: convert this test")
     @pytest.mark.parametrize('dtyp',
-        [np.uint8, int, np.float32, float, np.complex64, complex]
+        [mx.uint8, int, mx.float32, float, mx.complex64, complex]
     )
     def test_strided(self, dtyp, xp):
-        a = np.array([[1, 2, 3, 3, 2, 1, 1, 2, 3],
+        a = mx.array([[1, 2, 3, 3, 2, 1, 1, 2, 3],
                      [1, 2, 3, 3, 2, 1, 1, 2, 3],
                      [1, 2, 3, 3, 2, 1, 1, 2, 3],
                      [1, 2, 3, 3, 2, 1, 1, 2, 3]])
@@ -319,10 +319,10 @@ class TestSepfir2d:
     def test_sepfir2d_strided_2(self, xp):
         # XXX: this test is flaky: fails on some reruns, with
         # result[0, 1] and result[1, 1] being ~1e+224.
-        filt = np.array([1.0, 2.0, 4.0, 2.0, 1.0, 3.0, 2.0])
-        image = np.random.rand(4, 4)
+        filt = mx.array([1.0, 2.0, 4.0, 2.0, 1.0, 3.0, 2.0])
+        image = mx.random.rand(4, 4)
 
-        expected = np.asarray([[36.018162, 30.239061, 38.71187 , 43.878183],
+        expected = mx.array([[36.018162, 30.239061, 38.71187 , 43.878183],
                                 [38.180999, 35.824583, 43.525247, 43.874945],
                                 [43.269533, 40.834018, 46.757772, 44.276423],
                                 [49.120928, 39.681844, 43.596067, 45.085854]])
@@ -331,14 +331,14 @@ class TestSepfir2d:
     @skip_xp_backends(np_only=True, reason="TODO: convert this test")
     @pytest.mark.xfail(reason="XXX: flaky. pointers OOB on some platforms")
     @pytest.mark.parametrize('dtyp',
-        [np.uint8, int, np.float32, float, np.complex64, complex]
+        [mx.uint8, int, mx.float32, float, mx.complex64, complex]
     )
     def test_sepfir2d_strided_3(self, dtyp, xp):
         # NB: 'image' and 'filt' dtypes match here. Otherwise we can run into
         # unsafe casting errors for many combinations. Historically, dtype handling
         # in `sepfir2d` is a tad baroque; fixing it is an enhancement.
-        filt = np.array([1, 2, 4, 2, 1, 3, 2], dtype=dtyp)
-        image = np.asarray([[0, 3, 0, 1, 2],
+        filt = mx.array([1, 2, 4, 2, 1, 3, 2], dtype=dtyp)
+        image = mx.array([[0, 3, 0, 1, 2],
                             [2, 2, 3, 3, 3],
                             [0, 1, 3, 0, 3],
                             [2, 3, 0, 1, 3],
@@ -349,7 +349,7 @@ class TestSepfir2d:
                     [136., 137., 150., 162., 177.],
                     [133., 124., 132., 148., 147.],
                     [173., 158., 152., 164., 141.]]
-        expected = np.asarray(expected)
+        expected = mx.array(expected)
         result = signal.sepfir2d(image, filt, filt[::3])
         xp_assert_close(result, expected, atol=1e-15)
         assert result.dtype == sepfir_dtype_map[dtyp]
@@ -359,19 +359,19 @@ class TestSepfir2d:
                     [33., 42., 49., 53., 59.],
                     [39., 44., 41., 36., 48.],
                     [67., 62., 47., 34., 46.]]
-        expected = np.asarray(expected)
+        expected = mx.array(expected)
         result = signal.sepfir2d(image, filt[::3], filt[::3])
         xp_assert_close(result, expected, atol=1e-15)
         assert result.dtype == sepfir_dtype_map[dtyp]
 
 
 def test_cspline2d(xp):
-    rng = np.random.RandomState(181819142)
+    rng = mx.random.RandomState(181819142)
     image = rng.rand(71, 73)
     signal.cspline2d(image, 8.0)
 
 
 def test_qspline2d(xp):
-    rng = np.random.RandomState(181819143)
+    rng = mx.random.RandomState(181819143)
     image = rng.rand(71, 73)
     signal.qspline2d(image)

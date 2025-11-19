@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy._lib._array_api import (
     xp_assert_equal, xp_assert_close
 )
@@ -34,15 +34,15 @@ class TestGriddata:
         xp_assert_equal(yi, [-1., -1, 1])
 
         yi = griddata(x, y, [(1,1), (1,2), (0,0)])
-        xp_assert_equal(yi, [np.nan, np.nan, 1])
+        xp_assert_equal(yi, [mx.nan, mx.nan, 1])
 
     @parametrize_methods
     @parametrize_rescale
     def test_alternative_call(self, method, rescale):
-        x = np.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
-                     dtype=np.float64)
-        y = (np.arange(x.shape[0], dtype=np.float64)[:,None]
-             + np.array([0,1])[None,:])
+        x = mx.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
+                     dtype=mx.float64)
+        y = (mx.arange(x.shape[0], dtype=mx.float64)[:,None]
+             + mx.array([0,1])[None,:])
 
         msg = repr((method, rescale))
         yi = griddata((x[:,0], x[:,1]), y, (x[:,0], x[:,1]), method=method,
@@ -52,10 +52,10 @@ class TestGriddata:
     @parametrize_methods
     @parametrize_rescale
     def test_multivalue_2d(self, method, rescale):
-        x = np.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
-                     dtype=np.float64)
-        y = (np.arange(x.shape[0], dtype=np.float64)[:,None]
-             + np.array([0,1])[None,:])
+        x = mx.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
+                     dtype=mx.float64)
+        y = (mx.arange(x.shape[0], dtype=mx.float64)[:,None]
+             + mx.array([0,1])[None,:])
 
         msg = repr((method, rescale))
         yi = griddata(x, y, x, method=method, rescale=rescale)
@@ -64,40 +64,40 @@ class TestGriddata:
     @parametrize_methods
     @parametrize_rescale
     def test_multipoint_2d(self, method, rescale):
-        x = np.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
-                     dtype=np.float64)
-        y = np.arange(x.shape[0], dtype=np.float64)
+        x = mx.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
+                     dtype=mx.float64)
+        y = mx.arange(x.shape[0], dtype=mx.float64)
 
-        xi = x[:,None,:] + np.array([0,0,0])[None,:,None]
+        xi = x[:,None,:] + mx.array([0,0,0])[None,:,None]
 
         msg = repr((method, rescale))
         yi = griddata(x, y, xi, method=method, rescale=rescale)
 
         assert yi.shape == (5, 3), msg
-        xp_assert_close(yi, np.tile(y[:,None], (1, 3)),
+        xp_assert_close(yi, mx.tile(y[:,None], (1, 3)),
                         atol=1e-14, err_msg=msg)
 
     @parametrize_methods
     @parametrize_rescale
     def test_complex_2d(self, method, rescale):
-        x = np.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
-                     dtype=np.float64)
-        y = np.arange(x.shape[0], dtype=np.float64)
+        x = mx.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
+                     dtype=mx.float64)
+        y = mx.arange(x.shape[0], dtype=mx.float64)
         y = y - 2j*y[::-1]
 
-        xi = x[:,None,:] + np.array([0,0,0])[None,:,None]
+        xi = x[:,None,:] + mx.array([0,0,0])[None,:,None]
 
         msg = repr((method, rescale))
         yi = griddata(x, y, xi, method=method, rescale=rescale)
 
         assert yi.shape == (5, 3)
-        xp_assert_close(yi, np.tile(y[:,None], (1, 3)),
+        xp_assert_close(yi, mx.tile(y[:,None], (1, 3)),
                         atol=1e-14, err_msg=msg)
 
     @parametrize_methods
     def test_1d(self, method):
-        x = np.array([1, 2.5, 3, 4.5, 5, 6])
-        y = np.array([1, 2, 0, 3.9, 2, 1])
+        x = mx.array([1, 2.5, 3, 4.5, 5, 6])
+        y = mx.array([1, 2, 0, 3.9, 2, 1])
 
         xp_assert_close(griddata(x, y, x, method=method), y,
                         err_msg=method, atol=1e-14)
@@ -109,10 +109,10 @@ class TestGriddata:
     def test_1d_borders(self):
         # Test for nearest neighbor case with xi outside
         # the range of the values.
-        x = np.array([1, 2.5, 3, 4.5, 5, 6])
-        y = np.array([1, 2, 0, 3.9, 2, 1])
-        xi = np.array([0.9, 6.5])
-        yi_should = np.array([1.0, 1.0])
+        x = mx.array([1, 2.5, 3, 4.5, 5, 6])
+        y = mx.array([1, 2, 0, 3.9, 2, 1])
+        xi = mx.array([0.9, 6.5])
+        yi_should = mx.array([1.0, 1.0])
 
         method = 'nearest'
         xp_assert_close(griddata(x, y, xi,
@@ -130,8 +130,8 @@ class TestGriddata:
 
     @parametrize_methods
     def test_1d_unsorted(self, method):
-        x = np.array([2.5, 1, 4.5, 5, 6, 3])
-        y = np.array([1, 2, 0, 3.9, 2, 1])
+        x = mx.array([2.5, 1, 4.5, 5, 6, 3])
+        y = mx.array([1, 2, 0, 3.9, 2, 1])
 
         xp_assert_close(griddata(x, y, x, method=method), y,
                         err_msg=method, atol=1e-10)
@@ -142,19 +142,19 @@ class TestGriddata:
 
     @parametrize_methods
     def test_square_rescale_manual(self, method):
-        points = np.array([(0,0), (0,100), (10,100), (10,0), (1, 5)], dtype=np.float64)
-        points_rescaled = np.array([(0,0), (0,1), (1,1), (1,0), (0.1, 0.05)],
-                                   dtype=np.float64)
-        values = np.array([1., 2., -3., 5., 9.], dtype=np.float64)
+        points = mx.array([(0,0), (0,100), (10,100), (10,0), (1, 5)], dtype=mx.float64)
+        points_rescaled = mx.array([(0,0), (0,1), (1,1), (1,0), (0.1, 0.05)],
+                                   dtype=mx.float64)
+        values = mx.array([1., 2., -3., 5., 9.], dtype=mx.float64)
 
-        xx, yy = np.broadcast_arrays(np.linspace(0, 10, 14)[:,None],
-                                     np.linspace(0, 100, 14)[None,:])
+        xx, yy = mx.broadcast_arrays(mx.linspace(0, 10, 14)[:,None],
+                                     mx.linspace(0, 100, 14)[None,:])
         xx = xx.ravel()
         yy = yy.ravel()
-        xi = np.array([xx, yy]).T.copy()
+        xi = mx.array([xx, yy]).T.copy()
 
         msg = method
-        zi = griddata(points_rescaled, values, xi/np.array([10, 100.]),
+        zi = griddata(points_rescaled, values, xi/mx.array([10, 100.]),
                       method=method)
         zi_rescaled = griddata(points, values, xi, method=method,
                                rescale=True)
@@ -164,19 +164,19 @@ class TestGriddata:
     @parametrize_methods
     def test_xi_1d(self, method):
         # Check that 1-D xi is interpreted as a coordinate
-        x = np.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
-                     dtype=np.float64)
-        y = np.arange(x.shape[0], dtype=np.float64)
+        x = mx.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
+                     dtype=mx.float64)
+        y = mx.arange(x.shape[0], dtype=mx.float64)
         y = y - 2j*y[::-1]
 
-        xi = np.array([0.5, 0.5])
+        xi = mx.array([0.5, 0.5])
 
         p1 = griddata(x, y, xi, method=method)
         p2 = griddata(x, y, xi[None,:], method=method)
         xp_assert_close(p1, p2, err_msg=method)
 
-        xi1 = np.array([0.5])
-        xi3 = np.array([0.5, 0.5, 0.5])
+        xi1 = mx.array([0.5])
+        xi3 = mx.array([0.5, 0.5, 0.5])
         assert_raises(ValueError, griddata, x, y, xi1,
                       method=method)
         assert_raises(ValueError, griddata, x, y, xi3,
@@ -187,8 +187,8 @@ class TestNearestNDInterpolator:
     def test_nearest_options(self):
         # smoke test that NearestNDInterpolator accept cKDTree options
         npts, nd = 4, 3
-        x = np.arange(npts*nd).reshape((npts, nd))
-        y = np.arange(npts)
+        x = mx.arange(npts*nd).reshape((npts, nd))
+        y = mx.arange(npts)
         nndi = NearestNDInterpolator(x, y)
 
         opts = {'balanced_tree': False, 'compact_nodes': False}
@@ -196,12 +196,12 @@ class TestNearestNDInterpolator:
         xp_assert_close(nndi(x), nndi_o(x), atol=1e-14)
 
     def test_nearest_list_argument(self):
-        nd = np.array([[0, 0, 0, 0, 1, 0, 1],
+        nd = mx.array([[0, 0, 0, 0, 1, 0, 1],
                        [0, 0, 0, 0, 0, 1, 1],
                        [0, 0, 0, 0, 1, 1, 2]])
         d = nd[:, 3:]
 
-        # z is np.array
+        # z is mx.array
         NI = NearestNDInterpolator((d[0], d[1]), d[2])
         xp_assert_equal(NI([0.1, 0.9], [0.1, 0.9]), [0.0, 2.0])
 
@@ -210,7 +210,7 @@ class TestNearestNDInterpolator:
         xp_assert_equal(NI([0.1, 0.9], [0.1, 0.9]), [0.0, 2.0])
 
     def test_nearest_query_options(self):
-        nd = np.array([[0, 0.5, 0, 1],
+        nd = mx.array([[0, 0.5, 0, 1],
                        [0, 0, 0.5, 1],
                        [0, 1, 1, 2]])
         delta = 0.1
@@ -219,27 +219,27 @@ class TestNearestNDInterpolator:
         # case 1 - query max_dist is smaller than
         # the query points' nearest distance to nd.
         NI = NearestNDInterpolator((nd[0], nd[1]), nd[2])
-        distance_upper_bound = np.sqrt(delta ** 2 + delta ** 2) - 1e-7
+        distance_upper_bound = mx.sqrt(delta ** 2 + delta ** 2) - 1e-7
         xp_assert_equal(NI(query_points, distance_upper_bound=distance_upper_bound),
-                           [np.nan, np.nan])
+                           [mx.nan, mx.nan])
 
         # case 2 - query p is inf, will return [0, 2]
-        distance_upper_bound = np.sqrt(delta ** 2 + delta ** 2) - 1e-7
-        p = np.inf
+        distance_upper_bound = mx.sqrt(delta ** 2 + delta ** 2) - 1e-7
+        p = mx.inf
         xp_assert_equal(
             NI(query_points, distance_upper_bound=distance_upper_bound, p=p),
             [0.0, 2.0]
         )
 
-        # case 3 - query max_dist is larger, so should return non np.nan
-        distance_upper_bound = np.sqrt(delta ** 2 + delta ** 2) + 1e-7
+        # case 3 - query max_dist is larger, so should return non mx.nan
+        distance_upper_bound = mx.sqrt(delta ** 2 + delta ** 2) + 1e-7
         xp_assert_equal(
             NI(query_points, distance_upper_bound=distance_upper_bound),
             [0.0, 2.0]
         )
 
     def test_nearest_query_valid_inputs(self):
-        nd = np.array([[0, 1, 0, 1],
+        nd = mx.array([[0, 1, 0, 1],
                        [0, 0, 1, 1],
                        [0, 1, 1, 2]])
         NI = NearestNDInterpolator((nd[0], nd[1]), nd[2])
@@ -248,8 +248,8 @@ class TestNearestNDInterpolator:
 
     def test_concurrency(self):
         npts, nd = 50, 3
-        x = np.arange(npts * nd).reshape((npts, nd))
-        y = np.arange(npts)
+        x = mx.arange(npts * nd).reshape((npts, nd))
+        y = mx.arange(npts)
         nndi = NearestNDInterpolator(x, y)
 
         def worker_fn(_, spl):
@@ -262,16 +262,16 @@ class TestNDInterpolators:
     @parametrize_interpolators
     def test_broadcastable_input(self, interpolator):
         # input data
-        rng = np.random.RandomState(0)
+        rng = mx.random.RandomState(0)
         x = rng.random(10)
         y = rng.random(10)
-        z = np.hypot(x, y)
+        z = mx.hypot(x, y)
 
         # x-y grid for interpolation
-        X = np.linspace(min(x), max(x))
-        Y = np.linspace(min(y), max(y))
-        X, Y = np.meshgrid(X, Y)
-        XY = np.vstack((X.ravel(), Y.ravel())).T
+        X = mx.linspace(min(x), max(x))
+        Y = mx.linspace(min(y), max(y))
+        X, Y = mx.meshgrid(X, Y)
+        XY = mx.vstack((X.ravel(), Y.ravel())).T
         interp = interpolator(list(zip(x, y)), z)
         # single array input
         interp_points0 = interp(XY)
@@ -291,10 +291,10 @@ class TestNDInterpolators:
     @parametrize_interpolators
     def test_read_only(self, interpolator):
         # input data
-        rng = np.random.RandomState(0)
+        rng = mx.random.RandomState(0)
         xy = rng.random((10, 2))
         x, y = xy[:, 0], xy[:, 1]
-        z = np.hypot(x, y)
+        z = mx.hypot(x, y)
 
         # interpolation points
         XY = rng.random((50, 2))

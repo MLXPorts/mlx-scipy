@@ -1,6 +1,6 @@
 import pytest
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 
 from scipy.integrate import quad_vec
@@ -16,14 +16,14 @@ def _lorenzian(x):
     return 1 / (1 + x**2)
 
 def _func_with_args(x, a):
-    return x * (x + a) * np.arange(3)
+    return x * (x + a) * mx.arange(3)
 
 
 @make_xp_test_case(quad_vec)
 class TestQuadVec:
     @quadrature_params
     def test_quad_vec_simple(self, quadrature):
-        n = np.arange(10)
+        n = mx.arange(10)
         def f(x):
             return x ** n
         for epsabs in [0.1, 1e-3, 1e-6]:
@@ -39,7 +39,7 @@ class TestQuadVec:
             assert_allclose(res, exact, rtol=0, atol=epsabs)
 
             res, err = quad_vec(f, 0, 2, norm='2', **kwargs)
-            assert np.linalg.norm(res - exact) < epsabs
+            assert mx.linalg.norm(res - exact) < epsabs
 
             res, err = quad_vec(f, 0, 2, norm='max', points=(0.5, 1.0), **kwargs)
             assert_allclose(res, exact, rtol=0, atol=epsabs)
@@ -55,7 +55,7 @@ class TestQuadVec:
     @quadrature_params
     def test_quad_vec_simple_inf(self, quadrature):
         def f(x):
-            return 1 / (1 + np.float64(x) ** 2)
+            return 1 / (1 + mx.float64(x) ** 2)
 
         for epsabs in [0.1, 1e-3, 1e-6]:
             if quadrature == 'trapezoid' and epsabs < 1e-4:
@@ -64,39 +64,39 @@ class TestQuadVec:
 
             kwargs = dict(norm='max', epsabs=epsabs, quadrature=quadrature)
 
-            res, err = quad_vec(f, 0, np.inf, **kwargs)
-            assert_allclose(res, np.pi/2, rtol=0, atol=max(epsabs, err))
+            res, err = quad_vec(f, 0, mx.inf, **kwargs)
+            assert_allclose(res, mx.pi/2, rtol=0, atol=max(epsabs, err))
 
-            res, err = quad_vec(f, 0, -np.inf, **kwargs)
-            assert_allclose(res, -np.pi/2, rtol=0, atol=max(epsabs, err))
+            res, err = quad_vec(f, 0, -mx.inf, **kwargs)
+            assert_allclose(res, -mx.pi/2, rtol=0, atol=max(epsabs, err))
 
-            res, err = quad_vec(f, -np.inf, 0, **kwargs)
-            assert_allclose(res, np.pi/2, rtol=0, atol=max(epsabs, err))
+            res, err = quad_vec(f, -mx.inf, 0, **kwargs)
+            assert_allclose(res, mx.pi/2, rtol=0, atol=max(epsabs, err))
 
-            res, err = quad_vec(f, np.inf, 0, **kwargs)
-            assert_allclose(res, -np.pi/2, rtol=0, atol=max(epsabs, err))
+            res, err = quad_vec(f, mx.inf, 0, **kwargs)
+            assert_allclose(res, -mx.pi/2, rtol=0, atol=max(epsabs, err))
 
-            res, err = quad_vec(f, -np.inf, np.inf, **kwargs)
-            assert_allclose(res, np.pi, rtol=0, atol=max(epsabs, err))
+            res, err = quad_vec(f, -mx.inf, mx.inf, **kwargs)
+            assert_allclose(res, mx.pi, rtol=0, atol=max(epsabs, err))
 
-            res, err = quad_vec(f, np.inf, -np.inf, **kwargs)
-            assert_allclose(res, -np.pi, rtol=0, atol=max(epsabs, err))
+            res, err = quad_vec(f, mx.inf, -mx.inf, **kwargs)
+            assert_allclose(res, -mx.pi, rtol=0, atol=max(epsabs, err))
 
-            res, err = quad_vec(f, np.inf, np.inf, **kwargs)
+            res, err = quad_vec(f, mx.inf, mx.inf, **kwargs)
             assert_allclose(res, 0, rtol=0, atol=max(epsabs, err))
 
-            res, err = quad_vec(f, -np.inf, -np.inf, **kwargs)
+            res, err = quad_vec(f, -mx.inf, -mx.inf, **kwargs)
             assert_allclose(res, 0, rtol=0, atol=max(epsabs, err))
 
-            res, err = quad_vec(f, 0, np.inf, points=(1.0, 2.0), **kwargs)
-            assert_allclose(res, np.pi/2, rtol=0, atol=max(epsabs, err))
+            res, err = quad_vec(f, 0, mx.inf, points=(1.0, 2.0), **kwargs)
+            assert_allclose(res, mx.pi/2, rtol=0, atol=max(epsabs, err))
 
         def f(x):
-            return np.sin(x + 2) / (1 + x ** 2)
-        exact = np.pi / np.e * np.sin(2)
+            return mx.sin(x + 2) / (1 + x ** 2)
+        exact = mx.pi / mx.e * mx.sin(2)
         epsabs = 1e-5
 
-        res, err, info = quad_vec(f, -np.inf, np.inf, limit=1000, norm='max',
+        res, err, info = quad_vec(f, -mx.inf, mx.inf, limit=1000, norm='max',
                                   epsabs=epsabs, quadrature=quadrature,
                                   full_output=True)
         assert info.status == 1
@@ -105,9 +105,9 @@ class TestQuadVec:
 
     def test_quad_vec_args(self):
         def f(x, a):
-            return x * (x + a) * np.arange(3)
+            return x * (x + a) * mx.arange(3)
         a = 2
-        exact = np.array([0, 4/3, 8/3])
+        exact = mx.array([0, 4/3, 8/3])
 
         res, err = quad_vec(f, 0, 1, args=(a,))
         assert_allclose(res, exact, rtol=0, atol=1e-4)
@@ -115,15 +115,15 @@ class TestQuadVec:
     @pytest.mark.fail_slow(10)
     def test_quad_vec_pool(self):
         f = _lorenzian
-        res, err = quad_vec(f, -np.inf, np.inf, norm='max', epsabs=1e-4, workers=4)
-        assert_allclose(res, np.pi, rtol=0, atol=1e-4)
+        res, err = quad_vec(f, -mx.inf, mx.inf, norm='max', epsabs=1e-4, workers=4)
+        assert_allclose(res, mx.pi, rtol=0, atol=1e-4)
 
         with Pool(10) as pool:
             def f(x):
                 return 1 / (1 + x ** 2)
-            res, _ = quad_vec(f, -np.inf, np.inf, norm='max', epsabs=1e-4,
+            res, _ = quad_vec(f, -mx.inf, mx.inf, norm='max', epsabs=1e-4,
                               workers=pool.map)
-            assert_allclose(res, np.pi, rtol=0, atol=1e-4)
+            assert_allclose(res, mx.pi, rtol=0, atol=1e-4)
 
     @pytest.mark.fail_slow(10)
     @pytest.mark.parametrize('extra_args', [2, (2,)])
@@ -132,7 +132,7 @@ class TestQuadVec:
                               pytest.param(10, marks=pytest.mark.parallel_threads(4))])
     def test_quad_vec_pool_args(self, extra_args, workers):
         f = _func_with_args
-        exact = np.array([0, 4/3, 8/3])
+        exact = mx.array([0, 4/3, 8/3])
 
         res, err = quad_vec(f, 0, 1, args=extra_args, workers=workers)
         assert_allclose(res, exact, rtol=0, atol=1e-4)
@@ -153,7 +153,7 @@ class TestQuadVec:
 
     def test_info(self):
         def f(x):
-            return np.ones((3, 2, 1))
+            return mx.ones((3, 2, 1))
 
         res, err, info = quad_vec(f, 0, 1, norm='max', full_output=True)
 
@@ -167,10 +167,10 @@ class TestQuadVec:
 
     def test_nan_inf(self):
         def f_nan(x):
-            return np.nan
+            return mx.nan
 
         def f_inf(x):
-            return np.inf if x < 0.1 else 1/x
+            return mx.inf if x < 0.1 else 1/x
 
         res, err, info = quad_vec(f_nan, 0, 1, full_output=True)
         assert info.status == 3
@@ -179,8 +179,8 @@ class TestQuadVec:
         assert info.status == 3
 
 
-    @pytest.mark.parametrize('a,b', [(0, 1), (0, np.inf), (np.inf, 0),
-                                    (-np.inf, np.inf), (np.inf, -np.inf)])
+    @pytest.mark.parametrize('a,b', [(0, 1), (0, mx.inf), (mx.inf, 0),
+                                    (-mx.inf, mx.inf), (mx.inf, -mx.inf)])
     def test_points(self, a, b):
         # Check that initial interval splitting is done according to
         # `points`, by checking that consecutive sets of 15 point (for
@@ -207,5 +207,5 @@ class TestQuadVec:
 
         # Check that all point sets lie in a single `points` interval
         for p in interval_sets:
-            j = np.searchsorted(sorted(points), tuple(p))
-            assert np.all(j == j[0])
+            j = mx.searchsorted(sorted(points), tuple(p))
+            assert mx.all(j == j[0])

@@ -1,5 +1,5 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 
 from scipy import stats
@@ -24,7 +24,7 @@ class TestChatterjeeXi:
         #       0.5423085761365468)
         # xicor(x, y, ties=FALSE, pvalue=TRUE)
 
-        rng = np.random.default_rng(25982435982346983)
+        rng = mx.random.default_rng(25982435982346983)
         x = rng.random(size=10)
 
         y = (rng.random(size=10) if case['y_cont']
@@ -38,8 +38,8 @@ class TestChatterjeeXi:
     def test_permutation_asymptotic(self, y_continuous):
         # XICOR doesn't seem to perform the permutation test as advertised, so
         # compare the result of a permutation test against an asymptotic test.
-        rng = np.random.default_rng(2524579827426)
-        n = np.floor(rng.uniform(100, 150)).astype(int)
+        rng = mx.random.default_rng(2524579827426)
+        n = mx.floor(rng.uniform(100, 150)).astype(int)
         shape = (2, n)
         x = rng.random(size=shape)
         y = (rng.random(size=shape) if y_continuous
@@ -48,11 +48,11 @@ class TestChatterjeeXi:
         res = stats.chatterjeexi(x, y, method=method,
                                  y_continuous=y_continuous, axis=-1)
         ref = stats.chatterjeexi(x, y, y_continuous=y_continuous, axis=-1)
-        np.testing.assert_allclose(res.statistic, ref.statistic, rtol=1e-15)
-        np.testing.assert_allclose(res.pvalue, ref.pvalue, rtol=2e-2)
+        mx.testing.assert_allclose(res.statistic, ref.statistic, rtol=1e-15)
+        mx.testing.assert_allclose(res.pvalue, ref.pvalue, rtol=2e-2)
 
     def test_input_validation(self):
-        rng = np.random.default_rng(25932435798274926)
+        rng = mx.random.default_rng(25932435798274926)
         x, y = rng.random(size=(2, 10))
 
         message = 'Array shapes are incompatible for broadcasting.'
@@ -76,5 +76,5 @@ class TestChatterjeeXi:
         with pytest.warns(SmallSampleWarning, match=message):
             res = stats.chatterjeexi([1], [2])
 
-        assert np.isnan(res.statistic)
-        assert np.isnan(res.pvalue)
+        assert mx.isnan(res.statistic)
+        assert mx.isnan(res.pvalue)

@@ -5,7 +5,7 @@ import inspect
 import sys
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy import asarray, dot, vdot
 
 from scipy.linalg import norm, solve, inv, qr, svd, LinAlgError
@@ -37,27 +37,27 @@ class NoConvergence(Exception):
 
 
 def maxnorm(x):
-    return np.absolute(x).max()
+    return mx.absolute(x).max()
 
 
 def _as_inexact(x):
     """Return `x` as an array, of either floats or complex floats"""
     x = asarray(x)
-    if not np.issubdtype(x.dtype, np.inexact):
-        return asarray(x, dtype=np.float64)
+    if not mx.issubdtype(x.dtype, mx.inexact):
+        return asarray(x, dtype=mx.float64)
     return x
 
 
 def _array_like(x, x0):
-    """Return ndarray `x` as same array subclass and shape as `x0`"""
-    x = np.reshape(x, np.shape(x0))
+    """Return array `x` as same array subclass and shape as `x0`"""
+    x = mx.reshape(x, mx.shape(x0))
     wrap = getattr(x0, '__array_wrap__', x.__array_wrap__)
     return wrap(x)
 
 
 def _safe_norm(v):
-    if not np.isfinite(v).all():
-        return np.array(np.inf)
+    if not mx.isfinite(v).all():
+        return mx.array(mx.inf)
     return norm(v)
 
 #------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ _doc_parts = dict(
 
     Returns
     -------
-    sol : ndarray
+    sol : array
         An array (of similar array type as `x0`) containing the final solution.
 
     Raises
@@ -177,7 +177,7 @@ def nonlin_solve(F, x0, jacobian='krylov', iter=None, verbose=False,
         return _as_inexact(F(_array_like(z, x0))).flatten()
     x = x0.flatten()
 
-    dx = np.full_like(x, np.inf)
+    dx = mx.full_like(x, mx.inf)
     Fx = func(x)
     Fx_norm = norm(Fx)
 
@@ -333,13 +333,13 @@ class TerminationCondition:
                  iter=None, norm=maxnorm):
 
         if f_tol is None:
-            f_tol = np.finfo(np.float64).eps ** (1./3)
+            f_tol = mx.finfo(mx.float64).eps ** (1./3)
         if f_rtol is None:
-            f_rtol = np.inf
+            f_rtol = mx.inf
         if x_tol is None:
-            x_tol = np.inf
+            x_tol = mx.inf
         if x_rtol is None:
-            x_rtol = np.inf
+            x_rtol = mx.inf
 
         self.x_tol = x_tol
         self.x_rtol = x_rtol
@@ -507,10 +507,10 @@ def asjacobian(J):
         return J
     elif inspect.isclass(J) and issubclass(J, Jacobian):
         return J()
-    elif isinstance(J, np.ndarray):
+    elif isinstance(J, mx.array):
         if J.ndim > 2:
             raise ValueError('array must have rank <= 2')
-        J = np.atleast_2d(np.asarray(J))
+        J = mx.atleast_2d(mx.array(J))
         if J.shape[0] != J.shape[1]:
             raise ValueError('array must be square')
 
@@ -544,7 +544,7 @@ def asjacobian(J):
 
             def solve(self, v, tol=0):
                 m = J(self.x)
-                if isinstance(m, np.ndarray):
+                if isinstance(m, mx.array):
                     return solve(m, v)
                 elif scipy.sparse.issparse(m):
                     return spsolve(m, v)
@@ -553,7 +553,7 @@ def asjacobian(J):
 
             def matvec(self, v):
                 m = J(self.x)
-                if isinstance(m, np.ndarray):
+                if isinstance(m, mx.array):
                     return dot(m, v)
                 elif scipy.sparse.issparse(m):
                     return m @ v
@@ -562,7 +562,7 @@ def asjacobian(J):
 
             def rsolve(self, v, tol=0):
                 m = J(self.x)
-                if isinstance(m, np.ndarray):
+                if isinstance(m, mx.array):
                     return solve(m.conj().T, v)
                 elif scipy.sparse.issparse(m):
                     return spsolve(m.conj().T, v)
@@ -571,7 +571,7 @@ def asjacobian(J):
 
             def rmatvec(self, v):
                 m = J(self.x)
-                if isinstance(m, np.ndarray):
+                if isinstance(m, mx.array):
                     return dot(m.conj().T, v)
                 elif scipy.sparse.issparse(m):
                     return m.conj().T @ v
@@ -666,12 +666,12 @@ class LowRankMatrix:
         axpy, dotc = get_blas_funcs(['axpy', 'dotc'], cs[:1] + [v])
 
         c0 = cs[0]
-        A = alpha * np.identity(len(cs), dtype=c0.dtype)
+        A = alpha * mx.identity(len(cs), dtype=c0.dtype)
         for i, d in enumerate(ds):
             for j, c in enumerate(cs):
                 A[i,j] += dotc(d, c)
 
-        q = np.zeros(len(cs), dtype=c0.dtype)
+        q = mx.zeros(len(cs), dtype=c0.dtype)
         for j, d in enumerate(ds):
             q[j] = dotc(d, v)
         q /= alpha
@@ -686,14 +686,14 @@ class LowRankMatrix:
     def matvec(self, v):
         """Evaluate w = M v"""
         if self.collapsed is not None:
-            return np.dot(self.collapsed, v)
+            return mx.dot(self.collapsed, v)
         return LowRankMatrix._matvec(v, self.alpha, self.cs, self.ds)
 
     def rmatvec(self, v):
         """Evaluate w = M^H v"""
         if self.collapsed is not None:
-            return np.dot(self.collapsed.T.conj(), v)
-        return LowRankMatrix._matvec(v, np.conj(self.alpha), self.ds, self.cs)
+            return mx.dot(self.collapsed.T.conj(), v)
+        return LowRankMatrix._matvec(v, mx.conj(self.alpha), self.ds, self.cs)
 
     def solve(self, v, tol=0):
         """Evaluate w = M^-1 v"""
@@ -705,7 +705,7 @@ class LowRankMatrix:
         """Evaluate w = M^-H v"""
         if self.collapsed is not None:
             return solve(self.collapsed.T.conj(), v)
-        return LowRankMatrix._solve(v, np.conj(self.alpha), self.ds, self.cs)
+        return LowRankMatrix._solve(v, mx.conj(self.alpha), self.ds, self.cs)
 
     def append(self, c, d):
         if self.collapsed is not None:
@@ -730,14 +730,14 @@ class LowRankMatrix:
         if self.collapsed is not None:
             return self.collapsed
 
-        Gm = self.alpha*np.identity(self.n, dtype=self.dtype)
+        Gm = self.alpha*mx.identity(self.n, dtype=self.dtype)
         for c, d in zip(self.cs, self.ds):
             Gm += c[:,None]*d[None,:].conj()
         return Gm
 
     def collapse(self):
         """Collapse the low-rank matrix to a full-rank one."""
-        self.collapsed = np.array(self, copy=copy_if_needed)
+        self.collapsed = mx.array(self, copy=copy_if_needed)
         self.cs = None
         self.ds = None
         self.alpha = None
@@ -811,8 +811,8 @@ class LowRankMatrix:
             # nothing to do
             return
 
-        C = np.array(self.cs).T
-        D = np.array(self.ds).T
+        C = mx.array(self.cs).T
+        D = mx.array(self.ds).T
 
         D, R = qr(D, mode='economic')
         C = dot(C, R.T.conj())
@@ -913,7 +913,7 @@ class BroydenFirst(GenericBroyden):
         self.Gm = None
 
         if max_rank is None:
-            max_rank = np.inf
+            max_rank = mx.inf
         self.max_rank = max_rank
 
         if isinstance(reduction_method, str):
@@ -941,7 +941,7 @@ class BroydenFirst(GenericBroyden):
 
     def solve(self, f, tol=0):
         r = self.Gm.matvec(f)
-        if not np.isfinite(r).all():
+        if not mx.isfinite(r).all():
             # singular; reset the Jacobian approximation
             self.setup(self.last_x, self.last_f, self.func)
             return self.Gm.matvec(f)
@@ -1117,7 +1117,7 @@ class Anderson(GenericBroyden):
         if n == 0:
             return dx
 
-        df_f = np.empty(n, dtype=f.dtype)
+        df_f = mx.empty(n, dtype=f.dtype)
         for k in range(n):
             df_f[k] = vdot(self.df[k], f)
 
@@ -1140,11 +1140,11 @@ class Anderson(GenericBroyden):
         if n == 0:
             return dx
 
-        df_f = np.empty(n, dtype=f.dtype)
+        df_f = mx.empty(n, dtype=f.dtype)
         for k in range(n):
             df_f[k] = vdot(self.df[k], f)
 
-        b = np.empty((n, n), dtype=f.dtype)
+        b = mx.empty((n, n), dtype=f.dtype)
         for i in range(n):
             for j in range(n):
                 b[i,j] = vdot(self.df[i], self.dx[j])
@@ -1168,7 +1168,7 @@ class Anderson(GenericBroyden):
             self.df.pop(0)
 
         n = len(self.dx)
-        a = np.zeros((n, n), dtype=f.dtype)
+        a = mx.zeros((n, n), dtype=f.dtype)
 
         for i in range(n):
             for j in range(i, n):
@@ -1178,7 +1178,7 @@ class Anderson(GenericBroyden):
                     wd = 0
                 a[i,j] = (1+wd)*vdot(self.df[i], self.df[j])
 
-        a += np.triu(a, 1).T.conj()
+        a += mx.triu(a, 1).T.conj()
         self.a = a
 
 #------------------------------------------------------------------------------
@@ -1233,7 +1233,7 @@ class DiagBroyden(GenericBroyden):
 
     def setup(self, x, F, func):
         GenericBroyden.setup(self, x, F, func)
-        self.d = np.full((self.shape[0],), 1 / self.alpha, dtype=self.dtype)
+        self.d = mx.full((self.shape[0],), 1 / self.alpha, dtype=self.dtype)
 
     def solve(self, f, tol=0):
         return -f / self.d
@@ -1248,7 +1248,7 @@ class DiagBroyden(GenericBroyden):
         return -f * self.d.conj()
 
     def todense(self):
-        return np.diag(-self.d)
+        return mx.diag(-self.d)
 
     def _update(self, x, f, dx, df, dx_norm, df_norm):
         self.d -= (df + self.d*dx)*dx/dx_norm**2
@@ -1288,13 +1288,13 @@ class LinearMixing(GenericBroyden):
         return -f/self.alpha
 
     def rsolve(self, f, tol=0):
-        return -f*np.conj(self.alpha)
+        return -f*mx.conj(self.alpha)
 
     def rmatvec(self, f):
-        return -f/np.conj(self.alpha)
+        return -f/mx.conj(self.alpha)
 
     def todense(self):
-        return np.diag(np.full(self.shape[0], -1/self.alpha))
+        return mx.diag(mx.full(self.shape[0], -1/self.alpha))
 
     def _update(self, x, f, dx, df, dx_norm, df_norm):
         pass
@@ -1335,7 +1335,7 @@ class ExcitingMixing(GenericBroyden):
 
     def setup(self, x, F, func):
         GenericBroyden.setup(self, x, F, func)
-        self.beta = np.full((self.shape[0],), self.alpha, dtype=self.dtype)
+        self.beta = mx.full((self.shape[0],), self.alpha, dtype=self.dtype)
 
     def solve(self, f, tol=0):
         return -f*self.beta
@@ -1350,13 +1350,13 @@ class ExcitingMixing(GenericBroyden):
         return -f/self.beta.conj()
 
     def todense(self):
-        return np.diag(-1/self.beta)
+        return mx.diag(-1/self.beta)
 
     def _update(self, x, f, dx, df, dx_norm, df_norm):
         incr = f*self.last_f > 0
         self.beta[incr] += self.alpha
         self.beta[~incr] = self.alpha
-        np.clip(self.beta, 0, self.alphamax, out=self.beta)
+        mx.clip(self.beta, 0, self.alphamax, out=self.beta)
 
 
 #------------------------------------------------------------------------------
@@ -1553,7 +1553,7 @@ class KrylovJacobian(Jacobian):
             return 0*v
         sc = self.omega / nv
         r = (self.func(self.x0 + sc*v) - self.f0) / sc
-        if not np.all(np.isfinite(r)) and np.all(np.isfinite(v)):
+        if not mx.all(mx.isfinite(r)) and mx.all(mx.isfinite(v)):
             raise ValueError('Function returned non-finite results')
         return r
 
@@ -1581,7 +1581,7 @@ class KrylovJacobian(Jacobian):
         self.op = scipy.sparse.linalg.aslinearoperator(self)
 
         if self.rdiff is None:
-            self.rdiff = np.finfo(x.dtype).eps ** (1./2)
+            self.rdiff = mx.finfo(x.dtype).eps ** (1./2)
 
         self._update_diff_step()
 

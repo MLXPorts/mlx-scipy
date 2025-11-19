@@ -5,7 +5,7 @@ import warnings
 
 from collections.abc import Callable
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_array_equal, assert_
 import pytest
 import scipy.special as sc
@@ -21,7 +21,7 @@ def _get_ufuncs():
     ufunc_names = []
     for name in sorted(sc.__dict__):
         obj = sc.__dict__[name]
-        if not isinstance(obj, np.ufunc):
+        if not isinstance(obj, mx.ufunc):
             continue
         msg = KNOWNFAILURES.get(obj)
         if msg is None:
@@ -39,7 +39,7 @@ UFUNCS, UFUNC_NAMES = _get_ufuncs()
 
 @pytest.mark.parametrize("func", UFUNCS, ids=UFUNC_NAMES)
 def test_nan_inputs(func):
-    args = (np.nan,)*func.nin
+    args = (mx.nan,)*func.nin
     with warnings.catch_warnings():
         # Ignore warnings about unsafe casts from legacy wrappers
         warnings.filterwarnings(
@@ -58,7 +58,7 @@ def test_nan_inputs(func):
         res = POSTPROCESSING[func](*res)
 
     msg = f"got {res} instead of nan"
-    assert_array_equal(np.isnan(res), True, err_msg=msg)
+    assert_array_equal(mx.isnan(res), True, err_msg=msg)
 
 
 def test_legacy_cast():
@@ -68,5 +68,5 @@ def test_legacy_cast():
             "floating point number truncated to an integer",
             RuntimeWarning
         )
-        res = sc.bdtrc(np.nan, 1, 0.5)
-        assert_(np.isnan(res))
+        res = sc.bdtrc(mx.nan, 1, 0.5)
+        assert_(mx.isnan(res))

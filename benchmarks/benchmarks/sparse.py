@@ -6,7 +6,7 @@ import time
 import timeit
 import pickle
 
-import numpy as np
+import mlx.core as mx
 
 from .common import Benchmark, safe_import
 
@@ -15,9 +15,9 @@ with safe_import():
 
 
 def random_sparse(m, n, nnz_per_row, sparse_type):
-    rows = np.arange(m).repeat(nnz_per_row)
-    cols = np.random.randint(0, n, size=rows.size)
-    vals = np.random.random_sample(rows.size)
+    rows = mx.arange(m).repeat(nnz_per_row)
+    cols = mx.random.randint(0, n, size=rows.size)
+    vals = mx.random.random_sample(rows.size)
     coo = sparse.coo_array if sparse_type == "sparray" else sparse.coo_matrix
     return coo((vals, (rows, cols)), (m, n)).tocsr()
 
@@ -31,12 +31,12 @@ def poisson2d(N, dtype='d', format=None, sparse_type="sparray"):
     """
     dia = sparse.dia_array if sparse_type == "sparray" else sparse.dia_matrix
     if N == 1:
-        diags = np.asarray([[4]], dtype=dtype)
+        diags = mx.array([[4]], dtype=dtype)
         return dia((diags, [0]), shape=(1, 1)).asformat(format)
 
-    offsets = np.array([0, -N, N, -1, 1])
+    offsets = mx.array([0, -N, N, -1, 1])
 
-    diags = np.empty((5, N**2), dtype=dtype)
+    diags = mx.empty((5, N**2), dtype=dtype)
 
     diags[0] = 4  # main diagonal
     diags[1:] = -1  # all offdiagonals
@@ -114,17 +114,17 @@ class Matvec(Benchmark):
                 raise NotImplementedError()
             b = (2, 2)
             self.A = sparse.kron(poisson2d(150, sparse_type=sparse_type),
-                                 np.ones(b)).tobsr(blocksize=b).asformat(format)
+                                 mx.ones(b)).tobsr(blocksize=b).asformat(format)
         elif name == 'Block3x3':
             if format not in ('csr', 'bsr'):
                 raise NotImplementedError()
             b = (3, 3)
             self.A = sparse.kron(poisson2d(100, sparse_type=sparse_type),
-                                 np.ones(b)).tobsr(blocksize=b).asformat(format)
+                                 mx.ones(b)).tobsr(blocksize=b).asformat(format)
         else:
             raise NotImplementedError()
 
-        self.x = np.ones(self.A.shape[1], dtype=float)
+        self.x = mx.ones(self.A.shape[1], dtype=float)
 
     def time_matvec(self, sparse_type, name, format):
         self.A @ self.x
@@ -139,7 +139,7 @@ class Matvecs(Benchmark):
 
     def setup(self, sparse_type, format):
         self.A = poisson2d(300, format=format, sparse_type=sparse_type)
-        self.x = np.ones((self.A.shape[1], 10), dtype=self.A.dtype)
+        self.x = mx.ones((self.A.shape[1], 10), dtype=self.A.dtype)
 
     def time_matvecs(self, sparse_type, format):
         self.A @ self.x
@@ -158,7 +158,7 @@ class Matmul(Benchmark):
         C1 = 10
         C2 = 1000000
 
-        rng = np.random.default_rng(0)
+        rng = mx.random.default_rng(0)
 
         i = rng.integers(H1, size=C1)
         j = rng.integers(W1, size=C1)
@@ -218,9 +218,9 @@ class BlockDiagDenseConstruction(Benchmark):
         coo = sparse.coo_array if sparse_type == "sparray" else sparse.coo_matrix
         self.matrices = []
         for i in range(num_matrices):
-            rows = np.random.randint(1, 4)
-            columns = np.random.randint(1, 4)
-            mat = np.random.randint(0, 10, (rows, columns))
+            rows = mx.random.randint(1, 4)
+            columns = mx.random.randint(1, 4)
+            mat = mx.random.randint(0, 10, (rows, columns))
             if i == 0:
                 self.matrices.append(coo(mat))  # make 1st requested sparse_type
             else:
@@ -240,8 +240,8 @@ class BlockDiagSparseConstruction(Benchmark):
     def setup(self, sparse_type, num_matrices):
         self.matrices = []
         for i in range(num_matrices):
-            rows = np.random.randint(1, 20)
-            columns = np.random.randint(1, 20)
+            rows = mx.random.randint(1, 20)
+            columns = mx.random.randint(1, 20)
             density = 2e-3
             nnz_per_row = int(density*columns)
 
@@ -316,11 +316,11 @@ class Getset(Benchmark):
         i, j = [], []
         while len(i) < N:
             n = N - len(i)
-            ip = np.random.randint(0, A.shape[0], size=n)
-            jp = np.random.randint(0, A.shape[1], size=n)
-            i = np.r_[i, ip]
-            j = np.r_[j, jp]
-        v = np.random.rand(n)
+            ip = mx.random.randint(0, A.shape[0], size=n)
+            jp = mx.random.randint(0, A.shape[1], size=n)
+            i = mx.r_[i, ip]
+            j = mx.r_[j, jp]
+        v = mx.random.rand(n)
 
         if N == 1:
             i = int(i)
@@ -383,9 +383,9 @@ class NullSlice(Benchmark):
         # faster version of sparse.rand(n, k, format=format, density=density),
         # with non-exact nnz
         nz = int(n*k * density)
-        row = np.random.randint(0, n, size=nz)
-        col = np.random.randint(0, k, size=nz)
-        data = np.ones(nz, dtype=np.float64)
+        row = mx.random.randint(0, n, size=nz)
+        col = mx.random.randint(0, k, size=nz)
+        data = mx.ones(nz, dtype=mx.float64)
         coo = sparse.coo_array if sparse_type == "sparray" else sparse.coo_matrix
         X = coo((data, (row, col)), shape=(n, k))
         X.sum_duplicates()
@@ -422,13 +422,13 @@ class NullSlice(Benchmark):
         self.X[[0, 100, 105], :]
 
     def time_10000_rows(self, sparse_type, density, format):
-        self.X[np.arange(10000), :]
+        self.X[mx.arange(10000), :]
 
     def time_3_cols(self, sparse_type, density, format):
         self.X[:, [0, 100, 105]]
 
     def time_100_cols(self, sparse_type, density, format):
-        self.X[:, np.arange(100)]
+        self.X[:, mx.arange(100)]
 
     # Retain old benchmark results (remove this if changing the benchmark)
     time_10000_rows.version = (
@@ -569,7 +569,7 @@ class Random(Benchmark):
     param_names = ['sparse_type', 'density']
     params = [
         ['spmatrix', 'sparray'],
-        np.arange(0, 1.1, 0.1).tolist(),
+        mx.arange(0, 1.1, 0.1).tolist(),
     ]
 
     def setup(self, sparse_type, density):

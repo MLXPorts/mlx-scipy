@@ -14,7 +14,7 @@ from io import BytesIO
 from tempfile import mkstemp
 from contextlib import contextmanager
 
-import numpy as np
+import mlx.core as mx
 
 from numpy.testing import assert_, assert_equal
 from pytest import raises as assert_raises
@@ -203,7 +203,7 @@ class TestZlibInputStream:
     def test_all_data_read_overlap(self):
         COMPRESSION_LEVEL = 6
 
-        data = np.arange(33707000, dtype=np.uint8)
+        data = mx.arange(33707000, dtype=mx.uint8)
         compressed_data = zlib.compress(data, COMPRESSION_LEVEL)
         compressed_data_len = len(compressed_data)
 
@@ -222,7 +222,7 @@ class TestZlibInputStream:
     def test_all_data_read_bad_checksum(self):
         COMPRESSION_LEVEL = 6
 
-        data = np.arange(33707000, dtype=np.uint8)
+        data = mx.arange(33707000, dtype=mx.uint8)
         compressed_data = zlib.compress(data, COMPRESSION_LEVEL)
         compressed_data_len = len(compressed_data)
 

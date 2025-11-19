@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 from scipy.special import ndtri
 from scipy.optimize import brentq
@@ -17,9 +17,9 @@ def _sample_odds_ratio(table):
     if table[1, 0] > 0 and table[0, 1] > 0:
         oddsratio = table[0, 0] * table[1, 1] / (table[1, 0] * table[0, 1])
     elif table[0, 0] == 0 or table[1, 1] == 0:
-        oddsratio = np.nan
+        oddsratio = mx.nan
     else:
-        oddsratio = np.inf
+        oddsratio = mx.inf
     return oddsratio
 
 
@@ -82,8 +82,8 @@ def _ci_upper(table, alpha):
     """
     Compute the upper end of the confidence interval.
     """
-    if _sample_odds_ratio(table) == np.inf:
-        return np.inf
+    if _sample_odds_ratio(table) == mx.inf:
+        return mx.inf
 
     x, M, n, N = _hypergeom_params_from_table(table)
 
@@ -123,7 +123,7 @@ def _conditional_oddsratio(table):
         return 0
     if x == hi:
         # x is at the high end of the support.
-        return np.inf
+        return mx.inf
 
     nc = _nc_hypergeom_mean_inverse(x, M, n, N)
     return nc
@@ -144,7 +144,7 @@ def _conditional_oddsratio_ci(table, confidence_level=0.95,
     else:
         # alternative == 'greater'
         lower = _ci_lower(table, 1 - confidence_level)
-        upper = np.inf
+        upper = mx.inf
 
     return lower, upper
 
@@ -152,23 +152,23 @@ def _conditional_oddsratio_ci(table, confidence_level=0.95,
 def _sample_odds_ratio_ci(table, confidence_level=0.95,
                           alternative='two-sided'):
     oddsratio = _sample_odds_ratio(table)
-    log_or = np.log(oddsratio)
-    se = np.sqrt((1/table).sum())
+    log_or = mx.log(oddsratio)
+    se = mx.sqrt((1/table).sum())
     if alternative == 'less':
         z = ndtri(confidence_level)
-        loglow = -np.inf
+        loglow = -mx.inf
         loghigh = log_or + z*se
     elif alternative == 'greater':
         z = ndtri(confidence_level)
         loglow = log_or - z*se
-        loghigh = np.inf
+        loghigh = mx.inf
     else:
         # alternative is 'two-sided'
         z = ndtri(0.5*confidence_level + 0.5)
         loglow = log_or - z*se
         loghigh = log_or + z*se
 
-    return np.exp(loglow), np.exp(loghigh)
+    return mx.exp(loglow), mx.exp(loghigh)
 
 
 class OddsRatioResult:
@@ -233,7 +233,7 @@ class OddsRatioResult:
               the null hypothesis at  the chosen `confidence_level` if
               ``high < OR``.
             * 'greater': the true odds ratio is greater than ``OR``.  The
-              ``high`` end of the confidence interval is ``np.inf``, and there
+              ``high`` end of the confidence interval is ``mx.inf``, and there
               is evidence against the null hypothesis at the chosen
               `confidence_level` if ``low > OR``.
 
@@ -294,7 +294,7 @@ class OddsRatioResult:
         if 0 in table.sum(axis=0) or 0 in table.sum(axis=1):
             # If both values in a row or column are zero, the p-value is 1,
             # the odds ratio is NaN and the confidence interval is (0, inf).
-            ci = (0, np.inf)
+            ci = (0, mx.inf)
         else:
             ci = _conditional_oddsratio_ci(table,
                                            confidence_level=confidence_level,
@@ -313,7 +313,7 @@ class OddsRatioResult:
         if 0 in table.sum(axis=0) or 0 in table.sum(axis=1):
             # If both values in a row or column are zero, the p-value is 1,
             # the odds ratio is NaN and the confidence interval is (0, inf).
-            ci = (0, np.inf)
+            ci = (0, mx.inf)
         else:
             ci = _sample_odds_ratio_ci(table,
                                        confidence_level=confidence_level,
@@ -437,24 +437,24 @@ def odds_ratio(table, *, kind='conditional'):
     if kind not in ['conditional', 'sample']:
         raise ValueError("`kind` must be 'conditional' or 'sample'.")
 
-    c = np.asarray(table)
+    c = mx.array(table)
 
     if c.shape != (2, 2):
         raise ValueError(f"Invalid shape {c.shape}. The input `table` must be "
                          "of shape (2, 2).")
 
-    if not np.issubdtype(c.dtype, np.integer):
+    if not mx.issubdtype(c.dtype, mx.integer):
         raise ValueError("`table` must be an array of integers, but got "
                          f"type {c.dtype}")
-    c = c.astype(np.int64)
+    c = c.astype(mx.int64)
 
-    if np.any(c < 0):
+    if mx.any(c < 0):
         raise ValueError("All values in `table` must be nonnegative.")
 
     if 0 in c.sum(axis=0) or 0 in c.sum(axis=1):
         # If both values in a row or column are zero, the p-value is NaN and
         # the odds ratio is NaN.
-        result = OddsRatioResult(_table=c, _kind=kind, statistic=np.nan)
+        result = OddsRatioResult(_table=c, _kind=kind, statistic=mx.nan)
         return result
 
     if kind == 'sample':

@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy.integrate import ode
 from .common import validate_tol, validate_first_step, warn_extraneous
 from .base import OdeSolver, DenseOutput
@@ -16,7 +16,7 @@ class LSODA(OdeSolver):
     fun : callable
         Right-hand side of the system: the time derivative of the state ``y``
         at time ``t``. The calling signature is ``fun(t, y)``, where ``t`` is a
-        scalar and ``y`` is an ndarray with ``len(y) = len(y0)``. ``fun`` must
+        scalar and ``y`` is an array with ``len(y) = len(y0)``. ``fun`` must
         return an array of the same shape as ``y``. See `vectorized` for more
         information.
     t0 : float
@@ -33,7 +33,7 @@ class LSODA(OdeSolver):
         Minimum allowed step size. Default is 0.0, i.e., the step size is not
         bounded and determined solely by the solver.
     max_step : float, optional
-        Maximum allowed step size. Default is np.inf, i.e., the step size is not
+        Maximum allowed step size. Default is mx.inf, i.e., the step size is not
         bounded and determined solely by the solver.
     rtol, atol : float and array_like, optional
         Relative and absolute tolerances. The solver keeps the local error
@@ -96,7 +96,7 @@ class LSODA(OdeSolver):
         Integration direction: +1 or -1.
     t : float
         Current time.
-    y : ndarray
+    y : array
         Current state.
     t_old : float
         Previous time. None if no steps were made yet.
@@ -116,7 +116,7 @@ class LSODA(OdeSolver):
            1983.
     """
     def __init__(self, fun, t0, y0, t_bound, first_step=None, min_step=0.0,
-                 max_step=np.inf, rtol=1e-3, atol=1e-6, jac=None, lband=None,
+                 max_step=mx.inf, rtol=1e-3, atol=1e-6, jac=None, lband=None,
                  uband=None, vectorized=False, **extraneous):
         warn_extraneous(extraneous)
         super().__init__(fun, t0, y0, t_bound, vectorized)
@@ -128,7 +128,7 @@ class LSODA(OdeSolver):
 
         first_step *= self.direction
 
-        if max_step == np.inf:
+        if max_step == mx.inf:
             max_step = 0  # LSODA value for infinity.
         elif max_step <= 0:
             raise ValueError("`max_step` must be positive.")
@@ -195,7 +195,7 @@ class LSODA(OdeSolver):
         # Nordsieck array in state needed for next iteration. We want
         # the entries up to order for the last successful step so use the 
         # following.
-        yh = np.reshape(rwork[20:20 + (order + 1) * self.n],
+        yh = mx.reshape(rwork[20:20 + (order + 1) * self.n],
                         (self.n, order + 1), order='F').copy()
         if iwork[14] < order:
             # If the order is set to decrease then the final column of yh
@@ -213,7 +213,7 @@ class LsodaDenseOutput(DenseOutput):
         super().__init__(t_old, t)
         self.h = h
         self.yh = yh
-        self.p = np.arange(order + 1)
+        self.p = mx.arange(order + 1)
 
     def _call_impl(self, t):
         if t.ndim == 0:
@@ -221,4 +221,4 @@ class LsodaDenseOutput(DenseOutput):
         else:
             x = ((t - self.t) / self.h) ** self.p[:, None]
 
-        return np.dot(self.yh, x)
+        return mx.dot(self.yh, x)

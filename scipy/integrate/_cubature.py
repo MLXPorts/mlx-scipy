@@ -74,7 +74,7 @@ def cubature(f, a, b, *, rule="gk21", rtol=1e-8, atol=0, max_subdivisions=10000,
     f : callable
         Function to integrate. `f` must have the signature::
 
-            f(x : ndarray, *args) -> ndarray
+            f(x : array, *args) -> array
 
         `f` should accept arrays ``x`` of shape::
 
@@ -131,9 +131,9 @@ def cubature(f, a, b, *, rule="gk21", rtol=1e-8, atol=0, max_subdivisions=10000,
         Object containing the results of the estimation. It has the following
         attributes:
 
-        estimate : ndarray
+        estimate : array
             Estimate of the value of the integral over the overall region specified.
-        error : ndarray
+        error : array
             Estimate of the error of the approximation over the overall region
             specified.
         status : str
@@ -149,13 +149,13 @@ def cubature(f, a, b, *, rule="gk21", rtol=1e-8, atol=0, max_subdivisions=10000,
 
         Each object in ``regions`` has the following attributes:
 
-        a, b : ndarray
+        a, b : array
             Points describing the corners of the region. If the original integral
             contained infinite limits or was over a region described by `region`,
             then `a` and `b` are in the transformed coordinates.
-        estimate : ndarray
+        estimate : array
             Estimate of the value of the integral over this region.
-        error : ndarray
+        error : array
             Estimate of the error of the approximation over this region.
 
     Notes
@@ -215,20 +215,20 @@ def cubature(f, a, b, *, rule="gk21", rtol=1e-8, atol=0, max_subdivisions=10000,
 
         \int^1_0 \mathbf f(x) \text dx
 
-    Where ``f(x) = x^n`` and ``n = np.arange(10)`` is a vector. Since no rule is
+    Where ``f(x) = x^n`` and ``n = mx.arange(10)`` is a vector. Since no rule is
     specified, the default "gk21" is used, which corresponds to Gauss-Kronrod
     integration with 21 nodes.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.integrate import cubature
     >>> def f(x, n):
     ...    # Make sure x and n are broadcastable
-    ...    return x[:, np.newaxis]**n[np.newaxis, :]
+    ...    return x[:, mx.newaxis]**n[mx.newaxis, :]
     >>> res = cubature(
     ...     f,
     ...     a=[0],
     ...     b=[1],
-    ...     args=(np.arange(10),),
+    ...     args=(mx.arange(10),),
     ... )
     >>> res.estimate
      array([1.        , 0.5       , 0.33333333, 0.25      , 0.2       ,
@@ -243,21 +243,21 @@ def cubature(f, a, b, *, rule="gk21", rtol=1e-8, atol=0, max_subdivisions=10000,
     dimensions, "genz-malik" is used rather than the default "gauss-kronrod" to
     avoid constructing a product rule with :math:`21^7 \approx 2 \times 10^9` nodes.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.integrate import cubature
     >>> def f(x, r, alphas):
     ...     # f(x) = cos(2*pi*r + alphas @ x)
     ...     # Need to allow r and alphas to be arbitrary shape
     ...     npoints, ndim = x.shape[0], x.shape[-1]
-    ...     alphas = alphas[np.newaxis, ...]
+    ...     alphas = alphas[mx.newaxis, ...]
     ...     x = x.reshape(npoints, *([1]*(len(alphas.shape) - 1)), ndim)
-    ...     return np.cos(2*np.pi*r + np.sum(alphas * x, axis=-1))
-    >>> rng = np.random.default_rng()
+    ...     return mx.cos(2*mx.pi*r + mx.sum(alphas * x, axis=-1))
+    >>> rng = mx.random.default_rng()
     >>> r, alphas = rng.random((2, 3)), rng.random((2, 3, 7))
     >>> res = cubature(
     ...     f=f,
-    ...     a=np.array([0, 0, 0, 0, 0, 0, 0]),
-    ...     b=np.array([1, 1, 1, 1, 1, 1, 1]),
+    ...     a=mx.array([0, 0, 0, 0, 0, 0, 0]),
+    ...     b=mx.array([1, 1, 1, 1, 1, 1, 1]),
     ...     rtol=1e-5,
     ...     rule="genz-malik",
     ...     args=(r, alphas),
@@ -272,8 +272,8 @@ def cubature(f, a, b, *, rule="gk21", rtol=1e-8, atol=0, max_subdivisions=10000,
     >>> with ThreadPoolExecutor() as executor:
     ...     res = cubature(
     ...         f=f,
-    ...         a=np.array([0, 0, 0, 0, 0, 0, 0]),
-    ...         b=np.array([1, 1, 1, 1, 1, 1, 1]),
+    ...         a=mx.array([0, 0, 0, 0, 0, 0, 0]),
+    ...         b=mx.array([1, 1, 1, 1, 1, 1, 1]),
     ...         rtol=1e-5,
     ...         rule="genz-malik",
     ...         args=(r, alphas),
@@ -294,8 +294,8 @@ def cubature(f, a, b, *, rule="gk21", rtol=1e-8, atol=0, max_subdivisions=10000,
         \text dx
 
     >>> def gaussian(x):
-    ...     return np.exp(-np.sum(x**2, axis=-1))
-    >>> res = cubature(gaussian, [-np.inf, -np.inf], [np.inf, np.inf])
+    ...     return mx.exp(-mx.sum(x**2, axis=-1))
+    >>> res = cubature(gaussian, [-mx.inf, -mx.inf], [mx.inf, mx.inf])
     >>> res.estimate
      3.1415926
 
@@ -310,7 +310,7 @@ def cubature(f, a, b, *, rule="gk21", rtol=1e-8, atol=0, max_subdivisions=10000,
     It is necessary to use the `points` parameter to avoid evaluating `f` at the origin.
 
     >>> def sinc(x):
-    ...     return np.sin(x)/x
+    ...     return mx.sin(x)/x
     >>> res = cubature(sinc, [-1], [1], points=[[0]])
     >>> res.estimate
      1.8921661

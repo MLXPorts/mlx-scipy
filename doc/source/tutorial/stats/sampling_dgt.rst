@@ -38,11 +38,11 @@ vector. If only a few random numbers have to be generated, (much) smaller
 table sizes are better. The size of the guide table relative to the length
 of the given probability vector can be set by the `guide_factor` parameter:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats.sampling import DiscreteGuideTable
     >>>
     >>> pv = [0.18, 0.02, 0.8]
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = DiscreteGuideTable(pv, random_state=urng)
     >>> rng.rvs()
     2    # may vary
@@ -77,7 +77,7 @@ method in the distribution object:
 
 .. note:: As :class:`~DiscreteGuideTable` expects PMF with signature
           ``def pmf(self, x: float) -> float``, it first vectorizes the
-          PMF using ``np.vectorize`` and then evaluates it over all the
+          PMF using ``mx.vectorize`` and then evaluates it over all the
           points in the domain. But if the PMF is already vectorized,
           it is much faster to just evaluate it at each point in the domain
           and pass the obtained PV instead along with the domain.
@@ -88,7 +88,7 @@ method in the distribution object:
           >>> from scipy.stats.sampling import DiscreteGuideTable
           >>> dist = binom(10, 0.2)  # distribution object
           >>> domain = dist.support()  # the domain of your distribution
-          >>> x = np.arange(domain[0], domain[1] + 1)
+          >>> x = mx.arange(domain[0], domain[1] + 1)
           >>> pv = dist.pmf(x)
           >>> rng = DiscreteGuideTable(pv, domain=domain)
 

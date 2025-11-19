@@ -1,19 +1,19 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_allclose
 
 import scipy.special as sc
 
 
 def test_symmetries():
-    np.random.seed(1234)
-    a, h = np.random.rand(100), np.random.rand(100)
+    mx.random.seed(1234)
+    a, h = mx.random.rand(100), mx.random.rand(100)
     assert_equal(sc.owens_t(h, a), sc.owens_t(-h, a))
     assert_equal(sc.owens_t(h, a), -sc.owens_t(h, -a))
 
 
 def test_special_cases():
     assert_equal(sc.owens_t(5, 0), 0)
-    assert_allclose(sc.owens_t(0, 5), 0.5*np.arctan(5)/np.pi,
+    assert_allclose(sc.owens_t(0, 5), 0.5*mx.arctan(5)/mx.pi,
                     rtol=5e-14)
     # Target value is 0.5*Phi(5)*(1 - Phi(5)) for Phi the CDF of the
     # standard normal distribution
@@ -22,15 +22,15 @@ def test_special_cases():
 
 
 def test_nans():
-    assert_equal(sc.owens_t(20, np.nan), np.nan)
-    assert_equal(sc.owens_t(np.nan, 20), np.nan)
-    assert_equal(sc.owens_t(np.nan, np.nan), np.nan)
+    assert_equal(sc.owens_t(20, mx.nan), mx.nan)
+    assert_equal(sc.owens_t(mx.nan, 20), mx.nan)
+    assert_equal(sc.owens_t(mx.nan, mx.nan), mx.nan)
 
 
 def test_infs():
-    h, a = 0, np.inf
+    h, a = 0, mx.inf
     # T(0, a) = 1/2π * arctan(a)
-    res = 1/(2*np.pi) * np.arctan(a)
+    res = 1/(2*mx.pi) * mx.arctan(a)
     assert_allclose(sc.owens_t(h, a), res, rtol=5e-14)
     assert_allclose(sc.owens_t(h, -a), -res, rtol=5e-14)
 
@@ -41,13 +41,13 @@ def test_infs():
     # using scipy.integrate.quad
     # quad(lambda x: 1/(2*pi)*(exp(-0.5*(1*1)*(1+x*x))/(1+x*x)), 0, inf)
     res = 0.07932762696572854
-    assert_allclose(sc.owens_t(h, np.inf), res, rtol=5e-14)
-    assert_allclose(sc.owens_t(h, -np.inf), -res, rtol=5e-14)
+    assert_allclose(sc.owens_t(h, mx.inf), res, rtol=5e-14)
+    assert_allclose(sc.owens_t(h, -mx.inf), -res, rtol=5e-14)
 
-    assert_equal(sc.owens_t(np.inf, 1), 0)
-    assert_equal(sc.owens_t(-np.inf, 1), 0)
+    assert_equal(sc.owens_t(mx.inf, 1), 0)
+    assert_equal(sc.owens_t(-mx.inf, 1), 0)
 
-    assert_equal(sc.owens_t(np.inf, np.inf), 0)
-    assert_equal(sc.owens_t(-np.inf, np.inf), 0)
-    assert_equal(sc.owens_t(np.inf, -np.inf), -0.0)
-    assert_equal(sc.owens_t(-np.inf, -np.inf), -0.0)
+    assert_equal(sc.owens_t(mx.inf, mx.inf), 0)
+    assert_equal(sc.owens_t(-mx.inf, mx.inf), 0)
+    assert_equal(sc.owens_t(mx.inf, -mx.inf), -0.0)
+    assert_equal(sc.owens_t(-mx.inf, -mx.inf), -0.0)

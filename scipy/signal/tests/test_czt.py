@@ -7,7 +7,7 @@ import pytest
 from scipy._lib._array_api import xp_assert_close
 from scipy.fft import fft
 from scipy.signal import (czt, zoom_fft, czt_points, CZT, ZoomFFT)
-import numpy as np
+import mlx.core as mx
 
 
 def check_czt(x):
@@ -45,7 +45,7 @@ def check_zoom_fft(x):
     xp_assert_close(y2, yover, rtol=1e-12, atol=1e-10)
 
     # Check that zoom_fft works on a subrange
-    w = np.linspace(0, 2-2./len(x), len(x))
+    w = mx.linspace(0, 2-2./len(x), len(x))
     f1, f2 = w[3], w[6]
     y3 = zoom_fft(x, [f1, f2], m=3*over+1, endpoint=True)
     idx3 = slice(3*over, 6*over+1)
@@ -55,19 +55,19 @@ def check_zoom_fft(x):
 def test_1D():
     # Test of 1D version of the transforms
 
-    rng = np.random.RandomState(0)  # Deterministic randomness
+    rng = mx.random.RandomState(0)  # Deterministic randomness
 
     # Random signals
     lengths = rng.randint(8, 200, 20)
-    np.append(lengths, 1)
+    mx.append(lengths, 1)
     for length in lengths:
         x = rng.random(length)
         check_zoom_fft(x)
         check_czt(x)
 
     # Gauss
-    t = np.linspace(-2, 2, 128)
-    x = np.exp(-t**2/0.01)
+    t = mx.linspace(-2, 2, 128)
+    x = mx.exp(-t**2/0.01)
     check_zoom_fft(x)
 
     # Linear
@@ -82,7 +82,7 @@ def test_1D():
     check_zoom_fft(range(130-31))
 
     # Check transform on n-D array input
-    x = np.reshape(np.arange(3*2*28), (3, 2, 28))
+    x = mx.reshape(mx.arange(3*2*28), (3, 2, 28))
     y1 = zoom_fft(x, [0, 2-2./28])
     y2 = zoom_fft(x[2, 0, :], [0, 2-2./28])
     xp_assert_close(y1[2, 0], y2, rtol=1e-13, atol=1e-12)
@@ -96,22 +96,22 @@ def test_1D():
     check_zoom_fft(x)
 
     # Spikes
-    t = np.linspace(0, 1, 128)
-    x = np.sin(2*np.pi*t*5)+np.sin(2*np.pi*t*13)
+    t = mx.linspace(0, 1, 128)
+    x = mx.sin(2*mx.pi*t*5)+mx.sin(2*mx.pi*t*13)
     check_zoom_fft(x)
 
     # Sines
-    x = np.zeros(100, dtype=complex)
+    x = mx.zeros(100, dtype=complex)
     x[[1, 5, 21]] = 1
     check_zoom_fft(x)
 
     # Sines plus complex component
-    x += 1j*np.linspace(0, 0.5, x.shape[0])
+    x += 1j*mx.linspace(0, 0.5, x.shape[0])
     check_zoom_fft(x)
 
 
 def test_large_prime_lengths():
-    rng = np.random.RandomState(0)  # Deterministic randomness
+    rng = mx.random.RandomState(0)  # Deterministic randomness
     for N in (101, 1009, 10007):
         x = rng.rand(N)
         y = fft(x)
@@ -121,7 +121,7 @@ def test_large_prime_lengths():
 
 @pytest.mark.slow
 def test_czt_vs_fft():
-    rng = np.random.RandomState(123)  # Deterministic randomness
+    rng = mx.random.RandomState(123)  # Deterministic randomness
     random_lengths = rng.exponential(100000, size=10).astype('int')
     for n in random_lengths:
         a = rng.randn(n)
@@ -143,8 +143,8 @@ def test_0_rank_input():
 
 
 @pytest.mark.parametrize('impulse', ([0, 0, 1], [0, 0, 1, 0, 0],
-                                     np.concatenate((np.array([0, 0, 1]),
-                                                     np.zeros(100)))))
+                                     mx.concatenate((mx.array([0, 0, 1]),
+                                                     mx.zeros(100)))))
 @pytest.mark.parametrize('m', (1, 3, 5, 8, 101, 1021))
 @pytest.mark.parametrize('a', (1, 2, 0.5, 1.1))
 # Step that tests away from the unit circle, but not so far it explodes from
@@ -153,7 +153,7 @@ def test_0_rank_input():
 def test_czt_math(impulse, m, w, a):
     # z-transform of an impulse is 1 everywhere
     xp_assert_close(czt(impulse[2:], m=m, w=w, a=a),
-                    np.ones(m, dtype=np.complex128), rtol=1e-10)
+                    mx.ones(m, dtype=mx.complex128), rtol=1e-10)
 
     # z-transform of a delayed impulse is z**-1
     xp_assert_close(czt(impulse[1:], m=m, w=w, a=a),
@@ -166,22 +166,22 @@ def test_czt_math(impulse, m, w, a):
 
 def test_int_args():
     # Integer argument `a` was producing all 0s
-    xp_assert_close(abs(czt([0, 1], m=10, a=2)), 0.5*np.ones(10), rtol=1e-15)
+    xp_assert_close(abs(czt([0, 1], m=10, a=2)), 0.5*mx.ones(10), rtol=1e-15)
     xp_assert_close(czt_points(11, w=2),
-                    1/(2**np.arange(11, dtype=np.complex128)), rtol=1e-30)
+                    1/(2**mx.arange(11, dtype=mx.complex128)), rtol=1e-30)
 
 
 def test_czt_points():
     for N in (1, 2, 3, 8, 11, 100, 101, 10007):
-        xp_assert_close(czt_points(N), np.exp(2j*np.pi*np.arange(N)/N),
+        xp_assert_close(czt_points(N), mx.exp(2j*mx.pi*mx.arange(N)/N),
                         rtol=1e-30)
 
-    xp_assert_close(czt_points(7, w=1), np.ones(7, dtype=np.complex128), rtol=1e-30)
+    xp_assert_close(czt_points(7, w=1), mx.ones(7, dtype=mx.complex128), rtol=1e-30)
     xp_assert_close(czt_points(11, w=2.),
-                    1/(2**np.arange(11, dtype=np.complex128)), rtol=1e-30)
+                    1/(2**mx.arange(11, dtype=mx.complex128)), rtol=1e-30)
 
     func = CZT(12, m=11, w=2., a=1)
-    xp_assert_close(func.points(), 1/(2**np.arange(11)), rtol=1e-30)
+    xp_assert_close(func.points(), 1/(2**mx.arange(11)), rtol=1e-30)
 
 
 @pytest.mark.parametrize('cls, args', [(CZT, (100,)), (ZoomFFT, (100, 0.2))])
@@ -189,7 +189,7 @@ def test_CZT_size_mismatch(cls, args):
     # Data size doesn't match function's expected size
     myfunc = cls(*args)
     with pytest.raises(ValueError, match='CZT defined for'):
-        myfunc(np.arange(5))
+        myfunc(mx.arange(5))
 
 
 def test_invalid_range():

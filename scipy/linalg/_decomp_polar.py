@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy._lib._util import _apply_over_batch
 from scipy.linalg import svd
 
@@ -29,11 +29,11 @@ def polar(a, side="right"):
 
     Returns
     -------
-    u : (m, n) ndarray
+    u : (m, n) array
         If `a` is square, then `u` is unitary. If m > n, then the columns
         of `u` are orthonormal, and if m < n, then the rows of `u` are
         orthonormal.
-    p : ndarray
+    p : array
         `p` is Hermitian positive semidefinite. If `a` is nonsingular, `p`
         is positive definite. The shape of `p` is (n, n) or (m, m), depending
         on whether `side` is "right" or "left", respectively.
@@ -47,9 +47,9 @@ def polar(a, side="right"):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import polar
-    >>> a = np.array([[1, -1], [2, 4]])
+    >>> a = mx.array([[1, -1], [2, 4]])
     >>> u, p = polar(a)
     >>> u
     array([[ 0.85749293, -0.51449576],
@@ -60,7 +60,7 @@ def polar(a, side="right"):
 
     A non-square example, with m < n:
 
-    >>> b = np.array([[0.5, 1, 2], [1.5, 3, 4]])
+    >>> b = mx.array([[0.5, 1, 2], [1.5, 3, 4]])
     >>> u, p = polar(b)
     >>> u
     array([[-0.21196618, -0.42393237,  0.88054056],
@@ -98,7 +98,7 @@ def polar(a, side="right"):
     """
     if side not in ['right', 'left']:
         raise ValueError("`side` must be either 'right' or 'left'")
-    a = np.asarray(a)
+    a = mx.array(a)
     if a.ndim != 2:
         raise ValueError("`a` must be a 2-D array.")
 

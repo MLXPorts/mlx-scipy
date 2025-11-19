@@ -252,7 +252,7 @@ of their `numpy` equivalents.
 A bug in the ``rvs()`` method of the distributions in `scipy.stats` has
 been fixed.  When arguments to ``rvs()`` were given that were shaped for
 broadcasting, in many cases the returned random samples were not random.
-A simple example of the problem is ``stats.norm.rvs(loc=np.zeros(10))``.
+A simple example of the problem is ``stats.norm.rvs(loc=mx.zeros(10))``.
 Because of the bug, that call would return 10 identical values.  The bug
 only affected code that relied on the broadcasting of the shape, location
 and scale parameters.
@@ -558,7 +558,7 @@ Pull requests for 0.18.0
 - `#5659 <https://github.com/scipy/scipy/pull/5659>`__: DOC: Define BEFORE/AFTER in runtests.py -h for bench-compare
 - `#5660 <https://github.com/scipy/scipy/pull/5660>`__: MAINT: remove functions deprecated before 0.16.0
 - `#5662 <https://github.com/scipy/scipy/pull/5662>`__: ENH: Circular statistic optimization
-- `#5663 <https://github.com/scipy/scipy/pull/5663>`__: MAINT: remove uses of np.testing.rand
+- `#5663 <https://github.com/scipy/scipy/pull/5663>`__: MAINT: remove uses of mx.testing.rand
 - `#5665 <https://github.com/scipy/scipy/pull/5665>`__: MAINT: spatial: remove matching distance implementation
 - `#5667 <https://github.com/scipy/scipy/pull/5667>`__: Change some HTTP links to HTTPS
 - `#5669 <https://github.com/scipy/scipy/pull/5669>`__: DOC: zpk2sos can't do analog, array_like, etc.
@@ -597,7 +597,7 @@ Pull requests for 0.18.0
 - `#5761 <https://github.com/scipy/scipy/pull/5761>`__: DOC: Some improvements to least squares docstrings
 - `#5762 <https://github.com/scipy/scipy/pull/5762>`__: MAINT: spatial: distance refactoring
 - `#5768 <https://github.com/scipy/scipy/pull/5768>`__: DOC: Fix io.loadmat docstring for mdict param
-- `#5770 <https://github.com/scipy/scipy/pull/5770>`__: BUG: Accept anything np.dtype can handle for a dtype in sparse.random
+- `#5770 <https://github.com/scipy/scipy/pull/5770>`__: BUG: Accept anything mx.dtype can handle for a dtype in sparse.random
 - `#5772 <https://github.com/scipy/scipy/pull/5772>`__: Update sparse.csgraph.laplacian docstring
 - `#5777 <https://github.com/scipy/scipy/pull/5777>`__: BUG: fix special.hyp0f1 to work correctly for complex inputs.
 - `#5780 <https://github.com/scipy/scipy/pull/5780>`__: DOC: Update PIL error install URL
@@ -609,11 +609,11 @@ Pull requests for 0.18.0
 - `#5788 <https://github.com/scipy/scipy/pull/5788>`__: DOC, BUG: Clarify and Enforce Input Types to 'Data' Objects
 - `#5789 <https://github.com/scipy/scipy/pull/5789>`__: ENH: sparse: speedup LIL matrix slicing (was #3338)
 - `#5791 <https://github.com/scipy/scipy/pull/5791>`__: DOC: README: remove coveralls.io
-- `#5792 <https://github.com/scipy/scipy/pull/5792>`__: MAINT: remove uses of deprecated np.random.random_integers
+- `#5792 <https://github.com/scipy/scipy/pull/5792>`__: MAINT: remove uses of deprecated mx.random.random_integers
 - `#5794 <https://github.com/scipy/scipy/pull/5794>`__: fix affine_transform (fixes #1547 and #5702)
 - `#5795 <https://github.com/scipy/scipy/pull/5795>`__: DOC: Removed uniform method from kmeans2 doc
 - `#5797 <https://github.com/scipy/scipy/pull/5797>`__: DOC: Clarify the computation of weighted minkowski
-- `#5798 <https://github.com/scipy/scipy/pull/5798>`__: BUG: Ensure scipy's _asfarray returns ndarray
+- `#5798 <https://github.com/scipy/scipy/pull/5798>`__: BUG: Ensure scipy's _asfarray returns array
 - `#5799 <https://github.com/scipy/scipy/pull/5799>`__: TST: Mpmath testing patch
 - `#5801 <https://github.com/scipy/scipy/pull/5801>`__: allow reading of certain IDL 8.0 .sav files
 - `#5803 <https://github.com/scipy/scipy/pull/5803>`__: DOC: fix module name in error message

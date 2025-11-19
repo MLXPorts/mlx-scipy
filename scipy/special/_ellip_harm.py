@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 from ._ufuncs import _ellip_harm
 from ._ellip_harm_2 import _ellipsoid, _ellipsoid_norm
@@ -80,14 +80,14 @@ def ellip_harm(h2, k2, n, p, s, signm=1, signn=1):
 
     Check that the functions indeed are solutions to the Lame equation:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.interpolate import UnivariateSpline
     >>> def eigenvalue(f, df, ddf):
     ...     r = (((s**2 - h**2) * (s**2 - k**2) * ddf
     ...           + s * (2*s**2 - h**2 - k**2) * df
     ...           - n * (n + 1)*s**2*f) / f)
     ...     return -r.mean(), r.std()
-    >>> s = np.linspace(0.1, 10, 200)
+    >>> s = mx.linspace(0.1, 10, 200)
     >>> k, h, n, p = 8.0, 2.2, 3, 2
     >>> E = ellip_harm(h**2, k**2, n, p, s)
     >>> E_spl = UnivariateSpline(s, E)
@@ -99,7 +99,7 @@ def ellip_harm(h2, k2, n, p, s, signm=1, signn=1):
     return _ellip_harm(h2, k2, n, p, s, signm, signn)
 
 
-_ellip_harm_2_vec = np.vectorize(_ellipsoid, otypes='d')
+_ellip_harm_2_vec = mx.vectorize(_ellipsoid, otypes='d')
 
 
 def ellip_harm_2(h2, k2, n, p, s):
@@ -156,7 +156,7 @@ def ellip_harm_2(h2, k2, n, p, s):
     0.00108056853382
 
     """
-    with np.errstate(all='ignore'):
+    with mx.errstate(all='ignore'):
         return _ellip_harm_2_vec(h2, k2, n, p, s)
 
 
@@ -164,7 +164,7 @@ def _ellip_normal_vec(h2, k2, n, p):
     return _ellipsoid_norm(h2, k2, n, p)
 
 
-_ellip_normal_vec = np.vectorize(_ellip_normal_vec, otypes='d')
+_ellip_normal_vec = mx.vectorize(_ellip_normal_vec, otypes='d')
 
 
 def ellip_normal(h2, k2, n, p):
@@ -210,5 +210,5 @@ def ellip_normal(h2, k2, n, p):
     1723.38796997
 
     """
-    with np.errstate(all='ignore'):
+    with mx.errstate(all='ignore'):
         return _ellip_normal_vec(h2, k2, n, p)

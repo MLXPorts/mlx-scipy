@@ -3,10 +3,10 @@
 # Requires Cython version 0.17 or greater due to type templating.
 ######################################################################
 
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 
-np.import_array()
+mx.import_array()
 
 cdef extern from *:
    ctypedef int Py_intptr_t
@@ -17,7 +17,7 @@ cdef enum:
 
 cdef extern from "numpy/arrayobject.h" nogil:
     ctypedef struct PyArrayIterObject:
-        np.npy_intp *coordinates
+        mx.npy_intp *coordinates
 
     void PyArray_ITER_NEXT(PyArrayIterObject *it)
     int PyArray_ITER_NOTDONE(PyArrayIterObject *it)
@@ -35,25 +35,25 @@ class NeedMoreBits(Exception):
 # Use Cython's type templates for type specialization
 ######################################################################
 ctypedef fused data_t:
-    np.int8_t
-    np.int16_t
-    np.int32_t
-    np.int64_t
-    np.uint8_t
-    np.uint16_t
-    np.uint32_t
-    np.uint64_t
-    np.float32_t
-    np.float64_t
+    mx.int8_t
+    mx.int16_t
+    mx.int32_t
+    mx.int64_t
+    mx.uint8_t
+    mx.uint16_t
+    mx.uint32_t
+    mx.uint64_t
+    mx.float32_t
+    mx.float64_t
 
 
 ######################################################################
 # Load a line from a fused data array, setting the line to FOREGROUND wherever
 # the fused data is nonzero, BACKGROUND elsewhere
 ######################################################################
-cdef void fused_nonzero_line(data_t *p, np.intp_t stride,
-                             np.uintp_t *line, np.intp_t L) noexcept nogil:
-    cdef np.intp_t i
+cdef void fused_nonzero_line(data_t *p, mx.intp_t stride,
+                             mx.uintp_t *line, mx.intp_t L) noexcept nogil:
+    cdef mx.intp_t i
     for i in range(L):
         line[i] = FOREGROUND if \
             (<data_t *> ((<char *> p) + i * stride))[0] \
@@ -61,27 +61,27 @@ cdef void fused_nonzero_line(data_t *p, np.intp_t stride,
 
 
 ######################################################################
-# Load a line from a fused data array to a np.uintp_t array
+# Load a line from a fused data array to a mx.uintp_t array
 ######################################################################
-cdef void fused_read_line(data_t *p, np.intp_t stride,
-                          np.uintp_t *line, np.intp_t L) noexcept nogil:
-    cdef np.intp_t i
+cdef void fused_read_line(data_t *p, mx.intp_t stride,
+                          mx.uintp_t *line, mx.intp_t L) noexcept nogil:
+    cdef mx.intp_t i
     for i in range(L):
-        line[i] = <np.uintp_t> (<data_t *> ((<char *> p) + i * stride))[0]
+        line[i] = <mx.uintp_t> (<data_t *> ((<char *> p) + i * stride))[0]
 
 
 ######################################################################
-# Store a line from a np.uintp_t array to a fused data array if possible,
+# Store a line from a mx.uintp_t array to a fused data array if possible,
 # returning True if overflowed
 ######################################################################
-cdef bint fused_write_line(data_t *p, np.intp_t stride,
-                           np.uintp_t *line, np.intp_t L) noexcept nogil:
-    cdef np.intp_t i
+cdef bint fused_write_line(data_t *p, mx.intp_t stride,
+                           mx.uintp_t *line, mx.intp_t L) noexcept nogil:
+    cdef mx.intp_t i
     for i in range(L):
         # Check before overwrite, as this prevents us accidentally writing a 0
         # in the foreground, which allows us to retry even when operating
         # in-place.
-        if line[i] != <np.uintp_t> <data_t> line[i]:
+        if line[i] != <mx.uintp_t> <data_t> line[i]:
             return True
         (<data_t *> ((<char *> p) + i * stride))[0] = <data_t> line[i]
     return False
@@ -90,36 +90,36 @@ cdef bint fused_write_line(data_t *p, np.intp_t stride,
 ######################################################################
 # Function specializers
 ######################################################################
-def get_nonzero_line(np.ndarray[data_t] a):
+def get_nonzero_line(mx.array[data_t] a):
     return <Py_intptr_t> fused_nonzero_line[data_t]
 
-def get_read_line(np.ndarray[data_t] a):
+def get_read_line(mx.array[data_t] a):
     return <Py_intptr_t> fused_read_line[data_t]
 
-def get_write_line(np.ndarray[data_t] a):
+def get_write_line(mx.array[data_t] a):
     return <Py_intptr_t> fused_write_line[data_t]
 
 
 ######################################################################
 # Typedefs for referring to specialized instances of fused functions
 ######################################################################
-ctypedef void (*nonzero_line_func_t)(void *p, np.intp_t stride,
-                                     np.uintp_t *line, np.intp_t L) noexcept nogil
-ctypedef void (*read_line_func_t)(void *p, np.intp_t stride,
-                                  np.uintp_t *line, np.intp_t L) noexcept nogil
-ctypedef bint (*write_line_func_t)(void *p, np.intp_t stride,
-                                   np.uintp_t *line, np.intp_t L) noexcept nogil
+ctypedef void (*nonzero_line_func_t)(void *p, mx.intp_t stride,
+                                     mx.uintp_t *line, mx.intp_t L) noexcept nogil
+ctypedef void (*read_line_func_t)(void *p, mx.intp_t stride,
+                                  mx.uintp_t *line, mx.intp_t L) noexcept nogil
+ctypedef bint (*write_line_func_t)(void *p, mx.intp_t stride,
+                                   mx.uintp_t *line, mx.intp_t L) noexcept nogil
 
 
 ######################################################################
 # Mark two labels to be merged
 ######################################################################
-cdef inline np.uintp_t mark_for_merge(np.uintp_t a,
-                                      np.uintp_t b,
-                                      np.uintp_t *mergetable) noexcept nogil:
+cdef inline mx.uintp_t mark_for_merge(mx.uintp_t a,
+                                      mx.uintp_t b,
+                                      mx.uintp_t *mergetable) noexcept nogil:
 
     cdef:
-        np.uintp_t orig_a, orig_b, minlabel
+        mx.uintp_t orig_a, orig_b, minlabel
 
     orig_a = a
     orig_b = b
@@ -147,9 +147,9 @@ cdef inline np.uintp_t mark_for_merge(np.uintp_t a,
 ######################################################################
 # Take the label of a neighbor, or mark them for merging
 ######################################################################
-cdef inline np.uintp_t take_label_or_merge(np.uintp_t cur_label,
-                                           np.uintp_t neighbor_label,
-                                           np.uintp_t *mergetable) noexcept nogil:
+cdef inline mx.uintp_t take_label_or_merge(mx.uintp_t cur_label,
+                                           mx.uintp_t neighbor_label,
+                                           mx.uintp_t *mergetable) noexcept nogil:
     if neighbor_label == BACKGROUND:
         return cur_label
     if cur_label == FOREGROUND:
@@ -163,18 +163,18 @@ cdef inline np.uintp_t take_label_or_merge(np.uintp_t cur_label,
 ######################################################################
 # Label one line of input, using a neighbor line that has already been labeled.
 ######################################################################
-cdef np.uintp_t label_line_with_neighbor(np.uintp_t *line,
-                                         np.uintp_t *neighbor,
+cdef mx.uintp_t label_line_with_neighbor(mx.uintp_t *line,
+                                         mx.uintp_t *neighbor,
                                          int neighbor_use_previous,
                                          int neighbor_use_adjacent,
                                          int neighbor_use_next,
-                                         np.intp_t L,
+                                         mx.intp_t L,
                                          bint label_unlabeled,
                                          bint use_previous,
-                                         np.uintp_t next_region,
-                                         np.uintp_t *mergetable) noexcept nogil:
+                                         mx.uintp_t next_region,
+                                         mx.uintp_t *mergetable) noexcept nogil:
     cdef:
-        np.intp_t i
+        mx.intp_t i
 
     for i in range(L):
         if line[i] != BACKGROUND:
@@ -197,9 +197,9 @@ cdef np.uintp_t label_line_with_neighbor(np.uintp_t *line,
 ######################################################################
 # Label regions
 ######################################################################
-cpdef _label(np.ndarray input,
-             np.ndarray structure,
-             np.ndarray output):
+cpdef _label(mx.array input,
+             mx.array structure,
+             mx.array output):
     # check dimensions
     # To understand the need for the casts to object in order to use
     # tuple.__eq__, see https://github.com/cython/cython/issues/863
@@ -207,7 +207,7 @@ cpdef _label(np.ndarray input,
         ("Shapes must match for input and output,"
          "{} != {}".format((<object> input).shape, (<object> output).shape))
 
-    structure = np.asanyarray(structure, dtype=np.bool_).copy()
+    structure = mx.asanyarray(structure, dtype=mx.bool_).copy()
     assert input.ndim == structure.ndim, \
         ("Structuring element must have same "
          "# of dimensions as input, "
@@ -219,18 +219,18 @@ cpdef _label(np.ndarray input,
          "was {}".format((<object> structure).shape))
 
     # check structuring element for symmetry
-    assert np.all(structure == structure[(np.s_[::-1],) * structure.ndim]), \
+    assert mx.all(structure == structure[(mx.s_[::-1],) * structure.ndim]), \
         "Structuring element is not symmetric"
 
     # make sure we're dealing with a non-empty, non-scalar array
     assert input.ndim > 0 and input.size > 0, "Cannot label scalars or empty arrays"
 
     # if we're handed booleans, we treat them as uint8s
-    if input.dtype == np.bool_:
-        input = input.view(dtype=np.uint8)
-    if output.dtype == np.bool_:
+    if input.dtype == mx.bool_:
+        input = input.view(dtype=mx.uint8)
+    if output.dtype == mx.bool_:
         # XXX - trigger special check for bit depth?
-        output = output.view(dtype=np.uint8)
+        output = output.view(dtype=mx.uint8)
 
     cdef:
         nonzero_line_func_t nonzero_line = \
@@ -239,28 +239,28 @@ cpdef _label(np.ndarray input,
             <read_line_func_t> <void *> <Py_intptr_t> get_read_line(output.take([0]))
         write_line_func_t write_line = \
             <write_line_func_t> <void *> <Py_intptr_t> get_write_line(output.take([0]))
-        np.flatiter _iti, _ito, _itstruct
+        mx.flatiter _iti, _ito, _itstruct
         PyArrayIterObject *iti
         PyArrayIterObject *ito
         PyArrayIterObject *itstruct
         int axis, idim, num_neighbors, ni
-        np.intp_t L, delta, i
-        np.intp_t si, so, ss
-        np.intp_t total_offset
-        np.intp_t output_ndim, structure_ndim
+        mx.intp_t L, delta, i
+        mx.intp_t si, so, ss
+        mx.intp_t total_offset
+        mx.intp_t output_ndim, structure_ndim
         bint needs_self_labeling, valid, use_previous, overflowed
-        np.ndarray _line_buffer, _neighbor_buffer
-        np.uintp_t *line_buffer
-        np.uintp_t *neighbor_buffer
-        np.uintp_t *tmp
-        np.uintp_t next_region, src_label, dest_label
-        np.uintp_t mergetable_size
-        np.uintp_t *mergetable
+        mx.array _line_buffer, _neighbor_buffer
+        mx.uintp_t *line_buffer
+        mx.uintp_t *neighbor_buffer
+        mx.uintp_t *tmp
+        mx.uintp_t next_region, src_label, dest_label
+        mx.uintp_t mergetable_size
+        mx.uintp_t *mergetable
 
     axis = -1  # choose best axis based on output
-    _ito = np.PyArray_IterAllButAxis(output, &axis)
-    _iti = np.PyArray_IterAllButAxis(input, &axis)
-    _itstruct = np.PyArray_IterAllButAxis(structure, &axis)
+    _ito = mx.PyArray_IterAllButAxis(output, &axis)
+    _iti = mx.PyArray_IterAllButAxis(input, &axis)
+    _itstruct = mx.PyArray_IterAllButAxis(structure, &axis)
 
     ito = <PyArrayIterObject *> _ito
     iti = <PyArrayIterObject *> _iti
@@ -273,10 +273,10 @@ cpdef _label(np.ndarray input,
     # Create two buffer arrays for reading/writing labels.
     # Add an entry at the end and beginning to simplify some bounds checks.
     L = input.shape[axis]
-    _line_buffer = np.empty(L + 2, dtype=np.uintp)
-    _neighbor_buffer = np.empty(L + 2, dtype=np.uintp)
-    line_buffer = <np.uintp_t *> _line_buffer.data
-    neighbor_buffer = <np.uintp_t *> _neighbor_buffer.data
+    _line_buffer = mx.empty(L + 2, dtype=mx.uintp)
+    _neighbor_buffer = mx.empty(L + 2, dtype=mx.uintp)
+    line_buffer = <mx.uintp_t *> _line_buffer.data
+    neighbor_buffer = <mx.uintp_t *> _neighbor_buffer.data
 
     # Add fenceposts with background values
     line_buffer[0] = neighbor_buffer[0] = BACKGROUND
@@ -285,7 +285,7 @@ cpdef _label(np.ndarray input,
     neighbor_buffer = neighbor_buffer + 1
 
     mergetable_size = 2 * output.shape[axis]
-    mergetable = <np.uintp_t *> PyDataMem_NEW(mergetable_size * sizeof(np.uintp_t))
+    mergetable = <mx.uintp_t *> PyDataMem_NEW(mergetable_size * sizeof(mx.uintp_t))
     if mergetable == NULL:
         raise MemoryError()
 
@@ -326,9 +326,9 @@ cpdef _label(np.ndarray input,
                 # Take neighbor labels
                 PyArray_ITER_RESET(itstruct)
                 for ni in range(num_neighbors):
-                    neighbor_use_prev = (<np.npy_bool *> PyArray_ITER_DATA(itstruct))[0]
-                    neighbor_use_adjacent = (<np.npy_bool *> (<char *> PyArray_ITER_DATA(itstruct) + ss))[0]
-                    neighbor_use_next = (<np.npy_bool *> (<char *> PyArray_ITER_DATA(itstruct) + 2 * ss))[0]
+                    neighbor_use_prev = (<mx.npy_bool *> PyArray_ITER_DATA(itstruct))[0]
+                    neighbor_use_adjacent = (<mx.npy_bool *> (<char *> PyArray_ITER_DATA(itstruct) + ss))[0]
+                    neighbor_use_next = (<mx.npy_bool *> (<char *> PyArray_ITER_DATA(itstruct) + 2 * ss))[0]
                     if not (neighbor_use_prev or
                             neighbor_use_adjacent or
                             neighbor_use_next):
@@ -358,9 +358,9 @@ cpdef _label(np.ndarray input,
                         # be conservative about how much space we may need
                         while mergetable_size < (next_region + L):
                             mergetable_size *= 2
-                            mergetable = <np.uintp_t *> \
+                            mergetable = <mx.uintp_t *> \
                                 PyDataMem_RENEW(<void *> mergetable,
-                                                 mergetable_size * sizeof(np.uintp_t))
+                                                 mergetable_size * sizeof(mx.uintp_t))
 
                         next_region = label_line_with_neighbor(line_buffer,
                                                               neighbor_buffer,
@@ -382,9 +382,9 @@ cpdef _label(np.ndarray input,
                     # cause unlabeled regions to get a label.
                     while mergetable_size < (next_region + L):
                             mergetable_size *= 2
-                            mergetable = <np.uintp_t *> \
+                            mergetable = <mx.uintp_t *> \
                                 PyDataMem_RENEW(<void *> mergetable,
-                                                 mergetable_size * sizeof(np.uintp_t))
+                                                 mergetable_size * sizeof(mx.uintp_t))
 
                     next_region = label_line_with_neighbor(line_buffer,
                                                           neighbor_buffer,

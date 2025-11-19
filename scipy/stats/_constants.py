@@ -2,26 +2,26 @@
 Statistics-related constants.
 
 """
-import numpy as np
+import mlx.core as mx
 
 
 # The smallest representable positive number such that 1.0 + _EPS != 1.0.
-_EPS = np.finfo(float).eps
+_EPS = mx.finfo(float).eps
 
 # The largest [in magnitude] usable floating value.
-_XMAX = np.finfo(float).max
+_XMAX = mx.finfo(float).max
 
 # The log of the largest usable floating value; useful for knowing
 # when exp(something) will overflow
-_LOGXMAX = np.log(_XMAX)
+_LOGXMAX = mx.log(_XMAX)
 
 # The smallest [in magnitude] usable (i.e. not subnormal) double precision
 # floating value.
-_XMIN = np.finfo(float).tiny
+_XMIN = mx.finfo(float).tiny
 
 # The log of the smallest [in magnitude] usable (i.e not subnormal)
 # double precision floating value.
-_LOGXMIN = np.log(_XMIN)
+_LOGXMIN = mx.log(_XMIN)
 
 # -special.psi(1)
 _EULER = 0.577215664901532860606512090082402431042

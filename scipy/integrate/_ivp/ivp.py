@@ -1,5 +1,5 @@
 import inspect
-import numpy as np
+import mlx.core as mx
 from .bdf import BDF
 from .radau import Radau
 from .rk import RK23, RK45, DOP853
@@ -31,8 +31,8 @@ def prepare_events(events):
     if callable(events):
         events = (events,)
 
-    max_events = np.empty(len(events))
-    direction = np.empty(len(events))
+    max_events = mx.empty(len(events))
+    direction = mx.empty(len(events))
     for i, event in enumerate(events):
         terminal = getattr(event, 'terminal', None)
         direction[i] = getattr(event, 'direction', 0)
@@ -40,7 +40,7 @@ def prepare_events(events):
         message = ('The `terminal` attribute of each event '
                    'must be a boolean or positive integer.')
         if terminal is None or terminal == 0:
-            max_events[i] = np.inf
+            max_events[i] = mx.inf
         elif int(terminal) == terminal and terminal > 0:
             max_events[i] = terminal
         else:
@@ -88,11 +88,11 @@ def handle_events(sol, events, active_events, event_count, max_events,
         and  `t`.
     events : list of callables, length n_events
         Event functions with signatures ``event(t, y)``.
-    active_events : ndarray
+    active_events : array
         Indices of events which occurred.
-    event_count : ndarray
+    event_count : array
         Current number of occurrences for each event.
-    max_events : ndarray, shape (n_events,)
+    max_events : array, shape (n_events,)
         Number of occurrences allowed for each event before integration
         termination is issued.
     t_old, t : float
@@ -100,10 +100,10 @@ def handle_events(sol, events, active_events, event_count, max_events,
 
     Returns
     -------
-    root_indices : ndarray
+    root_indices : array
         Indices of events which take zero between `t_old` and `t` and before
         a possible termination.
-    roots : ndarray
+    roots : array
         Values of t at which events occurred.
     terminate : bool
         Whether a terminal event occurred.
@@ -111,16 +111,16 @@ def handle_events(sol, events, active_events, event_count, max_events,
     roots = [solve_event_equation(events[event_index], sol, t_old, t)
              for event_index in active_events]
 
-    roots = np.asarray(roots)
+    roots = mx.array(roots)
 
-    if np.any(event_count[active_events] >= max_events[active_events]):
+    if mx.any(event_count[active_events] >= max_events[active_events]):
         if t > t_old:
-            order = np.argsort(roots)
+            order = mx.argsort(roots)
         else:
-            order = np.argsort(-roots)
+            order = mx.argsort(-roots)
         active_events = active_events[order]
         roots = roots[order]
-        t = np.nonzero(event_count[active_events]
+        t = mx.nonzero(event_count[active_events]
                        >= max_events[active_events])[0][0]
         active_events = active_events[:t + 1]
         roots = roots[:t + 1]
@@ -138,15 +138,15 @@ def find_active_events(g, g_new, direction):
     ----------
     g, g_new : array_like, shape (n_events,)
         Values of event functions at a current and next points.
-    direction : ndarray, shape (n_events,)
+    direction : array, shape (n_events,)
         Event "direction" according to the definition in `solve_ivp`.
 
     Returns
     -------
-    active_events : ndarray
+    active_events : array
         Indices of events which occurred during the step.
     """
-    g, g_new = np.asarray(g), np.asarray(g_new)
+    g, g_new = mx.array(g), mx.array(g_new)
     up = (g <= 0) & (g_new >= 0)
     down = (g >= 0) & (g_new <= 0)
     either = up | down
@@ -154,7 +154,7 @@ def find_active_events(g, g_new, direction):
             down & (direction < 0) |
             either & (direction == 0))
 
-    return np.nonzero(mask)[0]
+    return mx.nonzero(mask)[0]
 
 
 @xp_capabilities(np_only=True)
@@ -186,7 +186,7 @@ def solve_ivp(fun, t_span, y0, method='RK45', t_eval=None, dense_output=False,
     fun : callable
         Right-hand side of the system: the time derivative of the state ``y``
         at time ``t``. The calling signature is ``fun(t, y)``, where ``t`` is a
-        scalar and ``y`` is an ndarray with ``len(y) = len(y0)``. Additional
+        scalar and ``y`` is an array with ``len(y) = len(y0)``. Additional
         arguments need to be passed if ``args`` is used (see documentation of
         ``args`` argument). ``fun`` must return an array of the same shape as
         ``y``. See `vectorized` for more information.
@@ -303,7 +303,7 @@ def solve_ivp(fun, t_span, y0, method='RK45', t_eval=None, dense_output=False,
         Initial step size. Default is `None` which means that the algorithm
         should choose.
     max_step : float, optional
-        Maximum allowed step size. Default is np.inf, i.e., the step size is not
+        Maximum allowed step size. Default is mx.inf, i.e., the step size is not
         bounded and determined solely by the solver.
     rtol, atol : float or array_like, optional
         Relative and absolute tolerances. The solver keeps the local error
@@ -364,17 +364,17 @@ def solve_ivp(fun, t_span, y0, method='RK45', t_eval=None, dense_output=False,
     Returns
     -------
     Bunch object with the following fields defined:
-    t : ndarray, shape (n_points,)
+    t : array, shape (n_points,)
         Time points.
-    y : ndarray, shape (n, n_points)
+    y : array, shape (n, n_points)
         Values of the solution at `t`.
     sol : `OdeSolution` or None
         Found solution as `OdeSolution` instance; None if `dense_output` was
         set to False.
-    t_events : list of ndarray or None
+    t_events : list of array or None
         Contains for each event type a list of arrays at which an event of
         that type event was detected. None if `events` was None.
-    y_events : list of ndarray or None
+    y_events : list of array or None
         For each value of `t_events`, the corresponding value of the solution.
         None if `events` was None.
     nfev : int
@@ -439,7 +439,7 @@ def solve_ivp(fun, t_span, y0, method='RK45', t_eval=None, dense_output=False,
     --------
     Basic exponential decay showing automatically chosen time points.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.integrate import solve_ivp
     >>> def exponential_decay(t, y): return -0.5 * y
     >>> sol = solve_ivp(exponential_decay, [0, 10], [2, 4, 8])
@@ -519,7 +519,7 @@ def solve_ivp(fun, t_span, y0, method='RK45', t_eval=None, dense_output=False,
 
     Compute a dense solution and plot it.
 
-    >>> t = np.linspace(0, 15, 300)
+    >>> t = mx.linspace(0, 15, 300)
     >>> z = sol.sol(t)
     >>> import matplotlib.pyplot as plt
     >>> plt.plot(t, z.T)
@@ -531,7 +531,7 @@ def solve_ivp(fun, t_span, y0, method='RK45', t_eval=None, dense_output=False,
     A couple examples of using solve_ivp to solve the differential
     equation ``y' = Ay`` with complex matrix ``A``.
 
-    >>> A = np.array([[-0.25 + 0.14j, 0, 0.33 + 0.44j],
+    >>> A = mx.array([[-0.25 + 0.14j, 0, 0.33 + 0.44j],
     ...               [0.25 + 0.58j, -0.2 + 0.14j, 0],
     ...               [0, 0.2 + 0.4j, -0.1 + 0.97j]])
 
@@ -540,8 +540,8 @@ def solve_ivp(fun, t_span, y0, method='RK45', t_eval=None, dense_output=False,
     >>> def deriv_vec(t, y):
     ...     return A @ y
     >>> result = solve_ivp(deriv_vec, [0, 25],
-    ...                    np.array([10 + 0j, 20 + 0j, 30 + 0j]),
-    ...                    t_eval=np.linspace(0, 25, 101))
+    ...                    mx.array([10 + 0j, 20 + 0j, 30 + 0j]),
+    ...                    t_eval=mx.linspace(0, 25, 101))
     >>> print(result.y[:, 0])
     [10.+0.j 20.+0.j 30.+0.j]
     >>> print(result.y[:, -1])
@@ -552,12 +552,12 @@ def solve_ivp(fun, t_span, y0, method='RK45', t_eval=None, dense_output=False,
 
     >>> def deriv_mat(t, y):
     ...     return (A @ y.reshape(3, 3)).flatten()
-    >>> y0 = np.array([[2 + 0j, 3 + 0j, 4 + 0j],
+    >>> y0 = mx.array([[2 + 0j, 3 + 0j, 4 + 0j],
     ...                [5 + 0j, 6 + 0j, 7 + 0j],
     ...                [9 + 0j, 34 + 0j, 78 + 0j]])
 
     >>> result = solve_ivp(deriv_mat, [0, 25], y0.flatten(),
-    ...                    t_eval=np.linspace(0, 25, 101))
+    ...                    t_eval=mx.linspace(0, 25, 101))
     >>> print(result.y[:, 0].reshape(3, 3))
     [[ 2.+0.j  3.+0.j  4.+0.j]
      [ 5.+0.j  6.+0.j  7.+0.j]
@@ -598,21 +598,21 @@ def solve_ivp(fun, t_span, y0, method='RK45', t_eval=None, dense_output=False,
             options['jac'] = lambda t, x: jac(t, x, *args)
 
     if t_eval is not None:
-        t_eval = np.asarray(t_eval)
+        t_eval = mx.array(t_eval)
         if t_eval.ndim != 1:
             raise ValueError("`t_eval` must be 1-dimensional.")
 
-        if np.any(t_eval < min(t0, tf)) or np.any(t_eval > max(t0, tf)):
+        if mx.any(t_eval < min(t0, tf)) or mx.any(t_eval > max(t0, tf)):
             raise ValueError("Values in `t_eval` are not within `t_span`.")
 
-        d = np.diff(t_eval)
-        if tf > t0 and np.any(d <= 0) or tf < t0 and np.any(d >= 0):
+        d = mx.diff(t_eval)
+        if tf > t0 and mx.any(d <= 0) or tf < t0 and mx.any(d >= 0):
             raise ValueError("Values in `t_eval` are not properly sorted.")
 
         if tf > t0:
             t_eval_i = 0
         else:
-            # Make order of t_eval decreasing to use np.searchsorted.
+            # Make order of t_eval decreasing to use mx.searchsorted.
             t_eval = t_eval[::-1]
             # This will be an upper bound for slices.
             t_eval_i = t_eval.shape[0]
@@ -637,7 +637,7 @@ def solve_ivp(fun, t_span, y0, method='RK45', t_eval=None, dense_output=False,
 
     if events is not None:
         events, max_events, event_dir = prepare_events(events)
-        event_count = np.zeros(len(events))
+        event_count = mx.zeros(len(events))
         if args is not None:
             # Wrap user functions in lambdas to hide the additional parameters.
             # The original event function is passed as a keyword argument to the
@@ -708,10 +708,10 @@ def solve_ivp(fun, t_span, y0, method='RK45', t_eval=None, dense_output=False,
         else:
             # The value in t_eval equal to t will be included.
             if solver.direction > 0:
-                t_eval_i_new = np.searchsorted(t_eval, t, side='right')
+                t_eval_i_new = mx.searchsorted(t_eval, t, side='right')
                 t_eval_step = t_eval[t_eval_i:t_eval_i_new]
             else:
-                t_eval_i_new = np.searchsorted(t_eval, t, side='left')
+                t_eval_i_new = mx.searchsorted(t_eval, t, side='left')
                 # It has to be done with two slice operations, because
                 # you can't slice to 0th element inclusive using backward
                 # slicing.
@@ -730,15 +730,15 @@ def solve_ivp(fun, t_span, y0, method='RK45', t_eval=None, dense_output=False,
     message = MESSAGES.get(status, message)
 
     if t_events is not None:
-        t_events = [np.asarray(te) for te in t_events]
-        y_events = [np.asarray(ye) for ye in y_events]
+        t_events = [mx.array(te) for te in t_events]
+        y_events = [mx.array(ye) for ye in y_events]
 
     if t_eval is None:
-        ts = np.array(ts)
-        ys = np.vstack(ys).T
+        ts = mx.array(ts)
+        ys = mx.vstack(ys).T
     elif ts:
-        ts = np.hstack(ts)
-        ys = np.hstack(ys)
+        ts = mx.hstack(ts)
+        ys = mx.hstack(ys)
 
     if dense_output:
         if t_eval is None:

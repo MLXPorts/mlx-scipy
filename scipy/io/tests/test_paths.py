@@ -3,7 +3,7 @@ Ensure that we can use pathlib.Path objects in all relevant IO functions.
 """
 from pathlib import Path
 
-import numpy as np
+import mlx.core as mx
 
 import scipy.io
 import scipy.io.wavfile
@@ -12,7 +12,7 @@ import scipy.sparse
 
 
 class TestPaths:
-    data = np.arange(5).astype(np.int64)
+    data = mx.arange(5).astype(mx.int64)
 
     def test_savemat(self):
         with tempdir() as temp_dir:

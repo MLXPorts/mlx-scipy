@@ -1,6 +1,6 @@
 from subprocess import Popen, PIPE, STDOUT
 
-import numpy as np
+import mlx.core as mx
 
 SZ = [2, 3, 4, 8, 12, 15, 16, 17, 32, 64, 128, 256, 512, 1024]
 
@@ -8,11 +8,11 @@ SZ = [2, 3, 4, 8, 12, 15, 16, 17, 32, 64, 128, 256, 512, 1024]
 def gen_data(dt):
     arrays = {}
 
-    if dt == np.float128:
+    if dt == mx.float128:
         pg = './fftw_longdouble'
-    elif dt == np.float64:
+    elif dt == mx.float64:
         pg = './fftw_double'
-    elif dt == np.float32:
+    elif dt == mx.float32:
         pg = './fftw_single'
     else:
         raise ValueError(f"unknown: {dt}")
@@ -22,13 +22,13 @@ def gen_data(dt):
         for sz in SZ:
             a = Popen([pg, str(type), str(sz)], stdout=PIPE, stderr=STDOUT)
             st = [i.decode('ascii').strip() for i in a.stdout.readlines()]
-            arrays[type][sz] = np.fromstring(",".join(st), sep=',', dtype=dt)
+            arrays[type][sz] = mx.fromstring(",".join(st), sep=',', dtype=dt)
 
     return arrays
 
 
 # generate single precision data
-data = gen_data(np.float32)
+data = gen_data(mx.float32)
 filename = 'fftw_single_ref'
 # Save ref data into npz format
 d = {'sizes': SZ}
@@ -40,11 +40,11 @@ d['sizes'] = SZ
 for type in [5, 6, 7, 8]:
     for sz in SZ:
         d[f'dst_{type-4}_{sz}'] = data[type][sz]
-np.savez(filename, **d)
+mx.savez(filename, **d)
 
 
 # generate double precision data
-data = gen_data(np.float64)
+data = gen_data(mx.float64)
 filename = 'fftw_double_ref'
 # Save ref data into npz format
 d = {'sizes': SZ}
@@ -56,10 +56,10 @@ d['sizes'] = SZ
 for type in [5, 6, 7, 8]:
     for sz in SZ:
         d[f'dst_{type-4}_{sz}'] = data[type][sz]
-np.savez(filename, **d)
+mx.savez(filename, **d)
 
 # generate long double precision data
-data = gen_data(np.float128)
+data = gen_data(mx.float128)
 filename = 'fftw_longdouble_ref'
 # Save ref data into npz format
 d = {'sizes': SZ}
@@ -71,4 +71,4 @@ d['sizes'] = SZ
 for type in [5, 6, 7, 8]:
     for sz in SZ:
         d[f'dst_{type-4}_{sz}'] = data[type][sz]
-np.savez(filename, **d)
+mx.savez(filename, **d)

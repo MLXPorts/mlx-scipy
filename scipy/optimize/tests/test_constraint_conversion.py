@@ -3,7 +3,7 @@ Unit test for constraint conversion
 """
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import (assert_array_almost_equal,
                            assert_allclose)
 import pytest
@@ -39,7 +39,7 @@ class TestOldToNew:
         cons = {'type': 'eq',
                 'fun': lambda x, p1, p2: p1*x[0] - p2*x[1],
                 'args': (1, 1.1),
-                'jac': lambda x, p1, p2: np.array([[p1, -p2]])}
+                'jac': lambda x, p1, p2: mx.array([[p1, -p2]])}
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", "delta_grad == 0.0", UserWarning)
             res = minimize(fun, self.x0, method=self.method,
@@ -74,10 +74,10 @@ class TestNewToOld:
         coni.append([{'type': 'ineq', 'fun': lambda x: x[0] - 2 * x[1] + 2},
                      NonlinearConstraint(lambda x: x[0] - x[1], -1, 1)])
 
-        coni.append([LinearConstraint([1, -2, 0], -2, np.inf),
+        coni.append([LinearConstraint([1, -2, 0], -2, mx.inf),
                      NonlinearConstraint(lambda x: x[0] - x[1], -1, 1)])
 
-        coni.append([NonlinearConstraint(lambda x: x[0] - 2 * x[1] + 2, 0, np.inf),
+        coni.append([NonlinearConstraint(lambda x: x[0] - 2 * x[1] + 2, 0, mx.inf),
                      NonlinearConstraint(lambda x: x[0] - x[1], -1, 1)])
 
         for con in coni:
@@ -107,7 +107,7 @@ class TestNewToOld:
         cone.append(NonlinearConstraint(lambda x: x[0] - x[1], 1, 1))
         cone.append(NonlinearConstraint(lambda x: x[0] - x[1], [1.21], [1.21]))
         cone.append(NonlinearConstraint(lambda x: x[0] - x[1],
-                                        1.21, np.array([1.21])))
+                                        1.21, mx.array([1.21])))
 
         # multiple equalities
         cone.append(NonlinearConstraint(
@@ -121,24 +121,24 @@ class TestNewToOld:
                     [1.21, 1.21], 1.21))  # equality specified two ways
         cone.append(NonlinearConstraint(
                     lambda x: [x[0] - x[1], x[1] - x[2]],
-                    [1.21, -np.inf], [1.21, np.inf]))  # equality + unbounded
+                    [1.21, -mx.inf], [1.21, mx.inf]))  # equality + unbounded
 
         # nonstandard data types for constraint inequality bounds
-        coni.append(NonlinearConstraint(lambda x: x[0] - x[1], 1.21, np.inf))
-        coni.append(NonlinearConstraint(lambda x: x[0] - x[1], [1.21], np.inf))
+        coni.append(NonlinearConstraint(lambda x: x[0] - x[1], 1.21, mx.inf))
+        coni.append(NonlinearConstraint(lambda x: x[0] - x[1], [1.21], mx.inf))
         coni.append(NonlinearConstraint(lambda x: x[0] - x[1],
-                                        1.21, np.array([np.inf])))
-        coni.append(NonlinearConstraint(lambda x: x[0] - x[1], -np.inf, -3))
+                                        1.21, mx.array([mx.inf])))
+        coni.append(NonlinearConstraint(lambda x: x[0] - x[1], -mx.inf, -3))
         coni.append(NonlinearConstraint(lambda x: x[0] - x[1],
-                                        np.array(-np.inf), -3))
+                                        mx.array(-mx.inf), -3))
 
         # multiple inequalities/equalities
         coni.append(NonlinearConstraint(
                     lambda x: [x[0] - x[1], x[1] - x[2]],
-                    1.21, np.inf))  # two same inequalities
+                    1.21, mx.inf))  # two same inequalities
         cone.append(NonlinearConstraint(
                     lambda x: [x[0] - x[1], x[1] - x[2]],
-                    [1.21, -np.inf], [1.21, 1.4]))  # mixed equality/inequality
+                    [1.21, -mx.inf], [1.21, 1.4]))  # mixed equality/inequality
         coni.append(NonlinearConstraint(
                     lambda x: [x[0] - x[1], x[1] - x[2]],
                     [1.1, .8], [1.2, 1.4]))  # bounded above and below
@@ -150,7 +150,7 @@ class TestNewToOld:
         cone.append(LinearConstraint([1, -1, 0], 1.21, 1.21))
         cone.append(LinearConstraint([[1, -1, 0], [0, 1, -1]], 1.21, 1.21))
         cone.append(LinearConstraint([[1, -1, 0], [0, 1, -1]],
-                                     [1.21, -np.inf], [1.21, 1.4]))
+                                     [1.21, -mx.inf], [1.21, 1.4]))
 
         for con in coni:
             funs = {}
@@ -181,7 +181,7 @@ class TestNewToOld:
 class TestNewToOldSLSQP:
     method = 'slsqp'
     elec = Elec(n_electrons=2)
-    elec.x_opt = np.array([-0.58438468, 0.58438466, 0.73597047,
+    elec.x_opt = mx.array([-0.58438468, 0.58438466, 0.73597047,
                            -0.73597044, 0.34180668, -0.34180667])
     brock = BoundedRosenbrock()
     brock.x_opt = [0, 0]
@@ -231,28 +231,28 @@ class TestNewToOldSLSQP:
         else:
             bnds = None
 
-        cons = NonlinearConstraint(lambda x: x[0], 2, np.inf)
+        cons = NonlinearConstraint(lambda x: x[0], 2, mx.inf)
         res = minimize(fun, x0, method=self.method,
                        bounds=bnds, constraints=cons)
         # no warnings without constraint options
         assert_allclose(res.fun, 1)
 
-        cons = LinearConstraint([1, 0, 0], 2, np.inf)
+        cons = LinearConstraint([1, 0, 0], 2, mx.inf)
         res = minimize(fun, x0, method=self.method,
                        bounds=bnds, constraints=cons)
         # no warnings without constraint options
         assert_allclose(res.fun, 1)
 
         cons = []
-        cons.append(NonlinearConstraint(lambda x: x[0]**2, 2, np.inf,
+        cons.append(NonlinearConstraint(lambda x: x[0]**2, 2, mx.inf,
                                         keep_feasible=True))
-        cons.append(NonlinearConstraint(lambda x: x[0]**2, 2, np.inf,
+        cons.append(NonlinearConstraint(lambda x: x[0]**2, 2, mx.inf,
                                         hess=BFGS()))
-        cons.append(NonlinearConstraint(lambda x: x[0]**2, 2, np.inf,
+        cons.append(NonlinearConstraint(lambda x: x[0]**2, 2, mx.inf,
                                         finite_diff_jac_sparsity=42))
-        cons.append(NonlinearConstraint(lambda x: x[0]**2, 2, np.inf,
+        cons.append(NonlinearConstraint(lambda x: x[0]**2, 2, mx.inf,
                                         finite_diff_rel_step=42))
-        cons.append(LinearConstraint([1, 0, 0], 2, np.inf,
+        cons.append(LinearConstraint([1, 0, 0], 2, mx.inf,
                                      keep_feasible=True))
         for con in cons:
             with pytest.warns(OptimizeWarning):

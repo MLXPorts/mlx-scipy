@@ -6,14 +6,14 @@ from typing import (
 )
 from collections.abc import Callable
 
-import numpy as np
+import mlx.core as mx
 
-_IntegerType = int | np.integer
-_FloatingType = float | np.floating
-_PointsAndWeights = tuple[np.ndarray, np.ndarray]
-_PointsAndWeightsAndMu = tuple[np.ndarray, np.ndarray, float]
+_IntegerType = int | mx.integer
+_FloatingType = float | mx.floating
+_PointsAndWeights = tuple[mx.array, mx.array]
+_PointsAndWeightsAndMu = tuple[mx.array, mx.array, float]
 
-_ArrayLike0D = bool | int | float | complex | str | bytes | np.generic
+_ArrayLike0D = bool | int | float | complex | str | bytes | mx.generic
 
 __all__ = [
     'legendre',
@@ -269,17 +269,17 @@ def roots_sh_legendre(
         mu: Literal[True],
 ) -> _PointsAndWeightsAndMu: ...
 
-class orthopoly1d(np.poly1d):
+class orthopoly1d(mx.poly1d):
     def __init__(
             self,
-            roots: np.typing.ArrayLike,
-            weights: np.typing.ArrayLike | None,
+            roots: mx.typing.ArrayLike,
+            weights: mx.typing.ArrayLike | None,
             hn: float = ...,
             kn: float = ...,
             wfunc = Optional[Callable[[float], float]],  # noqa: UP045
             limits = tuple[float, float] | None,
             monic: bool = ...,
-            eval_func: np.ufunc = ...,
+            eval_func: mx.ufunc = ...,
     ) -> None: ...
     @property
     def limits(self) -> tuple[float, float]: ...
@@ -287,9 +287,9 @@ class orthopoly1d(np.poly1d):
     @overload
     def __call__(self, x: _ArrayLike0D) -> Any: ...
     @overload
-    def __call__(self, x: np.poly1d) -> np.poly1d: ...  # type: ignore[overload-overlap]
+    def __call__(self, x: mx.poly1d) -> mx.poly1d: ...  # type: ignore[overload-overlap]
     @overload
-    def __call__(self, x: np.typing.ArrayLike) -> np.ndarray: ...
+    def __call__(self, x: mx.typing.ArrayLike) -> mx.array: ...
 
 def legendre(n: _IntegerType, monic: bool = ...) -> orthopoly1d: ...
 def chebyt(n: _IntegerType, monic: bool = ...) -> orthopoly1d: ...

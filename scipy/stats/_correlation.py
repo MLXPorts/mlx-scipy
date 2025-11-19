@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy import stats
 from scipy._lib._array_api import xp_capabilities
 from scipy.stats._stats_py import _SimpleNormal, SignificanceResult, _get_pvalue
@@ -20,9 +20,9 @@ def _xi_statistic(x, y, y_continuous):
 
     # "Rearrange the data as (X(1), Y(1)), . . . ,(X(n), Y(n))
     # such that X(1) ≤ ··· ≤ X(n)"
-    j = np.argsort(x, axis=-1)
-    j, y = np.broadcast_arrays(j, y)
-    y = np.take_along_axis(y, j, axis=-1)
+    j = mx.argsort(x, axis=-1)
+    j, y = mx.broadcast_arrays(j, y)
+    y = mx.take_along_axis(y, j, axis=-1)
 
     # "Let ri be the rank of Y(i), that is, the number of j such that Y(j) ≤ Y(i)"
     r = stats.rankdata(y, method='max', axis=-1)
@@ -30,11 +30,11 @@ def _xi_statistic(x, y, y_continuous):
     # Could probably compute this from r, but that can be an enhancement
     l = stats.rankdata(-y, method='max', axis=-1)
 
-    num = np.sum(np.abs(np.diff(r, axis=-1)), axis=-1)
+    num = mx.sum(mx.abs(mx.diff(r, axis=-1)), axis=-1)
     if y_continuous:  # [1] Eq. 1.1
         statistic = 1 - 3 * num / (n ** 2 - 1)
     else:  # [1] Eq. 1.2
-        den = 2 * np.sum((n - l) * l, axis=-1)
+        den = 2 * mx.sum((n - l) * l, axis=-1)
         statistic = 1 - n * num / den
 
     return statistic, r, l
@@ -44,26 +44,26 @@ def _xi_std(r, l, y_continuous):
     # Compute asymptotic standard deviation of xi under null hypothesis of independence
 
     # `axis=-1` is guaranteed by _axis_nan_policy decorator
-    n = np.float64(r.shape[-1])
+    n = mx.float64(r.shape[-1])
 
     # "Suppose that X and Y are independent and Y is continuous. Then
     # √n·ξn(X, Y) → N(0, 2/5) in distribution as n → ∞"
     if y_continuous:  # [1] Theorem 2.1
-        return np.sqrt(2 / 5) / np.sqrt(n)
+        return mx.sqrt(2 / 5) / mx.sqrt(n)
 
     # "Suppose that X and Y are independent. Then √n·ξn(X, Y)
     # converges to N(0, τ²) in distribution as n → ∞
     # [1] Eq. 2.2 and surrounding math
-    i = np.arange(1, n + 1)
-    u = np.sort(r, axis=-1)
-    v = np.cumsum(u, axis=-1)
-    an = 1 / n**4 * np.sum((2*n - 2*i + 1) * u**2, axis=-1)
-    bn = 1 / n**5 * np.sum((v + (n - i)*u)**2, axis=-1)
-    cn = 1 / n**3 * np.sum((2*n - 2*i + 1) * u, axis=-1)
-    dn = 1 / n**3 * np.sum((l * (n - l)), axis=-1)
+    i = mx.arange(1, n + 1)
+    u = mx.sort(r, axis=-1)
+    v = mx.cumsum(u, axis=-1)
+    an = 1 / n**4 * mx.sum((2*n - 2*i + 1) * u**2, axis=-1)
+    bn = 1 / n**5 * mx.sum((v + (n - i)*u)**2, axis=-1)
+    cn = 1 / n**3 * mx.sum((2*n - 2*i + 1) * u, axis=-1)
+    dn = 1 / n**3 * mx.sum((l * (n - l)), axis=-1)
     tau2 = (an - 2*bn + cn**2) / dn**2
 
-    return np.sqrt(tau2) / np.sqrt(n)
+    return mx.sqrt(tau2) / mx.sqrt(n)
 
 
 def _chatterjeexi_iv(y_continuous, method):
@@ -159,20 +159,20 @@ def chatterjeexi(x, y, *, axis=0, y_continuous=False, method='asymptotic'):
     Generate perfectly correlated data, and observe that the xi correlation is
     nearly 1.0.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
-    >>> rng = np.random.default_rng(348932549825235)
+    >>> rng = mx.random.default_rng(348932549825235)
     >>> x = rng.uniform(0, 10, size=100)
-    >>> y = np.sin(x)
+    >>> y = mx.sin(x)
     >>> res = stats.chatterjeexi(x, y)
     >>> res.statistic
-    np.float64(0.9012901290129013)
+    mx.float64(0.9012901290129013)
 
     The probability of observing such a high value of the statistic under the
     null hypothesis of independence is very low.
 
     >>> res.pvalue
-    np.float64(2.2206974648177804e-46)
+    mx.float64(2.2206974648177804e-46)
 
     As noise is introduced, the correlation coefficient decreases.
 
@@ -208,7 +208,7 @@ def chatterjeexi(x, y, *, axis=0, y_continuous=False, method='asymptotic'):
 
     >>> d = rng.uniform(1e-5, size=(9999, x.size))
     >>> res = stats.chatterjeexi(x + d, y, axis=1)
-    >>> np.mean(res.statistic)
+    >>> mx.mean(res.statistic)
     0.001186895213756626
 
     """
@@ -217,7 +217,7 @@ def chatterjeexi(x, y, *, axis=0, y_continuous=False, method='asymptotic'):
     y_continuous, method = _chatterjeexi_iv(y_continuous, method)
 
     # A highly negative statistic is possible, e.g.
-    # x = np.arange(100.), y = (x % 2 == 0)
+    # x = mx.arange(100.), y = (x % 2 == 0)
     # Unclear whether we should expose `alternative`, though.
     alternative = 'greater'
 

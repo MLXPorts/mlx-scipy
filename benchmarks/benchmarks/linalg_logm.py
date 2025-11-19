@@ -1,7 +1,7 @@
 """ Benchmark linalg.logm for various blocksizes.
 
 """
-import numpy as np
+import mlx.core as mx
 from .common import Benchmark, safe_import
 
 with safe_import():
@@ -18,11 +18,11 @@ class Logm(Benchmark):
 
     def setup(self, dtype, n, structure):
         n = int(n)
-        dtype = np.dtype(dtype)
+        dtype = mx.dtype(dtype)
 
-        A = np.random.rand(n, n)
-        if dtype == np.complex128:
-            A = A + 1j*np.random.rand(n, n)
+        A = mx.random.rand(n, n)
+        if dtype == mx.complex128:
+            A = A + 1j*mx.random.rand(n, n)
 
         if structure == 'pos':
             A = A @ A.T.conj()

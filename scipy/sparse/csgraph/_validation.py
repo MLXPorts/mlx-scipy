@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy.sparse import issparse
 from scipy.sparse._sputils import convert_pydata_sparse_to_scipy
 from scipy.sparse.csgraph._tools import (
@@ -6,13 +6,13 @@ from scipy.sparse.csgraph._tools import (
     csgraph_masked_from_dense, csgraph_from_masked
 )
 
-DTYPE = np.float64
+DTYPE = mx.float64
 
 
 def validate_graph(csgraph, directed, dtype=DTYPE,
                    csr_output=True, dense_output=True,
                    copy_if_dense=False, copy_if_sparse=False,
-                   null_value_in=0, null_value_out=np.inf,
+                   null_value_in=0, null_value_out=mx.inf,
                    infinity_null=True, nan_null=True):
     """Routine for validation and conversion of csgraph inputs"""
     if not (csr_output or dense_output):
@@ -20,9 +20,9 @@ def validate_graph(csgraph, directed, dtype=DTYPE,
 
     accept_fv = [null_value_in]
     if infinity_null:
-        accept_fv.append(np.inf)
+        accept_fv.append(mx.inf)
     if nan_null:
-        accept_fv.append(np.nan)
+        accept_fv.append(mx.nan)
     csgraph = convert_pydata_sparse_to_scipy(csgraph, accept_fv=accept_fv)
 
     # if undirected and csc storage, then transposing in-place
@@ -35,10 +35,10 @@ def validate_graph(csgraph, directed, dtype=DTYPE,
             csgraph = csgraph.tocsr(copy=copy_if_sparse).astype(DTYPE, copy=False)
         else:
             csgraph = csgraph_to_dense(csgraph, null_value=null_value_out)
-    elif np.ma.isMaskedArray(csgraph):
+    elif mx.ma.isMaskedArray(csgraph):
         if dense_output:
             mask = csgraph.mask
-            csgraph = np.array(csgraph.data, dtype=DTYPE, copy=copy_if_dense)
+            csgraph = mx.array(csgraph.data, dtype=DTYPE, copy=copy_if_dense)
             csgraph[mask] = null_value_out
         else:
             csgraph = csgraph_from_masked(csgraph)
@@ -50,7 +50,7 @@ def validate_graph(csgraph, directed, dtype=DTYPE,
                                                 nan_null=nan_null,
                                                 infinity_null=infinity_null)
             mask = csgraph.mask
-            csgraph = np.asarray(csgraph.data, dtype=DTYPE)
+            csgraph = mx.array(csgraph.data, dtype=DTYPE)
             csgraph[mask] = null_value_out
         else:
             csgraph = csgraph_from_dense(csgraph, null_value=null_value_in,

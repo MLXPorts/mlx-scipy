@@ -1,5 +1,5 @@
 #define NO_IMPORT_ARRAY
-#include "numpy/ndarrayobject.h"
+#include "numpy/arrayobject.h"
 #include "_sigtools.hh"
 #include <stdbool.h>
 #include <stdint.h>

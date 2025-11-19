@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import scipy.fft
 import threading
 
@@ -17,42 +17,42 @@ class _MockFunction:
         return self.return_value
 
 
-fft = _MockFunction(np.random.random(10))
-fft2 = _MockFunction(np.random.random(10))
-fftn = _MockFunction(np.random.random(10))
+fft = _MockFunction(mx.random.random(10))
+fft2 = _MockFunction(mx.random.random(10))
+fftn = _MockFunction(mx.random.random(10))
 
-ifft = _MockFunction(np.random.random(10))
-ifft2 = _MockFunction(np.random.random(10))
-ifftn = _MockFunction(np.random.random(10))
+ifft = _MockFunction(mx.random.random(10))
+ifft2 = _MockFunction(mx.random.random(10))
+ifftn = _MockFunction(mx.random.random(10))
 
-rfft = _MockFunction(np.random.random(10))
-rfft2 = _MockFunction(np.random.random(10))
-rfftn = _MockFunction(np.random.random(10))
+rfft = _MockFunction(mx.random.random(10))
+rfft2 = _MockFunction(mx.random.random(10))
+rfftn = _MockFunction(mx.random.random(10))
 
-irfft = _MockFunction(np.random.random(10))
-irfft2 = _MockFunction(np.random.random(10))
-irfftn = _MockFunction(np.random.random(10))
+irfft = _MockFunction(mx.random.random(10))
+irfft2 = _MockFunction(mx.random.random(10))
+irfftn = _MockFunction(mx.random.random(10))
 
-hfft = _MockFunction(np.random.random(10))
-hfft2 = _MockFunction(np.random.random(10))
-hfftn = _MockFunction(np.random.random(10))
+hfft = _MockFunction(mx.random.random(10))
+hfft2 = _MockFunction(mx.random.random(10))
+hfftn = _MockFunction(mx.random.random(10))
 
-ihfft = _MockFunction(np.random.random(10))
-ihfft2 = _MockFunction(np.random.random(10))
-ihfftn = _MockFunction(np.random.random(10))
+ihfft = _MockFunction(mx.random.random(10))
+ihfft2 = _MockFunction(mx.random.random(10))
+ihfftn = _MockFunction(mx.random.random(10))
 
-dct = _MockFunction(np.random.random(10))
-idct = _MockFunction(np.random.random(10))
-dctn = _MockFunction(np.random.random(10))
-idctn = _MockFunction(np.random.random(10))
+dct = _MockFunction(mx.random.random(10))
+idct = _MockFunction(mx.random.random(10))
+dctn = _MockFunction(mx.random.random(10))
+idctn = _MockFunction(mx.random.random(10))
 
-dst = _MockFunction(np.random.random(10))
-idst = _MockFunction(np.random.random(10))
-dstn = _MockFunction(np.random.random(10))
-idstn = _MockFunction(np.random.random(10))
+dst = _MockFunction(mx.random.random(10))
+idst = _MockFunction(mx.random.random(10))
+dstn = _MockFunction(mx.random.random(10))
+idstn = _MockFunction(mx.random.random(10))
 
-fht = _MockFunction(np.random.random(10))
-ifht = _MockFunction(np.random.random(10))
+fht = _MockFunction(mx.random.random(10))
+ifht = _MockFunction(mx.random.random(10))
 
 
 __ua_domain__ = "numpy.scipy.fft"

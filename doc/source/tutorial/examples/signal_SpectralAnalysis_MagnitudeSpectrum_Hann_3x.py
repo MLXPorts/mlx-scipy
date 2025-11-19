@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import numpy as np
+import mlx.core as mx
 
 from scipy.fft import rfft, rfftfreq
 from scipy.signal.windows import hann
@@ -7,9 +7,9 @@ from scipy.signal.windows import hann
 n, T = 100, 0.01  # number of samples and sampling interval
 tau = n*T
 q = 3  # over-sampling factor
-t = np.arange(n) * T
+t = mx.arange(n) * T
 fcc = (20, 20.5)  # frequencies of sines
-xx = [np.sin(2 * np.pi * fc_ * t) for fc_ in fcc]  # sine signals
+xx = [mx.sin(2 * mx.pi * fc_ * t) for fc_ in fcc]  # sine signals
 w = hann(n)
 c_w = abs(sum(w))  # normalize constant for window
 

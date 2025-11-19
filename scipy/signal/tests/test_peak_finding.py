@@ -1,6 +1,6 @@
 import copy
 
-import numpy as np
+import mlx.core as mx
 import pytest
 from pytest import raises, warns
 from scipy._lib._array_api import xp_assert_close, xp_assert_equal
@@ -20,18 +20,18 @@ from scipy.signal._peak_finding_utils import _local_maxima_1d, PeakPropertyWarni
 
 
 def _gen_gaussians(center_locs, sigmas, total_length):
-    xdata = np.arange(0, total_length).astype(float)
-    out_data = np.zeros(total_length, dtype=float)
+    xdata = mx.arange(0, total_length).astype(float)
+    out_data = mx.zeros(total_length, dtype=float)
     for ind, sigma in enumerate(sigmas):
         tmp = (xdata - center_locs[ind]) / sigma
-        out_data += np.exp(-(tmp**2))
+        out_data += mx.exp(-(tmp**2))
     return out_data
 
 
 def _gen_gaussians_even(sigmas, total_length):
     num_peaks = len(sigmas)
     delta = total_length / (num_peaks + 1)
-    center_locs = np.linspace(delta, total_length - delta, num=num_peaks).astype(int)
+    center_locs = mx.linspace(delta, total_length - delta, num=num_peaks).astype(int)
     out_data = _gen_gaussians(center_locs, sigmas, total_length)
     return out_data, center_locs
 
@@ -58,7 +58,7 @@ def _gen_ridge_line(start_locs, max_locs, length, distances, gaps):
     gaps = copy.deepcopy(gaps)
     distances = copy.deepcopy(distances)
 
-    locs = np.zeros([length, 2], dtype=int)
+    locs = mx.zeros([length, 2], dtype=int)
     locs[0, :] = start_locs
     total_length = max_locs[0] - start_locs[0] - sum(gaps)
     if total_length < length:
@@ -83,23 +83,23 @@ class TestLocalMaxima1d:
 
     def test_empty(self):
         """Test with empty signal."""
-        x = np.array([], dtype=np.float64)
+        x = mx.array([], dtype=mx.float64)
         for array in _local_maxima_1d(x):
-            xp_assert_equal(array, np.array([]), check_dtype=False)
+            xp_assert_equal(array, mx.array([]), check_dtype=False)
             assert array.base is None
 
     def test_linear(self):
         """Test with linear signal."""
-        x = np.linspace(0, 100)
+        x = mx.linspace(0, 100)
         for array in _local_maxima_1d(x):
-            xp_assert_equal(array, np.array([], dtype=np.intp))
+            xp_assert_equal(array, mx.array([], dtype=mx.intp))
             assert array.base is None
 
     def test_simple(self):
         """Test with simple signal."""
-        x = np.linspace(-10, 10, 50)
+        x = mx.linspace(-10, 10, 50)
         x[2::3] += 1
-        expected = np.arange(2, 50, 3, dtype=np.intp)
+        expected = mx.arange(2, 50, 3, dtype=mx.intp)
         for array in _local_maxima_1d(x):
             # For plateaus of size 1, the edges are identical with the
             # midpoints
@@ -108,30 +108,30 @@ class TestLocalMaxima1d:
 
     def test_flat_maxima(self):
         """Test if flat maxima are detected correctly."""
-        x = np.array([-1.3, 0, 1, 0, 2, 2, 0, 3, 3, 3, 2.99, 4, 4, 4, 4, -10,
+        x = mx.array([-1.3, 0, 1, 0, 2, 2, 0, 3, 3, 3, 2.99, 4, 4, 4, 4, -10,
                       -5, -5, -5, -5, -5, -10])
         midpoints, left_edges, right_edges = _local_maxima_1d(x)
-        xp_assert_equal(midpoints, np.array([2, 4, 8, 12, 18]), check_dtype=False)
-        xp_assert_equal(left_edges, np.array([2, 4, 7, 11, 16]), check_dtype=False)
-        xp_assert_equal(right_edges, np.array([2, 5, 9, 14, 20]), check_dtype=False)
+        xp_assert_equal(midpoints, mx.array([2, 4, 8, 12, 18]), check_dtype=False)
+        xp_assert_equal(left_edges, mx.array([2, 4, 7, 11, 16]), check_dtype=False)
+        xp_assert_equal(right_edges, mx.array([2, 5, 9, 14, 20]), check_dtype=False)
 
     @pytest.mark.parametrize('x', [
-        np.array([1., 0, 2]),
-        np.array([3., 3, 0, 4, 4]),
-        np.array([5., 5, 5, 0, 6, 6, 6]),
+        mx.array([1., 0, 2]),
+        mx.array([3., 3, 0, 4, 4]),
+        mx.array([5., 5, 5, 0, 6, 6, 6]),
     ])
     def test_signal_edges(self, x):
         """Test if behavior on signal edges is correct."""
         for array in _local_maxima_1d(x):
-            xp_assert_equal(array, np.array([], dtype=np.intp))
+            xp_assert_equal(array, mx.array([], dtype=mx.intp))
             assert array.base is None
 
     def test_exceptions(self):
         """Test input validation and raised exceptions."""
         with raises(ValueError, match="wrong number of dimensions"):
-            _local_maxima_1d(np.ones((1, 1)))
+            _local_maxima_1d(mx.ones((1, 1)))
         with raises(ValueError, match="expected 'const float64_t'"):
-            _local_maxima_1d(np.ones(1, dtype=int))
+            _local_maxima_1d(mx.ones(1, dtype=int))
         with raises(TypeError, match="list"):
             _local_maxima_1d([1., 2.])
         with raises(TypeError, match="'x' must not be None"):
@@ -141,29 +141,29 @@ class TestLocalMaxima1d:
 class TestRidgeLines:
 
     def test_empty(self):
-        test_matr = np.zeros([20, 100])
-        lines = _identify_ridge_lines(test_matr, np.full(20, 2), 1)
+        test_matr = mx.zeros([20, 100])
+        lines = _identify_ridge_lines(test_matr, mx.full(20, 2), 1)
         assert len(lines) == 0
 
     def test_minimal(self):
-        test_matr = np.zeros([20, 100])
+        test_matr = mx.zeros([20, 100])
         test_matr[0, 10] = 1
-        lines = _identify_ridge_lines(test_matr, np.full(20, 2), 1)
+        lines = _identify_ridge_lines(test_matr, mx.full(20, 2), 1)
         assert len(lines) == 1
 
-        test_matr = np.zeros([20, 100])
+        test_matr = mx.zeros([20, 100])
         test_matr[0:2, 10] = 1
-        lines = _identify_ridge_lines(test_matr, np.full(20, 2), 1)
+        lines = _identify_ridge_lines(test_matr, mx.full(20, 2), 1)
         assert len(lines) == 1
 
     def test_single_pass(self):
         distances = [0, 1, 2, 5]
         gaps = [0, 1, 2, 0, 1]
-        test_matr = np.zeros([20, 50]) + 1e-12
+        test_matr = mx.zeros([20, 50]) + 1e-12
         length = 12
         line = _gen_ridge_line([0, 25], test_matr.shape, length, distances, gaps)
         test_matr[line[0], line[1]] = 1
-        max_distances = np.full(20, max(distances))
+        max_distances = mx.full(20, max(distances))
         identified_lines = _identify_ridge_lines(test_matr,
                                                  max_distances,
                                                  max(gaps) + 1)
@@ -174,12 +174,12 @@ class TestRidgeLines:
     def test_single_bigdist(self):
         distances = [0, 1, 2, 5]
         gaps = [0, 1, 2, 4]
-        test_matr = np.zeros([20, 50])
+        test_matr = mx.zeros([20, 50])
         length = 12
         line = _gen_ridge_line([0, 25], test_matr.shape, length, distances, gaps)
         test_matr[line[0], line[1]] = 1
         max_dist = 3
-        max_distances = np.full(20, max_dist)
+        max_distances = mx.full(20, max_dist)
         #This should get 2 lines, since the distance is too large
         identified_lines = _identify_ridge_lines(test_matr,
                                                  max_distances,
@@ -187,53 +187,53 @@ class TestRidgeLines:
         assert len(identified_lines) == 2
 
         for iline in identified_lines:
-            adists = np.diff(iline[1])
-            np.testing.assert_array_less(np.abs(adists), max_dist)
+            adists = mx.diff(iline[1])
+            mx.testing.assert_array_less(mx.abs(adists), max_dist)
 
-            agaps = np.diff(iline[0])
-            np.testing.assert_array_less(np.abs(agaps), max(gaps) + 0.1)
+            agaps = mx.diff(iline[0])
+            mx.testing.assert_array_less(mx.abs(agaps), max(gaps) + 0.1)
 
     def test_single_biggap(self):
         distances = [0, 1, 2, 5]
         max_gap = 3
         gaps = [0, 4, 2, 1]
-        test_matr = np.zeros([20, 50])
+        test_matr = mx.zeros([20, 50])
         length = 12
         line = _gen_ridge_line([0, 25], test_matr.shape, length, distances, gaps)
         test_matr[line[0], line[1]] = 1
         max_dist = 6
-        max_distances = np.full(20, max_dist)
+        max_distances = mx.full(20, max_dist)
         #This should get 2 lines, since the gap is too large
         identified_lines = _identify_ridge_lines(test_matr, max_distances, max_gap)
         assert len(identified_lines) == 2
 
         for iline in identified_lines:
-            adists = np.diff(iline[1])
-            np.testing.assert_array_less(np.abs(adists), max_dist)
+            adists = mx.diff(iline[1])
+            mx.testing.assert_array_less(mx.abs(adists), max_dist)
 
-            agaps = np.diff(iline[0])
-            np.testing.assert_array_less(np.abs(agaps), max(gaps) + 0.1)
+            agaps = mx.diff(iline[0])
+            mx.testing.assert_array_less(mx.abs(agaps), max(gaps) + 0.1)
 
     def test_single_biggaps(self):
         distances = [0]
         max_gap = 1
         gaps = [3, 6]
-        test_matr = np.zeros([50, 50])
+        test_matr = mx.zeros([50, 50])
         length = 30
         line = _gen_ridge_line([0, 25], test_matr.shape, length, distances, gaps)
         test_matr[line[0], line[1]] = 1
         max_dist = 1
-        max_distances = np.full(50, max_dist)
+        max_distances = mx.full(50, max_dist)
         #This should get 3 lines, since the gaps are too large
         identified_lines = _identify_ridge_lines(test_matr, max_distances, max_gap)
         assert len(identified_lines) == 3
 
         for iline in identified_lines:
-            adists = np.diff(iline[1])
-            np.testing.assert_array_less(np.abs(adists), max_dist)
+            adists = mx.diff(iline[1])
+            mx.testing.assert_array_less(mx.abs(adists), max_dist)
 
-            agaps = np.diff(iline[0])
-            np.testing.assert_array_less(np.abs(agaps), max(gaps) + 0.1)
+            agaps = mx.diff(iline[0])
+            mx.testing.assert_array_less(mx.abs(agaps), max(gaps) + 0.1)
 
 
 class TestArgrel:
@@ -244,15 +244,15 @@ class TestArgrel:
         # the number of empty arrays returned matches the
         # dimension of the input.
 
-        empty_array = np.array([], dtype=int)
+        empty_array = mx.array([], dtype=int)
 
-        z1 = np.zeros(5)
+        z1 = mx.zeros(5)
 
         i = argrelmin(z1)
         xp_assert_equal(len(i), 1)
         xp_assert_equal(i[0], empty_array, check_dtype=False)
 
-        z2 = np.zeros((3, 5))
+        z2 = mx.zeros((3, 5))
 
         row, col = argrelmin(z2, axis=0)
         xp_assert_equal(row, empty_array, check_dtype=False)
@@ -267,29 +267,29 @@ class TestArgrel:
         # do not give a guarantee of the order of the indices, so we'll
         # sort them before testing.
 
-        x = np.array([[1, 2, 2, 3, 2],
+        x = mx.array([[1, 2, 2, 3, 2],
                       [2, 1, 2, 2, 3],
                       [3, 2, 1, 2, 2],
                       [2, 3, 2, 1, 2],
                       [1, 2, 3, 2, 1]])
 
         row, col = argrelmax(x, axis=0)
-        order = np.argsort(row)
+        order = mx.argsort(row)
         xp_assert_equal(row[order], [1, 2, 3], check_dtype=False)
         xp_assert_equal(col[order], [4, 0, 1], check_dtype=False)
 
         row, col = argrelmax(x, axis=1)
-        order = np.argsort(row)
+        order = mx.argsort(row)
         xp_assert_equal(row[order], [0, 3, 4], check_dtype=False)
         xp_assert_equal(col[order], [3, 1, 2], check_dtype=False)
 
         row, col = argrelmin(x, axis=0)
-        order = np.argsort(row)
+        order = mx.argsort(row)
         xp_assert_equal(row[order], [1, 2, 3], check_dtype=False)
         xp_assert_equal(col[order], [1, 2, 3], check_dtype=False)
 
         row, col = argrelmin(x, axis=1)
-        order = np.argsort(row)
+        order = mx.argsort(row)
         xp_assert_equal(row[order], [1, 2, 3], check_dtype=False)
         xp_assert_equal(col[order], [1, 2, 3], check_dtype=False)
 
@@ -308,8 +308,8 @@ class TestArgrel:
         sigmas = [1.0, 2.0, 10.0]
         test_data, act_locs = _gen_gaussians_even(sigmas, 100)
         rot_factor = 20
-        rot_range = np.arange(0, len(test_data)) - rot_factor
-        test_data_2 = np.vstack([test_data, test_data[rot_range]])
+        rot_range = mx.arange(0, len(test_data)) - rot_factor
+        test_data_2 = mx.vstack([test_data, test_data[rot_range]])
         rel_max_rows, rel_max_cols = argrelmax(test_data_2, axis=1, order=1)
 
         for rw in range(0, test_data_2.shape[0]):
@@ -326,12 +326,12 @@ class TestPeakProminences:
         Test if an empty array is returned if no peaks are provided.
         """
         out = peak_prominences([1, 2, 3], [])
-        for arr, dtype in zip(out, [np.float64, np.intp, np.intp]):
+        for arr, dtype in zip(out, [mx.float64, mx.intp, mx.intp]):
             assert arr.size == 0
             assert arr.dtype == dtype
 
         out = peak_prominences([], [])
-        for arr, dtype in zip(out, [np.float64, np.intp, np.intp]):
+        for arr, dtype in zip(out, [mx.float64, mx.intp, mx.intp]):
             assert arr.size == 0
             assert arr.dtype == dtype
 
@@ -341,11 +341,11 @@ class TestPeakProminences:
         rising baseline (peak widths are 1 sample).
         """
         # Prepare basic signal
-        x = np.array([-1, 1.2, 1.2, 1, 3.2, 1.3, 2.88, 2.1])
-        peaks = np.array([1, 2, 4, 6])
-        lbases = np.array([0, 0, 0, 5])
-        rbases = np.array([3, 3, 5, 7])
-        proms = x[peaks] - np.max([x[lbases], x[rbases]], axis=0)
+        x = mx.array([-1, 1.2, 1.2, 1, 3.2, 1.3, 2.88, 2.1])
+        peaks = mx.array([1, 2, 4, 6])
+        lbases = mx.array([0, 0, 0, 5])
+        rbases = mx.array([3, 3, 5, 7])
+        proms = x[peaks] - mx.max([x[lbases], x[rbases]], axis=0)
         # Test if calculation matches handcrafted result
         out = peak_prominences(x, peaks)
         xp_assert_equal(out[0], proms, check_dtype=False)
@@ -360,15 +360,15 @@ class TestPeakProminences:
         x = [0, 2, 1, 2, 1, 2, 0]
         peaks = [1, 3, 5]
         proms, lbases, rbases = peak_prominences(x, peaks)
-        xp_assert_equal(proms, np.asarray([2.0, 2, 2]), check_dtype=False)
+        xp_assert_equal(proms, mx.array([2.0, 2, 2]), check_dtype=False)
         xp_assert_equal(lbases, [0, 0, 0], check_dtype=False)
         xp_assert_equal(rbases, [6, 6, 6], check_dtype=False)
 
         # Peaks have same height & prominence but different bases
         x = [0, 1, 0, 1, 0, 1, 0]
-        peaks = np.array([1, 3, 5])
+        peaks = mx.array([1, 3, 5])
         proms, lbases, rbases = peak_prominences(x, peaks)
-        xp_assert_equal(proms, np.asarray([1.0, 1, 1]))
+        xp_assert_equal(proms, mx.array([1.0, 1, 1]))
         xp_assert_equal(lbases, peaks - 1, check_dtype=False)
         xp_assert_equal(rbases, peaks + 1, check_dtype=False)
 
@@ -376,10 +376,10 @@ class TestPeakProminences:
         """
         Test with non-C-contiguous input arrays.
         """
-        x = np.repeat([-9, 9, 9, 0, 3, 1], 2)
-        peaks = np.repeat([1, 2, 4], 2)
+        x = mx.repeat([-9, 9, 9, 0, 3, 1], 2)
+        peaks = mx.repeat([1, 2, 4], 2)
         proms, lbases, rbases = peak_prominences(x[::2], peaks[::2])
-        xp_assert_equal(proms, np.asarray([9.0, 9, 2]))
+        xp_assert_equal(proms, mx.array([9.0, 9, 2]))
         xp_assert_equal(lbases, [0, 0, 3], check_dtype=False)
         xp_assert_equal(rbases, [3, 3, 5], check_dtype=False)
 
@@ -421,13 +421,13 @@ class TestPeakProminences:
             with raises(ValueError, match='not a valid index'):
                 peak_prominences([1, 0, 2], [p])
 
-        # peaks is not cast-able to np.intp
+        # peaks is not cast-able to mx.intp
         with raises(TypeError, match='cannot safely cast'):
             peak_prominences([0, 1, 1, 0], [1.1, 2.3])
 
         # wlen < 3
         with raises(ValueError, match='wlen'):
-            peak_prominences(np.arange(10), [3, 5], wlen=1)
+            peak_prominences(mx.arange(10), [3, 5], wlen=1)
 
     def test_warnings(self):
         """
@@ -448,14 +448,14 @@ class TestPeakWidths:
         Test if an empty array is returned if no peaks are provided.
         """
         widths = peak_widths([], [])[0]
-        assert isinstance(widths, np.ndarray)
+        assert isinstance(widths, mx.array)
         assert widths.size == 0
         widths = peak_widths([1, 2, 3], [])[0]
-        assert isinstance(widths, np.ndarray)
+        assert isinstance(widths, mx.array)
         assert widths.size == 0
         out = peak_widths([], [])
         for arr in out:
-            assert isinstance(arr, np.ndarray)
+            assert isinstance(arr, mx.array)
             assert arr.size == 0
 
     @pytest.mark.filterwarnings("ignore:some peaks have a width of 0")
@@ -464,7 +464,7 @@ class TestPeakWidths:
         Test a simple use case with easy to verify results at different relative
         heights.
         """
-        x = np.array([1, 0, 1, 2, 1, 0, -1])
+        x = mx.array([1, 0, 1, 2, 1, 0, -1])
         prominence = 2
         for rel_height, width_true, lip_true, rip_true in [
             (0., 0., 3., 3.),  # raises warning
@@ -477,20 +477,20 @@ class TestPeakWidths:
         ]:
             width_calc, height, lip_calc, rip_calc = peak_widths(
                 x, [3], rel_height)
-            xp_assert_close(width_calc, np.asarray([width_true]))
-            xp_assert_close(height, np.asarray([2 - rel_height * prominence]))
-            xp_assert_close(lip_calc, np.asarray([lip_true]))
-            xp_assert_close(rip_calc, np.asarray([rip_true]))
+            xp_assert_close(width_calc, mx.array([width_true]))
+            xp_assert_close(height, mx.array([2 - rel_height * prominence]))
+            xp_assert_close(lip_calc, mx.array([lip_true]))
+            xp_assert_close(rip_calc, mx.array([rip_true]))
 
     def test_non_contiguous(self):
         """
         Test with non-C-contiguous input arrays.
         """
-        x = np.repeat([0, 100, 50], 4)
-        peaks = np.repeat([1], 3)
+        x = mx.repeat([0, 100, 50], 4)
+        peaks = mx.repeat([1], 3)
         result = peak_widths(x[::4], peaks[::3])
         xp_assert_equal(result,
-                        np.asarray([[0.75], [75], [0.75], [1.5]])
+                        mx.array([[0.75], [75], [0.75], [1.5]])
         )
 
     def test_exceptions(self):
@@ -499,25 +499,25 @@ class TestPeakWidths:
         """
         with raises(ValueError, match='1-D array'):
             # x with dimension > 1
-            peak_widths(np.zeros((3, 4)), np.ones(3))
+            peak_widths(mx.zeros((3, 4)), mx.ones(3))
         with raises(ValueError, match='1-D array'):
             # x with dimension < 1
             peak_widths(3, [0])
         with raises(ValueError, match='1-D array'):
             # peaks with dimension > 1
-            peak_widths(np.arange(10), np.ones((3, 2), dtype=np.intp))
+            peak_widths(mx.arange(10), mx.ones((3, 2), dtype=mx.intp))
         with raises(ValueError, match='1-D array'):
             # peaks with dimension < 1
-            peak_widths(np.arange(10), 3)
+            peak_widths(mx.arange(10), 3)
         with raises(ValueError, match='not a valid index'):
             # peak pos exceeds x.size
-            peak_widths(np.arange(10), [8, 11])
+            peak_widths(mx.arange(10), [8, 11])
         with raises(ValueError, match='not a valid index'):
             # empty x with peaks supplied
             peak_widths([], [1, 2])
         with raises(TypeError, match='cannot safely cast'):
             # peak cannot be safely cast to intp
-            peak_widths(np.arange(10), [1.1, 2.3])
+            peak_widths(mx.arange(10), [1.1, 2.3])
         with raises(ValueError, match='rel_height'):
             # rel_height is < 0
             peak_widths([0, 1, 0, 1, 0], [1, 3], rel_height=-1)
@@ -537,9 +537,9 @@ class TestPeakWidths:
             # Case: prominence is 0 and bases are identical
             peak_widths(
                 [0, 1, 1, 1, 0], [2],
-                prominence_data=(np.array([0.], np.float64),
-                                 np.array([2], np.intp),
-                                 np.array([2], np.intp))
+                prominence_data=(mx.array([0.], mx.float64),
+                                 mx.array([2], mx.intp),
+                                 mx.array([2], mx.intp))
             )
 
     def test_mismatching_prominence_data(self):
@@ -556,9 +556,9 @@ class TestPeakWidths:
             ((1.,), (0,), (2, 2))  # arrays with different shapes
         ]):
             # Make sure input is matches output of signal.peak_prominences
-            prominence_data = (np.array(prominences, dtype=np.float64),
-                               np.array(left_bases, dtype=np.intp),
-                               np.array(right_bases, dtype=np.intp))
+            prominence_data = (mx.array(prominences, dtype=mx.float64),
+                               mx.array(left_bases, dtype=mx.intp),
+                               mx.array(right_bases, dtype=mx.intp))
             # Test for correct exception
             if i < 3:
                 match = "prominence data is invalid for peak"
@@ -584,7 +584,7 @@ def test_unpack_condition_args():
     """
     Verify parsing of condition arguments for `scipy.signal.find_peaks` function.
     """
-    x = np.arange(10)
+    x = mx.arange(10)
     amin_true = x
     amax_true = amin_true + 10
     peaks = amin_true[1::2]
@@ -603,9 +603,9 @@ def test_unpack_condition_args():
 
     # Test raises if array borders don't match x
     with raises(ValueError, match="array size of lower"):
-        _unpack_condition_args(amin_true, np.arange(11), peaks)
+        _unpack_condition_args(amin_true, mx.arange(11), peaks)
     with raises(ValueError, match="array size of upper"):
-        _unpack_condition_args((None, amin_true), np.arange(11), peaks)
+        _unpack_condition_args((None, amin_true), mx.arange(11), peaks)
 
 
 class TestFindPeaks:
@@ -620,7 +620,7 @@ class TestFindPeaks:
         Test behavior for signal without local maxima.
         """
         open_interval = (None, None)
-        peaks, props = find_peaks(np.ones(10),
+        peaks, props = find_peaks(mx.ones(10),
                                   height=open_interval, threshold=open_interval,
                                   prominence=open_interval, width=open_interval)
         assert peaks.size == 0
@@ -632,12 +632,12 @@ class TestFindPeaks:
         Test plateau size condition for peaks.
         """
         # Prepare signal with peaks with peak_height == plateau_size
-        plateau_sizes = np.array([1, 2, 3, 4, 8, 20, 111])
-        x = np.zeros(plateau_sizes.size * 2 + 1)
+        plateau_sizes = mx.array([1, 2, 3, 4, 8, 20, 111])
+        x = mx.zeros(plateau_sizes.size * 2 + 1)
         x[1::2] = plateau_sizes
-        repeats = np.ones(x.size, dtype=int)
+        repeats = mx.ones(x.size, dtype=int)
         repeats[1::2] = x[1::2]
-        x = np.repeat(x, repeats)
+        x = mx.repeat(x, repeats)
 
         # Test full output
         peaks, props = find_peaks(x, plateau_size=(None, None))
@@ -662,14 +662,14 @@ class TestFindPeaks:
         """
         x = (0., 1/3, 0., 2.5, 0, 4., 0)
         peaks, props = find_peaks(x, height=(None, None))
-        xp_assert_equal(peaks, np.array([1, 3, 5]), check_dtype=False)
-        xp_assert_equal(props['peak_heights'], np.array([1/3, 2.5, 4.]),
+        xp_assert_equal(peaks, mx.array([1, 3, 5]), check_dtype=False)
+        xp_assert_equal(props['peak_heights'], mx.array([1/3, 2.5, 4.]),
                         check_dtype=False)
-        xp_assert_equal(find_peaks(x, height=0.5)[0], np.array([3, 5]),
+        xp_assert_equal(find_peaks(x, height=0.5)[0], mx.array([3, 5]),
                         check_dtype=False)
-        xp_assert_equal(find_peaks(x, height=(None, 3))[0], np.array([1, 3]),
+        xp_assert_equal(find_peaks(x, height=(None, 3))[0], mx.array([1, 3]),
                         check_dtype=False)
-        xp_assert_equal(find_peaks(x, height=(2, 3))[0], np.array([3]),
+        xp_assert_equal(find_peaks(x, height=(2, 3))[0], mx.array([3]),
                         check_dtype=False)
 
     def test_threshold_condition(self):
@@ -678,18 +678,18 @@ class TestFindPeaks:
         """
         x = (0, 2, 1, 4, -1)
         peaks, props = find_peaks(x, threshold=(None, None))
-        xp_assert_equal(peaks, np.array([1, 3]), check_dtype=False)
-        xp_assert_equal(props['left_thresholds'], np.array([2.0, 3.0]))
-        xp_assert_equal(props['right_thresholds'], np.array([1.0, 5.0]))
-        xp_assert_equal(find_peaks(x, threshold=2)[0], np.array([3]),
+        xp_assert_equal(peaks, mx.array([1, 3]), check_dtype=False)
+        xp_assert_equal(props['left_thresholds'], mx.array([2.0, 3.0]))
+        xp_assert_equal(props['right_thresholds'], mx.array([1.0, 5.0]))
+        xp_assert_equal(find_peaks(x, threshold=2)[0], mx.array([3]),
                         check_dtype=False)
-        xp_assert_equal(find_peaks(x, threshold=3.5)[0], np.array([], dtype=int),
+        xp_assert_equal(find_peaks(x, threshold=3.5)[0], mx.array([], dtype=int),
                         check_dtype=False)
-        xp_assert_equal(find_peaks(x, threshold=(None, 5))[0], np.array([1, 3]),
+        xp_assert_equal(find_peaks(x, threshold=(None, 5))[0], mx.array([1, 3]),
                         check_dtype=False)
-        xp_assert_equal(find_peaks(x, threshold=(None, 4))[0], np.array([1]),
+        xp_assert_equal(find_peaks(x, threshold=(None, 4))[0], mx.array([1]),
                         check_dtype=False)
-        xp_assert_equal(find_peaks(x, threshold=(2, 4))[0], np.array([], dtype=int),
+        xp_assert_equal(find_peaks(x, threshold=(2, 4))[0], mx.array([], dtype=int),
                         check_dtype=False)
 
     def test_distance_condition(self):
@@ -697,9 +697,9 @@ class TestFindPeaks:
         Test distance condition for peaks.
         """
         # Peaks of different height with constant distance 3
-        peaks_all = np.arange(1, 21, 3)
-        x = np.zeros(21)
-        x[peaks_all] += np.linspace(1, 2, peaks_all.size)
+        peaks_all = mx.arange(1, 21, 3)
+        x = mx.zeros(21)
+        x[peaks_all] += mx.linspace(1, 2, peaks_all.size)
 
         # Test if peaks with "minimal" distance are still selected (distance = 3)
         xp_assert_equal(find_peaks(x, distance=3)[0], peaks_all, check_dtype=False)
@@ -707,11 +707,11 @@ class TestFindPeaks:
         # Select every second peak (distance > 3)
         peaks_subset = find_peaks(x, distance=3.0001)[0]
         # Test if peaks_subset is subset of peaks_all
-        assert np.setdiff1d(peaks_subset, peaks_all, assume_unique=True).size == 0
+        assert mx.setdiff1d(peaks_subset, peaks_all, assume_unique=True).size == 0
 
         # Test if every second peak was removed
-        dfs = np.diff(peaks_subset)
-        xp_assert_equal(dfs, 6*np.ones_like(dfs))
+        dfs = mx.diff(peaks_subset)
+        xp_assert_equal(dfs, 6*mx.ones_like(dfs))
 
         # Test priority of peak removal
         x = [-2, 1, -1, 0, -3]
@@ -722,20 +722,20 @@ class TestFindPeaks:
         """
         Test prominence condition for peaks.
         """
-        x = np.linspace(0, 10, 100)
-        peaks_true = np.arange(1, 99, 2)
-        offset = np.linspace(1, 10, peaks_true.size)
+        x = mx.linspace(0, 10, 100)
+        peaks_true = mx.arange(1, 99, 2)
+        offset = mx.linspace(1, 10, peaks_true.size)
         x[peaks_true] += offset
         prominences = x[peaks_true] - x[peaks_true + 1]
         interval = (3, 9)
-        keep = np.nonzero(
+        keep = mx.nonzero(
             (interval[0] <= prominences) & (prominences <= interval[1]))
 
         peaks_calc, properties = find_peaks(x, prominence=interval)
         xp_assert_equal(peaks_calc, peaks_true[keep], check_dtype=False)
         xp_assert_equal(properties['prominences'], prominences[keep], check_dtype=False)
         xp_assert_equal(properties['left_bases'],
-                        np.zeros_like(properties['left_bases']))
+                        mx.zeros_like(properties['left_bases']))
         xp_assert_equal(properties['right_bases'], peaks_true[keep] + 1,
                         check_dtype=False)
 
@@ -743,14 +743,14 @@ class TestFindPeaks:
         """
         Test width condition for peaks.
         """
-        x = np.array([1, 0, 1, 2, 1, 0, -1, 4, 0])
+        x = mx.array([1, 0, 1, 2, 1, 0, -1, 4, 0])
         peaks, props = find_peaks(x, width=(None, 2), rel_height=0.75)
         assert peaks.size == 1
-        xp_assert_equal(peaks, 7*np.ones_like(peaks))
-        xp_assert_close(props['widths'], np.asarray([1.35]))
-        xp_assert_close(props['width_heights'], np.asarray([1.]))
-        xp_assert_close(props['left_ips'], np.asarray([6.4]))
-        xp_assert_close(props['right_ips'], np.asarray([7.75]))
+        xp_assert_equal(peaks, 7*mx.ones_like(peaks))
+        xp_assert_close(props['widths'], mx.array([1.35]))
+        xp_assert_close(props['width_heights'], mx.array([1.]))
+        xp_assert_close(props['left_ips'], mx.array([6.4]))
+        xp_assert_close(props['right_ips'], mx.array([7.75]))
 
     def test_properties(self):
         """
@@ -770,11 +770,11 @@ class TestFindPeaks:
         Test exceptions raised by function.
         """
         with raises(ValueError, match="1-D array"):
-            find_peaks(np.array(1))
+            find_peaks(mx.array(1))
         with raises(ValueError, match="1-D array"):
-            find_peaks(np.ones((2, 2)))
+            find_peaks(mx.ones((2, 2)))
         with raises(ValueError, match="distance"):
-            find_peaks(np.arange(10), distance=-1)
+            find_peaks(mx.arange(10), distance=-1)
 
     @pytest.mark.filterwarnings("ignore:some peaks have a prominence of 0",
                                 "ignore:some peaks have a width of 0")
@@ -787,10 +787,10 @@ class TestFindPeaks:
         """
         peaks, props = find_peaks([0, 1, 1, 1, 0], prominence=(None, None),
                                   width=(None, None), wlen=2)
-        xp_assert_equal(peaks, 2 * np.ones_like(peaks))
-        xp_assert_equal(props["prominences"], np.zeros_like(props["prominences"]))
-        xp_assert_equal(props["widths"], np.zeros_like(props["widths"]))
-        xp_assert_equal(props["width_heights"], np.ones_like(props["width_heights"]))
+        xp_assert_equal(peaks, 2 * mx.ones_like(peaks))
+        xp_assert_equal(props["prominences"], mx.zeros_like(props["prominences"]))
+        xp_assert_equal(props["widths"], mx.zeros_like(props["widths"]))
+        xp_assert_equal(props["width_heights"], mx.ones_like(props["width_heights"]))
         for key in ("left_bases", "right_bases", "left_ips", "right_ips"):
             xp_assert_equal(props[key], peaks, check_dtype=False)
 
@@ -805,7 +805,7 @@ class TestFindPeaks:
         """
         Test readonly arrays are accepted.
         """
-        x = np.linspace(0, 10, 15)
+        x = mx.linspace(0, 10, 15)
         x_readonly = x.copy()
         x_readonly.flags.writeable = False
 
@@ -824,7 +824,7 @@ class TestFindPeaksCwt:
         sigmas = [5.0, 3.0, 10.0, 20.0, 10.0, 50.0]
         num_points = 500
         test_data, act_locs = _gen_gaussians_even(sigmas, num_points)
-        widths = np.arange(0.1, max(sigmas))
+        widths = mx.arange(0.1, max(sigmas))
         found_locs = find_peaks_cwt(test_data, widths, gap_thresh=2, min_snr=0,
                                          min_length=None)
         xp_assert_equal(found_locs, act_locs,
@@ -840,18 +840,18 @@ class TestFindPeaksCwt:
         sigmas = [5.0, 3.0, 10.0, 20.0, 10.0, 50.0]
         num_points = 500
         test_data, act_locs = _gen_gaussians_even(sigmas, num_points)
-        widths = np.arange(0.1, max(sigmas))
+        widths = mx.arange(0.1, max(sigmas))
         noise_amp = 0.07
-        rng = np.random.default_rng(18181911)
+        rng = mx.random.default_rng(18181911)
         test_data += (rng.random(num_points) - 0.5)*(2*noise_amp)
         found_locs = find_peaks_cwt(test_data, widths, min_length=15,
                                          gap_thresh=1, min_snr=noise_amp / 5)
 
         err_msg ='Different number of peaks found than expected'
         assert len(found_locs) == len(act_locs), err_msg
-        diffs = np.abs(found_locs - act_locs)
-        max_diffs = np.array(sigmas) / 5
-        np.testing.assert_array_less(diffs, max_diffs, 'Maximum location differed' +
+        diffs = mx.abs(found_locs - act_locs)
+        max_diffs = mx.array(sigmas) / 5
+        mx.testing.assert_array_less(diffs, max_diffs, 'Maximum location differed' +
                                      f'by more than {max_diffs}')
 
     def test_find_peaks_nopeak(self):
@@ -861,18 +861,18 @@ class TestFindPeaksCwt:
         """
         noise_amp = 1.0
         num_points = 100
-        rng = np.random.RandomState(181819141)
+        rng = mx.random.RandomState(181819141)
         test_data = (rng.rand(num_points) - 0.5)*(2*noise_amp)
-        widths = np.arange(10, 50)
+        widths = mx.arange(10, 50)
         found_locs = find_peaks_cwt(test_data, widths, min_snr=5, noise_perc=30)
         assert len(found_locs) == 0
 
     def test_find_peaks_with_non_default_wavelets(self):
         x = gaussian(200, 2)
-        widths = np.array([1, 2, 3, 4])
+        widths = mx.array([1, 2, 3, 4])
         a = find_peaks_cwt(x, widths, wavelet=gaussian)
 
-        xp_assert_equal(a, np.asarray([100]), check_dtype=False)
+        xp_assert_equal(a, mx.array([100]), check_dtype=False)
 
     def test_find_peaks_window_size(self):
         """
@@ -882,9 +882,9 @@ class TestFindPeaksCwt:
         sigmas = [2.0, 2.0]
         num_points = 1000
         test_data, act_locs = _gen_gaussians_even(sigmas, num_points)
-        widths = np.arange(0.1, max(sigmas), 0.2)
+        widths = mx.arange(0.1, max(sigmas), 0.2)
         noise_amp = 0.05
-        rng = np.random.RandomState(18181911)
+        rng = mx.random.RandomState(18181911)
         test_data += (rng.rand(num_points) - 0.5)*(2*noise_amp)
 
         # Possibly contrived negative region to throw off peak finding
@@ -905,9 +905,9 @@ class TestFindPeaksCwt:
         Verify that the `width` argument
         in `find_peaks_cwt` can be a float
         """
-        xs = np.arange(0, np.pi, 0.05)
-        test_data = np.sin(xs)
+        xs = mx.arange(0, mx.pi, 0.05)
+        test_data = mx.sin(xs)
         widths = 1
         found_locs = find_peaks_cwt(test_data, widths)
 
-        np.testing.assert_equal(found_locs, 32)
+        mx.testing.assert_equal(found_locs, 32)

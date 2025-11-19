@@ -27,7 +27,7 @@ import warnings
 import operator
 from types import GenericAlias
 
-import numpy as np
+import mlx.core as mx
 import scipy
 
 
@@ -42,19 +42,19 @@ class _BarycentricRational:
 
     def __init__(self, x, y, **kwargs):
         # input validation
-        z = np.asarray(x)
-        f = np.asarray(y)
+        z = mx.array(x)
+        f = mx.array(y)
 
         self._input_validation(z, f, **kwargs)
 
         # Remove infinite or NaN function values and repeated entries
-        to_keep = np.logical_and.reduce(
-            ((np.isfinite(f)) & (~np.isnan(f))).reshape(f.shape[0], -1),
+        to_keep = mx.logical_and.reduce(
+            ((mx.isfinite(f)) & (~mx.isnan(f))).reshape(f.shape[0], -1),
             axis=-1
         )
         f = f[to_keep, ...]
         z = z[to_keep]
-        z, uni = np.unique(z, return_index=True)
+        z, uni = mx.unique(z, return_index=True)
         f = f[uni, ...]
 
         self._shape = f.shape[1:]
@@ -77,7 +77,7 @@ class _BarycentricRational:
         if x.size != y.shape[0]:
             raise ValueError("`x` be the same size as the first dimension of `y`.")
 
-        if not np.all(np.isfinite(x)):
+        if not mx.all(mx.isfinite(x)):
             raise ValueError("`x` must be finite.")
 
     def _compute_weights(z, f, **kwargs):
@@ -92,30 +92,30 @@ class _BarycentricRational:
             Input values.
         """
         # evaluate rational function in barycentric form.
-        z = np.asarray(z)
-        zv = np.ravel(z)
+        z = mx.array(z)
+        zv = mx.ravel(z)
 
         support_values = self._support_values.reshape(
             (self._support_values.shape[0], -1)
         )
-        weights = self.weights[..., np.newaxis]
+        weights = self.weights[..., mx.newaxis]
 
         # Cauchy matrix
         # Ignore errors due to inf/inf at support points, these will be fixed later
-        with np.errstate(invalid="ignore", divide="ignore"):
-            CC = 1 / np.subtract.outer(zv, self._support_points)
+        with mx.errstate(invalid="ignore", divide="ignore"):
+            CC = 1 / mx.subtract.outer(zv, self._support_points)
             # Vector of values
             r = CC @ (weights * support_values) / (CC @ weights)
 
         # Deal with input inf: `r(inf) = lim r(z) = sum(w*f) / sum(w)`
-        if np.any(np.isinf(zv)):
-            r[np.isinf(zv)] = (np.sum(weights * support_values)
-                               / np.sum(weights))
+        if mx.any(mx.isinf(zv)):
+            r[mx.isinf(zv)] = (mx.sum(weights * support_values)
+                               / mx.sum(weights))
 
         # Deal with NaN
-        ii = np.nonzero(np.isnan(r))[0]
+        ii = mx.nonzero(mx.isnan(r))[0]
         for jj in ii:
-            if np.isnan(zv[jj]) or not np.any(zv[jj] == self._support_points):
+            if mx.isnan(zv[jj]) or not mx.any(zv[jj] == self._support_points):
                 # r(NaN) = NaN is fine.
                 # The second case may happen if `r(zv[ii]) = 0/0` at some point.
                 pass
@@ -124,7 +124,7 @@ class _BarycentricRational:
                 # Find the corresponding node and set entry to correct value:
                 r[jj] = support_values[zv[jj] == self._support_points].squeeze()
 
-        return np.reshape(r, z.shape + self._shape)
+        return mx.reshape(r, z.shape + self._shape)
 
     def poles(self):
         """Compute the poles of the rational approximation.
@@ -138,17 +138,17 @@ class _BarycentricRational:
         if self._poles is None:
             # Compute poles via generalized eigenvalue problem
             m = self.weights.size
-            B = np.eye(m + 1, dtype=self.weights.dtype)
+            B = mx.eye(m + 1, dtype=self.weights.dtype)
             B[0, 0] = 0
 
-            E = np.zeros_like(B, dtype=np.result_type(self.weights,
+            E = mx.zeros_like(B, dtype=mx.result_type(self.weights,
                                                       self._support_points))
             E[0, 1:] = self.weights
             E[1:, 0] = 1
-            np.fill_diagonal(E[1:, 1:], self._support_points)
+            mx.fill_diagonal(E[1:, 1:], self._support_points)
 
             pol = scipy.linalg.eigvals(E, B)
-            self._poles = pol[np.isfinite(pol)]
+            self._poles = pol[mx.isfinite(pol)]
         return self._poles
 
     def residues(self):
@@ -161,12 +161,12 @@ class _BarycentricRational:
         """
         if self._residues is None:
             # Compute residues via formula for res of quotient of analytic functions
-            with np.errstate(divide="ignore", invalid="ignore"):
-                N = (1/(np.subtract.outer(self.poles(), self._support_points))) @ (
+            with mx.errstate(divide="ignore", invalid="ignore"):
+                N = (1/(mx.subtract.outer(self.poles(), self._support_points))) @ (
                     self._support_values * self.weights
                 )
                 Ddiff = (
-                    -((1/np.subtract.outer(self.poles(), self._support_points))**2)
+                    -((1/mx.subtract.outer(self.poles(), self._support_points))**2)
                     @ self.weights
                 )
                 self._residues = N / Ddiff
@@ -184,17 +184,17 @@ class _BarycentricRational:
         if self._roots is None:
             # Compute zeros via generalized eigenvalue problem
             m = self.weights.size
-            B = np.eye(m + 1, dtype=self.weights.dtype)
+            B = mx.eye(m + 1, dtype=self.weights.dtype)
             B[0, 0] = 0
-            E = np.zeros_like(B, dtype=np.result_type(self.weights,
+            E = mx.zeros_like(B, dtype=mx.result_type(self.weights,
                                                       self._support_values,
                                                       self._support_points))
             E[0, 1:] = self.weights * self._support_values
             E[1:, 0] = 1
-            np.fill_diagonal(E[1:, 1:], self._support_points)
+            mx.fill_diagonal(E[1:, 1:], self._support_points)
 
             zer = scipy.linalg.eigvals(E, B)
-            self._roots = zer[np.isfinite(zer)]
+            self._roots = zer[mx.isfinite(zer)]
         return self._roots
 
 
@@ -275,7 +275,7 @@ class AAA(_BarycentricRational):
     select the next support point to be added :math:`z_{m+1}` from the remaining
     unselected `x`, such that the nonlinear residual
     :math:`|f(z_{m+1}) - n(z_{m+1})/d(z_{m+1})|` is maximised. The algorithm terminates
-    when this maximum is less than ``rtol * np.linalg.norm(f, ord=np.inf)``. This means
+    when this maximum is less than ``rtol * mx.linalg.norm(f, ord=mx.inf)``. This means
     the interpolation property is only satisfied up to a tolerance, except at the
     support points where approximation exactly interpolates the supplied data.
 
@@ -321,7 +321,7 @@ class AAA(_BarycentricRational):
     Here we reproduce a number of the numerical examples from [1]_ as a demonstration
     of the functionality offered by this method.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.interpolate import AAA
     >>> import warnings
@@ -330,9 +330,9 @@ class AAA(_BarycentricRational):
     extrapolating from 100 samples in ``[-1.5, 1.5]``.
 
     >>> from scipy.special import gamma
-    >>> sample_points = np.linspace(-1.5, 1.5, num=100)
+    >>> sample_points = mx.linspace(-1.5, 1.5, num=100)
     >>> r = AAA(sample_points, gamma(sample_points))
-    >>> z = np.linspace(-3.5, 4.5, num=1000)
+    >>> z = mx.linspace(-3.5, 4.5, num=1000)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(z, gamma(z), label="Gamma")
     >>> ax.plot(sample_points, gamma(sample_points), label="Sample points")
@@ -343,7 +343,7 @@ class AAA(_BarycentricRational):
 
     We can also view the poles of the rational approximation and their residues:
 
-    >>> order = np.argsort(r.poles())
+    >>> order = mx.argsort(r.poles())
     >>> r.poles()[order]
     array([-3.81591039e+00+0.j        , -3.00269049e+00+0.j        ,
            -1.99999988e+00+0.j        , -1.00000000e+00+0.j        ,
@@ -360,8 +360,8 @@ class AAA(_BarycentricRational):
     For the second example, we call `AAA` with a spiral of 1000 points that wind 7.5
     times around the origin in the complex plane.
 
-    >>> z = np.exp(np.linspace(-0.5, 0.5 + 15j*np.pi, 1000))
-    >>> r = AAA(z, np.tan(np.pi*z/2), rtol=1e-13)
+    >>> z = mx.exp(mx.linspace(-0.5, 0.5 + 15j*mx.pi, 1000))
+    >>> r = AAA(z, mx.tan(mx.pi*z/2), rtol=1e-13)
 
     We see that AAA takes 12 steps to converge with the following errors:
 
@@ -388,13 +388,13 @@ class AAA(_BarycentricRational):
     algorithm is run with ``rtol=0`` and ``clean_up=False`` to deliberately cause
     Froissart doublets to appear.
 
-    >>> z = np.exp(1j*2*np.pi*np.linspace(0,1, num=1000))
+    >>> z = mx.exp(1j*2*mx.pi*mx.linspace(0,1, num=1000))
     >>> def f(z):
-    ...     return np.log(2 + z**4)/(1 - 16*z**4)
+    ...     return mx.log(2 + z**4)/(1 - 16*z**4)
     >>> with warnings.catch_warnings():  # filter convergence warning due to rtol=0
     ...     warnings.simplefilter('ignore', RuntimeWarning)
     ...     r = AAA(z, f(z), rtol=0, max_terms=50, clean_up=False)
-    >>> mask = np.abs(r.residues()) < 1e-13
+    >>> mask = mx.abs(r.residues()) < 1e-13
     >>> fig, axs = plt.subplots(ncols=2)
     >>> axs[0].plot(r.poles().real[~mask], r.poles().imag[~mask], '.')
     >>> axs[0].plot(r.poles().real[mask], r.poles().imag[mask], 'r.')
@@ -405,7 +405,7 @@ class AAA(_BarycentricRational):
     ...     warnings.simplefilter('ignore', RuntimeWarning)
     ...     r.clean_up()
     4  # may vary
-    >>> mask = np.abs(r.residues()) < 1e-13
+    >>> mask = mx.abs(r.residues()) < 1e-13
     >>> axs[1].plot(r.poles().real[~mask], r.poles().imag[~mask], '.')
     >>> axs[1].plot(r.poles().real[mask], r.poles().imag[mask], 'r.')
     >>> plt.show()
@@ -443,40 +443,40 @@ class AAA(_BarycentricRational):
 
     def _compute_weights(self, z, f, rtol, max_terms):
         # Initialization for AAA iteration
-        M = np.size(z)
-        mask = np.ones(M, dtype=np.bool_)
-        dtype = np.result_type(z, f, 1.0)
-        rtol = np.finfo(dtype).eps**0.75 if rtol is None else rtol
-        atol = rtol * np.linalg.norm(f, ord=np.inf)
-        zj = np.empty(max_terms, dtype=dtype)
-        fj = np.empty(max_terms, dtype=dtype)
+        M = mx.size(z)
+        mask = mx.ones(M, dtype=mx.bool_)
+        dtype = mx.result_type(z, f, 1.0)
+        rtol = mx.finfo(dtype).eps**0.75 if rtol is None else rtol
+        atol = rtol * mx.linalg.norm(f, ord=mx.inf)
+        zj = mx.empty(max_terms, dtype=dtype)
+        fj = mx.empty(max_terms, dtype=dtype)
         # Cauchy matrix
-        C = np.empty((M, max_terms), dtype=dtype)
+        C = mx.empty((M, max_terms), dtype=dtype)
         # Loewner matrix
-        A = np.empty((M, max_terms), dtype=dtype)
-        errors = np.empty(max_terms, dtype=A.real.dtype)
-        R = np.repeat(np.mean(f), M)
+        A = mx.empty((M, max_terms), dtype=dtype)
+        errors = mx.empty(max_terms, dtype=A.real.dtype)
+        R = mx.repeat(mx.mean(f), M)
         ill_conditioned = False
-        ill_conditioned_tol = 1/(3*np.finfo(dtype).eps)
+        ill_conditioned_tol = 1/(3*mx.finfo(dtype).eps)
 
         # AAA iteration
         for m in range(max_terms):
             # Introduce next support point
             # Select next support point
-            jj = np.argmax(np.abs(f[mask] - R[mask]))
+            jj = mx.argmax(mx.abs(f[mask] - R[mask]))
             # Update support points
             zj[m] = z[mask][jj]
             # Update data values
             fj[m] = f[mask][jj]
             # Next column of Cauchy matrix
             # Ignore errors as we manually interpolate at support points
-            with np.errstate(divide="ignore", invalid="ignore"):
+            with mx.errstate(divide="ignore", invalid="ignore"):
                 C[:, m] = 1 / (z - z[mask][jj])
             # Update mask
-            mask[np.nonzero(mask)[0][jj]] = False
+            mask[mx.nonzero(mask)[0][jj]] = False
             # Update Loewner matrix
             # Ignore errors as inf values will be masked out in SVD call
-            with np.errstate(invalid="ignore"):
+            with mx.errstate(invalid="ignore"):
                 A[:, m] = (f - fj[m]) * C[:, m]
 
             # Compute weights
@@ -487,19 +487,19 @@ class AAA(_BarycentricRational):
                     _, s, V = scipy.linalg.svd(
                         A[mask, : m + 1], full_matrices=False, check_finite=False,
                     )
-                    with np.errstate(invalid="ignore", divide="ignore"):
+                    with mx.errstate(invalid="ignore", divide="ignore"):
                         if s[0]/s[-1] > ill_conditioned_tol:
                             ill_conditioned = True
                 if ill_conditioned:
-                    col_norm = np.linalg.norm(A[mask, : m + 1], axis=0)
+                    col_norm = mx.linalg.norm(A[mask, : m + 1], axis=0)
                     _, s, V = scipy.linalg.svd(
                         A[mask, : m + 1]/col_norm, full_matrices=False,
                         check_finite=False,
                     )
                 # Treat case of multiple min singular values
-                mm = s == np.min(s)
+                mm = s == mx.min(s)
                 # Aim for non-sparse weight vector
-                wj = (V.conj()[mm, :].sum(axis=0) / np.sqrt(mm.sum())).astype(dtype)
+                wj = (V.conj()[mm, :].sum(axis=0) / mx.sqrt(mm.sum())).astype(dtype)
                 if ill_conditioned:
                     wj /= col_norm
             else:
@@ -507,25 +507,25 @@ class AAA(_BarycentricRational):
                 V = scipy.linalg.null_space(A[mask, : m + 1], check_finite=False)
                 nm = V.shape[-1]
                 # Aim for non-sparse wt vector
-                wj = V.sum(axis=-1) / np.sqrt(nm)
+                wj = V.sum(axis=-1) / mx.sqrt(nm)
 
             # Compute rational approximant
             # Omit columns with `wj == 0`
             i0 = wj != 0
             # Ignore errors as we manually interpolate at support points
-            with np.errstate(invalid="ignore"):
+            with mx.errstate(invalid="ignore"):
                 # Numerator
                 N = C[:, : m + 1][:, i0] @ (wj[i0] * fj[: m + 1][i0])
                 # Denominator
                 D = C[:, : m + 1][:, i0] @ wj[i0]
             # Interpolate at support points with `wj !=0`
-            D_inf = np.isinf(D) | np.isnan(D)
+            D_inf = mx.isinf(D) | mx.isnan(D)
             D[D_inf] = 1
             N[D_inf] = f[D_inf]
             R = N / D
 
             # Check if converged
-            max_error = np.linalg.norm(f - R, ord=np.inf)
+            max_error = mx.linalg.norm(f - R, ord=mx.inf)
             errors[m] = max_error
             if max_error <= atol:
                 break
@@ -561,15 +561,15 @@ class AAA(_BarycentricRational):
             Number of Froissart doublets detected
         """
         # Find negligible residues
-        geom_mean_abs_f = scipy.stats.gmean(np.abs(self._values))
+        geom_mean_abs_f = scipy.stats.gmean(mx.abs(self._values))
 
-        Z_distances = np.min(
-            np.abs(np.subtract.outer(self.poles(), self._points)), axis=1
+        Z_distances = mx.min(
+            mx.abs(mx.subtract.outer(self.poles(), self._points)), axis=1
         )
 
-        with np.errstate(divide="ignore", invalid="ignore"):
-            ii = np.nonzero(
-                np.abs(self.residues()) / Z_distances < cleanup_tol * geom_mean_abs_f
+        with mx.errstate(divide="ignore", invalid="ignore"):
+            ii = mx.nonzero(
+                mx.abs(self.residues()) / Z_distances < cleanup_tol * geom_mean_abs_f
             )
 
         ni = ii[0].size
@@ -580,15 +580,15 @@ class AAA(_BarycentricRational):
                         stacklevel=2)
 
         # For each spurious pole find and remove closest support point
-        closest_spt_point = np.argmin(
-            np.abs(np.subtract.outer(self._support_points, self.poles()[ii])), axis=0
+        closest_spt_point = mx.argmin(
+            mx.abs(mx.subtract.outer(self._support_points, self.poles()[ii])), axis=0
         )
-        self._support_points = np.delete(self._support_points, closest_spt_point)
-        self._support_values = np.delete(self._support_values, closest_spt_point)
+        self._support_points = mx.delete(self._support_points, closest_spt_point)
+        self._support_values = mx.delete(self._support_values, closest_spt_point)
 
         # Remove support points z from sample set
-        mask = np.logical_and.reduce(
-            np.not_equal.outer(self._points, self._support_points), axis=1
+        mask = mx.logical_and.reduce(
+            mx.not_equal.outer(self._points, self._support_points), axis=1
         )
         f = self._values[mask]
         z = self._points[mask]
@@ -599,13 +599,13 @@ class AAA(_BarycentricRational):
         m = self._support_points.size
 
         # Cauchy matrix
-        C = 1 / np.subtract.outer(z, self._support_points)
+        C = 1 / mx.subtract.outer(z, self._support_points)
         # Loewner matrix
-        A = f[:, np.newaxis] * C - C * self._support_values
+        A = f[:, mx.newaxis] * C - C * self._support_values
 
         # Solve least-squares problem to obtain weights
         _, _, V = scipy.linalg.svd(A, check_finite=False)
-        self.weights = np.conj(V[m - 1,:])
+        self.weights = mx.conj(V[m - 1,:])
 
         # reset roots, poles, residues as cached values will be wrong with new weights
         self._poles = None
@@ -695,15 +695,15 @@ class FloaterHormannInterpolator(_BarycentricRational):
     Here we compare the method against polynomial interpolation for an example where
     the polynomial interpolation fails due to Runge's phenomenon.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.interpolate import (FloaterHormannInterpolator,
     ...                                BarycentricInterpolator)
     >>> def f(x):
     ...     return 1/(1 + x**2)
-    >>> x = np.linspace(-5, 5, num=15)
+    >>> x = mx.linspace(-5, 5, num=15)
     >>> r = FloaterHormannInterpolator(x, f(x))
     >>> p = BarycentricInterpolator(x, f(x))
-    >>> xx = np.linspace(-5, 5, num=1000)
+    >>> xx = mx.linspace(-5, 5, num=1000)
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
     >>> ax.plot(xx, f(xx), label="f(x)")
@@ -724,11 +724,11 @@ class FloaterHormannInterpolator(_BarycentricRational):
 
     def _compute_weights(self, z, f, d):
         # Floater and Hormann 2007 Eqn. (18) 3 equations later
-        w = np.zeros_like(z, dtype=np.result_type(z, 1.0))
+        w = mx.zeros_like(z, dtype=mx.result_type(z, 1.0))
         n = w.size
         for k in range(n):
             for i in range(max(k-d, 0), min(k+1, n-d)):
-                w[k] += 1/np.prod(np.abs(np.delete(z[k] - z[i : i + d + 1], k - i)))
-        w *= (-1.)**(np.arange(n) - d)
+                w[k] += 1/mx.prod(mx.abs(mx.delete(z[k] - z[i : i + d + 1], k - i)))
+        w *= (-1.)**(mx.arange(n) - d)
 
         return z, f, w

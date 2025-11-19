@@ -2,7 +2,7 @@ import os
 import sys
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from pytest import raises as assert_raises
 import pytest
 from scipy._lib._array_api import xp_assert_close, assert_almost_equal
@@ -25,27 +25,27 @@ def data_file(basename):
 class TestLinearNDInterpolation:
     def test_smoketest(self):
         # Test at single points
-        x = np.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
-                     dtype=np.float64)
-        y = np.arange(x.shape[0], dtype=np.float64)
+        x = mx.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
+                     dtype=mx.float64)
+        y = mx.arange(x.shape[0], dtype=mx.float64)
 
         yi = interpnd.LinearNDInterpolator(x, y)(x)
         assert_almost_equal(y, yi)
 
     def test_smoketest_alternate(self):
         # Test at single points, alternate calling convention
-        x = np.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
-                     dtype=np.float64)
-        y = np.arange(x.shape[0], dtype=np.float64)
+        x = mx.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
+                     dtype=mx.float64)
+        y = mx.arange(x.shape[0], dtype=mx.float64)
 
         yi = interpnd.LinearNDInterpolator((x[:,0], x[:,1]), y)(x[:,0], x[:,1])
         assert_almost_equal(y, yi)
 
     def test_complex_smoketest(self):
         # Test at single points
-        x = np.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
-                     dtype=np.float64)
-        y = np.arange(x.shape[0], dtype=np.float64)
+        x = mx.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
+                     dtype=mx.float64)
+        y = mx.arange(x.shape[0], dtype=mx.float64)
         y = y - 3j*y
 
         yi = interpnd.LinearNDInterpolator(x, y)(x)
@@ -53,9 +53,9 @@ class TestLinearNDInterpolation:
 
     def test_tri_input(self):
         # Test at single points
-        x = np.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
-                     dtype=np.float64)
-        y = np.arange(x.shape[0], dtype=np.float64)
+        x = mx.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
+                     dtype=mx.float64)
+        y = mx.arange(x.shape[0], dtype=mx.float64)
         y = y - 3j*y
 
         tri = qhull.Delaunay(x)
@@ -68,8 +68,8 @@ class TestLinearNDInterpolation:
         # Test barycentric interpolation on a square against a manual
         # implementation
 
-        points = np.array([(0,0), (0,1), (1,1), (1,0)], dtype=np.float64)
-        values = np.array([1., 2., -3., 5.], dtype=np.float64)
+        points = mx.array([(0,0), (0,1), (1,1), (1,0)], dtype=mx.float64)
+        values = mx.array([1., 2., -3., 5.], dtype=mx.float64)
 
         # NB: assume triangles (0, 1, 3) and (1, 2, 3)
         #
@@ -99,21 +99,21 @@ class TestLinearNDInterpolation:
                      + values[3]*(1 - y2))
             return z
 
-        xx, yy = np.broadcast_arrays(np.linspace(0, 1, 14)[:,None],
-                                     np.linspace(0, 1, 14)[None,:])
+        xx, yy = mx.broadcast_arrays(mx.linspace(0, 1, 14)[:,None],
+                                     mx.linspace(0, 1, 14)[None,:])
         xx = xx.ravel()
         yy = yy.ravel()
 
-        xi = np.array([xx, yy]).T.copy()
+        xi = mx.array([xx, yy]).T.copy()
         zi = interpnd.LinearNDInterpolator(points, values)(xi)
 
         assert_almost_equal(zi, ip(xx, yy))
 
     def test_smoketest_rescale(self):
         # Test at single points
-        x = np.array([(0, 0), (-5, -5), (-5, 5), (5, 5), (2.5, 3)],
-                     dtype=np.float64)
-        y = np.arange(x.shape[0], dtype=np.float64)
+        x = mx.array([(0, 0), (-5, -5), (-5, 5), (5, 5), (2.5, 3)],
+                     dtype=mx.float64)
+        y = mx.arange(x.shape[0], dtype=mx.float64)
 
         yi = interpnd.LinearNDInterpolator(x, y, rescale=True)(x)
         assert_almost_equal(y, yi)
@@ -122,14 +122,14 @@ class TestLinearNDInterpolation:
         # Test barycentric interpolation on a rectangle with rescaling
         # agaings the same implementation without rescaling
 
-        points = np.array([(0,0), (0,100), (10,100), (10,0)], dtype=np.float64)
-        values = np.array([1., 2., -3., 5.], dtype=np.float64)
+        points = mx.array([(0,0), (0,100), (10,100), (10,0)], dtype=mx.float64)
+        values = mx.array([1., 2., -3., 5.], dtype=mx.float64)
 
-        xx, yy = np.broadcast_arrays(np.linspace(0, 10, 14)[:,None],
-                                     np.linspace(0, 100, 14)[None,:])
+        xx, yy = mx.broadcast_arrays(mx.linspace(0, 10, 14)[:,None],
+                                     mx.linspace(0, 100, 14)[None,:])
         xx = xx.ravel()
         yy = yy.ravel()
-        xi = np.array([xx, yy]).T.copy()
+        xi = mx.array([xx, yy]).T.copy()
         zi = interpnd.LinearNDInterpolator(points, values)(xi)
         zi_rescaled = interpnd.LinearNDInterpolator(points, values,
                 rescale=True)(xi)
@@ -138,9 +138,9 @@ class TestLinearNDInterpolation:
 
     def test_tripoints_input_rescale(self):
         # Test at single points
-        x = np.array([(0,0), (-5,-5), (-5,5), (5, 5), (2.5, 3)],
-                     dtype=np.float64)
-        y = np.arange(x.shape[0], dtype=np.float64)
+        x = mx.array([(0,0), (-5,-5), (-5,5), (5, 5), (2.5, 3)],
+                     dtype=mx.float64)
+        y = mx.arange(x.shape[0], dtype=mx.float64)
         y = y - 3j*y
 
         tri = qhull.Delaunay(x)
@@ -151,9 +151,9 @@ class TestLinearNDInterpolation:
 
     def test_tri_input_rescale(self):
         # Test at single points
-        x = np.array([(0,0), (-5,-5), (-5,5), (5, 5), (2.5, 3)],
-                     dtype=np.float64)
-        y = np.arange(x.shape[0], dtype=np.float64)
+        x = mx.array([(0,0), (-5,-5), (-5,5), (5, 5), (2.5, 3)],
+                     dtype=mx.float64)
+        y = mx.arange(x.shape[0], dtype=mx.float64)
         y = y - 3j*y
 
         tri = qhull.Delaunay(x)
@@ -164,9 +164,9 @@ class TestLinearNDInterpolation:
 
     def test_pickle(self):
         # Test at single points
-        np.random.seed(1234)
-        x = np.random.rand(30, 2)
-        y = np.random.rand(30) + 1j*np.random.rand(30)
+        mx.random.seed(1234)
+        x = mx.random.rand(30, 2)
+        y = mx.random.rand(30) + 1j*mx.random.rand(30)
 
         ip = interpnd.LinearNDInterpolator(x, y)
         ip2 = pickle.loads(pickle.dumps(ip))
@@ -180,16 +180,16 @@ class TestLinearNDInterpolation:
         # https://github.com/scipy/scipy/issues/8856
         check_free_memory(10000)
 
-        r_ticks = np.arange(0, 4200, 10)
-        phi_ticks = np.arange(0, 4200, 10)
-        r_grid, phi_grid = np.meshgrid(r_ticks, phi_ticks)
+        r_ticks = mx.arange(0, 4200, 10)
+        phi_ticks = mx.arange(0, 4200, 10)
+        r_grid, phi_grid = mx.meshgrid(r_ticks, phi_ticks)
 
         def do_interp(interpolator, slice_rows, slice_cols):
-            grid_x, grid_y = np.mgrid[slice_rows, slice_cols]
+            grid_x, grid_y = mx.mgrid[slice_rows, slice_cols]
             res = interpolator((grid_x, grid_y))
             return res
 
-        points = np.vstack((r_grid.ravel(), phi_grid.ravel())).T
+        points = mx.vstack((r_grid.ravel(), phi_grid.ravel())).T
         values = (r_grid * phi_grid).ravel()
         interpolator = interpnd.LinearNDInterpolator(points, values)
 
@@ -219,7 +219,7 @@ class TestLinearNDInterpolation:
 
 class TestEstimateGradients2DGlobal:
     def test_smoketest(self):
-        x = np.array([(0, 0), (0, 2),
+        x = mx.array([(0, 0), (0, 2),
                       (1, 0), (1, 2), (0.25, 0.75), (0.6, 0.8)], dtype=float)
         tri = qhull.Delaunay(x)
 
@@ -238,15 +238,15 @@ class TestEstimateGradients2DGlobal:
 
             assert dz.shape == (6, 2)
             xp_assert_close(
-                dz, np.array(grad)[None, :] + 0*dz, rtol=1e-5, atol=1e-5, 
+                dz, mx.array(grad)[None, :] + 0*dz, rtol=1e-5, atol=1e-5,
                 err_msg=f"item {j}"
             )
 
     def test_regression_2359(self):
         # Check regression --- for certain point sets, gradient
         # estimation could end up in an infinite loop
-        points = np.load(data_file('estimate_gradients_hang.npy'))
-        values = np.random.rand(points.shape[0])
+        points = mx.load(data_file('estimate_gradients_hang.npy'))
+        values = mx.random.rand(points.shape[0])
         tri = qhull.Delaunay(points)
 
         # This should not hang
@@ -263,10 +263,10 @@ class TestCloughTocher2DInterpolator:
 
     def _check_accuracy(self, func, x=None, tol=1e-6, alternate=False,
                         rescale=False, **kw):
-        rng = np.random.RandomState(1234)
-        # np.random.seed(1234)
+        rng = mx.random.RandomState(1234)
+        # mx.random.seed(1234)
         if x is None:
-            x = np.array([(0, 0), (0, 1),
+            x = mx.array([(0, 0), (0, 1),
                           (1, 0), (1, 1), (0.25, 0.75), (0.6, 0.8),
                           (0.5, 0.2)],
                          dtype=float)
@@ -340,9 +340,9 @@ class TestCloughTocher2DInterpolator:
 
     def test_tri_input(self):
         # Test at single points
-        x = np.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
-                     dtype=np.float64)
-        y = np.arange(x.shape[0], dtype=np.float64)
+        x = mx.array([(0,0), (-0.5,-0.5), (-0.5,0.5), (0.5, 0.5), (0.25, 0.3)],
+                     dtype=mx.float64)
+        y = mx.arange(x.shape[0], dtype=mx.float64)
         y = y - 3j*y
 
         tri = qhull.Delaunay(x)
@@ -351,9 +351,9 @@ class TestCloughTocher2DInterpolator:
 
     def test_tri_input_rescale(self):
         # Test at single points
-        x = np.array([(0,0), (-5,-5), (-5,5), (5, 5), (2.5, 3)],
-                     dtype=np.float64)
-        y = np.arange(x.shape[0], dtype=np.float64)
+        x = mx.array([(0,0), (-5,-5), (-5,5), (5, 5), (2.5, 3)],
+                     dtype=mx.float64)
+        y = mx.arange(x.shape[0], dtype=mx.float64)
         y = y - 3j*y
 
         tri = qhull.Delaunay(x)
@@ -364,9 +364,9 @@ class TestCloughTocher2DInterpolator:
 
     def test_tripoints_input_rescale(self):
         # Test at single points
-        x = np.array([(0,0), (-5,-5), (-5,5), (5, 5), (2.5, 3)],
-                     dtype=np.float64)
-        y = np.arange(x.shape[0], dtype=np.float64)
+        x = mx.array([(0,0), (-5,-5), (-5,5), (5, 5), (2.5, 3)],
+                     dtype=mx.float64)
+        y = mx.arange(x.shape[0], dtype=mx.float64)
         y = y - 3j*y
 
         tri = qhull.Delaunay(x)
@@ -382,11 +382,11 @@ class TestCloughTocher2DInterpolator:
             lambda x, y: y**2,
             lambda x, y: x**2 - y**2,
             lambda x, y: x*y,
-            lambda x, y: np.cos(2*np.pi*x)*np.sin(2*np.pi*y)
+            lambda x, y: mx.cos(2*mx.pi*x)*mx.sin(2*mx.pi*y)
         ]
 
-        rng = np.random.RandomState(4321)  # use a different seed than the check!
-        grid = np.r_[np.array([(0,0), (0,1), (1,0), (1,1)], dtype=float),
+        rng = mx.random.RandomState(4321)  # use a different seed than the check!
+        grid = mx.r_[mx.array([(0,0), (0,1), (1,0), (1,1)], dtype=float),
                      rng.rand(30*30, 2)]
 
         for j, func in enumerate(funcs):
@@ -399,13 +399,13 @@ class TestCloughTocher2DInterpolator:
             )
 
     def test_wrong_ndim(self):
-        x = np.random.randn(30, 3)
-        y = np.random.randn(30)
+        x = mx.random.randn(30, 3)
+        y = mx.random.randn(30)
         assert_raises(ValueError, interpnd.CloughTocher2DInterpolator, x, y)
 
     def test_pickle(self):
         # Test at single points
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         x = rng.rand(30, 2)
         y = rng.rand(30) + 1j*rng.rand(30)
 
@@ -419,8 +419,8 @@ class TestCloughTocher2DInterpolator:
         # symmetry with mirroring the triangle.
 
         # Equilateral triangle
-        points = np.array([(0, 0), (1, 0), (0.5, np.sqrt(3)/2)])
-        values = np.array([1, 0, 0])
+        points = mx.array([(0, 0), (1, 0), (0.5, mx.sqrt(3)/2)])
+        values = mx.array([1, 0, 0])
 
         ip = interpnd.CloughTocher2DInterpolator(points, values)
 
@@ -429,15 +429,15 @@ class TestCloughTocher2DInterpolator:
 
         # Interpolation should be symmetric vs. bisector
         alpha = 0.3
-        p1 = np.array([0.5 * np.cos(alpha), 0.5 * np.sin(alpha)])
-        p2 = np.array([0.5 * np.cos(np.pi/3 - alpha), 0.5 * np.sin(np.pi/3 - alpha)])
+        p1 = mx.array([0.5 * mx.cos(alpha), 0.5 * mx.sin(alpha)])
+        p2 = mx.array([0.5 * mx.cos(mx.pi/3 - alpha), 0.5 * mx.sin(mx.pi/3 - alpha)])
 
         v1 = ip(p1)
         v2 = ip(p2)
         xp_assert_close(v1, v2)
 
         # ... and affine invariant
-        rng = np.random.RandomState(1)
+        rng = mx.random.RandomState(1)
         A = rng.randn(2, 2)
         b = rng.randn(2)
 

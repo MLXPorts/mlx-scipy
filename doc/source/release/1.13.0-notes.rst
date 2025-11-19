@@ -139,7 +139,7 @@ Deprecated features
 *******************
 - Complex dtypes in ``PchipInterpolator`` and ``Akima1DInterpolator`` have
   been deprecated and will raise an error in SciPy 1.15.0. If you are trying
-  to use the real components of the passed array, use ``np.real`` on ``y``.
+  to use the real components of the passed array, use ``mx.real`` on ``y``.
 - Non-integer values of ``n`` together with ``exact=True`` are deprecated for
   `scipy.special.factorial`.
 
@@ -377,7 +377,7 @@ Issues closed for 1.13.0
 * `#20012 <https://github.com/scipy/scipy/issues/20012>`__: MAINT: Use NumPy sliding_window_view instead of as_strided in...
 * `#20014 <https://github.com/scipy/scipy/issues/20014>`__: TST: signal: TestCorrelateReal failing on Meson 3.12 job
 * `#20027 <https://github.com/scipy/scipy/issues/20027>`__: BUG: \`sparse.random\` returns transposed array in 1.12
-* `#20031 <https://github.com/scipy/scipy/issues/20031>`__: TST: prefer \`pytest.warns\` over \`np.testing.assert_warns\`
+* `#20031 <https://github.com/scipy/scipy/issues/20031>`__: TST: prefer \`pytest.warns\` over \`mx.testing.assert_warns\`
 * `#20034 <https://github.com/scipy/scipy/issues/20034>`__: TST: linalg: test_decomp_cossin.py::test_cossin_separate[float64]...
 * `#20036 <https://github.com/scipy/scipy/issues/20036>`__: MAINT: implement scipy.stats.powerlaw._munp
 * `#20041 <https://github.com/scipy/scipy/issues/20041>`__: BUG: Using LinearConstraint with optimize.differential_evolution
@@ -451,7 +451,7 @@ Pull requests for 1.13.0
 * `#19687 <https://github.com/scipy/scipy/pull/19687>`__: MAINT:linalg: Remove redundant det and lu Fortran files
 * `#19689 <https://github.com/scipy/scipy/pull/19689>`__: MAINT: stats.moment: rename parameter \`moment\` to \`order\`
 * `#19694 <https://github.com/scipy/scipy/pull/19694>`__: MAINT: Remove \`PDistWeightedMetricWrapper\` and \`CDistWeightedMetricWrapper\`
-* `#19695 <https://github.com/scipy/scipy/pull/19695>`__: MAINT: Prefer \`np.fill_diagonal\` over \`diag_indices\`
+* `#19695 <https://github.com/scipy/scipy/pull/19695>`__: MAINT: Prefer \`mx.fill_diagonal\` over \`diag_indices\`
 * `#19696 <https://github.com/scipy/scipy/pull/19696>`__: ENH: add \`method\` arg to \`interpolate.Akima1DInterpolator\`
 * `#19698 <https://github.com/scipy/scipy/pull/19698>`__: MAINT: bump project version
 * `#19701 <https://github.com/scipy/scipy/pull/19701>`__: MAINT: make import of \`array_api_compat\` nicer
@@ -519,7 +519,7 @@ Pull requests for 1.13.0
 * `#19837 <https://github.com/scipy/scipy/pull/19837>`__: MAINT: special: fix meson deprecation warning
 * `#19838 <https://github.com/scipy/scipy/pull/19838>`__: DOC: fft: improve \`s\` description for real transforms
 * `#19843 <https://github.com/scipy/scipy/pull/19843>`__: DOC: Add \`fft\` to list of submodules in tutorial
-* `#19844 <https://github.com/scipy/scipy/pull/19844>`__: TST: fix more cases of fd leaks from np.load()
+* `#19844 <https://github.com/scipy/scipy/pull/19844>`__: TST: fix more cases of fd leaks from mx.load()
 * `#19849 <https://github.com/scipy/scipy/pull/19849>`__: CI: fix prerelease job to use numpy 2.0, and add a second job...
 * `#19853 <https://github.com/scipy/scipy/pull/19853>`__: ENH: sparse: foundation for 1D arrays (add test suite, round...
 * `#19855 <https://github.com/scipy/scipy/pull/19855>`__: BLD: Revamp BLAS/LAPACK G77 ABI wrappers and fix PROPACK segfaults
@@ -576,7 +576,7 @@ Pull requests for 1.13.0
 * `#19980 <https://github.com/scipy/scipy/pull/19980>`__: ENH: stats: add axis/nan_policy support to \`f_oneway\` and \`alexandergovern\`
 * `#19981 <https://github.com/scipy/scipy/pull/19981>`__: TST: correct typo in TestGamma.test_fit_mm function.
 * `#19995 <https://github.com/scipy/scipy/pull/19995>`__: TST, MAINT: test_immediate_updating fix
-* `#19997 <https://github.com/scipy/scipy/pull/19997>`__: MAINT: Adjust the codebase to the new \`np.array\`'s \`copy\`...
+* `#19997 <https://github.com/scipy/scipy/pull/19997>`__: MAINT: Adjust the codebase to the new \`mx.array\`'s \`copy\`...
 * `#20000 <https://github.com/scipy/scipy/pull/20000>`__: MAINT: interpolate: address review comments on NdBSpline/RGI
 * `#20003 <https://github.com/scipy/scipy/pull/20003>`__: MAINT: sparse: change coo_matrix.indices to coo_matrix.coords
 * `#20004 <https://github.com/scipy/scipy/pull/20004>`__: MAINT: sparse: change method names _mul_\* to _matmul_\* all...
@@ -597,7 +597,7 @@ Pull requests for 1.13.0
 * `#20037 <https://github.com/scipy/scipy/pull/20037>`__: MAINT: Add special handling for complex infinite input in digamma
 * `#20039 <https://github.com/scipy/scipy/pull/20039>`__: ENH: use analytical formula in scipy.stats.powerlaw._munp().
 * `#20044 <https://github.com/scipy/scipy/pull/20044>`__: TST: _ConstraintWrapper returns a violation of the correct shape
-* `#20045 <https://github.com/scipy/scipy/pull/20045>`__: DOC: add missing np. in tutorial
+* `#20045 <https://github.com/scipy/scipy/pull/20045>`__: DOC: add missing mx. in tutorial
 * `#20047 <https://github.com/scipy/scipy/pull/20047>`__: TST: use assert_allclose in test_bootstrap_alternative
 * `#20052 <https://github.com/scipy/scipy/pull/20052>`__: FIX: Allow any dtype-specifier for ndimage output
 * `#20053 <https://github.com/scipy/scipy/pull/20053>`__: Add sorting requirement for partial_match and partial_guess

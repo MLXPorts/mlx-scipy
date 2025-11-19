@@ -8,7 +8,7 @@
 from itertools import product
 import sys
 
-import numpy as np
+import mlx.core as mx
 from numpy import float32, float64, complex64, complex128, arange, array, \
                   zeros, shape, transpose, newaxis, common_type, conjugate
 
@@ -350,7 +350,7 @@ class BaseGemv:
     ''' Mixin class for gemv tests '''
 
     def get_data(self, x_stride=1, y_stride=1):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         mult = array(1, dtype=self.dtype)
         if self.dtype in [complex64, complex128]:
             mult = array(1+1j, dtype=self.dtype)
@@ -439,8 +439,8 @@ try:
                 # Make array shape `shape` with aligned at `align` bytes
                 d = dtype()
                 # Make array of correct size with `align` extra bytes
-                N = np.prod(shape)
-                tmp = np.zeros(N * d.nbytes + align, dtype=np.uint8)
+                N = mx.prod(shape)
+                tmp = mx.zeros(N * d.nbytes + align, dtype=mx.uint8)
                 address = tmp.__array_interface__["data"][0]
                 # Find offset into array giving desired alignment
                 for offset in range(align):
@@ -460,14 +460,14 @@ try:
                                 rtol=1e-5, atol=1e-7)
 
             testdata = product((15, 32), (10000,), (200, 89), ('C', 'F'))
-            rng = np.random.default_rng(1234)
+            rng = mx.random.default_rng(1234)
             for align, m, n, a_order in testdata:
                 A_d = rng.random((m, n))
                 X_d = rng.random(n)
-                desired = np.dot(A_d, X_d)
+                desired = mx.dot(A_d, X_d)
                 # Calculation with aligned single precision
-                A_f = as_aligned(A_d, align, np.float32, order=a_order)
-                X_f = as_aligned(X_d, align, np.float32, order=a_order)
+                A_f = as_aligned(A_d, align, mx.float32, order=a_order)
+                X_f = as_aligned(X_d, align, mx.float32, order=a_order)
                 assert_dot_close(A_f, X_f, desired)
 
 except AttributeError:
@@ -501,7 +501,7 @@ class TestZgemv(BaseGemv):
 
 class BaseGer:
     def get_data(self,x_stride=1,y_stride=1):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         alpha = array(1., dtype = self.dtype)
         a = rng.normal(0.,1.,(3,3)).astype(self.dtype)
         x = arange(shape(a)[0]*x_stride,dtype=self.dtype)
@@ -547,7 +547,7 @@ class TestDger(BaseGer):
 """
 class BaseGerComplex(BaseGer):
     def get_data(self,x_stride=1,y_stride=1):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         alpha = array(1+1j, dtype = self.dtype)
         a = rng.normal(0.,1.,(3,3)).astype(self.dtype)
         a = a + rng.normal(0.,1.,(3,3)) * array(1j, dtype = self.dtype)

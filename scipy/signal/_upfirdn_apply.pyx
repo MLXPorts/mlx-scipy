@@ -34,13 +34,13 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 cimport cython
-cimport numpy as np
-import numpy as np
+cimport mlx.core as mx
+import mlx.core as mx
 from cython import bint  # boolean integer type
 from libc.stdlib cimport malloc, free
 from libc.string cimport memset
 
-np.import_array()
+mx.import_array()
 
 ctypedef double complex double_complex
 ctypedef float complex float_complex
@@ -54,15 +54,15 @@ ctypedef fused DTYPE_t:
     double_complex
 
 cdef struct ArrayInfo:
-    np.intp_t * shape
-    np.intp_t * strides
-    np.intp_t ndim
+    mx.intp_t * shape
+    mx.intp_t * strides
+    mx.intp_t ndim
 
 
-def _output_len(np.int64_t len_h,
-                np.int64_t in_len,
-                np.int64_t up,
-                np.int64_t down):
+def _output_len(mx.int64_t len_h,
+                mx.int64_t in_len,
+                mx.int64_t up,
+                mx.int64_t down):
     """The output length that results from a given input"""
     # ceil(((in_len - 1) * up + len_h) / down), but using integer arithmetic
     return (((in_len - 1) * up + len_h) - 1) // down + 1
@@ -107,7 +107,7 @@ cpdef MODE mode_enum(mode):
 @cython.cdivision(True)  # faster modulo
 @cython.boundscheck(False)  # designed to stay within bounds
 @cython.wraparound(False)  # we don't use negative indexing
-cdef DTYPE_t _extend_left(DTYPE_t *x, np.intp_t idx, np.intp_t len_x,
+cdef DTYPE_t _extend_left(DTYPE_t *x, mx.intp_t idx, mx.intp_t len_x,
                           MODE mode, DTYPE_t cval) noexcept nogil:
     cdef DTYPE_t le = 0.
     cdef DTYPE_t lin_slope = 0.
@@ -173,7 +173,7 @@ cdef DTYPE_t _extend_left(DTYPE_t *x, np.intp_t idx, np.intp_t len_x,
 @cython.cdivision(True)  # faster modulo
 @cython.boundscheck(False)  # designed to stay within bounds
 @cython.wraparound(False)  # we don't use negative indexing
-cdef DTYPE_t _extend_right(DTYPE_t *x, np.intp_t idx, np.intp_t len_x,
+cdef DTYPE_t _extend_right(DTYPE_t *x, mx.intp_t idx, mx.intp_t len_x,
                            MODE mode, DTYPE_t cval) noexcept nogil:
     # note: idx will be >= len_x
     cdef DTYPE_t re = 0.
@@ -233,16 +233,16 @@ cdef DTYPE_t _extend_right(DTYPE_t *x, np.intp_t idx, np.intp_t len_x,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef _pad_test(np.ndarray[DTYPE_t] data, np.intp_t npre=0, np.intp_t npost=0,
+cpdef _pad_test(mx.array[DTYPE_t] data, mx.intp_t npre=0, mx.intp_t npost=0,
                 object mode=0):
     """1D test function for signal extension modes.
 
     Returns ``data extended by ``npre``, ``npost`` at the beginning, end.
     """
-    cdef np.intp_t idx
-    cdef np.intp_t cnt = 0
-    cdef np.intp_t len_x = data.size
-    cdef np.intp_t len_out = npre + len_x + npost
+    cdef mx.intp_t idx
+    cdef mx.intp_t cnt = 0
+    cdef mx.intp_t len_x = data.size
+    cdef mx.intp_t len_out = npre + len_x + npost
     cdef DTYPE_t xval
     cdef DTYPE_t [::1] out
     cdef DTYPE_t* data_ptr
@@ -250,13 +250,13 @@ cpdef _pad_test(np.ndarray[DTYPE_t] data, np.intp_t npre=0, np.intp_t npost=0,
     _mode = mode_enum(mode)
 
     if DTYPE_t is float:
-        out = np.zeros((len_out,), dtype=np.float32)
+        out = mx.zeros((len_out,), dtype=mx.float32)
     elif DTYPE_t is float_complex:
-        out = np.zeros((len_out,), dtype=np.complex64)
+        out = mx.zeros((len_out,), dtype=mx.complex64)
     elif DTYPE_t is double:
-        out = np.zeros((len_out,), dtype=np.float64)
+        out = mx.zeros((len_out,), dtype=mx.float64)
     elif DTYPE_t is double_complex:
-        out = np.zeros((len_out,), dtype=np.complex128)
+        out = mx.zeros((len_out,), dtype=mx.complex128)
     else:
         raise ValueError("unsupported dtype")
 
@@ -271,27 +271,27 @@ cpdef _pad_test(np.ndarray[DTYPE_t] data, np.intp_t npre=0, np.intp_t npost=0,
                 xval = data_ptr[idx]
             out[cnt] = xval
             cnt += 1
-    return np.asarray(out)
+    return mx.array(out)
 
 
-def _apply(np.ndarray data, const DTYPE_t [::1] h_trans_flip, np.ndarray out,
-           np.intp_t up, np.intp_t down, np.intp_t axis, np.intp_t mode,
+def _apply(mx.array data, const DTYPE_t [::1] h_trans_flip, mx.array out,
+           mx.intp_t up, mx.intp_t down, mx.intp_t axis, mx.intp_t mode,
            DTYPE_t cval):
     cdef ArrayInfo data_info, output_info
-    cdef np.intp_t len_h = h_trans_flip.size
+    cdef mx.intp_t len_h = h_trans_flip.size
     cdef DTYPE_t *data_ptr
     cdef DTYPE_t *filter_ptr
     cdef DTYPE_t *out_ptr
     cdef int retval
-    cdef np.intp_t len_out = out.shape[axis]
+    cdef mx.intp_t len_out = out.shape[axis]
 
     data_info.ndim = data.ndim
-    data_info.strides = <np.intp_t *> data.strides
-    data_info.shape = <np.intp_t *> data.shape
+    data_info.strides = <mx.intp_t *> data.strides
+    data_info.shape = <mx.intp_t *> data.shape
 
     output_info.ndim = out.ndim
-    output_info.strides = <np.intp_t *> out.strides
-    output_info.shape = <np.intp_t *> out.shape
+    output_info.strides = <mx.intp_t *> out.strides
+    output_info.shape = <mx.intp_t *> out.shape
 
     data_ptr = <DTYPE_t*> data.data
     filter_ptr = <DTYPE_t*> &h_trans_flip[0]
@@ -318,13 +318,13 @@ def _apply(np.ndarray data, const DTYPE_t [::1] h_trans_flip, np.ndarray out,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef int _apply_axis_inner(DTYPE_t* data, ArrayInfo data_info,
-                           DTYPE_t* h_trans_flip, np.intp_t len_h,
+                           DTYPE_t* h_trans_flip, mx.intp_t len_h,
                            DTYPE_t* output, ArrayInfo output_info,
-                           np.intp_t up, np.intp_t down,
-                           np.intp_t axis, MODE mode, DTYPE_t cval,
-                           np.intp_t len_out) noexcept nogil:
-    cdef np.intp_t i
-    cdef np.intp_t num_loops = 1
+                           mx.intp_t up, mx.intp_t down,
+                           mx.intp_t axis, MODE mode, DTYPE_t cval,
+                           mx.intp_t len_out) noexcept nogil:
+    cdef mx.intp_t i
+    cdef mx.intp_t num_loops = 1
     cdef bint make_temp_data, make_temp_output
     cdef DTYPE_t* temp_data = NULL
     cdef DTYPE_t* temp_output = NULL
@@ -355,17 +355,17 @@ cdef int _apply_axis_inner(DTYPE_t* data, ArrayInfo data_info,
             num_loops *= output_info.shape[i]
 
     # strides in number of elements rather than number of bytes
-    cdef np.intp_t idx_stride = data_info.strides[axis] / sizeof(DTYPE_t)
-    cdef np.intp_t idx_stride_out = output_info.strides[axis] / sizeof(DTYPE_t)
+    cdef mx.intp_t idx_stride = data_info.strides[axis] / sizeof(DTYPE_t)
+    cdef mx.intp_t idx_stride_out = output_info.strides[axis] / sizeof(DTYPE_t)
 
-    cdef np.intp_t j
-    cdef np.intp_t data_offset
-    cdef np.intp_t output_offset
+    cdef mx.intp_t j
+    cdef mx.intp_t data_offset
+    cdef mx.intp_t output_offset
     cdef DTYPE_t* data_row
     cdef DTYPE_t* output_row
-    cdef np.intp_t reduced_idx
-    cdef np.intp_t j_rev
-    cdef np.intp_t axis_idx
+    cdef mx.intp_t reduced_idx
+    cdef mx.intp_t j_rev
+    cdef mx.intp_t axis_idx
     cdef DTYPE_t* tmp_ptr = NULL
     for i in range(num_loops):
         data_offset = 0
@@ -418,17 +418,17 @@ cdef int _apply_axis_inner(DTYPE_t* data, ArrayInfo data_info,
 @cython.cdivision(True)  # faster modulo
 @cython.boundscheck(False)  # designed to stay within bounds
 @cython.wraparound(False)  # we don't use negative indexing
-cdef void _apply_impl(DTYPE_t *x, np.intp_t len_x, DTYPE_t *h_trans_flip,
-                      np.intp_t len_h, DTYPE_t *out,
-                      np.intp_t up, np.intp_t down, MODE mode,
-                      DTYPE_t cval, np.intp_t len_out) noexcept nogil:
-    cdef np.intp_t h_per_phase = len_h // up
-    cdef np.intp_t padded_len = len_x + h_per_phase - 1
-    cdef np.intp_t x_idx = 0
-    cdef np.intp_t y_idx = 0
-    cdef np.intp_t h_idx = 0
-    cdef np.intp_t t = 0
-    cdef np.intp_t x_conv_idx = 0
+cdef void _apply_impl(DTYPE_t *x, mx.intp_t len_x, DTYPE_t *h_trans_flip,
+                      mx.intp_t len_h, DTYPE_t *out,
+                      mx.intp_t up, mx.intp_t down, MODE mode,
+                      DTYPE_t cval, mx.intp_t len_out) noexcept nogil:
+    cdef mx.intp_t h_per_phase = len_h // up
+    cdef mx.intp_t padded_len = len_x + h_per_phase - 1
+    cdef mx.intp_t x_idx = 0
+    cdef mx.intp_t y_idx = 0
+    cdef mx.intp_t h_idx = 0
+    cdef mx.intp_t t = 0
+    cdef mx.intp_t x_conv_idx = 0
     cdef DTYPE_t xval
     cdef bint zpad
 

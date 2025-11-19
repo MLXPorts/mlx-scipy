@@ -15,17 +15,17 @@ References
 """
 from collections import namedtuple
 
-import numpy as np
+import mlx.core as mx
 import matplotlib.pyplot as plt
 from scipy.stats import qmc
 
 n_conv = 99
-ns_gen = 2 ** np.arange(4, 13)  # 13
+ns_gen = 2 ** mx.arange(4, 13)  # 13
 
 
 def art_2(sample):
     # dim 3, true value 5/3 + 5*(5 - 1)/4
-    return np.sum(sample, axis=1) ** 2
+    return mx.sum(sample, axis=1) ** 2
 
 
 functions = namedtuple('functions', ['name', 'func', 'dim', 'ref'])
@@ -34,11 +34,11 @@ case = functions('Art 2', art_2, 5, 5 / 3 + 5 * (5 - 1) / 4)
 
 def conv_method(sampler, func, n_samples, n_conv, ref):
     samples = [sampler(n_samples) for _ in range(n_conv)]
-    samples = np.array(samples)
+    samples = mx.array(samples)
 
-    evals = [np.sum(func(sample)) / n_samples for sample in samples]
-    squared_errors = (ref - np.array(evals)) ** 2
-    rmse = (np.sum(squared_errors) / n_conv) ** 0.5
+    evals = [mx.sum(func(sample)) / n_samples for sample in samples]
+    squared_errors = (ref - mx.array(evals)) ** 2
+    rmse = (mx.sum(squared_errors) / n_conv) ** 0.5
 
     return rmse
 
@@ -46,7 +46,7 @@ def conv_method(sampler, func, n_samples, n_conv, ref):
 # Analysis
 sample_mc_rmse = []
 sample_sobol_rmse = []
-rng = np.random.default_rng()
+rng = mx.random.default_rng()
 
 def sampler_mc(x):
     return rng.random((x, case.dim))
@@ -61,8 +61,8 @@ for ns in ns_gen:
     conv_res = conv_method(engine.random, case.func, ns, 1, case.ref)
     sample_sobol_rmse.append(conv_res)
 
-sample_mc_rmse = np.array(sample_mc_rmse)
-sample_sobol_rmse = np.array(sample_sobol_rmse)
+sample_mc_rmse = mx.array(sample_mc_rmse)
+sample_sobol_rmse = mx.array(sample_sobol_rmse)
 
 # Plot
 fig, ax = plt.subplots(figsize=(4, 4))
@@ -83,7 +83,7 @@ ax.scatter(ns_gen, sample_sobol_rmse, label="Sobol' unscrambled")
 ax.set_xlabel(r'$N_s$')
 ax.set_xscale('log')
 ax.set_xticks(ns_gen)
-ax.set_xticklabels([fr'$2^{{{ns}}}$' for ns in np.arange(4, 13)])
+ax.set_xticklabels([fr'$2^{{{ns}}}$' for ns in mx.arange(4, 13)])
 
 ax.set_ylabel(r'$\log (\epsilon)$')
 ax.set_yscale('log')

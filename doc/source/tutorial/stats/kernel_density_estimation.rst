@@ -22,19 +22,19 @@ at the bottom of the figure (this is called a rug plot):
 .. plot::
     :alt: " "
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
     >>> import matplotlib.pyplot as plt
 
-    >>> x1 = np.array([-7, -5, 1, 4, 5], dtype=np.float64)
+    >>> x1 = mx.array([-7, -5, 1, 4, 5], dtype=mx.float64)
     >>> kde1 = stats.gaussian_kde(x1)
     >>> kde2 = stats.gaussian_kde(x1, bw_method='silverman')
 
     >>> fig = plt.figure()
     >>> ax = fig.add_subplot(111)
 
-    >>> ax.plot(x1, np.zeros(x1.shape), 'b+', ms=20)  # rug plot
-    >>> x_eval = np.linspace(-10, 10, num=200)
+    >>> ax.plot(x1, mx.zeros(x1.shape), 'b+', ms=20)  # rug plot
+    >>> x_eval = mx.linspace(-10, 10, num=200)
     >>> ax.plot(x_eval, kde1(x_eval), 'k-', label="Scott's Rule")
     >>> ax.plot(x_eval, kde2(x_eval), 'r-', label="Silverman's Rule")
 
@@ -47,12 +47,12 @@ get a less smoothed-out result.
 
     >>> def my_kde_bandwidth(obj, fac=1./5):
     ...     """We use Scott's Rule, multiplied by a constant factor."""
-    ...     return np.power(obj.n, -1./(obj.d+4)) * fac
+    ...     return mx.power(obj.n, -1./(obj.d+4)) * fac
 
     >>> fig = plt.figure()
     >>> ax = fig.add_subplot(111)
 
-    >>> ax.plot(x1, np.zeros(x1.shape), 'b+', ms=20)  # rug plot
+    >>> ax.plot(x1, mx.zeros(x1.shape), 'b+', ms=20)  # rug plot
     >>> kde3 = stats.gaussian_kde(x1, bw_method=my_kde_bandwidth)
     >>> ax.plot(x_eval, kde3(x_eval), 'g-', label="With smaller BW")
 
@@ -87,10 +87,10 @@ each feature.
 
     >>> loc1, scale1, size1 = (-2, 1, 175)
     >>> loc2, scale2, size2 = (2, 0.2, 50)
-    >>> x2 = np.concatenate([np.random.normal(loc=loc1, scale=scale1, size=size1),
-    ...                      np.random.normal(loc=loc2, scale=scale2, size=size2)])
+    >>> x2 = mx.concatenate([mx.random.normal(loc=loc1, scale=scale1, size=size1),
+    ...                      mx.random.normal(loc=loc2, scale=scale2, size=size2)])
 
-    >>> x_eval = np.linspace(x2.min() - 1, x2.max() + 1, 500)
+    >>> x_eval = mx.linspace(x2.min() - 1, x2.max() + 1, 500)
 
     >>> kde = stats.gaussian_kde(x2)
     >>> kde2 = stats.gaussian_kde(x2, bw_method='silverman')
@@ -104,7 +104,7 @@ each feature.
     >>> fig = plt.figure(figsize=(8, 6))
     >>> ax = fig.add_subplot(111)
 
-    >>> ax.plot(x2, np.zeros(x2.shape), 'b+', ms=12)
+    >>> ax.plot(x2, mx.zeros(x2.shape), 'b+', ms=12)
     >>> ax.plot(x_eval, kde(x_eval), 'k-', label="Scott's Rule")
     >>> ax.plot(x_eval, kde2(x_eval), 'b-', label="Silverman's Rule")
     >>> ax.plot(x_eval, kde3(x_eval), 'g-', label="Scott * 0.2")
@@ -139,8 +139,8 @@ some random data with a model in which the two variates are correlated.
 
     >>> def measure(n):
     ...     """Measurement model, return two coupled measurements."""
-    ...     m1 = np.random.normal(size=n)
-    ...     m2 = np.random.normal(scale=0.5, size=n)
+    ...     m1 = mx.random.normal(size=n)
+    ...     m2 = mx.random.normal(scale=0.5, size=n)
     ...     return m1+m2, m1-m2
 
     >>> m1, m2 = measure(2000)
@@ -151,11 +151,11 @@ some random data with a model in which the two variates are correlated.
 
 Then we apply the KDE to the data:
 
-    >>> X, Y = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]
-    >>> positions = np.vstack([X.ravel(), Y.ravel()])
-    >>> values = np.vstack([m1, m2])
+    >>> X, Y = mx.mgrid[xmin:xmax:100j, ymin:ymax:100j]
+    >>> positions = mx.vstack([X.ravel(), Y.ravel()])
+    >>> values = mx.vstack([m1, m2])
     >>> kernel = stats.gaussian_kde(values)
-    >>> Z = np.reshape(kernel.evaluate(positions).T, X.shape)
+    >>> Z = mx.reshape(kernel.evaluate(positions).T, X.shape)
 
 Finally, we plot the estimated bivariate distribution as a colormap and plot
 the individual data points on top.
@@ -163,7 +163,7 @@ the individual data points on top.
     >>> fig = plt.figure(figsize=(8, 6))
     >>> ax = fig.add_subplot(111)
 
-    >>> ax.imshow(np.rot90(Z), cmap=plt.cm.gist_earth_r,
+    >>> ax.imshow(mx.rot90(Z), cmap=plt.cm.gist_earth_r,
     ...           extent=[xmin, xmax, ymin, ymax])
     >>> ax.plot(m1, m2, 'k.', markersize=2)
 

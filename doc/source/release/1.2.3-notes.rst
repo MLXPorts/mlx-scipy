@@ -54,7 +54,7 @@ Pull requests for 1.2.3
 * `#10633 <https://github.com/scipy/scipy/pull/10633>`__: BUG: interpolate: integral(a, b) should be zero when both limits are outside of the interpolation range
 * `#10833 <https://github.com/scipy/scipy/pull/10833>`__: BUG: Fix subspace_angles for complex values
 * `#10882 <https://github.com/scipy/scipy/pull/10882>`__: BUG: sparse/arpack: fix incorrect code for complex hermitian M
-* `#10906 <https://github.com/scipy/scipy/pull/10906>`__: BUG: sparse/linalg: fix expm for np.matrix inputs
+* `#10906 <https://github.com/scipy/scipy/pull/10906>`__: BUG: sparse/linalg: fix expm for mx.matrix inputs
 * `#10961 <https://github.com/scipy/scipy/pull/10961>`__: BUG: Fix signal.unique_roots
 * `#11126 <https://github.com/scipy/scipy/pull/11126>`__: BUG: interpolate/fitpack: fix memory leak in splprep
 * `#11199 <https://github.com/scipy/scipy/pull/11199>`__: BUG: sparse.linalg: mistake in unsymm. real shift-invert ARPACK eigenvalue selection

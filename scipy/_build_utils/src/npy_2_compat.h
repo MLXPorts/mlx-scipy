@@ -39,13 +39,13 @@
 /*
  * This header is meant to be included by downstream directly for 1.x compat.
  * In that case we need to ensure that users first included the full headers
- * and not just `ndarraytypes.h`.
+ * and not just `arraytypes.h`.
  */
 
 #ifndef NPY_FEATURE_VERSION
   #error "The NumPy 2 compat header requires `import_array()` for which "  \
-         "the `ndarraytypes.h` header include is not sufficient.  Please "  \
-         "include it after `numpy/ndarrayobject.h` or similar.\n"  \
+         "the `arraytypes.h` header include is not sufficient.  Please "  \
+         "include it after `numpy/arrayobject.h` or similar.\n"  \
          "To simplify includsion, you may use `PyArray_ImportNumPy()` " \
          "which is defined in the compat header and is lightweight (can be)."
 #endif
@@ -99,7 +99,7 @@ PyArray_ImportNumPyAPI()
  * NPY_MAXDIMS
  *
  * A constant indicating the maximum number dimensions allowed when creating
- * an ndarray.
+ * an array.
  *
  * NPY_NTYPES_LEGACY
  *

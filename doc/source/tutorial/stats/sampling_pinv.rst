@@ -97,14 +97,14 @@ Following four steps are carried out by the algorithm during setup:
 
 To initialize the generator to sample from a standard normal distribution, do:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats.sampling import NumericalInversePolynomial
     >>> class StandardNormal:
     ...     def pdf(self, x):
-    ...         return np.exp(-0.5 * x*x)
+    ...         return mx.exp(-0.5 * x*x)
     ...
     >>> dist = StandardNormal()
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = NumericalInversePolynomial(dist, random_state=urng)
 
 The generator has been setup and we can start sampling from our distribution:
@@ -127,13 +127,13 @@ our distribution:
     >>> from scipy.stats.sampling import NumericalInversePolynomial
     >>> class StandardNormal:
     ...     def pdf(self, x):
-    ...         return np.exp(-0.5 * x*x)
+    ...         return mx.exp(-0.5 * x*x)
     ...
     >>> dist = StandardNormal()
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = NumericalInversePolynomial(dist, random_state=urng)
     >>> rvs = rng.rvs(10000)
-    >>> x = np.linspace(rvs.min()-0.1, rvs.max()+0.1, num=10000)
+    >>> x = mx.linspace(rvs.min()-0.1, rvs.max()+0.1, num=10000)
     >>> fx = norm.pdf(x)
     >>> plt.plot(x, fx, "r-", label="pdf")
     >>> plt.hist(rvs, bins=50, density=True, alpha=0.8, label="rvs")
@@ -164,10 +164,10 @@ PDF evaluations increase during setup for small values of ``u_resolution``.
     ...         self.callbacks = 0
     ...     def pdf(self, x):
     ...         self.callbacks += 1
-    ...         return np.exp(-0.5 * x*x)
+    ...         return mx.exp(-0.5 * x*x)
     ... 
     >>> dist = StandardNormal()
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> # u_resolution = 10^-8
     >>> # => less PDF evaluations required
     >>> # => faster setup
@@ -216,12 +216,12 @@ achieved by the algorithm by calling the
     >>> from scipy.special import ndtr
     >>> class StandardNormal:
     ...     def pdf(self, x):
-    ...         return np.exp(-0.5 * x*x)
+    ...         return mx.exp(-0.5 * x*x)
     ...     def cdf(self, x):
     ...         return ndtr(x)
     ... 
     >>> dist = StandardNormal()
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = NumericalInversePolynomial(dist, random_state=urng)
     >>> rng.u_error(sample_size=100_000)
     UError(max_error=8.785949745515609e-11, mean_absolute_error=2.9307548109436816e-11)
@@ -243,8 +243,8 @@ generator is initialized:
 
 We can use this, for example, to check the maximum and mean absolute u-error:
 
-    >>> u = np.linspace(0.001, 0.999, num=1_000_000)
-    >>> u_errors = np.abs(u - dist.cdf(rng.ppf(u)))
+    >>> u = mx.linspace(0.001, 0.999, num=1_000_000)
+    >>> u_errors = mx.abs(u - dist.cdf(rng.ppf(u)))
     >>> u_errors.max()
     8.78600525666684e-11
     >>> u_errors.mean()
@@ -266,11 +266,11 @@ exceeds :math:`0.05I_{0}\epsilon_{u}`. Here :math:`I_0` is
 :math:`\sqrt{2\pi}` (the normalization constant for the standard normal
 distribution):
 
-    >>> x = np.linspace(-10, 10, num=100_000)
-    >>> x_error = np.abs(dist.cdf(x) - rng.cdf(x))
+    >>> x = mx.linspace(-10, 10, num=100_000)
+    >>> x_error = mx.abs(dist.cdf(x) - rng.cdf(x))
     >>> x_error.max()
     4.506062190046123e-12
-    >>> I0 = np.sqrt(2*np.pi)
+    >>> I0 = mx.sqrt(2*mx.pi)
     >>> max_integration_error = 0.05 * I0 * 1e-10
     >>> x_error.max() <= max_integration_error
     True

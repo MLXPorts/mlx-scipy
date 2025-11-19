@@ -31,7 +31,7 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._array_api import array_namespace
 from ._upfirdn_apply import _output_len, _apply, mode_enum
@@ -58,7 +58,7 @@ def _pad_h(h, up):
 
     """
     h_padlen = len(h) + (-len(h) % up)
-    h_full = np.zeros(h_padlen, h.dtype)
+    h_full = mx.zeros(h_padlen, h.dtype)
     h_full[:len(h)] = h
     h_full = h_full.reshape(-1, up).T[:, ::-1].ravel()
     return h_full
@@ -74,32 +74,32 @@ class _UpFIRDn:
     """Helper for resampling."""
 
     def __init__(self, h, x_dtype, up, down):
-        h = np.asarray(h)
+        h = mx.array(h)
         if h.ndim != 1 or h.size == 0:
             raise ValueError('h must be 1-D with non-zero length')
-        self._output_type = np.result_type(h.dtype, x_dtype, np.float32)
-        h = np.asarray(h, self._output_type)
+        self._output_type = mx.result_type(h.dtype, x_dtype, mx.float32)
+        h = mx.array(h, self._output_type)
         self._up = int(up)
         self._down = int(down)
         if self._up < 1 or self._down < 1:
             raise ValueError('Both up and down must be >= 1')
         # This both transposes, and "flips" each phase for filtering
         self._h_trans_flip = _pad_h(h, self._up)
-        self._h_trans_flip = np.ascontiguousarray(self._h_trans_flip)
+        self._h_trans_flip = mx.ascontiguousarray(self._h_trans_flip)
         self._h_len_orig = len(h)
 
     def apply_filter(self, x, axis=-1, mode='constant', cval=0):
         """Apply the prepared filter to the specified axis of N-D signal x."""
         output_len = _output_len(self._h_len_orig, x.shape[axis],
                                  self._up, self._down)
-        # Explicit use of np.int64 for output_shape dtype avoids OverflowError
+        # Explicit use of mx.int64 for output_shape dtype avoids OverflowError
         # when allocating large array on platforms where intp is 32 bits.
-        output_shape = np.asarray(x.shape, dtype=np.int64)
+        output_shape = mx.array(x.shape, dtype=mx.int64)
         output_shape[axis] = output_len
-        out = np.zeros(output_shape, dtype=self._output_type, order='C')
+        out = mx.zeros(output_shape, dtype=self._output_type, order='C')
         axis = axis % x.ndim
         mode = _check_mode(mode)
-        _apply(np.asarray(x, self._output_type),
+        _apply(mx.array(x, self._output_type),
                self._h_trans_flip, out,
                self._up, self._down, axis, mode, cval)
         return out
@@ -140,7 +140,7 @@ def upfirdn(h, x, up=1, down=1, axis=-1, mode='constant', cval=0):
 
     Returns
     -------
-    y : ndarray
+    y : array
         The output signal array. Dimensions will be the same as `x` except
         for along `axis`, which will change size according to the `h`,
         `up`,  and `down` parameters.
@@ -166,7 +166,7 @@ def upfirdn(h, x, up=1, down=1, axis=-1, mode='constant', cval=0):
     --------
     Simple operations:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import upfirdn
     >>> upfirdn([1, 1, 1], [1, 1, 1])   # FIR filter
     array([ 1.,  2.,  3.,  2.,  1.])
@@ -176,14 +176,14 @@ def upfirdn(h, x, up=1, down=1, axis=-1, mode='constant', cval=0):
     array([ 1.,  1.,  1.,  2.,  2.,  2.,  3.,  3.,  3.])
     >>> upfirdn([.5, 1, .5], [1, 1, 1], 2)  # linear interpolation
     array([ 0.5,  1. ,  1. ,  1. ,  1. ,  1. ,  0.5])
-    >>> upfirdn([1], np.arange(10), 1, 3)  # decimation by 3
+    >>> upfirdn([1], mx.arange(10), 1, 3)  # decimation by 3
     array([ 0.,  3.,  6.,  9.])
-    >>> upfirdn([.5, 1, .5], np.arange(10), 2, 3)  # linear interp, rate 2/3
+    >>> upfirdn([.5, 1, .5], mx.arange(10), 2, 3)  # linear interp, rate 2/3
     array([ 0. ,  1. ,  2.5,  4. ,  5.5,  7. ,  8.5])
 
     Apply a single filter to multiple signals:
 
-    >>> x = np.reshape(np.arange(8), (4, 2))
+    >>> x = mx.reshape(mx.arange(8), (4, 2))
     >>> x
     array([[0, 1],
            [2, 3],
@@ -213,7 +213,7 @@ def upfirdn(h, x, up=1, down=1, axis=-1, mode='constant', cval=0):
     """
     xp = array_namespace(h, x)
 
-    x = np.asarray(x)
+    x = mx.array(x)
     ufd = _UpFIRDn(h, x.dtype, up, down)
-    # This is equivalent to (but faster than) using np.apply_along_axis
+    # This is equivalent to (but faster than) using mx.apply_along_axis
     return xp.asarray(ufd.apply_filter(x, axis, mode, cval))

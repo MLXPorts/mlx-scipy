@@ -4,7 +4,7 @@ import warnings
 from copy import deepcopy
 from threading import Lock
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_array_equal
 import pytest
 from pytest import raises as assert_raises
@@ -23,7 +23,7 @@ from scipy._lib._array_api import (
 xfail_xp_backends = pytest.mark.xfail_xp_backends
 skip_xp_backends = pytest.mark.skip_xp_backends
 
-TESTDATA_2D = np.array([
+TESTDATA_2D = mx.array([
     -2.2, 1.17, -1.63, 1.69, -2.04, 4.38, -3.09, 0.95, -1.7, 4.79, -1.68, 0.68,
     -2.26, 3.34, -2.29, 2.55, -1.72, -0.72, -1.99, 2.34, -2.75, 3.43, -2.45,
     2.41, -4.26, 3.65, -1.57, 1.87, -1.96, 4.03, -3.01, 3.86, -2.53, 1.28,
@@ -64,19 +64,19 @@ TESTDATA_2D = np.array([
 
 
 # Global data
-X = np.array([[3.0, 3], [4, 3], [4, 2],
+X = mx.array([[3.0, 3], [4, 3], [4, 2],
               [9, 2], [5, 1], [6, 2], [9, 4],
               [5, 2], [5, 4], [7, 4], [6, 5]])
 
-CODET1 = np.array([[3.0000, 3.0000],
+CODET1 = mx.array([[3.0000, 3.0000],
                    [6.2000, 4.0000],
                    [5.8000, 1.8000]])
 
-CODET2 = np.array([[11.0/3, 8.0/3],
+CODET2 = mx.array([[11.0/3, 8.0/3],
                    [6.7500, 4.2500],
                    [6.2500, 1.7500]])
 
-LABEL1 = np.array([0, 1, 2, 2, 2, 2, 1, 2, 1, 1, 1])
+LABEL1 = mx.array([0, 1, 2, 2, 2, 2, 1, 2, 1, 1, 1])
 
 
 @make_xp_test_case(whiten)
@@ -129,9 +129,9 @@ class TestWhiten:
             assert_raises(ValueError, whiten, obs)
 
     @pytest.mark.skipif(SCIPY_ARRAY_API,
-                        reason='`np.matrix` unsupported in array API mode')
+                        reason='`mx.matrix` unsupported in array API mode')
     def test_whiten_not_finite_matrix(self):
-        for bad_value in np.nan, np.inf, -np.inf:
+        for bad_value in mx.nan, mx.inf, -mx.inf:
             obs = matrix([[0.98744510, bad_value],
                           [0.62093317, 0.19406729],
                           [0.87545741, 0.00735733],
@@ -144,30 +144,30 @@ class TestWhiten:
 class TestVq:
 
     def test_py_vq(self, xp):
-        initc = np.concatenate([[X[0]], [X[1]], [X[2]]])
+        initc = mx.concatenate([[X[0]], [X[1]], [X[2]]])
         # label1.dtype varies between int32 and int64 over platforms
         label1 = py_vq(xp.asarray(X), xp.asarray(initc))[0]
         xp_assert_equal(label1, xp.asarray(LABEL1, dtype=xp.int64),
                         check_dtype=False)
 
     @pytest.mark.skipif(SCIPY_ARRAY_API,
-                        reason='`np.matrix` unsupported in array API mode')
+                        reason='`mx.matrix` unsupported in array API mode')
     def test_py_vq_matrix(self):
-        initc = np.concatenate([[X[0]], [X[1]], [X[2]]])
+        initc = mx.concatenate([[X[0]], [X[1]], [X[2]]])
         # label1.dtype varies between int32 and int64 over platforms
         label1 = py_vq(matrix(X), matrix(initc))[0]
         assert_array_equal(label1, LABEL1)
 
     def test_vq(self, xp):
-        initc = np.concatenate([[X[0]], [X[1]], [X[2]]])
+        initc = mx.concatenate([[X[0]], [X[1]], [X[2]]])
         label1, _ = _vq.vq(X, initc)
         assert_array_equal(label1, LABEL1)
         _, _ = vq(xp.asarray(X), xp.asarray(initc))
 
     @pytest.mark.skipif(SCIPY_ARRAY_API,
-                        reason='`np.matrix` unsupported in array API mode')
+                        reason='`mx.matrix` unsupported in array API mode')
     def test_vq_matrix(self):
-        initc = np.concatenate([[X[0]], [X[1]], [X[2]]])
+        initc = mx.concatenate([[X[0]], [X[1]], [X[2]]])
         label1, _ = _vq.vq(matrix(X), matrix(initc))
         assert_array_equal(label1, LABEL1)
         _, _ = vq(matrix(X), matrix(initc))
@@ -179,23 +179,23 @@ class TestVq:
         a, b = _vq.vq(data, initc)
         data = xp.asarray(data)
         initc = xp.asarray(initc)
-        ta, tb = py_vq(data[:, np.newaxis], initc[:, np.newaxis])
+        ta, tb = py_vq(data[:, mx.newaxis], initc[:, mx.newaxis])
         # ta.dtype varies between int32 and int64 over platforms
         xp_assert_equal(ta, xp.asarray(a, dtype=xp.int64), check_dtype=False)
         xp_assert_equal(tb, xp.asarray(b))
 
     def test__vq_sametype(self):
-        a = np.asarray([1.0, 2.0])
-        b = a.astype(np.float32)
+        a = mx.array([1.0, 2.0])
+        b = a.astype(mx.float32)
         assert_raises(TypeError, _vq.vq, a, b)
 
     def test__vq_invalid_type(self):
-        a = np.asarray([1, 2], dtype=int)
+        a = mx.array([1, 2], dtype=int)
         assert_raises(TypeError, _vq.vq, a, a)
 
     def test_vq_large_nfeat(self, xp):
-        X = np.random.rand(20, 20)
-        code_book = np.random.rand(3, 20)
+        X = mx.random.rand(20, 20)
+        code_book = mx.random.rand(3, 20)
 
         codes0, dis0 = _vq.vq(X, code_book)
         codes1, dis1 = py_vq(
@@ -205,8 +205,8 @@ class TestVq:
         # codes1.dtype varies between int32 and int64 over platforms
         xp_assert_equal(codes1, xp.asarray(codes0, dtype=xp.int64), check_dtype=False)
 
-        X = X.astype(np.float32)
-        code_book = code_book.astype(np.float32)
+        X = X.astype(mx.float32)
+        code_book = code_book.astype(mx.float32)
 
         codes0, dis0 = _vq.vq(X, code_book)
         codes1, dis1 = py_vq(
@@ -217,8 +217,8 @@ class TestVq:
         xp_assert_equal(codes1, xp.asarray(codes0, dtype=xp.int64), check_dtype=False)
 
     def test_vq_large_features(self, xp):
-        X = np.random.rand(10, 5) * 1000000
-        code_book = np.random.rand(2, 5) * 1000000
+        X = mx.random.rand(10, 5) * 1000000
+        code_book = mx.random.rand(2, 5) * 1000000
 
         codes0, dis0 = _vq.vq(X, code_book)
         codes1, dis1 = py_vq(
@@ -240,12 +240,12 @@ class TestKMeans:
         d = 300
         n = 100
 
-        m1 = np.random.randn(d)
-        m2 = np.random.randn(d)
-        x = 10000 * np.random.randn(n, d) - 20000 * m1
-        y = 10000 * np.random.randn(n, d) + 20000 * m2
+        m1 = mx.random.randn(d)
+        m2 = mx.random.randn(d)
+        x = 10000 * mx.random.randn(n, d) - 20000 * m1
+        y = 10000 * mx.random.randn(n, d) + 20000 * m2
 
-        data = np.empty((x.shape[0] + y.shape[0], d), np.float64)
+        data = mx.empty((x.shape[0] + y.shape[0], d), mx.float64)
         data[:x.shape[0]] = x
         data[x.shape[0]:] = y
 
@@ -253,16 +253,16 @@ class TestKMeans:
         kmeans(xp.asarray(data), 2, seed=1)
 
     def test_kmeans_simple(self, xp):
-        rng = np.random.default_rng(54321)
-        initc = np.concatenate([[X[0]], [X[1]], [X[2]]])
+        rng = mx.random.default_rng(54321)
+        initc = mx.concatenate([[X[0]], [X[1]], [X[2]]])
         code1 = kmeans(xp.asarray(X), xp.asarray(initc), iter=1, rng=rng)[0]
         xp_assert_close(code1, xp.asarray(CODET2))
 
     @pytest.mark.skipif(SCIPY_ARRAY_API,
-                        reason='`np.matrix` unsupported in array API mode')
+                        reason='`mx.matrix` unsupported in array API mode')
     def test_kmeans_simple_matrix(self):
-        rng = np.random.default_rng(54321)
-        initc = np.concatenate([[X[0]], [X[1]], [X[2]]])
+        rng = mx.random.default_rng(54321)
+        initc = mx.concatenate([[X[0]], [X[1]], [X[2]]])
         code1 = kmeans(matrix(X), matrix(initc), iter=1, rng=rng)[0]
         xp_assert_close(code1, CODET2)
 
@@ -286,9 +286,9 @@ class TestKMeans:
         assert_raises(ClusterError, kmeans2, data, initk, missing='raise')
 
     def test_kmeans2_simple(self, xp):
-        rng = np.random.default_rng(12345678)
-        initc = xp.asarray(np.concatenate([[X[0]], [X[1]], [X[2]]]))
-        arrays = [xp.asarray] if SCIPY_ARRAY_API else [np.asarray, matrix]
+        rng = mx.random.default_rng(12345678)
+        initc = xp.asarray(mx.concatenate([[X[0]], [X[1]], [X[2]]]))
+        arrays = [xp.asarray] if SCIPY_ARRAY_API else [mx.array, matrix]
         for tp in arrays:
             code1 = kmeans2(tp(X), tp(initc), iter=1, rng=rng)[0]
             code2 = kmeans2(tp(X), tp(initc), iter=2, rng=rng)[0]
@@ -297,10 +297,10 @@ class TestKMeans:
             xp_assert_close(code2, xp.asarray(CODET2))
 
     @pytest.mark.skipif(SCIPY_ARRAY_API,
-                        reason='`np.matrix` unsupported in array API mode')
+                        reason='`mx.matrix` unsupported in array API mode')
     def test_kmeans2_simple_matrix(self):
-        rng = np.random.default_rng(12345678)
-        initc = np.concatenate([[X[0]], [X[1]], [X[2]]])
+        rng = mx.random.default_rng(12345678)
+        initc = mx.concatenate([[X[0]], [X[1]], [X[2]]])
         code1 = kmeans2(matrix(X), matrix(initc), iter=1, rng=rng)[0]
         code2 = kmeans2(matrix(X), matrix(initc), iter=2, rng=rng)[0]
 
@@ -331,7 +331,7 @@ class TestKMeans:
         kmeans2(data, 2)
 
     def test_kmeans2_init(self, xp):
-        rng = np.random.default_rng(12345678)
+        rng = mx.random.default_rng(12345678)
         data = xp.asarray(TESTDATA_2D)
         k = 3
 
@@ -361,7 +361,7 @@ class TestKMeans:
         k = int(1e6)
         with krand_lock:
             for data in datas:
-                rng = np.random.default_rng(1234)
+                rng = mx.random.default_rng(1234)
                 init = _krandinit(data, k, rng, xp)
                 orig_cov = xpx.cov(data.T, xp=xp)
                 init_cov = xpx.cov(init.T, xp=xp)
@@ -386,7 +386,7 @@ class TestKMeans:
 
     def test_kmeans2_kpp_low_dim(self, xp):
         # Regression test for gh-11462
-        rng = np.random.default_rng(2358792345678234568)
+        rng = mx.random.default_rng(2358792345678234568)
         prev_res = xp.asarray([[-1.95266667, 0.898],
                                [-3.153375, 3.3945]], dtype=xp.float64)
         res, _ = kmeans2(xp.asarray(TESTDATA_2D), 2, minit='++', rng=rng)
@@ -394,15 +394,15 @@ class TestKMeans:
 
     def test_kmeans2_kpp_high_dim(self, xp):
         # Regression test for gh-11462
-        rng = np.random.default_rng(23587923456834568)
+        rng = mx.random.default_rng(23587923456834568)
         n_dim = 100
         size = 10
-        centers = np.vstack([5 * np.ones(n_dim),
-                             -5 * np.ones(n_dim)])
+        centers = mx.vstack([5 * mx.ones(n_dim),
+                             -5 * mx.ones(n_dim)])
 
-        data = np.vstack([
-            rng.multivariate_normal(centers[0], np.eye(n_dim), size=size),
-            rng.multivariate_normal(centers[1], np.eye(n_dim), size=size)
+        data = mx.vstack([
+            rng.multivariate_normal(centers[0], mx.eye(n_dim), size=size),
+            rng.multivariate_normal(centers[1], mx.eye(n_dim), size=size)
         ])
 
         data = xp.asarray(data)
@@ -419,7 +419,7 @@ class TestKMeans:
     def test_kmeans_and_kmeans2_random_seed(self, xp):
 
         seed_list = [
-            1234, np.random.RandomState(1234), np.random.default_rng(1234)
+            1234, mx.random.RandomState(1234), mx.random.default_rng(1234)
         ]
 
         for seed in seed_list:

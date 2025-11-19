@@ -293,8 +293,8 @@ def savemat(file_name, mdict,
     Examples
     --------
     >>> from scipy.io import savemat
-    >>> import numpy as np
-    >>> a = np.arange(20)
+    >>> import mlx.core as mx
+    >>> a = mx.arange(20)
     >>> mdic = {"a": a, "label": "experiment"}
     >>> mdic
     {'a': array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
@@ -353,14 +353,14 @@ def whosmat(file_name, appendmat=True, **kwargs):
     Examples
     --------
     >>> from io import BytesIO
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.io import savemat, whosmat
 
     Create some arrays, and use `savemat` to write them to a ``BytesIO``
     instance.
 
-    >>> a = np.array([[10, 20, 30], [11, 21, 31]], dtype=np.int32)
-    >>> b = np.geomspace(1, 10, 5)
+    >>> a = mx.array([[10, 20, 30], [11, 21, 31]], dtype=mx.int32)
+    >>> b = mx.geomspace(1, 10, 5)
     >>> f = BytesIO()
     >>> savemat(f, {'a': a, 'b': b})
 

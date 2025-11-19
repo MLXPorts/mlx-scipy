@@ -8,13 +8,6 @@ but are needed for NumPy compatibility in scipy.linalg.
 import mlx.core as mx
 
 
-def asarray(a, dtype=None, order=None):
-    """
-    Convert input to MLX array.
-
-    Wrapper for mx.array to match NumPy's asarray API.
-    """
-    return mx.array(a, dtype=dtype)
 
 
 def asarray_chkfinite(a, dtype=None, order=None):
@@ -92,7 +85,8 @@ def flatnonzero(a):
         Output array, containing the indices of the elements of a.ravel()
         that are non-zero.
     """
-    return mx.nonzero(mx.reshape(a, (-1,)))[0]
+    flat = mx.reshape(a, (-1,))
+    return mx.where(flat != 0)[0]
 
 
 def iscomplex(x):
@@ -144,8 +138,7 @@ def iscomplexobj(x):
 
 
 # Add these functions to mx namespace for convenience
-mx.asarray = asarray
-mx.asarray_chkfinite = asarray_chkfinite
+mx.array_chkfinite = asarray_chkfinite
 mx.empty_like = empty_like
 mx.flatnonzero = flatnonzero
 mx.iscomplex = iscomplex

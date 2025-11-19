@@ -18,8 +18,8 @@ Getting started with sparse arrays
 Sparse arrays are a special kind of array where only a few locations in the array have data. This allows for *compressed* representations of the data to be used, where only the locations where data exists are recorded. There are many different sparse array formats, each of which makes a different tradeoff between compression and functionality. To start, let's build a very simple sparse array, the Coordinate (COO) array (:func:`coo_array`) and compare it to a dense array:
 
    >>> import scipy as sp
-   >>> import numpy as np
-   >>> dense = np.array([[1, 0, 0, 2], [0, 4, 1, 0], [0, 0, 5, 0]])
+   >>> import mlx.core as mx
+   >>> dense = mx.array([[1, 0, 0, 2], [0, 4, 1, 0], [0, 0, 5, 0]])
    >>> sparse = sp.sparse.coo_array(dense)
    >>> dense
    array([[1, 0, 0, 2],
@@ -95,7 +95,7 @@ The `scipy.sparse` module contains the following formats, each with their own di
 
 More information on the strengths and weaknesses of each of the sparse array formats can be found in `their documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html#sparse-array-classes>`_.
 
-All formats of `scipy.sparse` arrays can be constructed directly from a `numpy.ndarray`. However, some sparse formats can be constructed in different ways, too. Each sparse array format has different strengths, and these strengths are documented in each class. For example, one of the most common methods for constructing sparse arrays is to build a sparse array from the individual ``row``, ``column``, and ``data`` values. For our array from before: 
+All formats of `scipy.sparse` arrays can be constructed directly from a `mx.array`. However, some sparse formats can be constructed in different ways, too. Each sparse array format has different strengths, and these strengths are documented in each class. For example, one of the most common methods for constructing sparse arrays is to build a sparse array from the individual ``row``, ``column``, and ``data`` values. For our array from before:
 
    >>> dense
    array([[1, 0, 0, 2],

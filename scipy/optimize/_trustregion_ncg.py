@@ -1,7 +1,7 @@
 """Newton-CG trust-region optimization."""
 import math
 
-import numpy as np
+import mlx.core as mx
 import scipy.linalg
 from ._trustregion import (_minimize_trust_region, BaseQuadraticSubproblem)
 
@@ -52,7 +52,7 @@ class CGSteihaugSubproblem(BaseQuadraticSubproblem):
 
         Returns
         -------
-        p : ndarray
+        p : array
             The proposed step.
         hits_boundary : bool
             True if the proposed step is on the boundary of the trust region.
@@ -66,7 +66,7 @@ class CGSteihaugSubproblem(BaseQuadraticSubproblem):
         """
 
         # get the norm of jacobian and define the origin
-        p_origin = np.zeros_like(self.jac)
+        p_origin = mx.zeros_like(self.jac)
 
         # define a default tolerance
         tolerance = min(0.5, math.sqrt(self.jac_mag)) * self.jac_mag
@@ -87,7 +87,7 @@ class CGSteihaugSubproblem(BaseQuadraticSubproblem):
 
             # do an iteration
             Bd = self.hessp(d)
-            dBd = np.dot(d, Bd)
+            dBd = mx.dot(d, Bd)
             if dBd <= 0:
                 # Look at the two boundary points.
                 # Find both values of t to get the boundary points such that
@@ -102,7 +102,7 @@ class CGSteihaugSubproblem(BaseQuadraticSubproblem):
                     p_boundary = pb
                 hits_boundary = True
                 return p_boundary, hits_boundary
-            r_squared = np.dot(r, r)
+            r_squared = mx.dot(r, r)
             alpha = r_squared / dBd
             z_next = z + alpha * d
             if scipy.linalg.norm(z_next) >= trust_radius:
@@ -113,7 +113,7 @@ class CGSteihaugSubproblem(BaseQuadraticSubproblem):
                 hits_boundary = True
                 return p_boundary, hits_boundary
             r_next = r + alpha * Bd
-            r_next_squared = np.dot(r_next, r_next)
+            r_next_squared = mx.dot(r_next, r_next)
             if math.sqrt(r_next_squared) < tolerance:
                 hits_boundary = False
                 return z_next, hits_boundary

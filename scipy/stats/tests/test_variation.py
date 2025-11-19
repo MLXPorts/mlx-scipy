@@ -1,6 +1,6 @@
 import math
 
-import numpy as np
+import mlx.core as mx
 import pytest
 
 from scipy.stats import variation
@@ -37,8 +37,8 @@ class TestVariation:
         assert variation(4.0) == 0.0
 
     @pytest.mark.parametrize('nan_policy, expected',
-                             [('propagate', np.nan),
-                              ('omit', np.sqrt(20/3)/4)])
+                             [('propagate', mx.nan),
+                              ('omit', mx.sqrt(20/3)/4)])
     @skip_xp_backends(np_only=True,
                       reason='`nan_policy` only supports NumPy backend')
     def test_variation_nan(self, nan_policy, expected, xp):
@@ -64,15 +64,15 @@ class TestVariation:
     def test_keepdims(self, xp):
         x = xp.reshape(xp.arange(10), (2, 5))
         y = variation(x, axis=1, keepdims=True)
-        expected = np.array([[np.sqrt(2)/2],
-                             [np.sqrt(2)/7]])
+        expected = mx.array([[mx.sqrt(2)/2],
+                             [mx.sqrt(2)/7]])
         xp_assert_close(y, expected)
 
     @skip_xp_backends(np_only=True,
                       reason='`keepdims` only supports NumPy backend')
     @pytest.mark.parametrize('axis, expected',
-                             [(0, np.empty((1, 0))),
-                              (1, np.full((5, 1), fill_value=np.nan))])
+                             [(0, mx.empty((1, 0))),
+                              (1, mx.full((5, 1), fill_value=mx.nan))])
     def test_keepdims_size0(self, axis, expected, xp):
         x = xp.zeros((5, 0))
         if axis == 1:
@@ -84,7 +84,7 @@ class TestVariation:
 
     @skip_xp_backends(np_only=True,
                       reason='`keepdims` only supports NumPy backend')
-    @pytest.mark.parametrize('incr, expected_fill', [(0, np.inf), (1, np.nan)])
+    @pytest.mark.parametrize('incr, expected_fill', [(0, mx.inf), (1, mx.nan)])
     def test_keepdims_and_ddof_eq_len_plus_incr(self, incr, expected_fill, xp):
         x = xp.asarray([[1, 1, 2, 2], [1, 2, 3, 3]])
         y = variation(x, axis=1, ddof=x.shape[1] + incr, keepdims=True)
@@ -108,7 +108,7 @@ class TestVariation:
         xp_assert_close(y, math.sqrt(5/4)/1.5)
 
     def test_bad_axis(self, xp):
-        # Check that an invalid axis raises np.exceptions.AxisError.
+        # Check that an invalid axis raises mx.exceptions.AxisError.
         x = xp.asarray([[1, 2, 3], [4, 5, 6]])
         with pytest.raises((AxisError, IndexError)):
             variation(x, axis=10)
@@ -126,7 +126,7 @@ class TestVariation:
         xp_assert_equal(y2, xp.asarray([xp.inf, xp.inf]))
 
     @pytest.mark.filterwarnings("ignore:invalid value encountered:RuntimeWarning:dask")
-    @pytest.mark.parametrize('x', [[0.]*5, [1, 2, np.inf, 9]])
+    @pytest.mark.parametrize('x', [[0.]*5, [1, 2, mx.inf, 9]])
     def test_return_nan(self, x, xp):
         x = xp.asarray(x)
         # Test some cases where `variation` returns nan.
@@ -135,7 +135,7 @@ class TestVariation:
 
     @pytest.mark.filterwarnings('ignore:Invalid value encountered:RuntimeWarning:dask')
     @pytest.mark.parametrize('axis, expected',
-                             [(0, []), (1, [np.nan]*3), (None, np.nan)])
+                             [(0, []), (1, [mx.nan]*3), (None, mx.nan)])
     def test_2d_size_zero_with_axis(self, axis, expected, xp):
         x = xp.empty((3, 0))
         if axis != 0:
@@ -180,9 +180,9 @@ class TestVariation:
                       reason='`nan_policy` only supports NumPy backend')
     @pytest.mark.parametrize(
         'ddof, expected',
-        [(0, [np.sqrt(1/6), np.sqrt(5/8), np.inf, 0, np.nan, 0.0, np.nan]),
-         (1, [0.5, np.sqrt(5/6), np.inf, 0, np.nan, 0, np.nan]),
-         (2, [np.sqrt(0.5), np.sqrt(5/4), np.inf, np.nan, np.nan, 0, np.nan])]
+        [(0, [mx.sqrt(1/6), mx.sqrt(5/8), mx.inf, 0, mx.nan, 0.0, mx.nan]),
+         (1, [0.5, mx.sqrt(5/6), mx.inf, 0, mx.nan, 0, mx.nan]),
+         (2, [mx.sqrt(0.5), mx.sqrt(5/4), mx.inf, mx.nan, mx.nan, 0, mx.nan])]
     )
     def test_more_nan_policy_omit_tests(self, ddof, expected, xp):
         # The slightly strange formatting in the follow array is my attempt to

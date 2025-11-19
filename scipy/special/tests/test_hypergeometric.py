@@ -1,5 +1,5 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose, assert_equal
 import scipy.special as sc
 
@@ -7,21 +7,21 @@ import scipy.special as sc
 class TestHyperu:
 
     def test_negative_x(self):
-        a, b, x = np.meshgrid(
+        a, b, x = mx.meshgrid(
             [-1, -0.5, 0, 0.5, 1],
             [-1, -0.5, 0, 0.5, 1],
-            np.linspace(-100, -1, 10),
+            mx.linspace(-100, -1, 10),
         )
-        assert np.all(np.isnan(sc.hyperu(a, b, x)))
+        assert mx.all(mx.isnan(sc.hyperu(a, b, x)))
 
     def test_special_cases(self):
         assert sc.hyperu(0, 1, 1) == 1.0
 
-    @pytest.mark.parametrize('a', [0.5, 1, np.nan])
-    @pytest.mark.parametrize('b', [1, 2, np.nan])
-    @pytest.mark.parametrize('x', [0.25, 3, np.nan])
+    @pytest.mark.parametrize('a', [0.5, 1, mx.nan])
+    @pytest.mark.parametrize('b', [1, 2, mx.nan])
+    @pytest.mark.parametrize('x', [0.25, 3, mx.nan])
     def test_nan_inputs(self, a, b, x):
-        assert np.isnan(sc.hyperu(a, b, x)) == np.any(np.isnan([a, b, x]))
+        assert mx.isnan(sc.hyperu(a, b, x)) == mx.any(mx.isnan([a, b, x]))
 
     @pytest.mark.parametrize(
         'a,b,x,expected',
@@ -60,16 +60,16 @@ class TestHyperu:
         # Reference values computed with mpmath using the script:
         #
         # import itertools as it
-        # import numpy as np
+        # import mlx.core as mx
         #
         # from mpmath import mp
         #
-        # rng = np.random.default_rng(1234)
+        # rng = mx.random.default_rng(1234)
         #
         # cases = []
         # for a, x in it.product(
-        #         np.random.uniform(-0.25, 0.25, size=6),
-        #         np.logspace(-5, -1, 4),
+        #         mx.random.uniform(-0.25, 0.25, size=6),
+        #         mx.logspace(-5, -1, 4),
         # ):
         #     with mp.workdps(100):
         #         cases.append((float(a), 1.0, float(x), float(mp.hyperu(a, 1.0, x))))
@@ -79,25 +79,25 @@ class TestHyperu:
         # The purpose of this test is to sanity check hyperu in the region that
         # was impacted by gh-15650 by making sure there are no excessively large
         # results, as were reported there.
-        a = np.linspace(-0.5, 0.5, 500)
-        x = np.linspace(1e-6, 1e-1, 500)
-        a, x = np.meshgrid(a, x)
+        a = mx.linspace(-0.5, 0.5, 500)
+        x = mx.linspace(1e-6, 1e-1, 500)
+        a, x = mx.meshgrid(a, x)
         results = sc.hyperu(a, 1.0, x)
-        assert np.all(np.abs(results) < 1e3)
+        assert mx.all(mx.abs(results) < 1e3)
 
 
 class TestHyp1f1:
 
     @pytest.mark.parametrize('a, b, x', [
-        (np.nan, 1, 1),
-        (1, np.nan, 1),
-        (1, 1, np.nan)
+        (mx.nan, 1, 1),
+        (1, mx.nan, 1),
+        (1, 1, mx.nan)
     ])
     def test_nan_inputs(self, a, b, x):
-        assert np.isnan(sc.hyp1f1(a, b, x))
+        assert mx.isnan(sc.hyp1f1(a, b, x))
 
     def test_poles(self):
-        assert_equal(sc.hyp1f1(1, [0, -1, -2, -3, -4], 0.5), np.inf)
+        assert_equal(sc.hyp1f1(1, [0, -1, -2, -3, -4], 0.5), mx.inf)
 
     @pytest.mark.parametrize('a, b, x, result', [
         (-1, 1, 0.5, 0.5),
@@ -225,10 +225,10 @@ class TestHyp1f1:
         # Boost (versions greater than 1.80), Mathematica (via Wolfram Alpha
         # online) and mpmath all return 1 in this case, but SciPy's hyp1f1
         # returns inf.
-        assert_equal(sc.hyp1f1(0, b, [-1.5, 0, 1.5]), [np.inf, np.inf, np.inf])
+        assert_equal(sc.hyp1f1(0, b, [-1.5, 0, 1.5]), [mx.inf, mx.inf, mx.inf])
 
     def test_legacy_case2(self):
         # This is a legacy edge case.
         # In software such as boost (1.81+), mpmath and Mathematica,
         # the value is 1.
-        assert sc.hyp1f1(-4, -3, 0) == np.inf
+        assert sc.hyp1f1(-4, -3, 0) == mx.inf

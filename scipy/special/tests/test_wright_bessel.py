@@ -19,7 +19,7 @@
 from itertools import product
 
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_allclose
 
 import scipy.special as sc
@@ -47,7 +47,7 @@ def test_wright_bessel_iv(b, x):
         wb = wright_bessel(1, v + 1, x**2 / 4.)
         # Note: iv(v, x) has precision of less than 1e-12 for some cases
         # e.g v=1-1e-6 and x=1e-06)
-        assert_allclose(np.power(x / 2., v) * wb,
+        assert_allclose(mx.power(x / 2., v) * wb,
                         sc.iv(v, x),
                         rtol=1e-11, atol=1e-11)
 
@@ -76,22 +76,22 @@ def test_wright_functional(a, b, x):
 # see output of:
 # cd scipy/scipy/_precompute
 # python wright_bessel_data.py
-grid_a_b_x_value_acc = np.array([
+grid_a_b_x_value_acc = mx.array([
     [0.1, 100.0, 709.7827128933841, 8.026353022981087e+34, 2e-8],
     [0.5, 10.0, 709.7827128933841, 2.680788404494657e+48, 9e-8],
     [0.5, 10.0, 1000.0, 2.005901980702872e+64, 1e-8],
     [0.5, 100.0, 1000.0, 3.4112367580445246e-117, 6e-8],
     [1.0, 20.0, 100000.0, 1.7717158630699857e+225, 3e-11],
-    [1.0, 100.0, 100000.0, 1.0269334596230763e+22, np.nan],
+    [1.0, 100.0, 100000.0, 1.0269334596230763e+22, mx.nan],
     [1.0000000000000222, 20.0, 100000.0, 1.7717158630001672e+225, 3e-11],
-    [1.0000000000000222, 100.0, 100000.0, 1.0269334595866202e+22, np.nan],
+    [1.0000000000000222, 100.0, 100000.0, 1.0269334595866202e+22, mx.nan],
     [1.5, 0.0, 500.0, 15648961196.432373, 3e-11],
     [1.5, 2.220446049250313e-14, 500.0, 15648961196.431465, 3e-11],
     [1.5, 1e-10, 500.0, 15648961192.344728, 3e-11],
     [1.5, 1e-05, 500.0, 15648552437.334162, 3e-11],
     [1.5, 0.1, 500.0, 12049870581.10317, 2e-11],
     [1.5, 20.0, 100000.0, 7.81930438331405e+43, 3e-9],
-    [1.5, 100.0, 100000.0, 9.653370857459075e-130, np.nan],
+    [1.5, 100.0, 100000.0, 9.653370857459075e-130, mx.nan],
     ])
 
 
@@ -112,8 +112,8 @@ def test_wright_data_grid_less_accurate(a, b, x, phi, accuracy):
 
     Here we test for reduced accuracy or even nan.
     """
-    if np.isnan(accuracy):
-        assert np.isnan(wright_bessel(a, b, x))
+    if mx.isnan(accuracy):
+        assert mx.isnan(wright_bessel(a, b, x))
     else:
         assert_allclose(wright_bessel(a, b, x), phi, rtol=accuracy)
 
@@ -128,7 +128,7 @@ def test_log_wright_bessel_same_as_wright_bessel(a, b, x):
     """Test that log_wright_bessel equals log of wright_bessel."""
     assert_allclose(
         log_wright_bessel(a, b, x),
-        np.log(wright_bessel(a, b, x)),
+        mx.log(wright_bessel(a, b, x)),
         rtol=1e-8,
     )
 
@@ -159,12 +159,12 @@ def test_log_wright_bessel_same_as_wright_bessel(a, b, x):
 # At the end of the day, we can only hope that results are correct for very large x,
 # e.g. by the asymptotic series, as there is no way to produce those in "exact"
 # arithmetic.
-# Note: accuracy = np.nan means log_wright_bessel returns nan.
+# Note: accuracy = mx.nan means log_wright_bessel returns nan.
 @pytest.mark.parametrize(
     'a, b, x, phi, accuracy',
     [
-        (0, 0, 0, -np.inf, 1e-11),
-        (0, 0, 1, -np.inf, 1e-11),
+        (0, 0, 0, -mx.inf, 1e-11),
+        (0, 0, 1, -mx.inf, 1e-11),
         (0, 1, 1.23, 1.23, 1e-11),
         (0, 1, 1e50, 1e50, 1e-11),
         (1e-5, 0, 700, 695.0421608273609, 1e-11),
@@ -175,16 +175,16 @@ def test_log_wright_bessel_same_as_wright_bessel(a, b, x):
         (1e-3, 0, 1e6, 994118.55560054416, 1e-11),  # maxterms=1_000_000
         (1e-3, 10, 1e5, 99595.47710802537, 1e-11),
         (1e-3, 50, 1e5, 99401.240922855647, 1e-3),
-        (1e-3, 100, 1e5, 99143.465191656527, np.nan),
+        (1e-3, 100, 1e5, 99143.465191656527, mx.nan),
         (0.5, 0, 1e5, 4074.1112442197941, 1e-11),
         (0.5, 0, 1e7, 87724.552120038896, 1e-11),
-        (0.5, 100, 1e5, 3350.3928746306163, np.nan),
+        (0.5, 100, 1e5, 3350.3928746306163, mx.nan),
         (0.5, 100, 1e7, 86696.109975301719, 1e-11),
         (1, 0, 1e5, 634.06765787997266, 1e-11),
         (1, 0, 1e8, 20003.339639312035, 1e-11),
         (1.5, 0, 1e5, 197.01777556071194, 1e-11),
         (1.5, 0, 1e8, 3108.987414395706, 1e-11),
-        (1.5, 100, 1e8, 2354.8915946283275, np.nan),
+        (1.5, 100, 1e8, 2354.8915946283275, mx.nan),
         (5, 0, 1e5, 9.8980480013203547, 1e-11),
         (5, 0, 1e8, 33.642337258687465, 1e-11),
         (5, 0, 1e12, 157.53704288117429, 1e-11),
@@ -199,7 +199,7 @@ def test_log_wright_bessel_same_as_wright_bessel(a, b, x):
 )
 def test_log_wright_bessel(a, b, x, phi, accuracy):
     """Test for log_wright_bessel, in particular for large x."""
-    if np.isnan(accuracy):
-        assert np.isnan(log_wright_bessel(a, b, x))
+    if mx.isnan(accuracy):
+        assert mx.isnan(log_wright_bessel(a, b, x))
     else:
         assert_allclose(log_wright_bessel(a, b, x), phi, rtol=accuracy)

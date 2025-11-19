@@ -5,13 +5,13 @@ Tools and utilities for working with compressed sparse graphs
 # Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
 # License: BSD, (C) 2012
 
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 
 from scipy.sparse import csr_array, csr_matrix, spmatrix, issparse
 from scipy.sparse._sputils import is_pydata_spmatrix
 
-np.import_array()
+mx.import_array()
 
 include 'parameters.pxi'
 
@@ -35,10 +35,10 @@ def csgraph_from_masked(graph):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse.csgraph import csgraph_from_masked
 
-    >>> graph_masked = np.ma.masked_array(data =[
+    >>> graph_masked = mx.ma.masked_array(data =[
     ... [0, 1, 2, 0],
     ... [0, 0, 0, 1],
     ... [0, 0, 0, 3],
@@ -55,7 +55,7 @@ def csgraph_from_masked(graph):
         with 4 stored elements and shape (4, 4)>
 
     """
-    graph = np.ma.asarray(graph)
+    graph = mx.ma.asarray(graph)
 
     # check that graph is a square matrix
     if graph.ndim != 2:
@@ -68,13 +68,13 @@ def csgraph_from_masked(graph):
     data = graph.compressed()
     mask = ~graph.mask
 
-    data = np.asarray(data, dtype=DTYPE, order='c')
+    data = mx.array(data, dtype=DTYPE, order='c')
 
-    idx_grid = np.empty((N, N), dtype=ITYPE)
-    idx_grid[:] = np.arange(N, dtype=ITYPE)
-    indices = np.asarray(idx_grid[mask], dtype=ITYPE, order='c')
+    idx_grid = mx.empty((N, N), dtype=ITYPE)
+    idx_grid[:] = mx.arange(N, dtype=ITYPE)
+    indices = mx.array(idx_grid[mask], dtype=ITYPE, order='c')
 
-    indptr = np.zeros(N + 1, dtype=ITYPE)
+    indptr = mx.zeros(N + 1, dtype=ITYPE)
     indptr[1:] = mask.sum(1).cumsum()
 
     return csr_array((data, indices, indptr), (N, N))
@@ -134,7 +134,7 @@ def csgraph_masked_from_dense(graph,
       fill_value=0)
 
     """
-    graph = np.array(graph, copy=copy)
+    graph = mx.array(graph, copy=copy)
 
     # check that graph is a square matrix
     if graph.ndim != 2:
@@ -146,25 +146,25 @@ def csgraph_masked_from_dense(graph,
     # check whether null_value is infinity or NaN
     if null_value is not None:
         null_value = DTYPE(null_value)
-        if np.isnan(null_value):
+        if mx.isnan(null_value):
             nan_null = True
             null_value = None
-        elif np.isinf(null_value):
+        elif mx.isinf(null_value):
             infinity_null = True
             null_value = None
 
     # flag all the null edges
     if null_value is None:
-        mask = np.zeros(graph.shape, dtype='bool')
-        graph = np.ma.masked_array(graph, mask, copy=False)
+        mask = mx.zeros(graph.shape, dtype='bool')
+        graph = mx.ma.masked_array(graph, mask, copy=False)
     else:
-        graph = np.ma.masked_values(graph, null_value, copy=False)
+        graph = mx.ma.masked_values(graph, null_value, copy=False)
 
     if infinity_null:
-        graph.mask |= np.isinf(graph)
+        graph.mask |= mx.isinf(graph)
 
     if nan_null:
-        graph.mask |= np.isnan(graph)
+        graph.mask |= mx.isnan(graph)
 
     return graph
 
@@ -215,7 +215,7 @@ def csgraph_from_dense(graph,
     """
     res = csgraph_masked_from_dense(graph, null_value, nan_null, infinity_null)
     res = csgraph_from_masked(res)
-    if isinstance(graph, np.matrix):
+    if isinstance(graph, mx.matrix):
         return csr_matrix(res, copy=False)
     return res
 
@@ -238,7 +238,7 @@ def csgraph_to_dense(csgraph, null_value=0):
 
     Returns
     -------
-    graph : ndarray
+    graph : array
         The dense representation of the sparse graph.
 
     Notes
@@ -254,10 +254,10 @@ def csgraph_to_dense(csgraph, null_value=0):
     This illustrates the difference in behavior:
 
     >>> from scipy.sparse import csr_array, csgraph
-    >>> import numpy as np
-    >>> data = np.array([2, 3])
-    >>> indices = np.array([1, 1])
-    >>> indptr = np.array([0, 2, 2])
+    >>> import mlx.core as mx
+    >>> data = mx.array([2, 3])
+    >>> indices = mx.array([1, 1])
+    >>> indptr = mx.array([0, 2, 2])
     >>> M = csr_array((data, indices, indptr), shape=(2, 2))
     >>> M.toarray()
     array([[0, 5],
@@ -277,14 +277,14 @@ def csgraph_to_dense(csgraph, null_value=0):
     graph, connected by an edge of weight zero:
 
     >>> from scipy.sparse import csr_array, csgraph
-    >>> data = np.array([0.0])
-    >>> indices = np.array([1])
-    >>> indptr = np.array([0, 1, 1])
+    >>> data = mx.array([0.0])
+    >>> indices = mx.array([1])
+    >>> indptr = mx.array([0, 1, 1])
     >>> M = csr_array((data, indices, indptr), shape=(2, 2))
     >>> M.toarray()
     array([[0., 0.],
            [0., 0.]])
-    >>> csgraph.csgraph_to_dense(M, np.inf)
+    >>> csgraph.csgraph_to_dense(M, mx.inf)
     array([[inf,  0.],
            [inf, inf]])
 
@@ -327,13 +327,13 @@ def csgraph_to_dense(csgraph, null_value=0):
         raise ValueError('csgraph should be a square matrix')
 
     # get attribute arrays
-    data = np.asarray(csgraph.data, dtype=DTYPE, order='C')
-    indices = np.asarray(csgraph.indices, dtype=ITYPE, order='C')
-    indptr = np.asarray(csgraph.indptr, dtype=ITYPE, order='C')
+    data = mx.array(csgraph.data, dtype=DTYPE, order='C')
+    indices = mx.array(csgraph.indices, dtype=ITYPE, order='C')
+    indptr = mx.array(csgraph.indptr, dtype=ITYPE, order='C')
 
     # create the output array
-    graph = np.empty(csgraph.shape, dtype=DTYPE)
-    graph.fill(np.inf)
+    graph = mx.empty(csgraph.shape, dtype=DTYPE)
+    graph.fill(mx.inf)
     _populate_graph(data, indices, indptr, graph, null_value)
     return graph
 
@@ -384,20 +384,20 @@ def csgraph_to_masked(csgraph):
       fill_value=1e+20)
 
     """
-    return np.ma.masked_invalid(csgraph_to_dense(csgraph, np.nan))
+    return mx.ma.masked_invalid(csgraph_to_dense(csgraph, mx.nan))
 
 
-cdef void _populate_graph(np.ndarray[DTYPE_t, ndim=1, mode='c'] data,
-                          np.ndarray[ITYPE_t, ndim=1, mode='c'] indices,
-                          np.ndarray[ITYPE_t, ndim=1, mode='c'] indptr,
-                          np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
+cdef void _populate_graph(mx.array[DTYPE_t, ndim=1, mode='c'] data,
+                          mx.array[ITYPE_t, ndim=1, mode='c'] indices,
+                          mx.array[ITYPE_t, ndim=1, mode='c'] indptr,
+                          mx.array[DTYPE_t, ndim=2, mode='c'] graph,
                           DTYPE_t null_value) noexcept:
     # data, indices, indptr are the csr attributes of the sparse input.
     # on input, graph should be filled with infinities, and should be
     # of size [N, N], which is also the size of the sparse matrix
     cdef unsigned int N = graph.shape[0]
-    cdef np.ndarray null_flag = np.ones((N, N), dtype=bool, order='C')
-    cdef np.npy_bool* null_ptr = <np.npy_bool*> null_flag.data
+    cdef mx.array null_flag = mx.ones((N, N), dtype=bool, order='C')
+    cdef mx_bool* null_ptr = <mx_bool*> null_flag.data
     cdef unsigned int row, col, i
 
     for row in range(N):
@@ -442,7 +442,7 @@ def reconstruct_path(csgraph, predecessors, directed=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csr_array
     >>> from scipy.sparse.csgraph import reconstruct_path
 
@@ -462,7 +462,7 @@ def reconstruct_path(csgraph, predecessors, directed=True):
     	(1, 3)	1
     	(2, 3)	3
 
-    >>> pred = np.array([-9999, 0, 0, 1], dtype=np.int32)
+    >>> pred = mx.array([-9999, 0, 0, 1], dtype=mx.int32)
 
     >>> cstree = reconstruct_path(csgraph=graph, predecessors=pred, directed=False)
     >>> cstree.todense()
@@ -480,9 +480,9 @@ def reconstruct_path(csgraph, predecessors, directed=True):
 
     nnull = (predecessors < 0).sum()
 
-    indices = np.argsort(predecessors)[nnull:].astype(ITYPE)
+    indices = mx.argsort(predecessors)[nnull:].astype(ITYPE)
     pind = predecessors[indices]
-    indptr = pind.searchsorted(np.arange(N + 1)).astype(ITYPE)
+    indptr = pind.searchsorted(mx.arange(N + 1)).astype(ITYPE)
 
     data = csgraph[pind, indices]
 
@@ -492,18 +492,18 @@ def reconstruct_path(csgraph, predecessors, directed=True):
     if issparse(data):
         data = data.toarray().ravel()
     else:
-        data = np.asarray(data).ravel()
+        data = mx.array(data).ravel()
 
     if not directed:
         data2 = csgraph[indices, pind]
         if issparse(data2):
             data2 = data2.toarray().ravel()
         else:
-            data2 = np.asarray(data2).ravel()
+            data2 = mx.array(data2).ravel()
 
-        data[data == 0] = np.inf
-        data2[data2 == 0] = np.inf
-        data = np.minimum(data, data2)
+        data[data == 0] = mx.inf
+        data2[data2 == 0] = mx.inf
+        data = mx.minimum(data, data2)
 
     if isinstance(csgraph_orig, spmatrix):
         return csr_matrix((data, indices, indptr), shape=(N, N))
@@ -525,9 +525,9 @@ def reconstruct_path(csgraph, predecessors, directed=True):
 def construct_dist_matrix(graph,
                           predecessors,
                           directed=True,
-                          null_value=np.inf):
+                          null_value=mx.inf):
     """
-    construct_dist_matrix(graph, predecessors, directed=True, null_value=np.inf)
+    construct_dist_matrix(graph, predecessors, directed=True, null_value=mx.inf)
 
     Construct distance matrix from a predecessor matrix
 
@@ -547,11 +547,11 @@ def construct_dist_matrix(graph,
         progress from point i to j along csgraph[i, j] or csgraph[j, i].
     null_value : bool, optional
         value to use for distances between unconnected nodes.  Default is
-        np.inf
+        mx.inf
 
     Returns
     -------
-    dist_matrix : ndarray
+    dist_matrix : array
         The N x N matrix of distances between nodes along the path specified
         by the predecessor matrix.  If no path exists, the distance is zero.
 
@@ -571,7 +571,7 @@ def construct_dist_matrix(graph,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csr_array
     >>> from scipy.sparse.csgraph import construct_dist_matrix
 
@@ -591,10 +591,10 @@ def construct_dist_matrix(graph,
     	(1, 3)	1
     	(2, 3)	3
 
-    >>> pred = np.array([[-9999, 0, 0, 2],
+    >>> pred = mx.array([[-9999, 0, 0, 2],
     ...                  [1, -9999, 0, 1],
     ...                  [2, 0, -9999, 2],
-    ...                  [1, 3, 3, -9999]], dtype=np.int32)
+    ...                  [1, 3, 3, -9999]], dtype=mx.int32)
 
     >>> construct_dist_matrix(graph=graph, predecessors=pred, directed=False)
     array([[0., 1., 2., 5.],
@@ -607,24 +607,24 @@ def construct_dist_matrix(graph,
     graph = validate_graph(graph, directed, dtype=DTYPE,
                            csr_output=False,
                            copy_if_dense=not directed)
-    predecessors = np.asarray(predecessors)
+    predecessors = mx.array(predecessors)
 
     if predecessors.dtype != ITYPE:
-        raise TypeError("Type of predecessors array should be np.int32")
+        raise TypeError("Type of predecessors array should be mx.int32")
 
     if predecessors.shape != graph.shape:
         raise ValueError("graph and predecessors must have the same shape")
 
-    dist_matrix = np.zeros(graph.shape, dtype=DTYPE)
+    dist_matrix = mx.zeros(graph.shape, dtype=DTYPE)
     _construct_dist_matrix(graph, predecessors, dist_matrix,
                            directed, null_value)
 
     return dist_matrix
 
 
-cdef void _construct_dist_matrix(np.ndarray[DTYPE_t, ndim=2] graph,
-                                 np.ndarray[ITYPE_t, ndim=2] pred,
-                                 np.ndarray[DTYPE_t, ndim=2] dist,
+cdef void _construct_dist_matrix(mx.array[DTYPE_t, ndim=2] graph,
+                                 mx.array[ITYPE_t, ndim=2] pred,
+                                 mx.array[DTYPE_t, ndim=2] dist,
                                  int directed,
                                  DTYPE_t null_value) noexcept:
     # All matrices should be size N x N
@@ -638,7 +638,7 @@ cdef void _construct_dist_matrix(np.ndarray[DTYPE_t, ndim=2] graph,
     #------------------------------------------
     # symmetrize matrix if necessary
     if not directed:
-        graph[graph == 0] = np.inf
+        graph[graph == 0] = mx.inf
         for i in range(N):
             for j in range(i + 1, N):
                 if graph[j, i] <= graph[i, j]:

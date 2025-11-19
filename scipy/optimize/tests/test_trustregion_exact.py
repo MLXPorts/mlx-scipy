@@ -3,7 +3,7 @@ Unit tests for trust-region iterative subproblem.
 
 """
 import pytest
-import numpy as np
+import mlx.core as mx
 from scipy.optimize._trustregion_exact import (
     estimate_smallest_singular_value,
     singular_leading_submatrix,
@@ -14,7 +14,7 @@ from numpy.testing import (assert_array_equal,
 
 
 def random_entry(n, min_eig, max_eig, case, rng=None):
-    rng = np.random.default_rng(rng)
+    rng = mx.random.default_rng(rng)
 
     # Generate random matrix
     rand = rng.uniform(low=-1, high=1, size=(n, n))
@@ -24,20 +24,20 @@ def random_entry(n, min_eig, max_eig, case, rng=None):
 
     # Generate random eigenvalues
     eigvalues = rng.uniform(low=min_eig, high=max_eig, size=n)
-    eigvalues = np.sort(eigvalues)[::-1]
+    eigvalues = mx.sort(eigvalues)[::-1]
 
     # Generate matrix
-    Qaux = np.multiply(eigvalues, Q)
-    A = np.dot(Qaux, Q.T)
+    Qaux = mx.multiply(eigvalues, Q)
+    A = mx.dot(Qaux, Q.T)
 
     # Generate gradient vector accordingly
     # to the case is being tested.
     if case == 'hard':
-        g = np.zeros(n)
+        g = mx.zeros(n)
         g[:-1] = rng.uniform(low=-1, high=1, size=n-1)
-        g = np.dot(Q, g)
+        g = mx.dot(Q, g)
     elif case == 'jac_equal_zero':
-        g = np.zeros(n)
+        g = mx.zeros(n)
     else:
         g = rng.uniform(low=-1, high=1, size=n)
 
@@ -49,7 +49,7 @@ class TestEstimateSmallestSingularValue:
     def test_for_ill_condiotioned_matrix(self):
 
         # Ill-conditioned triangular matrix
-        C = np.array([[1, 2, 3, 4],
+        C = mx.array([[1, 2, 3, 4],
                       [0, 0.05, 60, 7],
                       [0, 0, 0.8, 9],
                       [0, 0, 0, 10]])
@@ -75,7 +75,7 @@ class TestSingularLeadingSubmatrix:
 
         # Define test matrix A.
         # Note that the leading 2x2 submatrix is singular.
-        A = np.array([[1, 2, 3],
+        A = mx.array([[1, 2, 3],
                       [2, 4, 5],
                       [3, 5, 6]])
 
@@ -93,14 +93,14 @@ class TestSingularLeadingSubmatrix:
         assert_array_almost_equal(det(A[:k, :k]), 0)
 
         # Check if `v` fulfil the specified properties
-        quadratic_term = np.dot(v, np.dot(A, v))
+        quadratic_term = mx.dot(v, mx.dot(A, v))
         assert_array_almost_equal(quadratic_term, 0)
 
     def test_for_simetric_indefinite_matrix(self):
 
         # Define test matrix A.
         # Note that the leading 5x5 submatrix is indefinite.
-        A = np.asarray([[1, 2, 3, 7, 8],
+        A = mx.array([[1, 2, 3, 7, 8],
                         [2, 5, 5, 9, 0],
                         [3, 5, 11, 1, 2],
                         [7, 9, 1, 7, 5],
@@ -120,14 +120,14 @@ class TestSingularLeadingSubmatrix:
         assert_array_almost_equal(det(A[:k, :k]), 0)
 
         # Check if `v` fulfil the specified properties
-        quadratic_term = np.dot(v, np.dot(A, v))
+        quadratic_term = mx.dot(v, mx.dot(A, v))
         assert_array_almost_equal(quadratic_term, 0)
 
     def test_for_first_element_equal_to_zero(self):
 
         # Define test matrix A.
         # Note that the leading 2x2 submatrix is singular.
-        A = np.array([[0, 3, 11],
+        A = mx.array([[0, 3, 11],
                       [3, 12, 5],
                       [11, 5, 6]])
 
@@ -145,7 +145,7 @@ class TestSingularLeadingSubmatrix:
         assert_array_almost_equal(det(A[:k, :k]), 0)
 
         # Check if `v` fulfil the specified properties
-        quadratic_term = np.dot(v, np.dot(A, v))
+        quadratic_term = mx.dot(v, mx.dot(A, v))
         assert_array_almost_equal(quadratic_term, 0)
 
 
@@ -167,8 +167,8 @@ class TestIterativeSubproblem:
         # Solve Subproblem
         subprob = IterativeSubproblem(x=0,
                                       fun=lambda x: 0,
-                                      jac=lambda x: np.array(g),
-                                      hess=lambda x: np.array(H),
+                                      jac=lambda x: mx.array(g),
+                                      hess=lambda x: mx.array(H),
                                       k_easy=1e-10,
                                       k_hard=1e-10)
         p, hits_boundary = subprob.solve(trust_radius)
@@ -194,8 +194,8 @@ class TestIterativeSubproblem:
         # Solve Subproblem
         subprob = IterativeSubproblem(x=0,
                                       fun=lambda x: 0,
-                                      jac=lambda x: np.array(g),
-                                      hess=lambda x: np.array(H),
+                                      jac=lambda x: mx.array(g),
+                                      hess=lambda x: mx.array(H),
                                       k_easy=1e-10,
                                       k_hard=1e-10)
         p, hits_boundary = subprob.solve(trust_radius)
@@ -215,8 +215,8 @@ class TestIterativeSubproblem:
         # Solve Subproblem
         subprob = IterativeSubproblem(x=0,
                                       fun=lambda x: 0,
-                                      jac=lambda x: np.array(g),
-                                      hess=lambda x: np.array(H))
+                                      jac=lambda x: mx.array(g),
+                                      hess=lambda x: mx.array(H))
         p, hits_boundary = subprob.solve(1.1)
 
         assert_array_almost_equal(p, [-0.68585435, 0.1222621, -0.22090999,
@@ -238,8 +238,8 @@ class TestIterativeSubproblem:
         # Solve Subproblem
         subprob = IterativeSubproblem(x=0,
                                       fun=lambda x: 0,
-                                      jac=lambda x: np.array(g),
-                                      hess=lambda x: np.array(H),
+                                      jac=lambda x: mx.array(g),
+                                      hess=lambda x: mx.array(H),
                                       k_easy=1e-10,
                                       k_hard=1e-10)
         p, hits_boundary = subprob.solve(1.1)
@@ -262,8 +262,8 @@ class TestIterativeSubproblem:
         # Solve Subproblem
         subprob = IterativeSubproblem(x=0,
                                       fun=lambda x: 0,
-                                      jac=lambda x: np.array(g),
-                                      hess=lambda x: np.array(H),
+                                      jac=lambda x: mx.array(g),
+                                      hess=lambda x: mx.array(H),
                                       k_easy=1e-10,
                                       k_hard=1e-10)
         p, hits_boundary = subprob.solve(1.1)
@@ -276,7 +276,7 @@ class TestIterativeSubproblem:
     @pytest.mark.thread_unsafe(reason="fails in parallel")
     @pytest.mark.fail_slow(10)
     def test_for_random_entries(self):
-        rng = np.random.default_rng(1)
+        rng = mx.random.default_rng(1)
 
         # Dimension
         n = 5
@@ -312,7 +312,7 @@ class TestIterativeSubproblem:
                     p_ac, hits_boundary_ac = subprob_ac.solve(trust_radius)
 
                     # Compute objective function value
-                    J_ac = 1/2*np.dot(p_ac, np.dot(H, p_ac))+np.dot(g, p_ac)
+                    J_ac = 1/2*mx.dot(p_ac, mx.dot(H, p_ac))+mx.dot(g, p_ac)
 
                     stop_criteria = [(0.1, 2),
                                      (0.5, 1.1),
@@ -325,7 +325,7 @@ class TestIterativeSubproblem:
                         # Conn, A. R., Gould, N. I., & Toint, P. L. (2000).
                         # "Trust region methods". Siam. p. 197.
                         k_easy = min(k_trf-1,
-                                     1-np.sqrt(k_opt))
+                                     1-mx.sqrt(k_opt))
                         k_hard = 1-k_opt
 
                         # Solve subproblem
@@ -338,11 +338,11 @@ class TestIterativeSubproblem:
                         p, hits_boundary = subprob.solve(trust_radius)
 
                         # Compute objective function value
-                        J = 1/2*np.dot(p, np.dot(H, p))+np.dot(g, p)
+                        J = 1/2*mx.dot(p, mx.dot(H, p))+mx.dot(g, p)
 
                         # Check if it respect k_trf
                         if hits_boundary:
-                            assert_array_equal(np.abs(norm(p)-trust_radius) <=
+                            assert_array_equal(mx.abs(norm(p)-trust_radius) <=
                                                (k_trf-1)*trust_radius, True)
                         else:
                             assert_equal(norm(p) <= trust_radius, True)
@@ -353,7 +353,7 @@ class TestIterativeSubproblem:
 
     def test_for_finite_number_of_iterations(self):
         """Regression test for gh-12513"""
-        H = np.array(
+        H = mx.array(
             [[3.67335930e01, -2.52334820e02, 1.15477558e01, -1.19933725e-03,
               -2.06408851e03, -2.05821411e00, -2.52334820e02, -6.52076924e02,
               -2.71362566e-01, -1.98885126e00, 1.22085415e00, 2.30220713e00,
@@ -450,7 +450,7 @@ class TestIterativeSubproblem:
               -8.32946970e-01, -2.64962727e00, -6.29295273e00, 9.82625204e-01,
               2.22934659e01, -5.09020820e-01, 4.09964606e00]]
         )
-        J = np.array([
+        J = mx.array([
             -2.53298102e-07, 1.76392040e-06, 1.74776130e-06, -4.19479903e-10,
             1.44167498e-05, 1.41703911e-08, 1.76392030e-06, 4.96030153e-06,
             -2.35771675e-07, -1.68844985e-06, 4.29218258e-07, 6.65445159e-07,

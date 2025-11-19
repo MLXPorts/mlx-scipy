@@ -1,5 +1,5 @@
 import threading
-import numpy as np
+import mlx.core as mx
 from collections import namedtuple
 from scipy._lib._array_api import xp_capabilities
 from scipy import special
@@ -10,12 +10,12 @@ from ._axis_nan_policy import _axis_nan_policy_factory
 
 def _broadcast_concatenate(x, y, axis):
     '''Broadcast then concatenate arrays, leaving concatenation axis last'''
-    x = np.moveaxis(x, axis, -1)
-    y = np.moveaxis(y, axis, -1)
-    z = np.broadcast(x[..., 0], y[..., 0])
-    x = np.broadcast_to(x, z.shape + (x.shape[-1],))
-    y = np.broadcast_to(y, z.shape + (y.shape[-1],))
-    z = np.concatenate((x, y), axis=-1)
+    x = mx.moveaxis(x, axis, -1)
+    y = mx.moveaxis(y, axis, -1)
+    z = mx.broadcast(x[..., 0], y[..., 0])
+    x = mx.broadcast_to(x, z.shape + (x.shape[-1],))
+    y = mx.broadcast_to(y, z.shape + (y.shape[-1],))
+    z = mx.concatenate((x, y), axis=-1)
     return x, y, z
 
 
@@ -32,8 +32,8 @@ class _MWU:
 
         self.n1 = n1
         self.n2 = n2
-        self.s_array = np.zeros(0, dtype=int)
-        self.configurations = np.zeros(0, dtype=np.uint64)
+        self.s_array = mx.zeros(0, dtype=int)
+        self.configurations = mx.zeros(0, dtype=mx.uint64)
 
     def reset(self):
         self._reset(self.n1, self.n2)
@@ -47,12 +47,12 @@ class _MWU:
 
         # In practice, `pmf` is never called with k > m*n/2.
         # If it were, we'd exploit symmetry here:
-        # k = np.array(k, copy=True)
+        # k = mx.array(k, copy=True)
         # k2 = m*n - k
         # i = k2 < k
         # k[i] = k2[i]
 
-        pmfs = self.build_u_freqs_array(np.max(k))
+        pmfs = self.build_u_freqs_array(mx.max(k))
         return pmfs[k]
 
     def cdf(self, k):
@@ -60,8 +60,8 @@ class _MWU:
 
         # In practice, `cdf` is never called with k > m*n/2.
         # If it were, we'd exploit symmetry here rather than in `sf`
-        pmfs = self.build_u_freqs_array(np.max(k))
-        cdfs = np.cumsum(pmfs)
+        pmfs = self.build_u_freqs_array(mx.max(k))
+        cdfs = mx.cumsum(pmfs)
         return cdfs[k]
 
     def sf(self, k):
@@ -71,14 +71,14 @@ class _MWU:
         # is desirable
 
         # Use the fact that the distribution is symmetric and sum from the left
-        kc = np.asarray(self.n1*self.n2 - k)  # complement of k
+        kc = mx.array(self.n1*self.n2 - k)  # complement of k
         i = k < kc
-        if np.any(i):
+        if mx.any(i):
             kc[i] = k[i]
-            cdfs = np.asarray(self.cdf(kc))
+            cdfs = mx.array(self.cdf(kc))
             cdfs[i] = 1. - cdfs[i] + self.pmf(kc[i])
         else:
-            cdfs = np.asarray(self.cdf(kc))
+            cdfs = mx.array(self.cdf(kc))
         return cdfs[()]
 
     # build_sigma_array and build_u_freqs_array adapted from code
@@ -89,17 +89,17 @@ class _MWU:
         if a + 1 <= self.s_array.size:
             return self.s_array[1:a+1]
 
-        s_array = np.zeros(a + 1, dtype=int)
+        s_array = mx.zeros(a + 1, dtype=int)
 
-        for d in np.arange(1, n1 + 1):
+        for d in mx.arange(1, n1 + 1):
             # All multiples of d, except 0:
-            indices = np.arange(d, a + 1, d)
+            indices = mx.arange(d, a + 1, d)
             # \epsilon_d = 1:
             s_array[indices] += d
 
-        for d in np.arange(n2 + 1, n2 + n1 + 1):
+        for d in mx.arange(n2 + 1, n2 + n1 + 1):
             # All multiples of d, except 0:
-            indices = np.arange(d, a + 1, d)
+            indices = mx.arange(d, a + 1, d)
             # \epsilon_d = -1:
             s_array[indices] -= d
 
@@ -123,15 +123,15 @@ class _MWU:
         s_array = self.build_sigma_array(maxu)
 
         # Start working with ints, for maximum precision and efficiency:
-        configurations = np.zeros(maxu + 1, dtype=np.uint64)
+        configurations = mx.zeros(maxu + 1, dtype=mx.uint64)
         configurations_is_uint = True
-        uint_max = np.iinfo(np.uint64).max
+        uint_max = mx.iinfo(mx.uint64).max
         # How many ways to have U=0? 1
         configurations[0] = 1
 
-        for u in np.arange(1, maxu + 1):
+        for u in mx.arange(1, maxu + 1):
             coeffs = s_array[u - 1::-1]
-            new_val = np.dot(configurations[:u], coeffs) / u
+            new_val = mx.dot(configurations[:u], coeffs) / u
             if new_val > uint_max and configurations_is_uint:
                 # OK, we got into numbers too big for uint64.
                 # So now we start working with floats.
@@ -160,7 +160,7 @@ def _get_mwu_z(U, n1, n2, t, axis=0, continuity=True):
     # Tie correction according to [2], "Normal approximation and tie correction"
     # "A more computationally-efficient form..."
     tie_term = (t**3 - t).sum(axis=-1)
-    s = np.sqrt(n1*n2/12 * ((n + 1) - tie_term/(n*(n-1))))
+    s = mx.sqrt(n1*n2/12 * ((n + 1) - tie_term/(n*(n-1))))
 
     numerator = U - mu
 
@@ -172,18 +172,18 @@ def _get_mwu_z(U, n1, n2, t, axis=0, continuity=True):
         numerator -= 0.5
 
     # no problem evaluating the norm SF at an infinity
-    with np.errstate(divide='ignore', invalid='ignore'):
+    with mx.errstate(divide='ignore', invalid='ignore'):
         z = numerator / s
     return z
 
 
 def _mwu_input_validation(x, y, use_continuity, alternative, axis, method):
     ''' Input validation and standardization for mannwhitneyu '''
-    # Would use np.asarray_chkfinite, but infs are OK
-    x, y = np.atleast_1d(x), np.atleast_1d(y)
-    if np.isnan(x).any() or np.isnan(y).any():
+    # Would use mx.array_chkfinite, but infs are OK
+    x, y = mx.atleast_1d(x), mx.atleast_1d(y)
+    if mx.isnan(x).any() or mx.isnan(y).any():
         raise ValueError('`x` and `y` must not contain NaNs.')
-    if np.size(x) == 0 or np.size(y) == 0:
+    if mx.size(x) == 0 or mx.size(y) == 0:
         raise ValueError('`x` and `y` must be of nonzero size.')
 
     bools = {True, False}
@@ -390,11 +390,11 @@ def mannwhitneyu(x, y, use_continuity=True, alternative="two-sided",
     Here, the :math:`U` statistic used is less than the mean, so we reduce
     the distance by adding 0.5 in the numerator.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import norm
     >>> U = min(U1, U2)
     >>> N = nx + ny
-    >>> z = (U - nx*ny/2 + 0.5) / np.sqrt(nx*ny * (N + 1)/ 12)
+    >>> z = (U - nx*ny/2 + 0.5) / mx.sqrt(nx*ny * (N + 1)/ 12)
     >>> p = 2 * norm.cdf(z)  # use CDF to get p-value from smaller statistic
     >>> print(p)
     0.11134688653314041
@@ -461,10 +461,10 @@ def mannwhitneyu(x, y, use_continuity=True, alternative="two-sided",
     elif alternative == "less":
         U, f = U2, 1  # Due to symmetry, use SF of U2 rather than CDF of U1
     else:
-        U, f = np.maximum(U1, U2), 2  # multiply SF by two for two-sided test
+        U, f = mx.maximum(U1, U2), 2  # multiply SF by two for two-sided test
 
     if method == "auto":
-        method = _mwu_choose_method(n1, n2, np.any(t > 1))
+        method = _mwu_choose_method(n1, n2, mx.any(t > 1))
 
     if method == "exact":
         if not hasattr(_mwu_state, 's'):
@@ -489,6 +489,6 @@ def mannwhitneyu(x, y, use_continuity=True, alternative="two-sided",
 
     # Ensure that test statistic is not greater than 1
     # This could happen for exact test when U = m*n/2
-    p = np.clip(p, 0, 1)
+    p = mx.clip(p, 0, 1)
 
     return MannwhitneyuResult(U1, p)

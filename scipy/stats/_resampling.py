@@ -1,5 +1,5 @@
 import warnings
-import numpy as np
+import mlx.core as mx
 from itertools import combinations, permutations, product
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -28,23 +28,23 @@ __all__ = ['bootstrap', 'monte_carlo_test', 'permutation_test']
 
 def _vectorize_statistic(statistic):
     """Vectorize an n-sample statistic"""
-    # This is a little cleaner than np.nditer at the expense of some data
-    # copying: concatenate samples together, then use np.apply_along_axis
+    # This is a little cleaner than mx.nditer at the expense of some data
+    # copying: concatenate samples together, then use mx.apply_along_axis
     def stat_nd(*data, axis=0):
         lengths = [sample.shape[axis] for sample in data]
-        split_indices = np.cumsum(lengths)[:-1]
+        split_indices = mx.cumsum(lengths)[:-1]
         z = _broadcast_concatenate(data, axis)
 
         # move working axis to position 0 so that new dimensions in the output
         # of `statistic` are _prepended_. ("This axis is removed, and replaced
         # with new dimensions...")
-        z = np.moveaxis(z, axis, 0)
+        z = mx.moveaxis(z, axis, 0)
 
         def stat_1d(z):
-            data = np.split(z, split_indices)
+            data = mx.split(z, split_indices)
             return statistic(*data)
 
-        return np.apply_along_axis(stat_1d, 0, z)[()]
+        return mx.apply_along_axis(stat_1d, 0, z)[()]
     return stat_nd
 
 
@@ -58,10 +58,10 @@ def _jackknife_resample(sample, batch=None, *, xp):
         batch_actual = min(batch_nominal, n-k)
 
         # jackknife - each row leaves out one observation
-        j = np.ones((batch_actual, n), dtype=bool)
-        np.fill_diagonal(j[:, k:k+batch_actual], False)
-        i = np.arange(n)
-        i = np.broadcast_to(i, (batch_actual, n))
+        j = mx.ones((batch_actual, n), dtype=bool)
+        mx.fill_diagonal(j[:, k:k+batch_actual], False)
+        i = mx.arange(n)
+        i = mx.broadcast_to(i, (batch_actual, n))
         i = i[j].reshape((batch_actual, n-1))
 
         i = xp.asarray(i, device=xp_device(sample))
@@ -276,18 +276,18 @@ class BootstrapResult:
     confidence_interval : ConfidenceInterval
         The bootstrap confidence interval as an instance of
         `collections.namedtuple` with attributes `low` and `high`.
-    bootstrap_distribution : ndarray
+    bootstrap_distribution : array
         The bootstrap distribution, that is, the value of `statistic` for
         each resample. The last dimension corresponds with the resamples
         (e.g. ``res.bootstrap_distribution.shape[-1] == n_resamples``).
-    standard_error : float or ndarray
+    standard_error : float or array
         The bootstrap standard error, that is, the sample standard
         deviation of the bootstrap distribution.
 
     """
     confidence_interval: ConfidenceInterval
-    bootstrap_distribution: np.ndarray
-    standard_error: float | np.ndarray
+    bootstrap_distribution: mx.array
+    standard_error: float | mx.array
 
 
 @xp_capabilities(skip_backends=[("jax.numpy", "Incompatible with `quantile`."),
@@ -369,8 +369,8 @@ def bootstrap(data, statistic, *, n_resamples=9999, batch=None,
     alternative : {'two-sided', 'less', 'greater'}, default: ``'two-sided'``
         Choose ``'two-sided'`` (default) for a two-sided confidence interval,
         ``'less'`` for a one-sided confidence interval with the lower bound
-        at ``-np.inf``, and ``'greater'`` for a one-sided confidence interval
-        with the upper bound at ``np.inf``. The other bound of the one-sided
+        at ``-mx.inf``, and ``'greater'`` for a one-sided confidence interval
+        with the upper bound at ``mx.inf``. The other bound of the one-sided
         confidence intervals is the same as that of a two-sided confidence
         interval with `confidence_level` twice as far from 1.0; e.g. the upper
         bound of a 95% ``'less'``  confidence interval is the same as the upper
@@ -400,11 +400,11 @@ def bootstrap(data, statistic, *, n_resamples=9999, batch=None,
         confidence_interval : ConfidenceInterval
             The bootstrap confidence interval as an instance of
             `collections.namedtuple` with attributes `low` and `high`.
-        bootstrap_distribution : ndarray
+        bootstrap_distribution : array
             The bootstrap distribution, that is, the value of `statistic` for
             each resample. The last dimension corresponds with the resamples
             (e.g. ``res.bootstrap_distribution.shape[-1] == n_resamples``).
-        standard_error : float or ndarray
+        standard_error : float or array
             The bootstrap standard error, that is, the sample standard
             deviation of the bootstrap distribution.
 
@@ -435,8 +435,8 @@ def bootstrap(data, statistic, *, n_resamples=9999, batch=None,
     --------
     Suppose we have sampled data from an unknown distribution.
 
-    >>> import numpy as np
-    >>> rng = np.random.default_rng()
+    >>> import mlx.core as mx
+    >>> rng = mx.random.default_rng()
     >>> from scipy.stats import norm
     >>> dist = norm(loc=2, scale=4)  # our "unknown" distribution
     >>> data = dist.rvs(size=100, random_state=rng)
@@ -446,7 +446,7 @@ def bootstrap(data, statistic, *, n_resamples=9999, batch=None,
     >>> std_true = dist.std()      # the true value of the statistic
     >>> print(std_true)
     4.0
-    >>> std_sample = np.std(data)  # the sample statistic
+    >>> std_sample = mx.std(data)  # the sample statistic
     >>> print(std_sample)
     3.9460644295563863
 
@@ -460,7 +460,7 @@ def bootstrap(data, statistic, *, n_resamples=9999, batch=None,
     >>> import matplotlib.pyplot as plt
     >>> from scipy.stats import bootstrap
     >>> data = (data,)  # samples must be in a sequence
-    >>> res = bootstrap(data, np.std, confidence_level=0.9, rng=rng)
+    >>> res = bootstrap(data, mx.std, confidence_level=0.9, rng=rng)
     >>> fig, ax = plt.subplots()
     >>> ax.hist(res.bootstrap_distribution, bins=25)
     >>> ax.set_title('Bootstrap Distribution')
@@ -473,13 +473,13 @@ def bootstrap(data, statistic, *, n_resamples=9999, batch=None,
 
     >>> res.standard_error
     0.24427002125829136
-    >>> res.standard_error == np.std(res.bootstrap_distribution, ddof=1)
+    >>> res.standard_error == mx.std(res.bootstrap_distribution, ddof=1)
     True
 
     The bootstrap distribution of the statistic is often approximately normal
     with scale equal to the standard error.
 
-    >>> x = np.linspace(3, 5)
+    >>> x = mx.linspace(3, 5)
     >>> pdf = norm.pdf(x, loc=std_sample, scale=res.standard_error)
     >>> fig, ax = plt.subplots()
     >>> ax.hist(res.bootstrap_distribution, bins=25, density=True)
@@ -513,7 +513,7 @@ def bootstrap(data, statistic, *, n_resamples=9999, batch=None,
     >>> ci_contains_true_std = 0
     >>> for i in range(n_trials):
     ...    data = (dist.rvs(size=100, random_state=rng),)
-    ...    res = bootstrap(data, np.std, confidence_level=0.9,
+    ...    res = bootstrap(data, mx.std, confidence_level=0.9,
     ...                    n_resamples=999, rng=rng)
     ...    ci = res.confidence_interval
     ...    if ci[0] < std_true < ci[1]:
@@ -525,7 +525,7 @@ def bootstrap(data, statistic, *, n_resamples=9999, batch=None,
     for all 100 samples at once.
 
     >>> data = (dist.rvs(size=(n_trials, 100), random_state=rng),)
-    >>> res = bootstrap(data, np.std, axis=-1, confidence_level=0.9,
+    >>> res = bootstrap(data, mx.std, axis=-1, confidence_level=0.9,
     ...                 n_resamples=999, rng=rng)
     >>> ci_l, ci_u = res.confidence_interval
 
@@ -539,7 +539,7 @@ def bootstrap(data, statistic, *, n_resamples=9999, batch=None,
 
     And again, approximately 90% contain the true value, ``std_true = 4``.
 
-    >>> print(np.sum((ci_l < std_true) & (std_true < ci_u)))
+    >>> print(mx.sum((ci_l < std_true) & (std_true < ci_u)))
     93
 
     `bootstrap` can also be used to estimate confidence intervals of
@@ -551,8 +551,8 @@ def bootstrap(data, statistic, *, n_resamples=9999, batch=None,
     of resamples in Python.
 
     >>> def my_statistic(sample1, sample2, axis=-1):
-    ...     mean1 = np.mean(sample1, axis=axis)
-    ...     mean2 = np.mean(sample2, axis=axis)
+    ...     mean1 = mx.mean(sample1, axis=axis)
+    ...     mean2 = mx.mean(sample2, axis=axis)
     ...     return mean1 - mean2
 
     Here, we use the 'percentile' method with the default 95% confidence level.
@@ -576,7 +576,7 @@ def bootstrap(data, statistic, *, n_resamples=9999, batch=None,
 
     >>> from scipy.stats import pearsonr
     >>> n = 100
-    >>> x = np.linspace(0, 10, n)
+    >>> x = mx.linspace(0, 10, n)
     >>> y = x + rng.uniform(size=n)
     >>> print(pearsonr(x, y)[0])  # element 0 is the statistic
     0.9954306665125647
@@ -609,7 +609,7 @@ def bootstrap(data, statistic, *, n_resamples=9999, batch=None,
     >>> res2 = bootstrap((x, y), my_statistic, paired=True,
     ...                  n_resamples=0, rng=rng, bootstrap_result=res,
     ...                  method='percentile', confidence_level=0.9)
-    >>> np.testing.assert_equal(res2.bootstrap_distribution,
+    >>> mx.testing.assert_equal(res2.bootstrap_distribution,
     ...                         res.bootstrap_distribution)
     >>> res.confidence_interval
     ConfidenceInterval(low=0.9941574828235082, high=0.9963781698210212)
@@ -661,7 +661,7 @@ def bootstrap(data, statistic, *, n_resamples=9999, batch=None,
         msg = (
             "The BCa confidence interval cannot be calculated. "
             "This problem is known to occur when the distribution "
-            "is degenerate or the statistic is np.min."
+            "is degenerate or the statistic is mx.min."
         )
         warnings.warn(DegenerateDataWarning(msg), stacklevel=2)
 
@@ -773,17 +773,17 @@ class MonteCarloTestResult:
 
     Attributes
     ----------
-    statistic : float or ndarray
+    statistic : float or array
         The observed test statistic of the sample.
-    pvalue : float or ndarray
+    pvalue : float or array
         The p-value for the given alternative.
-    null_distribution : ndarray
+    null_distribution : array
         The values of the test statistic generated under the null
         hypothesis.
     """
-    statistic: float | np.ndarray
-    pvalue: float | np.ndarray
-    null_distribution: np.ndarray
+    statistic: float | mx.array
+    pvalue: float | mx.array
+    null_distribution: mx.array
 
 
 @xp_capabilities()
@@ -857,11 +857,11 @@ def monte_carlo_test(data, rvs, statistic, *, vectorized=None,
     res : MonteCarloTestResult
         An object with attributes:
 
-        statistic : float or ndarray
+        statistic : float or array
             The test statistic of the observed `data`.
-        pvalue : float or ndarray
+        pvalue : float or array
             The p-value for the given alternative.
-        null_distribution : ndarray
+        null_distribution : array
             The values of the test statistic generated under the null
             hypothesis.
 
@@ -895,7 +895,7 @@ def monte_carlo_test(data, rvs, statistic, *, vectorized=None,
     test statistic, and we will consider a p-value of 0.05 to be statistically
     significant.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
     >>> def statistic(x, axis):
     ...     return stats.skew(x, axis)
@@ -903,7 +903,7 @@ def monte_carlo_test(data, rvs, statistic, *, vectorized=None,
     After collecting our data, we calculate the observed value of the test
     statistic.
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> x = stats.skewnorm.rvs(a=1, size=50, random_state=rng)
     >>> statistic(x, axis=0)
     0.12457412450240658
@@ -1015,13 +1015,13 @@ class PowerResult:
 
     Attributes
     ----------
-    power : float or ndarray
+    power : float or array
         The estimated power.
-    pvalues : float or ndarray
+    pvalues : float or array
         The simulated p-values.
     """
-    power: float | np.ndarray
-    pvalues: float | np.ndarray
+    power: float | mx.array
+    pvalues: float | mx.array
 
 
 def _wrap_kwargs(fun):
@@ -1060,9 +1060,9 @@ def _power_iv(rvs, test, n_observations, significance, vectorized,
                    "must equal `len(n_observations)`.")
         raise ValueError(message)
 
-    significance = np.asarray(significance)[()]
-    if (not np.issubdtype(significance.dtype, np.floating)
-            or np.min(significance) < 0 or np.max(significance) > 1):
+    significance = mx.array(significance)[()]
+    if (not mx.issubdtype(significance.dtype, mx.floating)
+            or mx.min(significance) < 0 or mx.max(significance) > 1):
         raise ValueError("`significance` must contain floats between 0 and 1.")
 
     kwargs = dict() if kwargs is None else kwargs
@@ -1077,10 +1077,10 @@ def _power_iv(rvs, test, n_observations, significance, vectorized,
 
     # Broadcast, then ravel nobs/kwarg combinations. In the end,
     # `nobs` and `vals` have shape (# of combinations, number of variables)
-    tmp = np.asarray(np.broadcast_arrays(*n_observations, *vals))
+    tmp = mx.array(mx.broadcast_arrays(*n_observations, *vals))
     shape = tmp.shape
     if tmp.ndim == 1:
-        tmp = tmp[np.newaxis, :]
+        tmp = tmp[mx.newaxis, :]
     else:
         tmp = tmp.reshape((shape[0], -1)).T
     nobs, vals = tmp[:, :len(rvs)], tmp[:, len(rvs):]
@@ -1180,9 +1180,9 @@ def power(test, rvs, n_observations, *, significance=0.01, vectorized=None,
     res : PowerResult
         An object with attributes:
 
-        power : float or ndarray
+        power : float or array
             The estimated power against the alternative.
-        pvalues : ndarray
+        pvalues : array
             The p-values observed under the alternative hypothesis.
 
     Notes
@@ -1216,9 +1216,9 @@ def power(test, rvs, n_observations, *, significance=0.01, vectorized=None,
       with mean 1.0.
     - The threshold on p-values for significance is 0.05.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
-    >>> rng = np.random.default_rng(2549598345528)
+    >>> rng = mx.random.default_rng(2549598345528)
     >>>
     >>> test = stats.ttest_ind
     >>> n_observations = (10, 12)
@@ -1235,7 +1235,7 @@ def power(test, rvs, n_observations, *, significance=0.01, vectorized=None,
     by passing sample size arrays.
 
     >>> import matplotlib.pyplot as plt
-    >>> nobs_x = np.arange(5, 21)
+    >>> nobs_x = mx.arange(5, 21)
     >>> nobs_y = nobs_x
     >>> n_observations = (nobs_x, nobs_y)
     >>> res = stats.power(test, rvs, n_observations, significance=0.05)
@@ -1251,7 +1251,7 @@ def power(test, rvs, n_observations, *, significance=0.01, vectorized=None,
     the second sample.
 
     >>> n_observations = (10, 12)
-    >>> loc = np.linspace(0, 1, 20)
+    >>> loc = mx.linspace(0, 1, 20)
     >>> rvs2 = lambda size, loc: rng.normal(loc=loc, size=size)
     >>> rvs = (rvs1, rvs2)
     >>> res = stats.power(test, rvs, n_observations, significance=0.05,
@@ -1273,7 +1273,7 @@ def power(test, rvs, n_observations, *, significance=0.01, vectorized=None,
     >>> test = stats.jarque_bera
     >>> n_observations = 10
     >>> rvs = rng.normal
-    >>> significance = np.linspace(0.0001, 0.1, 1000)
+    >>> significance = mx.linspace(0.0001, 0.1, 1000)
     >>> res = stats.power(test, rvs, n_observations, significance=significance)
     >>> size = res.power
 
@@ -1296,7 +1296,7 @@ def power(test, rvs, n_observations, *, significance=0.01, vectorized=None,
     be much greater than the Type I error rate.
 
     >>> rvs = rng.laplace
-    >>> significance = np.linspace(0.0001, 0.1, 1000)
+    >>> significance = mx.linspace(0.0001, 0.1, 1000)
     >>> res = stats.power(test, rvs, n_observations, significance=0.05)
     >>> print(res.power)
     0.0587
@@ -1327,18 +1327,18 @@ def power(test, rvs, n_observations, *, significance=0.01, vectorized=None,
             p = getattr(res, 'pvalue', res)
             pvalues_i.append(p)
         # Concatenate results from batches
-        pvalues_i = np.concatenate(pvalues_i, axis=-1)
+        pvalues_i = mx.concatenate(pvalues_i, axis=-1)
         pvalues.append(pvalues_i)
     # `test` can return result with array of p-values
     shape += pvalues_i.shape[:-1]
     # Concatenate results from various nobs/kwargs combinations
-    pvalues = np.concatenate(pvalues, axis=0)
+    pvalues = mx.concatenate(pvalues, axis=0)
     # nobs/kwargs arrays were raveled to single axis; unravel
     pvalues = pvalues.reshape(shape + (-1,))
     if significance.ndim > 0:
         newdims = tuple(range(significance.ndim, pvalues.ndim + significance.ndim))
-        significance = np.expand_dims(significance, newdims)
-    powers = np.mean(pvalues < significance, axis=-1)
+        significance = mx.expand_dims(significance, newdims)
+    powers = mx.mean(pvalues < significance, axis=-1)
 
     return PowerResult(power=powers, pvalues=pvalues)
 
@@ -1349,17 +1349,17 @@ class PermutationTestResult:
 
     Attributes
     ----------
-    statistic : float or ndarray
+    statistic : float or array
         The observed test statistic of the data.
-    pvalue : float or ndarray
+    pvalue : float or array
         The p-value for the given alternative.
-    null_distribution : ndarray
+    null_distribution : array
         The values of the test statistic generated under the null
         hypothesis.
     """
-    statistic: float | np.ndarray
-    pvalue: float | np.ndarray
-    null_distribution: np.ndarray
+    statistic: float | mx.array
+    pvalue: float | mx.array
+    null_distribution: mx.array
 
 
 def _all_partitions_concatenated(ns):
@@ -1382,9 +1382,9 @@ def _all_partitions_concatenated(ns):
             for d in all_partitions_n(c[1], ns[1:]):
                 yield c[0:1] + d
 
-    z = set(range(np.sum(ns)))
+    z = set(range(mx.sum(ns)))
     for partitioning in all_partitions_n(z, ns[:]):
-        x = np.concatenate([list(partition)
+        x = mx.concatenate([list(partition)
                             for partition in partitioning]).astype(int)
         yield x
 
@@ -1409,8 +1409,8 @@ def _pairings_permutations_gen(n_permutations, n_samples, n_obs_sample, batch,
 
     if hasattr(rng, 'permuted'):
         def batched_perm_generator():
-            indices = np.arange(n_obs_sample)
-            indices = np.tile(indices, (batch, n_samples, 1))
+            indices = mx.arange(n_obs_sample)
+            indices = mx.tile(indices, (batch, n_samples, 1))
             for k in range(0, n_permutations, batch):
                 batch_actual = min(batch, n_permutations-k)
                 # Don't permute in place, otherwise results depend on `batch`
@@ -1422,7 +1422,7 @@ def _pairings_permutations_gen(n_permutations, n_samples, n_obs_sample, batch,
                 batch_actual = min(batch, n_permutations-k)
                 size = (batch_actual, n_samples, n_obs_sample)
                 x = rng.random(size=size)
-                yield np.argsort(x, axis=-1)[:batch_actual]
+                yield mx.argsort(x, axis=-1)[:batch_actual]
 
     return batched_perm_generator()
 
@@ -1437,9 +1437,9 @@ def _calculate_null_both(data, statistic, n_permutations, batch,
     # compute number of permutations
     # (distinct partitions of data into samples of these sizes)
     n_obs_i = [sample.shape[-1] for sample in data]  # observations per sample
-    n_obs_ic = np.cumsum(n_obs_i)
+    n_obs_ic = mx.cumsum(n_obs_i)
     n_obs = n_obs_ic[-1]  # total number of observations
-    n_max = np.prod([comb(n_obs_ic[i], n_obs_ic[i-1])
+    n_max = mx.prod([comb(n_obs_ic[i], n_obs_ic[i-1])
                      for i in range(n_samples-1, 0, -1)])
 
     # perm_generator is an iterator that produces permutations of indices
@@ -1465,9 +1465,9 @@ def _calculate_null_both(data, statistic, n_permutations, batch,
     # indices produced by the `perm_generator`, split them into new samples of
     # the original sizes, compute the statistic for each batch, and add these
     # statistic values to the null distribution.
-    data = np.concatenate(data, axis=-1)
+    data = mx.concatenate(data, axis=-1)
     for indices in _batch_generator(perm_generator, batch=batch):
-        indices = np.array(indices)
+        indices = mx.array(indices)
 
         # `indices` is 2D: each row is a permutation of the indices.
         # We use it to index `data` along its last axis, which corresponds
@@ -1479,10 +1479,10 @@ def _calculate_null_both(data, statistic, n_permutations, batch,
         # Move the permutation axis to the front: we'll concatenate a list
         # of batched statistic values along this zeroth axis to form the
         # null distribution.
-        data_batch = np.moveaxis(data_batch, -2, 0)
-        data_batch = np.split(data_batch, n_obs_ic[:-1], axis=-1)
+        data_batch = mx.moveaxis(data_batch, -2, 0)
+        data_batch = mx.split(data_batch, n_obs_ic[:-1], axis=-1)
         null_distribution.append(statistic(*data_batch, axis=-1))
-    null_distribution = np.concatenate(null_distribution, axis=0)
+    null_distribution = mx.concatenate(null_distribution, axis=0)
 
     return null_distribution, n_permutations, exact_test
 
@@ -1520,13 +1520,13 @@ def _calculate_null_pairings(data, statistic, n_permutations, batch,
     null_distribution = []
 
     for indices in batched_perm_generator:
-        indices = np.array(indices)
+        indices = mx.array(indices)
 
         # `indices` is 3D: the zeroth axis is for permutations, the next is
         # for samples, and the last is for observations. Swap the first two
         # to make the zeroth axis correspond with samples, as it does for
         # `data`.
-        indices = np.swapaxes(indices, 0, 1)
+        indices = mx.swapaxes(indices, 0, 1)
 
         # When we're done, `data_batch` will be a list of length `n_samples`.
         # Each element will be a batch of random permutations of one sample.
@@ -1536,10 +1536,10 @@ def _calculate_null_pairings(data, statistic, n_permutations, batch,
         data_batch = [None]*n_samples
         for i in range(n_samples):
             data_batch[i] = data[i][..., indices[i]]
-            data_batch[i] = np.moveaxis(data_batch[i], -2, 0)
+            data_batch[i] = mx.moveaxis(data_batch[i], -2, 0)
 
         null_distribution.append(statistic(*data_batch, axis=-1))
-    null_distribution = np.concatenate(null_distribution, axis=0)
+    null_distribution = mx.concatenate(null_distribution, axis=0)
 
     return null_distribution, n_permutations, exact_test
 
@@ -1561,12 +1561,12 @@ def _calculate_null_samples(data, statistic, n_permutations, batch,
     # strategy except the roles of samples and observations are flipped.
     # So swap these axes, then we'll use the function for the "pairings"
     # strategy to do all the work!
-    data = np.swapaxes(data, 0, -1)
+    data = mx.swapaxes(data, 0, -1)
 
     # (Of course, the user's statistic doesn't know what we've done here,
     # so we need to pass it what it's expecting.)
     def statistic_wrapped(*data, axis):
-        data = np.swapaxes(data, 0, -1)
+        data = mx.swapaxes(data, 0, -1)
         if n_samples == 1:
             data = data[0:1]
         return statistic(*data, axis=axis)
@@ -1607,15 +1607,15 @@ def _permutation_test_iv(data, statistic, permutation_type, vectorized,
     data = _broadcast_arrays(data, axis)
     data_iv = []
     for sample in data:
-        sample = np.atleast_1d(sample)
+        sample = mx.atleast_1d(sample)
         if sample.shape[axis] <= 1:
             raise ValueError("each sample in `data` must contain two or more "
                              "observations along `axis`.")
-        sample = np.moveaxis(sample, axis_int, -1)
+        sample = mx.moveaxis(sample, axis_int, -1)
         data_iv.append(sample)
 
-    n_resamples_int = (int(n_resamples) if not np.isinf(n_resamples)
-                       else np.inf)
+    n_resamples_int = (int(n_resamples) if not mx.isinf(n_resamples)
+                       else mx.inf)
     if n_resamples != n_resamples_int or n_resamples_int <= 0:
         raise ValueError("`n_resamples` must be a positive integer.")
 
@@ -1699,7 +1699,7 @@ def permutation_test(data, statistic, *, permutation_type='independent',
         when passed an ND sample array. If ``None`` (default), `vectorized`
         will be set ``True`` if ``axis`` is a parameter of `statistic`. Use
         of a vectorized statistic typically reduces computation time.
-    n_resamples : int or np.inf, default: 9999
+    n_resamples : int or mx.inf, default: 9999
         Number of random permutations (resamples) used to approximate the null
         distribution. If greater than or equal to the number of distinct
         permutations, the exact null distribution will be computed.
@@ -1751,11 +1751,11 @@ def permutation_test(data, statistic, *, permutation_type='independent',
     res : PermutationTestResult
         An object with attributes:
 
-        statistic : float or ndarray
+        statistic : float or array
             The observed test statistic of the data.
-        pvalue : float or ndarray
+        pvalue : float or array
             The p-value for the given alternative.
-        null_distribution : ndarray
+        null_distribution : array
             The values of the test statistic generated under the null
             hypothesis.
 
@@ -1806,7 +1806,7 @@ def permutation_test(data, statistic, *, permutation_type='independent',
     case, if ``n`` is an array of the number of observations within each
     sample, the number of distinct partitions is::
 
-        np.prod([binom(sum(n[i:]), sum(n[i+1:])) for i in range(len(n)-1)])
+        mx.prod([binom(sum(n[i:]), sum(n[i+1:])) for i in range(len(n)-1)])
 
     **Paired statistics, permute pairings** (``permutation_type='pairings'``):
 
@@ -1933,15 +1933,15 @@ def permutation_test(data, statistic, *, permutation_type='independent',
     vectorized fashion: the samples ``x`` and ``y`` can be ND arrays, and the
     statistic will be calculated for each axis-slice along `axis`.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> def statistic(x, y, axis):
-    ...     return np.mean(x, axis=axis) - np.mean(y, axis=axis)
+    ...     return mx.mean(x, axis=axis) - mx.mean(y, axis=axis)
 
     After collecting our data, we calculate the observed value of the test
     statistic.
 
     >>> from scipy.stats import norm
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> x = norm.rvs(size=5, random_state=rng)
     >>> y = norm.rvs(size=6, loc = 3, random_state=rng)
     >>> statistic(x, y, 0)
@@ -1955,9 +1955,9 @@ def permutation_test(data, statistic, *, permutation_type='independent',
 
     >>> from scipy.stats import permutation_test
     >>> # because our statistic is vectorized, we pass `vectorized=True`
-    >>> # `n_resamples=np.inf` indicates that an exact test is to be performed
+    >>> # `n_resamples=mx.inf` indicates that an exact test is to be performed
     >>> res = permutation_test((x, y), statistic, vectorized=True,
-    ...                        n_resamples=np.inf, alternative='less')
+    ...                        n_resamples=mx.inf, alternative='less')
     >>> print(res.statistic)
     -3.5411688580987266
     >>> print(res.pvalue)
@@ -2026,12 +2026,12 @@ def permutation_test(data, statistic, *, permutation_type='independent',
 
     >>> r
     0.7999999999999999
-    >>> unique = np.unique(null)
+    >>> unique = mx.unique(null)
     >>> unique
     array([-1. , -1. , -0.8, -0.8, -0.8, -0.6, -0.4, -0.4, -0.2, -0.2, -0.2,
         0. ,  0.2,  0.2,  0.2,  0.4,  0.4,  0.6,  0.8,  0.8,  0.8,  1. ,
         1. ])  # may vary
-    >>> unique[np.isclose(r, unique)].tolist()
+    >>> unique[mx.isclose(r, unique)].tolist()
     [0.7999999999999998, 0.7999999999999999, 0.8]  # may vary
 
     If `permutation_test` were to perform the comparison naively, the
@@ -2039,7 +2039,7 @@ def permutation_test(data, statistic, *, permutation_type='independent',
     not be considered as extreme or more extreme as the observed value of the
     statistic, so the calculated p-value would be too small.
 
-    >>> incorrect_pvalue = np.count_nonzero(null >= r) / len(null)
+    >>> incorrect_pvalue = mx.count_nonzero(null >= r) / len(null)
     >>> incorrect_pvalue
     0.14583333333333334  # may vary
 
@@ -2047,7 +2047,7 @@ def permutation_test(data, statistic, *, permutation_type='independent',
     are within ``max(1e-14, abs(r)*1e-14)`` of the observed value of the
     statistic ``r`` to be equal to ``r``.
 
-    >>> correct_pvalue = np.count_nonzero(null >= r - 1e-14) / len(null)
+    >>> correct_pvalue = mx.count_nonzero(null >= r - 1e-14) / len(null)
     >>> correct_pvalue
     0.16666666666666666
     >>> res.pvalue == correct_pvalue
@@ -2082,9 +2082,9 @@ def permutation_test(data, statistic, *, permutation_type='independent',
 
     # relative tolerance for detecting numerically distinct but
     # theoretically equal values in the null distribution
-    eps =  (0 if not np.issubdtype(observed.dtype, np.inexact)
-            else np.finfo(observed.dtype).eps*100)
-    gamma = np.abs(eps * observed)
+    eps =  (0 if not mx.issubdtype(observed.dtype, mx.inexact)
+            else mx.finfo(observed.dtype).eps*100)
+    gamma = mx.abs(eps * observed)
 
     def less(null_distribution, observed):
         cmps = null_distribution <= observed + gamma
@@ -2099,7 +2099,7 @@ def permutation_test(data, statistic, *, permutation_type='independent',
     def two_sided(null_distribution, observed):
         pvalues_less = less(null_distribution, observed)
         pvalues_greater = greater(null_distribution, observed)
-        pvalues = np.minimum(pvalues_less, pvalues_greater) * 2
+        pvalues = mx.minimum(pvalues_less, pvalues_greater) * 2
         return pvalues
 
     compare = {"less": less,
@@ -2107,7 +2107,7 @@ def permutation_test(data, statistic, *, permutation_type='independent',
                "two-sided": two_sided}
 
     pvalues = compare[alternative](null_distribution, observed)
-    pvalues = np.clip(pvalues, 0, 1)
+    pvalues = mx.clip(pvalues, 0, 1)
 
     return PermutationTestResult(observed, pvalues, null_distribution)
 
@@ -2164,7 +2164,7 @@ class MonteCarloMethod(ResamplingMethod):
         the null hypothesis of `scipy.stats.pearsonr` is typically that the
         samples are drawn from the standard normal distribution, so
         ``rvs = (rng.normal, rng.normal)`` where
-        ``rng = np.random.default_rng()``.
+        ``rng = mx.random.default_rng()``.
     rng : `numpy.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
         `numpy.random.Generator` is created using entropy from the
@@ -2195,12 +2195,12 @@ _rs_deprecation = ("Use of attribute `random_state` is deprecated and replaced b
                    "`rng`. Support for `random_state` will be removed in SciPy 1.19.0. "
                    "To silence this warning and ensure consistent behavior in SciPy "
                    "1.19.0, control the RNG using attribute `rng`. Values set using "
-                   "attribute `rng` will be validated by `np.random.default_rng`, so "
+                   "attribute `rng` will be validated by `mx.random.default_rng`, so "
                    "the behavior corresponding with a given value may change compared "
                    "to use of `random_state`. For example, 1) `None` will result in "
                    "unpredictable random numbers, 2) an integer will result in a "
                    "different stream of random numbers, (with the same distribution), "
-                   "and 3) `np.random` or `RandomState` instances will result in an "
+                   "and 3) `mx.random` or `RandomState` instances will result in an "
                    "error. See the documentation of `default_rng` for more "
                    "information.")
 

@@ -8,7 +8,7 @@
 #     https://dlmf.nist.gov/
 import cython
 from libc.math cimport M_PI, M_PI_2, NAN, INFINITY
-cimport numpy as np
+cimport mlx.core as mx
 
 from . cimport sf_error
 
@@ -17,13 +17,13 @@ from ._complexstuff cimport (
     zabs, zlog, zpack)
 
 cdef extern from "xsf_wrappers.h":
-    np.npy_cdouble xsf_cexpi(np.npy_cdouble) nogil
+    mx.npy_cdouble xsf_cexpi(mx.npy_cdouble) nogil
 
 DEF EULER = 0.577215664901532860606512090082402431  # Euler constant
     
 
 cdef inline double complex zexpi(double complex z) noexcept nogil:
-    cdef np.npy_cdouble r
+    cdef mx.npy_cdouble r
     r = xsf_cexpi(npy_cdouble_from_double_complex(z))
     return double_complex_from_npy_cdouble(r)
 

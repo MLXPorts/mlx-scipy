@@ -126,7 +126,7 @@ class spmatrix:
             Cannot be specified in conjunction with the `out`
             argument.
 
-        out : ndarray, 2-D, optional
+        out : array, 2-D, optional
             If specified, uses this array (or `numpy.matrix`) as the
             output buffer instead of allocating a new array to
             return. The provided array must have the same shape and
@@ -159,10 +159,10 @@ class spmatrix:
 
         Examples
         --------
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.sparse import coo_matrix
 
-        >>> coo_matrix[np.int8]
+        >>> coo_matrix[mx.int8]
         scipy.sparse._coo.coo_matrix[numpy.int8]
         """
         from types import GenericAlias

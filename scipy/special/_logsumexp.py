@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy._lib._array_api import (
     array_namespace,
     xp_capabilities,
@@ -46,12 +46,12 @@ def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
 
     Returns
     -------
-    res : ndarray
-        The result, ``np.log(np.sum(np.exp(a)))`` calculated in a numerically
-        more stable way. If `b` is given then ``np.log(np.sum(b*np.exp(a)))``
+    res : array
+        The result, ``mx.log(mx.sum(mx.exp(a)))`` calculated in a numerically
+        more stable way. If `b` is given then ``mx.log(mx.sum(b*mx.exp(a)))``
         is returned. If ``return_sign`` is True, ``res`` contains the log of
         the absolute value of the argument.
-    sgn : ndarray
+    sgn : array
         If ``return_sign`` is True, this will be an array of floating-point
         numbers matching res containing +1, 0, -1 (for real-valued inputs)
         or a complex phase (for complex inputs). This gives the sign of the
@@ -75,21 +75,21 @@ def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import logsumexp
-    >>> a = np.arange(10)
+    >>> a = mx.arange(10)
     >>> logsumexp(a)
     9.4586297444267107
-    >>> np.log(np.sum(np.exp(a)))
+    >>> mx.log(mx.sum(mx.exp(a)))
     9.4586297444267107
 
     With weights
 
-    >>> a = np.arange(10)
-    >>> b = np.arange(10, 0, -1)
+    >>> a = mx.arange(10)
+    >>> b = mx.arange(10, 0, -1)
     >>> logsumexp(a, b=b)
     9.9170178533034665
-    >>> np.log(np.sum(b*np.exp(a)))
+    >>> mx.log(mx.sum(b*mx.exp(a)))
     9.9170178533034647
 
     Returning a sign flag
@@ -100,10 +100,10 @@ def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
     Notice that `logsumexp` does not directly support masked arrays. To use it
     on a masked array, convert the mask into zero weights:
 
-    >>> a = np.ma.array([np.log(2), 2, np.log(3)],
+    >>> a = mx.ma.array([mx.log(2), 2, mx.log(3)],
     ...                  mask=[False, True, False])
     >>> b = (~a.mask).astype(int)
-    >>> logsumexp(a.data, b=b), np.log(5)
+    >>> logsumexp(a.data, b=b), mx.log(5)
     1.6094379124341005, 1.6094379124341005
 
     """
@@ -114,7 +114,7 @@ def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
     axis = tuple(range(a.ndim)) if axis is None else axis
 
     if xp_size(a) != 0:
-        with np.errstate(divide='ignore', invalid='ignore', over='ignore'):
+        with mx.errstate(divide='ignore', invalid='ignore', over='ignore'):
             # Where result is infinite, we use the direct logsumexp calculation to
             # delegate edge case handling to the behavior of `xp.log` and `xp.exp`,
             # which should follow the C99 standard for complex values.
@@ -124,7 +124,7 @@ def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
             sum_ = xp.abs(sum_) if return_sign else sum_
             out_inf = xp.log(sum_)
 
-        with np.errstate(divide='ignore', invalid='ignore'):  # log of zero is OK
+        with mx.errstate(divide='ignore', invalid='ignore'):  # log of zero is OK
             out, sgn = _logsumexp(a, b, axis=axis, return_sign=return_sign, xp=xp)
 
         # Replace infinite results. This probably could be done with an
@@ -134,7 +134,7 @@ def logsumexp(a, axis=None, b=None, keepdims=False, return_sign=False):
         out = xp.where(out_finite, out, out_inf)
         sgn = xp.where(out_finite, sgn, sgn_inf) if return_sign else sgn
     else:
-        shape = np.asarray(a.shape)  # NumPy is convenient for shape manipulation
+        shape = mx.array(a.shape)  # NumPy is convenient for shape manipulation
         shape[axis] = 1
         out = xp.full(tuple(shape), -xp.inf, dtype=a.dtype, device=xp_device(a))
         sgn = xp.sign(out)
@@ -168,7 +168,7 @@ def _wrap_radians(x, *, xp):
 
 def _elements_and_indices_with_max_real(a, *, axis=-1, xp):
     # This is an array-API compatible `max` function that works something
-    # like `np.max` for complex input. The important part is that it finds
+    # like `mx.max` for complex input. The important part is that it finds
     # the element with maximum real part. When there are multiple complex values
     # with this real part, it doesn't matter which we choose.
     # We could use `argmax` on real component, but array API doesn't yet have
@@ -257,7 +257,7 @@ def softmax(x, axis=None):
     exponentials of all the elements. That is, if `x` is a one-dimensional
     numpy array::
 
-        softmax(x) = np.exp(x)/sum(np.exp(x))
+        softmax(x) = mx.exp(x)/sum(mx.exp(x))
 
     Parameters
     ----------
@@ -269,7 +269,7 @@ def softmax(x, axis=None):
 
     Returns
     -------
-    s : ndarray
+    s : array
         An array the same shape as `x`. The result will sum to 1 along the
         specified axis.
 
@@ -295,11 +295,11 @@ def softmax(x, axis=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import softmax
-    >>> np.set_printoptions(precision=5)
+    >>> mx.set_printoptions(precision=5)
 
-    >>> x = np.array([[1, 0.5, 0.2, 3],
+    >>> x = mx.array([[1, 0.5, 0.2, 3],
     ...               [1,  -1,   7, 3],
     ...               [2,  12,  13, 3]])
     ...
@@ -367,33 +367,33 @@ def log_softmax(x, axis=None):
 
     Returns
     -------
-    s : ndarray or scalar
+    s : array or scalar
         An array with the same shape as `x`. Exponential of the result will
         sum to 1 along the specified axis. If `x` is a scalar, a scalar is
         returned.
 
     Notes
     -----
-    `log_softmax` is more accurate than ``np.log(softmax(x))`` with inputs that
+    `log_softmax` is more accurate than ``mx.log(softmax(x))`` with inputs that
     make `softmax` saturate (see examples below).
 
     .. versionadded:: 1.5.0
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import log_softmax
     >>> from scipy.special import softmax
-    >>> np.set_printoptions(precision=5)
+    >>> mx.set_printoptions(precision=5)
 
-    >>> x = np.array([1000.0, 1.0])
+    >>> x = mx.array([1000.0, 1.0])
 
     >>> y = log_softmax(x)
     >>> y
     array([   0., -999.])
 
-    >>> with np.errstate(divide='ignore'):
-    ...   y = np.log(softmax(x))
+    >>> with mx.errstate(divide='ignore'):
+    ...   y = mx.log(softmax(x))
     ...
     >>> y
     array([  0., -inf])
@@ -413,7 +413,7 @@ def log_softmax(x, axis=None):
     exp_tmp = xp.exp(tmp)
 
     # suppress warnings about log of zero
-    with np.errstate(divide='ignore'):
+    with mx.errstate(divide='ignore'):
         s = xp.sum(exp_tmp, axis=axis, keepdims=True)
         out = xp.log(s)
 

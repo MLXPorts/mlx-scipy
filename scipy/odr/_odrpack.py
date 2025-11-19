@@ -38,7 +38,7 @@ robert.kern@gmail.com
 import os
 from threading import Lock
 
-import numpy as np
+import mlx.core as mx
 from warnings import warn
 from scipy.odr import __odrpack
 
@@ -93,9 +93,9 @@ def _conv(obj, dtype=None):
         return obj
     else:
         if dtype is None:
-            obj = np.asarray(obj)
+            obj = mx.array(obj)
         else:
-            obj = np.asarray(obj, dtype)
+            obj = mx.array(obj, dtype)
         if obj.shape == ():
             # Scalar.
             return obj.dtype.type(obj)
@@ -262,8 +262,8 @@ class Data:
     def __init__(self, x, y=None, we=None, wd=None, fix=None, meta=None):
         self.x = _conv(x)
 
-        if not isinstance(self.x, np.ndarray):
-            raise ValueError("Expected an 'ndarray' of data for 'x', "
+        if not isinstance(self.x, mx.array):
+            raise ValueError("Expected an 'array' of data for 'x', "
                              f"but instead got data of type '{type(self.x).__name__}'")
 
         self.y = _conv(y)
@@ -340,11 +340,11 @@ class RealData(Data):
     The weights `wd` and `we` are computed from provided values as follows:
 
     `sx` and `sy` are converted to weights by dividing 1.0 by their squares.
-    For example, ``wd = 1./np.power(`sx`, 2)``.
+    For example, ``wd = 1./mx.power(`sx`, 2)``.
 
     `covx` and `covy` are arrays of covariance matrices and are converted to
     weights by performing a matrix inversion on each observation's covariance
-    matrix. For example, ``we[i] = np.linalg.inv(covy[i])``.
+    matrix. For example, ``we[i] = mx.linalg.inv(covy[i])``.
 
     These arguments follow the same structured argument conventions as wd and
     we only restricted by their natures: `sx` and `sy` can't be rank-3, but
@@ -375,8 +375,8 @@ class RealData(Data):
 
         self.x = _conv(x)
 
-        if not isinstance(self.x, np.ndarray):
-            raise ValueError("Expected an 'ndarray' of data for 'x', "
+        if not isinstance(self.x, mx.array):
+            raise ValueError("Expected an 'array' of data for 'x', "
                               f"but instead got data of type '{type(self.x).__name__}'")
 
         self.y = _conv(y)
@@ -391,7 +391,7 @@ class RealData(Data):
         """ Convert standard deviation to weights.
         """
 
-        return 1./np.power(sd, 2)
+        return 1./mx.power(sd, 2)
 
     def _cov2wt(self, cov):
         """ Convert covariance matrix(-ices) to weights.
@@ -402,7 +402,7 @@ class RealData(Data):
         if len(cov.shape) == 2:
             return inv(cov)
         else:
-            weights = np.zeros(cov.shape, float)
+            weights = mx.zeros(cov.shape, float)
 
             for i in range(cov.shape[-1]):  # n
                 weights[:,:,i] = inv(cov[:,:,i])
@@ -548,23 +548,23 @@ class Output:
 
     Attributes
     ----------
-    beta : ndarray
+    beta : array
         Estimated parameter values, of shape (q,).
-    sd_beta : ndarray
+    sd_beta : array
         Standard deviations of the estimated parameters, of shape (p,).
-    cov_beta : ndarray
+    cov_beta : array
         Covariance matrix of the estimated parameters, of shape (p,p).
         Note that this `cov_beta` is not scaled by the residual variance
         `res_var`, whereas `sd_beta` is. This means
-        ``np.sqrt(np.diag(output.cov_beta * output.res_var))`` is the same
+        ``mx.sqrt(mx.diag(output.cov_beta * output.res_var))`` is the same
         result as `output.sd_beta`.
-    delta : ndarray, optional
+    delta : array, optional
         Array of estimated errors in input variables, of same shape as `x`.
-    eps : ndarray, optional
+    eps : array, optional
         Array of estimated errors in response variables, of same shape as `y`.
-    xplus : ndarray, optional
+    xplus : array, optional
         Array of ``x + delta``.
-    y : ndarray, optional
+    y : array, optional
         Array ``y = fcn(x + delta)``.
     res_var : float, optional
         Residual variance.
@@ -578,7 +578,7 @@ class Output:
         Inverse condition number (cf. ODRPACK UG p. 77).
     rel_error : float, optional
         Relative error in function values computed within fcn.
-    work : ndarray, optional
+    work : array, optional
         Final work array.
     work_ind : dict, optional
         Indices into work for drawing out values (cf. ODRPACK UG p. 83).
@@ -711,10 +711,10 @@ class ODR:
         factors for the *errors* in the input variables. Again, these factors
         are automatically computed if you do not provide them. If scld.shape ==
         (m,), then the scaling factors are broadcast to all observations.
-    work : ndarray, optional
+    work : array, optional
         array to hold the double-valued working data for ODRPACK. When
         restarting, takes the value of self.output.work.
-    iwork : ndarray, optional
+    iwork : array, optional
         array to hold the integer-valued working data for ODRPACK. When
         restarting, takes the value of self.output.iwork.
     overwrite : bool, optional
@@ -766,8 +766,8 @@ class ODR:
         # These really are 32-bit integers in FORTRAN (gfortran), even on 64-bit
         # platforms.
         # XXX: some other FORTRAN compilers may not agree.
-        self.ifixx = _conv(ifixx, dtype=np.int32)
-        self.ifixb = _conv(ifixb, dtype=np.int32)
+        self.ifixx = _conv(ifixx, dtype=mx.int32)
+        self.ifixb = _conv(ifixb, dtype=mx.int32)
         self.job = job
         self.iprint = iprint
         self.errfile = errfile
@@ -795,7 +795,7 @@ class ODR:
 
         x_s = list(self.data.x.shape)
 
-        if isinstance(self.data.y, np.ndarray):
+        if isinstance(self.data.y, mx.array):
             y_s = list(self.data.y.shape)
             if self.model.implicit:
                 raise OdrError("an implicit model cannot use response data")
@@ -923,12 +923,12 @@ class ODR:
             lwork = (18 + 11*p + p*p + m + m*m + 4*n*q + 2*n*m + 2*n*q*p +
                      5*q + q*(p+m) + ldwe*ld2we*q)
 
-        if isinstance(self.work, np.ndarray) and self.work.shape == (lwork,)\
+        if isinstance(self.work, mx.array) and self.work.shape == (lwork,)\
                 and self.work.dtype.str.endswith('f8'):
             # the existing array is fine
             return
         else:
-            self.work = np.zeros((lwork,), float)
+            self.work = mx.zeros((lwork,), float)
 
     def set_job(self, fit_type=None, deriv=None, var_calc=None,
         del_init=None, restart=None):
@@ -1104,7 +1104,7 @@ class ODR:
             # delta0 provided and fit is not a restart
             self._gen_work()
 
-            d0 = np.ravel(self.delta0)
+            d0 = mx.ravel(self.delta0)
 
             self.work[:len(d0)] = d0
 

@@ -148,8 +148,8 @@ The caching of values when optimizing a function returning both value and
 gradient together has been improved, avoiding repeated function evaluations
 when using a ``HessianApproximation`` such as ``BFGS``.
 
-``differential_evolution`` can now use the modern ``np.random.Generator`` as
-well as the legacy ``np.random.RandomState`` as a seed.
+``differential_evolution`` can now use the modern ``mx.random.Generator`` as
+well as the legacy ``mx.random.RandomState`` as a seed.
 
 `scipy.signal` improvements
 ---------------------------
@@ -208,8 +208,8 @@ footprint reduction between 25 % and 60 % (see gh-11069).
 
 `scipy.stats` functions that accept a seed for reproducible calculations using
 random number generation (e.g. random variates from distributions) can now use
-the modern ``np.random.Generator`` as well as the legacy
-``np.random.RandomState`` as a seed.
+the modern ``mx.random.Generator`` as well as the legacy
+``mx.random.RandomState`` as a seed.
 
 The ``axis`` parameter was added to `scipy.stats.rankdata`. This allows slices
 of an array along the given axis to be ranked independently.
@@ -565,7 +565,7 @@ Issues closed for 1.5.0
 * `#11373 <https://github.com/scipy/scipy/issues/11373>`__: Add wrapper for ?gtsvx
 * `#11374 <https://github.com/scipy/scipy/issues/11374>`__: Add wrapper for ?ptsvx
 * `#11391 <https://github.com/scipy/scipy/issues/11391>`__: csgraph.minimum_spanning_tree loses precision
-* `#11398 <https://github.com/scipy/scipy/issues/11398>`__: Update stats to cope with \`np.random.Generator\` machinery
+* `#11398 <https://github.com/scipy/scipy/issues/11398>`__: Update stats to cope with \`mx.random.Generator\` machinery
 * `#11412 <https://github.com/scipy/scipy/issues/11412>`__: Array copying causes unwanted type casting from complex to float...
 * `#11415 <https://github.com/scipy/scipy/issues/11415>`__: Where is the Wiener Filter derived from?
 * `#11416 <https://github.com/scipy/scipy/issues/11416>`__: _lib._util.getargspec_no_self is missing KEYWORD_ONLY support
@@ -647,7 +647,7 @@ Issues closed for 1.5.0
 * `#12087 <https://github.com/scipy/scipy/issues/12087>`__: DOC: some odr models are missing docs
 * `#12119 <https://github.com/scipy/scipy/issues/12119>`__: signal.fftconvolve no longer convolves types f8 and numpy.float64
 * `#12149 <https://github.com/scipy/scipy/issues/12149>`__: Documentation of Rosenbrock function
-* `#12173 <https://github.com/scipy/scipy/issues/12173>`__: Large memory usage when indexing sparse matrices with \`np.ix_\`
+* `#12173 <https://github.com/scipy/scipy/issues/12173>`__: Large memory usage when indexing sparse matrices with \`mx.ix_\`
 * `#12178 <https://github.com/scipy/scipy/issues/12178>`__: BUG: stats: Some discrete distributions don't accept lists of...
 * `#12220 <https://github.com/scipy/scipy/issues/12220>`__: BUG, REL: gh_lists.py compromised scraping
 * `#12239 <https://github.com/scipy/scipy/issues/12239>`__: BUG: median absolute deviation handling of nan
@@ -782,8 +782,8 @@ Pull requests for 1.5.0
 * `#11394 <https://github.com/scipy/scipy/pull/11394>`__: MAINT: Remove self._size (and self._random_state) from stats...
 * `#11395 <https://github.com/scipy/scipy/pull/11395>`__: correction in error message (%d->%g format)
 * `#11396 <https://github.com/scipy/scipy/pull/11396>`__: DOC: revert gh10540, removing mtrand
-* `#11397 <https://github.com/scipy/scipy/pull/11397>`__: MAINT: differential_evolution accepts np.random.Generator
-* `#11402 <https://github.com/scipy/scipy/pull/11402>`__: ENH: stats can use np.random.Generator
+* `#11397 <https://github.com/scipy/scipy/pull/11397>`__: MAINT: differential_evolution accepts mx.random.Generator
+* `#11402 <https://github.com/scipy/scipy/pull/11402>`__: ENH: stats can use mx.random.Generator
 * `#11404 <https://github.com/scipy/scipy/pull/11404>`__: ENH: add docstring of butter() for transfer function syntax problem
 * `#11405 <https://github.com/scipy/scipy/pull/11405>`__: DOC: Fix "see also" for SmoothBivariateSpline
 * `#11408 <https://github.com/scipy/scipy/pull/11408>`__: ENH: Add a \`plan\` argument to FFT functions in \`scipy.fft\`
@@ -898,14 +898,14 @@ Pull requests for 1.5.0
 * `#11668 <https://github.com/scipy/scipy/pull/11668>`__: ENH: Add wrapper for ?gtsvx
 * `#11671 <https://github.com/scipy/scipy/pull/11671>`__: TST, CI: restore Azure temporarily
 * `#11672 <https://github.com/scipy/scipy/pull/11672>`__: Add warning to medfilt when array size < kernel_size
-* `#11674 <https://github.com/scipy/scipy/pull/11674>`__: TST: bump test precision for two np.dot related linalg tests.
+* `#11674 <https://github.com/scipy/scipy/pull/11674>`__: TST: bump test precision for two mx.dot related linalg tests.
 * `#11675 <https://github.com/scipy/scipy/pull/11675>`__: MAINT: pycodestyle clean-up
 * `#11677 <https://github.com/scipy/scipy/pull/11677>`__: ENH: Add wrapper for ?ptsvx
 * `#11679 <https://github.com/scipy/scipy/pull/11679>`__: BENCH: cKDTree benchmarks added: balanced/unbalanced tree (related...
 * `#11680 <https://github.com/scipy/scipy/pull/11680>`__: MAINT: rng_integers allows RandomState.randint or Generator.integers
 * `#11683 <https://github.com/scipy/scipy/pull/11683>`__: BUG: fix mode='mirror' on length 1 axes
 * `#11684 <https://github.com/scipy/scipy/pull/11684>`__: BUG: fix scipy.special.voigt_profile
-* `#11687 <https://github.com/scipy/scipy/pull/11687>`__: MAINT: sparse.linalg: avoid importing from \`np.core\`
+* `#11687 <https://github.com/scipy/scipy/pull/11687>`__: MAINT: sparse.linalg: avoid importing from \`mx.core\`
 * `#11688 <https://github.com/scipy/scipy/pull/11688>`__: ENH: mypy: get specific about ignoring missing imports
 * `#11690 <https://github.com/scipy/scipy/pull/11690>`__: MAINT: mypy: fix errors about incompatible types in lists
 * `#11692 <https://github.com/scipy/scipy/pull/11692>`__: MAINT: mypy: fix remaining type errors
@@ -1001,7 +1001,7 @@ Pull requests for 1.5.0
 * `#11889 <https://github.com/scipy/scipy/pull/11889>`__: DOC: signal: Unify lsim and lsim2 examples.
 * `#11896 <https://github.com/scipy/scipy/pull/11896>`__: BUG: stats: Fix handling of size 0 inputs for ttest_rel and ttest_ind.
 * `#11897 <https://github.com/scipy/scipy/pull/11897>`__: DOC: Remove misleading default values from fit method
-* `#11898 <https://github.com/scipy/scipy/pull/11898>`__: MAINT: LinearVectorFunction.J is ndarray closes #11886
+* `#11898 <https://github.com/scipy/scipy/pull/11898>`__: MAINT: LinearVectorFunction.J is array closes #11886
 * `#11902 <https://github.com/scipy/scipy/pull/11902>`__: BUG: linalg: test_heequb failure
 * `#11904 <https://github.com/scipy/scipy/pull/11904>`__: fix real-to-real transforms for complex inputs and overwrite_x=True
 * `#11906 <https://github.com/scipy/scipy/pull/11906>`__: DOC: stats: fix error caused by trapz docstring
@@ -1026,7 +1026,7 @@ Pull requests for 1.5.0
 * `#11946 <https://github.com/scipy/scipy/pull/11946>`__: MAINT: add py.typed marker
 * `#11950 <https://github.com/scipy/scipy/pull/11950>`__: TST:MAINT: separated and stabilized heequb tests
 * `#11952 <https://github.com/scipy/scipy/pull/11952>`__: DOC: update toolchain roadmap for py38, C99, C++11/14
-* `#11957 <https://github.com/scipy/scipy/pull/11957>`__: MAINT: Use np.errstate context manager instead of np.seterr.
+* `#11957 <https://github.com/scipy/scipy/pull/11957>`__: MAINT: Use mx.errstate context manager instead of mx.seterr.
 * `#11958 <https://github.com/scipy/scipy/pull/11958>`__: MAINT: interpolate: Remove some trailing spaces.
 * `#11960 <https://github.com/scipy/scipy/pull/11960>`__: MAINT: Cleanup Python2 compatibility code
 * `#11961 <https://github.com/scipy/scipy/pull/11961>`__: MAINT: Remove numpy/npy_3kcompat.h from _superluobject.c
@@ -1104,7 +1104,7 @@ Pull requests for 1.5.0
 * `#12127 <https://github.com/scipy/scipy/pull/12127>`__: DOC: update docstrings of signal.cspline2d, qspline2d, sepfir2d
 * `#12130 <https://github.com/scipy/scipy/pull/12130>`__: MAINT: Fixing broken links with linkchecker
 * `#12135 <https://github.com/scipy/scipy/pull/12135>`__: ENH: linalg: Add the function convolution_matrix.
-* `#12136 <https://github.com/scipy/scipy/pull/12136>`__: MAINT: Cleanup np.poly1d hack
+* `#12136 <https://github.com/scipy/scipy/pull/12136>`__: MAINT: Cleanup mx.poly1d hack
 * `#12137 <https://github.com/scipy/scipy/pull/12137>`__: TST, CI: reproduce wheels 32-bit setup
 * `#12140 <https://github.com/scipy/scipy/pull/12140>`__: TST: stats: add kstwo, ksone to slow tests.
 * `#12141 <https://github.com/scipy/scipy/pull/12141>`__: Support 64-bit integer size in Fitpack
@@ -1130,7 +1130,7 @@ Pull requests for 1.5.0
 * `#12276 <https://github.com/scipy/scipy/pull/12276>`__: TST: skip `test_heequb`, it fails intermittently.
 * `#12285 <https://github.com/scipy/scipy/pull/12285>`__: CI: split travis arm64 run into two
 * `#12317 <https://github.com/scipy/scipy/pull/12317>`__: BUG: prevent error accumulation in `Rotation` multiplication
-* `#12318 <https://github.com/scipy/scipy/pull/12318>`__: BUG: sparse: avoid np.prod overflow in check_shape
+* `#12318 <https://github.com/scipy/scipy/pull/12318>`__: BUG: sparse: avoid mx.prod overflow in check_shape
 * `#12319 <https://github.com/scipy/scipy/pull/12319>`__: BUG: Make cobyla threadsafe
 * `#12335 <https://github.com/scipy/scipy/pull/12335>`__: MAINT: Work around Sphinx bug
 

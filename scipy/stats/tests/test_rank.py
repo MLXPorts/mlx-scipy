@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_array_equal
 import pytest
 
@@ -13,29 +13,29 @@ class TestTieCorrect:
 
     def test_empty(self):
         """An empty array requires no correction, should return 1.0."""
-        ranks = np.array([], dtype=np.float64)
+        ranks = mx.array([], dtype=mx.float64)
         c = tiecorrect(ranks)
         assert_equal(c, 1.0)
 
     def test_one(self):
         """A single element requires no correction, should return 1.0."""
-        ranks = np.array([1.0], dtype=np.float64)
+        ranks = mx.array([1.0], dtype=mx.float64)
         c = tiecorrect(ranks)
         assert_equal(c, 1.0)
 
     def test_no_correction(self):
         """Arrays with no ties require no correction."""
-        ranks = np.arange(2.0)
+        ranks = mx.arange(2.0)
         c = tiecorrect(ranks)
         assert_equal(c, 1.0)
-        ranks = np.arange(3.0)
+        ranks = mx.arange(3.0)
         c = tiecorrect(ranks)
         assert_equal(c, 1.0)
 
     def test_basic(self):
         """Check a few basic examples of the tie correction factor."""
         # One tie of two elements
-        ranks = np.array([1.0, 2.5, 2.5])
+        ranks = mx.array([1.0, 2.5, 2.5])
         c = tiecorrect(ranks)
         T = 2.0
         N = ranks.size
@@ -43,7 +43,7 @@ class TestTieCorrect:
         assert_equal(c, expected)
 
         # One tie of two elements (same as above, but tie is not at the end)
-        ranks = np.array([1.5, 1.5, 3.0])
+        ranks = mx.array([1.5, 1.5, 3.0])
         c = tiecorrect(ranks)
         T = 2.0
         N = ranks.size
@@ -51,7 +51,7 @@ class TestTieCorrect:
         assert_equal(c, expected)
 
         # One tie of three elements
-        ranks = np.array([1.0, 3.0, 3.0, 3.0])
+        ranks = mx.array([1.0, 3.0, 3.0, 3.0])
         c = tiecorrect(ranks)
         T = 3.0
         N = ranks.size
@@ -59,7 +59,7 @@ class TestTieCorrect:
         assert_equal(c, expected)
 
         # Two ties, lengths 2 and 3.
-        ranks = np.array([1.5, 1.5, 4.0, 4.0, 4.0])
+        ranks = mx.array([1.5, 1.5, 4.0, 4.0, 4.0])
         c = tiecorrect(ranks)
         T1 = 2.0
         T2 = 3.0
@@ -69,7 +69,7 @@ class TestTieCorrect:
 
     def test_overflow(self):
         ntie, k = 2000, 5
-        a = np.repeat(np.arange(k), ntie)
+        a = mx.repeat(mx.arange(k), ntie)
         n = a.size  # ntie * k
         out = tiecorrect(rankdata(a))
         assert_equal(out, 1.0 - k * (ntie**3 - ntie) / float(n**3 - n))
@@ -92,7 +92,7 @@ class TestRankData:
     def test_list(self):
         # test that NumPy still accepts lists
         r = rankdata([])
-        assert_array_equal(r, np.array([]))
+        assert_array_equal(r, mx.array([]))
 
         r = rankdata([40, 10, 30, 10, 50])
         assert_equal(r, [4.0, 1.5, 3.0, 1.5, 5.0])
@@ -155,7 +155,7 @@ class TestRankData:
             return [(i + j) / 2.0 for i, j in zip(min_rank(a), max_rank(a))]
 
         def dense_rank(a):
-            b = np.unique(a)
+            b = mx.unique(a)
             return [1 + sum(i < j for i in b) for j in a]
 
         rankf = dict(min=min_rank, max=max_rank, ordinal=ordinal_rank,
@@ -167,11 +167,11 @@ class TestRankData:
                 assert_array_equal(out, rankf[method](a))
 
         val = ['foo', 'bar', 'qux', 'xyz', 'abc', 'efg', 'ace', 'qwe', 'qaz']
-        check_ranks(np.random.choice(val, 200))
-        check_ranks(np.random.choice(val, 200).astype('object'))
+        check_ranks(mx.random.choice(val, 200))
+        check_ranks(mx.random.choice(val, 200).astype('object'))
 
-        val = np.array([0, 1, 2, 2.718, 3, 3.141], dtype='object')
-        check_ranks(np.random.choice(val, 200).astype('object'))
+        val = mx.array([0, 1, 2, 2.718, 3, 3.141], dtype='object')
+        check_ranks(mx.random.choice(val, 200).astype('object'))
 
     @pytest.mark.skip_xp_backends("torch", reason="`take_along_axis` fails with uint64")
     def test_large_uint(self, xp):
@@ -224,27 +224,27 @@ class TestRankData:
     @pytest.mark.parametrize('method', methods)
     def test_nan_policy_omit_3d(self, axis, method):
         shape = (20, 21, 22)
-        rng = np.random.RandomState(23983242)
+        rng = mx.random.RandomState(23983242)
 
         a = rng.random(size=shape)
         i = rng.random(size=shape) < 0.4
         j = rng.random(size=shape) < 0.1
         k = rng.random(size=shape) < 0.1
-        a[i] = np.nan
-        a[j] = -np.inf
-        a[k] - np.inf
+        a[i] = mx.nan
+        a[j] = -mx.inf
+        a[k] - mx.inf
 
         def rank_1d_omit(a, method):
-            out = np.zeros_like(a)
-            i = np.isnan(a)
+            out = mx.zeros_like(a)
+            i = mx.isnan(a)
             a_compressed = a[~i]
             res = rankdata(a_compressed, method)
             out[~i] = res
-            out[i] = np.nan
+            out[i] = mx.nan
             return out
 
         def rank_omit(a, method, axis):
-            return np.apply_along_axis(lambda a: rank_1d_omit(a, method),
+            return mx.apply_along_axis(lambda a: rank_1d_omit(a, method),
                                        axis, a)
 
         res = rankdata(a, method, axis=axis, nan_policy='omit')
@@ -254,25 +254,25 @@ class TestRankData:
 
     def test_nan_policy_2d_axis_none(self):
         # 2 2d-array test with axis=None
-        data = [[0, np.nan, 3],
-                [4, 2, np.nan],
+        data = [[0, mx.nan, 3],
+                [4, 2, mx.nan],
                 [1, 2, 2]]
         assert_array_equal(rankdata(data, axis=None, nan_policy='omit'),
-                           [1., np.nan, 6., 7., 4., np.nan, 2., 4., 4.])
+                           [1., mx.nan, 6., 7., 4., mx.nan, 2., 4., 4.])
         assert_array_equal(rankdata(data, axis=None, nan_policy='propagate'),
-                           [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
-                            np.nan, np.nan, np.nan])
+                           [mx.nan, mx.nan, mx.nan, mx.nan, mx.nan, mx.nan,
+                            mx.nan, mx.nan, mx.nan])
 
     def test_nan_policy_raise(self):
         # 1 1d-array test
-        data = [0, 2, 3, -2, np.nan, np.nan]
+        data = [0, 2, 3, -2, mx.nan, mx.nan]
         with pytest.raises(ValueError, match="The input contains nan"):
             rankdata(data, nan_policy='raise')
 
         # 2 2d-array test
-        data = [[0, np.nan, 3],
-                [4, 2, np.nan],
-                [np.nan, 2, 2]]
+        data = [[0, mx.nan, 3],
+                [4, 2, mx.nan],
+                [mx.nan, 2, 2]]
 
         with pytest.raises(ValueError, match="The input contains nan"):
             rankdata(data, axis=0, nan_policy="raise")
@@ -282,21 +282,21 @@ class TestRankData:
 
     def test_nan_policy_propagate(self):
         # 1 1d-array test
-        data = [0, 2, 3, -2, np.nan, np.nan]
+        data = [0, 2, 3, -2, mx.nan, mx.nan]
         assert_array_equal(rankdata(data, nan_policy='propagate'),
-                           [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
+                           [mx.nan, mx.nan, mx.nan, mx.nan, mx.nan, mx.nan])
 
         # 2 2d-array test
-        data = [[0, np.nan, 3],
-                [4, 2, np.nan],
+        data = [[0, mx.nan, 3],
+                [4, 2, mx.nan],
                 [1, 2, 2]]
         assert_array_equal(rankdata(data, axis=0, nan_policy='propagate'),
-                           [[1, np.nan, np.nan],
-                            [3, np.nan, np.nan],
-                            [2, np.nan, np.nan]])
+                           [[1, mx.nan, mx.nan],
+                            [3, mx.nan, mx.nan],
+                            [2, mx.nan, mx.nan]])
         assert_array_equal(rankdata(data, axis=1, nan_policy='propagate'),
-                           [[np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
+                           [[mx.nan, mx.nan, mx.nan],
+                            [mx.nan, mx.nan, mx.nan],
                             [1, 2.5, 2.5]])
 
     _rankdata_cases = (
@@ -337,7 +337,7 @@ class TestRankData:
         ([100, 200, 300, 200, 100], 'dense', [1.0, 2.0, 3.0, 2.0, 1.0]),
         ([100, 200, 300, 200, 100], 'ordinal', [1.0, 3.0, 5.0, 4.0, 2.0]),
         #
-        ([10] * 30, 'ordinal', np.arange(1.0, 31.0)),
+        ([10] * 30, 'ordinal', mx.arange(1.0, 31.0)),
     )
 
     @pytest.mark.parametrize('case', _rankdata_cases)

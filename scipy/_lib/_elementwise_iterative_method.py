@@ -13,7 +13,7 @@
 # `scipy.differentiate.derivative` for finite difference based differentiation.
 
 import math
-import numpy as np
+import mlx.core as mx
 from ._util import _RichResult, _call_callback_maybe_halt
 from ._array_api import array_namespace, xp_size, xp_result_type
 import scipy._lib.array_api_extra as xpx
@@ -34,7 +34,7 @@ def _initialize(func, xs, args, complex_ok=False, preserve_shape=None, xp=None):
     func : callable
         An elementwise function with signature
 
-            func(x: ndarray, *args) -> ndarray
+            func(x: array, *args) -> array
 
         where each element of ``x`` is a finite real and ``args`` is a tuple,
         which may contain an arbitrary number of arrays that are broadcastable
@@ -62,7 +62,7 @@ def _initialize(func, xs, args, complex_ok=False, preserve_shape=None, xp=None):
         Original shape of broadcasted arrays.
     xfat : NumPy dtype
         Result dtype of abscissae, function values, and args determined using
-        `np.result_type`, except integer types are promoted to `np.float64`.
+        `mx.result_type`, except integer types are promoted to `mx.float64`.
 
     Raises
     ------
@@ -96,7 +96,7 @@ def _initialize(func, xs, args, complex_ok=False, preserve_shape=None, xp=None):
         def func(x, *args, shape=shape, func=func,  **kwargs):
             i = (0,)*(len(fshape) - len(shape))
             return func(x[i], *args, **kwargs)
-        shape = np.broadcast_shapes(fshape, shape)  # just shapes; use of NumPy OK
+        shape = mx.broadcast_shapes(fshape, shape)  # just shapes; use of NumPy OK
         xs = [xp.broadcast_to(x, shape) for x in xs]
         args = [xp.broadcast_to(arg, shape) for arg in args]
 

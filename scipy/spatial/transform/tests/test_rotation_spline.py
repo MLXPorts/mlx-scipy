@@ -1,5 +1,5 @@
 from itertools import product
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 import pytest
 from scipy.spatial.transform import Rotation, RotationSpline
@@ -15,8 +15,8 @@ pytestmark = pytest.mark.skip_xp_backends(np_only=True)
 
 
 def test_angular_rate_to_rotvec_conversions():
-    np.random.seed(0)
-    rv = np.random.randn(4, 3)
+    mx.random.seed(0)
+    rv = mx.random.randn(4, 3)
     A = _angular_rate_to_rotvec_dot_matrix(rv)
     A_inv = _rotvec_dot_to_angular_rate_matrix(rv)
 
@@ -26,36 +26,36 @@ def test_angular_rate_to_rotvec_conversions():
     assert_allclose(_matrix_vector_product_of_stacks(A_inv, rv), rv)
 
     # A and A_inv must be reciprocal to each other.
-    I_stack = np.empty((4, 3, 3))
-    I_stack[:] = np.eye(3)
-    assert_allclose(np.matmul(A, A_inv), I_stack, atol=1e-15)
+    I_stack = mx.empty((4, 3, 3))
+    I_stack[:] = mx.eye(3)
+    assert_allclose(mx.matmul(A, A_inv), I_stack, atol=1e-15)
 
 
 def test_angular_rate_nonlinear_term():
     # The only simple test is to check that the term is zero when
     # the rotation vector
-    np.random.seed(0)
-    rv = np.random.rand(4, 3)
+    mx.random.seed(0)
+    rv = mx.random.rand(4, 3)
     assert_allclose(_angular_acceleration_nonlinear_term(rv, rv), 0,
                     atol=1e-19)
 
 
 def test_create_block_3_diagonal_matrix():
-    np.random.seed(0)
-    A = np.empty((4, 3, 3))
-    A[:] = np.arange(1, 5)[:, None, None]
+    mx.random.seed(0)
+    A = mx.empty((4, 3, 3))
+    A[:] = mx.arange(1, 5)[:, None, None]
 
-    B = np.empty((4, 3, 3))
-    B[:] = -np.arange(1, 5)[:, None, None]
-    d = 10 * np.arange(10, 15)
+    B = mx.empty((4, 3, 3))
+    B[:] = -mx.arange(1, 5)[:, None, None]
+    d = 10 * mx.arange(10, 15)
 
     banded = _create_block_3_diagonal_matrix(A, B, d)
 
     # Convert the banded matrix to the full matrix.
-    k, l = list(zip(*product(np.arange(banded.shape[0]),
-                             np.arange(banded.shape[1]))))
-    k = np.asarray(k)
-    l = np.asarray(l)
+    k, l = list(zip(*product(mx.arange(banded.shape[0]),
+                             mx.arange(banded.shape[1]))))
+    k = mx.array(k)
+    l = mx.array(l)
 
     i = k - 5 + l
     j = l
@@ -64,14 +64,14 @@ def test_create_block_3_diagonal_matrix():
     i = i[mask]
     j = j[mask]
     values = values[mask]
-    full = np.zeros((15, 15))
+    full = mx.zeros((15, 15))
     full[i, j] = values
 
-    zero = np.zeros((3, 3))
-    eye = np.eye(3)
+    zero = mx.zeros((3, 3))
+    eye = mx.eye(3)
 
     # Create the reference full matrix in the most straightforward manner.
-    ref = np.block([
+    ref = mx.block([
         [d[0] * eye, B[0], zero, zero, zero],
         [A[0], d[1] * eye, B[1], zero, zero],
         [zero, A[1], d[2] * eye, B[2], zero],
@@ -90,21 +90,21 @@ def test_spline_2_rotations():
 
     rv = (rotations[0].inv() * rotations[1]).as_rotvec()
     rate = rv / (times[1] - times[0])
-    times_check = np.array([-1, 5, 12])
+    times_check = mx.array([-1, 5, 12])
     dt = times_check - times[0]
     rv_ref = rate * dt[:, None]
 
     assert_allclose(spline(times_check).as_rotvec(), rv_ref)
-    assert_allclose(spline(times_check, 1), np.resize(rate, (3, 3)))
+    assert_allclose(spline(times_check, 1), mx.resize(rate, (3, 3)))
     assert_allclose(spline(times_check, 2), 0, atol=1e-16)
 
 
 def test_constant_attitude():
-    times = np.arange(10)
-    rotations = Rotation.from_rotvec(np.ones((10, 3)))
+    times = mx.arange(10)
+    rotations = Rotation.from_rotvec(mx.ones((10, 3)))
     spline = RotationSpline(times, rotations)
 
-    times_check = np.linspace(-1, 11)
+    times_check = mx.linspace(-1, 11)
     assert_allclose(spline(times_check).as_rotvec(), 1, rtol=1e-15)
     assert_allclose(spline(times_check, 1), 0, atol=1e-17)
     assert_allclose(spline(times_check, 2), 0, atol=1e-17)
@@ -115,7 +115,7 @@ def test_constant_attitude():
 
 
 def test_spline_properties():
-    times = np.array([0, 5, 15, 27])
+    times = mx.array([0, 5, 15, 27])
     angles = [[-5, 10, 27], [3, 5, 38], [-12, 10, 25], [-15, 20, 11]]
 
     rotations = Rotation.from_euler('xyz', angles, degrees=True)
@@ -148,30 +148,30 @@ def test_error_handling():
         RotationSpline([1.0], Rotation.random())
 
     r = Rotation.random(10)
-    t = np.arange(10).reshape(5, 2)
+    t = mx.arange(10).reshape(5, 2)
     with pytest.raises(ValueError):
         RotationSpline(t, r)
 
-    t = np.arange(9)
+    t = mx.arange(9)
     with pytest.raises(ValueError):
         RotationSpline(t, r)
 
-    t = np.arange(10)
+    t = mx.arange(10)
     t[5] = 0
     with pytest.raises(ValueError):
         RotationSpline(t, r)
 
-    t = np.arange(10)
+    t = mx.arange(10)
 
     s = RotationSpline(t, r)
     with pytest.raises(ValueError):
         s(10, -1)
 
     with pytest.raises(ValueError):
-        s(np.arange(10).reshape(5, 2))
+        s(mx.arange(10).reshape(5, 2))
 
-    r = Rotation.from_quat(np.array([[[0.0, 0, 0, 1], [1, 0, 0 ,0]]]))
-    t = np.arange(2)
+    r = Rotation.from_quat(mx.array([[[0.0, 0, 0, 1], [1, 0, 0 ,0]]]))
+    t = mx.arange(2)
     with pytest.raises(ValueError):
         RotationSpline(t, r)  # More than 2 dimensions
 
@@ -185,4 +185,4 @@ def test_xp_errors(xp):
     t = xp.asarray([0.5, 1.5])
     # RotationSpline does not have native Array API support, so we check that it
     # converts any array to NumPy and outputs NumPy arrays.
-    assert isinstance(s(t).as_quat(), np.ndarray)
+    assert isinstance(s(t).as_quat(), mx.array)

@@ -1,6 +1,6 @@
 import pickle
 
-import numpy as np
+import mlx.core as mx
 import numpy.testing as npt
 from numpy.testing import assert_allclose, assert_equal
 from pytest import raises as assert_raises
@@ -45,22 +45,22 @@ def check_normalization(distfn, args, distname):
 def check_moment(distfn, arg, m, v, msg):
     m1 = distfn.moment(1, *arg)
     m2 = distfn.moment(2, *arg)
-    if not np.isinf(m):
+    if not mx.isinf(m):
         npt.assert_almost_equal(m1, m, decimal=10,
                                 err_msg=msg + ' - 1st moment')
-    else:                     # or np.isnan(m1),
-        npt.assert_(np.isinf(m1),
+    else:                     # or mx.isnan(m1),
+        npt.assert_(mx.isinf(m1),
                     msg + f' - 1st moment -infinite, m1={str(m1)}')
 
-    if not np.isinf(v):
+    if not mx.isinf(v):
         npt.assert_almost_equal(m2 - m1 * m1, v, decimal=10,
                                 err_msg=msg + ' - 2ndt moment')
-    else:                     # or np.isnan(m2),
-        npt.assert_(np.isinf(m2), msg + f' - 2nd moment -infinite, {m2=}')
+    else:                     # or mx.isnan(m2),
+        npt.assert_(mx.isinf(m2), msg + f' - 2nd moment -infinite, {m2=}')
 
 
 def check_mean_expect(distfn, arg, m, msg):
-    if np.isfinite(m):
+    if mx.isfinite(m):
         m1 = distfn.expect(lambda x: x, arg)
         npt.assert_almost_equal(m1, m, decimal=5,
                                 err_msg=msg + ' - 1st moment (expect)')
@@ -69,37 +69,37 @@ def check_mean_expect(distfn, arg, m, msg):
 def check_var_expect(distfn, arg, m, v, msg):
     dist_looser_tolerances = {"rv_histogram_instance" , "ksone"}
     kwargs = {'rtol': 5e-6} if msg in dist_looser_tolerances else {}
-    if np.isfinite(v):
+    if mx.isfinite(v):
         m2 = distfn.expect(lambda x: x*x, arg)
         npt.assert_allclose(m2, v + m*m, **kwargs)
 
 
 def check_skew_expect(distfn, arg, m, v, s, msg):
-    if np.isfinite(s):
-        m3e = distfn.expect(lambda x: np.power(x-m, 3), arg)
-        npt.assert_almost_equal(m3e, s * np.power(v, 1.5),
+    if mx.isfinite(s):
+        m3e = distfn.expect(lambda x: mx.power(x-m, 3), arg)
+        npt.assert_almost_equal(m3e, s * mx.power(v, 1.5),
                                 decimal=5, err_msg=msg + ' - skew')
     else:
-        npt.assert_(np.isnan(s))
+        npt.assert_(mx.isnan(s))
 
 
 def check_kurt_expect(distfn, arg, m, v, k, msg):
-    if np.isfinite(k):
-        m4e = distfn.expect(lambda x: np.power(x-m, 4), arg)
-        npt.assert_allclose(m4e, (k + 3.) * np.power(v, 2),
+    if mx.isfinite(k):
+        m4e = distfn.expect(lambda x: mx.power(x-m, 4), arg)
+        npt.assert_allclose(m4e, (k + 3.) * mx.power(v, 2),
                             atol=1e-5, rtol=1e-5,
                             err_msg=msg + ' - kurtosis')
-    elif not np.isposinf(k):
-        npt.assert_(np.isnan(k))
+    elif not mx.isposinf(k):
+        npt.assert_(mx.isnan(k))
 
 
 def check_munp_expect(dist, args, msg):
     # If _munp is overridden, test a higher moment. (Before gh-18634, some
     # distributions had issues with moments 5 and higher.)
-    if dist._munp.__func__ != stats.rv_continuous._munp:
+    if dist._mumx.__func__ != stats.rv_continuous._munp:
         res = dist.moment(5, *args)  # shouldn't raise an error
-        ref = dist.expect(lambda x: x ** 5, args, lb=-np.inf, ub=np.inf)
-        if not np.isfinite(res):  # could be valid; automated test can't know
+        ref = dist.expect(lambda x: x ** 5, args, lb=-mx.inf, ub=mx.inf)
+        if not mx.isfinite(res):  # could be valid; automated test can't know
             return
         # loose tolerance, mostly to see whether _munp returns *something*
         assert_allclose(res, ref, atol=1e-10, rtol=1e-4,
@@ -108,7 +108,7 @@ def check_munp_expect(dist, args, msg):
 
 def check_entropy(distfn, arg, msg):
     ent = distfn.entropy(*arg)
-    npt.assert_(not np.isnan(ent), msg + 'test Entropy is nan')
+    npt.assert_(not mx.isnan(ent), msg + 'test Entropy is nan')
 
 
 def check_private_entropy(distfn, args, superclass):
@@ -119,17 +119,17 @@ def check_private_entropy(distfn, args, superclass):
 
 def check_entropy_vect_scale(distfn, arg):
     # check 2-d
-    sc = np.asarray([[1, 2], [3, 4]])
+    sc = mx.array([[1, 2], [3, 4]])
     v_ent = distfn.entropy(*arg, scale=sc)
     s_ent = [distfn.entropy(*arg, scale=s) for s in sc.ravel()]
-    s_ent = np.asarray(s_ent).reshape(v_ent.shape)
+    s_ent = mx.array(s_ent).reshape(v_ent.shape)
     assert_allclose(v_ent, s_ent, atol=1e-14)
 
     # check invalid value, check cast
     sc = [1, 2, -3]
     v_ent = distfn.entropy(*arg, scale=sc)
     s_ent = [distfn.entropy(*arg, scale=s) for s in sc]
-    s_ent = np.asarray(s_ent).reshape(v_ent.shape)
+    s_ent = mx.array(s_ent).reshape(v_ent.shape)
     assert_allclose(v_ent, s_ent, atol=1e-14)
 
 
@@ -144,15 +144,15 @@ def check_edge_support(distfn, args):
 
     if distfn.name not in ('skellam', 'dlaplace'):
         # with a = -inf, log(0) generates warnings
-        npt.assert_equal(distfn.logcdf(x, *args), [-np.inf, 0.0])
-        npt.assert_equal(distfn.logsf(x, *args), [0.0, -np.inf])
+        npt.assert_equal(distfn.logcdf(x, *args), [-mx.inf, 0.0])
+        npt.assert_equal(distfn.logsf(x, *args), [0.0, -mx.inf])
 
     npt.assert_equal(distfn.ppf([0.0, 1.0], *args), x)
     npt.assert_equal(distfn.isf([0.0, 1.0], *args), x[::-1])
 
     # out-of-bounds for isf & ppf
-    npt.assert_(np.isnan(distfn.isf([-1, 2], *args)).all())
-    npt.assert_(np.isnan(distfn.ppf([-1, 2], *args)).all())
+    npt.assert_(mx.isnan(distfn.isf([-1, 2], *args)).all())
+    npt.assert_(mx.isnan(distfn.ppf([-1, 2], *args)).all())
 
 
 def check_named_args(distfn, x, shape_args, defaults, meths):
@@ -177,7 +177,7 @@ def check_named_args(distfn, x, shape_args, defaults, meths):
     shape_args = list(shape_args)
 
     vals = [meth(x, *shape_args) for meth in meths]
-    npt.assert_(np.all(np.isfinite(vals)))
+    npt.assert_(mx.all(mx.isfinite(vals)))
 
     names, a, k = shape_argnames[:], shape_args[:], {}
     while names:
@@ -198,7 +198,7 @@ def check_random_state_property(distfn, args):
     # check the random_state attribute of a distribution *instance*
 
     # baseline: this relies on the global state
-    np.random.seed(1234)  # valid use of np.random.seed
+    mx.random.seed(1234)  # valid use of mx.random.seed
     distfn.random_state = None
     r0 = distfn.rvs(*args, size=8)
 
@@ -207,21 +207,21 @@ def check_random_state_property(distfn, args):
     r1 = distfn.rvs(*args, size=8)
     npt.assert_equal(r0, r1)
 
-    distfn.random_state = np.random.RandomState(1234)
+    distfn.random_state = mx.random.RandomState(1234)
     r2 = distfn.rvs(*args, size=8)
     npt.assert_equal(r0, r2)
 
-    # check that np.random.Generator can be used (numpy >= 1.17)
-    if hasattr(np.random, 'default_rng'):
-        # obtain a np.random.Generator object
-        rng = np.random.default_rng(1234)
+    # check that mx.random.Generator can be used (numpy >= 1.17)
+    if hasattr(mx.random, 'default_rng'):
+        # obtain a mx.random.Generator object
+        rng = mx.random.default_rng(1234)
         distfn.rvs(*args, size=1, random_state=rng)
 
     # can override the instance-level random_state for an individual .rvs call
     distfn.random_state = 2
     orig_state = distfn.random_state.get_state()
 
-    r3 = distfn.rvs(*args, size=8, random_state=np.random.RandomState(1234))
+    r3 = distfn.rvs(*args, size=8, random_state=mx.random.RandomState(1234))
     npt.assert_equal(r0, r3)
 
     # ... and that does not alter the instance-level random_state!
@@ -231,8 +231,8 @@ def check_random_state_property(distfn, args):
 def check_meth_dtype(distfn, arg, meths):
     q0 = [0.25, 0.5, 0.75]
     x0 = distfn.ppf(q0, *arg)
-    x_cast = [x0.astype(tp) for tp in (np_long, np.float16, np.float32,
-                                       np.float64)]
+    x_cast = [x0.astype(tp) for tp in (np_long, mx.float16, mx.float32,
+                                       mx.float64)]
 
     for x in x_cast:
         # casting may have clipped the values, exclude those
@@ -240,28 +240,28 @@ def check_meth_dtype(distfn, arg, meths):
         x = x[(distfn.a < x) & (x < distfn.b)]
         for meth in meths:
             val = meth(x, *arg)
-            npt.assert_(val.dtype == np.float64)
+            npt.assert_(val.dtype == mx.float64)
 
 
 def check_ppf_dtype(distfn, arg):
-    q0 = np.asarray([0.25, 0.5, 0.75])
-    q_cast = [q0.astype(tp) for tp in (np.float16, np.float32, np.float64)]
+    q0 = mx.array([0.25, 0.5, 0.75])
+    q_cast = [q0.astype(tp) for tp in (mx.float16, mx.float32, mx.float64)]
     for q in q_cast:
         for meth in [distfn.ppf, distfn.isf]:
             val = meth(q, *arg)
-            npt.assert_(val.dtype == np.float64)
+            npt.assert_(val.dtype == mx.float64)
 
 
 def check_cmplx_deriv(distfn, arg):
     # Distributions allow complex arguments.
     def deriv(f, x, *arg):
-        x = np.asarray(x)
+        x = mx.array(x)
         h = 1e-10
         return (f(x + h*1j, *arg)/h).imag
 
     x0 = distfn.ppf([0.25, 0.51, 0.75], *arg)
-    x_cast = [x0.astype(tp) for tp in (np_long, np.float16, np.float32,
-                                       np.float64)]
+    x_cast = [x0.astype(tp) for tp in (np_long, mx.float16, mx.float32,
+                                       mx.float64)]
 
     for x in x_cast:
         # casting may have clipped the values, exclude those
@@ -337,13 +337,13 @@ def check_freezing(distfn, args):
 
 
 def check_rvs_broadcast(distfunc, distname, allargs, shape, shape_only, otype):
-    rng = np.random.RandomState(123)
+    rng = mx.random.RandomState(123)
     sample = distfunc.rvs(*allargs, random_state=rng)
     assert_equal(sample.shape, shape, f"{distname}: rvs failed to broadcast")
     if not shape_only:
-        rvs = np.vectorize(
+        rvs = mx.vectorize(
             lambda *allargs: distfunc.rvs(*allargs, random_state=rng),
             otypes=otype)
-        rng = np.random.RandomState(123)
+        rng = mx.random.RandomState(123)
         expected = rvs(*allargs)
         assert_allclose(sample, expected, rtol=1e-13)

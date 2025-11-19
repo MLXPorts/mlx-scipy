@@ -14,7 +14,7 @@ Functions
 
 """
 
-import numpy as np
+import mlx.core as mx
 
 from ._optimize import OptimizeResult, OptimizeWarning
 from warnings import warn
@@ -93,8 +93,8 @@ def linprog_verbose_callback(res):
     message = res['message']
     complete = res['complete']
 
-    saved_printoptions = np.get_printoptions()
-    np.set_printoptions(linewidth=500,
+    saved_printoptions = mx.get_printoptions()
+    mx.set_printoptions(linewidth=500,
                         formatter={'float': lambda x: f"{x: 12.4f}"})
     if status:
         print('--------- Simplex Early Exit -------\n')
@@ -117,7 +117,7 @@ def linprog_verbose_callback(res):
         print('x = ', x)
         print()
 
-    np.set_printoptions(**saved_printoptions)
+    mx.set_printoptions(**saved_printoptions)
 
 
 def linprog_terse_callback(res):
@@ -635,13 +635,13 @@ def linprog(c, A_ub=None, b_ub=None, A_eq=None, b_eq=None,
         warning_message = "x0 is used only when method is 'revised simplex'. "
         warn(warning_message, OptimizeWarning, stacklevel=2)
 
-    if np.any(integrality) and not meth == "highs":
+    if mx.any(integrality) and not meth == "highs":
         integrality = None
         warning_message = ("Only `method='highs'` supports integer "
                            "constraints. Ignoring `integrality`.")
         warn(warning_message, OptimizeWarning, stacklevel=2)
-    elif np.any(integrality):
-        integrality = np.broadcast_to(integrality, np.shape(c))
+    elif mx.any(integrality):
+        integrality = mx.broadcast_to(integrality, mx.shape(c))
     else:
         integrality = None
 

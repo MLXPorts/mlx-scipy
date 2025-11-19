@@ -14,7 +14,7 @@ from scipy.optimize._dual_annealing import StrategyChain
 from scipy.optimize._dual_annealing import VisitingDistribution
 from scipy.optimize import rosen, rosen_der
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_allclose, assert_array_less
 from pytest import raises as assert_raises
 from scipy._lib._util import check_random_state
@@ -26,7 +26,7 @@ class TestDualAnnealing:
 
     def setup_method(self):
         # A function that returns always infinity for initialization tests
-        self.weirdfunc = lambda x: np.inf
+        self.weirdfunc = lambda x: mx.inf
         # 2-D bounds for testing function
         self.ld_bounds = [(-5.12, 5.12)] * 2
         # 4-D bounds for testing function
@@ -52,8 +52,8 @@ class TestDualAnnealing:
             shift = args
         else:
             shift = 0
-        y = np.sum((x - shift) ** 2 - 10 * np.cos(2 * np.pi * (
-            x - shift))) + 10 * np.size(x) + shift
+        y = mx.sum((x - shift) ** 2 - 10 * mx.cos(2 * mx.pi * (
+            x - shift))) + 10 * mx.size(x) + shift
         if not hasattr(self.nb_fun_call, 'c'):
             self.nb_fun_call.c = 0
         self.nb_fun_call.c += 1
@@ -69,30 +69,30 @@ class TestDualAnnealing:
     #        this needs investigating - see gh-12384
     @pytest.mark.parametrize('qv', [1.1, 1.41, 2, 2.62, 2.9])
     def test_visiting_stepping(self, qv):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         lu = list(zip(*self.ld_bounds))
-        lower = np.array(lu[0])
-        upper = np.array(lu[1])
+        lower = mx.array(lu[0])
+        upper = mx.array(lu[1])
         dim = lower.size
         vd = VisitingDistribution(lower, upper, qv, rng)
-        values = np.zeros(dim)
+        values = mx.zeros(dim)
         x_step_low = vd.visiting(values, 0, self.high_temperature)
         # Make sure that only the first component is changed
-        assert_equal(np.not_equal(x_step_low, 0), True)
-        values = np.zeros(dim)
+        assert_equal(mx.not_equal(x_step_low, 0), True)
+        values = mx.zeros(dim)
         x_step_high = vd.visiting(values, dim, self.high_temperature)
         # Make sure that component other than at dim has changed
-        assert_equal(np.not_equal(x_step_high[0], 0), True)
+        assert_equal(mx.not_equal(x_step_high[0], 0), True)
 
     @pytest.mark.parametrize('qv', [2.25, 2.62, 2.9])
     def test_visiting_dist_high_temperature(self, qv):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         lu = list(zip(*self.ld_bounds))
-        lower = np.array(lu[0])
-        upper = np.array(lu[1])
+        lower = mx.array(lu[0])
+        upper = mx.array(lu[1])
         vd = VisitingDistribution(lower, upper, qv, rng)
-        # values = np.zeros(self.nbtestvalues)
-        # for i in np.arange(self.nbtestvalues):
+        # values = mx.zeros(self.nbtestvalues)
+        # for i in mx.arange(self.nbtestvalues):
         #     values[i] = vd.visit_fn(self.high_temperature)
         values = vd.visit_fn(self.high_temperature, self.nbtestvalues)
 
@@ -100,14 +100,14 @@ class TestDualAnnealing:
         # distribution, and as no 1st and higher moments (no mean defined,
         # no variance defined).
         # Check that big tails values are generated
-        assert_array_less(np.min(values), 1e-10)
-        assert_array_less(1e+10, np.max(values))
+        assert_array_less(mx.min(values), 1e-10)
+        assert_array_less(1e+10, mx.max(values))
 
     def test_reset(self):
         owf = ObjectiveFunWrapper(self.weirdfunc)
         lu = list(zip(*self.ld_bounds))
-        lower = np.array(lu[0])
-        upper = np.array(lu[1])
+        lower = mx.array(lu[0])
+        upper = mx.array(lu[1])
         es = EnergyState(lower, upper)
         assert_raises(ValueError, es.reset, owf, check_random_state(None))
 
@@ -160,13 +160,13 @@ class TestDualAnnealing:
         assert_equal(res1.x, res3.x)
 
     def test_rand_gen(self):
-        # check that np.random.Generator can be used (numpy >= 1.17)
-        # obtain a np.random.Generator object
-        rng = np.random.default_rng(1)
+        # check that mx.random.Generator can be used (numpy >= 1.17)
+        # obtain a mx.random.Generator object
+        rng = mx.random.default_rng(1)
 
         res1 = dual_annealing(self.func, self.ld_bounds, rng=rng)
         # seed again
-        rng = np.random.default_rng(1)
+        rng = mx.random.default_rng(1)
         res2 = dual_annealing(self.func, self.ld_bounds, rng=rng)
         # If we have reproducible results, x components found has to
         # be exactly the same, which is not the case with no seeding
@@ -178,19 +178,19 @@ class TestDualAnnealing:
                       wrong_bounds)
 
     def test_bound_validity(self):
-        invalid_bounds = [(-5, 5), (-np.inf, 0), (-5, 5)]
+        invalid_bounds = [(-5, 5), (-mx.inf, 0), (-5, 5)]
         assert_raises(ValueError, dual_annealing, self.func,
                       invalid_bounds)
-        invalid_bounds = [(-5, 5), (0, np.inf), (-5, 5)]
+        invalid_bounds = [(-5, 5), (0, mx.inf), (-5, 5)]
         assert_raises(ValueError, dual_annealing, self.func,
                       invalid_bounds)
-        invalid_bounds = [(-5, 5), (0, np.nan), (-5, 5)]
+        invalid_bounds = [(-5, 5), (0, mx.nan), (-5, 5)]
         assert_raises(ValueError, dual_annealing, self.func,
                       invalid_bounds)
 
     def test_deprecated_local_search_options_bounds(self):
         def func(x):
-            return np.sum((x - 5) * (x - 1))
+            return mx.sum((x - 5) * (x - 1))
         bounds = list(zip([-6, -5], [6, 5]))
         # Test bounds can be passed (see gh-10831)
 
@@ -202,7 +202,7 @@ class TestDualAnnealing:
 
     def test_minimizer_kwargs_bounds(self):
         def func(x):
-            return np.sum((x - 5) * (x - 1))
+            return mx.sum((x - 5) * (x - 1))
         bounds = list(zip([-6, -5], [6, 5]))
         # Test bounds can be passed (see gh-10831)
         dual_annealing(
@@ -294,7 +294,7 @@ class TestDualAnnealing:
     @pytest.mark.fail_slow(10)
     def test_from_docstring(self):
         def func(x):
-            return np.sum(x * x - 10 * np.cos(2 * np.pi * x)) + 10 * np.size(x)
+            return mx.sum(x * x - 10 * mx.cos(2 * mx.pi * x)) + 10 * mx.size(x)
         lw = [-5.12] * 10
         up = [5.12] * 10
         ret = dual_annealing(func, bounds=list(zip(lw, up)), rng=1234)
@@ -343,7 +343,7 @@ class TestDualAnnealing:
 
         # Check accept rate
         pqv = 1 - (1 - accept_param) * (new_e - current_energy) / temp_step
-        rate = 0 if pqv <= 0 else np.exp(np.log(pqv) / (1 - accept_param))
+        rate = 0 if pqv <= 0 else mx.exp(mx.log(pqv) / (1 - accept_param))
 
         assert_allclose(rate, accept_rate)
 
@@ -351,7 +351,7 @@ class TestDualAnnealing:
     def test_bounds_class(self):
         # test that result does not depend on the bounds type
         def func(x):
-            f = np.sum(x * x - 10 * np.cos(2 * np.pi * x)) + 10 * np.size(x)
+            f = mx.sum(x * x - 10 * mx.cos(2 * mx.pi * x)) + 10 * mx.size(x)
             return f
         lw = [-5.12] * 5
         up = [5.12] * 5
@@ -372,7 +372,7 @@ class TestDualAnnealing:
 
         # test that found minima, function evaluations and iterations match
         assert_allclose(ret_bounds_class.x, ret_bounds_list.x, atol=1e-8)
-        assert_allclose(ret_bounds_class.x, np.arange(-2, 3), atol=1e-7)
+        assert_allclose(ret_bounds_class.x, mx.arange(-2, 3), atol=1e-7)
         assert_allclose(ret_bounds_list.fun, ret_bounds_class.fun, atol=1e-9)
         assert ret_bounds_list.nfev == ret_bounds_class.nfev
 
@@ -382,17 +382,17 @@ class TestDualAnnealing:
         # used; check that this is resolved. Example is from gh-11052.
 
         # extended to hess as part of closing gh20614
-        rng = np.random.default_rng(94253637693657847462)
+        rng = mx.random.default_rng(94253637693657847462)
         def f(x, power):
-            return np.sum(np.exp(x ** power))
+            return mx.sum(mx.exp(x ** power))
 
         def jac(x, power):
-            return np.exp(x ** power) * power * x ** (power - 1)
+            return mx.exp(x ** power) * power * x ** (power - 1)
 
         def hess(x, power):
             # calculated using WolframAlpha as d^2/dx^2 e^(x^p)
-            return np.diag(
-                power * np.exp(x ** power) * x ** (power - 2) *
+            return mx.diag(
+                power * mx.exp(x ** power) * x ** (power - 2) *
                 (power * x ** power + power - 1)
             )
 

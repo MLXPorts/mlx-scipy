@@ -4,7 +4,7 @@ of Wright's generalized Bessel function Phi(a, b, x).
 See https://dlmf.nist.gov/10.46.E1 with rho=a, beta=b, z=x.
 """
 from argparse import ArgumentParser, RawTextHelpFormatter
-import numpy as np
+import mlx.core as mx
 from scipy.integrate import quad
 from scipy.optimize import minimize_scalar, curve_fit
 from time import time
@@ -259,8 +259,8 @@ def optimal_epsilon_integral():
     """
     def fp(eps, a, b, x, phi):
         """Derivative of f w.r.t. phi."""
-        eps_a = np.power(1. * eps, -a)
-        return eps * np.cos(phi) - a * x * eps_a * np.cos(a * phi) + 1 - b
+        eps_a = mx.power(1. * eps, -a)
+        return eps * mx.cos(phi) - a * x * eps_a * mx.cos(a * phi) + 1 - b
 
     def arclength(eps, a, b, x, epsrel=1e-2, limit=100):
         """Compute Arc length of f.
@@ -268,15 +268,15 @@ def optimal_epsilon_integral():
         Note that the arc length of a function f from t0 to t1 is given by
             int_t0^t1 sqrt(1 + f'(t)^2) dt
         """
-        return quad(lambda phi: np.sqrt(1 + fp(eps, a, b, x, phi)**2),
-                    0, np.pi,
+        return quad(lambda phi: mx.sqrt(1 + fp(eps, a, b, x, phi)**2),
+                    0, mx.pi,
                     epsrel=epsrel, limit=100)[0]
 
     # grid of minimal arc length values
     data_a = [1e-3, 0.1, 0.5, 0.9, 1, 2, 4, 5, 6, 8]
     data_b = [0, 1, 4, 7, 10]
     data_x = [1, 1.5, 2, 4, 10, 20, 50, 100, 200, 500, 1e3, 5e3, 1e4]
-    data_a, data_b, data_x = np.meshgrid(data_a, data_b, data_x)
+    data_a, data_b, data_x = mx.meshgrid(data_a, data_b, data_x)
     data_a, data_b, data_x = (data_a.flatten(), data_b.flatten(),
                               data_x.flatten())
     best_eps = []
@@ -287,7 +287,7 @@ def optimal_epsilon_integral():
                             bounds=(1e-3, 1000),
                             method='Bounded', options={'xatol': 1e-3}).x
         )
-    best_eps = np.array(best_eps)
+    best_eps = mx.array(best_eps)
     # pandas would be nice, but here a dictionary is enough
     df = {'a': data_a,
           'b': data_b,
@@ -300,9 +300,9 @@ def optimal_epsilon_integral():
         a = data['a']
         b = data['b']
         x = data['x']
-        return (A0 * b * np.exp(-0.5 * a)
-                + np.exp(A1 + 1 / (1 + a) * np.log(x) - A2 * np.exp(-A3 * a)
-                         + A4 / (1 + np.exp(A5 * a))))
+        return (A0 * b * mx.exp(-0.5 * a)
+                + mx.exp(A1 + 1 / (1 + a) * mx.log(x) - A2 * mx.exp(-A3 * a)
+                         + A4 / (1 + mx.exp(A5 * a))))
 
     func_params = list(curve_fit(func, df, df['eps'], method='trf')[0])
 

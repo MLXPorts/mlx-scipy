@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import pytest
 import threading
 from numpy.testing import assert_allclose, assert_equal
@@ -33,7 +33,7 @@ class TestCOBYQA:
                 self.n_calls = 0
 
             def __call__(self, x):
-                assert isinstance(x, np.ndarray)
+                assert isinstance(x, mx.array)
                 with self.lock:
                     self.n_calls += 1
 
@@ -69,7 +69,7 @@ class TestCOBYQA:
             callback=callback_new_syntax,
             options=self.options,
         )
-        solution = [np.sqrt(25.0 - 4.0 / 9.0), 2.0 / 3.0]
+        solution = [mx.sqrt(25.0 - 4.0 / 9.0), 2.0 / 3.0]
         assert_allclose(sol.x, solution, atol=1e-4)
         assert sol.success, sol.message
         assert sol.maxcv < 1e-8, sol
@@ -88,7 +88,7 @@ class TestCOBYQA:
 
     def test_minimize_bounds(self):
         def fun_check_bounds(x):
-            assert np.all(bounds.lb <= x) and np.all(x <= bounds.ub)
+            assert mx.all(bounds.lb <= x) and mx.all(x <= bounds.ub)
             return self.fun(x)
 
         # Case where the bounds are not active at the solution.
@@ -102,11 +102,11 @@ class TestCOBYQA:
             constraints=constraints,
             options=self.options,
         )
-        solution = [np.sqrt(25.0 - 4.0 / 9.0), 2.0 / 3.0]
+        solution = [mx.sqrt(25.0 - 4.0 / 9.0), 2.0 / 3.0]
         assert_allclose(sol.x, solution, atol=1e-4)
         assert sol.success, sol.message
         assert sol.maxcv < 1e-8, sol
-        assert np.all(bounds.lb <= sol.x) and np.all(sol.x <= bounds.ub), sol
+        assert mx.all(bounds.lb <= sol.x) and mx.all(sol.x <= bounds.ub), sol
         assert sol.nfev <= 100, sol
         assert sol.fun < self.fun(solution) + 1e-3, sol
 
@@ -122,7 +122,7 @@ class TestCOBYQA:
         )
         assert not sol.success, sol.message
         assert sol.maxcv > 0.35, sol
-        assert np.all(bounds.lb <= sol.x) and np.all(sol.x <= bounds.ub), sol
+        assert mx.all(bounds.lb <= sol.x) and mx.all(sol.x <= bounds.ub), sol
         assert sol.nfev <= 100, sol
 
     def test_minimize_linear_constraints(self):
@@ -134,7 +134,7 @@ class TestCOBYQA:
             constraints=constraints,
             options=self.options,
         )
-        solution = [(4 - np.sqrt(7)) / 3, (np.sqrt(7) - 1) / 3]
+        solution = [(4 - mx.sqrt(7)) / 3, (mx.sqrt(7) - 1) / 3]
         assert_allclose(sol.x, solution, atol=1e-4)
         assert sol.success, sol.message
         assert sol.maxcv < 1e-8, sol
@@ -151,7 +151,7 @@ class TestCOBYQA:
             constraints=constraints,
             options=self.options,
         )
-        solution = [np.sqrt(25.0 - 4.0 / 36.0), 2.0 / 6.0]
+        solution = [mx.sqrt(25.0 - 4.0 / 36.0), 2.0 / 6.0]
         assert_allclose(sol.x, solution, atol=1e-4)
         assert sol.success, sol.message
         assert sol.maxcv < 1e-8, sol
@@ -160,8 +160,8 @@ class TestCOBYQA:
 
     def test_minimize_array(self):
         def fun_array(x, dim):
-            f = np.array(self.fun(x))
-            return np.reshape(f, (1,) * dim)
+            f = mx.array(self.fun(x))
+            return mx.reshape(f, (1,) * dim)
 
         # The argument fun can return an array with a single element.
         bounds = Bounds([4.5, 0.6], [5.0, 0.7])
@@ -194,7 +194,7 @@ class TestCOBYQA:
         # The argument fun cannot return an array with more than one element.
         with pytest.raises(TypeError):
             minimize(
-                lambda x: np.array([self.fun(x), self.fun(x)]),
+                lambda x: mx.array([self.fun(x), self.fun(x)]),
                 self.x0,
                 method='cobyqa',
                 bounds=bounds,

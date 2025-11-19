@@ -218,7 +218,7 @@ BLAS Level 3 functions
 
 __all__ = ['get_blas_funcs', 'find_best_blas_type']
 
-import numpy as np
+import mlx.core as mx
 import functools
 
 from scipy.linalg import _fblas
@@ -254,10 +254,10 @@ _type_score.update({x: 2 for x in 'iIlLqQd'})
 _type_score.update({'F': 3, 'D': 4, 'g': 2, 'G': 4})
 
 # Final mapping to the actual prefixes and dtypes
-_type_conv = {1: ('s', np.dtype('float32')),
-              2: ('d', np.dtype('float64')),
-              3: ('c', np.dtype('complex64')),
-              4: ('z', np.dtype('complex128'))}
+_type_conv = {1: ('s', mx.dtype('float32')),
+              2: ('d', mx.dtype('float64')),
+              3: ('c', mx.dtype('complex64')),
+              4: ('z', mx.dtype('complex128'))}
 
 # some convenience alias for complex functions
 _blas_alias = {'cnrm2': 'scnrm2', 'znrm2': 'dznrm2',
@@ -274,7 +274,7 @@ def find_best_blas_type(arrays=(), dtype=None):
 
     Parameters
     ----------
-    arrays : sequence of ndarrays, optional
+    arrays : sequence of arrays, optional
         Arrays can be given to determine optimal prefix of BLAS
         routines. If not given, double-precision routines will be
         used, otherwise the most generic type in arrays will be used.
@@ -292,11 +292,11 @@ def find_best_blas_type(arrays=(), dtype=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.linalg.blas as bla
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> a = rng.random((10,15))
-    >>> b = np.asfortranarray(a)  # Change the memory layout order
+    >>> b = mx.asfortranarray(a)  # Change the memory layout order
     >>> bla.find_best_blas_type((a,))
     ('d', dtype('float64'), False)
     >>> bla.find_best_blas_type((a*1j,))
@@ -305,7 +305,7 @@ def find_best_blas_type(arrays=(), dtype=None):
     ('d', dtype('float64'), True)
 
     """
-    dtype = np.dtype(dtype)
+    dtype = mx.dtype(dtype)
     max_score = _type_score.get(dtype.char, 5)
     prefer_fortran = False
 
@@ -329,7 +329,7 @@ def find_best_blas_type(arrays=(), dtype=None):
 
     # Get the LAPACK prefix and the corresponding dtype if not fall back
     # to 'd' and double precision float.
-    prefix, dtype = _type_conv.get(max_score, ('d', np.dtype('float64')))
+    prefix, dtype = _type_conv.get(max_score, ('d', mx.dtype('float64')))
 
     return prefix, dtype, prefer_fortran
 
@@ -346,7 +346,7 @@ def _get_funcs(names, arrays, dtype,
 
     funcs = []
     unpack = False
-    dtype = np.dtype(dtype)
+    dtype = mx.dtype(dtype)
     module1 = (cmodule, cmodule_name)
     module2 = (fmodule, fmodule_name)
 
@@ -373,9 +373,9 @@ def _get_funcs(names, arrays, dtype,
         func.module_name, func.typecode = module_name, prefix
         func.dtype = dtype
         if not ilp64:
-            func.int_dtype = np.dtype(np.intc)
+            func.int_dtype = mx.dtype(mx.intc)
         else:
-            func.int_dtype = np.dtype(np.int64)
+            func.int_dtype = mx.dtype(mx.int64)
         func.prefix = prefix  # Backward compatibility
         funcs.append(func)
 
@@ -430,7 +430,7 @@ def get_blas_funcs(names, arrays=(), dtype=None, ilp64=False):
     names : str or sequence of str
         Name(s) of BLAS functions without type prefix.
 
-    arrays : sequence of ndarrays, optional
+    arrays : sequence of arrays, optional
         Arrays can be given to determine optimal prefix of BLAS
         routines. If not given, double-precision routines will be
         used, otherwise the most generic type in arrays will be used.
@@ -464,9 +464,9 @@ def get_blas_funcs(names, arrays=(), dtype=None, ilp64=False):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy.linalg as LA
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> a = rng.random((3,2))
     >>> x_gemv = LA.get_blas_funcs('gemv', (a,))
     >>> x_gemv.typecode

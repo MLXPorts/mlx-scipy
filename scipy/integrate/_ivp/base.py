@@ -1,11 +1,11 @@
 from types import GenericAlias
-import numpy as np
+import mlx.core as mx
 
 
 def check_arguments(fun, y0, support_complex):
     """Helper function for checking arguments common to all solvers."""
-    y0 = np.asarray(y0)
-    if np.issubdtype(y0.dtype, np.complexfloating):
+    y0 = mx.array(y0)
+    if mx.issubdtype(y0.dtype, mx.complexfloating):
         if not support_complex:
             raise ValueError("`y0` is complex, but the chosen solver does "
                              "not support integration in a complex domain.")
@@ -17,11 +17,11 @@ def check_arguments(fun, y0, support_complex):
     if y0.ndim != 1:
         raise ValueError("`y0` must be 1-dimensional.")
 
-    if not np.isfinite(y0).all():
+    if not mx.isfinite(y0).all():
         raise ValueError("All components of the initial state `y0` must be finite.")
 
     def fun_wrapped(t, y):
-        return np.asarray(fun(t, y), dtype=dtype)
+        return mx.array(fun(t, y), dtype=dtype)
 
     return fun_wrapped, y0
 
@@ -70,7 +70,7 @@ class OdeSolver:
     fun : callable
         Right-hand side of the system: the time derivative of the state ``y``
         at time ``t``. The calling signature is ``fun(t, y)``, where ``t`` is a
-        scalar and ``y`` is an ndarray with ``len(y) = len(y0)``. ``fun`` must
+        scalar and ``y`` is an array with ``len(y) = len(y0)``. ``fun`` must
         return an array of the same shape as ``y``. See `vectorized` for more
         information.
     t0 : float
@@ -114,7 +114,7 @@ class OdeSolver:
         Integration direction: +1 or -1.
     t : float
         Current time.
-    y : ndarray
+    y : array
         Current state.
     t_old : float
         Previous time. None if no steps were made yet.
@@ -148,7 +148,7 @@ class OdeSolver:
             fun_single = self._fun
 
             def fun_vectorized(t, y):
-                f = np.empty_like(y)
+                f = mx.empty_like(y)
                 for i, yi in enumerate(y.T):
                     f[:, i] = self._fun(t, yi)
                 return f
@@ -161,7 +161,7 @@ class OdeSolver:
         self.fun_single = fun_single
         self.fun_vectorized = fun_vectorized
 
-        self.direction = np.sign(t_bound - t0) if t_bound != t0 else 1
+        self.direction = mx.sign(t_bound - t0) if t_bound != t0 else 1
         self.n = self.y.size
         self.status = 'running'
 
@@ -174,7 +174,7 @@ class OdeSolver:
         if self.t_old is None:
             return None
         else:
-            return np.abs(self.t - self.t_old)
+            return mx.abs(self.t - self.t_old)
 
     def step(self):
         """Perform one integration step.
@@ -266,11 +266,11 @@ class DenseOutput:
 
         Returns
         -------
-        y : ndarray, shape (n,) or (n, n_points)
+        y : array, shape (n,) or (n, n_points)
             Computed values. Shape depends on whether `t` was a scalar or a
             1-D array.
         """
-        t = np.asarray(t)
+        t = mx.array(t)
         if t.ndim > 1:
             raise ValueError("`t` must be a float or a 1-D array.")
         return self._call_impl(t)
@@ -293,6 +293,6 @@ class ConstantDenseOutput(DenseOutput):
         if t.ndim == 0:
             return self.value
         else:
-            ret = np.empty((self.value.shape[0], t.shape[0]))
+            ret = mx.empty((self.value.shape[0], t.shape[0]))
             ret[:] = self.value[:, None]
             return ret

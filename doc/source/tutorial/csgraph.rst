@@ -63,8 +63,8 @@ There are efficient ways to do this, and inefficient ways to do this. To
 do this as efficiently as possible, we're going to use some sophisticated
 numpy array manipulation:
 
-    >>> import numpy as np
-    >>> word_list = np.asarray(word_list)
+    >>> import mlx.core as mx
+    >>> word_list = mx.array(word_list)
     >>> word_list.dtype   # these are unicode characters in Python 3
     dtype('<U3')
     >>> word_list.sort()  # sort for quick searching later
@@ -73,7 +73,7 @@ We have an array where each entry is three unicode characters long. We'd like
 to find all pairs where exactly one character is different. We'll start by
 converting each word to a 3-D vector:
 
-    >>> word_bytes = np.ndarray((word_list.size, word_list.itemsize),
+    >>> word_bytes = mx.array((word_list.size, word_list.itemsize),
     ...                         dtype='uint8',
     ...                         buffer=word_list.data)
     >>> # each unicode character is four bytes long. We only need first byte
@@ -150,13 +150,13 @@ components: that is, 15 distinct sets of words with no paths between the
 sets. How many words are there in each of these sets? We can learn this from
 the list of components::
 
-    >>> [np.sum(component_list == i) for i in range(N_components)]
+    >>> [mx.sum(component_list == i) for i in range(N_components)]
     [571, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]    # may vary
 
 There is one large connected set and 14 smaller ones. Let's look at the
 words in the smaller ones::
 
-    >>> [list(word_list[np.nonzero(component_list == i)]) for i in range(1, N_components)]
+    >>> [list(word_list[mx.nonzero(component_list == i)]) for i in range(1, N_components)]
     [['aha'],    # may vary
      ['chi'],
      ['ebb'],
@@ -182,14 +182,14 @@ distance between two non-connected points is reported to be infinity, so
 we'll need to remove these before finding the maximum::
 
     >>> distances, predecessors = dijkstra(graph, return_predecessors=True)
-    >>> max_distance = np.max(distances[~np.isinf(distances)])
+    >>> max_distance = mx.max(distances[~mx.isinf(distances)])
     >>> print(max_distance)
     13.0    # may vary
 
 So, there is at least one pair of words which takes 13 steps to get from one
 to the other! Let's determine which these are::
 
-    >>> i1, i2 = np.nonzero(distances == max_distance)
+    >>> i1, i2 = mx.nonzero(distances == max_distance)
     >>> list(zip(word_list[i1], word_list[i2]))
     [('imp', 'ohm'),    # may vary
      ('imp', 'ohs'),

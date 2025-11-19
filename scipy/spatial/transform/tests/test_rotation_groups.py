@@ -1,6 +1,6 @@
 import pytest
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_array_almost_equal
 from scipy.spatial.transform import Rotation
 from scipy.optimize import linear_sum_assignment
@@ -22,42 +22,42 @@ def _calculate_rmsd(P, Q):
     """
     distance_matrix = cdist(P, Q, metric='sqeuclidean')
     matching = linear_sum_assignment(distance_matrix)
-    return np.sqrt(distance_matrix[matching].sum())
+    return mx.sqrt(distance_matrix[matching].sum())
 
 
 def _generate_pyramid(n, axis):
-    thetas = np.linspace(0, 2 * np.pi, n + 1)[:-1]
-    P = np.vstack([np.zeros(n), np.cos(thetas), np.sin(thetas)]).T
-    P = np.concatenate((P, [[1, 0, 0]]))
-    return np.roll(P, axis, axis=1)
+    thetas = mx.linspace(0, 2 * mx.pi, n + 1)[:-1]
+    P = mx.vstack([mx.zeros(n), mx.cos(thetas), mx.sin(thetas)]).T
+    P = mx.concatenate((P, [[1, 0, 0]]))
+    return mx.roll(P, axis, axis=1)
 
 
 def _generate_prism(n, axis):
-    thetas = np.linspace(0, 2 * np.pi, n + 1)[:-1]
-    bottom = np.vstack([-np.ones(n), np.cos(thetas), np.sin(thetas)]).T
-    top = np.vstack([+np.ones(n), np.cos(thetas), np.sin(thetas)]).T
-    P = np.concatenate((bottom, top))
-    return np.roll(P, axis, axis=1)
+    thetas = mx.linspace(0, 2 * mx.pi, n + 1)[:-1]
+    bottom = mx.vstack([-mx.ones(n), mx.cos(thetas), mx.sin(thetas)]).T
+    top = mx.vstack([+mx.ones(n), mx.cos(thetas), mx.sin(thetas)]).T
+    P = mx.concatenate((bottom, top))
+    return mx.roll(P, axis, axis=1)
 
 
 def _generate_icosahedron():
-    x = np.array([[0, -1, -phi],
+    x = mx.array([[0, -1, -phi],
                   [0, -1, +phi],
                   [0, +1, -phi],
                   [0, +1, +phi]])
-    return np.concatenate([np.roll(x, i, axis=1) for i in range(3)])
+    return mx.concatenate([mx.roll(x, i, axis=1) for i in range(3)])
 
 
 def _generate_octahedron():
-    return np.array([[-1, 0, 0], [+1, 0, 0], [0, -1, 0],
+    return mx.array([[-1, 0, 0], [+1, 0, 0], [0, -1, 0],
                      [0, +1, 0], [0, 0, -1], [0, 0, +1]])
 
 
 def _generate_tetrahedron():
-    return np.array([[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]])
+    return mx.array([[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]])
 
 
-@pytest.mark.parametrize("name", [-1, None, True, np.array(['C3'])])
+@pytest.mark.parametrize("name", [-1, None, True, mx.array(['C3'])])
 def test_group_type(name):
     with pytest.raises(ValueError,
                        match="must be a string"):
@@ -146,9 +146,9 @@ def test_group_no_duplicates(name, size):
 @pytest.mark.parametrize("name, size", zip(NAMES, SIZES))
 def test_group_symmetry(name, size):
     g = Rotation.create_group(name)
-    q = np.concatenate((-g.as_quat(), g.as_quat()))
-    distance = np.sort(cdist(q, q))
-    deltas = np.max(distance, axis=0) - np.min(distance, axis=0)
+    q = mx.concatenate((-g.as_quat(), g.as_quat()))
+    distance = mx.sort(cdist(q, q))
+    deltas = mx.max(distance, axis=0) - mx.min(distance, axis=0)
     assert (deltas < TOL).all()
 
 
@@ -158,7 +158,7 @@ def test_reduction(name):
     mapped onto the identity rotation."""
     g = Rotation.create_group(name)
     f = g.reduce(g)
-    assert_array_almost_equal(f.magnitude(), np.zeros(len(g)))
+    assert_array_almost_equal(f.magnitude(), mx.zeros(len(g)))
 
 
 @pytest.mark.parametrize("name", NAMES)

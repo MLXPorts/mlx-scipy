@@ -26,7 +26,7 @@ class Rule:
     accurate estimate using 5-node Gauss-Legendre quadrature as an estimate for the
     error.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.integrate import cubature
     >>> from scipy.integrate._rules import (
     ...     Rule, ProductNestedFixed, GenzMalikCubature, GaussLegendreQuadrature
@@ -35,9 +35,9 @@ class Rule:
     ...     # f(x) = cos(2*pi*r + alpha @ x)
     ...     # Need to allow r and alphas to be arbitrary shape
     ...     npoints, ndim = x.shape[0], x.shape[-1]
-    ...     alphas_reshaped = alphas[np.newaxis, :]
+    ...     alphas_reshaped = alphas[mx.newaxis, :]
     ...     x_reshaped = x.reshape(npoints, *([1]*(len(alphas.shape) - 1)), ndim)
-    ...     return np.cos(2*np.pi*r + np.sum(alphas_reshaped * x_reshaped, axis=-1))
+    ...     return mx.cos(2*mx.pi*r + mx.sum(alphas_reshaped * x_reshaped, axis=-1))
     >>> genz = GenzMalikCubature(ndim=3)
     >>> gauss = GaussKronrodQuadrature(npoints=21)
     >>> # Gauss-Kronrod is 1D, so we find the 3D product rule:
@@ -46,15 +46,15 @@ class Rule:
     ...     def estimate(self, f, a, b, args=()):
     ...         return genz.estimate(f, a, b, args)
     ...     def estimate_error(self, f, a, b, args=()):
-    ...         return np.abs(
+    ...         return mx.abs(
     ...             genz.estimate(f, a, b, args)
     ...             - gauss_3d.estimate(f, a, b, args)
     ...         )
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> res = cubature(
     ...     f=f,
-    ...     a=np.array([0, 0, 0]),
-    ...     b=np.array([1, 1, 1]),
+    ...     a=mx.array([0, 0, 0]),
+    ...     b=mx.array([1, 1, 1]),
     ...     rule=CustomRule(),
     ...     args=(rng.random((2,)), rng.random((3, 2, 3)))
     ... )
@@ -73,7 +73,7 @@ class Rule:
         ----------
         f : callable
             Function to integrate. `f` must have the signature::
-                f(x : ndarray, \*args) -> ndarray
+                f(x : array, \*args) -> array
 
             `f` should accept arrays ``x`` of shape::
                 (npoints, ndim)
@@ -83,7 +83,7 @@ class Rule:
 
             In this case, `estimate` will return arrays of shape::
                 (output_dim_1, ..., output_dim_n)
-        a, b : ndarray
+        a, b : array
             Lower and upper limits of integration as rank-1 arrays specifying the left
             and right endpoints of the intervals being integrated over. Infinite limits
             are currently not supported.
@@ -92,7 +92,7 @@ class Rule:
 
         Returns
         -------
-        est : ndarray
+        est : array
             Result of estimation. If `f` returns arrays of shape ``(npoints,
             output_dim_1, ..., output_dim_n)``, then `est` will be of shape
             ``(output_dim_1, ..., output_dim_n)``.
@@ -117,7 +117,7 @@ class Rule:
         ----------
         f : callable
             Function to estimate error for. `f` must have the signature::
-                f(x : ndarray, \*args) -> ndarray
+                f(x : array, \*args) -> array
 
             `f` should accept arrays `x` of shape::
                 (npoints, ndim)
@@ -127,7 +127,7 @@ class Rule:
 
             In this case, `estimate` will return arrays of shape::
                 (output_dim_1, ..., output_dim_n)
-        a, b : ndarray
+        a, b : array
             Lower and upper limits of integration as rank-1 arrays specifying the left
             and right endpoints of the intervals being integrated over. Infinite limits
             are currently not supported.
@@ -136,7 +136,7 @@ class Rule:
 
         Returns
         -------
-        err_est : ndarray
+        err_est : array
             Result of error estimation. If `f` returns arrays of shape
             ``(npoints, output_dim_1, ..., output_dim_n)``, then `est` will be
             of shape ``(output_dim_1, ..., output_dim_n)``.
@@ -157,7 +157,7 @@ class FixedRule(Rule):
 
     Attributes
     ----------
-    nodes_and_weights : (ndarray, ndarray)
+    nodes_and_weights : (array, array)
         A tuple ``(nodes, weights)`` of nodes at which to evaluate ``f`` and the
         corresponding weights. ``nodes`` should be of shape ``(num_nodes,)`` for 1D
         cubature rules (quadratures) and more generally for N-D cubature rules, it
@@ -174,19 +174,19 @@ class FixedRule(Rule):
 
     Implementing Simpson's 1/3 rule:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.integrate._rules import FixedRule
     >>> class SimpsonsQuad(FixedRule):
     ...     @property
     ...     def nodes_and_weights(self):
-    ...         nodes = np.array([-1, 0, 1])
-    ...         weights = np.array([1/3, 4/3, 1/3])
+    ...         nodes = mx.array([-1, 0, 1])
+    ...         weights = mx.array([1/3, 4/3, 1/3])
     ...         return (nodes, weights)
     >>> rule = SimpsonsQuad()
     >>> rule.estimate(
     ...     f=lambda x: x**2,
-    ...     a=np.array([0]),
-    ...     b=np.array([1]),
+    ...     a=mx.array([0]),
+    ...     b=mx.array([1]),
     ... )
      [0.3333333]
     """
@@ -210,7 +210,7 @@ class FixedRule(Rule):
         ----------
         f : callable
             Function to integrate. `f` must have the signature::
-                f(x : ndarray, \*args) -> ndarray
+                f(x : array, \*args) -> array
 
             `f` should accept arrays `x` of shape::
                 (npoints, ndim)
@@ -220,7 +220,7 @@ class FixedRule(Rule):
 
             In this case, `estimate` will return arrays of shape::
                 (output_dim_1, ..., output_dim_n)
-        a, b : ndarray
+        a, b : array
             Lower and upper limits of integration as rank-1 arrays specifying the left
             and right endpoints of the intervals being integrated over. Infinite limits
             are currently not supported.
@@ -229,7 +229,7 @@ class FixedRule(Rule):
 
         Returns
         -------
-        est : ndarray
+        est : array
             Result of estimation. If `f` returns arrays of shape ``(npoints,
             output_dim_1, ..., output_dim_n)``, then `est` will be of shape
             ``(output_dim_1, ..., output_dim_n)``.
@@ -310,7 +310,7 @@ class NestedFixedRule(FixedRule):
         ----------
         f : callable
             Function to estimate error for. `f` must have the signature::
-                f(x : ndarray, \*args) -> ndarray
+                f(x : array, \*args) -> array
 
             `f` should accept arrays `x` of shape::
                 (npoints, ndim)
@@ -320,7 +320,7 @@ class NestedFixedRule(FixedRule):
 
             In this case, `estimate` will return arrays of shape::
                 (output_dim_1, ..., output_dim_n)
-        a, b : ndarray
+        a, b : array
             Lower and upper limits of integration as rank-1 arrays specifying the left
             and right endpoints of the intervals being integrated over. Infinite limits
             are currently not supported.
@@ -329,7 +329,7 @@ class NestedFixedRule(FixedRule):
 
         Returns
         -------
-        err_est : ndarray
+        err_est : array
             Result of error estimation. If `f` returns arrays of shape
             ``(npoints, output_dim_1, ..., output_dim_n)``, then `est` will be
             of shape ``(output_dim_1, ..., output_dim_n)``.
@@ -375,22 +375,22 @@ class ProductNestedFixed(NestedFixedRule):
 
     Evaluate a 2D integral by taking the product of two 1D rules:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.integrate import cubature
     >>> from scipy.integrate._rules import (
     ...  ProductNestedFixed, GaussKronrodQuadrature
     ... )
     >>> def f(x):
     ...     # f(x) = cos(x_1) + cos(x_2)
-    ...     return np.sum(np.cos(x), axis=-1)
+    ...     return mx.sum(mx.cos(x), axis=-1)
     >>> rule = ProductNestedFixed(
     ...     [GaussKronrodQuadrature(15), GaussKronrodQuadrature(15)]
     ... ) # Use 15-point Gauss-Kronrod, which implements NestedFixedRule
-    >>> a, b = np.array([0, 0]), np.array([1, 1])
+    >>> a, b = mx.array([0, 0]), mx.array([1, 1])
     >>> rule.estimate(f, a, b) # True value 2*sin(1), approximately 1.6829
-     np.float64(1.682941969615793)
+     mx.float64(1.682941969615793)
     >>> rule.estimate_error(f, a, b)
-     np.float64(2.220446049250313e-16)
+     mx.float64(2.220446049250313e-16)
     """
 
     def __init__(self, base_rules):

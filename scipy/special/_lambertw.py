@@ -1,6 +1,6 @@
 from ._ufuncs import _lambertw
 
-import numpy as np
+import mlx.core as mx
 
 
 def lambertw(z, k=0, tol=1e-8):
@@ -73,12 +73,12 @@ def lambertw(z, k=0, tol=1e-8):
     --------
     The Lambert W function is the inverse of ``w exp(w)``:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.special import lambertw
     >>> w = lambertw(1)
     >>> w
     (0.56714329040978384+0j)
-    >>> w * np.exp(w)
+    >>> w * mx.exp(w)
     (1.0+0j)
 
     Any branch gives a valid inverse:
@@ -86,7 +86,7 @@ def lambertw(z, k=0, tol=1e-8):
     >>> w = lambertw(1, k=3)
     >>> w
     (-2.8535817554090377+17.113535539412148j)
-    >>> w*np.exp(w)
+    >>> w*mx.exp(w)
     (1.0000000000000002+1.609823385706477e-15j)
 
     **Applications to equation-solving**
@@ -121,13 +121,13 @@ def lambertw(z, k=0, tol=1e-8):
 
     The solution to :math:`x = a + b e^{c x}` is:
 
-    >>> x = a - lambertw(-b*c*np.exp(a*c))/c
+    >>> x = a - lambertw(-b*c*mx.exp(a*c))/c
     >>> x
     (3.3707498368978794+0j)
 
     Verify that it solves the equation:
 
-    >>> a + b*np.exp(c*x)
+    >>> a + b*mx.exp(c*x)
     (3.37074983689788+0j)
 
     The Lambert W function may also be used find the value of the infinite
@@ -140,10 +140,10 @@ def lambertw(z, k=0, tol=1e-8):
     ...
     >>> tower(0.5, 100)
     0.641185744504986
-    >>> -lambertw(-np.log(0.5)) / np.log(0.5)
+    >>> -lambertw(-mx.log(0.5)) / mx.log(0.5)
     (0.64118574450498589+0j)
     """
     # TODO: special expert should inspect this
     # interception; better place to do it?
-    k = np.asarray(k, dtype=np.dtype("long"))
+    k = mx.array(k, dtype=mx.dtype("long"))
     return _lambertw(z, k, tol)

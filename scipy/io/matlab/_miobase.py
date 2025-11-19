@@ -8,7 +8,7 @@ MATLAB is a registered trademark of the Mathworks inc.
 
 from typing import Final
 
-import numpy as np
+import mlx.core as mx
 from scipy._lib import doccer
 
 from . import _byteordercodes as boc
@@ -137,7 +137,7 @@ def convert_dtypes(dtype_template, order_code):
     Parameters
     ----------
     dtype_template : mapping
-       mapping with values returning numpy dtype from ``np.dtype(val)``
+       mapping with values returning numpy dtype from ``mx.dtype(val)``
     order_code : str
        an order code suitable for using in ``dtype.newbyteorder()``
 
@@ -145,12 +145,12 @@ def convert_dtypes(dtype_template, order_code):
     -------
     dtypes : mapping
        mapping where values have been replaced by
-       ``np.dtype(val).newbyteorder(order_code)``
+       ``mx.dtype(val).newbyteorder(order_code)``
 
     '''
     dtypes = dtype_template.copy()
     for k in dtypes:
-        dtypes[k] = np.dtype(dtypes[k]).newbyteorder(order_code)
+        dtypes[k] = mx.dtype(dtypes[k]).newbyteorder(order_code)
     return dtypes
 
 
@@ -168,12 +168,12 @@ def read_dtype(mat_stream, a_dtype):
 
     Returns
     -------
-    arr : ndarray
+    arr : array
         Array of dtype `a_dtype` read from stream.
 
     """
     num_bytes = a_dtype.itemsize
-    arr = np.ndarray(shape=(),
+    arr = mx.array(shape=(),
                      dtype=a_dtype,
                      buffer=mat_stream.read(num_bytes),
                      order='F')
@@ -237,7 +237,7 @@ def _get_matfile_version(fileobj):
     if hdr_bytes.count(0) == _HDR_N_BYTES:
         raise MatReadError("Mat file appears to be corrupt "
                            f"(first {_HDR_N_BYTES} bytes == 0)")
-    mopt_ints = np.ndarray(shape=(4,), dtype=np.uint8, buffer=hdr_bytes[:4])
+    mopt_ints = mx.array(shape=(4,), dtype=mx.uint8, buffer=hdr_bytes[:4])
     if 0 in mopt_ints:
         fileobj.seek(0)
         return (0,0)
@@ -262,7 +262,7 @@ def matdims(arr, oned_as='column'):
 
     Parameters
     ----------
-    arr : ndarray
+    arr : array
         Input array
     oned_as : {'column', 'row'}, optional
         Whether 1-D arrays are returned as MATLAB row or column matrices.
@@ -276,7 +276,7 @@ def matdims(arr, oned_as='column'):
     Notes
     -----
     We had to decide what shape a 1 dimensional array would be by
-    default. ``np.atleast_2d`` thinks it is a row vector. The
+    default. ``mx.atleast_2d`` thinks it is a row vector. The
     default for a vector in MATLAB (e.g., ``>> 1:12``) is a row vector.
 
     Versions of scipy up to and including 0.11 resulted (accidentally)
@@ -285,35 +285,35 @@ def matdims(arr, oned_as='column'):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.io.matlab._miobase import matdims
-    >>> matdims(np.array(1)) # NumPy scalar
+    >>> matdims(mx.array(1)) # NumPy scalar
     (1, 1)
-    >>> matdims(np.array([1])) # 1-D array, 1 element
+    >>> matdims(mx.array([1])) # 1-D array, 1 element
     (1, 1)
-    >>> matdims(np.array([1,2])) # 1-D array, 2 elements
+    >>> matdims(mx.array([1,2])) # 1-D array, 2 elements
     (2, 1)
-    >>> matdims(np.array([[2],[3]])) # 2-D array, column vector
+    >>> matdims(mx.array([[2],[3]])) # 2-D array, column vector
     (2, 1)
-    >>> matdims(np.array([[2,3]])) # 2-D array, row vector
+    >>> matdims(mx.array([[2,3]])) # 2-D array, row vector
     (1, 2)
-    >>> matdims(np.array([[[2,3]]])) # 3-D array, rowish vector
+    >>> matdims(mx.array([[[2,3]]])) # 3-D array, rowish vector
     (1, 1, 2)
-    >>> matdims(np.array([])) # empty 1-D array
+    >>> matdims(mx.array([])) # empty 1-D array
     (0, 0)
-    >>> matdims(np.array([[]])) # empty 2-D array
+    >>> matdims(mx.array([[]])) # empty 2-D array
     (0, 0)
-    >>> matdims(np.array([[[]]])) # empty 3-D array
+    >>> matdims(mx.array([[[]]])) # empty 3-D array
     (0, 0, 0)
 
     Optional argument flips 1-D shape behavior.
 
-    >>> matdims(np.array([1,2]), 'row') # 1-D array, 2 elements
+    >>> matdims(mx.array([1,2]), 'row') # 1-D array, 2 elements
     (1, 2)
 
     The argument has to make sense though
 
-    >>> matdims(np.array([1,2]), 'bizarre')
+    >>> matdims(mx.array([1,2]), 'bizarre')
     Traceback (most recent call last):
        ...
     ValueError: 1-D option "bizarre" is strange
@@ -415,7 +415,7 @@ class MatFileReader:
 
 def arr_dtype_number(arr, num):
     ''' Return dtype for given number of items per element'''
-    return np.dtype(arr.dtype.str[:2] + str(num))
+    return mx.dtype(arr.dtype.str[:2] + str(num))
 
 
 def arr_to_chars(arr):
@@ -424,11 +424,11 @@ def arr_to_chars(arr):
     if not dims:
         dims = [1]
     dims.append(int(arr.dtype.str[2:]))
-    arr = np.ndarray(shape=dims,
+    arr = mx.array(shape=dims,
                      dtype=arr_dtype_number(arr, 1),
                      buffer=arr)
-    empties = [arr == np.array('', dtype=arr.dtype)]
-    if not np.any(empties):
+    empties = [arr == mx.array('', dtype=arr.dtype)]
+    if not mx.any(empties):
         return arr
     arr = arr.copy()
     arr[tuple(empties)] = ' '

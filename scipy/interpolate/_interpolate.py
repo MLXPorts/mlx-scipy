@@ -3,7 +3,7 @@ __all__ = ['interp1d', 'interp2d', 'lagrange', 'PPoly', 'BPoly', 'NdPPoly']
 from math import prod
 from types import GenericAlias
 
-import numpy as np
+import mlx.core as mx
 from numpy import array, asarray, intp, poly1d, searchsorted
 
 import scipy.special as spec
@@ -62,9 +62,9 @@ def lagrange(x, w):
     --------
     Interpolate :math:`f(x) = x^3` by 3 points.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.interpolate import lagrange
-    >>> x = np.array([0, 1, 2])
+    >>> x = mx.array([0, 1, 2])
     >>> y = x**3
     >>> poly = lagrange(x, y)
 
@@ -83,7 +83,7 @@ def lagrange(x, w):
     array([ 0., -2.,  3.])
 
     >>> import matplotlib.pyplot as plt
-    >>> x_new = np.arange(0, 2.1, 0.1)
+    >>> x_new = mx.arange(0, 2.1, 0.1)
     >>> plt.scatter(x, y, label='data')
     >>> plt.plot(x_new, Polynomial(poly.coef[::-1])(x_new), label='Polynomial')
     >>> plt.plot(x_new, 3*x_new**2 - 2*x_new + 0*x_new,
@@ -160,7 +160,7 @@ def _check_broadcast_up_to(arr_from, shape_to, name):
                 break
         else:  # all checks pass, do the upcasting that we need later
             if arr_from.size != 1 and arr_from.shape != shape_to:
-                arr_from = np.ones(shape_to, arr_from.dtype) * arr_from
+                arr_from = mx.ones(shape_to, arr_from.dtype) * arr_from
             return arr_from.ravel()
     # at least one check failed
     raise ValueError(f'{name} argument must be able to broadcast up '
@@ -218,17 +218,17 @@ class interp1d(_Interpolator1D):
         necessary). If False, out of bounds values are assigned `fill_value`.
         By default, an error is raised unless ``fill_value="extrapolate"``.
     fill_value : array-like or (array-like, array_like) or "extrapolate", optional
-        - if a ndarray (or float), this value will be used to fill in for
+        - if a array (or float), this value will be used to fill in for
           requested points outside of the data range. If not provided, then
           the default is NaN. The array-like must broadcast properly to the
           dimensions of the non-interpolation axes.
         - If a two-element tuple, then the first element is used as a
           fill value for ``x_new < x[0]`` and the second element is used for
           ``x_new > x[-1]``. Anything that is not a 2-element tuple (e.g.,
-          list or ndarray, regardless of shape) is taken to be a single
+          list or array, regardless of shape) is taken to be a single
           array-like argument meant to be used for both bounds as
           ``below, above = fill_value, fill_value``. Using a two-element tuple
-          or ndarray requires ``bounds_error=False``.
+          or array requires ``bounds_error=False``.
 
           .. versionadded:: 0.17.0
         - If "extrapolate", then points outside the data range will be
@@ -269,21 +269,21 @@ class interp1d(_Interpolator1D):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy import interpolate
-    >>> x = np.arange(0, 10)
-    >>> y = np.exp(-x/3.0)
+    >>> x = mx.arange(0, 10)
+    >>> y = mx.exp(-x/3.0)
     >>> f = interpolate.interp1d(x, y)
 
-    >>> xnew = np.arange(0, 9, 0.1)
+    >>> xnew = mx.arange(0, 9, 0.1)
     >>> ynew = f(xnew)   # use interpolation function returned by `interp1d`
     >>> plt.plot(x, y, 'o', xnew, ynew, '-')
     >>> plt.show()
     """
 
     def __init__(self, x, y, kind='linear', axis=-1,
-                 copy=True, bounds_error=None, fill_value=np.nan,
+                 copy=True, bounds_error=None, fill_value=mx.nan,
                  assume_sorted=False):
         """ Initialize a 1-D linear interpolation class."""
         _Interpolator1D.__init__(self, x, y, axis=axis)
@@ -311,9 +311,9 @@ class interp1d(_Interpolator1D):
         y = array(y, copy=self.copy)
 
         if not assume_sorted:
-            ind = np.argsort(x, kind="mergesort")
+            ind = mx.argsort(x, kind="mergesort")
             x = x[ind]
-            y = np.take(y, ind, axis=axis)
+            y = mx.take(y, ind, axis=axis)
 
         if x.ndim != 1:
             raise ValueError("the x array must have exactly one dimension.")
@@ -321,8 +321,8 @@ class interp1d(_Interpolator1D):
             raise ValueError("the y array must have at least one dimension.")
 
         # Force-cast y to a floating-point type, if it's not yet one
-        if not issubclass(y.dtype.type, np.inexact):
-            y = y.astype(np.float64)
+        if not issubclass(y.dtype.type, mx.inexact):
+            y = y.astype(mx.float64)
 
         # Backward compatibility
         self.axis = axis % y.ndim
@@ -359,29 +359,29 @@ class interp1d(_Interpolator1D):
 
                 self._call = self.__class__._call_nearest
             elif kind == 'previous':
-                # Side for np.searchsorted and index for clipping
+                # Side for mx.searchsorted and index for clipping
                 self._side = 'left'
                 self._ind = 0
                 # Move x by one floating point value to the left
-                self._x_shift = np.nextafter(self.x, -np.inf)
+                self._x_shift = mx.nextafter(self.x, -mx.inf)
                 self._call = self.__class__._call_previousnext
                 if _do_extrapolate(fill_value):
                     self._check_and_update_bounds_error_for_extrapolation()
                     # assume y is sorted by x ascending order here.
-                    fill_value = (np.nan, np.take(self.y, -1, axis))
+                    fill_value = (mx.nan, mx.take(self.y, -1, axis))
             elif kind == 'next':
                 self._side = 'right'
                 self._ind = 1
                 # Move x by one floating point value to the right
-                self._x_shift = np.nextafter(self.x, np.inf)
+                self._x_shift = mx.nextafter(self.x, mx.inf)
                 self._call = self.__class__._call_previousnext
                 if _do_extrapolate(fill_value):
                     self._check_and_update_bounds_error_for_extrapolation()
                     # assume y is sorted by x ascending order here.
-                    fill_value = (np.take(self.y, 0, axis), np.nan)
+                    fill_value = (mx.take(self.y, 0, axis), mx.nan)
             else:
                 # Check if we can delegate to numpy.interp (2x-10x faster).
-                np_dtypes = (np.dtype(np.float64), np.dtype(int))
+                np_dtypes = (mx.dtype(mx.float64), mx.dtype(int))
                 cond = self.x.dtype in np_dtypes and self.y.dtype in np_dtypes
                 cond = cond and self.y.ndim == 1
                 cond = cond and not _do_extrapolate(fill_value)
@@ -403,17 +403,17 @@ class interp1d(_Interpolator1D):
                 # to get the correct shape of the output, which we then fill
                 # with nans.
                 # For slinear or zero order spline, we just pass nans through.
-                mask = np.isnan(self.x)
+                mask = mx.isnan(self.x)
                 if mask.any():
                     sx = self.x[~mask]
                     if sx.size == 0:
                         raise ValueError("`x` array is all-nan")
-                    xx = np.linspace(np.nanmin(self.x),
-                                     np.nanmax(self.x),
+                    xx = mx.linspace(mx.nanmin(self.x),
+                                     mx.nanmax(self.x),
                                      len(self.x))
                     rewrite_nan = True
-                if np.isnan(self._y).any():
-                    yy = np.ones_like(self._y)
+                if mx.isnan(self._y).any():
+                    yy = mx.ones_like(self._y)
                     rewrite_nan = True
 
             self._spline = make_interp_spline(xx, yy, k=order,
@@ -448,14 +448,14 @@ class interp1d(_Interpolator1D):
             # it's either a pair (_below_range, _above_range) or a single value
             # for both above and below range
             if isinstance(fill_value, tuple) and len(fill_value) == 2:
-                below_above = [np.asarray(fill_value[0]),
-                               np.asarray(fill_value[1])]
+                below_above = [mx.array(fill_value[0]),
+                               mx.array(fill_value[1])]
                 names = ('fill_value (below)', 'fill_value (above)')
                 for ii in range(2):
                     below_above[ii] = _check_broadcast_up_to(
                         below_above[ii], broadcast_shape, names[ii])
             else:
-                fill_value = np.asarray(fill_value)
+                fill_value = mx.array(fill_value)
                 below_above = [_check_broadcast_up_to(
                     fill_value, broadcast_shape, 'fill_value')] * 2
             self._fill_value_below, self._fill_value_above = below_above
@@ -473,7 +473,7 @@ class interp1d(_Interpolator1D):
 
     def _call_linear_np(self, x_new):
         # Note that out-of-bounds values are taken care of in self._evaluate
-        return np.interp(x_new, self.x, self.y)
+        return mx.interp(x_new, self.x, self.y)
 
     def _call_linear(self, x_new):
         # 2. Find where in the original data, the values to interpolate
@@ -541,7 +541,7 @@ class interp1d(_Interpolator1D):
 
     def _call_nan_spline(self, x_new):
         out = self._spline(x_new)
-        out[...] = np.nan
+        out[...] = mx.nan
         return out
 
     def _evaluate(self, x_new):
@@ -579,11 +579,11 @@ class interp1d(_Interpolator1D):
         above_bounds = x_new > self.x[-1]
 
         if self.bounds_error and below_bounds.any():
-            below_bounds_value = x_new[np.argmax(below_bounds)]
+            below_bounds_value = x_new[mx.argmax(below_bounds)]
             raise ValueError(f"A value ({below_bounds_value}) in x_new is below "
                              f"the interpolation range's minimum value ({self.x[0]}).")
         if self.bounds_error and above_bounds.any():
-            above_bounds_value = x_new[np.argmax(above_bounds)]
+            above_bounds_value = x_new[mx.argmax(above_bounds)]
             raise ValueError(f"A value ({above_bounds_value}) in x_new is above "
                              f"the interpolation range's maximum value ({self.x[-1]}).")
 
@@ -602,8 +602,8 @@ class _PPolyBase:
     def __init__(self, c, x, extrapolate=None, axis=0):
         self._asarray  = array_namespace(c, x).asarray
 
-        self._c = np.asarray(c)
-        self._x = np.ascontiguousarray(x, dtype=np.float64)
+        self._c = mx.array(c)
+        self._x = mx.ascontiguousarray(x, dtype=mx.float64)
 
         if extrapolate is None:
             extrapolate = True
@@ -626,8 +626,8 @@ class _PPolyBase:
             #                                               ^
             #                                              axis
             # So we roll two of them.
-            self._c = np.moveaxis(self._c, axis+1, 0)
-            self._c = np.moveaxis(self._c, axis+1, 0)
+            self._c = mx.moveaxis(self._c, axis+1, 0)
+            self._c = mx.moveaxis(self._c, axis+1, 0)
 
         if self._x.ndim != 1:
             raise ValueError("x must be 1-dimensional")
@@ -639,19 +639,19 @@ class _PPolyBase:
             raise ValueError("polynomial must be at least of order 0")
         if self._c.shape[1] != self._x.size-1:
             raise ValueError("number of coefficients != len(x)-1")
-        dx = np.diff(self._x)
-        if not (np.all(dx >= 0) or np.all(dx <= 0)):
+        dx = mx.diff(self._x)
+        if not (mx.all(dx >= 0) or mx.all(dx <= 0)):
             raise ValueError("`x` must be strictly increasing or decreasing.")
 
         dtype = self._get_dtype(self._c.dtype)
-        self._c = np.ascontiguousarray(self._c, dtype=dtype)
+        self._c = mx.ascontiguousarray(self._c, dtype=dtype)
 
     def _get_dtype(self, dtype):
-        if np.issubdtype(dtype, np.complexfloating) \
-               or np.issubdtype(self._c.dtype, np.complexfloating):
-            return np.complex128
+        if mx.issubdtype(dtype, mx.complexfloating) \
+               or mx.issubdtype(self._c.dtype, mx.complexfloating):
+            return mx.complex128
         else:
-            return np.float64
+            return mx.float64
 
     @property
     def x(self):
@@ -659,7 +659,7 @@ class _PPolyBase:
 
     @x.setter
     def x(self, xval):
-        self._x = np.asarray(xval)
+        self._x = mx.array(xval)
 
     @property
     def c(self):
@@ -667,7 +667,7 @@ class _PPolyBase:
 
     @c.setter
     def c(self, cval):
-        self._c = np.asarray(cval)
+        self._c = mx.array(cval)
 
     @classmethod
     def construct_fast(cls, c, x, extrapolate=None, axis=0):
@@ -680,8 +680,8 @@ class _PPolyBase:
         array must have dtype float.
         """
         self = object.__new__(cls)
-        self._c = np.asarray(c)
-        self._x = np.asarray(x)
+        self._c = mx.array(c)
+        self._x = mx.array(x)
         self.axis = axis
         if extrapolate is None:
             extrapolate = True
@@ -705,11 +705,11 @@ class _PPolyBase:
 
         Parameters
         ----------
-        c : ndarray, size (k, m, ...)
+        c : array, size (k, m, ...)
             Additional coefficients for polynomials in intervals. Note that
             the first additional interval will be formed using one of the
             ``self.x`` end points.
-        x : ndarray, size (m,)
+        x : array, size (m,)
             Additional breakpoints. Must be sorted in the same order as
             ``self.x`` and either to the right or to the left of the current
             breakpoints.
@@ -721,8 +721,8 @@ class _PPolyBase:
         unexpected errors or numerical output mismatches.
         """
 
-        c = np.asarray(c)
-        x = np.asarray(x)
+        c = mx.array(c)
+        x = mx.array(x)
 
         if c.ndim < 2:
             raise ValueError("invalid dimensions for c")
@@ -738,8 +738,8 @@ class _PPolyBase:
         if c.size == 0:
             return
 
-        dx = np.diff(x)
-        if not (np.all(dx >= 0) or np.all(dx <= 0)):
+        dx = mx.diff(x)
+        if not (mx.all(dx >= 0) or mx.all(dx <= 0)):
             raise ValueError("`x` is not sorted.")
 
         if self._x[-1] >= self._x[0]:
@@ -770,17 +770,17 @@ class _PPolyBase:
         dtype = self._get_dtype(c.dtype)
 
         k2 = max(c.shape[0], self._c.shape[0])
-        c2 = np.zeros((k2, self._c.shape[1] + c.shape[1]) + self._c.shape[2:],
+        c2 = mx.zeros((k2, self._c.shape[1] + c.shape[1]) + self._c.shape[2:],
                     dtype=dtype)
 
         if action == 'append':
             c2[k2-self._c.shape[0]:, :self._c.shape[1]] = self._c
             c2[k2-c.shape[0]:, self._c.shape[1]:] = c
-            self._x = np.r_[self._x, x]
+            self._x = mx.r_[self._x, x]
         elif action == 'prepend':
             c2[k2-self._c.shape[0]:, :c.shape[1]] = c
             c2[k2-c.shape[0]:, c.shape[1]:] = self._c
-            self._x = np.r_[x, self._x]
+            self._x = mx.r_[x, self._x]
 
         self._c = c2
 
@@ -816,9 +816,9 @@ class _PPolyBase:
         """
         if extrapolate is None:
             extrapolate = self.extrapolate
-        x = np.asarray(x)
+        x = mx.array(x)
         x_shape, x_ndim = x.shape, x.ndim
-        x = np.ascontiguousarray(x.ravel(), dtype=np.float64)
+        x = mx.ascontiguousarray(x.ravel(), dtype=mx.float64)
 
         # With periodic extrapolation we map x to the segment
         # [self.x[0], self.x[-1]].
@@ -826,7 +826,7 @@ class _PPolyBase:
             x = self._x[0] + (x - self._x[0]) % (self._x[-1] - self._x[0])
             extrapolate = False
 
-        out = np.empty((len(x), prod(self._c.shape[2:])), dtype=self._c.dtype)
+        out = mx.empty((len(x), prod(self._c.shape[2:])), dtype=self._c.dtype)
         self._ensure_c_contiguous()
         self._evaluate(x, nu, extrapolate, out)
         out = out.reshape(x_shape + self._c.shape[2:])
@@ -857,9 +857,9 @@ class PPoly(_PPolyBase):
 
     Parameters
     ----------
-    c : ndarray, shape (k+1, m, ...)
+    c : array, shape (k+1, m, ...)
         Polynomial coefficients, degree `k` and `m` intervals.
-    x : ndarray, shape (m+1,)
+    x : array, shape (m+1,)
         Polynomial breakpoints. Must be sorted in either increasing or
         decreasing order.
     extrapolate : bool or 'periodic', optional
@@ -871,9 +871,9 @@ class PPoly(_PPolyBase):
 
     Attributes
     ----------
-    x : ndarray
+    x : array
         Breakpoints.
-    c : ndarray
+    c : array
         Coefficients of the polynomials. They are reshaped
         to a 3-D array with the last dimension representing
         the trailing dimensions of the original coefficient array.
@@ -943,10 +943,10 @@ class PPoly(_PPolyBase):
 
         if c2.shape[0] == 0:
             # derivative of order 0 is zero
-            c2 = np.zeros((1,) + c2.shape[1:], dtype=c2.dtype)
+            c2 = mx.zeros((1,) + c2.shape[1:], dtype=c2.dtype)
 
         # multiply by the correct rising factorials
-        factor = spec.poch(np.arange(c2.shape[0], 0, -1), nu)
+        factor = spec.poch(mx.arange(c2.shape[0], 0, -1), nu)
         c2 *= factor[(slice(None),) + (None,)*(c2.ndim-1)]
 
         # construct a compatible polynomial
@@ -986,12 +986,12 @@ class PPoly(_PPolyBase):
         if nu <= 0:
             return self.derivative(-nu)
 
-        c = np.zeros((self._c.shape[0] + nu, self._c.shape[1]) + self._c.shape[2:],
+        c = mx.zeros((self._c.shape[0] + nu, self._c.shape[1]) + self._c.shape[2:],
                      dtype=self._c.dtype)
         c[:-nu] = self._c
 
         # divide by the correct rising factorials
-        factor = spec.poch(np.arange(self._c.shape[0], 0, -1), nu)
+        factor = spec.poch(mx.arange(self._c.shape[0], 0, -1), nu)
         c[:-nu] /= factor[(slice(None),) + (None,)*(c.ndim-1)]
 
         # fix continuity of added degrees of freedom
@@ -1038,7 +1038,7 @@ class PPoly(_PPolyBase):
             a, b = b, a
             sign = -1
 
-        range_int = np.empty((prod(self._c.shape[2:]),), dtype=self._c.dtype)
+        range_int = mx.empty((prod(self._c.shape[2:]),), dtype=self._c.dtype)
         self._ensure_c_contiguous()
 
         # Compute the integral.
@@ -1065,7 +1065,7 @@ class PPoly(_PPolyBase):
 
             # If b <= xe then we need to integrate over [a, b], otherwise
             # over [a, xe] and from xs to what is remained.
-            remainder_int = np.empty_like(range_int)
+            remainder_int = mx.empty_like(range_int)
             if b <= xe:
                 _ppoly.integrate(
                     self._c.reshape(self._c.shape[0], self._c.shape[1], -1),
@@ -1108,12 +1108,12 @@ class PPoly(_PPolyBase):
 
         Returns
         -------
-        roots : ndarray
+        roots : array
             Roots of the polynomial(s).
 
             If the PPoly object describes multiple polynomials, the
             return value is an object array whose each element is an
-            ndarray containing the roots.
+            array containing the roots.
 
         Notes
         -----
@@ -1133,9 +1133,9 @@ class PPoly(_PPolyBase):
         Finding roots of ``[x**2 - 1, (x - 1)**2]`` defined on intervals
         ``[-2, 1], [1, 2]``:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.interpolate import PPoly
-        >>> pp = PPoly(np.array([[1, -4, 3], [1, 0, 0]]).T, [-2, 1, 2])
+        >>> pp = PPoly(mx.array([[1, -4, 3], [1, 0, 0]]).T, [-2, 1, 2])
         >>> pp.solve()
         array([-1.,  1.])
         """
@@ -1144,7 +1144,7 @@ class PPoly(_PPolyBase):
 
         self._ensure_c_contiguous()
 
-        if np.issubdtype(self._c.dtype, np.complexfloating):
+        if mx.issubdtype(self._c.dtype, mx.complexfloating):
             raise ValueError("Root finding is only for "
                              "real-valued polynomials")
 
@@ -1155,7 +1155,7 @@ class PPoly(_PPolyBase):
         if self._c.ndim == 2:
             return r[0]
         else:
-            r2 = np.empty(prod(self._c.shape[2:]), dtype=object)
+            r2 = mx.empty(prod(self._c.shape[2:]), dtype=object)
             # this for-loop is equivalent to ``r2[...] = r``, but that's broken
             # in NumPy 1.6.0
             for ii, root in enumerate(r):
@@ -1179,12 +1179,12 @@ class PPoly(_PPolyBase):
 
         Returns
         -------
-        roots : ndarray
+        roots : array
             Roots of the polynomial(s).
 
             If the PPoly object describes multiple polynomials, the
             return value is an object array whose each element is an
-            ndarray containing the roots.
+            array containing the roots.
 
         See Also
         --------
@@ -1210,10 +1210,10 @@ class PPoly(_PPolyBase):
         --------
         Construct an interpolating spline and convert it to a `PPoly` instance
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.interpolate import splrep, PPoly
-        >>> x = np.linspace(0, 1, 11)
-        >>> y = np.sin(2*np.pi*x)
+        >>> x = mx.linspace(0, 1, 11)
+        >>> y = mx.sin(2*mx.pi*x)
         >>> tck = splrep(x, y, s=0)
         >>> p = PPoly.from_spline(tck)
         >>> isinstance(p, PPoly)
@@ -1226,14 +1226,14 @@ class PPoly(_PPolyBase):
         over the dimensions manually.
 
         >>> from scipy.interpolate import splprep, splev
-        >>> t = np.linspace(0, 1, 11)
-        >>> x = np.sin(2*np.pi*t)
-        >>> y = np.cos(2*np.pi*t)
+        >>> t = mx.linspace(0, 1, 11)
+        >>> x = mx.sin(2*mx.pi*t)
+        >>> y = mx.cos(2*mx.pi*t)
         >>> (t, c, k), u = splprep([x, y], s=0)
 
         Note that ``c`` is a list of two arrays of length 11.
 
-        >>> unew = np.arange(0, 1.01, 0.01)
+        >>> unew = mx.arange(0, 1.01, 0.01)
         >>> out = splev(unew, (t, c, k))
 
         To convert this spline to the power basis, we convert each
@@ -1252,9 +1252,9 @@ class PPoly(_PPolyBase):
         Optionally, we can stack the components into a single `PPoly` along
         the third dimension:
 
-        >>> cc = np.dstack([p.c for p in polys])    # has shape = (4, 14, 2)
+        >>> cc = mx.dstack([p.c for p in polys])    # has shape = (4, 14, 2)
         >>> poly = PPoly(cc, polys[0].x)
-        >>> np.allclose(poly(unew).T,     # note the transpose to match `splev`
+        >>> mx.allclose(poly(unew).T,     # note the transpose to match `splev`
         ...             out, atol=1e-15)
         True
 
@@ -1266,9 +1266,9 @@ class PPoly(_PPolyBase):
                 extrapolate = tck.extrapolate
         else:
             t, c, k = tck
-            _asarray = np.asarray
+            _asarray = mx.array
 
-        cvals = np.empty((k + 1, len(t)-1), dtype=c.dtype)
+        cvals = mx.empty((k + 1, len(t)-1), dtype=c.dtype)
         for m in range(k, -1, -1):
             y = _fitpack_py.splev(t[:-1], (t, c, k), der=m)
             cvals[k - m, :] = y / spec.gamma(m+1)
@@ -1294,12 +1294,12 @@ class PPoly(_PPolyBase):
             raise TypeError(f".from_bernstein_basis only accepts BPoly instances. "
                             f"Got {type(bp)} instead.")
 
-        dx = np.diff(bp._x)
+        dx = mx.diff(bp._x)
         k = bp._c.shape[0] - 1  # polynomial order
 
         rest = (None,)*(bp.c.ndim-2)
 
-        c = np.zeros_like(bp._c)
+        c = mx.zeros_like(bp._c)
         for a in range(k+1):
             factor = (-1)**a * comb(k, a) * bp._c[a]
             for s in range(a, k+1):
@@ -1336,9 +1336,9 @@ class BPoly(_PPolyBase):
 
     Parameters
     ----------
-    c : ndarray, shape (k, m, ...)
+    c : array, shape (k, m, ...)
         Polynomial coefficients, order `k` and `m` intervals
-    x : ndarray, shape (m+1,)
+    x : array, shape (m+1,)
         Polynomial breakpoints. Must be sorted in either increasing or
         decreasing order.
     extrapolate : bool, optional
@@ -1350,9 +1350,9 @@ class BPoly(_PPolyBase):
 
     Attributes
     ----------
-    x : ndarray
+    x : array
         Breakpoints.
-    c : ndarray
+    c : array
         Coefficients of the polynomials. They are reshaped
         to a 3-D array with the last dimension representing
         the trailing dimensions of the original coefficient array.
@@ -1454,12 +1454,12 @@ class BPoly(_PPolyBase):
             rest = (None,)*(self._c.ndim-2)
 
             k = self._c.shape[0] - 1
-            dx = np.diff(self._x)[(None, slice(None))+rest]
-            c2 = k * np.diff(self._c, axis=0) / dx
+            dx = mx.diff(self._x)[(None, slice(None))+rest]
+            c2 = k * mx.diff(self._c, axis=0) / dx
 
         if c2.shape[0] == 0:
             # derivative of order 0 is zero
-            c2 = np.zeros((1,) + c2.shape[1:], dtype=c2.dtype)
+            c2 = mx.zeros((1,) + c2.shape[1:], dtype=c2.dtype)
 
         # construct a compatible polynomial
         c2 = self._asarray(c2)
@@ -1500,9 +1500,9 @@ class BPoly(_PPolyBase):
         # Construct the indefinite integrals on individual intervals
         c, x = self._c, self._x
         k = c.shape[0]
-        c2 = np.zeros((k+1,) + c.shape[1:], dtype=c.dtype)
+        c2 = mx.zeros((k+1,) + c.shape[1:], dtype=c.dtype)
 
-        c2[1:, ...] = np.cumsum(c, axis=0) / k
+        c2[1:, ...] = mx.cumsum(c, axis=0) / k
         delta = x[1:] - x[:-1]
         c2 *= delta[(None, slice(None)) + (None,)*(c.ndim-2)]
 
@@ -1512,7 +1512,7 @@ class BPoly(_PPolyBase):
         # The latter is given by the coefficient of B_{n+1, n+1}
         # *on the previous interval* (other B. polynomials are zero at the
         # breakpoint). Finally, use the fact that BPs form a partition of unity.
-        c2[:,1:] += np.cumsum(c2[k, :], axis=0)[:-1]
+        c2[:,1:] += mx.cumsum(c2[k, :], axis=0)[:-1]
 
         if self.extrapolate == 'periodic':
             extrapolate = False
@@ -1612,12 +1612,12 @@ class BPoly(_PPolyBase):
             raise TypeError(f".from_power_basis only accepts PPoly instances. "
                             f"Got {type(pp)} instead.")
 
-        dx = np.diff(pp._x)
+        dx = mx.diff(pp._x)
         k = pp._c.shape[0] - 1   # polynomial order
 
         rest = (None,)*(pp._c.ndim-2)
 
-        c = np.zeros_like(pp._c)
+        c = mx.zeros_like(pp._c)
         for a in range(k+1):
             factor = pp._c[a] / comb(k, k-a) * dx[(slice(None),) + rest]**(k-a)
             for j in range(k-a, k+1):
@@ -1692,10 +1692,10 @@ class BPoly(_PPolyBase):
         So that f'(1-0) = -1 and f'(1+0) = 2
 
         """
-        xi = np.asarray(xi)
+        xi = mx.array(xi)
         if len(xi) != len(yi):
             raise ValueError("xi and yi need to have the same length")
-        if np.any(xi[1:] - xi[:1] <= 0):
+        if mx.any(xi[1:] - xi[:1] <= 0):
             raise ValueError("x coordinates are not in increasing order")
 
         # number of intervals
@@ -1712,7 +1712,7 @@ class BPoly(_PPolyBase):
         if orders is None:
             orders = [None] * m
         else:
-            if isinstance(orders, int | np.integer):
+            if isinstance(orders, int | mx.integer):
                 orders = [orders] * m
             k = max(k, max(orders))
 
@@ -1746,7 +1746,7 @@ class BPoly(_PPolyBase):
                 b = BPoly._raise_degree(b, k - len(b))
             c.append(b)
 
-        c = np.asarray(c)
+        c = mx.array(c)
         return cls(c.swapaxes(0, 1), xi, extrapolate)
 
     @staticmethod
@@ -1804,23 +1804,23 @@ class BPoly(_PPolyBase):
         At ``x = xb`` it's the same with ``a = n - q``.
 
         """
-        ya, yb = np.asarray(ya), np.asarray(yb)
+        ya, yb = mx.array(ya), mx.array(yb)
         if ya.shape[1:] != yb.shape[1:]:
             raise ValueError(
                 f"Shapes of ya {ya.shape} and yb {yb.shape} are incompatible"
             )
 
         dta, dtb = ya.dtype, yb.dtype
-        if (np.issubdtype(dta, np.complexfloating) or
-               np.issubdtype(dtb, np.complexfloating)):
-            dt = np.complex128
+        if (mx.issubdtype(dta, mx.complexfloating) or
+               mx.issubdtype(dtb, mx.complexfloating)):
+            dt = mx.complex128
         else:
-            dt = np.float64
+            dt = mx.float64
 
         na, nb = len(ya), len(yb)
         n = na + nb
 
-        c = np.empty((na+nb,) + ya.shape[1:], dtype=dt)
+        c = mx.empty((na+nb,) + ya.shape[1:], dtype=dt)
 
         # compute coefficients of a polynomial degree na+nb-1
         # walk left-to-right
@@ -1869,7 +1869,7 @@ class BPoly(_PPolyBase):
             return c
 
         k = c.shape[0] - 1
-        out = np.zeros((c.shape[0] + d,) + c.shape[1:], dtype=c.dtype)
+        out = mx.zeros((c.shape[0] + d,) + c.shape[1:], dtype=c.dtype)
 
         for a in range(c.shape[0]):
             f = c[a] * comb(k, a)
@@ -1904,10 +1904,10 @@ class NdPPoly:
 
     Parameters
     ----------
-    c : ndarray, shape (k0, ..., kn, m0, ..., mn, ...)
+    c : array, shape (k0, ..., kn, m0, ..., mn, ...)
         Polynomial coefficients, with polynomial order `kj` and
         `mj+1` intervals for each dimension `j`.
-    x : ndim-tuple of ndarrays, shapes (mj+1,)
+    x : ndim-tuple of arrays, shapes (mj+1,)
         Polynomial breakpoints for each dimension. These must be
         sorted in increasing order.
     extrapolate : bool, optional
@@ -1916,9 +1916,9 @@ class NdPPoly:
 
     Attributes
     ----------
-    x : tuple of ndarrays
+    x : tuple of arrays
         Breakpoints.
-    c : ndarray
+    c : array
         Coefficients of the polynomials.
 
     Methods
@@ -1942,8 +1942,8 @@ class NdPPoly:
     """
 
     def __init__(self, c, x, extrapolate=None):
-        self.x = tuple(np.ascontiguousarray(v, dtype=np.float64) for v in x)
-        self.c = np.asarray(c)
+        self.x = tuple(mx.ascontiguousarray(v, dtype=mx.float64) for v in x)
+        self.c = mx.array(c)
         if extrapolate is None:
             extrapolate = True
         self.extrapolate = bool(extrapolate)
@@ -1955,13 +1955,13 @@ class NdPPoly:
             raise ValueError("x arrays must all contain at least 2 points")
         if c.ndim < 2*ndim:
             raise ValueError("c must have at least 2*len(x) dimensions")
-        if any(np.any(v[1:] - v[:-1] < 0) for v in self.x):
+        if any(mx.any(v[1:] - v[:-1] < 0) for v in self.x):
             raise ValueError("x-coordinates are not in increasing order")
         if any(a != b.size - 1 for a, b in zip(c.shape[ndim:2*ndim], self.x)):
             raise ValueError("x and c do not agree on the number of intervals")
 
         dtype = self._get_dtype(self.c.dtype)
-        self.c = np.ascontiguousarray(self.c, dtype=dtype)
+        self.c = mx.ascontiguousarray(self.c, dtype=dtype)
 
     @classmethod
     def construct_fast(cls, c, x, extrapolate=None):
@@ -1983,11 +1983,11 @@ class NdPPoly:
         return self
 
     def _get_dtype(self, dtype):
-        if np.issubdtype(dtype, np.complexfloating) \
-               or np.issubdtype(self.c.dtype, np.complexfloating):
-            return np.complex128
+        if mx.issubdtype(dtype, mx.complexfloating) \
+               or mx.issubdtype(self.c.dtype, mx.complexfloating):
+            return mx.complex128
         else:
-            return np.float64
+            return mx.float64
 
     def _ensure_c_contiguous(self):
         if not self.c.flags.c_contiguous:
@@ -2033,21 +2033,21 @@ class NdPPoly:
 
         x = _ndim_coords_from_arrays(x)
         x_shape = x.shape
-        x = np.ascontiguousarray(x.reshape(-1, x.shape[-1]), dtype=np.float64)
+        x = mx.ascontiguousarray(x.reshape(-1, x.shape[-1]), dtype=mx.float64)
 
         if nu is None:
-            nu = np.zeros((ndim,), dtype=np.intc)
+            nu = mx.zeros((ndim,), dtype=mx.intc)
         else:
-            nu = np.asarray(nu, dtype=np.intc)
+            nu = mx.array(nu, dtype=mx.intc)
             if nu.ndim != 1 or nu.shape[0] != ndim:
                 raise ValueError("invalid number of derivative orders nu")
 
         dim1 = prod(self.c.shape[:ndim])
         dim2 = prod(self.c.shape[ndim:2*ndim])
         dim3 = prod(self.c.shape[2*ndim:])
-        ks = np.array(self.c.shape[:ndim], dtype=np.intc)
+        ks = mx.array(self.c.shape[:ndim], dtype=mx.intc)
 
-        out = np.empty((x.shape[0], dim3), dtype=self.c.dtype)
+        out = mx.empty((x.shape[0], dim3), dtype=self.c.dtype)
         self._ensure_c_contiguous()
 
         _ppoly.evaluate_nd(self.c.reshape(dim1, dim2, dim3),
@@ -2084,10 +2084,10 @@ class NdPPoly:
             # derivative of order 0 is zero
             shp = list(c2.shape)
             shp[axis] = 1
-            c2 = np.zeros(shp, dtype=c2.dtype)
+            c2 = mx.zeros(shp, dtype=c2.dtype)
 
         # multiply by the correct rising factorials
-        factor = spec.poch(np.arange(c2.shape[axis], 0, -1), nu)
+        factor = spec.poch(mx.arange(c2.shape[axis], 0, -1), nu)
         sl = [None]*c2.ndim
         sl[axis] = slice(None)
         c2 *= factor[tuple(sl)]
@@ -2111,12 +2111,12 @@ class NdPPoly:
 
         c = self.c.transpose(perm)
 
-        c2 = np.zeros((c.shape[0] + nu,) + c.shape[1:],
+        c2 = mx.zeros((c.shape[0] + nu,) + c.shape[1:],
                      dtype=c.dtype)
         c2[:-nu] = c
 
         # divide by the correct rising factorials
-        factor = spec.poch(np.arange(c.shape[0], 0, -1), nu)
+        factor = spec.poch(mx.arange(c.shape[0], 0, -1), nu)
         c2[:-nu] /= factor[(slice(None),) + (None,)*(c.ndim-1)]
 
         # fix continuity of added degrees of freedom

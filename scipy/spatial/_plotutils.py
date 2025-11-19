@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 __all__ = ['delaunay_plot_2d', 'convex_hull_plot_2d', 'voronoi_plot_2d']
 
@@ -10,7 +10,7 @@ def _get_axes():
 
 
 def _adjust_bounds(ax, points):
-    margin = 0.1 * np.ptp(points, axis=0)
+    margin = 0.1 * mx.ptp(points, axis=0)
     xy_min = points.min(axis=0) - margin
     xy_max = points.max(axis=0) + margin
     ax.set_xlim(xy_min[0], xy_max[0])
@@ -45,13 +45,13 @@ def delaunay_plot_2d(tri, ax=None):
     Examples
     --------
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.spatial import Delaunay, delaunay_plot_2d
 
     The Delaunay triangulation of a set of random points:
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> points = rng.random((30, 2))
     >>> tri = Delaunay(points)
 
@@ -103,13 +103,13 @@ def convex_hull_plot_2d(hull, ax=None):
     Examples
     --------
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.spatial import ConvexHull, convex_hull_plot_2d
 
     The convex hull of a random set of points:
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> points = rng.random((30, 2))
     >>> hull = ConvexHull(points)
 
@@ -177,13 +177,13 @@ def voronoi_plot_2d(vor, ax=None, **kw):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.spatial import Voronoi, voronoi_plot_2d
 
     Create a set of points for the example:
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> points = rng.random((10,2))
 
     Generate the Voronoi diagram for the points:
@@ -220,23 +220,23 @@ def voronoi_plot_2d(vor, ax=None, **kw):
     line_alpha = kw.get('line_alpha', 1.0)
 
     center = vor.points.mean(axis=0)
-    ptp_bound = np.ptp(vor.points, axis=0)
+    ptp_bound = mx.ptp(vor.points, axis=0)
 
     finite_segments = []
     infinite_segments = []
     for pointidx, simplex in zip(vor.ridge_points, vor.ridge_vertices):
-        simplex = np.asarray(simplex)
-        if np.all(simplex >= 0):
+        simplex = mx.array(simplex)
+        if mx.all(simplex >= 0):
             finite_segments.append(vor.vertices[simplex])
         else:
             i = simplex[simplex >= 0][0]  # finite end Voronoi vertex
 
             t = vor.points[pointidx[1]] - vor.points[pointidx[0]]  # tangent
-            t /= np.linalg.norm(t)
-            n = np.array([-t[1], t[0]])  # normal
+            t /= mx.linalg.norm(t)
+            n = mx.array([-t[1], t[0]])  # normal
 
             midpoint = vor.points[pointidx].mean(axis=0)
-            direction = np.sign(np.dot(midpoint - center, n)) * n
+            direction = mx.sign(mx.dot(midpoint - center, n)) * n
             if (vor.furthest_site):
                 direction = -direction
             aspect_factor = abs(ptp_bound.max() / ptp_bound.min())

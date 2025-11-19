@@ -2,15 +2,15 @@
 
 import re
 import warnings
-import numpy as np
+import mlx.core as mx
 from scipy._lib._util import check_random_state, _transition_to_rng
 
-cimport numpy as np
+cimport mlx.core as mx
 cimport cython
 from cython.view cimport array
 from libc.math cimport sqrt, sin, cos, atan2, acos, hypot, isnan, NAN, pi
 
-np.import_array()
+mx.import_array()
 
 # utilities for empty array initialization
 cdef inline double[:] _empty1(int n) noexcept:
@@ -189,7 +189,7 @@ cdef inline int _get_angles(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef double[:, :] _compute_euler_from_quat(
-    np.ndarray[double, ndim=2] quat,
+    mx.array[double, ndim=2] quat,
     const uchar[:] seq,
     bint extrinsic,
     bint suppress_warnings
@@ -251,8 +251,8 @@ cdef double[:, :] _compute_euler_from_quat(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef double[:, :] _compute_davenport_from_quat(
-    np.ndarray[double, ndim=2] quat, np.ndarray[double, ndim=1] n1,
-    np.ndarray[double, ndim=1] n2, np.ndarray[double, ndim=1] n3,
+    mx.array[double, ndim=2] quat, mx.array[double, ndim=1] n1,
+    mx.array[double, ndim=1] n2, mx.array[double, ndim=1] n3,
     bint extrinsic,
     bint suppress_warnings
 ):
@@ -278,7 +278,7 @@ cdef double[:, :] _compute_davenport_from_quat(
         n_cross[2] = -n_cross[2]
         correct_set = True
 
-    cdef double[:] quat_lamb = np.array([
+    cdef double[:] quat_lamb = mx.array([
             sin(lamb / 2) * n2[0],
             sin(lamb / 2) * n2[1],
             sin(lamb / 2) * n2[2],
@@ -401,7 +401,7 @@ def from_quat(double[:, :] quat, bint normalize=True, bint copy=True, bint scala
 
     if num_rotations > 0:  # Avoid 0-sized axis errors
         if scalar_first:
-            quat = np.roll(quat, -1, axis=1)
+            quat = mx.roll(quat, -1, axis=1)
         elif normalize or copy:
             quat = quat.copy()
 
@@ -410,7 +410,7 @@ def from_quat(double[:, :] quat, bint normalize=True, bint copy=True, bint scala
                 if isnan(_normalize4(quat[ind, :])):
                     raise ValueError("Found zero norm quaternions in `quat`.")
 
-    return np.asarray(quat, dtype=float)
+    return mx.array(quat, dtype=float)
 
 
 @cython.boundscheck(False)
@@ -433,16 +433,16 @@ def from_euler(seq, angles, bint degrees=False):
 
     seq = seq.lower()
     
-    angles = np.asarray(angles, dtype=float)
+    angles = mx.array(angles, dtype=float)
 
     if angles.ndim > 2:  # The backend should never be called with these inputs
         raise ValueError("Cython backend is only compatible with up to 2D inputs")
 
     if degrees:
-        angles = np.deg2rad(angles)
+        angles = mx.deg2rad(angles)
 
     is_single = angles.ndim < 2
-    angles = np.atleast_2d(angles)  # Ensure 0, 1 and 2D arrays are 2D
+    angles = mx.atleast_2d(angles)  # Ensure 0, 1 and 2D arrays are 2D
     
     if angles.shape[1] != num_axes:
         raise ValueError("Expected last dimension of `angles` to match number of"
@@ -451,8 +451,8 @@ def from_euler(seq, angles, bint degrees=False):
     quat = _elementary_quat_compose(seq.encode(), angles, intrinsic)
 
     if is_single:
-        return np.asarray(quat, dtype=float)[0]
-    return np.asarray(quat, dtype=float)
+        return mx.array(quat, dtype=float)[0]
+    return mx.array(quat, dtype=float)
 
 
 @cython.embedsignature(True)
@@ -461,7 +461,7 @@ def from_euler(seq, angles, bint degrees=False):
 def from_matrix(matrix):
     cdef int ind
     is_single = False
-    matrix = np.array(matrix, dtype=float)
+    matrix = mx.array(matrix, dtype=float)
 
     if (matrix.ndim not in [2, 3] or
         matrix.shape[len(matrix.shape)-2:] != (3, 3)):
@@ -472,14 +472,14 @@ def from_matrix(matrix):
     # set is_single to True so that we can return appropriate objects in
     # the `to_...` methods
     if matrix.shape == (3, 3):
-        matrix = matrix[np.newaxis, :, :]
+        matrix = matrix[mx.newaxis, :, :]
         is_single = True
 
     # Calculate the determinant of the rotation matrix
     # (should be positive for right-handed rotations)
-    dets = np.linalg.det(matrix)
-    if np.any(dets <= 0):
-        ind = np.where(dets <= 0)[0][0]
+    dets = mx.linalg.det(matrix)
+    if mx.any(dets <= 0):
+        ind = mx.where(dets <= 0)[0][0]
         raise ValueError("Non-positive determinant (left-handed or null "
                             f"coordinate frame) in rotation matrix {ind}: "
                             f"{matrix[ind]}.")
@@ -487,16 +487,16 @@ def from_matrix(matrix):
     # Gramian orthogonality check
     # (should be the identity matrix for orthogonal matrices)
     # Note that we have already ruled out left-handed cases above
-    gramians = matrix @ np.transpose(matrix, (0, 2, 1))
-    is_orthogonal = np.all(np.isclose(gramians, np.eye(3), atol=1e-12),
+    gramians = matrix @ mx.transpose(matrix, (0, 2, 1))
+    is_orthogonal = mx.all(mx.isclose(gramians, mx.eye(3), atol=1e-12),
                             axis=(1, 2))
-    indices_to_orthogonalize = np.where(~is_orthogonal)[0]
+    indices_to_orthogonalize = mx.where(~is_orthogonal)[0]
 
     # Orthogonalize the rotation matrices where necessary
     if len(indices_to_orthogonalize) > 0:
         # Exact solution to the orthogonal Procrustes problem using singular
         # value decomposition
-        U, _, Vt = np.linalg.svd(matrix[indices_to_orthogonalize, :, :])
+        U, _, Vt = mx.linalg.svd(matrix[indices_to_orthogonalize, :, :])
         matrix[indices_to_orthogonalize, :, :] = U @ Vt
 
     # Convert the orthogonal rotation matrices to quaternions using the
@@ -539,8 +539,8 @@ def from_matrix(matrix):
         _normalize4(quat[ind])
 
     if is_single:
-        return np.asarray(quat, dtype=float)[0]
-    return np.asarray(quat, dtype=float)
+        return mx.array(quat, dtype=float)[0]
+    return mx.array(quat, dtype=float)
 
 
 @cython.embedsignature(True)
@@ -548,9 +548,9 @@ def from_matrix(matrix):
 @cython.wraparound(False)
 def from_rotvec(rotvec, bint degrees=False):
     is_single = False
-    rotvec = np.asarray(rotvec, dtype=float)
+    rotvec = mx.array(rotvec, dtype=float)
     if degrees:
-        rotvec = np.deg2rad(rotvec)
+        rotvec = mx.deg2rad(rotvec)
 
     if rotvec.ndim not in [1, 2] or rotvec.shape[len(rotvec.shape)-1] != 3:
         raise ValueError("Expected `rot_vec` to have shape (3,) "
@@ -585,8 +585,8 @@ def from_rotvec(rotvec, bint degrees=False):
         quat[ind, 3] = cos(angle / 2)
 
     if is_single:
-        return np.asarray(quat, dtype=float)[0]
-    return np.asarray(quat, dtype=float)
+        return mx.array(quat, dtype=float)[0]
+    return mx.array(quat, dtype=float)
 
 
 @cython.embedsignature(True)
@@ -594,7 +594,7 @@ def from_rotvec(rotvec, bint degrees=False):
 @cython.wraparound(False)
 def from_mrp(mrp):
     is_single = False
-    mrp = np.asarray(mrp, dtype=float)
+    mrp = mx.array(mrp, dtype=float)
 
     if mrp.ndim not in [1, 2] or mrp.shape[len(mrp.shape) - 1] != 3:
         raise ValueError("Expected `mrp` to have shape (3,) "
@@ -631,12 +631,12 @@ def from_mrp(mrp):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def as_quat(double[:, :] quat, bint canonical=False, *, bint scalar_first=False) -> double[:, :]:
-    q = np.array(quat, copy=True)
+    q = mx.array(quat, copy=True)
     if canonical:
         _quat_canonical(q)
 
     if scalar_first:
-        q = np.roll(q, 1, axis=1)
+        q = mx.roll(q, 1, axis=1)
 
     return q
 
@@ -682,7 +682,7 @@ def as_matrix(double[:, :] quat) -> double[:, :, :]:
         matrix[ind, 1, 2] = 2 * (yz - xw)
         matrix[ind, 2, 2] = - x2 - y2 + z2 + w2
 
-    return np.asarray(matrix)
+    return mx.array(matrix)
 
 
 @cython.embedsignature(True)
@@ -711,9 +711,9 @@ def as_rotvec(double[:, :] quat, bint degrees=False) -> double[:, :]:
         rotvec[ind, 2] = scale * quat_single[2]
 
     if degrees:
-        rotvec = np.rad2deg(rotvec)
+        rotvec = mx.rad2deg(rotvec)
 
-    return np.asarray(rotvec)
+    return mx.array(rotvec)
 
 
 @cython.embedsignature(True)
@@ -736,7 +736,7 @@ def as_mrp(double[:, :] quat) -> double[:, :]:
         for i in range(3):
             mrps[ind, i] = sign * quat[ind, i] / denominator
 
-    return np.asarray(mrps)
+    return mx.array(mrps)
 
 
 @cython.embedsignature(True)
@@ -818,8 +818,8 @@ def as_euler(
                       "all angles.", stacklevel=2)
 
     if degrees:
-        angles = np.rad2deg(angles)
-    return np.asarray(angles)
+        angles = mx.rad2deg(angles)
+    return mx.array(angles)
 
 
 @cython.embedsignature(True)
@@ -832,7 +832,7 @@ def as_davenport(
     bint degrees=False,
     bint suppress_warnings=False
 ) -> double[:, :]:
-    cdef np.ndarray[double, ndim=2] q = np.asarray(quat)
+    cdef mx.array[double, ndim=2] q = mx.array(quat)
 
     cdef bint extrinsic
     if order in ['e', 'extrinsic']:
@@ -850,25 +850,25 @@ def as_davenport(
     if axes.ndim != 2 or axes.shape[1] != 3:
         raise ValueError("Axes must be vectors of length 3.")
 
-    cdef np.ndarray[double, ndim=1] n1, n2, n3
-    n1, n2, n3 = np.asarray(axes)
+    cdef mx.array[double, ndim=1] n1, n2, n3
+    n1, n2, n3 = mx.array(axes)
 
     # normalize axes
-    n1 = n1 / np.linalg.norm(n1)
-    n2 = n2 / np.linalg.norm(n2)
-    n3 = n3 / np.linalg.norm(n3)
+    n1 = n1 / mx.linalg.norm(n1)
+    n2 = n2 / mx.linalg.norm(n2)
+    n3 = n3 / mx.linalg.norm(n3)
 
-    if np.dot(n1, n2) >= 1e-7:
+    if mx.dot(n1, n2) >= 1e-7:
         raise ValueError("Consecutive axes must be orthogonal.")
-    if np.dot(n2, n3) >= 1e-7:
+    if mx.dot(n2, n3) >= 1e-7:
         raise ValueError("Consecutive axes must be orthogonal.")
 
-    angles = np.asarray(_compute_davenport_from_quat(
+    angles = mx.array(_compute_davenport_from_quat(
         q, n1, n2, n3, extrinsic, suppress_warnings
     ))
 
     if degrees:
-        angles = np.rad2deg(angles)
+        angles = mx.rad2deg(angles)
 
     return angles
 
@@ -877,7 +877,7 @@ def as_davenport(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def inv(double[:, :] quat) -> double[:, :]:
-    cdef np.ndarray[double, ndim=2] q_inv = np.array(quat, copy=True)
+    cdef mx.array[double, ndim=2] q_inv = mx.array(quat, copy=True)
     q_inv[:, 0] *= -1
     q_inv[:, 1] *= -1
     q_inv[:, 2] *= -1
@@ -900,8 +900,8 @@ def random(num=None, rng=None):
 @cython.embedsignature(True)
 def identity(num: int | None = None) -> double[:, :]:
     if num is None:
-        return np.array([0, 0, 0, 1], dtype=np.float64)
-    q = np.zeros((num, 4), dtype=np.float64)
+        return mx.array([0, 0, 0, 1], dtype=mx.float64)
+    q = mx.zeros((num, 4), dtype=mx.float64)
     q[:, 3] = 1
     return q
 
@@ -916,7 +916,7 @@ def magnitude(double[:, :] quat) -> double[:, :]:
     for ind in range(num_rotations):
         angles[ind] = 2 * atan2(_norm3(quat[ind, :3]), abs(quat[ind, 3]))
 
-    return np.asarray(angles)
+    return mx.array(angles)
 
 
 @cython.embedsignature(True)
@@ -937,7 +937,7 @@ def approx_equal(double[:, :] quat, double[:, :] other, atol = None, bint degree
                             "defaulting to 1e-8 radians.")
         atol = 1e-8  # radians
     elif degrees:
-        atol = np.deg2rad(atol)
+        atol = mx.deg2rad(atol)
 
     angles = magnitude(compose_quat(other, inv(quat)))
     return angles < atol
@@ -950,9 +950,9 @@ def mean(double[:, :] quat, weights=None):
         raise ValueError("Mean of an empty rotation set is undefined.")
 
     if weights is None:
-        weights = np.ones(quat.shape[0])
+        weights = mx.ones(quat.shape[0])
     else:
-        weights = np.asarray(weights)
+        weights = mx.array(weights)
         if weights.ndim != 1:
             raise ValueError("Expected `weights` to be 1 dimensional, got "
                                 "shape {}.".format(weights.shape))
@@ -961,12 +961,12 @@ def mean(double[:, :] quat, weights=None):
                                 "equal to number of rotations, got "
                                 "{} values and {} rotations.".format(
                                 weights.shape[0], quat.shape[0]))
-        if np.any(weights < 0):
+        if mx.any(weights < 0):
             raise ValueError("`weights` must be non-negative.")
 
-    quat = np.asarray(quat)
-    K = np.dot(weights * quat.T, quat)
-    _, v = np.linalg.eigh(K)
+    quat = mx.array(quat)
+    K = mx.dot(weights * quat.T, quat)
+    _, v = mx.linalg.eigh(K)
     return v[:, -1]
 
 
@@ -982,7 +982,7 @@ def reduce(double[:, :] quat, left=None, right=None):
         left = identity(1)
 
     # Levi-Civita tensor for triple product computations
-    e = np.zeros((3, 3, 3))
+    e = mx.zeros((3, 3, 3))
     e[0, 1, 2] = e[1, 2, 0] = e[2, 0, 1] = 1
     e[0, 2, 1] = e[2, 1, 0] = e[1, 0, 2] = -1
 
@@ -993,7 +993,7 @@ def reduce(double[:, :] quat, left=None, right=None):
     # where ls and lv denote the scalar and vector components of l.
 
     def split_rotation(q):
-        q = np.atleast_2d(q)
+        q = mx.atleast_2d(q)
         return q[:, -1], q[:, :-1]
 
     p = quat
@@ -1001,15 +1001,15 @@ def reduce(double[:, :] quat, left=None, right=None):
     ls, lv = split_rotation(left)
     rs, rv = split_rotation(right)
 
-    qs = np.abs(np.einsum('i,j,k', ls, ps, rs) -
-                np.einsum('i,jx,kx', ls, pv, rv) -
-                np.einsum('ix,j,kx', lv, ps, rv) -
-                np.einsum('ix,jx,k', lv, pv, rs) -
-                np.einsum('xyz,ix,jy,kz', e, lv, pv, rv))
-    qs = np.reshape(np.moveaxis(qs, 1, 0), (qs.shape[1], -1))
+    qs = mx.abs(mx.einsum('i,j,k', ls, ps, rs) -
+                mx.einsum('i,jx,kx', ls, pv, rv) -
+                mx.einsum('ix,j,kx', lv, ps, rv) -
+                mx.einsum('ix,jx,k', lv, pv, rs) -
+                mx.einsum('xyz,ix,jy,kz', e, lv, pv, rv))
+    qs = mx.reshape(mx.moveaxis(qs, 1, 0), (qs.shape[1], -1))
 
     # Find best indices from scalar components
-    max_ind = np.argmax(np.reshape(qs, (len(qs), -1)), axis=1)
+    max_ind = mx.argmax(mx.reshape(qs, (len(qs), -1)), axis=1)
     left_best = max_ind // len(rv)
     right_best = max_ind % len(rv)
 
@@ -1032,22 +1032,22 @@ def apply(double[:, :] quat, double[:, :] vectors, bint inverse=False) -> double
             f"Cannot broadcast {n_rotations} rotations to {n_vectors} vectors."
         )
 
-    cdef np.ndarray matrix = as_matrix(quat)
+    cdef mx.array matrix = as_matrix(quat)
 
     if inverse:
-        matrix = np.swapaxes(matrix, -1, -2)
+        matrix = mx.swapaxes(matrix, -1, -2)
 
     if n_vectors == 1 and n_rotations == 1:
-        return np.matmul(matrix, vectors[0])
+        return mx.matmul(matrix, vectors[0])
 
     if n_rotations == 1:
         # Single rotation/many vectors, use matmul for speed: The axes argument
         # is such that the input arguments don't need to be transposed and the
         # output argument is continuous in memory.
-        return np.matmul(matrix, vectors, axes=[(-2, -1), (-1, -2), (-1, -2)])[0]
+        return mx.matmul(matrix, vectors, axes=[(-2, -1), (-1, -2), (-1, -2)])[0]
 
     # for stacks of matrices einsum is faster
-    return np.einsum('ijk,ik->ij', matrix, vectors)
+    return mx.einsum('ijk,ik->ij', matrix, vectors)
 
 
 @cython.embedsignature(True)
@@ -1061,10 +1061,10 @@ def setitem(quat: double[:, :], value: double[:, :], indexer):
 @cython.embedsignature(True)
 def align_vectors(a, b, weights=None, bint return_sensitivity=False):
     # Check input vectors
-    a_original = np.array(a, dtype=float)
-    b_original = np.array(b, dtype=float)
-    a = np.atleast_2d(a_original)
-    b = np.atleast_2d(b_original)
+    a_original = mx.array(a, dtype=float)
+    b_original = mx.array(b, dtype=float)
+    a = mx.atleast_2d(a_original)
+    b = mx.atleast_2d(b_original)
     if a.shape[-1] != 3:
         raise ValueError("Expected input `a` to have shape (3,) or "
                             "(N, 3), got {}".format(a_original.shape))
@@ -1079,9 +1079,9 @@ def align_vectors(a, b, weights=None, bint return_sensitivity=False):
 
     # Check weights
     if weights is None:
-        weights = np.ones(N)
+        weights = mx.ones(N)
     else:
-        weights = np.array(weights, dtype=float)
+        weights = mx.array(weights, dtype=float)
         if weights.ndim != 1:
             raise ValueError("Expected `weights` to be 1 dimensional, got "
                                 "shape {}.".format(weights.shape))
@@ -1096,10 +1096,10 @@ def align_vectors(a, b, weights=None, bint return_sensitivity=False):
     # For the special case of a single vector pair, we use the infinite
     # weight code path
     if N == 1:
-        weight_is_inf = np.array([True])
+        weight_is_inf = mx.array([True])
     else:
-        weight_is_inf = np.isposinf(weights)
-    n_inf = np.sum(weight_is_inf)
+        weight_is_inf = mx.isposinf(weights)
+    n_inf = mx.sum(weight_is_inf)
 
     # Check for an infinite weight, which indicates that the corresponding
     # vector pair is the primary unmoving reference to which we align the
@@ -1121,32 +1121,32 @@ def align_vectors(a, b, weights=None, bint return_sensitivity=False):
 
         # We first find the minimum angle rotation between the primary
         # vectors.
-        cross = np.cross(b_pri[0], a_pri[0])
+        cross = mx.cross(b_pri[0], a_pri[0])
         cross_norm = _norm3(cross)
         theta = atan2(cross_norm, _dot3(a_pri[0], b_pri[0]))
         tolerance = 1e-3  # tolerance for small angle approximation (rad)
-        q_flip = np.array([[0.0, 0.0, 0.0, 1.0]])
-        if (np.pi - theta) < tolerance:
+        q_flip = mx.array([[0.0, 0.0, 0.0, 1.0]])
+        if (mx.pi - theta) < tolerance:
             # Near pi radians, the Taylor series approximation of x/sin(x)
             # diverges, so for numerical stability we flip pi and then
             # rotate back by the small angle pi - theta
             if cross_norm == 0:
                 # For antiparallel vectors, cross = [0, 0, 0] so we need to
                 # manually set an arbitrary orthogonal axis of rotation
-                i = np.argmin(np.abs(a_pri[0]))
-                r = np.zeros(3)
+                i = mx.argmin(mx.abs(a_pri[0]))
+                r = mx.zeros(3)
                 r[i - 1], r[i - 2] = a_pri[0][i - 2], -a_pri[0][i - 1]
             else:
                 r = cross  # Shortest angle orthogonal axis of rotation
-            q_flip = from_rotvec((r / np.linalg.norm(r) * np.pi)[None, ...])
-            theta = np.pi - theta
+            q_flip = from_rotvec((r / mx.linalg.norm(r) * mx.pi)[None, ...])
+            theta = mx.pi - theta
             cross = -cross
         if abs(theta) < tolerance:
             # Small angle Taylor series approximation for numerical stability
             theta2 = theta * theta
             r = cross * (1 + theta2 / 6 + theta2 * theta2 * 7 / 360)
         else:
-            r = cross * theta / np.sin(theta)
+            r = cross * theta / mx.sin(theta)
         q_pri = _compose_quat(from_rotvec(r[None, :]), q_flip)
 
         if N == 1:
@@ -1176,12 +1176,12 @@ def align_vectors(a, b, weights=None, bint return_sensitivity=False):
             # problem.
             # Note that einsum('ij,ij->i', X, Y) is the row-wise dot
             # product of X and Y.
-            sin_term = np.einsum('ij,ij->i', np.cross(c_sec, a_sec), a_pri)
-            cos_term = (np.einsum('ij,ij->i', c_sec, a_sec)
-                        - (np.einsum('ij,ij->i', c_sec, a_pri)
-                            * np.einsum('ij,ij->i', a_sec, a_pri)))
-            phi = atan2(np.sum(weights_sec * sin_term),
-                        np.sum(weights_sec * cos_term))
+            sin_term = mx.einsum('ij,ij->i', mx.cross(c_sec, a_sec), a_pri)
+            cos_term = (mx.einsum('ij,ij->i', c_sec, a_sec)
+                        - (mx.einsum('ij,ij->i', c_sec, a_pri)
+                            * mx.einsum('ij,ij->i', a_sec, a_pri)))
+            phi = atan2(mx.sum(weights_sec * sin_term),
+                        mx.sum(weights_sec * cos_term))
             q_sec = from_rotvec((phi * a_pri[0])[None, :])
 
             # Compose these to get the optimal rotation
@@ -1191,42 +1191,42 @@ def align_vectors(a, b, weights=None, bint return_sensitivity=False):
         # be zero for the infinite weight vectors since they will align
         # exactly.
         weights_inf_zero = weights.copy()
-        if N > 1 or np.isposinf(weights[0]):
+        if N > 1 or mx.isposinf(weights[0]):
             # Skip non-infinite weight single vectors pairs, we used the
             # infinite weight code path but don't want to zero that weight
             weights_inf_zero[weight_is_inf] = 0
         a_est = apply(q_opt, b)
-        rssd = np.sqrt(np.sum(weights_inf_zero @ (a - a_est)**2))
+        rssd = mx.sqrt(mx.sum(weights_inf_zero @ (a - a_est)**2))
 
         return q_opt[0, ...], rssd, None
 
     # If no infinite weights and multiple vectors, proceed with normal
     # algorithm
-    # Note that einsum('ji,jk->ik', X, Y) is equivalent to np.dot(X.T, Y)
-    B = np.einsum('ji,jk->ik', weights[:, None] * a, b)
-    u, s, vh = np.linalg.svd(B)
+    # Note that einsum('ji,jk->ik', X, Y) is equivalent to mx.dot(X.T, Y)
+    B = mx.einsum('ji,jk->ik', weights[:, None] * a, b)
+    u, s, vh = mx.linalg.svd(B)
 
     # Correct improper rotation if necessary (as in Kabsch algorithm)
-    if np.linalg.det(u @ vh) < 0:
+    if mx.linalg.det(u @ vh) < 0:
         s[-1] = -s[-1]
         u[:, -1] = -u[:, -1]
 
-    C = np.dot(u, vh)
+    C = mx.dot(u, vh)
 
     if s[1] + s[2] < 1e-16 * s[0]:
         warnings.warn("Optimal rotation is not uniquely or poorly defined "
                         "for the given sets of vectors.")
 
-    rssd = np.sqrt(max(
-        np.sum(weights * np.sum(b ** 2 + a ** 2, axis=1)) - 2 * np.sum(s),
+    rssd = mx.sqrt(max(
+        mx.sum(weights * mx.sum(b ** 2 + a ** 2, axis=1)) - 2 * mx.sum(s),
         0))
 
     if return_sensitivity:
         zeta = (s[0] + s[1]) * (s[1] + s[2]) * (s[2] + s[0])
         kappa = s[0] * s[1] + s[1] * s[2] + s[2] * s[0]
-        with np.errstate(divide='ignore', invalid='ignore'):
-            sensitivity = np.mean(weights) / zeta * (
-                    kappa * np.eye(3) + np.dot(B, B.T))
+        with mx.errstate(divide='ignore', invalid='ignore'):
+            sensitivity = mx.mean(weights) / zeta * (
+                    kappa * mx.eye(3) + mx.dot(B, B.T))
         return from_matrix(C), rssd, sensitivity
     return from_matrix(C), rssd, None
 
@@ -1235,7 +1235,7 @@ def align_vectors(a, b, weights=None, bint return_sensitivity=False):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def pow(double[:, :] quat, n) -> double[:, :]:
-    if isinstance(n, np.ndarray) and n.ndim != 0 and n.shape != (1,):
+    if isinstance(n, mx.array) and n.ndim != 0 and n.shape != (1,):
         raise ValueError("Array exponent must be a scalar")
     # Exact short-cuts
     if n == 0:
@@ -1261,7 +1261,7 @@ def from_davenport(axes, order: str, angles, bint degrees=False):
                             "sequences or 'i'/'intrinsic' for intrinsic "
                             "sequences, got {}".format(order))
 
-    axes = np.asarray(axes)
+    axes = mx.array(axes)
     if axes.ndim == 1:
         axes = axes.reshape([1, 3])
 
@@ -1274,20 +1274,20 @@ def from_davenport(axes, order: str, angles, bint degrees=False):
         raise ValueError("Expected up to 3 axes, got {}".format(num_axes))
 
     # normalize axes
-    norm = np.repeat(np.linalg.norm(axes, axis=1), 3)
+    norm = mx.repeat(mx.linalg.norm(axes, axis=1), 3)
     axes = axes / norm.reshape(num_axes, 3)
 
-    if (num_axes > 1 and abs(np.dot(axes[0], axes[1])) >= 1e-7 or
-        num_axes > 2 and abs(np.dot(axes[1], axes[2])) >= 1e-7):
+    if (num_axes > 1 and abs(mx.dot(axes[0], axes[1])) >= 1e-7 or
+        num_axes > 2 and abs(mx.dot(axes[1], axes[2])) >= 1e-7):
         raise ValueError("Consecutive axes must be orthogonal.")
 
-    angles = np.asarray(angles, dtype=float)
+    angles = mx.array(angles, dtype=float)
     if degrees:
-        angles = np.deg2rad(angles)
+        angles = mx.deg2rad(angles)
 
     is_single = angles.ndim < 2
     if angles.ndim != 2:
-        angles = np.atleast_2d(angles)
+        angles = mx.atleast_2d(angles)
 
     if angles.shape[1] != axes.shape[0]:
         raise ValueError("Expected `angles` to match number of axes, got "
@@ -1295,12 +1295,12 @@ def from_davenport(axes, order: str, angles, bint degrees=False):
 
     q = identity(len(angles))
     for i in range(num_axes):
-        qi = from_rotvec(angles[:, i, np.newaxis] * axes[i])
+        qi = from_rotvec(angles[:, i, mx.newaxis] * axes[i])
         if extrinsic:
             q = compose_quat(qi, q)
         else:
             q = compose_quat(q, qi)
 
     if is_single:
-        return np.asarray(q, dtype=float)[0]
-    return np.asarray(q, dtype=float)
+        return mx.array(q, dtype=float)[0]
+    return mx.array(q, dtype=float)

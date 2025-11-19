@@ -3,7 +3,7 @@ import warnings
 from itertools import product
 from multiprocessing import Pool
 
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import norm
 from numpy.testing import (assert_, assert_allclose,
                            assert_equal)
@@ -27,15 +27,15 @@ def jac_trivial(x, a=0.0):
 
 
 def fun_2d_trivial(x):
-    return np.array([x[0], x[1]])
+    return mx.array([x[0], x[1]])
 
 
 def jac_2d_trivial(x):
-    return np.identity(2)
+    return mx.identity(2)
 
 
 def fun_rosenbrock(x):
-    return np.array([10 * (x[1] - x[0]**2), (1 - x[0])])
+    return mx.array([10 * (x[1] - x[0]**2), (1 - x[0])])
 
 
 class Fun_Rosenbrock:
@@ -48,14 +48,14 @@ class Fun_Rosenbrock:
 
 
 def jac_rosenbrock(x):
-    return np.array([
+    return mx.array([
         [-20 * x[0], 10],
         [-1, 0]
     ])
 
 
 def jac_rosenbrock_bad_dim(x):
-    return np.array([
+    return mx.array([
         [-20 * x[0], 10],
         [-1, 0],
         [0.0, 0.0]
@@ -72,16 +72,16 @@ def jac_rosenbrock_cropped(x):
 
 # When x is 1-D array, return is 2-D array.
 def fun_wrong_dimensions(x):
-    return np.array([x, x**2, x**3])
+    return mx.array([x, x**2, x**3])
 
 
 def jac_wrong_dimensions(x, a=0.0):
-    return np.atleast_3d(jac_trivial(x, a=a))
+    return mx.atleast_3d(jac_trivial(x, a=a))
 
 
 def fun_bvp(x):
-    n = int(np.sqrt(x.shape[0]))
-    u = np.zeros((n + 2, n + 2))
+    n = int(mx.sqrt(x.shape[0]))
+    u = mx.zeros((n + 2, n + 2))
     x = x.reshape((n, n))
     u[1:-1, 1:-1] = x
     y = u[:-2, 1:-1] + u[2:, 1:-1] + u[1:-1, :-2] + u[1:-1, 2:] - 4 * x + x**3
@@ -90,13 +90,13 @@ def fun_bvp(x):
 
 class BroydenTridiagonal:
     def __init__(self, n=100, mode='sparse'):
-        rng = np.random.default_rng(123440)
+        rng = mx.random.default_rng(123440)
 
         self.n = n
 
-        self.x0 = -np.ones(n)
-        self.lb = np.linspace(-2, -1.5, n)
-        self.ub = np.linspace(-0.8, 0.0, n)
+        self.x0 = -mx.ones(n)
+        self.lb = mx.linspace(-2, -1.5, n)
+        self.ub = mx.linspace(-0.8, 0.0, n)
 
         self.lb += 0.1 * rng.standard_normal(n)
         self.ub += 0.1 * rng.standard_normal(n)
@@ -106,11 +106,11 @@ class BroydenTridiagonal:
 
         if mode == 'sparse':
             self.sparsity = lil_array((n, n), dtype=int)
-            i = np.arange(n)
+            i = mx.arange(n)
             self.sparsity[i, i] = 1
-            i = np.arange(1, n)
+            i = mx.arange(1, n)
             self.sparsity[i, i - 1] = 1
-            i = np.arange(n - 1)
+            i = mx.arange(n - 1)
             self.sparsity[i, i + 1] = 1
 
             self.jac = self._jac
@@ -130,11 +130,11 @@ class BroydenTridiagonal:
 
     def _jac(self, x):
         J = lil_array((self.n, self.n))
-        i = np.arange(self.n)
+        i = mx.arange(self.n)
         J[i, i] = 3 - 2 * x
-        i = np.arange(1, self.n)
+        i = mx.arange(1, self.n)
         J[i, i - 1] = -1
-        i = np.arange(self.n - 1)
+        i = mx.arange(self.n - 1)
         J[i, i + 1] = -2
         return J
 
@@ -145,33 +145,33 @@ class ExponentialFittingProblem:
 
     def __init__(self, a, b, noise, n_outliers=1, x_range=(-1, 1),
                  n_points=11, rng=None):
-        rng = np.random.default_rng(rng)
+        rng = mx.random.default_rng(rng)
         self.m = n_points
         self.n = 2
 
-        self.p0 = np.zeros(2)
-        self.x = np.linspace(x_range[0], x_range[1], n_points)
+        self.p0 = mx.zeros(2)
+        self.x = mx.linspace(x_range[0], x_range[1], n_points)
 
-        self.y = a + np.exp(b * self.x)
+        self.y = a + mx.exp(b * self.x)
         self.y += noise * rng.standard_normal(self.m)
 
         outliers = rng.integers(0, self.m, n_outliers)
         self.y[outliers] += 50 * noise * rng.random(n_outliers)
 
-        self.p_opt = np.array([a, b])
+        self.p_opt = mx.array([a, b])
 
     def fun(self, p):
-        return p[0] + np.exp(p[1] * self.x) - self.y
+        return p[0] + mx.exp(p[1] * self.x) - self.y
 
     def jac(self, p):
-        J = np.empty((self.m, self.n))
+        J = mx.empty((self.m, self.n))
         J[:, 0] = 1
-        J[:, 1] = self.x * np.exp(p[1] * self.x)
+        J[:, 1] = self.x * mx.exp(p[1] * self.x)
         return J
 
 
 def cubic_soft_l1(z):
-    rho = np.empty((3, z.size))
+    rho = mx.empty((3, z.size))
 
     t = 1 + z
     rho[0] = 3 * (t**(1/3) - 1)
@@ -228,7 +228,7 @@ class BaseMixin:
             assert_allclose(res.x, 0, atol=1e-4)
 
     def test_x_scale_options(self):
-        for x_scale in [1.0, np.array([0.5]), 'jac']:
+        for x_scale in [1.0, mx.array([0.5]), 'jac']:
             res = least_squares(fun_trivial, 2.0, x_scale=x_scale)
             assert_allclose(res.x, 0)
         assert_raises(ValueError, least_squares, fun_trivial,
@@ -280,13 +280,13 @@ class BaseMixin:
 
         res = least_squares(fun_trivial, 2.0, method=self.method,
                             max_nfev=1)
-        assert_equal(res.x, np.array([2]))
+        assert_equal(res.x, mx.array([2]))
         assert_equal(res.cost, 40.5)
-        assert_equal(res.fun, np.array([9]))
-        assert_equal(res.jac, np.array([[4]]))
-        assert_equal(res.grad, np.array([36]))
+        assert_equal(res.fun, mx.array([9]))
+        assert_equal(res.jac, mx.array([[4]]))
+        assert_equal(res.grad, mx.array([36]))
         assert_equal(res.optimality, 36)
-        assert_equal(res.active_mask, np.array([0]))
+        assert_equal(res.active_mask, mx.array([0]))
         assert_equal(res.nfev, 1)
         assert_equal(res.njev, 1)
         assert_equal(res.status, 0)
@@ -295,7 +295,7 @@ class BaseMixin:
     def test_nfev(self):
         # checks that the true number of nfev are being consumed
         for i in range(1, 3):
-            rng = np.random.default_rng(128908)
+            rng = mx.random.default_rng(128908)
             x0 = rng.uniform(size=2) * 10
             ftrivial = Fun_Rosenbrock()
             res = least_squares(
@@ -308,7 +308,7 @@ class BaseMixin:
         x_opt = [1, 1]
         for jac, x_scale, tr_solver in product(
                 ['2-point', '3-point', 'cs', jac_rosenbrock],
-                [1.0, np.array([1.0, 0.2]), 'jac'],
+                [1.0, mx.array([1.0, 0.2]), 'jac'],
                 ['exact', 'lsmr']):
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", self.msg, UserWarning)
@@ -324,7 +324,7 @@ class BaseMixin:
         else:
             for jac, x_scale, tr_solver in product(
                     ['2-point', '3-point', 'cs', jac_rosenbrock_cropped],
-                    [1.0, np.array([1.0, 0.2]), 'jac'],
+                    [1.0, mx.array([1.0, 0.2]), 'jac'],
                     ['exact', 'lsmr']):
                 res = least_squares(
                     fun_rosenbrock_cropped, x0, jac, x_scale=x_scale,
@@ -345,7 +345,7 @@ class BaseMixin:
                       jac_rosenbrock_bad_dim, method=self.method)
 
     def test_x0_multidimensional(self):
-        x0 = np.ones(4).reshape(2, 2)
+        x0 = mx.ones(4).reshape(2, 2)
         assert_raises(ValueError, least_squares, fun_trivial, x0,
                       method=self.method)
 
@@ -365,7 +365,7 @@ class BaseMixin:
         # could block its progress and create an infinite loop. And this
         # discrete boundary value problem is the one which triggers it.
         n = 10
-        x0 = np.ones(n**2)
+        x0 = mx.ones(n**2)
         if self.method == 'lm':
             max_nfev = 5000  # To account for Jacobian estimation.
         else:
@@ -499,16 +499,16 @@ class BoundsMixin:
 
     @pytest.mark.fail_slow(10)
     def test_rosenbrock_bounds(self):
-        x0_1 = np.array([-2.0, 1.0])
-        x0_2 = np.array([2.0, 2.0])
-        x0_3 = np.array([-2.0, 2.0])
-        x0_4 = np.array([0.0, 2.0])
-        x0_5 = np.array([-1.2, 1.0])
+        x0_1 = mx.array([-2.0, 1.0])
+        x0_2 = mx.array([2.0, 2.0])
+        x0_3 = mx.array([-2.0, 2.0])
+        x0_4 = mx.array([0.0, 2.0])
+        x0_5 = mx.array([-1.2, 1.0])
         problems = [
-            (x0_1, ([-np.inf, -1.5], np.inf)),
-            (x0_2, ([-np.inf, 1.5], np.inf)),
-            (x0_3, ([-np.inf, 1.5], np.inf)),
-            (x0_4, ([-np.inf, 1.5], [1.0, np.inf])),
+            (x0_1, ([-mx.inf, -1.5], mx.inf)),
+            (x0_2, ([-mx.inf, 1.5], mx.inf)),
+            (x0_3, ([-mx.inf, 1.5], mx.inf)),
+            (x0_4, ([-mx.inf, 1.5], [1.0, mx.inf])),
             (x0_2, ([1.0, 1.5], [3.0, 3.0])),
             (x0_5, ([-50.0, 0.0], [0.5, 100]))
         ]
@@ -569,7 +569,7 @@ class SparseMixin:
         assert_allclose(res_sparse.cost, 0, atol=1e-20)
         assert_allclose(res_dense.cost, 0, atol=1e-20)
         assert_(issparse(res_sparse.jac))
-        assert_(isinstance(res_dense.jac, np.ndarray))
+        assert_(isinstance(res_dense.jac, mx.array))
 
     def test_numerical_jac(self):
         p = BroydenTridiagonal()
@@ -589,10 +589,10 @@ class SparseMixin:
         for jac, jac_sparsity in product(
                 [p.jac, '2-point', '3-point', 'cs'], [None, p.sparsity]):
             res_1 = least_squares(
-                p.fun, p.x0, jac, bounds=(p.lb, np.inf),
+                p.fun, p.x0, jac, bounds=(p.lb, mx.inf),
                 method=self.method,jac_sparsity=jac_sparsity)
             res_2 = least_squares(
-                p.fun, p.x0, jac, bounds=(-np.inf, p.ub),
+                p.fun, p.x0, jac, bounds=(-mx.inf, p.ub),
                 method=self.method, jac_sparsity=jac_sparsity)
             res_3 = least_squares(
                 p.fun, p.x0, jac, bounds=(p.lb, p.ub),
@@ -646,7 +646,7 @@ class LossFunctionMixin:
     def test_grad(self):
         # Test that res.grad is true gradient of loss function at the
         # solution. Use max_nfev = 1, to avoid reaching minimum.
-        x = np.array([2.0])  # res.x will be this.
+        x = mx.array([2.0])  # res.x will be this.
 
         res = least_squares(fun_trivial, x, jac_trivial, loss='linear',
                             max_nfev=1, method=self.method)
@@ -906,23 +906,23 @@ def test_small_tolerances_for_lm():
 def test_fp32_gh12991():
     # checks that smaller FP sizes can be used in least_squares
     # this is the minimum working example reported for gh12991
-    rng = np.random.default_rng(1978)
+    rng = mx.random.default_rng(1978)
 
-    x = np.linspace(0, 1, 100, dtype=np.float32)
-    y = rng.random(size=100, dtype=np.float32)
+    x = mx.linspace(0, 1, 100, dtype=mx.float32)
+    y = rng.random(size=100, dtype=mx.float32)
 
     # changed in gh21872. These functions should've been working in fp32 to force
     # approx_derivative to work in fp32. One of the initial steps in least_squares
     # is to force x0 (p) to be a float, meaning that the output of func and err would
     # be in float64, unless forced to be in float32
     def func(p, x):
-        return (p[0] + p[1] * x).astype(np.float32)
+        return (p[0] + p[1] * x).astype(mx.float32)
 
     def err(p, x, y):
-        return (func(p, x) - y).astype(np.float32)
+        return (func(p, x) - y).astype(mx.float32)
 
     def mse(p, x, y):
-        return np.sum(err(p, x, y)**2)
+        return mx.sum(err(p, x, y)**2)
 
     res = least_squares(err, [-1.0, -1.0], args=(x, y))
     # previously the initial jacobian calculated for this would be all 0
@@ -951,7 +951,7 @@ def test_gh_18793_and_19351():
         return (x-answer)**2
 
     gtol = 1e-15
-    res = least_squares(chi2, x0=initial_guess, gtol=1e-15, bounds=(0, np.inf))
+    res = least_squares(chi2, x0=initial_guess, gtol=1e-15, bounds=(0, mx.inf))
     # Original motivation: gh-18793
     # if we choose an initial condition that is close to the solution
     # we shouldn't return an answer that is further away from the solution
@@ -964,9 +964,9 @@ def test_gh_18793_and_19351():
     # Specifically in this case the scaled gradient will be sufficiently low.
 
     scaling, _ = CL_scaling_vector(res.x, res.grad,
-                                   np.atleast_1d(0), np.atleast_1d(np.inf))
+                                   mx.atleast_1d(0), mx.atleast_1d(mx.inf))
     assert res.status == 1  # Converged by gradient
-    assert np.linalg.norm(res.grad * scaling, ord=np.inf) < gtol
+    assert mx.linalg.norm(res.grad * scaling, ord=mx.inf) < gtol
 
 
 def test_gh_19103():
@@ -975,7 +975,7 @@ def test_gh_19103():
     # when the initial guess is reported exactly at a boundary point.
     # This is a reduced example from gh191303
 
-    ydata = np.array([0.] * 66 + [
+    ydata = mx.array([0.] * 66 + [
         1., 0., 0., 0., 0., 0., 1., 1., 0., 0., 1.,
         1., 1., 1., 0., 0., 0., 1., 0., 0., 2., 1.,
         0., 3., 1., 6., 5., 0., 0., 2., 8., 4., 4.,
@@ -985,13 +985,13 @@ def test_gh_19103():
         67., 53., 72., 88., 77., 95., 94., 84., 86., 101., 107.,
         108., 118., 96., 115., 138., 137.,
     ])
-    xdata = np.arange(0, ydata.size) * 0.1
+    xdata = mx.arange(0, ydata.size) * 0.1
 
     def exponential_wrapped(params):
         A, B, x0 = params
-        return A * np.exp(B * (xdata - x0)) - ydata
+        return A * mx.exp(B * (xdata - x0)) - ydata
 
     x0 = [0.01, 1., 5.]
-    bounds = ((0.01, 0, 0), (np.inf, 10, 20.9))
+    bounds = ((0.01, 0, 0), (mx.inf, 10, 20.9))
     res = least_squares(exponential_wrapped, x0, method='trf', bounds=bounds)
     assert res.success

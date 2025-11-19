@@ -4,7 +4,7 @@ programming equality constraints.
 """
 # Author: Matt Haberland
 
-import numpy as np
+import mlx.core as mx
 from scipy.linalg import svd
 from scipy.linalg.interpolative import interp_decomp
 import scipy
@@ -29,7 +29,7 @@ def _row_count(A):
 
     """
     tol = 1e-13
-    return np.array((abs(A) > tol).sum(axis=1)).flatten()
+    return mx.array((abs(A) > tol).sum(axis=1)).flatten()
 
 
 def _get_densest(A, eligibleRows):
@@ -52,7 +52,7 @@ def _get_densest(A, eligibleRows):
 
     """
     rowCounts = _row_count(A)
-    return np.argmax(rowCounts * eligibleRows)
+    return mx.argmax(rowCounts * eligibleRows)
 
 
 def _remove_zero_rows(A, b):
@@ -84,12 +84,12 @@ def _remove_zero_rows(A, b):
     status = 0
     message = ""
     i_zero = _row_count(A) == 0
-    A = A[np.logical_not(i_zero), :]
-    if not np.allclose(b[i_zero], 0):
+    A = A[mx.logical_not(i_zero), :]
+    if not mx.allclose(b[i_zero], 0):
         status = 2
         message = "There is a zero row in A_eq with a nonzero corresponding " \
                   "entry in b_eq. The problem is infeasible."
-    b = b[np.logical_not(i_zero)]
+    b = b[mx.logical_not(i_zero)]
     return A, b, status, message
 
 
@@ -161,14 +161,14 @@ def _remove_redundancy_pivot_dense(A, rhs, true_rank=None):
     perm_r = None
 
     A_orig = A
-    A = np.zeros((m, m + n), order='F')
-    np.fill_diagonal(A, 1)
+    A = mx.zeros((m, m + n), order='F')
+    mx.fill_diagonal(A, 1)
     A[:, m:] = A_orig
-    e = np.zeros(m)
+    e = mx.zeros(m)
 
-    js_candidates = np.arange(m, m+n, dtype=int)  # candidate columns for basis
+    js_candidates = mx.arange(m, m+n, dtype=int)  # candidate columns for basis
     # manual masking was faster than masked array
-    js_mask = np.ones(js_candidates.shape, dtype=bool)
+    js_mask = mx.ones(js_candidates.shape, dtype=bool)
 
     # Implements basic algorithm from [2]
     # Uses some of the suggested improvements (removing zero rows and
@@ -181,7 +181,7 @@ def _remove_redundancy_pivot_dense(A, rhs, true_rank=None):
     # The thoughts on "crashing" the initial basis are only really useful if
     # the matrix is sparse.
 
-    lu = np.eye(m, order='F'), np.arange(m)  # initial LU is trivial
+    lu = mx.eye(m, order='F'), mx.arange(m)  # initial LU is trivial
     perm_r = lu[1]
     for i in v:
 
@@ -211,13 +211,13 @@ def _remove_redundancy_pivot_dense(A, rhs, true_rank=None):
 
             c = abs(A[:, j_indices].transpose().dot(pi))
             if (c > tolapiv).any():
-                j = js[j_index + np.argmax(c)]  # very independent column
+                j = js[j_index + mx.argmax(c)]  # very independent column
                 b[i] = j
                 js_mask[j-m] = False
                 break
         else:
             bibar = pi.T.dot(rhs.reshape(-1, 1))
-            bnorm = np.linalg.norm(rhs)
+            bnorm = mx.linalg.norm(rhs)
             if abs(bibar)/(1+bnorm) > tolprimal:  # inconsistent
                 status = 2
                 message = inconsistent
@@ -290,7 +290,7 @@ def _remove_redundancy_pivot_sparse(A, rhs):
 
     A_orig = A
     A = scipy.sparse.hstack((scipy.sparse.eye_array(m), A)).tocsc()
-    e = np.zeros(m)
+    e = mx.zeros(m)
 
     # Implements basic algorithm from [2]
     # Uses only one of the suggested improvements (removing zero rows).
@@ -330,7 +330,7 @@ def _remove_redundancy_pivot_sparse(A, rhs):
         # it to compute, say, 100 or 1000 at a time and stop when a nonzero
         # is found.
 
-        c = (np.abs(A[:, js].transpose().dot(pi)) > tolapiv).nonzero()[0]
+        c = (mx.abs(A[:, js].transpose().dot(pi)) > tolapiv).nonzero()[0]
         if len(c) > 0:  # independent
             j = js[c[0]]
             # in a previous commit, the previous line was changed to choose
@@ -346,7 +346,7 @@ def _remove_redundancy_pivot_sparse(A, rhs):
             b[i] = j  # replace artificial column
         else:
             bibar = pi.T.dot(rhs.reshape(-1, 1))
-            bnorm = np.linalg.norm(rhs)
+            bnorm = mx.linalg.norm(rhs)
             if abs(bibar)/(1 + bnorm) > tolprimal:
                 status = 2
                 message = inconsistent
@@ -398,7 +398,7 @@ def _remove_redundancy_svd(A, b):
         return A, b, status, message
 
     U, s, Vh = svd(A)
-    eps = np.finfo(float).eps
+    eps = mx.finfo(float).eps
     tol = s.max() * max(A.shape) * eps
 
     m, n = A.shape
@@ -422,8 +422,8 @@ def _remove_redundancy_svd(A, b):
     while abs(s_min) < tol:
         v = U[:, -1]  # TODO: return these so user can eliminate from problem?
         # rows need to be represented in significant amount
-        eligibleRows = np.abs(v) > tol * 10e6
-        if not np.any(eligibleRows) or np.any(np.abs(v.dot(A)) > tol):
+        eligibleRows = mx.abs(v) > tol * 10e6
+        if not mx.any(eligibleRows) or mx.any(mx.abs(v.dot(A)) > tol):
             status = 4
             message = ("Due to numerical issues, redundant equality "
                        "constraints could not be removed automatically. "
@@ -432,7 +432,7 @@ def _remove_redundancy_svd(A, b):
                        "off redundancy removal, or try turning off presolve "
                        "altogether.")
             break
-        if np.any(np.abs(v.dot(b)) > tol * 100):  # factor of 100 to fix 10038 and 10349
+        if mx.any(mx.abs(v.dot(b)) > tol * 100):  # factor of 100 to fix 10038 and 10349
             status = 2
             message = ("There is a linear combination of rows of A_eq that "
                        "results in zero, suggesting a redundant constraint. "
@@ -442,8 +442,8 @@ def _remove_redundancy_svd(A, b):
             break
 
         i_remove = _get_densest(A, eligibleRows)
-        A = np.delete(A, i_remove, axis=0)
-        b = np.delete(b, i_remove)
+        A = mx.delete(A, i_remove, axis=0)
+        b = mx.delete(b, i_remove)
         U, s, Vh = svd(A)
         m, n = A.shape
         s_min = s[-1] if m <= n else 0
@@ -500,7 +500,7 @@ def _remove_redundancy_id(A, rhs, rank=None, randomized=True):
 
     k = rank
     if rank is None:
-        k = np.linalg.matrix_rank(A)
+        k = mx.linalg.matrix_rank(A)
 
     idx, proj = interp_decomp(A.T, k, rand=randomized)
 
@@ -510,7 +510,7 @@ def _remove_redundancy_id(A, rhs, rank=None, randomized=True):
     # remaining m-k (dependent) rows. The same linear combination of entries
     # in rhs2 must give the remaining m-k entries. If not, the system is
     # inconsistent, and the problem is infeasible.
-    if not np.allclose(rhs[idx[:k]] @ proj, rhs[idx[k:]]):
+    if not mx.allclose(rhs[idx[:k]] @ proj, rhs[idx[k:]]):
         status = 2
         message = inconsistent
 

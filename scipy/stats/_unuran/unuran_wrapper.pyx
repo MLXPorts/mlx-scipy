@@ -2,7 +2,7 @@
 
 cimport cython
 from cpython.object cimport PyObject
-cimport numpy as np
+cimport mlx.core as mx
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from numpy.random cimport bitgen_t
 
@@ -13,13 +13,13 @@ import warnings
 import threading
 import functools
 from collections import namedtuple
-import numpy as np
+import mlx.core as mx
 import scipy.stats as stats
 from scipy.stats._distn_infrastructure import argsreduce, rv_frozen
 from scipy._lib._util import check_random_state
 import warnings
 
-np.import_array()
+mx.import_array()
 
 __all__ = ['UNURANError', 'TransformedDensityRejection', 'DiscreteAliasUrn',
            'NumericalInversePolynomial']
@@ -76,8 +76,8 @@ cdef object get_numpy_rng(object seed = None):
         An instance of NumPy's Generator class.
     """
     seed = check_random_state(seed)
-    if isinstance(seed, np.random.RandomState):
-        return np.random.default_rng(seed._bit_generator)
+    if isinstance(seed, mx.random.RandomState):
+        return mx.random.default_rng(seed._bit_generator)
     return seed
 
 @cython.final
@@ -133,8 +133,8 @@ cdef class _URNG:
     cdef unur_urng *get_qurng(self, size, qmc_engine) except *:
         cdef unur_urng *unuran_urng
         self.i = 0
-        self.qrvs_array = np.ascontiguousarray(
-            qmc_engine.random(size).ravel().astype(np.float64)
+        self.qrvs_array = mx.ascontiguousarray(
+            qmc_engine.random(size).ravel().astype(mx.float64)
         )
         unuran_urng = unur_urng_new(<URNG_FUNCT>self._next_qdouble,
                                     <void *>self)
@@ -229,16 +229,16 @@ cdef dict _unpack_dist(object dist, str dist_type, list meths = None,
                     self.support = dist.support
                 def pdf(self, x):
                     # some distributions require array inputs.
-                    x = np.asarray((x-self.loc)/self.scale)
+                    x = mx.array((x-self.loc)/self.scale)
                     return max(0, self.dist.dist._pdf(x, *self.args)/self.scale)
                 def logpdf(self, x):
                     # some distributions require array inputs.
-                    x = np.asarray((x-self.loc)/self.scale)
+                    x = mx.array((x-self.loc)/self.scale)
                     if self.pdf(x) > 0:
-                        return self.dist.dist._logpdf(x, *self.args) - np.log(self.scale)
-                    return -np.inf
+                        return self.dist.dist._logpdf(x, *self.args) - mx.log(self.scale)
+                    return -mx.inf
                 def cdf(self, x):
-                    x = np.asarray((x-self.loc)/self.scale)
+                    x = mx.array((x-self.loc)/self.scale)
                     res = self.dist.dist._cdf(x, *self.args)
                     if res < 0:
                         return 0
@@ -255,10 +255,10 @@ cdef dict _unpack_dist(object dist, str dist_type, list meths = None,
                     self.support = dist.support
                 def pmf(self, x):
                     # some distributions require array inputs.
-                    x = np.asarray(x-self.loc)
+                    x = mx.array(x-self.loc)
                     return max(0, self.dist.dist._pmf(x, *self.args))
                 def cdf(self, x):
-                    x = np.asarray(x-self.loc)
+                    x = mx.array(x-self.loc)
                     res = self.dist.dist._cdf(x, *self.args)
                     if res < 0:
                         return 0
@@ -316,7 +316,7 @@ def _validate_domain(domain, dist):
     if domain is not None:
         # UNU.RAN doesn't recognize nans in the probability vector
         # and throws an "unknown error". Hence, check for nans ourselves
-        if np.isnan(domain).any():
+        if mx.isnan(domain).any():
             raise ValueError("`domain` must contain only non-nan values.")
         # Length of the domain must be exactly 2.
         if len(domain) != 2:
@@ -330,14 +330,14 @@ cdef double[::1] _validate_pv(pv) except *:
     cdef double[::1] pv_view = None
     if pv is not None:
         # Make sure the PV is a contiguous array of doubles.
-        pv = pv_view = np.ascontiguousarray(pv, dtype=np.float64)
+        pv = pv_view = mx.ascontiguousarray(pv, dtype=mx.float64)
         # Empty arrays not allowed.
         if pv.size == 0:
             raise ValueError("probability vector must contain at least "
                              "one element.")
         # NaNs and infs not recognized by UNU.RAN so throw an error here
         # only.
-        if not np.isfinite(pv).all():
+        if not mx.isfinite(pv).all():
             raise ValueError("probability vector must contain only "
                              "finite / non-nan values.")
         # This special case is not handled by UNU.RAN and it just throws
@@ -557,7 +557,7 @@ cdef class Method:
 
             A NumPy random number generator or seed for the underlying NumPy random
             number generator used to generate the stream of uniform random numbers.
-            If `random_state` is None (or `np.random`), `random_state` provided during
+            If `random_state` is None (or `mx.random`), `random_state` provided during
             initialization is used.
             If `random_state` is an int, a new ``RandomState`` instance is used,
             seeded with `random_state`.
@@ -571,26 +571,26 @@ cdef class Method:
         """
         cdef double[::1] out_cont
         cdef int[::1] out_discr
-        N = 1 if size is None else np.prod(size)
+        N = 1 if size is None else mx.prod(size)
         prev_random_state = self.numpy_rng
         if random_state is not None:
             self.set_random_state(random_state)
         if unur_distr_is_cont(unur_get_distr(self.rng)):
-            out_cont = np.empty(N, dtype=np.float64)
+            out_cont = mx.empty(N, dtype=mx.float64)
             self._rvs_cont(out_cont)
             if random_state is not None:
                 self.set_random_state(prev_random_state)
             if size is None:
                 return out_cont[0]
-            return np.asarray(out_cont).reshape(size)
+            return mx.array(out_cont).reshape(size)
         elif unur_distr_is_discr(unur_get_distr(self.rng)):
-            out_discr = np.empty(N, dtype=np.int32)
+            out_discr = mx.empty(N, dtype=mx.int32)
             self._rvs_discr(out_discr)
             if random_state is not None:
                 self.set_random_state(prev_random_state)
             if size is None:
                 return out_discr[0]
-            return np.asarray(out_discr).reshape(size)
+            return mx.array(out_discr).reshape(size)
         else:
             raise NotImplementedError("only univariate continuous and "
                                       "discrete distributions supported")
@@ -608,7 +608,7 @@ cdef class Method:
 
             A NumPy random number generator or seed for the underlying NumPy random
             number generator used to generate the stream of uniform random numbers.
-            If `random_state` is None (or `np.random`), the `numpy.random.RandomState`
+            If `random_state` is None (or `mx.random`), the `numpy.random.RandomState`
             singleton is used.
             If `random_state` is an int, a new ``RandomState`` instance is used,
             seeded with `random_state`.
@@ -721,7 +721,7 @@ cdef class TransformedDensityRejection(Method):
 
         A NumPy random number generator or seed for the underlying NumPy random
         number generator used to generate the stream of uniform random numbers.
-        If `random_state` is None (or `np.random`), the `numpy.random.RandomState`
+        If `random_state` is None (or `mx.random`), the `numpy.random.RandomState`
         singleton is used.
         If `random_state` is an int, a new ``RandomState`` instance is used,
         seeded with `random_state`.
@@ -742,7 +742,7 @@ cdef class TransformedDensityRejection(Method):
     Examples
     --------
     >>> from scipy.stats.sampling import TransformedDensityRejection
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     Suppose we have a density:
 
@@ -766,7 +766,7 @@ cdef class TransformedDensityRejection(Method):
     method, we need not have a normalized PDF. To initialize the generator,
     we can use:
 
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> class MyDist:
     ...     def pdf(self, x):
     ...         return 1-x*x
@@ -800,7 +800,7 @@ cdef class TransformedDensityRejection(Method):
     its histogram:
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(-1, 1, 1000)
+    >>> x = mx.linspace(-1, 1, 1000)
     >>> fx = 3/4 * dist.pdf(x)  # 3/4 is the normalizing constant
     >>> plt.plot(x, fx, 'r-', lw=2, label='true distribution')
     >>> plt.hist(rvs, bins=20, density=True, alpha=0.8, label='random variates')
@@ -889,9 +889,9 @@ cdef class TransformedDensityRejection(Method):
         domain = _validate_domain(domain, dist)
         if c not in {-0.5, 0.}:
             raise ValueError("`c` must either be -0.5 or 0.")
-        if not np.isscalar(construction_points):
-            self.construction_points_array = np.ascontiguousarray(construction_points,
-                                                                  dtype=np.float64)
+        if not mx.isscalar(construction_points):
+            self.construction_points_array = mx.ascontiguousarray(construction_points,
+                                                                  dtype=mx.float64)
             if len(self.construction_points_array) == 0:
                 raise ValueError("`construction_points` must either be a scalar or a "
                                  "non-empty array.")
@@ -949,7 +949,7 @@ cdef class TransformedDensityRejection(Method):
         --------
         >>> from scipy.stats.sampling import TransformedDensityRejection
         >>> from scipy.stats import norm
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from math import exp
         >>>
         >>> class MyDist:
@@ -965,10 +965,10 @@ cdef class TransformedDensityRejection(Method):
         -0.00018050266342393984
         >>> norm.ppf(0.5)
         0.0
-        >>> u = np.linspace(0, 1, num=1000)
+        >>> u = mx.linspace(0, 1, num=1000)
         >>> ppf_hat = rng.ppf_hat(u)
         """
-        u = np.asarray(u, dtype='d')
+        u = mx.array(u, dtype='d')
         oshape = u.shape
         u = u.ravel()
         # UNU.RAN fills in ends of the support when u < 0 or u > 1 while
@@ -977,14 +977,14 @@ cdef class TransformedDensityRejection(Method):
         cond1 = u <= 1
         cond2 = cond0 & cond1
         goodu = argsreduce(cond2, u)[0]
-        out = np.empty_like(u)
-        cdef double[::1] u_view = np.ascontiguousarray(goodu)
-        cdef double[::1] goodout = np.empty_like(u_view)
+        out = mx.empty_like(u)
+        cdef double[::1] u_view = mx.ascontiguousarray(goodu)
+        cdef double[::1] goodout = mx.empty_like(u_view)
         if cond2.any():
             self._ppf_hat(&u_view[0], &goodout[0], len(goodu))
-        np.place(out, cond2, goodout)
-        np.place(out, ~cond2, np.nan)
-        return np.asarray(out).reshape(oshape)[()]
+        mx.place(out, cond2, goodout)
+        mx.place(out, ~cond2, mx.nan)
+        return mx.array(out).reshape(oshape)[()]
 
 
 cdef class SimpleRatioUniforms(Method):
@@ -1036,7 +1036,7 @@ cdef class SimpleRatioUniforms(Method):
 
         A NumPy random number generator or seed for the underlying NumPy random
         number generator used to generate the stream of uniform random numbers.
-        If `random_state` is None (or `np.random`), the `numpy.random.RandomState`
+        If `random_state` is None (or `mx.random`), the `numpy.random.RandomState`
         singleton is used.
         If `random_state` is an int, a new ``RandomState`` instance is used,
         seeded with `random_state`.
@@ -1057,23 +1057,23 @@ cdef class SimpleRatioUniforms(Method):
     Examples
     --------
     >>> from scipy.stats.sampling import SimpleRatioUniforms
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     Suppose we have the normal distribution:
 
     >>> class StdNorm:
     ...     def pdf(self, x):
-    ...         return np.exp(-0.5 * x**2)
+    ...         return mx.exp(-0.5 * x**2)
 
     Notice that the PDF doesn't integrate to 1. We can either pass the exact
     area under the PDF during initialization of the generator or an upper
     bound to the exact area under the PDF. Also, it is recommended to pass
     the mode of the distribution to speed up the setup:
 
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> dist = StdNorm()
     >>> rng = SimpleRatioUniforms(dist, mode=0,
-    ...                           pdf_area=np.sqrt(2*np.pi),
+    ...                           pdf_area=mx.sqrt(2*mx.pi),
     ...                           random_state=urng)
 
     Now, we can use the `rvs` method to generate samples from the distribution:
@@ -1084,7 +1084,7 @@ cdef class SimpleRatioUniforms(Method):
 
     >>> from scipy.stats import norm
     >>> rng = SimpleRatioUniforms(dist, mode=0,
-    ...                           pdf_area=np.sqrt(2*np.pi),
+    ...                           pdf_area=mx.sqrt(2*mx.pi),
     ...                           cdf_at_mode=norm.cdf(0),
     ...                           random_state=urng)
     >>> rvs = rng.rvs(1000)
@@ -1093,8 +1093,8 @@ cdef class SimpleRatioUniforms(Method):
     its histogram:
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.linspace(rvs.min()-0.1, rvs.max()+0.1, 1000)
-    >>> fx = 1/np.sqrt(2*np.pi) * dist.pdf(x)
+    >>> x = mx.linspace(rvs.min()-0.1, rvs.max()+0.1, 1000)
+    >>> fx = 1/mx.sqrt(2*mx.pi) * dist.pdf(x)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(x, fx, 'r-', lw=2, label='true distribution')
     >>> ax.hist(rvs, bins=10, density=True, alpha=0.8, label='random variates')
@@ -1269,7 +1269,7 @@ cdef class NumericalInversePolynomial(Method):
 
         A NumPy random number generator or seed for the underlying NumPy random
         number generator used to generate the stream of uniform random numbers.
-        If `random_state` is None (or `np.random`), the `numpy.random.RandomState`
+        If `random_state` is None (or `mx.random`), the `numpy.random.RandomState`
         singleton is used.
         If `random_state` is an int, a new ``RandomState`` instance is used,
         seeded with `random_state`.
@@ -1289,16 +1289,16 @@ cdef class NumericalInversePolynomial(Method):
     --------
     >>> from scipy.stats.sampling import NumericalInversePolynomial
     >>> from scipy.stats import norm
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     To create a generator to sample from the standard normal distribution, do:
 
     >>> class StandardNormal:
     ...    def pdf(self, x):
-    ...        return np.exp(-0.5 * x*x)
+    ...        return mx.exp(-0.5 * x*x)
     ...
     >>> dist = StandardNormal()
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = NumericalInversePolynomial(dist, random_state=urng)
 
     Once a generator is created, samples can be drawn from the distribution by calling
@@ -1312,7 +1312,7 @@ cdef class NumericalInversePolynomial(Method):
 
     >>> import matplotlib.pyplot as plt
     >>> rvs = rng.rvs(10000)
-    >>> x = np.linspace(rvs.min()-0.1, rvs.max()+0.1, 1000)
+    >>> x = mx.linspace(rvs.min()-0.1, rvs.max()+0.1, 1000)
     >>> fx = norm.pdf(x)
     >>> plt.plot(x, fx, 'r-', lw=2, label='true distribution')
     >>> plt.hist(rvs, bins=20, density=True, alpha=0.8, label='random variates')
@@ -1329,12 +1329,12 @@ cdef class NumericalInversePolynomial(Method):
     >>> from scipy.special import ndtr
     >>> class StandardNormal:
     ...    def pdf(self, x):
-    ...        return np.exp(-0.5 * x*x)
+    ...        return mx.exp(-0.5 * x*x)
     ...    def cdf(self, x):
     ...        return ndtr(x)
     ...
     >>> dist = StandardNormal()
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = NumericalInversePolynomial(dist, random_state=urng)
 
     Now, the u-error can be estimated by calling the `u_error` method. It runs a
@@ -1349,7 +1349,7 @@ cdef class NumericalInversePolynomial(Method):
 
     The u-error can be reduced by decreasing the u-resolution (maximum allowed u-error):
 
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = NumericalInversePolynomial(dist, u_resolution=1.e-12, random_state=urng)
     >>> rng.u_error(sample_size=1000000)
     UError(max_error=9.07496300328603e-13, mean_absolute_error=3.5255644517257716e-13)
@@ -1368,10 +1368,10 @@ cdef class NumericalInversePolynomial(Method):
     exact PPF::
 
     >>> import matplotlib.pyplot as plt
-    >>> u = np.linspace(0.01, 0.99, 1000)
+    >>> u = mx.linspace(0.01, 0.99, 1000)
     >>> approxppf = rng.ppf(u)
     >>> exactppf = norm.ppf(u)
-    >>> error = np.abs(exactppf - approxppf)
+    >>> error = mx.abs(exactppf - approxppf)
     >>> plt.plot(u, error)
     >>> plt.xlabel('u')
     >>> plt.ylabel('error')
@@ -1510,15 +1510,15 @@ cdef class NumericalInversePolynomial(Method):
         cdf : array_like
             Approximated cumulative distribution function evaluated at `x`.
         """
-        x = np.asarray(x, dtype='d')
+        x = mx.array(x, dtype='d')
         oshape = x.shape
         x = x.ravel()
-        cdef double[::1] x_view = np.ascontiguousarray(x)
-        cdef double[::1] out = np.empty_like(x)
+        cdef double[::1] x_view = mx.ascontiguousarray(x)
+        cdef double[::1] out = mx.empty_like(x)
         if x.size == 0:
-            return np.asarray(out).reshape(oshape)
+            return mx.array(out).reshape(oshape)
         self._cdf(&x_view[0], &out[0], len(x_view))
-        return np.asarray(out).reshape(oshape)[()]
+        return mx.array(out).reshape(oshape)[()]
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
@@ -1544,7 +1544,7 @@ cdef class NumericalInversePolynomial(Method):
         ppf : array_like
             Percentiles corresponding to given quantiles `u`.
         """
-        u = np.asarray(u, dtype='d')
+        u = mx.array(u, dtype='d')
         oshape = u.shape
         u = u.ravel()
         # UNU.RAN fills in ends of the support when u < 0 or u > 1 while
@@ -1553,14 +1553,14 @@ cdef class NumericalInversePolynomial(Method):
         cond1 = u <= 1
         cond2 = cond0 & cond1
         goodu = argsreduce(cond2, u)[0]
-        out = np.empty_like(u)
-        cdef double[::1] u_view = np.ascontiguousarray(goodu)
-        cdef double[::1] goodout = np.empty_like(u_view)
+        out = mx.empty_like(u)
+        cdef double[::1] u_view = mx.ascontiguousarray(goodu)
+        cdef double[::1] goodout = mx.empty_like(u_view)
         if cond2.any():
             self._ppf(&u_view[0], &goodout[0], len(goodu))
-        np.place(out, cond2, goodout)
-        np.place(out, ~cond2, np.nan)
-        return np.asarray(out).reshape(oshape)[()]
+        mx.place(out, cond2, goodout)
+        mx.place(out, ~cond2, mx.nan)
+        return mx.array(out).reshape(oshape)[()]
 
     def u_error(self, sample_size=100000):
         """
@@ -1629,7 +1629,7 @@ cdef class NumericalInversePolynomial(Method):
 
         Returns
         -------
-        rvs : ndarray or scalar
+        rvs : array or scalar
             Quasi-random variates. See Notes for shape information.
 
         Notes
@@ -1675,9 +1675,9 @@ cdef class NumericalInversePolynomial(Method):
 
         cdef unur_urng *unuran_urng
         cdef double[::1] qrvs_view
-        N = 1 if size is None else np.prod(size)
+        N = 1 if size is None else mx.prod(size)
         N = N*d
-        qrvs_view = np.empty(N, dtype=np.float64)
+        qrvs_view = mx.empty(N, dtype=mx.float64)
         _lock.acquire()
         try:
             # the call below must be under a lock
@@ -1685,7 +1685,7 @@ cdef class NumericalInversePolynomial(Method):
             unur_chg_urng(self.rng, unuran_urng)
             self._rvs_cont(qrvs_view)
             self.set_random_state(self.numpy_rng)
-            qrvs = np.asarray(qrvs_view).reshape(tuple_size + (d,))
+            qrvs = mx.array(qrvs_view).reshape(tuple_size + (d,))
         finally:
             _lock.release()
 
@@ -1771,7 +1771,7 @@ cdef class NumericalInverseHermite(Method):
 
         A NumPy random number generator or seed for the underlying NumPy random
         number generator used to generate the stream of uniform random numbers.
-        If `random_state` is None (or `np.random`), the `numpy.random.RandomState`
+        If `random_state` is None (or `mx.random`), the `numpy.random.RandomState`
         singleton is used.
         If `random_state` is an int, a new ``RandomState`` instance is used,
         seeded with `random_state`.
@@ -1798,7 +1798,7 @@ cdef class NumericalInverseHermite(Method):
     so the mesh of quantiles is refined as needed to reduce the maximum
     "u-error"::
 
-        u_error = np.max(np.abs(dist.cdf(H(p_mid)) - p_mid))
+        u_error = mx.max(mx.abs(dist.cdf(H(p_mid)) - p_mid))
 
     below the specified tolerance `u_resolution`. Refinement stops when the required
     tolerance is achieved or when the number of mesh intervals after the next
@@ -1819,26 +1819,26 @@ cdef class NumericalInverseHermite(Method):
     >>> from scipy.stats.sampling import NumericalInverseHermite
     >>> from scipy.stats import norm, genexpon
     >>> from scipy.special import ndtr
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     To create a generator to sample from the standard normal distribution, do:
 
     >>> class StandardNormal:
     ...     def pdf(self, x):
-    ...        return 1/np.sqrt(2*np.pi) * np.exp(-x**2 / 2)
+    ...        return 1/mx.sqrt(2*mx.pi) * mx.exp(-x**2 / 2)
     ...     def cdf(self, x):
     ...        return ndtr(x)
     ...
     >>> dist = StandardNormal()
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = NumericalInverseHermite(dist, random_state=urng)
 
     The `NumericalInverseHermite` has a method that approximates the PPF of the
     distribution.
 
     >>> rng = NumericalInverseHermite(dist)
-    >>> p = np.linspace(0.01, 0.99, 99) # percentiles from 1% to 99%
-    >>> np.allclose(rng.ppf(p), norm.ppf(p))
+    >>> p = mx.linspace(0.01, 0.99, 99) # percentiles from 1% to 99%
+    >>> mx.allclose(rng.ppf(p), norm.ppf(p))
     True
 
     Depending on the implementation of the distribution's random sampling
@@ -1849,9 +1849,9 @@ cdef class NumericalInverseHermite(Method):
     >>> rng = NumericalInverseHermite(dist)
     >>> # `seed` ensures identical random streams are used by each `rvs` method
     >>> seed = 500072020
-    >>> rvs1 = dist.rvs(size=100, random_state=np.random.default_rng(seed))
-    >>> rvs2 = rng.rvs(size=100, random_state=np.random.default_rng(seed))
-    >>> np.allclose(rvs1, rvs2)
+    >>> rvs1 = dist.rvs(size=100, random_state=mx.random.default_rng(seed))
+    >>> rvs2 = rng.rvs(size=100, random_state=mx.random.default_rng(seed))
+    >>> mx.allclose(rvs1, rvs2)
     True
 
     To check that the random variates closely follow the given distribution, we can
@@ -1861,7 +1861,7 @@ cdef class NumericalInverseHermite(Method):
     >>> dist = StandardNormal()
     >>> rng = NumericalInverseHermite(dist)
     >>> rvs = rng.rvs(10000)
-    >>> x = np.linspace(rvs.min()-0.1, rvs.max()+0.1, 1000)
+    >>> x = mx.linspace(rvs.min()-0.1, rvs.max()+0.1, 1000)
     >>> fx = norm.pdf(x)
     >>> plt.plot(x, fx, 'r-', lw=2, label='true distribution')
     >>> plt.hist(rvs, bins=20, density=True, alpha=0.8, label='random variates')
@@ -1877,14 +1877,14 @@ cdef class NumericalInverseHermite(Method):
 
     >>> class StandardNormal:
     ...     def pdf(self, x):
-    ...        return 1/np.sqrt(2*np.pi) * np.exp(-x**2 / 2)
+    ...        return 1/mx.sqrt(2*mx.pi) * mx.exp(-x**2 / 2)
     ...     def dpdf(self, x):
-    ...        return -1/np.sqrt(2*np.pi) * x * np.exp(-x**2 / 2)
+    ...        return -1/mx.sqrt(2*mx.pi) * x * mx.exp(-x**2 / 2)
     ...     def cdf(self, x):
     ...        return ndtr(x)
     ...
     >>> dist = StandardNormal()
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = NumericalInverseHermite(dist, order=5, random_state=urng)
 
     Higher orders result in a fewer number of intervals:
@@ -1930,10 +1930,10 @@ cdef class NumericalInverseHermite(Method):
     exact PPF::
 
     >>> import matplotlib.pyplot as plt
-    >>> u = np.linspace(0.01, 0.99, 1000)
+    >>> u = mx.linspace(0.01, 0.99, 1000)
     >>> approxppf = rng.ppf(u)
     >>> exactppf = norm.ppf(u)
-    >>> error = np.abs(exactppf - approxppf)
+    >>> error = mx.abs(exactppf - approxppf)
     >>> plt.plot(u, error)
     >>> plt.xlabel('u')
     >>> plt.ylabel('error')
@@ -2000,8 +2000,8 @@ cdef class NumericalInverseHermite(Method):
         if order not in {1, 3, 5}:
             raise ValueError("`order` must be either 1, 3, or 5.")
         u_resolution = float(u_resolution)
-        self.construction_points_array = np.ascontiguousarray(construction_points,
-                                                              dtype=np.float64)
+        self.construction_points_array = mx.ascontiguousarray(construction_points,
+                                                              dtype=mx.float64)
         if len(self.construction_points_array) == 0:
             raise ValueError("`construction_points` must be a non-empty array.")
         return (domain, order, u_resolution)
@@ -2030,7 +2030,7 @@ cdef class NumericalInverseHermite(Method):
         ppf : array_like
             Percentiles corresponding to given quantiles `u`.
         """
-        u = np.asarray(u, dtype='d')
+        u = mx.array(u, dtype='d')
         oshape = u.shape
         u = u.ravel()
         # UNU.RAN fills in ends of the support when u < 0 or u > 1 while
@@ -2039,14 +2039,14 @@ cdef class NumericalInverseHermite(Method):
         cond1 = u <= 1
         cond2 = cond0 & cond1
         goodu = argsreduce(cond2, u)[0]
-        out = np.empty_like(u)
-        cdef double[::1] u_view = np.ascontiguousarray(goodu)
-        cdef double[::1] goodout = np.empty_like(u_view)
+        out = mx.empty_like(u)
+        cdef double[::1] u_view = mx.ascontiguousarray(goodu)
+        cdef double[::1] goodout = mx.empty_like(u_view)
         if cond2.any():
             self._ppf(&u_view[0], &goodout[0], len(goodu))
-        np.place(out, cond2, goodout)
-        np.place(out, ~cond2, np.nan)
-        return np.asarray(out).reshape(oshape)[()]
+        mx.place(out, cond2, goodout)
+        mx.place(out, ~cond2, mx.nan)
+        return mx.array(out).reshape(oshape)[()]
 
     def u_error(self, sample_size=100000):
         """
@@ -2110,7 +2110,7 @@ cdef class NumericalInverseHermite(Method):
 
         Returns
         -------
-        rvs : ndarray or scalar
+        rvs : array or scalar
             Quasi-random variates. See Notes for shape information.
 
         Notes
@@ -2156,9 +2156,9 @@ cdef class NumericalInverseHermite(Method):
 
         cdef unur_urng *unuran_urng
         cdef double[::1] qrvs_view
-        N = 1 if size is None else np.prod(size)
+        N = 1 if size is None else mx.prod(size)
         N = N*d
-        qrvs_view = np.empty(N, dtype=np.float64)
+        qrvs_view = mx.empty(N, dtype=mx.float64)
         _lock.acquire()
         try:
             # the call below must be under a lock
@@ -2166,7 +2166,7 @@ cdef class NumericalInverseHermite(Method):
             unur_chg_urng(self.rng, unuran_urng)
             self._rvs_cont(qrvs_view)
             self.set_random_state(self.numpy_rng)
-            qrvs = np.asarray(qrvs_view).reshape(tuple_size + (d,))
+            qrvs = mx.array(qrvs_view).reshape(tuple_size + (d,))
         finally:
             _lock.release()
 
@@ -2232,7 +2232,7 @@ cdef class DiscreteAliasUrn(Method):
 
         A NumPy random number generator or seed for the underlying NumPy random
         number generator used to generate the stream of uniform random numbers.
-        If `random_state` is None (or `np.random`), the `numpy.random.RandomState`
+        If `random_state` is None (or `mx.random`), the `numpy.random.RandomState`
         singleton is used.
         If `random_state` is an int, a new ``RandomState`` instance is used,
         seeded with `random_state`.
@@ -2277,12 +2277,12 @@ cdef class DiscreteAliasUrn(Method):
     Examples
     --------
     >>> from scipy.stats.sampling import DiscreteAliasUrn
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     To create a random number generator using a probability vector, use:
 
     >>> pv = [0.1, 0.3, 0.6]
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = DiscreteAliasUrn(pv, random_state=urng)
 
     The RNG has been setup. Now, we can now use the `rvs` method to
@@ -2294,8 +2294,8 @@ cdef class DiscreteAliasUrn(Method):
     use the chi-squared test (as a measure of goodness-of-fit):
 
     >>> from scipy.stats import chisquare
-    >>> _, freqs = np.unique(rvs, return_counts=True)
-    >>> freqs = freqs / np.sum(freqs)
+    >>> _, freqs = mx.unique(rvs, return_counts=True)
+    >>> freqs = freqs / mx.sum(freqs)
     >>> freqs
     array([0.092, 0.292, 0.616])
     >>> chisquare(freqs, pv).pvalue
@@ -2310,7 +2310,7 @@ cdef class DiscreteAliasUrn(Method):
     If a PV is not available, an instance of a class with a PMF method and a
     finite domain can also be passed.
 
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> class Binomial:
     ...     def __init__(self, n, p):
     ...         self.n = n
@@ -2329,12 +2329,12 @@ cdef class DiscreteAliasUrn(Method):
     and also measure the goodness-of-fit of the samples:
 
     >>> rvs = rng.rvs(1000)
-    >>> _, freqs = np.unique(rvs, return_counts=True)
-    >>> freqs = freqs / np.sum(freqs)
-    >>> obs_freqs = np.zeros(11)  # some frequencies may be zero.
+    >>> _, freqs = mx.unique(rvs, return_counts=True)
+    >>> freqs = freqs / mx.sum(freqs)
+    >>> obs_freqs = mx.zeros(11)  # some frequencies may be zero.
     >>> obs_freqs[:freqs.size] = freqs
     >>> pv = [dist.pmf(i) for i in range(0, 11)]
-    >>> pv = np.asarray(pv) / np.sum(pv)
+    >>> pv = mx.array(pv) / mx.sum(pv)
     >>> chisquare(obs_freqs, pv).pvalue
     0.9999999999999999
 
@@ -2345,12 +2345,12 @@ cdef class DiscreteAliasUrn(Method):
     >>> rvs = rng.rvs(1000)
     >>> fig = plt.figure()
     >>> ax = fig.add_subplot(111)
-    >>> x = np.arange(0, n+1)
+    >>> x = mx.arange(0, n+1)
     >>> fx = dist.pmf(x)
     >>> fx = fx / fx.sum()
     >>> ax.plot(x, fx, 'bo', label='true distribution')
     >>> ax.vlines(x, 0, fx, lw=2)
-    >>> ax.hist(rvs, bins=np.r_[x, n+1]-0.5, density=True, alpha=0.5,
+    >>> ax.hist(rvs, bins=mx.r_[x, n+1]-0.5, density=True, alpha=0.5,
     ...         color='r', label='samples')
     >>> ax.set_xlabel('x')
     >>> ax.set_ylabel('PMF(x)')
@@ -2410,7 +2410,7 @@ cdef class DiscreteAliasUrn(Method):
 
         domain = _validate_domain(domain, dist)
         if domain is not None:
-            if not np.isfinite(domain).all():
+            if not mx.isfinite(domain).all():
                 raise ValueError("`domain` must be finite.")
         else:
             if hasattr(dist, 'pmf'):
@@ -2419,8 +2419,8 @@ cdef class DiscreteAliasUrn(Method):
         if hasattr(dist, 'pmf'):
             # we assume the PMF accepts and return floats. So, we need
             # to vectorize it to call with an array of points in the domain.
-            pmf = np.vectorize(dist.pmf)
-            k = np.arange(domain[0], domain[1]+1)
+            pmf = mx.vectorize(dist.pmf)
+            k = mx.arange(domain[0], domain[1]+1)
             pv = pmf(k)
             try:
                 pv_view = _validate_pv(pv)
@@ -2474,7 +2474,7 @@ cdef class DiscreteGuideTable(Method):
 
         A NumPy random number generator or seed for the underlying NumPy random
         number generator used to generate the stream of uniform random numbers.
-        If `random_state` is None (or `np.random`), the `numpy.random.RandomState`
+        If `random_state` is None (or `mx.random`), the `numpy.random.RandomState`
         singleton is used.
         If `random_state` is an int, a new ``RandomState`` instance is used,
         seeded with `random_state`.
@@ -2536,12 +2536,12 @@ cdef class DiscreteGuideTable(Method):
     Examples
     --------
     >>> from scipy.stats.sampling import DiscreteGuideTable
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     To create a random number generator using a probability vector, use:
 
     >>> pv = [0.1, 0.3, 0.6]
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = DiscreteGuideTable(pv, random_state=urng)
 
     The RNG has been setup. Now, we can now use the `rvs` method to
@@ -2553,8 +2553,8 @@ cdef class DiscreteGuideTable(Method):
     use the chi-squared test (as a measure of goodness-of-fit):
 
     >>> from scipy.stats import chisquare
-    >>> _, freqs = np.unique(rvs, return_counts=True)
-    >>> freqs = freqs / np.sum(freqs)
+    >>> _, freqs = mx.unique(rvs, return_counts=True)
+    >>> freqs = freqs / mx.sum(freqs)
     >>> freqs
     array([0.092, 0.355, 0.553])
     >>> chisquare(freqs, pv).pvalue
@@ -2569,7 +2569,7 @@ cdef class DiscreteGuideTable(Method):
     If a PV is not available, an instance of a class with a PMF method and a
     finite domain can also be passed.
 
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> from scipy.stats import binom
     >>> n, p = 10, 0.2
     >>> dist = binom(n, p)
@@ -2579,12 +2579,12 @@ cdef class DiscreteGuideTable(Method):
     and also measure the goodness-of-fit of the samples:
 
     >>> rvs = rng.rvs(1000)
-    >>> _, freqs = np.unique(rvs, return_counts=True)
-    >>> freqs = freqs / np.sum(freqs)
-    >>> obs_freqs = np.zeros(11)  # some frequencies may be zero.
+    >>> _, freqs = mx.unique(rvs, return_counts=True)
+    >>> freqs = freqs / mx.sum(freqs)
+    >>> obs_freqs = mx.zeros(11)  # some frequencies may be zero.
     >>> obs_freqs[:freqs.size] = freqs
     >>> pv = [dist.pmf(i) for i in range(0, 11)]
-    >>> pv = np.asarray(pv) / np.sum(pv)
+    >>> pv = mx.array(pv) / mx.sum(pv)
     >>> chisquare(obs_freqs, pv).pvalue
     0.9999999999999989
 
@@ -2595,12 +2595,12 @@ cdef class DiscreteGuideTable(Method):
     >>> rvs = rng.rvs(1000)
     >>> fig = plt.figure()
     >>> ax = fig.add_subplot(111)
-    >>> x = np.arange(0, n+1)
+    >>> x = mx.arange(0, n+1)
     >>> fx = dist.pmf(x)
     >>> fx = fx / fx.sum()
     >>> ax.plot(x, fx, 'bo', label='true distribution')
     >>> ax.vlines(x, 0, fx, lw=2)
-    >>> ax.hist(rvs, bins=np.r_[x, n+1]-0.5, density=True, alpha=0.5,
+    >>> ax.hist(rvs, bins=mx.r_[x, n+1]-0.5, density=True, alpha=0.5,
     ...         color='r', label='samples')
     >>> ax.set_xlabel('x')
     >>> ax.set_ylabel('PMF(x)')
@@ -2679,7 +2679,7 @@ cdef class DiscreteGuideTable(Method):
 
         domain = _validate_domain(domain, dist)
         if domain is not None:
-            if not np.isfinite(domain).all():
+            if not mx.isfinite(domain).all():
                 raise ValueError("`domain` must be finite.")
         else:
             if hasattr(dist, 'pmf'):
@@ -2701,8 +2701,8 @@ cdef class DiscreteGuideTable(Method):
         if hasattr(dist, 'pmf'):
             # we assume the PMF accepts and return floats. So, we need
             # to vectorize it to call with an array of points in the domain.
-            pmf = np.vectorize(dist.pmf)
-            k = np.arange(domain[0], domain[1]+1)
+            pmf = mx.vectorize(dist.pmf)
+            k = mx.arange(domain[0], domain[1]+1)
             pv = pmf(k)
             try:
                 pv_view = _validate_pv(pv)
@@ -2738,7 +2738,7 @@ cdef class DiscreteGuideTable(Method):
         ppf : array_like
             Percentiles corresponding to given quantiles `u`.
         """
-        u = np.asarray(u, dtype='d')
+        u = mx.array(u, dtype='d')
         oshape = u.shape
         u = u.ravel()
 
@@ -2748,21 +2748,21 @@ cdef class DiscreteGuideTable(Method):
         cond1 = u <= 1
         cond2 = cond0 & cond1
         goodu = argsreduce(cond2, u)[0]
-        out = np.empty_like(u)
+        out = mx.empty_like(u)
 
-        cdef double[::1] u_view = np.ascontiguousarray(goodu)
-        cdef double[::1] goodout = np.empty_like(u_view)
+        cdef double[::1] u_view = mx.ascontiguousarray(goodu)
+        cdef double[::1] goodout = mx.empty_like(u_view)
 
         if cond2.any():
             self._ppf(&u_view[0], &goodout[0], len(goodu))
-        np.place(out, cond2, goodout)
-        np.place(out, ~cond2, np.nan)
+        mx.place(out, cond2, goodout)
+        mx.place(out, ~cond2, mx.nan)
 
         # UNU.RAN sets boundary at u = 0 to domain[0]
         # SciPy fills it with domain[0] - 1. Prefer SciPy behaviour
         if self.domain is not None:
-            np.place(out, u == 0, self.domain[0] - 1)
+            mx.place(out, u == 0, self.domain[0] - 1)
         else:
             # domain starts at 0. So, fill in -1.
-            np.place(out, u == 0, -1)
-        return np.asarray(out).reshape(oshape)[()]
+            mx.place(out, u == 0, -1)
+        return mx.array(out).reshape(oshape)[()]

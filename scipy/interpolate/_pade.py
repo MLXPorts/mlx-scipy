@@ -25,13 +25,13 @@ def pade(an, m, n=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.interpolate import pade
     >>> e_exp = [1.0, 1.0, 1.0/2.0, 1.0/6.0, 1.0/24.0, 1.0/120.0]
     >>> p, q = pade(e_exp, 2)
 
     >>> e_exp.reverse()
-    >>> e_poly = np.poly1d(e_exp)
+    >>> e_poly = mx.poly1d(e_exp)
 
     Compare ``e_poly(x)`` and the Pade approximation ``p(x)/q(x)``
 

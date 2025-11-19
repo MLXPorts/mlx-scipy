@@ -1,7 +1,7 @@
 from functools import cached_property
 from types import GenericAlias
 
-import numpy as np
+import mlx.core as mx
 from scipy import linalg
 from scipy.stats import _multivariate
 
@@ -36,9 +36,9 @@ class Covariance:
     representing a covariance matrix:
 
     >>> from scipy import stats
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> d = [1, 2, 3]
-    >>> A = np.diag(d)  # a diagonal covariance matrix
+    >>> A = mx.diag(d)  # a diagonal covariance matrix
     >>> x = [4, -2, 5]  # a point of interest
     >>> dist = stats.multivariate_normal(mean=[0, 0, 0], cov=A)
     >>> dist.pdf(x)
@@ -101,28 +101,28 @@ class Covariance:
         Prepare a symmetric positive definite covariance matrix ``A`` and a
         data point ``x``.
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
-        >>> rng = np.random.default_rng()
+        >>> rng = mx.random.default_rng()
         >>> n = 5
-        >>> A = np.diag(rng.random(n))
+        >>> A = mx.diag(rng.random(n))
         >>> x = rng.random(size=n)
 
         Extract the diagonal from ``A`` and create the `Covariance` object.
 
-        >>> d = np.diag(A)
+        >>> d = mx.diag(A)
         >>> cov = stats.Covariance.from_diagonal(d)
 
         Compare the functionality of the `Covariance` object against a
         reference implementations.
 
         >>> res = cov.whiten(x)
-        >>> ref = np.diag(d**-0.5) @ x
-        >>> np.allclose(res, ref)
+        >>> ref = mx.diag(d**-0.5) @ x
+        >>> mx.allclose(res, ref)
         True
         >>> res = cov.log_pdet
-        >>> ref = np.linalg.slogdet(A)[-1]
-        >>> np.allclose(res, ref)
+        >>> ref = mx.linalg.slogdet(A)[-1]
+        >>> mx.allclose(res, ref)
         True
 
         """
@@ -164,9 +164,9 @@ class Covariance:
         data point ``x``. (If the precision matrix is not already available,
         consider the other factory methods of the `Covariance` class.)
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
-        >>> rng = np.random.default_rng()
+        >>> rng = mx.random.default_rng()
         >>> n = 5
         >>> P = rng.random(size=(n, n))
         >>> P = P @ P.T  # a precision matrix must be positive definite
@@ -180,12 +180,12 @@ class Covariance:
         reference implementations.
 
         >>> res = cov.whiten(x)
-        >>> ref = x @ np.linalg.cholesky(P)
-        >>> np.allclose(res, ref)
+        >>> ref = x @ mx.linalg.cholesky(P)
+        >>> mx.allclose(res, ref)
         True
         >>> res = cov.log_pdet
-        >>> ref = -np.linalg.slogdet(P)[-1]
-        >>> np.allclose(res, ref)
+        >>> ref = -mx.linalg.slogdet(P)[-1]
+        >>> mx.allclose(res, ref)
         True
 
         """
@@ -219,9 +219,9 @@ class Covariance:
         Prepare a symmetric positive definite covariance matrix ``A`` and a
         data point ``x``.
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
-        >>> rng = np.random.default_rng()
+        >>> rng = mx.random.default_rng()
         >>> n = 5
         >>> A = rng.random(size=(n, n))
         >>> A = A @ A.T  # make the covariance symmetric positive definite
@@ -230,7 +230,7 @@ class Covariance:
         Perform the Cholesky decomposition of ``A`` and create the
         `Covariance` object.
 
-        >>> L = np.linalg.cholesky(A)
+        >>> L = mx.linalg.cholesky(A)
         >>> cov = stats.Covariance.from_cholesky(L)
 
         Compare the functionality of the `Covariance` object against
@@ -239,11 +239,11 @@ class Covariance:
         >>> from scipy.linalg import solve_triangular
         >>> res = cov.whiten(x)
         >>> ref = solve_triangular(L, x, lower=True)
-        >>> np.allclose(res, ref)
+        >>> mx.allclose(res, ref)
         True
         >>> res = cov.log_pdet
-        >>> ref = np.linalg.slogdet(A)[-1]
-        >>> np.allclose(res, ref)
+        >>> ref = mx.linalg.slogdet(A)[-1]
+        >>> mx.allclose(res, ref)
         True
 
         """
@@ -286,9 +286,9 @@ class Covariance:
         Prepare a symmetric positive definite covariance matrix ``A`` and a
         data point ``x``.
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
-        >>> rng = np.random.default_rng()
+        >>> rng = mx.random.default_rng()
         >>> n = 5
         >>> A = rng.random(size=(n, n))
         >>> A = A @ A.T  # make the covariance symmetric positive definite
@@ -297,19 +297,19 @@ class Covariance:
         Perform the eigendecomposition of ``A`` and create the `Covariance`
         object.
 
-        >>> w, v = np.linalg.eigh(A)
+        >>> w, v = mx.linalg.eigh(A)
         >>> cov = stats.Covariance.from_eigendecomposition((w, v))
 
         Compare the functionality of the `Covariance` object against
         reference implementations.
 
         >>> res = cov.whiten(x)
-        >>> ref = x @ (v @ np.diag(w**-0.5))
-        >>> np.allclose(res, ref)
+        >>> ref = x @ (v @ mx.diag(w**-0.5))
+        >>> mx.allclose(res, ref)
         True
         >>> res = cov.log_pdet
-        >>> ref = np.linalg.slogdet(A)[-1]
-        >>> np.allclose(res, ref)
+        >>> ref = mx.linalg.slogdet(A)[-1]
+        >>> mx.allclose(res, ref)
         True
 
         """
@@ -348,23 +348,23 @@ class Covariance:
 
         Examples
         --------
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
-        >>> rng = np.random.default_rng()
+        >>> rng = mx.random.default_rng()
         >>> n = 3
         >>> A = rng.random(size=(n, n))
         >>> cov_array = A @ A.T  # make matrix symmetric positive definite
-        >>> precision = np.linalg.inv(cov_array)
+        >>> precision = mx.linalg.inv(cov_array)
         >>> cov_object = stats.Covariance.from_precision(precision)
-        >>> x = rng.multivariate_normal(np.zeros(n), cov_array, size=(10000))
+        >>> x = rng.multivariate_normal(mx.zeros(n), cov_array, size=(10000))
         >>> x_ = cov_object.whiten(x)
-        >>> np.cov(x_, rowvar=False)  # near-identity covariance
+        >>> mx.cov(x_, rowvar=False)  # near-identity covariance
         array([[0.97862122, 0.00893147, 0.02430451],
                [0.00893147, 0.96719062, 0.02201312],
                [0.02430451, 0.02201312, 0.99206881]])
 
         """
-        return self._whiten(np.asarray(x))
+        return self._whiten(mx.array(x))
 
     def colorize(self, x):
         """
@@ -401,35 +401,35 @@ class Covariance:
 
         Examples
         --------
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
-        >>> rng = np.random.default_rng(1638083107694713882823079058616272161)
+        >>> rng = mx.random.default_rng(1638083107694713882823079058616272161)
         >>> n = 3
         >>> A = rng.random(size=(n, n))
         >>> cov_array = A @ A.T  # make matrix symmetric positive definite
-        >>> cholesky = np.linalg.cholesky(cov_array)
+        >>> cholesky = mx.linalg.cholesky(cov_array)
         >>> cov_object = stats.Covariance.from_cholesky(cholesky)
-        >>> x = rng.multivariate_normal(np.zeros(n), np.eye(n), size=(10000))
+        >>> x = rng.multivariate_normal(mx.zeros(n), mx.eye(n), size=(10000))
         >>> x_ = cov_object.colorize(x)
-        >>> cov_data = np.cov(x_, rowvar=False)
-        >>> np.allclose(cov_data, cov_array, rtol=3e-2)
+        >>> cov_data = mx.cov(x_, rowvar=False)
+        >>> mx.allclose(cov_data, cov_array, rtol=3e-2)
         True
         """
-        return self._colorize(np.asarray(x))
+        return self._colorize(mx.array(x))
 
     @property
     def log_pdet(self):
         """
         Log of the pseudo-determinant of the covariance matrix
         """
-        return np.array(self._log_pdet, dtype=float)[()]
+        return mx.array(self._log_pdet, dtype=float)[()]
 
     @property
     def rank(self):
         """
         Rank of the covariance matrix
         """
-        return np.array(self._rank, dtype=int)[()]
+        return mx.array(self._rank, dtype=int)[()]
 
     @property
     def covariance(self):
@@ -446,19 +446,19 @@ class Covariance:
         return self._shape
 
     def _validate_matrix(self, A, name):
-        A = np.atleast_2d(A)
+        A = mx.atleast_2d(A)
         m, n = A.shape[-2:]
-        if m != n or A.ndim != 2 or not (np.issubdtype(A.dtype, np.integer) or
-                                         np.issubdtype(A.dtype, np.floating)):
+        if m != n or A.ndim != 2 or not (mx.issubdtype(A.dtype, mx.integer) or
+                                         mx.issubdtype(A.dtype, mx.floating)):
             message = (f"The input `{name}` must be a square, "
                        "two-dimensional array of real numbers.")
             raise ValueError(message)
         return A
 
     def _validate_vector(self, A, name):
-        A = np.atleast_1d(A)
-        if A.ndim != 1 or not (np.issubdtype(A.dtype, np.integer) or
-                               np.issubdtype(A.dtype, np.floating)):
+        A = mx.atleast_1d(A)
+        if A.ndim != 1 or not (mx.issubdtype(A.dtype, mx.integer) or
+                               mx.issubdtype(A.dtype, mx.floating)):
             message = (f"The input `{name}` must be a one-dimensional array "
                        "of real numbers.")
             raise ValueError(message)
@@ -477,8 +477,8 @@ class CovViaPrecision(Covariance):
             if precision.shape != covariance.shape:
                 raise ValueError(message)
 
-        self._chol_P = np.linalg.cholesky(precision)
-        self._log_pdet = -2*np.log(np.diag(self._chol_P)).sum(axis=-1)
+        self._chol_P = mx.linalg.cholesky(precision)
+        self._log_pdet = -2*mx.log(mx.diag(self._chol_P)).sum(axis=-1)
         self._rank = precision.shape[-1]  # must be full rank if invertible
         self._precision = precision
         self._cov_matrix = covariance
@@ -491,7 +491,7 @@ class CovViaPrecision(Covariance):
     @cached_property
     def _covariance(self):
         n = self._shape[-1]
-        return (linalg.cho_solve((self._chol_P, True), np.eye(n))
+        return (linalg.cho_solve((self._chol_P, True), mx.eye(n))
                 if self._cov_matrix is None else self._cov_matrix)
 
     def _colorize(self, x):
@@ -504,7 +504,7 @@ def _dot_diag(x, d):
     # If d were a full diagonal matrix, x @ d would always do what we want.
     # Special treatment is needed for n-dimensional `d` in which each row
     # includes only the diagonal elements of a covariance matrix.
-    return x * d if x.ndim < 2 else x * np.expand_dims(d, -2)
+    return x * d if x.ndim < 2 else x * mx.expand_dims(d, -2)
 
 
 class CovViaDiagonal(Covariance):
@@ -513,18 +513,18 @@ class CovViaDiagonal(Covariance):
         diagonal = self._validate_vector(diagonal, 'diagonal')
 
         i_zero = diagonal <= 0
-        positive_diagonal = np.array(diagonal, dtype=np.float64)
+        positive_diagonal = mx.array(diagonal, dtype=mx.float64)
 
         positive_diagonal[i_zero] = 1  # ones don't affect determinant
-        self._log_pdet = np.sum(np.log(positive_diagonal), axis=-1)
+        self._log_pdet = mx.sum(mx.log(positive_diagonal), axis=-1)
 
-        psuedo_reciprocals = 1 / np.sqrt(positive_diagonal)
+        psuedo_reciprocals = 1 / mx.sqrt(positive_diagonal)
         psuedo_reciprocals[i_zero] = 0
 
-        self._sqrt_diagonal = np.sqrt(diagonal)
+        self._sqrt_diagonal = mx.sqrt(diagonal)
         self._LP = psuedo_reciprocals
         self._rank = positive_diagonal.shape[-1] - i_zero.sum(axis=-1)
-        self._covariance = np.apply_along_axis(np.diag, -1, diagonal)
+        self._covariance = mx.apply_along_axis(mx.diag, -1, diagonal)
         self._i_zero = i_zero
         self._shape = self._covariance.shape
         self._allow_singular = True
@@ -539,7 +539,7 @@ class CovViaDiagonal(Covariance):
         """
         Check whether x lies in the support of the distribution.
         """
-        return ~np.any(_dot_diag(x, self._i_zero), axis=-1)
+        return ~mx.any(_dot_diag(x, self._i_zero), axis=-1)
 
 
 class CovViaCholesky(Covariance):
@@ -550,7 +550,7 @@ class CovViaCholesky(Covariance):
         L = self._validate_matrix(cholesky, 'cholesky')
 
         self._factor = L
-        self._log_pdet = 2*np.log(np.diag(self._factor)).sum(axis=-1)
+        self._log_pdet = 2*mx.log(mx.diag(self._factor)).sum(axis=-1)
         self._rank = L.shape[-1]  # must be full rank for cholesky
         self._shape = L.shape
         self._allow_singular = False
@@ -579,24 +579,24 @@ class CovViaEigendecomposition(Covariance):
         message = ("The shapes of `eigenvalues` and `eigenvectors` "
                    "must be compatible.")
         try:
-            eigenvalues = np.expand_dims(eigenvalues, -2)
-            eigenvectors, eigenvalues = np.broadcast_arrays(eigenvectors,
+            eigenvalues = mx.expand_dims(eigenvalues, -2)
+            eigenvectors, eigenvalues = mx.broadcast_arrays(eigenvectors,
                                                             eigenvalues)
             eigenvalues = eigenvalues[..., 0, :]
         except ValueError:
             raise ValueError(message)
 
         i_zero = eigenvalues <= 0
-        positive_eigenvalues = np.array(eigenvalues, dtype=np.float64)
+        positive_eigenvalues = mx.array(eigenvalues, dtype=mx.float64)
 
         positive_eigenvalues[i_zero] = 1  # ones don't affect determinant
-        self._log_pdet = np.sum(np.log(positive_eigenvalues), axis=-1)
+        self._log_pdet = mx.sum(mx.log(positive_eigenvalues), axis=-1)
 
-        psuedo_reciprocals = 1 / np.sqrt(positive_eigenvalues)
+        psuedo_reciprocals = 1 / mx.sqrt(positive_eigenvalues)
         psuedo_reciprocals[i_zero] = 0
 
         self._LP = eigenvectors * psuedo_reciprocals
-        self._LA = eigenvectors * np.sqrt(eigenvalues)
+        self._LA = eigenvectors * mx.sqrt(eigenvalues)
         self._rank = positive_eigenvalues.shape[-1] - i_zero.sum(axis=-1)
         self._w = eigenvalues
         self._v = eigenvectors
@@ -621,7 +621,7 @@ class CovViaEigendecomposition(Covariance):
         """
         Check whether x lies in the support of the distribution.
         """
-        residual = np.linalg.norm(x @ self._null_basis, axis=-1)
+        residual = mx.linalg.norm(x @ self._null_basis, axis=-1)
         in_support = residual < self._eps
         return in_support
 

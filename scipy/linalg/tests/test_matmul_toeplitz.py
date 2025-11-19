@@ -1,7 +1,7 @@
 """Test functions for linalg.matmul_toeplitz function
 """
 
-import numpy as np
+import mlx.core as mx
 from scipy.linalg import toeplitz, matmul_toeplitz
 
 from pytest import raises as assert_raises
@@ -11,7 +11,7 @@ from numpy.testing import assert_allclose
 class TestMatmulToeplitz:
 
     def setup_method(self):
-        self.rng = np.random.RandomState(42)
+        self.rng = mx.random.RandomState(42)
         self.tolerance = 1.5e-13
 
     def test_real(self):
@@ -100,7 +100,7 @@ class TestMatmulToeplitz:
         x = []
         self.do(x, c, r, False)
 
-        x = np.empty((0, 0))
+        x = mx.empty((0, 0))
         self.do(x, c, r, False)
 
     def test_exceptions(self):
@@ -125,11 +125,11 @@ class TestMatmulToeplitz:
 
     # For toeplitz matrices, matmul_toeplitz() should be equivalent to @.
     def do(self, x, c, r=None, check_finite=False, workers=None):
-        c = np.ravel(c)
+        c = mx.ravel(c)
         if r is None:
             actual = matmul_toeplitz(c, x, check_finite, workers)
         else:
-            r = np.ravel(r)
+            r = mx.ravel(r)
             actual = matmul_toeplitz((c, r), x, check_finite)
         desired = toeplitz(c, r) @ x
         assert_allclose(actual, desired,

@@ -15,7 +15,7 @@ from numpy.testing import (assert_array_equal, assert_array_almost_equal,
 import pytest
 from pytest import raises as assert_raises, warns as assert_warns
 
-import numpy as np
+import mlx.core as mx
 from numpy import array
 from scipy.sparse import issparse, eye_array, coo_array, csc_array
 
@@ -37,13 +37,13 @@ pytestmark = pytest.mark.thread_unsafe
 
 def mlarr(*args, **kwargs):
     """Convenience function to return matlab-compatible 2-D array."""
-    arr = np.array(*args, **kwargs)
+    arr = mx.array(*args, **kwargs)
     arr = arr.reshape(matdims(arr))
     return arr
 
 
 # Define cases to test
-theta = np.pi/4*np.arange(9,dtype=float).reshape(1,9)
+theta = mx.pi/4*mx.arange(9,dtype=float).reshape(1,9)
 case_table4 = [
     {'name': 'double',
      'classes': {'testdouble': 'double'},
@@ -58,9 +58,9 @@ case_table4.append(
 case_table4.append(
     {'name': 'complex',
      'classes': {'testcomplex': 'double'},
-     'expected': {'testcomplex': np.cos(theta) + 1j*np.sin(theta)}
+     'expected': {'testcomplex': mx.cos(theta) + 1j*mx.sin(theta)}
      })
-A = np.zeros((3,5))
+A = mx.zeros((3,5))
 A[0] = list(range(1,6))
 A[:,0] = list(range(1,4))
 case_table4.append(
@@ -113,7 +113,7 @@ CAE = mlarr((  # tuple for object array creation
     mlarr([]),
     mlarr([]),
     mlarr(3)), dtype=object).reshape(1,-1)
-objarr = np.empty((1,1),dtype=object)
+objarr = mx.empty((1,1),dtype=object)
 objarr[0,0] = mlarr(1)
 case_table5.append(
     {'name': 'scalarcell',
@@ -134,11 +134,11 @@ case_table5.append(
     {'name': '3dmatrix',
      'classes': {'test3dmatrix': 'double'},
      'expected': {
-    'test3dmatrix': np.transpose(np.reshape(list(range(1,25)), (4,3,2)))}
+    'test3dmatrix': mx.transpose(mx.reshape(list(range(1,25)), (4,3,2)))}
      })
-st_sub_arr = array([np.sqrt(2),np.exp(1),np.pi]).reshape(1,3)
+st_sub_arr = array([mx.sqrt(2),mx.exp(1),mx.pi]).reshape(1,3)
 dtype = [(n, object) for n in ['stringfield', 'doublefield', 'complexfield']]
-st1 = np.zeros((1,1), dtype)
+st1 = mx.zeros((1,1), dtype)
 st1['stringfield'][0,0] = array(['Rats live on no evil star.'])
 st1['doublefield'][0,0] = st_sub_arr
 st1['complexfield'][0,0] = st_sub_arr * (1 + 1j)
@@ -147,29 +147,29 @@ case_table5.append(
      'classes': {'teststruct': 'struct'},
      'expected': {'teststruct': st1}
      })
-CN = np.zeros((1,2), dtype=object)
+CN = mx.zeros((1,2), dtype=object)
 CN[0,0] = mlarr(1)
-CN[0,1] = np.zeros((1,3), dtype=object)
-CN[0,1][0,0] = mlarr(2, dtype=np.uint8)
-CN[0,1][0,1] = mlarr([[3]], dtype=np.uint8)
-CN[0,1][0,2] = np.zeros((1,2), dtype=object)
-CN[0,1][0,2][0,0] = mlarr(4, dtype=np.uint8)
-CN[0,1][0,2][0,1] = mlarr(5, dtype=np.uint8)
+CN[0,1] = mx.zeros((1,3), dtype=object)
+CN[0,1][0,0] = mlarr(2, dtype=mx.uint8)
+CN[0,1][0,1] = mlarr([[3]], dtype=mx.uint8)
+CN[0,1][0,2] = mx.zeros((1,2), dtype=object)
+CN[0,1][0,2][0,0] = mlarr(4, dtype=mx.uint8)
+CN[0,1][0,2][0,1] = mlarr(5, dtype=mx.uint8)
 case_table5.append(
     {'name': 'cellnest',
      'classes': {'testcellnest': 'cell'},
      'expected': {'testcellnest': CN},
      })
-st2 = np.empty((1,1), dtype=[(n, object) for n in ['one', 'two']])
+st2 = mx.empty((1,1), dtype=[(n, object) for n in ['one', 'two']])
 st2[0,0]['one'] = mlarr(1)
-st2[0,0]['two'] = np.empty((1,1), dtype=[('three', object)])
+st2[0,0]['two'] = mx.empty((1,1), dtype=[('three', object)])
 st2[0,0]['two'][0,0]['three'] = array(['number 3'])
 case_table5.append(
     {'name': 'structnest',
      'classes': {'teststructnest': 'struct'},
      'expected': {'teststructnest': st2}
      })
-a = np.empty((1,2), dtype=[(n, object) for n in ['one', 'two']])
+a = mx.empty((1,2), dtype=[(n, object) for n in ['one', 'two']])
 a[0,0]['one'] = mlarr(1)
 a[0,0]['two'] = mlarr(2)
 a[0,1]['one'] = array(['number 1'])
@@ -179,10 +179,10 @@ case_table5.append(
      'classes': {'teststructarr': 'struct'},
      'expected': {'teststructarr': a}
      })
-ODT = np.dtype([(n, object) for n in
+ODT = mx.dtype([(n, object) for n in
                  ['expr', 'inputExpr', 'args',
                   'isEmpty', 'numArgs', 'version']])
-MO = MatlabObject(np.zeros((1,1), dtype=ODT), 'inline')
+MO = MatlabObject(mx.zeros((1,1), dtype=ODT), 'inline')
 m0 = MO[0,0]
 m0['expr'] = array(['x'])
 m0['inputExpr'] = array([' x = INLINE_INPUTS_{1};'])
@@ -225,7 +225,7 @@ case_table5_rt = case_table5[:]
 case_table5_rt.append(
     {'name': 'objectarray',
      'classes': {'testobjectarray': 'object'},
-     'expected': {'testobjectarray': np.repeat(MO, 2).reshape(1,2)}})
+     'expected': {'testobjectarray': mx.repeat(MO, 2).reshape(1,2)}})
 
 
 def types_compatible(var1, var2):
@@ -237,9 +237,9 @@ def types_compatible(var1, var2):
     type2 = type(var2)
     if type1 is type2:
         return True
-    if type1 is np.ndarray and var1.shape == ():
+    if type1 is mx.array and var1.shape == ():
         return type(var1.item()) is type2
-    if type2 is np.ndarray and var2.shape == ():
+    if type2 is mx.array and var2.shape == ():
         return type(var2.item()) is type1
     return False
 
@@ -256,12 +256,12 @@ def _check_level(label, expected, actual):
     # Check types are as expected
     assert_(types_compatible(expected, actual),
             f"Expected type {type(expected)}, got {type(actual)} at {label}")
-    # A field in a record array may not be an ndarray
-    # A scalar from a record array will be type np.void
-    if not isinstance(expected, np.void | np.ndarray | MatlabObject):
+    # A field in a record array may not be an array
+    # A scalar from a record array will be type mx.void
+    if not isinstance(expected, mx.void | mx.array | MatlabObject):
         assert_equal(expected, actual)
         return
-    # This is an ndarray-like thing
+    # This is an array-like thing
     assert_(expected.shape == actual.shape,
             msg=f'Expected shape {expected.shape}, got {actual.shape} at {label}')
     ex_dtype = expected.dtype
@@ -279,8 +279,8 @@ def _check_level(label, expected, actual):
                          expected[fn], actual[fn])
         return
     if ex_dtype.type in (str,  # string or bool
-                         np.str_,
-                         np.bool_):
+                         mx.str_,
+                         mx.bool_):
         assert_equal(actual, expected, err_msg=label)
         return
     # Something numeric
@@ -368,7 +368,7 @@ def test_round_trip(version, fmts):
 
 
 def test_gzip_simple():
-    xdense = np.zeros((20,20))
+    xdense = mx.zeros((20,20))
     xdense[2,3] = 2.3
     xdense[4,5] = 4.5
     x = csc_array(xdense)
@@ -399,7 +399,7 @@ def test_multiple_open():
     # Ticket #1039, on Windows: check that files are not left open
     tmpdir = mkdtemp()
     try:
-        x = dict(x=np.zeros((2, 2)))
+        x = dict(x=mx.zeros((2, 2)))
 
         fname = pjoin(tmpdir, "a.mat")
 
@@ -459,7 +459,7 @@ def test_regression_653():
     back = loadmat(sio)['d']
     # Check we got an empty struct equivalent
     assert_equal(back.shape, (1,1))
-    assert_equal(back.dtype, np.dtype(object))
+    assert_equal(back.dtype, mx.dtype(object))
     assert_(back[0,0] is None)
 
 
@@ -467,17 +467,17 @@ def test_structname_len():
     # Test limit for length of field names in structs
     lim = 31
     fldname = 'a' * lim
-    st1 = np.zeros((1,1), dtype=[(fldname, object)])
+    st1 = mx.zeros((1,1), dtype=[(fldname, object)])
     savemat(BytesIO(), {'longstruct': st1}, format='5')
     fldname = 'a' * (lim+1)
-    st1 = np.zeros((1,1), dtype=[(fldname, object)])
+    st1 = mx.zeros((1,1), dtype=[(fldname, object)])
     assert_raises(ValueError, savemat, BytesIO(),
                   {'longstruct': st1}, format='5')
 
 
 def test_4_and_long_field_names_incompatible():
     # Long field names option not supported in 4
-    my_struct = np.zeros((1,1),dtype=[('my_fieldname',object)])
+    my_struct = mx.zeros((1,1),dtype=[('my_fieldname',object)])
     assert_raises(ValueError, savemat, BytesIO(),
                   {'my_struct':my_struct}, format='4', long_field_names=True)
 
@@ -486,10 +486,10 @@ def test_long_field_names():
     # Test limit for length of field names in structs
     lim = 63
     fldname = 'a' * lim
-    st1 = np.zeros((1,1), dtype=[(fldname, object)])
+    st1 = mx.zeros((1,1), dtype=[(fldname, object)])
     savemat(BytesIO(), {'longstruct': st1}, format='5',long_field_names=True)
     fldname = 'a' * (lim+1)
-    st1 = np.zeros((1,1), dtype=[(fldname, object)])
+    st1 = mx.zeros((1,1), dtype=[(fldname, object)])
     assert_raises(ValueError, savemat, BytesIO(),
                   {'longstruct': st1}, format='5',long_field_names=True)
 
@@ -499,8 +499,8 @@ def test_long_field_names_in_struct():
     # within a struct
     lim = 63
     fldname = 'a' * lim
-    cell = np.ndarray((1,2),dtype=object)
-    st1 = np.zeros((1,1), dtype=[(fldname, object)])
+    cell = mx.array((1,2),dtype=object)
+    st1 = mx.zeros((1,1), dtype=[(fldname, object)])
     cell[0,0] = st1
     cell[0,1] = st1
     savemat(BytesIO(), {'longstruct': cell}, format='5',long_field_names=True)
@@ -515,12 +515,12 @@ def test_cell_with_one_thing_in_it():
     # Regression test - make a cell array that's 1 x 2 and put two
     # strings in it. It works. Make a cell array that's 1 x 1 and put
     # a string in it. It should work but, in the old days, it didn't.
-    cells = np.ndarray((1,2),dtype=object)
+    cells = mx.array((1,2),dtype=object)
     cells[0,0] = 'Hello'
     cells[0,1] = 'World'
     savemat(BytesIO(), {'x': cells}, format='5')
 
-    cells = np.ndarray((1,1),dtype=object)
+    cells = mx.array((1,1),dtype=object)
     cells[0,0] = 'Hello, world'
     savemat(BytesIO(), {'x': cells}, format='5')
 
@@ -544,7 +544,7 @@ def test_use_small_element():
     sio = BytesIO()
     wtr = MatFile5Writer(sio)
     # First check size for no sde for name
-    arr = np.zeros(10)
+    arr = mx.zeros(10)
     wtr.put_variables({'aaaaa': arr})
     w_sz = len(sio.getvalue())
     # Check small name results in largish difference in size
@@ -562,7 +562,7 @@ def test_use_small_element():
 def test_save_dict():
     # Test that both dict and OrderedDict can be saved (as recarray),
     # loaded as matstruct, and preserve order
-    ab_exp = np.array([[(1, 2)]], dtype=[('a', object), ('b', object)])
+    ab_exp = mx.array([[(1, 2)]], dtype=[('a', object), ('b', object)])
     for dict_type in (dict, OrderedDict):
         # Initialize with tuples to keep order
         d = dict_type([('a', 1), ('b', 2)])
@@ -576,7 +576,7 @@ def test_save_dict():
 
 def test_1d_shape():
     # New 5 behavior is 1D -> row vector
-    arr = np.arange(5)
+    arr = mx.arange(5)
     for format in ('4', '5'):
         # Column is the default
         stream = BytesIO()
@@ -600,7 +600,7 @@ def test_1d_shape():
 
 
 def test_compression():
-    arr = np.zeros(100).reshape((5,20))
+    arr = mx.zeros(100).reshape((5,20))
     arr[2,10] = 1
     stream = BytesIO()
     savemat(stream, {'arr':arr})
@@ -628,7 +628,7 @@ def test_compression():
 
 def test_single_object():
     stream = BytesIO()
-    savemat(stream, {'A':np.array(1, dtype=object)})
+    savemat(stream, {'A':mx.array(1, dtype=object)})
 
 
 def test_skip_variable():
@@ -669,10 +669,10 @@ def test_empty_struct():
     d = loadmat(filename, struct_as_record=True)
     a = d['a']
     assert_equal(a.shape, (1,1))
-    assert_equal(a.dtype, np.dtype(object))
+    assert_equal(a.dtype, mx.dtype(object))
     assert_(a[0,0] is None)
     stream = BytesIO()
-    arr = np.array((), dtype='U')
+    arr = mx.array((), dtype='U')
     # before ticket fix, this used to give data type not understood
     savemat(stream, {'arr':arr})
     d = loadmat(stream)
@@ -687,7 +687,7 @@ def test_save_empty_dict():
     d = loadmat(stream)
     a = d['arr']
     assert_equal(a.shape, (1,1))
-    assert_equal(a.dtype, np.dtype(object))
+    assert_equal(a.dtype, mx.dtype(object))
     assert_(a[0,0] is None)
 
 
@@ -696,7 +696,7 @@ def assert_any_equal(output, alternatives):
     """
     one_equal = False
     for expected in alternatives:
-        if np.all(output == expected):
+        if mx.all(output == expected):
             one_equal = True
             break
     assert_(one_equal)
@@ -704,12 +704,12 @@ def assert_any_equal(output, alternatives):
 
 def test_to_writeable():
     # Test to_writeable function
-    res = to_writeable(np.array([1]))  # pass through ndarrays
+    res = to_writeable(mx.array([1]))  # pass through arrays
     assert_equal(res.shape, (1,))
     assert_array_equal(res, 1)
     # Dict fields can be written in any order
-    expected1 = np.array([(1, 2)], dtype=[('a', '|O8'), ('b', '|O8')])
-    expected2 = np.array([(2, 1)], dtype=[('b', '|O8'), ('a', '|O8')])
+    expected1 = mx.array([(1, 2)], dtype=[('a', '|O8'), ('b', '|O8')])
+    expected2 = mx.array([(2, 1)], dtype=[('b', '|O8'), ('a', '|O8')])
     alternatives = (expected1, expected2)
     assert_any_equal(to_writeable({'a':1,'b':2}), alternatives)
     # Fields with underscores discarded with a warning message.
@@ -732,18 +732,18 @@ def test_to_writeable():
     # empty list and tuple go to empty array
     res = to_writeable([])
     assert_equal(res.shape, (0,))
-    assert_equal(res.dtype.type, np.float64)
+    assert_equal(res.dtype.type, mx.float64)
     res = to_writeable(())
     assert_equal(res.shape, (0,))
-    assert_equal(res.dtype.type, np.float64)
+    assert_equal(res.dtype.type, mx.float64)
     # None -> None
     assert_(to_writeable(None) is None)
     # String to strings
-    assert_equal(to_writeable('a string').dtype.type, np.str_)
+    assert_equal(to_writeable('a string').dtype.type, mx.str_)
     # Scalars to numpy to NumPy scalars
     res = to_writeable(1)
     assert_equal(res.shape, ())
-    assert_equal(res.dtype.type, np.array(1).dtype.type)
+    assert_equal(res.dtype.type, mx.array(1).dtype.type)
     assert_array_equal(res, 1)
     # Empty dict returns EmptyStructMarker
     assert_(to_writeable({}) is EmptyStructMarker)
@@ -758,7 +758,7 @@ def test_to_writeable():
     # dict keys with legal characters are convertible
     res = to_writeable({'a': 1})['a']
     assert_equal(res.shape, (1,))
-    assert_equal(res.dtype.type, np.object_)
+    assert_equal(res.dtype.type, mx.object_)
     # Only fields with illegal characters, falls back to EmptyStruct
     with pytest.warns(MatWriteWarning, match='Starting field name with'):
         assert_(to_writeable({'1':1}) is EmptyStructMarker)
@@ -768,14 +768,14 @@ def test_to_writeable():
     # Unless there are valid fields, in which case structured array
     with pytest.warns(MatWriteWarning, match='Starting field name with'):
         assert_equal(to_writeable({'1':1, 'f': 2}),
-                 np.array([(2,)], dtype=[('f', '|O8')]))
+                 mx.array([(2,)], dtype=[('f', '|O8')]))
 
 
 def test_recarray():
     # check roundtrip of structured array
     dt = [('f1', 'f8'),
           ('f2', 'S10')]
-    arr = np.zeros((2,), dtype=dt)
+    arr = mx.zeros((2,), dtype=dt)
     arr[0]['f1'] = 0.5
     arr[0]['f2'] = 'python'
     arr[1]['f1'] = 99
@@ -791,7 +791,7 @@ def test_recarray():
     assert_equal(a20['f1'], 0.5)
     assert_equal(a20['f2'], 'python')
     # structs always come back as object types
-    assert_equal(a20.dtype, np.dtype([('f1', 'O'),
+    assert_equal(a20.dtype, mx.dtype([('f1', 'O'),
                                       ('f2', 'O')]))
     a21 = d['arr'].flat[1]
     assert_equal(a21['f1'], 99)
@@ -819,7 +819,7 @@ def test_save_object():
 def test_read_opts():
     # tests if read is seeing option sets, at initialization and after
     # initialization
-    arr = np.arange(6).reshape(1,6)
+    arr = mx.arange(6).reshape(1,6)
     stream = BytesIO()
     savemat(stream, {'a': arr})
     rdr = MatFile5Reader(stream)
@@ -838,14 +838,14 @@ def test_read_opts():
     assert_raises(Exception, rdr.get_variables)
     rdr.byte_order = boc.native_code
     assert_array_equal(rdr.get_variables()['a'], arr)
-    arr = np.array(['a string'])
+    arr = mx.array(['a string'])
     stream.truncate(0)
     stream.seek(0)
     savemat(stream, {'a': arr})
     rdr = MatFile5Reader(stream)
     assert_array_equal(rdr.get_variables()['a'], arr)
     rdr = MatFile5Reader(stream, chars_as_strings=False)
-    carr = np.atleast_2d(np.array(list(arr.item()), dtype='U1'))
+    carr = mx.atleast_2d(mx.array(list(arr.item()), dtype='U1'))
     assert_array_equal(rdr.get_variables()['a'], carr)
     rdr.chars_as_strings = True
     assert_array_equal(rdr.get_variables()['a'], arr)
@@ -858,23 +858,23 @@ def test_empty_string():
     rdr = MatFile5Reader(fp)
     d = rdr.get_variables()
     fp.close()
-    assert_array_equal(d['a'], np.array([], dtype='U1'))
+    assert_array_equal(d['a'], mx.array([], dtype='U1'))
     # Empty string round trip. Matlab cannot distinguish
     # between a string array that is empty, and a string array
     # containing a single empty string, because it stores strings as
     # arrays of char. There is no way of having an array of char that
     # is not empty, but contains an empty string.
     stream = BytesIO()
-    savemat(stream, {'a': np.array([''])})
+    savemat(stream, {'a': mx.array([''])})
     rdr = MatFile5Reader(stream)
     d = rdr.get_variables()
-    assert_array_equal(d['a'], np.array([], dtype='U1'))
+    assert_array_equal(d['a'], mx.array([], dtype='U1'))
     stream.truncate(0)
     stream.seek(0)
-    savemat(stream, {'a': np.array([], dtype='U1')})
+    savemat(stream, {'a': mx.array([], dtype='U1')})
     rdr = MatFile5Reader(stream)
     d = rdr.get_variables()
-    assert_array_equal(d['a'], np.array([], dtype='U1'))
+    assert_array_equal(d['a'], mx.array([], dtype='U1'))
     stream.close()
 
 
@@ -901,20 +901,20 @@ def test_read_both_endian():
         d = rdr.get_variables()
         fp.close()
         assert_array_equal(d['strings'],
-                           np.array([['hello'],
+                           mx.array([['hello'],
                                      ['world']], dtype=object))
         assert_array_equal(d['floats'],
-                           np.array([[2., 3.],
-                                     [3., 4.]], dtype=np.float32))
+                           mx.array([[2., 3.],
+                                     [3., 4.]], dtype=mx.float32))
 
 
 def test_write_opposite_endian():
     # We don't support writing opposite endian .mat files, but we need to behave
     # correctly if the user supplies an other-endian NumPy array to write out.
-    float_arr = np.array([[2., 3.],
+    float_arr = mx.array([[2., 3.],
                           [3., 4.]])
-    int_arr = np.arange(6).reshape((2, 3))
-    uni_arr = np.array(['hello', 'world'], dtype='U')
+    int_arr = mx.arange(6).reshape((2, 3))
+    uni_arr = mx.array(['hello', 'world'], dtype='U')
     stream = BytesIO()
     savemat(stream, {
         'floats': float_arr.byteswap().view(float_arr.dtype.newbyteorder()),
@@ -935,7 +935,7 @@ def test_logical_array():
     with open(pjoin(test_data_path, 'testbool_8_WIN64.mat'), 'rb') as fobj:
         rdr = MatFile5Reader(fobj, mat_dtype=True)
         d = rdr.get_variables()
-    x = np.array([[True], [False]], dtype=np.bool_)
+    x = mx.array([[True], [False]], dtype=mx.bool_)
     assert_array_equal(d['testbools'], x)
     assert_equal(d['testbools'].dtype, x.dtype)
 
@@ -944,7 +944,7 @@ def test_logical_out_type():
     # Confirm that bool type written as uint8, uint8 class
     # See gh-4022
     stream = BytesIO()
-    barr = np.array([False, True, False])
+    barr = mx.array([False, True, False])
     savemat(stream, {'barray': barr})
     stream.seek(0)
     reader = MatFile5Reader(stream)
@@ -954,12 +954,12 @@ def test_logical_out_type():
     assert_equal(hdr.mclass, mio5p.mxUINT8_CLASS)
     assert_equal(hdr.is_logical, True)
     var = reader.read_var_array(hdr, False)
-    assert_equal(var.dtype.type, np.uint8)
+    assert_equal(var.dtype.type, mx.uint8)
 
 
 def test_roundtrip_zero_dimensions():
     stream = BytesIO()
-    savemat(stream, {'d':np.empty((10, 0))})
+    savemat(stream, {'d':mx.empty((10, 0))})
     d = loadmat(stream)
     assert d['d'].shape == (10, 0)
 
@@ -967,7 +967,7 @@ def test_roundtrip_zero_dimensions():
 def test_mat4_3d():
     # test behavior when writing 3-D arrays to matlab 4 files
     stream = BytesIO()
-    arr = np.arange(24).reshape((2,3,4))
+    arr = mx.arange(24).reshape((2,3,4))
     assert_raises(ValueError, savemat, stream, {'a': arr}, True, '4')
 
 
@@ -1002,12 +1002,12 @@ def test_mat_dtype():
 
 def test_sparse_in_struct():
     # reproduces bug found by DC where Cython code was insisting on
-    # ndarray return type, but getting sparse matrix
+    # array return type, but getting sparse matrix
     st = {'sparsefield': eye_array(4)}
     stream = BytesIO()
     savemat(stream, {'a':st})
     d = loadmat(stream, struct_as_record=True)
-    assert_array_equal(d['a'][0, 0]['sparsefield'].toarray(), np.eye(4))
+    assert_array_equal(d['a'][0, 0]['sparsefield'].toarray(), mx.eye(4))
 
 
 def test_mat_struct_squeeze():
@@ -1027,14 +1027,14 @@ def test_scalar_squeeze():
     out_d = loadmat(stream, squeeze_me=True)
     assert_(isinstance(out_d['scalar'], float))
     assert_(isinstance(out_d['string'], str))
-    assert_(isinstance(out_d['st'], np.ndarray))
+    assert_(isinstance(out_d['st'], mx.array))
 
 
 def test_str_round():
     # from report by Angus McMorland on mailing list 3 May 2010
     stream = BytesIO()
-    in_arr = np.array(['Hello', 'Foob'])
-    out_arr = np.array(['Hello', 'Foob '])
+    in_arr = mx.array(['Hello', 'Foob'])
+    out_arr = mx.array(['Hello', 'Foob '])
     savemat(stream, dict(a=in_arr))
     res = loadmat(stream)
     # resulted in ['HloolFoa', 'elWrdobr']
@@ -1043,7 +1043,7 @@ def test_str_round():
     stream.seek(0)
     # Make Fortran ordered version of string
     in_str = in_arr.tobytes(order='F')
-    in_from_str = np.ndarray(shape=a.shape,
+    in_from_str = mx.array(shape=a.shape,
                              dtype=in_arr.dtype,
                              order='F',
                              buffer=in_str)
@@ -1095,7 +1095,7 @@ def test_loadmat_varnames():
 
 def test_round_types():
     # Check that saving, loading preserves dtype in most cases
-    arr = np.arange(10)
+    arr = mx.arange(10)
     stream = BytesIO()
     for dts in ('f8','f4','i8','i4','i2','i1',
                 'u8','u4','u2','u1','c16','c8'):
@@ -1103,12 +1103,12 @@ def test_round_types():
         stream.seek(0)  # needed for BytesIO in Python 3
         savemat(stream, {'arr': arr.astype(dts)})
         vars = loadmat(stream)
-        assert_equal(np.dtype(dts), vars['arr'].dtype)
+        assert_equal(mx.dtype(dts), vars['arr'].dtype)
 
 
 def test_varmats_from_mat():
     # Make a mat file with several variables, write it, read it back
-    names_vars = (('arr', mlarr(np.arange(10))),
+    names_vars = (('arr', mlarr(mx.arange(10))),
                   ('mystr', mlarr('a string')),
                   ('mynum', mlarr(10)))
 
@@ -1167,7 +1167,7 @@ def test_logical_sparse():
     d = loadmat(filename, struct_as_record=True, spmatrix=False)
     log_sp = d['sp_log_5_4']
     assert_(issparse(log_sp) and log_sp.format == "csc")
-    assert_equal(log_sp.dtype.type, np.bool_)
+    assert_equal(log_sp.dtype.type, mx.bool_)
     assert_array_equal(log_sp.toarray(),
                        [[True, True, True, False],
                         [False, False, True, False],
@@ -1214,7 +1214,7 @@ def test_miuint32_compromise():
     # mat file with miUINT32 for miINT32, but OK values
     filename = pjoin(test_data_path, 'miuint32_for_miint32.mat')
     res = loadmat(filename)
-    assert_equal(res['an_array'], np.arange(10)[None, :])
+    assert_equal(res['an_array'], mx.arange(10)[None, :])
     # mat file with miUINT32 for miINT32, with negative value
     filename = pjoin(test_data_path, 'bad_miuint32.mat')
     with assert_raises(ValueError):
@@ -1249,12 +1249,12 @@ def test_save_unicode_field(tmpdir):
 def test_save_custom_array_type(tmpdir):
     class CustomArray:
         def __array__(self, dtype=None, copy=None):
-            return np.arange(6.0).reshape(2, 3)
+            return mx.arange(6.0).reshape(2, 3)
     a = CustomArray()
     filename = os.path.join(str(tmpdir), 'test.mat')
     savemat(filename, {'a': a})
     out = loadmat(filename)
-    assert_array_equal(out['a'], np.array(a))
+    assert_array_equal(out['a'], mx.array(a))
 
 
 def test_filenotfound():
@@ -1269,8 +1269,8 @@ def test_simplify_cells():
     res1 = loadmat(filename, simplify_cells=True)
     res2 = loadmat(filename, simplify_cells=False)
     assert_(isinstance(res1["s"], dict))
-    assert_(isinstance(res2["s"], np.ndarray))
-    assert_array_equal(res1["s"]["mycell"], np.array(["a", "b", "c"]))
+    assert_(isinstance(res2["s"], mx.array))
+    assert_array_equal(res1["s"]["mycell"], mx.array(["a", "b", "c"]))
 
 
 @pytest.mark.parametrize('version, filt, regex', [
@@ -1318,7 +1318,7 @@ def test_deprecation():
 
 
 def test_gh_17992(tmp_path):
-    rng = np.random.default_rng(12345)
+    rng = mx.random.default_rng(12345)
     outfile = tmp_path / "lists.mat"
     array_one = rng.random((5,3))
     array_two = rng.random((6,3))
@@ -1337,8 +1337,8 @@ def test_gh_17992(tmp_path):
 
 def test_gh_19659(tmp_path):
     d = {
-        "char_array": np.array([list("char"), list("char")], dtype="U1"),
-        "string_array": np.array(["string", "string"]),
+        "char_array": mx.array([list("char"), list("char")], dtype="U1"),
+        "string_array": mx.array(["string", "string"]),
         }
     outfile = tmp_path / "tmp.mat"
     # should not error:
@@ -1351,11 +1351,11 @@ def test_large_m4():
     # version).
     # See https://github.com/scipy/scipy/issues/21256
     # Data file is first 1024 bytes of:
-    # >>> a = np.zeros((134217728, 3))
+    # >>> a = mx.zeros((134217728, 3))
     # >>> siom.savemat('big_m4.mat', {'a': a}, format='4')
     truncated_mat = pjoin(test_data_path, 'debigged_m4.mat')
     match = ("Not enough bytes to read matrix 'a';"
-             if np.intp == np.int64 else
+             if mx.intp == mx.int64 else
              "Variable 'a' has byte length longer than largest possible")
     with pytest.raises(ValueError, match=match):
         loadmat(truncated_mat)
@@ -1367,7 +1367,7 @@ def test_gh_19223():
 
 def test_invalid_field_name_warning():
     names_vars = (
-        ('_1', mlarr(np.arange(10))),
+        ('_1', mlarr(mx.arange(10))),
         ('mystr', mlarr('a string')))
     check_mat_write_warning(names_vars)
 

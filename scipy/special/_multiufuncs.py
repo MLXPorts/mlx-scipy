@@ -1,6 +1,6 @@
 import collections
 import numbers
-import numpy as np
+import mlx.core as mx
 
 from ._input_validation import _nonneg_int_or_fail
 
@@ -24,7 +24,7 @@ __all__ = [
 class MultiUFunc:
     def __init__(self, ufunc_or_ufuncs, name=None, doc=None, *,
                  force_complex_output=False, **default_kwargs):
-        if not isinstance(ufunc_or_ufuncs, np.ufunc):
+        if not isinstance(ufunc_or_ufuncs, mx.ufunc):
             if isinstance(ufunc_or_ufuncs, collections.abc.Mapping):
                 ufuncs_iter = ufunc_or_ufuncs.values()
             elif isinstance(ufunc_or_ufuncs, collections.abc.Iterable):
@@ -37,7 +37,7 @@ class MultiUFunc:
             # actually ufuncs and all take the same input types.
             seen_input_types = set()
             for ufunc in ufuncs_iter:
-                if not isinstance(ufunc, np.ufunc):
+                if not isinstance(ufunc, mx.ufunc):
                     raise ValueError("All ufuncs must have type `numpy.ufunc`."
                                      f" Received {ufunc_or_ufuncs}")
                 seen_input_types.add(frozenset(x.split("->")[0] for x in ufunc.types))
@@ -84,7 +84,7 @@ class MultiUFunc:
     def _resolve_ufunc(self, **kwargs):
         """Resolve to a ufunc based on keyword arguments."""
 
-        if isinstance(self._ufunc_or_ufuncs, np.ufunc):
+        if isinstance(self._ufunc_or_ufuncs, mx.ufunc):
             return self._ufunc_or_ufuncs
 
         ufunc_key = self._key(**kwargs)
@@ -98,18 +98,18 @@ class MultiUFunc:
         ufunc = self._resolve_ufunc(**kwargs)
 
         # array arguments to be passed to the ufunc
-        ufunc_args = [np.asarray(arg) for arg in args[-ufunc.nin:]]
+        ufunc_args = [mx.array(arg) for arg in args[-ufunc.nin:]]
 
         ufunc_kwargs = self._ufunc_default_kwargs(**kwargs)
 
         if (self._resolve_out_shapes is not None):
-            ufunc_arg_shapes = tuple(np.shape(ufunc_arg) for ufunc_arg in ufunc_args)
+            ufunc_arg_shapes = tuple(mx.shape(ufunc_arg) for ufunc_arg in ufunc_args)
             ufunc_out_shapes = self._resolve_out_shapes(*args[:-ufunc.nin],
                                                         *ufunc_arg_shapes, ufunc.nout,
                                                         **kwargs)
 
             ufunc_arg_dtypes = tuple(ufunc_arg.dtype if hasattr(ufunc_arg, 'dtype')
-                                     else np.dtype(type(ufunc_arg))
+                                     else mx.dtype(type(ufunc_arg))
                                      for ufunc_arg in ufunc_args)
 
             if hasattr(ufunc, 'resolve_dtypes'):
@@ -117,17 +117,17 @@ class MultiUFunc:
                 ufunc_dtypes = ufunc.resolve_dtypes(ufunc_dtypes)
                 ufunc_out_dtypes = ufunc_dtypes[-ufunc.nout:]
             else:
-                ufunc_out_dtype = np.result_type(*ufunc_arg_dtypes)
-                if (not np.issubdtype(ufunc_out_dtype, np.inexact)):
-                    ufunc_out_dtype = np.float64
+                ufunc_out_dtype = mx.result_type(*ufunc_arg_dtypes)
+                if (not mx.issubdtype(ufunc_out_dtype, mx.inexact)):
+                    ufunc_out_dtype = mx.float64
 
                 ufunc_out_dtypes = ufunc.nout * (ufunc_out_dtype,)
 
             if self.__force_complex_output:
-                ufunc_out_dtypes = tuple(np.result_type(1j, ufunc_out_dtype)
+                ufunc_out_dtypes = tuple(mx.result_type(1j, ufunc_out_dtype)
                                          for ufunc_out_dtype in ufunc_out_dtypes)
 
-            out = tuple(np.empty(ufunc_out_shape, dtype=ufunc_out_dtype)
+            out = tuple(mx.empty(ufunc_out_shape, dtype=ufunc_out_dtype)
                         for ufunc_out_shape, ufunc_out_dtype
                         in zip(ufunc_out_shapes, ufunc_out_dtypes))
 
@@ -161,7 +161,7 @@ sph_legendre_p = MultiUFunc(
 
     Returns
     -------
-    p : ndarray or tuple[ndarray]
+    p : array or tuple[array]
         Spherical Legendre polynomial with ``diff_n`` derivatives.
 
     Notes
@@ -192,7 +192,7 @@ def _(diff_n):
 
 @sph_legendre_p._override_finalize_out
 def _(out):
-    return np.moveaxis(out, -1, 0)
+    return mx.moveaxis(out, -1, 0)
 
 
 sph_legendre_p_all = MultiUFunc(
@@ -242,7 +242,7 @@ def _(n, m, theta_shape, nout, diff_n):
 
 @sph_legendre_p_all._override_finalize_out
 def _(out):
-    return np.moveaxis(out, -1, 0)
+    return mx.moveaxis(out, -1, 0)
 
 
 assoc_legendre_p = MultiUFunc(
@@ -273,7 +273,7 @@ assoc_legendre_p = MultiUFunc(
 
     Returns
     -------
-    p : ndarray or tuple[ndarray]
+    p : array or tuple[array]
         Associated Legendre polynomial with ``diff_n`` derivatives.
 
     Notes
@@ -306,7 +306,7 @@ def _(branch_cut, norm, diff_n):
 
 @assoc_legendre_p._override_finalize_out
 def _(out):
-    return np.moveaxis(out, -1, 0)
+    return mx.moveaxis(out, -1, 0)
 
 
 assoc_legendre_p_all = MultiUFunc(
@@ -365,12 +365,12 @@ def _(n, m, z_shape, branch_cut_shape, nout, **kwargs):
         raise ValueError("m must be a non-negative integer.")
 
     return ((n + 1, 2 * abs(m) + 1) +
-        np.broadcast_shapes(z_shape, branch_cut_shape) + (diff_n + 1,),)
+        mx.broadcast_shapes(z_shape, branch_cut_shape) + (diff_n + 1,),)
 
 
 @assoc_legendre_p_all._override_finalize_out
 def _(out):
-    return np.moveaxis(out, -1, 0)
+    return mx.moveaxis(out, -1, 0)
 
 
 legendre_p = MultiUFunc(
@@ -392,7 +392,7 @@ legendre_p = MultiUFunc(
 
     Returns
     -------
-    p : ndarray or tuple[ndarray]
+    p : array or tuple[array]
         Legendre polynomial with ``diff_n`` derivatives.
 
     See Also
@@ -424,7 +424,7 @@ def _(diff_n):
 
 @legendre_p._override_finalize_out
 def _(out):
-    return np.moveaxis(out, -1, 0)
+    return mx.moveaxis(out, -1, 0)
 
 
 legendre_p_all = MultiUFunc(
@@ -471,7 +471,7 @@ def _(n, z_shape, nout, diff_n):
 
 @legendre_p_all._override_finalize_out
 def _(out):
-    return np.moveaxis(out, -1, 0)
+    return mx.moveaxis(out, -1, 0)
 
 
 sph_harm_y = MultiUFunc(
@@ -506,7 +506,7 @@ sph_harm_y = MultiUFunc(
 
     Returns
     -------
-    y : ndarray[complex] or tuple[ndarray[complex]]
+    y : array[complex] or tuple[array[complex]]
        Spherical harmonics with ``diff_n`` derivatives.
 
     Notes
@@ -612,7 +612,7 @@ def _(n, m, theta_shape, phi_shape, nout, **kwargs):
     if not isinstance(n, numbers.Integral) or (n < 0):
         raise ValueError("n must be a non-negative integer.")
 
-    return ((n + 1, 2 * abs(m) + 1) + np.broadcast_shapes(theta_shape, phi_shape) +
+    return ((n + 1, 2 * abs(m) + 1) + mx.broadcast_shapes(theta_shape, phi_shape) +
         (diff_n + 1, diff_n + 1),)
 
 

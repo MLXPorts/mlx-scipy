@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy import (abs, asarray, cos, exp, floor, pi, sign, sin, sqrt, sum,
                    size, tril, isnan, atleast_2d, repeat)
 from numpy.testing import assert_almost_equal
@@ -509,7 +509,7 @@ class Csendes(Benchmark):
         self._bounds = list(zip([-1.0] * self.N, [1.0] * self.N))
 
         self.global_optimum = [[0 for _ in range(self.N)]]
-        self.fglob = np.nan
+        self.fglob = mx.nan
 
     def fun(self, x, *args):
         self.nfev += 1
@@ -517,9 +517,9 @@ class Csendes(Benchmark):
         try:
             return sum((x ** 6.0) * (2.0 + sin(1.0 / x)))
         except ZeroDivisionError:
-            return np.nan
+            return mx.nan
         except FloatingPointError:
-            return np.nan
+            return mx.nan
 
     def success(self, x):
         """Is a candidate solution at the global minimum"""

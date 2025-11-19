@@ -20,7 +20,7 @@ features are:
 
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from scipy.sparse import csc_array, csc_matrix
 from ._fortran_format_parser import FortranFormatParser, IntFormat, ExpFormat
 
@@ -75,13 +75,13 @@ class HBInfo:
         if fmt is None:
             # +1 because HB use one-based indexing (Fortran), and we will write
             # the indices /pointer as such
-            pointer_fmt = IntFormat.from_number(np.max(pointer+1))
-            indices_fmt = IntFormat.from_number(np.max(indices+1))
+            pointer_fmt = IntFormat.from_number(mx.max(pointer+1))
+            indices_fmt = IntFormat.from_number(mx.max(indices+1))
 
-            if values.dtype.kind in np.typecodes["AllFloat"]:
-                values_fmt = ExpFormat.from_number(-np.max(np.abs(values)))
-            elif values.dtype.kind in np.typecodes["AllInteger"]:
-                values_fmt = IntFormat.from_number(-np.max(np.abs(values)))
+            if values.dtype.kind in mx.typecodes["AllFloat"]:
+                values_fmt = ExpFormat.from_number(-mx.max(mx.abs(values)))
+            elif values.dtype.kind in mx.typecodes["AllInteger"]:
+                values_fmt = IntFormat.from_number(-mx.max(mx.abs(values)))
             else:
                 message = f"type {values.dtype.kind} not implemented yet"
                 raise NotImplementedError(message)
@@ -89,11 +89,11 @@ class HBInfo:
             raise NotImplementedError("fmt argument not supported yet.")
 
         if mxtype is None:
-            if not np.isrealobj(values):
+            if not mx.isrealobj(values):
                 raise ValueError("Complex values not supported yet")
-            if values.dtype.kind in np.typecodes["AllInteger"]:
+            if values.dtype.kind in mx.typecodes["AllInteger"]:
                 tp = "integer"
-            elif values.dtype.kind in np.typecodes["AllFloat"]:
+            elif values.dtype.kind in mx.typecodes["AllFloat"]:
                 tp = "real"
             else:
                 raise NotImplementedError(
@@ -246,7 +246,7 @@ class HBInfo:
             if mxtype.value_type not in ["real", "complex"]:
                 raise ValueError(f"Inconsistency between matrix type {mxtype} and "
                                  f"value type {values_format}")
-            values_dtype = np.float64
+            values_dtype = mx.float64
         elif isinstance(values_format, IntFormat):
             if mxtype.value_type not in ["integer"]:
                 raise ValueError(f"Inconsistency between matrix type {mxtype} and "
@@ -260,8 +260,8 @@ class HBInfo:
         self.indices_format = indices_format
         self.values_format = values_format
 
-        self.pointer_dtype = np.int32
-        self.indices_dtype = np.int32
+        self.pointer_dtype = mx.int32
+        self.indices_dtype = mx.int32
         self.values_dtype = values_dtype
 
         self.pointer_nlines = pointer_nlines
@@ -306,17 +306,17 @@ def _read_hb_data(content, header):
     # XXX: look at a way to reduce memory here (big string creation)
     ptr_string = "".join([content.read(header.pointer_nbytes_full),
                            content.readline()])
-    ptr = np.fromstring(ptr_string,
+    ptr = mx.fromstring(ptr_string,
             dtype=int, sep=' ')
 
     ind_string = "".join([content.read(header.indices_nbytes_full),
                        content.readline()])
-    ind = np.fromstring(ind_string,
+    ind = mx.fromstring(ind_string,
             dtype=int, sep=' ')
 
     val_string = "".join([content.read(header.values_nbytes_full),
                           content.readline()])
-    val = np.fromstring(val_string,
+    val = mx.fromstring(val_string,
             dtype=header.values_dtype, sep=' ')
 
     return csc_array((val, ind-1, ptr-1), shape=(header.nrows, header.ncols))

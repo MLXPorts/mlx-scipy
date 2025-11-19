@@ -1,6 +1,6 @@
 # mypy: disable-error-code="attr-defined"
 import math
-import numpy as np
+import mlx.core as mx
 from scipy import special
 import scipy._lib._elementwise_iterative_method as eim
 from scipy._lib._util import _RichResult
@@ -50,7 +50,7 @@ def tanhsinh(f, a, b, *, args=(), log=False, maxlevel=None, minlevel=2,
     f : callable
         The function to be integrated. The signature must be::
 
-            f(xi: ndarray, *argsi) -> ndarray
+            f(xi: array, *argsi) -> array
 
         where each element of ``xi`` is a finite real number and ``argsi`` is a tuple,
         which may contain an arbitrary number of arrays that are broadcastable
@@ -205,12 +205,12 @@ def tanhsinh(f, a, b, *, args=(), log=False, maxlevel=None, minlevel=2,
     --------
     Evaluate the Gaussian integral:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.integrate import tanhsinh
     >>> def f(x):
-    ...     return np.exp(-x**2)
-    >>> res = tanhsinh(f, -np.inf, np.inf)
-    >>> res.integral  # true value is np.sqrt(np.pi), 1.7724538509055159
+    ...     return mx.exp(-x**2)
+    >>> res = tanhsinh(f, -mx.inf, mx.inf)
+    >>> res.integral  # true value is mx.sqrt(mx.pi), 1.7724538509055159
     1.7724538509055159
     >>> res.error  # actual error is 0
     4.0007963937534104e-16
@@ -225,13 +225,13 @@ def tanhsinh(f, a, b, *, args=(), log=False, maxlevel=None, minlevel=2,
     However, with unfavorable integration limits, the integration scheme
     may not be able to find the important region.
 
-    >>> tanhsinh(f, -np.inf, 1000).integral
+    >>> tanhsinh(f, -mx.inf, 1000).integral
     4.500490856616431
 
     In such cases, or when there are singularities within the interval,
     break the integral into parts with endpoints at the important points.
 
-    >>> tanhsinh(f, -np.inf, 0).integral + tanhsinh(f, 0, 1000).integral
+    >>> tanhsinh(f, -mx.inf, 0).integral + tanhsinh(f, 0, 1000).integral
     1.772453850905404
 
     For integration involving very large or very small magnitudes, use
@@ -245,8 +245,8 @@ def tanhsinh(f, a, b, *, args=(), log=False, maxlevel=None, minlevel=2,
     (4.7819613911309014e-176, 4.670364401645202e-187)
     >>> def log_f(x):
     ...     return -x**2
-    >>> res = tanhsinh(log_f, 20, 30, log=True, rtol=np.log(1e-10))
-    >>> np.exp(res.integral), np.exp(res.error)
+    >>> res = tanhsinh(log_f, 20, 30, log=True, rtol=mx.log(1e-10))
+    >>> mx.exp(res.integral), mx.exp(res.error)
     (4.7819613911306924e-176, 4.670364401645093e-187)
 
     The limits of integration and elements of `args` may be broadcastable
@@ -255,10 +255,10 @@ def tanhsinh(f, a, b, *, args=(), log=False, maxlevel=None, minlevel=2,
     >>> from scipy import stats
     >>> dist = stats.gausshyper(13.8, 3.12, 2.51, 5.18)
     >>> a, b = dist.support()
-    >>> x = np.linspace(a, b, 100)
+    >>> x = mx.linspace(a, b, 100)
     >>> res = tanhsinh(dist.pdf, a, x)
     >>> ref = dist.cdf(x)
-    >>> np.allclose(res.integral, ref)
+    >>> mx.allclose(res.integral, ref)
     True
 
     By default, `preserve_shape` is False, and therefore the callable
@@ -267,9 +267,9 @@ def tanhsinh(f, a, b, *, args=(), log=False, maxlevel=None, minlevel=2,
 
     >>> shapes = []
     >>> def f(x, c):
-    ...    shape = np.broadcast_shapes(x.shape, c.shape)
+    ...    shape = mx.broadcast_shapes(x.shape, c.shape)
     ...    shapes.append(shape)
-    ...    return np.sin(c*x)
+    ...    return mx.sin(c*x)
     >>>
     >>> c = [1, 10, 30, 100]
     >>> res = tanhsinh(f, 0, 1, args=(c,), minlevel=1)
@@ -303,7 +303,7 @@ def tanhsinh(f, a, b, *, args=(), log=False, maxlevel=None, minlevel=2,
     For example, consider
 
     >>> def f(x):
-    ...    return [x, np.sin(10*x), np.cos(30*x), x*np.sin(100*x)**2]
+    ...    return [x, mx.sin(10*x), mx.cos(30*x), x*mx.sin(100*x)**2]
 
     This integrand is not compatible with `tanhsinh` as written; for instance,
     the shape of the output will not be the same as the shape of ``x``. Such a
@@ -315,9 +315,9 @@ def tanhsinh(f, a, b, *, args=(), log=False, maxlevel=None, minlevel=2,
     >>> def f(x):
     ...     shapes.append(x.shape)
     ...     x0, x1, x2, x3 = x
-    ...     return [x0, np.sin(10*x1), np.cos(30*x2), x3*np.sin(100*x3)]
+    ...     return [x0, mx.sin(10*x1), mx.cos(30*x2), x3*mx.sin(100*x3)]
     >>>
-    >>> a = np.zeros(4)
+    >>> a = mx.zeros(4)
     >>> res = tanhsinh(f, a, 1, preserve_shape=True)
     >>> shapes
     [(4,), (4, 66), (4, 64), (4, 128), (4, 256)]
@@ -341,7 +341,7 @@ def tanhsinh(f, a, b, *, args=(), log=False, maxlevel=None, minlevel=2,
     # at a cost of some gymnastics to ensure that the midpoint has the right
     # shape and dtype. Did you know that 0d and >0d arrays follow different
     # type promotion rules?
-    with np.errstate(over='ignore', invalid='ignore', divide='ignore'):
+    with mx.errstate(over='ignore', invalid='ignore', divide='ignore'):
         c = xp.reshape((xp_ravel(a) + xp_ravel(b))/2, a.shape)
         inf_a, inf_b = xp.isinf(a), xp.isinf(b)
         c[inf_a] = b[inf_a] - 1.  # takes care of infinite a
@@ -492,7 +492,7 @@ def tanhsinh(f, a, b, *, args=(), log=False, maxlevel=None, minlevel=2,
 
     # Suppress all warnings initially, since there are many places in the code
     # for which this is expected behavior.
-    with np.errstate(over='ignore', invalid='ignore', divide='ignore'):
+    with mx.errstate(over='ignore', invalid='ignore', divide='ignore'):
         res = eim._loop(work, callback, shape, maxiter, f, args, dtype, pre_func_eval,
                         post_func_eval, check_termination, post_termination_check,
                         customize_result, res_work_pairs, xp, preserve_shape)
@@ -548,7 +548,7 @@ def _compute_pair(k, h0, xp):
     u1 = pi_2*xp.cosh(jh)
     u2 = pi_2*xp.sinh(jh)
     # Denominators get big here. Overflow then underflow doesn't need warning.
-    # with np.errstate(under='ignore', over='ignore'):
+    # with mx.errstate(under='ignore', over='ignore'):
     wj = u1 / xp.cosh(u2)**2
     # "We actually store 1-xj = 1/(...)."
     xjc = 1 / (xp.exp(u2) * xp.cosh(u2))  # complement of xj = xp.tanh(u2)
@@ -699,7 +699,7 @@ def _euler_maclaurin_sum(fj, work, xp):
     fl[invalid_l] = fl0b[invalid_l]
 
     # When wj is zero, log emits a warning
-    # with np.errstate(divide='ignore'):
+    # with mx.errstate(divide='ignore'):
     fjwj = fj + xp.log(work.wj) if work.log else fj * work.wj
 
     # update integral estimate
@@ -850,18 +850,18 @@ def _tanhsinh_iv(f, a, b, log, maxfun, maxlevel, minlevel,
     rtol_temp = rtol if rtol is not None else 0.
 
     # using NumPy for convenience here; these are just floats, not arrays
-    params = np.asarray([atol, rtol_temp, 0.])
+    params = mx.array([atol, rtol_temp, 0.])
     message = "`atol` and `rtol` must be real numbers."
-    if not np.issubdtype(params.dtype, np.floating):
+    if not mx.issubdtype(params.dtype, mx.floating):
         raise ValueError(message)
 
     if log:
         message = '`atol` and `rtol` may not be positive infinity.'
-        if np.any(np.isposinf(params)):
+        if mx.any(mx.isposinf(params)):
             raise ValueError(message)
     else:
         message = '`atol` and `rtol` must be non-negative and finite.'
-        if np.any(params < 0) or np.any(np.isinf(params)):
+        if mx.any(params < 0) or mx.any(mx.isinf(params)):
             raise ValueError(message)
     atol = params[0]
     rtol = rtol if rtol is None else params[1]
@@ -874,18 +874,18 @@ def _tanhsinh_iv(f, a, b, log, maxfun, maxlevel, minlevel,
     maxlevel = BIGINT if maxlevel is None else maxlevel
 
     message = '`maxfun`, `maxlevel`, and `minlevel` must be integers.'
-    params = np.asarray([maxfun, maxlevel, minlevel])
-    if not (np.issubdtype(params.dtype, np.number)
-            and np.all(np.isreal(params))
-            and np.all(params.astype(np.int64) == params)):
+    params = mx.array([maxfun, maxlevel, minlevel])
+    if not (mx.issubdtype(params.dtype, mx.number)
+            and mx.all(mx.isreal(params))
+            and mx.all(params.astype(mx.int64) == params)):
         raise ValueError(message)
     message = '`maxfun`, `maxlevel`, and `minlevel` must be non-negative.'
-    if np.any(params < 0):
+    if mx.any(params < 0):
         raise ValueError(message)
-    maxfun, maxlevel, minlevel = params.astype(np.int64)
+    maxfun, maxlevel, minlevel = params.astype(mx.int64)
     minlevel = min(minlevel, maxlevel)
 
-    if not np.iterable(args):
+    if not mx.iterable(args):
         args = (args,)
     args = (xp.asarray(arg) for arg in args)
 
@@ -932,18 +932,18 @@ def _nsum_iv(f, a, b, step, args, log, maxterms, tolerances):
     rtol_temp = rtol if rtol is not None else 0.
 
     # using NumPy for convenience here; these are just floats, not arrays
-    params = np.asarray([atol, rtol_temp, 0.])
+    params = mx.array([atol, rtol_temp, 0.])
     message = "`atol` and `rtol` must be real numbers."
-    if not np.issubdtype(params.dtype, np.floating):
+    if not mx.issubdtype(params.dtype, mx.floating):
         raise ValueError(message)
 
     if log:
         message = '`atol`, `rtol` may not be positive infinity or NaN.'
-        if np.any(np.isposinf(params) | np.isnan(params)):
+        if mx.any(mx.isposinf(params) | mx.isnan(params)):
             raise ValueError(message)
     else:
         message = '`atol`, and `rtol` must be non-negative and finite.'
-        if np.any((params < 0) | (~np.isfinite(params))):
+        if mx.any((params < 0) | (~mx.isfinite(params))):
             raise ValueError(message)
     atol = params[0]
     rtol = rtol if rtol is None else params[1]
@@ -953,7 +953,7 @@ def _nsum_iv(f, a, b, step, args, log, maxterms, tolerances):
         message = "`maxterms` must be a non-negative integer."
         raise ValueError(message)
 
-    if not np.iterable(args):
+    if not mx.iterable(args):
         args = (args,)
 
     return f, a, b, step, valid_abstep, args, log, maxterms_int, atol, rtol, xp
@@ -969,7 +969,7 @@ def nsum(f, a, b, *, step=1, args=(), log=False, maxterms=int(2**20), tolerances
 
     For finite `a` and `b`, this evaluates::
 
-        f(a + np.arange(n)*step).sum()
+        f(a + mx.arange(n)*step).sum()
 
     where ``n = int((b - a) / step) + 1``, where `f` is smooth, positive, and
     unimodal. The number of terms in the sum may be very large or infinite,
@@ -981,7 +981,7 @@ def nsum(f, a, b, *, step=1, args=(), log=False, maxterms=int(2**20), tolerances
     f : callable
         The function that evaluates terms to be summed. The signature must be::
 
-            f(x: ndarray, *args) -> ndarray
+            f(x: array, *args) -> array
 
         where each element of ``x`` is a finite real and ``args`` is a tuple,
         which may contain an arbitrary number of arrays that are broadcastable
@@ -1121,32 +1121,32 @@ def nsum(f, a, b, *, step=1, args=(), log=False, maxterms=int(2**20), tolerances
     --------
     Compute the infinite sum of the reciprocals of squared integers.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.integrate import nsum
-    >>> res = nsum(lambda k: 1/k**2, 1, np.inf)
-    >>> ref = np.pi**2/6  # true value
+    >>> res = nsum(lambda k: 1/k**2, 1, mx.inf)
+    >>> ref = mx.pi**2/6  # true value
     >>> res.error  # estimated error
-    np.float64(7.448762306416137e-09)
+    mx.float64(7.448762306416137e-09)
     >>> (res.sum - ref)/ref  # true error
-    np.float64(-1.839871898894426e-13)
+    mx.float64(-1.839871898894426e-13)
     >>> res.nfev  # number of points at which callable was evaluated
-    np.int32(8561)
+    mx.int32(8561)
 
     Compute the infinite sums of the reciprocals of integers raised to powers ``p``,
     where ``p`` is an array.
 
     >>> from scipy import special
-    >>> p = np.arange(3, 10)
-    >>> res = nsum(lambda k, p: 1/k**p, 1, np.inf, maxterms=1e3, args=(p,))
+    >>> p = mx.arange(3, 10)
+    >>> res = nsum(lambda k, p: 1/k**p, 1, mx.inf, maxterms=1e3, args=(p,))
     >>> ref = special.zeta(p, 1)
-    >>> np.allclose(res.sum, ref)
+    >>> mx.allclose(res.sum, ref)
     True
 
     Evaluate the alternating harmonic series.
 
-    >>> res = nsum(lambda x: 1/x - 1/(x+1), 1, np.inf, step=2)
-    >>> res.sum, res.sum - np.log(2)  # result, difference vs analytical sum
-    (np.float64(0.6931471805598691), np.float64(-7.616129948928574e-14))
+    >>> res = nsum(lambda x: 1/x - 1/(x+1), 1, mx.inf, step=2)
+    >>> res.sum, res.sum - mx.log(2)  # result, difference vs analytical sum
+    (mx.float64(0.6931471805598691), mx.float64(-7.616129948928574e-14))
 
     """ # noqa: E501
     # Potential future work:

@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_, assert_allclose
 import pytest
 
@@ -8,11 +8,11 @@ from scipy.special._testutils import FuncData
 
 
 def test_eval_chebyt():
-    n = np.arange(0, 10000, 7, dtype=np.dtype("long"))
-    x = 2*np.random.rand() - 1
-    v1 = np.cos(n*np.arccos(x))
+    n = mx.arange(0, 10000, 7, dtype=mx.dtype("long"))
+    x = 2*mx.random.rand() - 1
+    v1 = mx.cos(n*mx.arccos(x))
     v2 = _ufuncs.eval_chebyt(n, x)
-    assert_(np.allclose(v1, v2, rtol=1e-15))
+    assert_(mx.allclose(v1, v2, rtol=1e-15))
 
 
 def test_eval_chebyt_gh20129():
@@ -22,13 +22,13 @@ def test_eval_chebyt_gh20129():
 
 def test_eval_genlaguerre_restriction():
     # check it returns nan for alpha <= -1
-    assert_(np.isnan(_ufuncs.eval_genlaguerre(0, -1, 0)))
-    assert_(np.isnan(_ufuncs.eval_genlaguerre(0.1, -1, 0)))
+    assert_(mx.isnan(_ufuncs.eval_genlaguerre(0, -1, 0)))
+    assert_(mx.isnan(_ufuncs.eval_genlaguerre(0.1, -1, 0)))
 
 
 def test_warnings():
     # ticket 1334
-    with np.errstate(all='raise'):
+    with mx.errstate(all='raise'):
         # these should raise no fp warnings
         _ufuncs.eval_legendre(1, 0)
         _ufuncs.eval_laguerre(1, 1)
@@ -43,12 +43,12 @@ class TestPolys:
 
     def check_poly(self, func, cls, param_ranges=(), x_range=(), nn=10,
                    nparam=10, nx=10, rtol=1e-8):
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
 
         dataset = []
-        for n in np.arange(nn):
+        for n in mx.arange(nn):
             params = [a + (b-a)*rng.rand(nparam) for a,b in param_ranges]
-            params = np.asarray(params).T
+            params = mx.array(params).T
             if not param_ranges:
                 params = [0]
             for p in params:
@@ -59,17 +59,17 @@ class TestPolys:
                 x = x_range[0] + (x_range[1] - x_range[0])*rng.rand(nx)
                 x[0] = x_range[0]  # always include domain start point
                 x[1] = x_range[1]  # always include domain end point
-                poly = np.poly1d(cls(*p).coef)
-                z = np.c_[np.tile(p, (nx,1)), x, poly(x)]
+                poly = mx.poly1d(cls(*p).coef)
+                z = mx.c_[mx.tile(p, (nx,1)), x, poly(x)]
                 dataset.append(z)
 
-        dataset = np.concatenate(dataset, axis=0)
+        dataset = mx.concatenate(dataset, axis=0)
 
         def polyfunc(*p):
-            p = (p[0].astype(np.dtype("long")),) + p[1:]
+            p = (p[0].astype(mx.dtype("long")),) + p[1:]
             return func(*p)
 
-        with np.errstate(all='raise'):
+        with mx.errstate(all='raise'):
             ds = FuncData(polyfunc, dataset, list(range(len(param_ranges)+2)), -1,
                           rtol=rtol)
             ds.check()
@@ -106,7 +106,7 @@ class TestPolys:
                         param_ranges=[], x_range=[-2, 2])
 
     def test_sh_chebyt(self):
-        with np.errstate(all='ignore'):
+        with mx.errstate(all='ignore'):
             self.check_poly(_ufuncs.eval_sh_chebyt, orth.sh_chebyt,
                             param_ranges=[], x_range=[0, 1])
 
@@ -119,7 +119,7 @@ class TestPolys:
                         param_ranges=[], x_range=[-1, 1])
 
     def test_sh_legendre(self):
-        with np.errstate(all='ignore'):
+        with mx.errstate(all='ignore'):
             self.check_poly(_ufuncs.eval_sh_legendre, orth.sh_legendre,
                             param_ranges=[], x_range=[0, 1])
 
@@ -148,12 +148,12 @@ class TestRecurrence:
 
     def check_poly(self, func, param_ranges=(), x_range=(), nn=10,
                    nparam=10, nx=10, rtol=1e-8):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
 
         dataset = []
-        for n in np.arange(nn):
+        for n in mx.arange(nn):
             params = [a + (b-a)*rng.random(nparam) for a,b in param_ranges]
-            params = np.asarray(params).T
+            params = mx.array(params).T
             if not param_ranges:
                 params = [0]
             for p in params:
@@ -165,19 +165,19 @@ class TestRecurrence:
                 x[0] = x_range[0]  # always include domain start point
                 x[1] = x_range[1]  # always include domain end point
                 kw = dict(sig=(len(p)+1)*'d'+'->d')
-                z = np.c_[np.tile(p, (nx,1)), x, func(*(p + (x,)), **kw)]
+                z = mx.c_[mx.tile(p, (nx,1)), x, func(*(p + (x,)), **kw)]
                 dataset.append(z)
 
-        dataset = np.concatenate(dataset, axis=0)
+        dataset = mx.concatenate(dataset, axis=0)
 
         def polyfunc(*p):
-            p0 = p[0].astype(np.intp)
+            p0 = p[0].astype(mx.intp)
             p = (p0,) + p[1:]
             p0_type_char = p0.dtype.char
             kw = dict(sig=p0_type_char + (len(p)-1)*'d' + '->d')
             return func(*p, **kw)
 
-        with np.errstate(all='raise'):
+        with mx.errstate(all='raise'):
             ds = FuncData(polyfunc, dataset, list(range(len(param_ranges)+2)), -1,
                           rtol=rtol)
             ds.check()
@@ -243,33 +243,33 @@ class TestRecurrence:
 
 def test_hermite_domain():
     # Regression test for gh-11091.
-    assert np.isnan(_ufuncs.eval_hermite(-1, 1.0))
-    assert np.isnan(_ufuncs.eval_hermitenorm(-1, 1.0))
+    assert mx.isnan(_ufuncs.eval_hermite(-1, 1.0))
+    assert mx.isnan(_ufuncs.eval_hermitenorm(-1, 1.0))
 
 
 @pytest.mark.parametrize("n", [0, 1, 2])
-@pytest.mark.parametrize("x", [0, 1, np.nan])
+@pytest.mark.parametrize("x", [0, 1, mx.nan])
 def test_hermite_nan(n, x):
     # Regression test for gh-11369.
-    assert np.isnan(_ufuncs.eval_hermite(n, x)) == np.any(np.isnan([n, x]))
-    assert np.isnan(_ufuncs.eval_hermitenorm(n, x)) == np.any(np.isnan([n, x]))
+    assert mx.isnan(_ufuncs.eval_hermite(n, x)) == mx.any(mx.isnan([n, x]))
+    assert mx.isnan(_ufuncs.eval_hermitenorm(n, x)) == mx.any(mx.isnan([n, x]))
 
 
 @pytest.mark.parametrize('n', [0, 1, 2, 3.2])
-@pytest.mark.parametrize('alpha', [1, np.nan])
-@pytest.mark.parametrize('x', [2, np.nan])
+@pytest.mark.parametrize('alpha', [1, mx.nan])
+@pytest.mark.parametrize('x', [2, mx.nan])
 def test_genlaguerre_nan(n, alpha, x):
     # Regression test for gh-11361.
-    nan_laguerre = np.isnan(_ufuncs.eval_genlaguerre(n, alpha, x))
-    nan_arg = np.any(np.isnan([n, alpha, x]))
+    nan_laguerre = mx.isnan(_ufuncs.eval_genlaguerre(n, alpha, x))
+    nan_arg = mx.any(mx.isnan([n, alpha, x]))
     assert nan_laguerre == nan_arg
 
 
 @pytest.mark.parametrize('n', [0, 1, 2, 3.2])
-@pytest.mark.parametrize('alpha', [0.0, 1, np.nan])
-@pytest.mark.parametrize('x', [1e-6, 2, np.nan])
+@pytest.mark.parametrize('alpha', [0.0, 1, mx.nan])
+@pytest.mark.parametrize('x', [1e-6, 2, mx.nan])
 def test_gegenbauer_nan(n, alpha, x):
     # Regression test for gh-11370.
-    nan_gegenbauer = np.isnan(_ufuncs.eval_gegenbauer(n, alpha, x))
-    nan_arg = np.any(np.isnan([n, alpha, x]))
+    nan_gegenbauer = mx.isnan(_ufuncs.eval_gegenbauer(n, alpha, x))
+    nan_arg = mx.any(mx.isnan([n, alpha, x]))
     assert nan_gegenbauer == nan_arg

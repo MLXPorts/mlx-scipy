@@ -30,7 +30,7 @@ cdef inline double _agm_iter(double a, double b) noexcept nogil:
 cdef inline double agm(double a, double b) noexcept nogil:
     # Arithmetic-geometric mean
 
-    # sqrthalfmax is sqrt(np.finfo(1.0).max/2)
+    # sqrthalfmax is sqrt(mx.finfo(1.0).max/2)
     # invsqrthalfmax is 1/sqrthalfmax
     cdef double sqrthalfmax = 9.480751908109176e+153
     cdef double invsqrthalfmax = 1.0547686614863e-154

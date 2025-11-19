@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy.linalg import lu_factor, lu_solve
 from scipy.sparse import issparse, csc_matrix, eye
 from scipy.sparse.linalg import splu
@@ -17,12 +17,12 @@ MAX_FACTOR = 10
 
 def compute_R(order, factor):
     """Compute the matrix for changing the differences array."""
-    I = np.arange(1, order + 1)[:, None]
-    J = np.arange(1, order + 1)
-    M = np.zeros((order + 1, order + 1))
+    I = mx.arange(1, order + 1)[:, None]
+    J = mx.arange(1, order + 1)
+    M = mx.zeros((order + 1, order + 1))
     M[1:, 1:] = (I - 1 - factor * J) / I
     M[0] = 1
-    return np.cumprod(M, axis=0)
+    return mx.cumprod(M, axis=0)
 
 
 def change_D(D, order, factor):
@@ -30,7 +30,7 @@ def change_D(D, order, factor):
     R = compute_R(order, factor)
     U = compute_R(order, 1)
     RU = R.dot(U)
-    D[:order + 1] = np.dot(RU.T, D[:order + 1])
+    D[:order + 1] = mx.dot(RU.T, D[:order + 1])
 
 
 def solve_bdf_system(fun, t_new, y_predict, c, psi, LU, solve_lu, scale, tol):
@@ -41,7 +41,7 @@ def solve_bdf_system(fun, t_new, y_predict, c, psi, LU, solve_lu, scale, tol):
     converged = False
     for k in range(NEWTON_MAXITER):
         f = fun(t_new, y)
-        if not np.all(np.isfinite(f)):
+        if not mx.all(mx.isfinite(f)):
             break
 
         dy = solve_lu(LU, c * f - psi - d)
@@ -85,7 +85,7 @@ class BDF(OdeSolver):
     fun : callable
         Right-hand side of the system: the time derivative of the state ``y``
         at time ``t``. The calling signature is ``fun(t, y)``, where ``t`` is a
-        scalar and ``y`` is an ndarray with ``len(y) = len(y0)``. ``fun`` must
+        scalar and ``y`` is an array with ``len(y) = len(y0)``. ``fun`` must
         return an array of the same shape as ``y``. See `vectorized` for more
         information.
     t0 : float
@@ -99,7 +99,7 @@ class BDF(OdeSolver):
         Initial step size. Default is ``None`` which means that the algorithm
         should choose.
     max_step : float, optional
-        Maximum allowed step size. Default is np.inf, i.e., the step size is not
+        Maximum allowed step size. Default is mx.inf, i.e., the step size is not
         bounded and determined solely by the solver.
     rtol, atol : float and array_like, optional
         Relative and absolute tolerances. The solver keeps the local error
@@ -168,7 +168,7 @@ class BDF(OdeSolver):
         Integration direction: +1 or -1.
     t : float
         Current time.
-    y : ndarray
+    y : array
         Current state.
     t_old : float
         Previous time. None if no steps were made yet.
@@ -195,7 +195,7 @@ class BDF(OdeSolver):
            and its Applications, 13, pp. 117-120, 1974.
     """
 
-    def __init__(self, fun, t0, y0, t_bound, max_step=np.inf,
+    def __init__(self, fun, t0, y0, t_bound, max_step=mx.inf,
                  rtol=1e-3, atol=1e-6, jac=None, jac_sparsity=None,
                  vectorized=False, first_step=None, **extraneous):
         warn_extraneous(extraneous)
@@ -235,18 +235,18 @@ class BDF(OdeSolver):
             def solve_lu(LU, b):
                 return lu_solve(LU, b, overwrite_b=True)
 
-            I = np.identity(self.n, dtype=self.y.dtype)
+            I = mx.identity(self.n, dtype=self.y.dtype)
 
         self.lu = lu
         self.solve_lu = solve_lu
         self.I = I
 
-        kappa = np.array([0, -0.1850, -1/9, -0.0823, -0.0415, 0])
-        self.gamma = np.hstack((0, np.cumsum(1 / np.arange(1, MAX_ORDER + 1))))
+        kappa = mx.array([0, -0.1850, -1/9, -0.0823, -0.0415, 0])
+        self.gamma = mx.hstack((0, mx.cumsum(1 / mx.arange(1, MAX_ORDER + 1))))
         self.alpha = (1 - kappa) * self.gamma
-        self.error_const = kappa * self.gamma + 1 / np.arange(1, MAX_ORDER + 2)
+        self.error_const = kappa * self.gamma + 1 / mx.arange(1, MAX_ORDER + 2)
 
-        D = np.empty((MAX_ORDER + 3, self.n), dtype=self.y.dtype)
+        D = mx.empty((MAX_ORDER + 3, self.n), dtype=self.y.dtype)
         D[0] = self.y
         D[1] = f * self.h_abs * self.direction
         self.D = D
@@ -284,11 +284,11 @@ class BDF(OdeSolver):
                     self.njev += 1
                     return csc_matrix(jac(t, y), dtype=y0.dtype)
             else:
-                J = np.asarray(J, dtype=y0.dtype)
+                J = mx.array(J, dtype=y0.dtype)
 
                 def jac_wrapped(t, y):
                     self.njev += 1
-                    return np.asarray(jac(t, y), dtype=y0.dtype)
+                    return mx.array(jac(t, y), dtype=y0.dtype)
 
             if J.shape != (self.n, self.n):
                 raise ValueError(f"`jac` is expected to have shape {(self.n, self.n)},"
@@ -297,7 +297,7 @@ class BDF(OdeSolver):
             if issparse(jac):
                 J = csc_matrix(jac, dtype=y0.dtype)
             else:
-                J = np.asarray(jac, dtype=y0.dtype)
+                J = mx.array(jac, dtype=y0.dtype)
 
             if J.shape != (self.n, self.n):
                 raise ValueError(f"`jac` is expected to have shape {(self.n, self.n)},"
@@ -311,7 +311,7 @@ class BDF(OdeSolver):
         D = self.D
 
         max_step = self.max_step
-        min_step = 10 * np.abs(np.nextafter(t, self.direction * np.inf) - t)
+        min_step = 10 * mx.abs(mx.nextafter(t, self.direction * mx.inf) - t)
         if self.h_abs > max_step:
             h_abs = max_step
             change_D(D, self.order, max_step / self.h_abs)
@@ -345,17 +345,17 @@ class BDF(OdeSolver):
 
             if self.direction * (t_new - self.t_bound) > 0:
                 t_new = self.t_bound
-                change_D(D, order, np.abs(t_new - t) / h_abs)
+                change_D(D, order, mx.abs(t_new - t) / h_abs)
                 self.n_equal_steps = 0
                 LU = None
 
             h = t_new - t
-            h_abs = np.abs(h)
+            h_abs = mx.abs(h)
 
-            y_predict = np.sum(D[:order + 1], axis=0)
+            y_predict = mx.sum(D[:order + 1], axis=0)
 
-            scale = atol + rtol * np.abs(y_predict)
-            psi = np.dot(D[1: order + 1].T, gamma[1: order + 1]) / alpha[order]
+            scale = atol + rtol * mx.abs(y_predict)
+            psi = mx.dot(D[1: order + 1].T, gamma[1: order + 1]) / alpha[order]
 
             converged = False
             c = h / alpha[order]
@@ -385,7 +385,7 @@ class BDF(OdeSolver):
             safety = 0.9 * (2 * NEWTON_MAXITER + 1) / (2 * NEWTON_MAXITER
                                                        + n_iter)
 
-            scale = atol + rtol * np.abs(y_new)
+            scale = atol + rtol * mx.abs(y_new)
             error = error_const[order] * d
             error_norm = norm(error / scale)
 
@@ -425,23 +425,23 @@ class BDF(OdeSolver):
             error_m = error_const[order - 1] * D[order]
             error_m_norm = norm(error_m / scale)
         else:
-            error_m_norm = np.inf
+            error_m_norm = mx.inf
 
         if order < MAX_ORDER:
             error_p = error_const[order + 1] * D[order + 2]
             error_p_norm = norm(error_p / scale)
         else:
-            error_p_norm = np.inf
+            error_p_norm = mx.inf
 
-        error_norms = np.array([error_m_norm, error_norm, error_p_norm])
-        with np.errstate(divide='ignore'):
-            factors = error_norms ** (-1 / np.arange(order, order + 3))
+        error_norms = mx.array([error_m_norm, error_norm, error_p_norm])
+        with mx.errstate(divide='ignore'):
+            factors = error_norms ** (-1 / mx.arange(order, order + 3))
 
-        delta_order = np.argmax(factors) - 1
+        delta_order = mx.argmax(factors) - 1
         order += delta_order
         self.order = order
 
-        factor = min(MAX_FACTOR, safety * np.max(factors))
+        factor = min(MAX_FACTOR, safety * mx.max(factors))
         self.h_abs *= factor
         change_D(D, order, factor)
         self.n_equal_steps = 0
@@ -458,19 +458,19 @@ class BdfDenseOutput(DenseOutput):
     def __init__(self, t_old, t, h, order, D):
         super().__init__(t_old, t)
         self.order = order
-        self.t_shift = self.t - h * np.arange(self.order)
-        self.denom = h * (1 + np.arange(self.order))
+        self.t_shift = self.t - h * mx.arange(self.order)
+        self.denom = h * (1 + mx.arange(self.order))
         self.D = D
 
     def _call_impl(self, t):
         if t.ndim == 0:
             x = (t - self.t_shift) / self.denom
-            p = np.cumprod(x)
+            p = mx.cumprod(x)
         else:
             x = (t - self.t_shift[:, None]) / self.denom[:, None]
-            p = np.cumprod(x, axis=0)
+            p = mx.cumprod(x, axis=0)
 
-        y = np.dot(self.D[1:].T, p)
+        y = mx.dot(self.D[1:].T, p)
         if y.ndim == 1:
             y += self.D[0]
         else:

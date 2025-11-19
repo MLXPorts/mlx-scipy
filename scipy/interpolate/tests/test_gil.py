@@ -2,7 +2,7 @@ import itertools
 import threading
 import time
 
-import numpy as np
+import mlx.core as mx
 import pytest
 import scipy.interpolate
 
@@ -31,8 +31,8 @@ class TestGIL:
     @pytest.mark.xfail(reason='race conditions, may depend on system load')
     def test_rectbivariatespline(self):
         def generate_params(n_points):
-            x = y = np.linspace(0, 1000, n_points)
-            x_grid, y_grid = np.meshgrid(x, y)
+            x = y = mx.linspace(0, 1000, n_points)
+            x_grid, y_grid = mx.meshgrid(x, y)
             z = x_grid * y_grid
             return x, y, z
 

@@ -1,7 +1,7 @@
 # Tests for the CensoredData class.
 
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_array_equal
 from scipy.stats import CensoredData
 
@@ -21,32 +21,32 @@ class TestCensoredData:
         assert_equal(data._interval, interval)
 
         udata = data._uncensor()
-        assert_equal(udata, np.concatenate((uncensored, left, right,
-                                            np.mean(interval, axis=1))))
+        assert_equal(udata, mx.concatenate((uncensored, left, right,
+                                            mx.mean(interval, axis=1))))
 
     def test_right_censored(self):
-        x = np.array([0, 3, 2.5])
-        is_censored = np.array([0, 1, 0], dtype=bool)
+        x = mx.array([0, 3, 2.5])
+        is_censored = mx.array([0, 1, 0], dtype=bool)
         data = CensoredData.right_censored(x, is_censored)
         assert_equal(data._uncensored, x[~is_censored])
         assert_equal(data._right, x[is_censored])
         assert_equal(data._left, [])
-        assert_equal(data._interval, np.empty((0, 2)))
+        assert_equal(data._interval, mx.empty((0, 2)))
 
     def test_left_censored(self):
-        x = np.array([0, 3, 2.5])
-        is_censored = np.array([0, 1, 0], dtype=bool)
+        x = mx.array([0, 3, 2.5])
+        is_censored = mx.array([0, 1, 0], dtype=bool)
         data = CensoredData.left_censored(x, is_censored)
         assert_equal(data._uncensored, x[~is_censored])
         assert_equal(data._left, x[is_censored])
         assert_equal(data._right, [])
-        assert_equal(data._interval, np.empty((0, 2)))
+        assert_equal(data._interval, mx.empty((0, 2)))
 
     def test_interval_censored_basic(self):
         a = [0.5, 2.0, 3.0, 5.5]
         b = [1.0, 2.5, 3.5, 7.0]
         data = CensoredData.interval_censored(low=a, high=b)
-        assert_array_equal(data._interval, np.array(list(zip(a, b))))
+        assert_array_equal(data._interval, mx.array(list(zip(a, b))))
         assert data._uncensored.shape == (0,)
         assert data._left.shape == (0,)
         assert data._right.shape == (0,)
@@ -56,8 +56,8 @@ class TestCensoredData:
         # and interval-censored data.  Check that when the `interval_censored`
         # class method is used, the data is correctly separated into the
         # appropriate arrays.
-        a = [0.5, -np.inf, -13.0, 2.0, 1.0, 10.0, -1.0]
-        b = [0.5, 2500.0, np.inf, 3.0, 1.0, 11.0, np.inf]
+        a = [0.5, -mx.inf, -13.0, 2.0, 1.0, 10.0, -1.0]
+        b = [0.5, 2500.0, mx.inf, 3.0, 1.0, 11.0, mx.inf]
         data = CensoredData.interval_censored(low=a, high=b)
         assert_array_equal(data._interval, [[2.0, 3.0], [10.0, 11.0]])
         assert_array_equal(data._uncensored, [0.5, 1.0])
@@ -69,12 +69,12 @@ class TestCensoredData:
         # left- or right-censored data.  Test the conversion of such
         # an example to the canonical form in which the different
         # types have been split into the separate arrays.
-        interval = np.array([[0, 1],        # interval-censored
+        interval = mx.array([[0, 1],        # interval-censored
                              [2, 2],        # not censored
                              [3, 3],        # not censored
-                             [9, np.inf],   # right-censored
-                             [8, np.inf],   # right-censored
-                             [-np.inf, 0],  # left-censored
+                             [9, mx.inf],   # right-censored
+                             [8, mx.inf],   # right-censored
+                             [-mx.inf, 0],  # left-censored
                              [1, 2]])       # interval-censored
         data = CensoredData(interval=interval)
         assert_equal(data._uncensored, [2, 3])
@@ -101,17 +101,17 @@ class TestCensoredData:
             CensoredData(interval=[[1, 2, 3]])
 
         with pytest.raises(ValueError, match='must not contain nan'):
-            CensoredData(uncensored=[1, np.nan, 2])
+            CensoredData(uncensored=[1, mx.nan, 2])
         with pytest.raises(ValueError, match='must not contain nan'):
-            CensoredData(left=[1, np.nan, 2])
+            CensoredData(left=[1, mx.nan, 2])
         with pytest.raises(ValueError, match='must not contain nan'):
-            CensoredData(right=[1, np.nan, 2])
+            CensoredData(right=[1, mx.nan, 2])
         with pytest.raises(ValueError, match='must not contain nan'):
-            CensoredData(interval=[[1, np.nan], [2, 3]])
+            CensoredData(interval=[[1, mx.nan], [2, 3]])
 
         with pytest.raises(ValueError,
                            match='both values must not be infinite'):
-            CensoredData(interval=[[1, 3], [2, 9], [np.inf, np.inf]])
+            CensoredData(interval=[[1, 3], [2, 9], [mx.inf, mx.inf]])
 
         with pytest.raises(ValueError,
                            match='left value must not exceed the right'):
@@ -127,7 +127,7 @@ class TestCensoredData:
                            match='`censored` must be one-dimensional'):
             func([1, 2, 3], [[0, 1, 1]])
         with pytest.raises(ValueError, match='`x` must not contain'):
-            func([1, 2, np.nan], [0, 1, 1])
+            func([1, 2, mx.nan], [0, 1, 1])
         with pytest.raises(ValueError, match='must have the same length'):
             func([1, 2, 3], [0, 0, 1, 1])
 
@@ -139,7 +139,7 @@ class TestCensoredData:
                            match='`high` must be a one-dimensional'):
             CensoredData.interval_censored(low=[3], high=[[4, 5]])
         with pytest.raises(ValueError, match='`low` must not contain'):
-            CensoredData.interval_censored([1, 2, np.nan], [0, 1, 1])
+            CensoredData.interval_censored([1, 2, mx.nan], [0, 1, 1])
         with pytest.raises(ValueError, match='must have the same length'):
             CensoredData.interval_censored([1, 2, 3], [0, 0, 1, 1])
 

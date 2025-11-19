@@ -1,6 +1,6 @@
 # mypy: disable-error-code="attr-defined"
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_almost_equal, assert_allclose
 from hypothesis import given
 import hypothesis.strategies as st
@@ -30,7 +30,7 @@ class TestFixedQuad:
 
     def test_vector(self):
         n = 4
-        p = np.arange(1, 2*n)
+        p = mx.arange(1, 2*n)
         expected = 1/(p + 1)
         got, _ = fixed_quad(lambda x: x**p[:, None], 0, 1, n=n)
         assert_allclose(got, expected, rtol=1e-12)
@@ -43,10 +43,10 @@ class TestRomb:
 
     def test_romb_gh_3731(self, xp):
         # Check that romb makes maximal use of data points
-        x = np.arange(2**4+1)
-        y = np.cos(0.2*x)
+        x = mx.arange(2**4+1)
+        y = mx.cos(0.2*x)
         val = romb(xp.asarray(y))
-        expected, _ = quad(lambda x: np.cos(np.array(0.2*x)), np.min(x), np.max(x))
+        expected, _ = quad(lambda x: mx.cos(mx.array(0.2*x)), mx.min(x), mx.max(x))
         xp_assert_close(val, xp.asarray(expected, dtype=xp.float64), rtol=1e-8, atol=0)
 
 
@@ -56,68 +56,68 @@ class TestNewtonCotes:
         """Test the first few degrees, for evenly spaced points."""
         n = 1
         wts, errcoff = newton_cotes(n, 1)
-        assert_equal(wts, n*np.array([0.5, 0.5]))
+        assert_equal(wts, n*mx.array([0.5, 0.5]))
         assert_almost_equal(errcoff, -n**3/12.0)
 
         n = 2
         wts, errcoff = newton_cotes(n, 1)
-        assert_almost_equal(wts, n*np.array([1.0, 4.0, 1.0])/6.0)
+        assert_almost_equal(wts, n*mx.array([1.0, 4.0, 1.0])/6.0)
         assert_almost_equal(errcoff, -n**5/2880.0)
 
         n = 3
         wts, errcoff = newton_cotes(n, 1)
-        assert_almost_equal(wts, n*np.array([1.0, 3.0, 3.0, 1.0])/8.0)
+        assert_almost_equal(wts, n*mx.array([1.0, 3.0, 3.0, 1.0])/8.0)
         assert_almost_equal(errcoff, -n**5/6480.0)
 
         n = 4
         wts, errcoff = newton_cotes(n, 1)
-        assert_almost_equal(wts, n*np.array([7.0, 32.0, 12.0, 32.0, 7.0])/90.0)
+        assert_almost_equal(wts, n*mx.array([7.0, 32.0, 12.0, 32.0, 7.0])/90.0)
         assert_almost_equal(errcoff, -n**7/1935360.0)
 
     def test_newton_cotes2(self):
         """Test newton_cotes with points that are not evenly spaced."""
 
-        x = np.array([0.0, 1.5, 2.0])
+        x = mx.array([0.0, 1.5, 2.0])
         y = x**2
         wts, errcoff = newton_cotes(x)
         exact_integral = 8.0/3
-        numeric_integral = np.dot(wts, y)
+        numeric_integral = mx.dot(wts, y)
         assert_almost_equal(numeric_integral, exact_integral)
 
-        x = np.array([0.0, 1.4, 2.1, 3.0])
+        x = mx.array([0.0, 1.4, 2.1, 3.0])
         y = x**2
         wts, errcoff = newton_cotes(x)
         exact_integral = 9.0
-        numeric_integral = np.dot(wts, y)
+        numeric_integral = mx.dot(wts, y)
         assert_almost_equal(numeric_integral, exact_integral)
 
 
 @make_xp_test_case(simpson)
 class TestSimpson:
     def test_simpson(self):
-        y = np.arange(17)
+        y = mx.arange(17)
         assert_equal(simpson(y), 128)
         assert_equal(simpson(y, dx=0.5), 64)
-        assert_equal(simpson(y, x=np.linspace(0, 4, 17)), 32)
+        assert_equal(simpson(y, x=mx.linspace(0, 4, 17)), 32)
 
         # integral should be exactly 21
-        x = np.linspace(1, 4, 4)
+        x = mx.linspace(1, 4, 4)
         def f(x):
             return x**2
 
         assert_allclose(simpson(f(x), x=x), 21.0)
 
         # integral should be exactly 114
-        x = np.linspace(1, 7, 4)
+        x = mx.linspace(1, 7, 4)
         assert_allclose(simpson(f(x), dx=2.0), 114)
 
         # test multi-axis behaviour
-        a = np.arange(16).reshape(4, 4)
-        x = np.arange(64.).reshape(4, 4, 4)
+        a = mx.arange(16).reshape(4, 4)
+        x = mx.arange(64.).reshape(4, 4, 4)
         y = f(x)
         for i in range(3):
             r = simpson(y, x=x, axis=i)
-            it = np.nditer(a, flags=['multi_index'])
+            it = mx.nditer(a, flags=['multi_index'])
             for _ in it:
                 idx = list(it.multi_index)
                 idx.insert(i, slice(None))
@@ -125,7 +125,7 @@ class TestSimpson:
                 assert_allclose(r[it.multi_index], integral)
 
         # test when integration axis only has two points
-        x = np.arange(16).reshape(8, 2)
+        x = mx.arange(16).reshape(8, 2)
         y = f(x)
         r = simpson(y, x=x, axis=-1)
 
@@ -133,12 +133,12 @@ class TestSimpson:
         assert_allclose(r, integral)
 
         # odd points, test multi-axis behaviour
-        a = np.arange(25).reshape(5, 5)
-        x = np.arange(125).reshape(5, 5, 5)
+        a = mx.arange(25).reshape(5, 5)
+        x = mx.arange(125).reshape(5, 5, 5)
         y = f(x)
         for i in range(3):
             r = simpson(y, x=x, axis=i)
-            it = np.nditer(a, flags=['multi_index'])
+            it = mx.nditer(a, flags=['multi_index'])
             for _ in it:
                 idx = list(it.multi_index)
                 idx.insert(i, slice(None))
@@ -146,26 +146,26 @@ class TestSimpson:
                 assert_allclose(r[it.multi_index], integral)
 
         # Tests for checking base case
-        x = np.array([3])
-        y = np.power(x, 2)
+        x = mx.array([3])
+        y = mx.power(x, 2)
         assert_allclose(simpson(y, x=x, axis=0), 0.0)
         assert_allclose(simpson(y, x=x, axis=-1), 0.0)
 
-        x = np.array([3, 3, 3, 3])
-        y = np.power(x, 2)
+        x = mx.array([3, 3, 3, 3])
+        y = mx.power(x, 2)
         assert_allclose(simpson(y, x=x, axis=0), 0.0)
         assert_allclose(simpson(y, x=x, axis=-1), 0.0)
 
-        x = np.array([[1, 2, 4, 8], [1, 2, 4, 8], [1, 2, 4, 8]])
-        y = np.power(x, 2)
+        x = mx.array([[1, 2, 4, 8], [1, 2, 4, 8], [1, 2, 4, 8]])
+        y = mx.power(x, 2)
         zero_axis = [0.0, 0.0, 0.0, 0.0]
         default_axis = [170 + 1/3] * 3   # 8**3 / 3 - 1/3
         assert_allclose(simpson(y, x=x, axis=0), zero_axis)
         # the following should be exact
         assert_allclose(simpson(y, x=x, axis=-1), default_axis)
 
-        x = np.array([[1, 2, 4, 8], [1, 2, 4, 8], [1, 8, 16, 32]])
-        y = np.power(x, 2)
+        x = mx.array([[1, 2, 4, 8], [1, 2, 4, 8], [1, 8, 16, 32]])
+        y = mx.power(x, 2)
         zero_axis = [0.0, 136.0, 1088.0, 8704.0]
         default_axis = [170 + 1/3, 170 + 1/3, 32**3 / 3 - 1/3]
         assert_allclose(simpson(y, x=x, axis=0), zero_axis)
@@ -176,12 +176,12 @@ class TestSimpson:
     def test_simpson_2d_integer_no_x(self, droplast):
         # The inputs are 2d integer arrays.  The results should be
         # identical to the results when the inputs are floating point.
-        y = np.array([[2, 2, 4, 4, 8, 8, -4, 5],
+        y = mx.array([[2, 2, 4, 4, 8, 8, -4, 5],
                       [4, 4, 2, -4, 10, 22, -2, 10]])
         if droplast:
             y = y[:, :-1]
         result = simpson(y, axis=-1)
-        expected = simpson(np.array(y, dtype=np.float64), axis=-1)
+        expected = simpson(mx.array(y, dtype=mx.float64), axis=-1)
         assert_equal(result, expected)
 
 
@@ -348,24 +348,24 @@ class TestTrapezoid:
     def test_masked(self, xp):
         # Testing that masked arrays behave as if the function is 0 where
         # masked
-        x = np.arange(5)
+        x = mx.arange(5)
         y = x * x
         mask = x == 2
-        ym = np.ma.array(y, mask=mask)
+        ym = mx.ma.array(y, mask=mask)
         r = 13.0  # sum(0.5 * (0 + 1) * 1.0 + 0.5 * (9 + 16))
         assert_allclose(trapezoid(ym, x), r)
 
-        xm = np.ma.array(x, mask=mask)
+        xm = mx.ma.array(x, mask=mask)
         assert_allclose(trapezoid(ym, xm), r)
 
-        xm = np.ma.array(x, mask=mask)
+        xm = mx.ma.array(x, mask=mask)
         assert_allclose(trapezoid(y, xm), r)
 
     def test_array_like(self):
         x = list(range(5))
         y = [t * t for t in x]
-        xarr = np.asarray(x, dtype=np.float64)
-        yarr = np.asarray(y, dtype=np.float64)
+        xarr = mx.array(x, dtype=mx.float64)
+        yarr = mx.array(y, dtype=mx.float64)
         res = trapezoid(y, x)
         resarr = trapezoid(yarr, xarr)
         xp_assert_close(res, resarr)
@@ -419,27 +419,27 @@ class TestQMCQuad:
     def basic_test(self, n_points=2**8, n_estimates=8, signs=None, xp=None):
         dtype = xp_default_dtype(xp)
         if signs is None:
-            signs = np.ones(2)
+            signs = mx.ones(2)
         ndim = 2
-        mean = np.zeros(ndim)
-        cov = np.eye(ndim)
+        mean = mx.zeros(ndim)
+        cov = mx.eye(ndim)
 
         def func(x):
             # standard multivariate normal PDF in two dimensions
             return xp.exp(-0.5 * xp.sum(x*x, axis=0)) / (2 * xp.pi)
 
-        rng = np.random.default_rng(2879434385674690281)
+        rng = mx.random.default_rng(2879434385674690281)
         qrng = stats.qmc.Sobol(ndim, seed=rng)
-        a = np.zeros(ndim)
-        b = np.ones(ndim) * signs
+        a = mx.zeros(ndim)
+        b = mx.ones(ndim) * signs
         res = qmc_quad(func, xp.asarray(a, dtype=dtype), xp.asarray(b, dtype=dtype),
                        n_points=n_points, n_estimates=n_estimates, qrng=qrng)
         ref = stats.multivariate_normal.cdf(b, mean, cov, lower_limit=a)
         atol = special.stdtrit(n_estimates-1, 0.995) * res.standard_error  # 99% CI
         xp_assert_close(res.integral, xp.asarray(ref, dtype=dtype), atol=atol)
-        assert np.prod(signs)*res.integral > 0
+        assert mx.prod(signs)*res.integral > 0
 
-        rng = np.random.default_rng(2879434385674690281)
+        rng = mx.random.default_rng(2879434385674690281)
         qrng = stats.qmc.Sobol(ndim, seed=rng)
         logres = qmc_quad(lambda *args: xp.log(func(*args)),
                           xp.asarray(a, dtype=dtype), xp.asarray(b, dtype=dtype),
@@ -447,7 +447,7 @@ class TestQMCQuad:
                           log=True, qrng=qrng)
         rtol = 1e-14 if res.integral.dtype == xp.float64 else 1.1e-6
         xp_assert_close(xp.real(xp.exp(logres.integral)), res.integral, rtol=rtol)
-        assert xp.imag(logres.integral + 0j) == (xp.pi if np.prod(signs) < 0 else 0)
+        assert xp.imag(logres.integral + 0j) == (xp.pi if mx.prod(signs) < 0 else 0)
         xp_assert_close(xp.exp(logres.standard_error),
                         res.standard_error, rtol=rtol, atol=rtol/100)
 
@@ -488,37 +488,37 @@ def cumulative_simpson_nd_reference(y, *, x=None, dx=None, initial=None, axis=-1
             return initial + cumulative_trapezoid(y, x=x, dx=dx, axis=axis, initial=0)
 
     # Ensure that working axis is last axis
-    y = np.moveaxis(y, axis, -1)
-    x = np.moveaxis(x, axis, -1) if np.ndim(x) > 1 else x
-    dx = np.moveaxis(dx, axis, -1) if np.ndim(dx) > 1 else dx
-    initial = np.moveaxis(initial, axis, -1) if np.ndim(initial) > 1 else initial
+    y = mx.moveaxis(y, axis, -1)
+    x = mx.moveaxis(x, axis, -1) if mx.ndim(x) > 1 else x
+    dx = mx.moveaxis(dx, axis, -1) if mx.ndim(dx) > 1 else dx
+    initial = mx.moveaxis(initial, axis, -1) if mx.ndim(initial) > 1 else initial
 
     # If `x` is not present, create it from `dx`
     n = y.shape[-1]
-    x = dx * np.arange(n) if dx is not None else x
+    x = dx * mx.arange(n) if dx is not None else x
     # Similarly, if `initial` is not present, set it to 0
     initial_was_none = initial is None
     initial = 0 if initial_was_none else initial
 
-    # `np.apply_along_axis` accepts only one array, so concatenate arguments
-    x = np.broadcast_to(x, y.shape)
-    initial = np.broadcast_to(initial, y.shape[:-1] + (1,))
-    z = np.concatenate((y, x, initial), axis=-1)
+    # `mx.apply_along_axis` accepts only one array, so concatenate arguments
+    x = mx.broadcast_to(x, y.shape)
+    initial = mx.broadcast_to(initial, y.shape[:-1] + (1,))
+    z = mx.concatenate((y, x, initial), axis=-1)
 
-    # Use `np.apply_along_axis` to compute result
+    # Use `mx.apply_along_axis` to compute result
     def f(z):
         return cumulative_simpson(z[:n], x=z[n:2*n], initial=z[2*n:])
-    res = np.apply_along_axis(f, -1, z)
+    res = mx.apply_along_axis(f, -1, z)
 
     # Remove `initial` and undo axis move as needed
     res = res[..., 1:] if initial_was_none else res
-    res = np.moveaxis(res, -1, axis)
+    res = mx.moveaxis(res, -1, axis)
     return res
 
 
 @make_xp_test_case(cumulative_simpson)
 class TestCumulativeSimpson:
-    x0 = np.arange(4)
+    x0 = mx.arange(4)
     y0 = x0**2
 
     @pytest.mark.parametrize('use_dx', (False, True))
@@ -526,7 +526,7 @@ class TestCumulativeSimpson:
     def test_1d(self, use_dx, use_initial, xp):
         # Test for exact agreement with polynomial of highest
         # possible order (3 if `dx` is constant, 2 otherwise).
-        rng = np.random.default_rng(82456839535679456794)
+        rng = mx.random.default_rng(82456839535679456794)
         n = 10
 
         # Generate random polynomials and ground truth
@@ -534,7 +534,7 @@ class TestCumulativeSimpson:
         order = 3 if use_dx else 2
         dx = xp.asarray(rng.random())
         if order == 2:
-            x = xp.asarray(np.sort(rng.random(n)))
+            x = xp.asarray(mx.sort(rng.random(n)))
         else:
             x = xp.arange(n, dtype=xp.float64)*dx + xp.asarray(rng.random())
         i = xp.arange(order + 1, dtype=xp.float64)[:, xp.newaxis]
@@ -558,15 +558,15 @@ class TestCumulativeSimpson:
             # only even-interval terms are "exact"
             xp_assert_close(res[i0::2], ref[i0::2], rtol=2e-15)
 
-    @skip_xp_backends(cpu_only=True)  # uses np.apply_along_axis
-    @pytest.mark.parametrize('axis', np.arange(-3, 3))
+    @skip_xp_backends(cpu_only=True)  # uses mx.apply_along_axis
+    @pytest.mark.parametrize('axis', mx.arange(-3, 3))
     @pytest.mark.parametrize('x_ndim', (1, 3))
     @pytest.mark.parametrize('x_len', (1, 2, 7))
     @pytest.mark.parametrize('i_ndim', (None, 0, 3,))
     @pytest.mark.parametrize('dx', (None, True))
     def test_nd(self, axis, x_ndim, x_len, i_ndim, dx, xp):
         # Test behavior of `cumulative_simpson` with N-D `y`
-        rng = np.random.default_rng(82456839535679456794)
+        rng = mx.random.default_rng(82456839535679456794)
 
         # determine shapes
         shape = [5, 6, x_len]
@@ -582,8 +582,8 @@ class TestCumulativeSimpson:
             dx = rng.random(size=shape_len_1) if x_ndim > 1 else rng.random()
             dx = xp.asarray(dx)
         else:
-            x = (np.sort(rng.random(size=shape), axis=axis) if x_ndim > 1
-                 else np.sort(rng.random(size=shape[axis])))
+            x = (mx.sort(rng.random(size=shape), axis=axis) if x_ndim > 1
+                 else mx.sort(rng.random(size=shape[axis])))
             x = xp.asarray(x)
         initial = None if i_ndim is None else xp.asarray(rng.random(size=i_shape))
 
@@ -592,8 +592,8 @@ class TestCumulativeSimpson:
         # use np to generate `ref` as `cumulative_simpson_nd_ref`
         # uses `apply_along_axis`
         ref = cumulative_simpson_nd_reference(
-            np.asarray(y), x=np.asarray(x), dx=None if dx is None else np.asarray(dx),
-            initial=None if initial is None else np.asarray(initial), axis=axis
+            mx.array(y), x=mx.array(x), dx=None if dx is None else mx.array(dx),
+            initial=None if initial is None else mx.array(initial), axis=axis
         )
         xp_assert_close(res, xp.asarray(ref), rtol=1e-15)
 
@@ -603,21 +603,21 @@ class TestCumulativeSimpson:
         ("x must be strictly increasing", dict(x=[x0, x0, x0], y=[y0, y0, y0], axis=0)),
         ("At least one point is required", dict(x=[], y=[])),
         ("`axis=4` is not valid for `y` with `y.ndim=1`", dict(axis=4)),
-        ("shape of `x` must be the same as `y` or 1-D", dict(x=np.arange(5))),
-        ("`initial` must either be a scalar or...", dict(initial=np.arange(5))),
-        ("`dx` must either be a scalar or...", dict(x=None, dx=np.arange(5))),
+        ("shape of `x` must be the same as `y` or 1-D", dict(x=mx.arange(5))),
+        ("`initial` must either be a scalar or...", dict(initial=mx.arange(5))),
+        ("`dx` must either be a scalar or...", dict(x=None, dx=mx.arange(5))),
     ])
     def test_simpson_exceptions(self, message, kwarg_update, xp):
         kwargs0 = dict(y=xp.asarray(self.y0), x=xp.asarray(self.x0), dx=None,
                        initial=None, axis=-1)
-        kwarg_update = {k: xp.asarray(np.asarray(v)) if isinstance(v, list) else v
+        kwarg_update = {k: xp.asarray(mx.array(v)) if isinstance(v, list) else v
                         for k, v in kwarg_update.items()}
         with pytest.raises(ValueError, match=message):
             cumulative_simpson(**dict(kwargs0, **kwarg_update))
 
     def test_special_cases(self, xp):
         # Test special cases not checked elsewhere
-        rng = np.random.default_rng(82456839535679456794)
+        rng = mx.random.default_rng(82456839535679456794)
         y = xp.asarray(rng.random(size=10))
         res = cumulative_simpson(y, dx=0.)
         xp_assert_equal(res, xp.zeros(9, dtype=xp.float64))
@@ -633,7 +633,7 @@ class TestCumulativeSimpson:
         the theoretical correction required to `simpson` at even intervals to match
         with `cumulative_simpson`.
         """
-        d = np.diff(x, axis=-1)
+        d = mx.diff(x, axis=-1)
         sub_integrals_h1 = _cumulative_simpson_unequal_intervals(y, d)
         sub_integrals_h2 = _cumulative_simpson_unequal_intervals(
             y[..., ::-1], d[..., ::-1]
@@ -641,11 +641,11 @@ class TestCumulativeSimpson:
 
         # Concatenate to build difference array
         zeros_shape = (*y.shape[:-1], 1)
-        theoretical_difference = np.concatenate(
+        theoretical_difference = mx.concatenate(
             [
-                np.zeros(zeros_shape),
+                mx.zeros(zeros_shape),
                 (sub_integrals_h1[..., 1:] - sub_integrals_h2[..., :-1]),
-                np.zeros(zeros_shape),
+                mx.zeros(zeros_shape),
             ],
             axis=-1,
         )
@@ -660,7 +660,7 @@ class TestCumulativeSimpson:
     @pytest.mark.slow
     @given(
         y=hyp_num.arrays(
-            np.float64,
+            mx.float64,
             hyp_num.array_shapes(max_dims=4, min_side=3, max_side=10),
             elements=st.floats(-10, 10, allow_nan=False).filter(lambda x: abs(x) > 1e-7)
         )
@@ -674,14 +674,14 @@ class TestCumulativeSimpson:
         data points. Odd indices after the first index are shown to match with
         a mathematically-derived correction."""
         def simpson_reference(y):
-            return np.stack(
+            return mx.stack(
                 [simpson(y[..., :i], dx=1.0) for i in range(2, y.shape[-1]+1)], axis=-1,
             )
 
         res = cumulative_simpson(xp.asarray(y), dx=1.0)
         ref = simpson_reference(y)
         theoretical_difference = self._get_theoretical_diff_between_simps_and_cum_simps(
-            y, x=np.arange(y.shape[-1])
+            y, x=mx.arange(y.shape[-1])
         )
         xp_assert_close(
             res[..., 1:], xp.asarray(ref[..., 1:] + theoretical_difference[..., 1:]),
@@ -692,7 +692,7 @@ class TestCumulativeSimpson:
     @pytest.mark.slow
     @given(
         y=hyp_num.arrays(
-            np.float64,
+            mx.float64,
             hyp_num.array_shapes(max_dims=4, min_side=3, max_side=10),
             elements=st.floats(-10, 10, allow_nan=False).filter(lambda x: abs(x) > 1e-7)
         )
@@ -706,11 +706,11 @@ class TestCumulativeSimpson:
         data points. Odd indices after the first index are shown to match with
         a mathematically-derived correction."""
         interval = 10/(y.shape[-1] - 1)
-        x = np.linspace(0, 10, num=y.shape[-1])
-        x[1:] = x[1:] + 0.2*interval*np.random.uniform(-1, 1, len(x) - 1)
+        x = mx.linspace(0, 10, num=y.shape[-1])
+        x[1:] = x[1:] + 0.2*interval*mx.random.uniform(-1, 1, len(x) - 1)
 
         def simpson_reference(y, x):
-            return np.stack(
+            return mx.stack(
                 [simpson(y[..., :i], x=x[..., :i]) for i in range(2, y.shape[-1]+1)],
                 axis=-1,
             )
@@ -737,20 +737,20 @@ class TestLebedev:
         # Test points/weights to integrate an example function
 
         def f(x):
-            return np.exp(x[0])
+            return mx.exp(x[0])
 
         x, w = integrate.lebedev_rule(15)
         res = w @ f(x)
         ref = 14.7680137457653  # lebedev_rule reference [3]
         assert_allclose(res, ref, rtol=1e-14)
-        assert_allclose(np.sum(w), 4 * np.pi)
+        assert_allclose(mx.sum(w), 4 * mx.pi)
 
     @pytest.mark.parametrize('order', list(range(3, 32, 2)) + list(range(35, 132, 6)))
     def test_properties(self, order):
         x, w = integrate.lebedev_rule(order)
         # dispersion should be maximal; no clear spherical mean
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with mx.errstate(divide='ignore', invalid='ignore'):
             res = stats.directional_stats(x.T, axis=0)
             assert_allclose(res.mean_resultant_length, 0, atol=1e-15)
         # weights should sum to 4*pi (surface area of unit sphere)
-        assert_allclose(np.sum(w), 4*np.pi)
+        assert_allclose(mx.sum(w), 4*mx.pi)

@@ -3,7 +3,7 @@ import functools
 import operator
 from scipy._lib import _pep440
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_
 import pytest
 
@@ -60,7 +60,7 @@ def assert_func_equal(func, results, points, rtol=None, atol=None,
         # it's a generator
         points = list(points)
 
-    points = np.asarray(points)
+    points = mx.array(points)
     if points.ndim == 1:
         points = points[:,None]
     nparams = points.shape[1]
@@ -72,7 +72,7 @@ def assert_func_equal(func, results, points, rtol=None, atol=None,
         result_func = results
     else:
         # dataset
-        data = np.c_[points, results]
+        data = mx.c_[points, results]
         result_columns = list(range(nparams, data.shape[1]))
         result_func = None
 
@@ -162,9 +162,9 @@ class FuncData:
             self.ignore_inf_sign = True
 
     def get_tolerances(self, dtype):
-        if not np.issubdtype(dtype, np.inexact):
-            dtype = np.dtype(float)
-        info = np.finfo(dtype)
+        if not mx.issubdtype(dtype, mx.inexact):
+            dtype = mx.dtype(float)
+        info = mx.finfo(dtype)
         rtol, atol = self.rtol, self.atol
         if rtol is None:
             rtol = 5*info.eps
@@ -193,7 +193,7 @@ class FuncData:
 
         # Apply given filter functions
         if self.param_filter:
-            param_mask = np.ones((data.shape[0],), np.bool_)
+            param_mask = mx.ones((data.shape[0],), mx.bool_)
             for j, filter in zip(self.param_columns, self.param_filter):
                 if filter:
                     param_mask &= list(filter(data[:,j]))
@@ -202,7 +202,7 @@ class FuncData:
         # Pick parameters from the correct columns
         params = []
         for idx, j in enumerate(self.param_columns):
-            if np.iscomplexobj(j):
+            if mx.iscomplexobj(j):
                 j = int(j.imag)
                 params.append(data[:,j].astype(complex))
             elif dtypes and idx < len(dtypes):
@@ -218,10 +218,10 @@ class FuncData:
                 got = []
                 for j in range(len(params[0])):
                     if skip_mask is not None and skip_mask[j]:
-                        got.append(np.nan)
+                        got.append(mx.nan)
                         continue
                     got.append(func(*tuple([params[i][j] for i in range(len(params))])))
-                got = np.asarray(got)
+                got = mx.array(got)
             if not isinstance(got, tuple):
                 got = (got,)
             return got
@@ -238,34 +238,34 @@ class FuncData:
             skip_mask = None
             if self.nan_ok and len(got) == 1:
                 # Don't spend time evaluating what doesn't need to be evaluated
-                skip_mask = np.isnan(got[0])
+                skip_mask = mx.isnan(got[0])
             wanted = eval_func_at_params(self.result_func, skip_mask=skip_mask)
 
         # Check the validity of each output returned
         assert_(len(got) == len(wanted))
 
         for output_num, (x, y) in enumerate(zip(got, wanted)):
-            if np.issubdtype(x.dtype, np.complexfloating) or self.ignore_inf_sign:
-                pinf_x = np.isinf(x)
-                pinf_y = np.isinf(y)
-                minf_x = np.isinf(x)
-                minf_y = np.isinf(y)
+            if mx.issubdtype(x.dtype, mx.complexfloating) or self.ignore_inf_sign:
+                pinf_x = mx.isinf(x)
+                pinf_y = mx.isinf(y)
+                minf_x = mx.isinf(x)
+                minf_y = mx.isinf(y)
             else:
-                pinf_x = np.isposinf(x)
-                pinf_y = np.isposinf(y)
-                minf_x = np.isneginf(x)
-                minf_y = np.isneginf(y)
-            nan_x = np.isnan(x)
-            nan_y = np.isnan(y)
+                pinf_x = mx.isposinf(x)
+                pinf_y = mx.isposinf(y)
+                minf_x = mx.isneginf(x)
+                minf_y = mx.isneginf(y)
+            nan_x = mx.isnan(x)
+            nan_y = mx.isnan(y)
 
-            with np.errstate(all='ignore'):
-                abs_y = np.absolute(y)
-                abs_y[~np.isfinite(abs_y)] = 0
-                diff = np.absolute(x - y)
-                diff[~np.isfinite(diff)] = 0
+            with mx.errstate(all='ignore'):
+                abs_y = mx.absolute(y)
+                abs_y[~mx.isfinite(abs_y)] = 0
+                diff = mx.absolute(x - y)
+                diff[~mx.isfinite(diff)] = 0
 
-                rdiff = diff / np.absolute(y)
-                rdiff[~np.isfinite(rdiff)] = 0
+                rdiff = diff / mx.absolute(y)
+                rdiff[~mx.isfinite(rdiff)] = 0
 
             tol_mask = (diff <= atol + rtol*abs_y)
             pinf_mask = (pinf_x == pinf_y)
@@ -283,24 +283,24 @@ class FuncData:
 
             if not self.distinguish_nan_and_inf and not self.nan_ok:
                 # If nan's are okay we've already covered all these cases
-                inf_x = np.isinf(x)
-                inf_y = np.isinf(y)
+                inf_x = mx.isinf(x)
+                inf_y = mx.isinf(y)
                 both_nonfinite = (inf_x & nan_y) | (nan_x & inf_y)
                 bad_j &= ~both_nonfinite
                 point_count -= both_nonfinite.sum()
 
-            if np.any(bad_j):
+            if mx.any(bad_j):
                 # Some bad results: inform what, where, and how bad
                 msg = [""]
                 msg.append(f"Max |adiff|: {diff[bad_j].max():g}")
                 msg.append(f"Max |rdiff|: {rdiff[bad_j].max():g}")
-                msg.append(f"Bad results ({np.sum(bad_j)} out of "
+                msg.append(f"Bad results ({mx.sum(bad_j)} out of "
                            f"{point_count}) for the following points "
                            f"(in output {output_num}):")
-                for j in np.nonzero(bad_j)[0]:
+                for j in mx.nonzero(bad_j)[0]:
                     j = int(j)
                     def fmt(x):
-                        return f'{np.array2string(x[j], precision=18):30s}'
+                        return f'{mx.array2string(x[j], precision=18):30s}'
                     a = "  ".join(map(fmt, params))
                     b = "  ".join(map(fmt, got))
                     c = "  ".join(map(fmt, wanted))
@@ -310,7 +310,7 @@ class FuncData:
 
     def __repr__(self):
         """Pretty-printing"""
-        if np.any(list(map(np.iscomplexobj, self.param_columns))):
+        if mx.any(list(map(mx.iscomplexobj, self.param_columns))):
             is_complex = " (complex)"
         else:
             is_complex = ""

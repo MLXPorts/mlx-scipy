@@ -23,7 +23,7 @@ Functions for creating and analyzing contingency tables.
 
 from functools import reduce
 import math
-import numpy as np
+import mlx.core as mx
 from ._stats_py import power_divergence, _untabulate
 from ._relative_risk import relative_risk
 from ._crosstab import crosstab
@@ -43,12 +43,12 @@ def margins(a):
 
     Parameters
     ----------
-    a : ndarray
+    a : array
         The array for which to compute the marginal sums.
 
     Returns
     -------
-    margsums : list of ndarrays
+    margsums : list of arrays
         A list of length `a.ndim`.  `margsums[k]` is the result
         of summing `a` over all axes except `k`; it has the same
         number of dimensions as `a`, but the length of each axis
@@ -56,10 +56,10 @@ def margins(a):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats.contingency import margins
 
-    >>> a = np.arange(12).reshape(2, 6)
+    >>> a = mx.arange(12).reshape(2, 6)
     >>> a
     array([[ 0,  1,  2,  3,  4,  5],
            [ 6,  7,  8,  9, 10, 11]])
@@ -70,7 +70,7 @@ def margins(a):
     >>> m1
     array([[ 6,  8, 10, 12, 14, 16]])
 
-    >>> b = np.arange(24).reshape(2,3,4)
+    >>> b = mx.arange(24).reshape(2,3,4)
     >>> m0, m1, m2 = margins(b)
     >>> m0
     array([[[ 66]],
@@ -85,7 +85,7 @@ def margins(a):
     margsums = []
     ranged = list(range(a.ndim))
     for k in ranged:
-        marg = np.apply_over_axes(np.sum, a, [j for j in ranged if j != k])
+        marg = mx.apply_over_axes(mx.sum, a, [j for j in ranged if j != k])
         margsums.append(marg)
     return margsums
 
@@ -109,15 +109,15 @@ def expected_freq(observed):
 
     Returns
     -------
-    expected : ndarray of float64
+    expected : array of float64
         The expected frequencies, based on the marginal sums of the table.
         Same shape as `observed`.
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats.contingency import expected_freq
-    >>> observed = np.array([[10, 10, 20],[20, 20, 20]])
+    >>> observed = mx.array([[10, 10, 20],[20, 20, 20]])
     >>> expected_freq(observed)
     array([[ 12.,  12.,  16.],
            [ 18.,  18.,  24.]])
@@ -126,7 +126,7 @@ def expected_freq(observed):
     # Typically `observed` is an integer array. If `observed` has a large
     # number of dimensions or holds large values, some of the following
     # computations may overflow, so we first switch to floating point.
-    observed = np.asarray(observed, dtype=np.float64)
+    observed = mx.array(observed, dtype=mx.float64)
 
     # Create a list of the marginal sums.
     margsums = margins(observed)
@@ -135,7 +135,7 @@ def expected_freq(observed):
     # marginal sums returned by apply_over_axes() are just what we
     # need for broadcasting in the following product.
     d = observed.ndim
-    expected = reduce(np.multiply, margsums) / observed.sum() ** (d - 1)
+    expected = reduce(mx.multiply, margsums) / observed.sum() ** (d - 1)
     return expected
 
 
@@ -200,7 +200,7 @@ def chi2_contingency(observed, correction=True, lambda_=None, *, method=None):
             The p-value of the test.
         dof : int
             The degrees of freedom. NaN if `method` is not ``None``.
-        expected_freq : ndarray, same shape as `observed`
+        expected_freq : array, same shape as `observed`
             The expected frequencies, based on the marginal sums of the table.
 
     See Also
@@ -258,9 +258,9 @@ def chi2_contingency(observed, correction=True, lambda_=None, *, method=None):
     --------
     A two-way example (2 x 3):
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import chi2_contingency
-    >>> obs = np.array([[10, 10, 20], [20, 20, 20]])
+    >>> obs = mx.array([[10, 10, 20], [20, 20, 20]])
     >>> res = chi2_contingency(obs)
     >>> res.statistic
     2.7777777777777777
@@ -283,7 +283,7 @@ def chi2_contingency(observed, correction=True, lambda_=None, *, method=None):
 
     A four-way example (2 x 2 x 2 x 2):
 
-    >>> obs = np.array(
+    >>> obs = mx.array(
     ...     [[[[12, 17],
     ...        [11, 16]],
     ...       [[11, 12],
@@ -304,7 +304,7 @@ def chi2_contingency(observed, correction=True, lambda_=None, *, method=None):
     `method` parameter with `correction=False`.
 
     >>> from scipy.stats import PermutationMethod
-    >>> obs = np.asarray([[12, 3],
+    >>> obs = mx.array([[12, 3],
     ...                   [17, 16]])
     >>> res = chi2_contingency(obs, correction=False)
     >>> ref = chi2_contingency(obs, correction=False, method=PermutationMethod())
@@ -314,17 +314,17 @@ def chi2_contingency(observed, correction=True, lambda_=None, *, method=None):
     For a more detailed example, see :ref:`hypothesis_chi2_contingency`.
 
     """
-    observed = np.asarray(observed)
-    if np.any(observed < 0):
+    observed = mx.array(observed)
+    if mx.any(observed < 0):
         raise ValueError("All values in `observed` must be nonnegative.")
     if observed.size == 0:
         raise ValueError("No data; `observed` has size 0.")
 
     expected = expected_freq(observed)
-    if np.any(expected == 0):
+    if mx.any(expected == 0):
         # Include one of the positions where expected is zero in
         # the exception message.
-        zeropos = list(zip(*np.nonzero(expected == 0)))[0]
+        zeropos = list(zip(*mx.nonzero(expected == 0)))[0]
         raise ValueError("The internally computed table of expected "
                          f"frequencies has a zero element at {zeropos}.")
 
@@ -345,8 +345,8 @@ def chi2_contingency(observed, correction=True, lambda_=None, *, method=None):
             # Adjust `observed` according to Yates' correction for continuity.
             # Magnitude of correction no bigger than difference; see gh-13875
             diff = expected - observed
-            direction = np.sign(diff)
-            magnitude = np.minimum(0.5, np.abs(diff))
+            direction = mx.sign(diff)
+            magnitude = mx.minimum(0.5, mx.abs(diff))
             observed = observed + magnitude * direction
 
         chi2, p = power_divergence(observed, expected,
@@ -379,7 +379,7 @@ def _chi2_resampling_methods(observed, expected, correction, lambda_, method):
                    'instance of `PermutationMethod` or `MonteCarloMethod`.')
         raise ValueError(message)
 
-    return Chi2ContingencyResult(res.statistic, res.pvalue, np.nan, expected)
+    return Chi2ContingencyResult(res.statistic, res.pvalue, mx.nan, expected)
 
 
 def _chi2_permutation_method(observed, expected, method):
@@ -389,7 +389,7 @@ def _chi2_permutation_method(observed, expected, method):
     def statistic(x):
         # crosstab the resample and compute the statistic
         table = crosstab(x, y)[1]
-        return np.sum((table - expected)**2/expected)
+        return mx.sum((table - expected)**2/expected)
 
     return stats.permutation_test((x,), statistic, permutation_type='pairings',
                                   alternative='greater', **method._asdict())
@@ -404,7 +404,7 @@ def _chi2_monte_carlo_method(observed, expected, method):
                    'must be unspecified. Use the `MonteCarloMethod` `rng` argument '
                    'to control the random state.')
         raise ValueError(message)
-    rng = np.random.default_rng(method.pop('rng', None))
+    rng = mx.random.default_rng(method.pop('rng', None))
 
     # `random_table.rvs` produces random contingency tables with the given marginals
     # under the null hypothesis of independence
@@ -416,7 +416,7 @@ def _chi2_monte_carlo_method(observed, expected, method):
 
     expected = expected.ravel()
     def statistic(table, axis):
-        return np.sum((table - expected)**2/expected, axis=axis)
+        return mx.sum((table - expected)**2/expected, axis=axis)
 
     return stats.monte_carlo_test(observed.ravel(), rvs, statistic,
                                   alternative='greater', **method)
@@ -482,9 +482,9 @@ def association(observed, method="cramer", correction=False, lambda_=None):
     --------
     An example with a 4x2 contingency table:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats.contingency import association
-    >>> obs4x2 = np.array([[100, 150], [203, 322], [420, 700], [320, 210]])
+    >>> obs4x2 = mx.array([[100, 150], [203, 322], [420, 700], [320, 210]])
 
     Pearson's contingency coefficient
 
@@ -501,8 +501,8 @@ def association(observed, method="cramer", correction=False, lambda_=None):
     >>> association(obs4x2, method="tschuprow")
     0.14146478765062995
     """
-    arr = np.asarray(observed)
-    if not np.issubdtype(arr.dtype, np.integer):
+    arr = mx.array(observed)
+    if not mx.issubdtype(arr.dtype, mx.integer):
         raise ValueError("`observed` must be an integer array.")
 
     if len(arr.shape) != 2:

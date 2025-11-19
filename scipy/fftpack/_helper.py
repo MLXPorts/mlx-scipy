@@ -1,6 +1,6 @@
 import operator
 
-import numpy as np
+import mlx.core as mx
 from numpy.fft import fftshift, ifftshift, fftfreq
 
 import scipy.fft._pocketfft.helper as _helper
@@ -27,14 +27,14 @@ def rfftfreq(n, d=1.0):
 
     Returns
     -------
-    out : ndarray
+    out : array
         The array of length `n`, containing the sample frequencies.
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import fftpack
-    >>> sig = np.array([-2, 8, 6, 4, 1, 0, 3, 5], dtype=float)
+    >>> sig = mx.array([-2, 8, 6, 4, 1, 0, 3, 5], dtype=float)
     >>> sig_fft = fftpack.rfft(sig)
     >>> n = sig_fft.size
     >>> timestep = 0.1
@@ -48,7 +48,7 @@ def rfftfreq(n, d=1.0):
         raise ValueError(f"n = {n} is not valid. "
                          "n must be a nonnegative integer.")
 
-    return (np.arange(1, n + 1, dtype=int) // 2) / float(n * d)
+    return (mx.arange(1, n + 1, dtype=int) // 2) / float(n * d)
 
 
 def next_fast_len(target):
@@ -79,8 +79,8 @@ def next_fast_len(target):
     On a particular machine, an FFT of prime length takes 133 ms:
 
     >>> from scipy import fftpack
-    >>> import numpy as np
-    >>> rng = np.random.default_rng()
+    >>> import mlx.core as mx
+    >>> rng = mx.random.default_rng()
     >>> min_len = 10007  # prime length is worst case for speed
     >>> a = rng.standard_normal(min_len)
     >>> b = fftpack.fft(a)
@@ -109,7 +109,7 @@ def _good_shape(x, shape, axes):
     """
     if shape is not None and axes is None:
         shape = _helper._iterable_of_int(shape, 'shape')
-        if len(shape) != np.ndim(x):
+        if len(shape) != mx.ndim(x):
             raise ValueError("when given, axes and shape arguments"
                              " have to be of the same length")
     return shape

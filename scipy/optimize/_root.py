@@ -7,7 +7,7 @@ Functions
 """
 __all__ = ['root']
 
-import numpy as np
+import mlx.core as mx
 
 from warnings import warn
 
@@ -38,7 +38,7 @@ def root(fun, x0, args=(), method='hybr', jac=None, tol=None, callback=None,
         only ``x``; e.g., pass ``fun=lambda x: f0(x, *my_args, **my_kwargs)`` as the
         callable, where ``my_args`` (tuple) and ``my_kwargs`` (dict) have been
         gathered before invoking this function.
-    x0 : ndarray
+    x0 : array
         Initial guess.
     args : tuple, optional
         Extra arguments passed to the objective function and its Jacobian.
@@ -141,13 +141,13 @@ def root(fun, x0, args=(), method='hybr', jac=None, tol=None, callback=None,
     The following functions define a system of nonlinear equations and its
     jacobian.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> def fun(x):
     ...     return [x[0]  + 0.5 * (x[0] - x[1])**3 - 1.0,
     ...             0.5 * (x[1] - x[0])**3 + x[1]]
 
     >>> def jac(x):
-    ...     return np.array([[1 + 1.5 * (x[0] - x[1])**2,
+    ...     return mx.array([[1 + 1.5 * (x[0] - x[1])**2,
     ...                       -1.5 * (x[0] - x[1])**2],
     ...                      [-1.5 * (x[1] - x[0])**2,
     ...                       1 + 1.5 * (x[1] - x[0])**2]])
@@ -182,8 +182,8 @@ def root(fun, x0, args=(), method='hybr', jac=None, tol=None, callback=None,
     >>> P_top, P_bottom = 1, 0
 
     >>> def residual(P):
-    ...    d2x = np.zeros_like(P)
-    ...    d2y = np.zeros_like(P)
+    ...    d2x = mx.zeros_like(P)
+    ...    d2y = mx.zeros_like(P)
     ...
     ...    d2x[1:-1] = (P[2:]   - 2*P[1:-1] + P[:-2]) / hx/hx
     ...    d2x[0]    = (P[1]    - 2*P[0]    + P_left)/hx/hx
@@ -193,15 +193,15 @@ def root(fun, x0, args=(), method='hybr', jac=None, tol=None, callback=None,
     ...    d2y[:,0]    = (P[:,1]  - 2*P[:,0]    + P_bottom)/hy/hy
     ...    d2y[:,-1]   = (P_top   - 2*P[:,-1]   + P[:,-2])/hy/hy
     ...
-    ...    return d2x + d2y - 10*np.cosh(P).mean()**2
+    ...    return d2x + d2y - 10*mx.cosh(P).mean()**2
 
-    >>> guess = np.zeros((nx, ny), float)
+    >>> guess = mx.zeros((nx, ny), float)
     >>> sol = optimize.root(residual, guess, method='krylov')
     >>> print('Residual: %g' % abs(residual(sol.x)).max())
     Residual: 5.7972e-06  # may vary
 
     >>> import matplotlib.pyplot as plt
-    >>> x, y = np.mgrid[0:1:(nx*1j), 0:1:(ny*1j)]
+    >>> x, y = mx.mgrid[0:1:(nx*1j), 0:1:(ny*1j)]
     >>> plt.pcolormesh(x, y, sol.x, shading='gouraud')
     >>> plt.colorbar()
     >>> plt.show()
@@ -246,9 +246,9 @@ def root(fun, x0, args=(), method='hybr', jac=None, tol=None, callback=None,
         elif meth in ('broyden1', 'broyden2', 'anderson', 'linearmixing',
                       'diagbroyden', 'excitingmixing', 'krylov'):
             options.setdefault('xtol', tol)
-            options.setdefault('xatol', np.inf)
-            options.setdefault('ftol', np.inf)
-            options.setdefault('fatol', np.inf)
+            options.setdefault('xatol', mx.inf)
+            options.setdefault('ftol', mx.inf)
+            options.setdefault('fatol', mx.inf)
 
     if meth == 'hybr':
         sol = _root_hybr(_wrapped_fun, x0, args=args, jac=jac, **options)
@@ -438,14 +438,14 @@ def _root_broyden1_doc():
     Examples
     --------
     >>> def func(x):
-    ...     return np.cos(x) + x[::-1] - [1, 2, 3, 4]
+    ...     return mx.cos(x) + x[::-1] - [1, 2, 3, 4]
     ...
     >>> from scipy import optimize
     >>> res = optimize.root(func, [1, 1, 1, 1], method='broyden1', tol=1e-14)
     >>> x = res.x
     >>> x
     array([4.04674914, 3.91158389, 2.71791677, 1.61756251])
-    >>> np.cos(x) + x[::-1]
+    >>> mx.cos(x) + x[::-1]
     array([1., 2., 3., 4.])
 
     """

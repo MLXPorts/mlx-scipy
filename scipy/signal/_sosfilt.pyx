@@ -1,7 +1,7 @@
-cimport numpy as np
+cimport mlx.core as mx
 cimport cython
 
-np.import_array()
+mx.import_array()
 
 ctypedef fused DTYPE_floating_t:
     float

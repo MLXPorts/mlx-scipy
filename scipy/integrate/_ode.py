@@ -85,7 +85,7 @@ import threading
 import types
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy import asarray, array, zeros, isscalar, real, imag, vstack
 
 from . import _vode
@@ -133,7 +133,7 @@ class ode:
     ----------
     t : float
         Current time.
-    y : ndarray
+    y : array
         Current variable values.
 
     See also
@@ -621,7 +621,7 @@ class complex_ode(ode):
     ----------
     t : float
         Current time.
-    y : ndarray
+    y : array
         Current variable values.
 
     Examples
@@ -1184,7 +1184,7 @@ class dopri5(IntegratorBase):
         work[5] = self.max_step
         work[6] = self.first_step
         self.work = work
-        self.iwork = zeros((21,), dtype=np.int32)
+        self.iwork = zeros((21,), dtype=mx.int32)
         self.call_args = [self.rtol, self.atol, self._solout,
                           self.iout, self.work, self.iwork,
                           self.nsteps, self.verbosity]
@@ -1243,7 +1243,7 @@ class dop853(dopri5):
         work[5] = self.max_step
         work[6] = self.first_step
         self.work = work
-        self.iwork = zeros((21,), dtype=np.int32)
+        self.iwork = zeros((21,), dtype=mx.int32)
         self.call_args = [self.rtol, self.atol, self._solout,
                           self.iout, self.work, self.iwork,
                           self.nsteps, self.verbosity]

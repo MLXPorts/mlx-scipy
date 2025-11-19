@@ -1,5 +1,5 @@
 """benchmarks for the scipy.sparse.csgraph module"""
-import numpy as np
+import mlx.core as mx
 import scipy.sparse
 
 from .common import Benchmark, safe_import
@@ -18,7 +18,7 @@ class Laplacian(Benchmark):
 
     def setup(self, n, format, normed):
         data = scipy.sparse.rand(9, n, density=0.5, random_state=42).toarray()
-        data = np.vstack((data, data))
+        data = mx.vstack((data, data))
         diags = list(range(-9, 0)) + list(range(1, 10))
         A = scipy.sparse.spdiags(data, diags, n, n)
         if format == 'dense':

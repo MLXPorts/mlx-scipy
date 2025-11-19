@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import matplotlib.pyplot as plt
 from scipy.stats import multiscale_graphcorr
 
@@ -39,8 +39,8 @@ def mgc_plot(x, y, mgc_dict):
     ax.set_ylim(0, 100)
 
 
-rng = np.random.default_rng()
-x = np.linspace(-1, 1, num=100)
+rng = mx.random.default_rng()
+x = mx.linspace(-1, 1, num=100)
 y = x + 0.3 * rng.random(x.size)
 
 

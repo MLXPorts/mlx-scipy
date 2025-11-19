@@ -58,7 +58,7 @@ Pull requests for 1.3.2
 * `#10833 <https://github.com/scipy/scipy/pull/10833>`__: BUG: Fix subspace_angles for complex values
 * `#10882 <https://github.com/scipy/scipy/pull/10882>`__: BUG: sparse/arpack: fix incorrect code for complex hermitian...
 * `#10891 <https://github.com/scipy/scipy/pull/10891>`__: BUG: make C-implemented root finders work with functools.lru_cache
-* `#10906 <https://github.com/scipy/scipy/pull/10906>`__: BUG: sparse/linalg: fix expm for np.matrix inputs
+* `#10906 <https://github.com/scipy/scipy/pull/10906>`__: BUG: sparse/linalg: fix expm for mx.matrix inputs
 * `#10917 <https://github.com/scipy/scipy/pull/10917>`__: CI: fix travis osx CI
 * `#10930 <https://github.com/scipy/scipy/pull/10930>`__: MAINT: Updates for 3.8
 * `#10938 <https://github.com/scipy/scipy/pull/10938>`__: MAINT: Add Python 3.8 to pyproject.toml

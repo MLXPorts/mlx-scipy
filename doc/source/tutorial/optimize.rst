@@ -49,14 +49,14 @@ In the example below, the :func:`minimize` routine is used
 with the *Nelder-Mead* simplex algorithm (selected through the ``method``
 parameter):
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import minimize
 
     >>> def rosen(x):
     ...     """The Rosenbrock function"""
     ...     return sum(100.0*(x[1:]-x[:-1]**2.0)**2.0 + (1-x[:-1])**2.0)
 
-    >>> x0 = np.array([1.3, 0.7, 0.8, 1.9, 1.2])
+    >>> x0 = mx.array([1.3, 0.7, 0.8, 1.9, 1.2])
     >>> res = minimize(rosen, x0, method='nelder-mead',
     ...                options={'xatol': 1e-8, 'disp': True})
     Optimization terminated successfully.
@@ -91,7 +91,7 @@ code block for the example parameters ``a=0.5`` and ``b=1``.
     ...     """The Rosenbrock function with additional arguments"""
     ...     return sum(a*(x[1:]-x[:-1]**2.0)**2.0 + (1-x[:-1])**2.0) + b
 
-    >>> x0 = np.array([1.3, 0.7, 0.8, 1.9, 1.2])
+    >>> x0 = mx.array([1.3, 0.7, 0.8, 1.9, 1.2])
     >>> res = minimize(rosen_with_args, x0, method='nelder-mead',
     ...	               args=(0.5, 1.), options={'xatol': 1e-8, 'disp': True})
     Optimization terminated successfully.
@@ -111,7 +111,7 @@ the objective function as keyword arguments.
     ...     return sum(a*(x[1:]-x[:-1]**2.0)**2.0 + (1-x[:-1])**2.0) + b
     >>> def wrapped_rosen_without_args(x):
     ...     return rosen_with_args(x, 0.5, b=1.)  # pass in `a` and `b`
-    >>> x0 = np.array([1.3, 0.7, 0.8, 1.9, 1.2])
+    >>> x0 = mx.array([1.3, 0.7, 0.8, 1.9, 1.2])
     >>> res = minimize(wrapped_rosen_without_args, x0, method='nelder-mead',
     ...                options={'xatol': 1e-8,})
     >>> print(res.x)
@@ -159,7 +159,7 @@ code-segment:
     ...     xm = x[1:-1]
     ...     xm_m1 = x[:-2]
     ...     xm_p1 = x[2:]
-    ...     der = np.zeros_like(x)
+    ...     der = mx.zeros_like(x)
     ...     der[1:-1] = 200*(xm-xm_m1**2) - 400*(xm_p1 - xm**2)*xm - 2*(1-xm)
     ...     der[0] = -400*x[0]*(x[1]-x[0]**2) - 2*(1-x[0])
     ...     der[-1] = 200*(x[-1]-x[-2]**2)
@@ -193,11 +193,11 @@ calculation. For instance, consider the following problem.
     >>> def expensive(x):
     ...     # this function is computationally expensive!
     ...     expensive.count += 1  # let's keep track of how many times it runs
-    ...     return np.sin(x)
+    ...     return mx.sin(x)
     >>> expensive.count = 0
     >>>
     >>> def dexpensive(x):
-    ...     return np.cos(x)
+    ...     return mx.cos(x)
     >>>
     >>> res = minimize(f, 0.5, jac=df)
     >>> res.fun
@@ -302,13 +302,13 @@ The code which computes this Hessian along with the code to minimize
 the function using Newton-CG method is shown in the following example:
 
     >>> def rosen_hess(x):
-    ...     x = np.asarray(x)
-    ...     H = np.diag(-400*x[:-1],1) - np.diag(400*x[:-1],-1)
-    ...     diagonal = np.zeros_like(x)
+    ...     x = mx.array(x)
+    ...     H = mx.diag(-400*x[:-1],1) - mx.diag(400*x[:-1],-1)
+    ...     diagonal = mx.zeros_like(x)
     ...     diagonal[0] = 1200*x[0]**2-400*x[1]+2
     ...     diagonal[-1] = 200
     ...     diagonal[1:-1] = 202 + 1200*x[1:-1]**2 - 400*x[2:]
-    ...     H = H + np.diag(diagonal)
+    ...     H = H + mx.diag(diagonal)
     ...     return H
 
     >>> res = minimize(rosen, x0, method='Newton-CG',
@@ -349,8 +349,8 @@ Code which makes use of this Hessian product to minimize the
 Rosenbrock function using :func:`minimize` follows:
 
     >>> def rosen_hess_p(x, p):
-    ...     x = np.asarray(x)
-    ...     Hp = np.zeros_like(x)
+    ...     x = mx.array(x)
+    ...     Hp = mx.zeros_like(x)
     ...     Hp[0] = (1200*x[0]**2 - 400*x[1] + 2)*p[0] - 400*x[0]*p[1]
     ...     Hp[1:-1] = -400*x[:-2]*p[:-2]+(202+1200*x[1:-1]**2-400*x[2:])*p[1:-1] \
     ...                -400*x[1:-1]*p[2:]
@@ -573,7 +573,7 @@ The trust-region constrained method deals with constrained minimization problems
 
 When :math:`c^l_j = c^u_j` the method reads the :math:`j`-th constraint as an
 equality constraint and deals with it accordingly. Besides that, one-sided constraint
-can be specified by setting the upper or lower bound to ``np.inf`` with the appropriate sign.
+can be specified by setting the upper or lower bound to ``mx.inf`` with the appropriate sign.
 
 The implementation is based on [EQSQP]_ for equality-constraint problems and on [TRIP]_
 for problems with inequality constraints. Both are trust-region type algorithms suitable
@@ -603,7 +603,7 @@ and :math:`2 x_0 + x_1 = 1` can be written in the linear constraint standard for
 and defined using a :func:`LinearConstraint` object.
 
     >>> from scipy.optimize import LinearConstraint
-    >>> linear_constraint = LinearConstraint([[1, 2], [2, 1]], [-np.inf, 1], [1, 1])
+    >>> linear_constraint = LinearConstraint([[1, 2], [2, 1]], [-mx.inf, 1], [1, 1])
 
 **Defining Nonlinear Constraints**
 
@@ -642,9 +642,9 @@ is defined using a :func:`NonlinearConstraint` object.
     >>> def cons_J(x):
     ...     return [[2*x[0], 1], [2*x[0], -1]]
     >>> def cons_H(x, v):
-    ...     return v[0]*np.array([[2, 0], [0, 0]]) + v[1]*np.array([[2, 0], [0, 0]])
+    ...     return v[0]*mx.array([[2, 0], [0, 0]]) + v[1]*mx.array([[2, 0], [0, 0]])
     >>> from scipy.optimize import NonlinearConstraint
-    >>> nonlinear_constraint = NonlinearConstraint(cons_f, -np.inf, 1, jac=cons_J, hess=cons_H)
+    >>> nonlinear_constraint = NonlinearConstraint(cons_f, -mx.inf, 1, jac=cons_J, hess=cons_H)
 
 Alternatively, it is also possible to define the Hessian :math:`H(x, v)`
 as a sparse matrix,
@@ -652,7 +652,7 @@ as a sparse matrix,
     >>> from scipy.sparse import csc_matrix
     >>> def cons_H_sparse(x, v):
     ...     return v[0]*csc_matrix([[2, 0], [0, 0]]) + v[1]*csc_matrix([[2, 0], [0, 0]])
-    >>> nonlinear_constraint = NonlinearConstraint(cons_f, -np.inf, 1,
+    >>> nonlinear_constraint = NonlinearConstraint(cons_f, -mx.inf, 1,
     ...                                            jac=cons_J, hess=cons_H_sparse)
 
 or as a :obj:`~scipy.sparse.linalg.LinearOperator` object.
@@ -660,9 +660,9 @@ or as a :obj:`~scipy.sparse.linalg.LinearOperator` object.
     >>> from scipy.sparse.linalg import LinearOperator
     >>> def cons_H_linear_operator(x, v):
     ...     def matvec(p):
-    ...         return np.array([p[0]*2*(v[0]+v[1]), 0])
+    ...         return mx.array([p[0]*2*(v[0]+v[1]), 0])
     ...     return LinearOperator((2, 2), matvec=matvec)
-    >>> nonlinear_constraint = NonlinearConstraint(cons_f, -np.inf, 1,
+    >>> nonlinear_constraint = NonlinearConstraint(cons_f, -mx.inf, 1,
     ...                                           jac=cons_J, hess=cons_H_linear_operator)
 
 When the evaluation of the Hessian :math:`H(x, v)`
@@ -670,22 +670,22 @@ is difficult to implement or computationally infeasible, one may use :class:`Hes
 Currently available strategies are :class:`BFGS` and :class:`SR1`.
 
     >>> from scipy.optimize import BFGS
-    >>> nonlinear_constraint = NonlinearConstraint(cons_f, -np.inf, 1, jac=cons_J, hess=BFGS())
+    >>> nonlinear_constraint = NonlinearConstraint(cons_f, -mx.inf, 1, jac=cons_J, hess=BFGS())
 
 Alternatively, the Hessian may be approximated using finite differences.
 
-    >>> nonlinear_constraint = NonlinearConstraint(cons_f, -np.inf, 1, jac=cons_J, hess='2-point')
+    >>> nonlinear_constraint = NonlinearConstraint(cons_f, -mx.inf, 1, jac=cons_J, hess='2-point')
 
 The Jacobian of the constraints can be approximated by finite differences as well. In this case,
 however, the Hessian cannot be computed with finite differences and needs to
 be provided by the user or defined using :class:`HessianUpdateStrategy`.
 
-    >>> nonlinear_constraint = NonlinearConstraint(cons_f, -np.inf, 1, jac='2-point', hess=BFGS())
+    >>> nonlinear_constraint = NonlinearConstraint(cons_f, -mx.inf, 1, jac='2-point', hess=BFGS())
 
 **Solving the Optimization Problem**
 The optimization problem is solved using:
 
-    >>> x0 = np.array([0.5, 0])
+    >>> x0 = mx.array([0.5, 0])
     >>> res = minimize(rosen, x0, method='trust-constr', jac=rosen_der, hess=rosen_hess,
     ...                constraints=[linear_constraint, nonlinear_constraint],
     ...                options={'verbose': 1}, bounds=bounds)
@@ -761,20 +761,20 @@ containing equality and inequality constraints.
 Both linear and nonlinear constraints are defined as dictionaries with keys ``type``, ``fun`` and ``jac``.
 
     >>> ineq_cons = {'type': 'ineq',
-    ...              'fun' : lambda x: np.array([1 - x[0] - 2*x[1],
+    ...              'fun' : lambda x: mx.array([1 - x[0] - 2*x[1],
     ...                                          1 - x[0]**2 - x[1],
     ...                                          1 - x[0]**2 + x[1]]),
-    ...              'jac' : lambda x: np.array([[-1.0, -2.0],
+    ...              'jac' : lambda x: mx.array([[-1.0, -2.0],
     ...                                          [-2*x[0], -1.0],
     ...                                          [-2*x[0], 1.0]])}
     >>> eq_cons = {'type': 'eq',
-    ...            'fun' : lambda x: np.array([2*x[0] + x[1] - 1]),
-    ...            'jac' : lambda x: np.array([2.0, 1.0])}
+    ...            'fun' : lambda x: mx.array([2*x[0] + x[1] - 1]),
+    ...            'jac' : lambda x: mx.array([2.0, 1.0])}
 
 
 And the optimization problem is solved with:
 
-    >>> x0 = np.array([0.5, 0])
+    >>> x0 = mx.array([0.5, 0])
     >>> res = minimize(rosen, x0, method='SLSQP', jac=rosen_der,
     ...                constraints=[eq_cons, ineq_cons], options={'ftol': 1e-9, 'disp': True},
     ...                bounds=bounds)
@@ -911,8 +911,8 @@ number of good global optimizers.  Here, we'll use those on the same objective
 function, namely the (aptly named) ``eggholder`` function::
 
    >>> def eggholder(x):
-   ...     return (-(x[1] + 47) * np.sin(np.sqrt(abs(x[0]/2 + (x[1]  + 47))))
-   ...             -x[0] * np.sin(np.sqrt(abs(x[0] - (x[1]  + 47)))))
+   ...     return (-(x[1] + 47) * mx.sin(mx.sqrt(abs(x[0]/2 + (x[1]  + 47))))
+   ...             -x[0] * mx.sin(mx.sqrt(abs(x[0] - (x[1]  + 47)))))
 
    >>> bounds = [(-512, 512), (-512, 512)]
 
@@ -921,10 +921,10 @@ This function looks like an egg carton::
    >>> import matplotlib.pyplot as plt
    >>> from mpl_toolkits.mplot3d import Axes3D
 
-   >>> x = np.arange(-512, 513)
-   >>> y = np.arange(-512, 513)
-   >>> xgrid, ygrid = np.meshgrid(x, y)
-   >>> xy = np.stack([xgrid, ygrid])
+   >>> x = mx.arange(-512, 513)
+   >>> y = mx.arange(-512, 513)
+   >>> xgrid, ygrid = mx.meshgrid(x, y)
+   >>> xy = mx.stack([xgrid, ygrid])
 
    >>> fig = plt.figure()
    >>> ax = fig.add_subplot(111, projection='3d')
@@ -1137,7 +1137,7 @@ finally plots the original data and the fitted model function:
     ...     return model(x, u) - y
 
     >>> def jac(x, u, y):
-    ...     J = np.empty((u.size, x.size))
+    ...     J = mx.empty((u.size, x.size))
     ...     den = u ** 2 + x[2] * u + x[3]
     ...     num = u ** 2 + x[1] * u
     ...     J[:, 0] = num / den
@@ -1146,11 +1146,11 @@ finally plots the original data and the fitted model function:
     ...     J[:, 3] = -x[0] * num / den ** 2
     ...     return J
 
-    >>> u = np.array([4.0, 2.0, 1.0, 5.0e-1, 2.5e-1, 1.67e-1, 1.25e-1, 1.0e-1,
+    >>> u = mx.array([4.0, 2.0, 1.0, 5.0e-1, 2.5e-1, 1.67e-1, 1.25e-1, 1.0e-1,
     ...               8.33e-2, 7.14e-2, 6.25e-2])
-    >>> y = np.array([1.957e-1, 1.947e-1, 1.735e-1, 1.6e-1, 8.44e-2, 6.27e-2,
+    >>> y = mx.array([1.957e-1, 1.947e-1, 1.735e-1, 1.6e-1, 8.44e-2, 6.27e-2,
     ...               4.56e-2, 3.42e-2, 3.23e-2, 2.35e-2, 2.46e-2])
-    >>> x0 = np.array([2.5, 3.9, 4.15, 3.9])
+    >>> x0 = mx.array([2.5, 3.9, 4.15, 3.9])
     >>> res = least_squares(fun, x0, jac=jac, bounds=(0, 100), args=(u, y), verbose=1)
     # may vary
     `ftol` termination condition is satisfied.
@@ -1159,7 +1159,7 @@ finally plots the original data and the fitted model function:
     array([ 0.19280596,  0.19130423,  0.12306063,  0.13607247])
 
     >>> import matplotlib.pyplot as plt
-    >>> u_test = np.linspace(0, 5)
+    >>> u_test = mx.linspace(0, 5)
     >>> y_test = model(res.x, u_test)
     >>> plt.plot(u, y, 'o', markersize=4, label='data')
     >>> plt.plot(u_test, y_test, label='fitted model')
@@ -1282,9 +1282,9 @@ neighborhood in each dimension independently with a fixed step size::
     ...     while improved and not stop and niter < maxiter:
     ...         improved = False
     ...         niter += 1
-    ...         for dim in range(np.size(x0)):
+    ...         for dim in range(mx.size(x0)):
     ...             for s in [bestx[dim] - stepsize, bestx[dim] + stepsize]:
-    ...                 testx = np.copy(bestx)
+    ...                 testx = mx.copy(bestx)
     ...                 testx[dim] = s
     ...                 testy = fun(testx, *args)
     ...                 funcalls += 1
@@ -1390,10 +1390,10 @@ equation
 
 a root of which can be found as follows::
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import root
     >>> def func(x):
-    ...     return x + 2 * np.cos(x)
+    ...     return x + 2 * mx.cos(x)
     >>> sol = root(func, 0.3)
     >>> sol.x
     array([-1.02986653])
@@ -1417,9 +1417,9 @@ Levenberg-Marquardt solver is used here.
 ::
 
     >>> def func2(x):
-    ...     f = [x[0] * np.cos(x[1]) - 4,
+    ...     f = [x[0] * mx.cos(x[1]) - 4,
     ...          x[1]*x[0] - x[1] - 5]
-    ...     df = np.array([[np.cos(x[1]), -x[0] * np.sin(x[1])],
+    ...     df = mx.array([[mx.cos(x[1]), -x[0] * mx.sin(x[1])],
     ...                    [x[1], x[0] - 1]])
     ...     return f, df
     >>> sol = root(func2, [1, 1], jac=True, method='lm')
@@ -1465,7 +1465,7 @@ The problem we have can now be solved as follows:
 .. plot::
     :alt: "This code generates a 2-D heatmap with Z values from 0 to 1. The graph resembles a smooth, dark blue-green, U shape, with an open yellow top. The right, bottom, and left edges have a value near zero and the top has a value close to 1. The center of the solution space has a value close to 0.8."
 
-    import numpy as np
+    import mlx.core as mx
     from scipy.optimize import root
     from numpy import cosh, zeros_like, mgrid, zeros
 
@@ -1728,18 +1728,18 @@ Finally, we can solve the transformed problem using :func:`linprog`.
 
 ::
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import linprog
-    >>> c = np.array([-29.0, -45.0, 0.0, 0.0])
-    >>> A_ub = np.array([[1.0, -1.0, -3.0, 0.0],
+    >>> c = mx.array([-29.0, -45.0, 0.0, 0.0])
+    >>> A_ub = mx.array([[1.0, -1.0, -3.0, 0.0],
     ...                 [-2.0, 3.0, 7.0, -3.0]])
-    >>> b_ub = np.array([5.0, -10.0])
-    >>> A_eq = np.array([[2.0, 8.0, 1.0, 0.0],
+    >>> b_ub = mx.array([5.0, -10.0])
+    >>> A_eq = mx.array([[2.0, 8.0, 1.0, 0.0],
     ...                 [4.0, 4.0, 0.0, 1.0]])
-    >>> b_eq = np.array([60.0, 60.0])
+    >>> b_eq = mx.array([60.0, 60.0])
     >>> x0_bounds = (0, None)
     >>> x1_bounds = (0, 5.0)
-    >>> x2_bounds = (-np.inf, 0.5)  # +/- np.inf can be used instead of None
+    >>> x2_bounds = (-mx.inf, 0.5)  # +/- mx.inf can be used instead of None
     >>> x3_bounds = (-3.0, None)
     >>> bounds = [x0_bounds, x1_bounds, x2_bounds, x3_bounds]
     >>> result = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=bounds)
@@ -1764,7 +1764,7 @@ We can check the objective value (``result.fun``) is same as :math:`c^Tx`:
 
 ::
 
-    >>> x = np.array(result.x)
+    >>> x = mx.array(result.x)
     >>> obj = result.fun
     >>> print(c @ x)
     -505.97435889013434  # may vary
@@ -1831,8 +1831,8 @@ correspond with swimming styles and the columns correspond with students:
 
 ::
 
-    >>> import numpy as np
-    >>> cost = np.array([[43.5, 45.5, 43.4, 46.5, 46.3],
+    >>> import mlx.core as mx
+    >>> cost = mx.array([[43.5, 45.5, 43.4, 46.5, 46.3],
     ...                  [47.1, 42.1, 39.1, 44.1, 47.8],
     ...                  [48.4, 49.6, 42.1, 44.5, 50.4],
     ...                  [38.2, 36.8, 43.2, 41.2, 37.2]])
@@ -1857,8 +1857,8 @@ The optimal assignment is:
 
 ::
 
-    >>> styles = np.array(["backstroke", "breaststroke", "butterfly", "freestyle"])[row_ind]
-    >>> students = np.array(["A", "B", "C", "D", "E"])[col_ind]
+    >>> styles = mx.array(["backstroke", "breaststroke", "butterfly", "freestyle"])[row_ind]
+    >>> students = mx.array(["A", "B", "C", "D", "E"])[col_ind]
     >>> dict(zip(styles, students))
     {'backstroke': 'A', 'breaststroke': 'C', 'butterfly': 'D', 'freestyle': 'B'}
 
@@ -1873,7 +1873,7 @@ Note that this result is not the same as the sum of the minimum times for each s
 
 ::
 
-    >>> np.min(cost, axis=1).sum()
+    >>> mx.min(cost, axis=1).sum()
     161.39999999999998
 
 because student "C" is the best swimmer in both "breaststroke" and "butterfly" style.
@@ -1943,10 +1943,10 @@ each is specified as follows.
 
 ::
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import optimize
-    >>> sizes = np.array([21, 11, 15, 9, 34, 25, 41, 52])
-    >>> values = np.array([22, 12, 16, 10, 35, 26, 42, 53])
+    >>> sizes = mx.array([21, 11, 15, 9, 34, 25, 41, 52])
+    >>> values = mx.array([22, 12, 16, 10, 35, 26, 42, 53])
 
 We need to constrain our eight decision variables to be binary. We do so
 by adding a :class:`Bounds`: constraint to ensure that they lie between
@@ -1956,7 +1956,7 @@ they are *either* :math:`0` *or* :math:`1`.
 ::
 
     >>> bounds = optimize.Bounds(0, 1)  # 0 <= x_i <= 1
-    >>> integrality = np.full_like(values, True)  # x_i are integers
+    >>> integrality = mx.full_like(values, True)  # x_i are integers
 
 The knapsack capacity constraint is specified using :class:`LinearConstraint`.
 
@@ -2049,7 +2049,7 @@ Lambda functions do not meet that requirement.
 
 ::
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import rosen, differential_evolution, Bounds
     >>> bnds = Bounds([0., 0., 0.], [10., 10., 10.])
     >>> res = differential_evolution(rosen, bnds, workers=2, updating='deferred')
@@ -2091,7 +2091,7 @@ simulate a slow function we use the ``time`` package.
 
 Examine the serial minimization first::
 
-    In [1]: rng = np.random.default_rng()
+    In [1]: rng = mx.random.default_rng()
 
     In [2]: x0 = rng.uniform(low=0.0, high=10.0, size=(20,))
 
@@ -2110,7 +2110,7 @@ objective function can carry out the required calculations in a single (rather t
 multiple) call, which is typically very efficient::
 
     In [5]: def vectorized_maplike(fun, iterable):
-    ...         arr = np.array([i for i in iter(iterable)])   # arr.shape = (S, N)
+    ...         arr = mx.array([i for i in iter(iterable)])   # arr.shape = (S, N)
     ...         arr_t = arr.T                                 # arr_t.shape = (N, S)
     ...         r = slow_func(arr_t)                          # calculation vectorized over S
     ...         return r

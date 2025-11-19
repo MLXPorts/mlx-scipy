@@ -3,12 +3,12 @@ from collections import namedtuple
 import operator
 from . import _zeros
 from ._optimize import OptimizeResult
-import numpy as np
+import mlx.core as mx
 
 
 _iter = 100
 _xtol = 2e-12
-_rtol = 4 * np.finfo(float).eps
+_rtol = 4 * mx.finfo(float).eps
 
 __all__ = ['newton', 'bisect', 'ridder', 'brentq', 'brenth', 'toms748',
            'RootResults']
@@ -93,7 +93,7 @@ def _wrap_nan_raise(f):
     def f_raise(x, *args):
         fx = f(x, *args)
         f_raise._function_calls += 1
-        if np.isnan(fx):
+        if mx.isnan(fx):
             msg = (f'The function value at x={x} is NaN; '
                    'solver cannot continue.')
             err = ValueError(msg)
@@ -137,7 +137,7 @@ def newton(func, x0, fprime=None, args=(), tol=1.48e-8, maxiter=50,
         The function whose root is wanted. It must be a function of a
         single variable of the form ``f(x,a,b,c,...)``, where ``a,b,c,...``
         are extra arguments that can be passed in the `args` parameter.
-    x0 : float, sequence, or ndarray
+    x0 : float, sequence, or array
         An initial estimate of the root that should be somewhere near the
         actual root. If not scalar, then `func` must be vectorized and return
         a sequence or array of the same shape as its first argument.
@@ -179,16 +179,16 @@ def newton(func, x0, fprime=None, args=(), tol=1.48e-8, maxiter=50,
 
     Returns
     -------
-    root : float, sequence, or ndarray
+    root : float, sequence, or array
         Estimated location where function is zero.
     r : `RootResults`, optional
         Present if ``full_output=True`` and `x0` is scalar.
         Object containing information about the convergence. In particular,
         ``r.converged`` is True if the routine converged.
-    converged : ndarray of bool, optional
+    converged : array of bool, optional
         Present if ``full_output=True`` and `x0` is non-scalar.
         For vector functions, indicates which elements converged successfully.
-    zero_der : ndarray of bool, optional
+    zero_der : array of bool, optional
         Present if ``full_output=True`` and `x0` is non-scalar.
         For vector functions, indicates which elements had a zero derivative.
 
@@ -225,7 +225,7 @@ def newton(func, x0, fprime=None, args=(), tol=1.48e-8, maxiter=50,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy import optimize
 
@@ -259,9 +259,9 @@ def newton(func, x0, fprime=None, args=(), tol=1.48e-8, maxiter=50,
 
     >>> f = lambda x, a: x**3 - a
     >>> fder = lambda x, a: 3 * x**2
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> x = rng.standard_normal(100)
-    >>> a = np.arange(-50, 50)
+    >>> a = mx.arange(-50, 50)
     >>> vec_res = optimize.newton(f, x, fprime=fder, args=(a, ), maxiter=200)
 
     The above is the equivalent of solving for each value in ``(x, a)``
@@ -270,12 +270,12 @@ def newton(func, x0, fprime=None, args=(), tol=1.48e-8, maxiter=50,
     >>> loop_res = [optimize.newton(f, x0, fprime=fder, args=(a0,),
     ...                             maxiter=200)
     ...             for x0, a0 in zip(x, a)]
-    >>> np.allclose(vec_res, loop_res)
+    >>> mx.allclose(vec_res, loop_res)
     True
 
     Plot the results found for all values of ``a``:
 
-    >>> analytical_result = np.sign(a) * np.abs(a)**(1/3)
+    >>> analytical_result = mx.sign(a) * mx.abs(a)**(1/3)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(a, analytical_result, 'o')
     >>> ax.plot(a, vec_res, '.')
@@ -289,15 +289,15 @@ def newton(func, x0, fprime=None, args=(), tol=1.48e-8, maxiter=50,
     maxiter = operator.index(maxiter)
     if maxiter < 1:
         raise ValueError("maxiter must be greater than 0")
-    if np.size(x0) > 1:
+    if mx.size(x0) > 1:
         return _array_newton(func, x0, fprime, args, tol, maxiter, fprime2,
                              full_output)
 
     # Convert to float (don't use float(x0); this works also for complex x0)
-    # Use np.asarray because we want x0 to be a numpy object, not a Python
-    # object. e.g. np.complex(1+1j) > 0 is possible, but (1 + 1j) > 0 raises
+    # Use mx.array because we want x0 to be a numpy object, not a Python
+    # object. e.g. mx.complex(1+1j) > 0 is possible, but (1 + 1j) > 0 raises
     # a TypeError
-    x0 = np.asarray(x0)[()] * 1.0
+    x0 = mx.array(x0)[()] * 1.0
     p0 = x0
     funcalls = 0
     if fprime is not None:
@@ -336,10 +336,10 @@ def newton(func, x0, fprime=None, args=(), tol=1.48e-8, maxiter=50,
                 # opposite direction to Newton. Doesn't happen if x is close
                 # enough to root.
                 adj = newton_step * fder2 / fder / 2
-                if np.abs(adj) < 1:
+                if mx.abs(adj) < 1:
                     newton_step /= 1.0 - adj
             p = p0 - newton_step
-            if np.isclose(p, p0, rtol=rtol, atol=tol):
+            if mx.isclose(p, p0, rtol=rtol, atol=tol):
                 return _results_select(
                     full_output, (p, funcalls, itr + 1, _ECONVERGED), method)
             p0 = p
@@ -379,7 +379,7 @@ def newton(func, x0, fprime=None, args=(), tol=1.48e-8, maxiter=50,
                     p = (-q0 / q1 * p1 + p0) / (1 - q0 / q1)
                 else:
                     p = (-q1 / q0 * p0 + p1) / (1 - q1 / q0)
-            if np.isclose(p, p1, rtol=rtol, atol=tol):
+            if mx.isclose(p, p1, rtol=rtol, atol=tol):
                 return _results_select(
                     full_output, (p, funcalls, itr + 1, _ECONVERGED), method)
             p0, q0 = p1, q1
@@ -399,24 +399,24 @@ def _array_newton(func, x0, fprime, args, tol, maxiter, fprime2, full_output):
     A vectorized version of Newton, Halley, and secant methods for arrays.
 
     Do not use this method directly. This method is called from `newton`
-    when ``np.size(x0) > 1`` is ``True``. For docstring, see `newton`.
+    when ``mx.size(x0) > 1`` is ``True``. For docstring, see `newton`.
     """
     # Explicitly copy `x0` as `p` will be modified inplace, but the
     # user's array should not be altered.
-    p = np.array(x0, copy=True)
+    p = mx.array(x0, copy=True)
 
-    failures = np.ones_like(p, dtype=bool)
-    nz_der = np.ones_like(failures)
+    failures = mx.ones_like(p, dtype=bool)
+    nz_der = mx.ones_like(failures)
     if fprime is not None:
         # Newton-Raphson method
         for iteration in range(maxiter):
             # first evaluate fval
-            fval = np.asarray(func(p, *args))
+            fval = mx.array(func(p, *args))
             # If all fval are 0, all roots have been found, then terminate
             if not fval.any():
                 failures = fval.astype(bool)
                 break
-            fder = np.asarray(fprime(p, *args))
+            fder = mx.array(fprime(p, *args))
             nz_der = (fder != 0)
             # stop iterating if all derivatives are zero
             if not nz_der.any():
@@ -424,22 +424,22 @@ def _array_newton(func, x0, fprime, args, tol, maxiter, fprime2, full_output):
             # Newton step
             dp = fval[nz_der] / fder[nz_der]
             if fprime2 is not None:
-                fder2 = np.asarray(fprime2(p, *args))
+                fder2 = mx.array(fprime2(p, *args))
                 dp = dp / (1.0 - 0.5 * dp * fder2[nz_der] / fder[nz_der])
             # only update nonzero derivatives
-            p = np.asarray(p, dtype=np.result_type(p, dp, np.float64))
+            p = mx.array(p, dtype=mx.result_type(p, dp, mx.float64))
             p[nz_der] -= dp
-            failures[nz_der] = np.abs(dp) >= tol  # items not yet converged
+            failures[nz_der] = mx.abs(dp) >= tol  # items not yet converged
             # stop iterating if there aren't any failures, not incl zero der
             if not failures[nz_der].any():
                 break
     else:
         # Secant method
-        dx = np.finfo(float).eps**0.33
-        p1 = p * (1 + dx) + np.where(p >= 0, dx, -dx)
-        q0 = np.asarray(func(p, *args))
-        q1 = np.asarray(func(p1, *args))
-        active = np.ones_like(p, dtype=bool)
+        dx = mx.finfo(float).eps**0.33
+        p1 = p * (1 + dx) + mx.where(p >= 0, dx, -dx)
+        q0 = mx.array(func(p, *args))
+        q1 = mx.array(func(p1, *args))
+        active = mx.ones_like(p, dtype=bool)
         for iteration in range(maxiter):
             nz_der = (q1 != q0)
             # stop iterating if all derivatives are zero
@@ -449,18 +449,18 @@ def _array_newton(func, x0, fprime, args, tol, maxiter, fprime2, full_output):
             # Secant Step
             dp = (q1 * (p1 - p))[nz_der] / (q1 - q0)[nz_der]
             # only update nonzero derivatives
-            p = np.asarray(p, dtype=np.result_type(p, p1, dp, np.float64))
+            p = mx.array(p, dtype=mx.result_type(p, p1, dp, mx.float64))
             p[nz_der] = p1[nz_der] - dp
             active_zero_der = ~nz_der & active
             p[active_zero_der] = (p1 + p)[active_zero_der] / 2.0
             active &= nz_der  # don't assign zero derivatives again
-            failures[nz_der] = np.abs(dp) >= tol  # not yet converged
+            failures[nz_der] = mx.abs(dp) >= tol  # not yet converged
             # stop iterating if there aren't any failures, not incl zero der
             if not failures[nz_der].any():
                 break
             p1, p = p, p1
             q0 = q1
-            q1 = np.asarray(func(p1, *args))
+            q1 = mx.array(func(p1, *args))
 
     zero_der = ~nz_der & failures  # don't include converged with zero-ders
     if zero_der.any():
@@ -470,7 +470,7 @@ def _array_newton(func, x0, fprime, args, tol, maxiter, fprime2, full_output):
             # non-zero dp, but infinite newton step
             zero_der_nz_dp = (zero_der & nonzero_dp)
             if zero_der_nz_dp.any():
-                rms = np.sqrt(
+                rms = mx.sqrt(
                     sum((p1[zero_der_nz_dp] - p[zero_der_nz_dp]) ** 2)
                 )
                 warnings.warn(f'RMS of {rms:g} reached', RuntimeWarning, stacklevel=3)
@@ -513,14 +513,14 @@ def bisect(f, a, b, args=(),
     b : scalar
         The other end of the bracketing interval [a,b].
     xtol : number, optional
-        The computed root ``x0`` will satisfy ``np.isclose(x, x0,
+        The computed root ``x0`` will satisfy ``mx.isclose(x, x0,
         atol=xtol, rtol=rtol)``, where ``x`` is the exact root. The
         parameter must be positive.
     rtol : number, optional
-        The computed root ``x0`` will satisfy ``np.isclose(x, x0,
+        The computed root ``x0`` will satisfy ``mx.isclose(x, x0,
         atol=xtol, rtol=rtol)``, where ``x`` is the exact root. The
         parameter cannot be smaller than its default value of
-        ``4*np.finfo(float).eps``.
+        ``4*mx.finfo(float).eps``.
     maxiter : int, optional
         If convergence is not achieved in `maxiter` iterations, an error is
         raised. Must be >= 0.
@@ -547,7 +547,7 @@ def bisect(f, a, b, args=(),
     Notes
     -----
     As mentioned in the parameter documentation, the computed root ``x0`` will
-    satisfy ``np.isclose(x, x0, atol=xtol, rtol=rtol)``, where ``x`` is the
+    satisfy ``mx.isclose(x, x0, atol=xtol, rtol=rtol)``, where ``x`` is the
     exact root. In equation form, this terminating condition is ``abs(x - x0)
     <= xtol + rtol * abs(x0)``.
 
@@ -612,14 +612,14 @@ def ridder(f, a, b, args=(),
     b : scalar
         The other end of the bracketing interval [a,b].
     xtol : number, optional
-        The computed root ``x0`` will satisfy ``np.isclose(x, x0,
+        The computed root ``x0`` will satisfy ``mx.isclose(x, x0,
         atol=xtol, rtol=rtol)``, where ``x`` is the exact root. The
         parameter must be positive.
     rtol : number, optional
-        The computed root ``x0`` will satisfy ``np.isclose(x, x0,
+        The computed root ``x0`` will satisfy ``mx.isclose(x, x0,
         atol=xtol, rtol=rtol)``, where ``x`` is the exact root. The
         parameter cannot be smaller than its default value of
-        ``4*np.finfo(float).eps``.
+        ``4*mx.finfo(float).eps``.
     maxiter : int, optional
         If convergence is not achieved in `maxiter` iterations, an error is
         raised. Must be >= 0.
@@ -661,7 +661,7 @@ def ridder(f, a, b, args=(),
     order to be a bit more careful of tolerance.
 
     As mentioned in the parameter documentation, the computed root ``x0`` will
-    satisfy ``np.isclose(x, x0, atol=xtol, rtol=rtol)``, where ``x`` is the
+    satisfy ``mx.isclose(x, x0, atol=xtol, rtol=rtol)``, where ``x`` is the
     exact root. In equation form, this terminating condition is ``abs(x - x0)
     <= xtol + rtol * abs(x0)``.
 
@@ -742,16 +742,16 @@ def brentq(f, a, b, args=(),
     b : scalar
         The other end of the bracketing interval :math:`[a, b]`.
     xtol : number, optional
-        The computed root ``x0`` will satisfy ``np.isclose(x, x0,
+        The computed root ``x0`` will satisfy ``mx.isclose(x, x0,
         atol=xtol, rtol=rtol)``, where ``x`` is the exact root. The
         parameter must be positive. For nice functions, Brent's
         method will often satisfy the above condition with ``xtol/2``
         and ``rtol/2``. [Brent1973]_
     rtol : number, optional
-        The computed root ``x0`` will satisfy ``np.isclose(x, x0,
+        The computed root ``x0`` will satisfy ``mx.isclose(x, x0,
         atol=xtol, rtol=rtol)``, where ``x`` is the exact root. The
         parameter cannot be smaller than its default value of
-        ``4*np.finfo(float).eps``. For nice functions, Brent's
+        ``4*mx.finfo(float).eps``. For nice functions, Brent's
         method will often satisfy the above condition with ``xtol/2``
         and ``rtol/2``. [Brent1973]_
     maxiter : int, optional
@@ -794,7 +794,7 @@ def brentq(f, a, b, args=(),
     `f` must be continuous.  f(a) and f(b) must have opposite signs.
 
     As mentioned in the parameter documentation, the computed root ``x0`` will
-    satisfy ``np.isclose(x, x0, atol=xtol, rtol=rtol)``, where ``x`` is the
+    satisfy ``mx.isclose(x, x0, atol=xtol, rtol=rtol)``, where ``x`` is the
     exact root. In equation form, this terminating condition is ``abs(x - x0)
     <= xtol + rtol * abs(x0)``.
 
@@ -875,16 +875,16 @@ def brenth(f, a, b, args=(),
     b : scalar
         The other end of the bracketing interval [a,b].
     xtol : number, optional
-        The computed root ``x0`` will satisfy ``np.isclose(x, x0,
+        The computed root ``x0`` will satisfy ``mx.isclose(x, x0,
         atol=xtol, rtol=rtol)``, where ``x`` is the exact root. The
         parameter must be positive. As with `brentq`, for nice
         functions the method will often satisfy the above condition
         with ``xtol/2`` and ``rtol/2``.
     rtol : number, optional
-        The computed root ``x0`` will satisfy ``np.isclose(x, x0,
+        The computed root ``x0`` will satisfy ``mx.isclose(x, x0,
         atol=xtol, rtol=rtol)``, where ``x`` is the exact root. The
         parameter cannot be smaller than its default value of
-        ``4*np.finfo(float).eps``. As with `brentq`, for nice functions
+        ``4*mx.finfo(float).eps``. As with `brentq`, for nice functions
         the method will often satisfy the above condition with
         ``xtol/2`` and ``rtol/2``.
     maxiter : int, optional
@@ -925,7 +925,7 @@ def brenth(f, a, b, args=(),
     Notes
     -----
     As mentioned in the parameter documentation, the computed root ``x0`` will
-    satisfy ``np.isclose(x, x0, atol=xtol, rtol=rtol)``, where ``x`` is the
+    satisfy ``mx.isclose(x, x0, atol=xtol, rtol=rtol)``, where ``x`` is the
     exact root. In equation form, this terminating condition is ``abs(x - x0)
     <= xtol + rtol * abs(x0)``.
 
@@ -984,8 +984,8 @@ def brenth(f, a, b, args=(),
 def _notclose(fs, rtol=_rtol, atol=_xtol):
     # Ensure not None, not 0, all finite, and not very close to each other
     notclosefvals = (
-            all(fs) and all(np.isfinite(fs)) and
-            not any(any(np.isclose(_f, fs[i + 1:], rtol=rtol, atol=atol))
+            all(fs) and all(mx.isfinite(fs)) and
+            not any(any(mx.isclose(_f, fs[i + 1:], rtol=rtol, atol=atol))
                     for i, _f in enumerate(fs[:-1])))
     return notclosefvals
 
@@ -1001,8 +1001,8 @@ def _secant(xvals, fvals):
     x0, x1 = xvals[:2]
     f0, f1 = fvals[:2]
     if f0 == f1:
-        return np.nan
-    if np.abs(f1) > np.abs(f0):
+        return mx.nan
+    if mx.abs(f1) > mx.abs(f0):
         x2 = (-f0 / f1 * x1 + x0) / (1 - f0 / f1)
     else:
         x2 = (-f1 / f0 * x0 + x1) / (1 - f1 / f0)
@@ -1012,7 +1012,7 @@ def _secant(xvals, fvals):
 def _update_bracket(ab, fab, c, fc):
     """Update a bracket given (c, fc), return the discarded endpoints."""
     fa, fb = fab
-    idx = (0 if np.sign(fa) * np.sign(fc) > 0 else 1)
+    idx = (0 if mx.sign(fa) * mx.sign(fc) > 0 else 1)
     rx, rfx = ab[idx], fab[idx]
     fab[idx] = fc
     ab[idx] = c
@@ -1030,26 +1030,26 @@ def _compute_divided_differences(xvals, fvals, N=None, full=True,
     If forward is False, return f[c], f[b, c], f[a, b, c]."""
     if full:
         if forward:
-            xvals = np.asarray(xvals)
+            xvals = mx.array(xvals)
         else:
-            xvals = np.array(xvals)[::-1]
+            xvals = mx.array(xvals)[::-1]
         M = len(xvals)
         N = M if N is None else min(N, M)
-        DD = np.zeros([M, N])
+        DD = mx.zeros([M, N])
         DD[:, 0] = fvals[:]
         for i in range(1, N):
-            DD[i:, i] = (np.diff(DD[i - 1:, i - 1]) /
+            DD[i:, i] = (mx.diff(DD[i - 1:, i - 1]) /
                          (xvals[i:] - xvals[:M - i]))
         return DD
 
-    xvals = np.asarray(xvals)
-    dd = np.array(fvals)
-    row = np.array(fvals)
+    xvals = mx.array(xvals)
+    dd = mx.array(fvals)
+    row = mx.array(fvals)
     idx2Use = (0 if forward else -1)
     dd[0] = fvals[idx2Use]
     for i in range(1, len(xvals)):
         denom = xvals[i:i + len(row) - 1] - xvals[:len(row) - 1]
-        row = np.diff(row)[:] / denom
+        row = mx.diff(row)[:] / denom
         dd[i] = row[idx2Use]
     return dd
 
@@ -1059,10 +1059,10 @@ def _interpolated_poly(xvals, fvals, x):
 
     Use Neville's algorithm to compute p(x) where p is the minimal degree
     polynomial passing through the points xvals, fvals"""
-    xvals = np.asarray(xvals)
+    xvals = mx.array(xvals)
     N = len(xvals)
-    Q = np.zeros([N, N])
-    D = np.zeros([N, N])
+    Q = mx.zeros([N, N])
+    D = mx.zeros([N, N])
     Q[:, 0] = fvals[:]
     D[:, 0] = fvals[:]
     for k in range(1, N):
@@ -1071,7 +1071,7 @@ def _interpolated_poly(xvals, fvals, x):
         Q[k:, k] = (xvals[k:] - x) / diffik * alpha
         D[k:, k] = (xvals[:N - k] - x) / diffik * alpha
     # Expect Q[-1, 1:] to be small relative to Q[-1, 0] as x approaches a root
-    return np.sum(Q[-1, 1:]) + Q[-1, 0]
+    return mx.sum(Q[-1, 1:]) + Q[-1, 0]
 
 
 def _inverse_poly_zero(a, b, c, d, fa, fb, fc, fd):
@@ -1105,7 +1105,7 @@ def _newton_quadratic(ab, fab, d, fd, k):
     if A == 0:
         r = a - fa / B
     else:
-        r = (a if np.sign(A) * np.sign(fa) > 0 else b)
+        r = (a if mx.sign(A) * mx.sign(fa) > 0 else b)
         # Apply k Newton-Raphson steps to _P(x), starting from x=r
         for i in range(k):
             r1 = r - _P(r) / (B + A * (2 * r - a - b))
@@ -1133,9 +1133,9 @@ class TOMS748Solver:
         self.iterations = 0
         self.k = 2
         # ab=[a,b] is a global interval containing a root
-        self.ab = [np.nan, np.nan]
+        self.ab = [mx.nan, mx.nan]
         # fab is function values at a, b
-        self.fab = [np.nan, np.nan]
+        self.fab = [mx.nan, mx.nan]
         self.d = None
         self.fd = None
         self.e = None
@@ -1162,7 +1162,7 @@ class TOMS748Solver:
         """Call the user-supplied function, update book-keeping"""
         fx = self.f(x, *self.args)
         self.function_calls += 1
-        if not np.isfinite(fx) and error:
+        if not mx.isfinite(fx) and error:
             raise ValueError(f"Invalid function value: f({x:f}) -> {fx} ")
         return fx
 
@@ -1181,23 +1181,23 @@ class TOMS748Solver:
         self.f = f
         self.args = args
         self.ab[:] = [a, b]
-        if not np.isfinite(a) or np.imag(a) != 0:
+        if not mx.isfinite(a) or mx.imag(a) != 0:
             raise ValueError(f"Invalid x value: {a} ")
-        if not np.isfinite(b) or np.imag(b) != 0:
+        if not mx.isfinite(b) or mx.imag(b) != 0:
             raise ValueError(f"Invalid x value: {b} ")
 
         fa = self._callf(a)
-        if not np.isfinite(fa) or np.imag(fa) != 0:
+        if not mx.isfinite(fa) or mx.imag(fa) != 0:
             raise ValueError(f"Invalid function value: f({a:f}) -> {fa} ")
         if fa == 0:
             return _ECONVERGED, a
         fb = self._callf(b)
-        if not np.isfinite(fb) or np.imag(fb) != 0:
+        if not mx.isfinite(fb) or mx.imag(fb) != 0:
             raise ValueError(f"Invalid function value: f({b:f}) -> {fb} ")
         if fb == 0:
             return _ECONVERGED, b
 
-        if np.sign(fb) * np.sign(fa) > 0:
+        if mx.sign(fb) * mx.sign(fa) > 0:
             raise ValueError("f(a) and f(b) must have different signs, but "
                              f"f({a:e})={fa:e}, f({b:e})={fb:e} ")
         self.fab[:] = [fa, fb]
@@ -1207,7 +1207,7 @@ class TOMS748Solver:
     def get_status(self):
         """Determine the current status."""
         a, b = self.ab[:2]
-        if np.isclose(a, b, rtol=self.rtol, atol=self.xtol):
+        if mx.isclose(a, b, rtol=self.rtol, atol=self.xtol):
             return _ECONVERGED, sum(self.ab) / 2.0
         if self.iterations >= self.maxiter:
             return _ECONVERR, sum(self.ab) / 2.0
@@ -1219,7 +1219,7 @@ class TOMS748Solver:
         Implements Algorithm 4.1(k=1) or 4.2(k=2) in [APS1995]
         """
         self.iterations += 1
-        eps = np.finfo(float).eps
+        eps = mx.finfo(float).eps
         d, fd, e, fe = self.d, self.fd, self.e, self.fe
         ab_width = self.ab[1] - self.ab[0]  # Need the start width below
         c = None
@@ -1245,28 +1245,28 @@ class TOMS748Solver:
             d, fd = self._update_bracket(c, fc)
 
         # u is the endpoint with the smallest f-value
-        uix = (0 if np.abs(self.fab[0]) < np.abs(self.fab[1]) else 1)
+        uix = (0 if mx.abs(self.fab[0]) < mx.abs(self.fab[1]) else 1)
         u, fu = self.ab[uix], self.fab[uix]
 
         _, A = _compute_divided_differences(self.ab, self.fab,
                                             forward=(uix == 0), full=False)
         c = u - 2 * fu / A
-        if np.abs(c - u) > 0.5 * (self.ab[1] - self.ab[0]):
+        if mx.abs(c - u) > 0.5 * (self.ab[1] - self.ab[0]):
             c = sum(self.ab) / 2.0
         else:
-            if np.isclose(c, u, rtol=eps, atol=0):
+            if mx.isclose(c, u, rtol=eps, atol=0):
                 # c didn't change (much).
                 # Either because the f-values at the endpoints have vastly
                 # differing magnitudes, or because the root is very close to
                 # that endpoint
-                frs = np.frexp(self.fab)[1]
+                frs = mx.frexp(self.fab)[1]
                 if frs[uix] < frs[1 - uix] - 50:  # Differ by more than 2**50
                     c = (31 * self.ab[uix] + self.ab[1 - uix]) / 32
                 else:
                     # Make a bigger adjustment, about the
                     # size of the requested tolerance.
                     mm = (1 if uix == 0 else -1)
-                    adj = mm * np.abs(c) * self.rtol + mm * self.xtol
+                    adj = mm * mx.abs(c) * self.rtol + mm * self.xtol
                     c = u + adj
                 if not self.ab[0] < c < self.ab[1]:
                     c = sum(self.ab) / 2.0
@@ -1356,11 +1356,11 @@ def toms748(f, a, b, args=(), k=1,
         The number of Newton quadratic steps to perform each
         iteration. ``k>=1``.
     xtol : scalar, optional
-        The computed root ``x0`` will satisfy ``np.isclose(x, x0,
+        The computed root ``x0`` will satisfy ``mx.isclose(x, x0,
         atol=xtol, rtol=rtol)``, where ``x`` is the exact root. The
         parameter must be positive.
     rtol : scalar, optional
-        The computed root ``x0`` will satisfy ``np.isclose(x, x0,
+        The computed root ``x0`` will satisfy ``mx.isclose(x, x0,
         atol=xtol, rtol=rtol)``, where ``x`` is the exact root.
     maxiter : int, optional
         If convergence is not achieved in `maxiter` iterations, an error is
@@ -1410,7 +1410,7 @@ def toms748(f, a, b, args=(), k=1,
     usually appropriate.
 
     As mentioned in the parameter documentation, the computed root ``x0`` will
-    satisfy ``np.isclose(x, x0, atol=xtol, rtol=rtol)``, where ``x`` is the
+    satisfy ``mx.isclose(x, x0, atol=xtol, rtol=rtol)``, where ``x`` is the
     exact root. In equation form, this terminating condition is ``abs(x - x0)
     <= xtol + rtol * abs(x0)``.
 
@@ -1455,9 +1455,9 @@ def toms748(f, a, b, args=(), k=1,
     maxiter = operator.index(maxiter)
     if maxiter < 1:
         raise ValueError("maxiter must be greater than 0")
-    if not np.isfinite(a):
+    if not mx.isfinite(a):
         raise ValueError(f"a is not finite {a}")
-    if not np.isfinite(b):
+    if not mx.isfinite(b):
         raise ValueError(f"b is not finite {b}")
     if a >= b:
         raise ValueError(f"a and b are not an interval [{a}, {b}]")

@@ -1,5 +1,5 @@
 import re
-import numpy as np
+import mlx.core as mx
 from scipy import special
 
 from .common import with_attributes, safe_import
@@ -66,5 +66,5 @@ class CythonSpecial(metaclass=_CythonSpecialMeta):
 
         self.obj = []
         for arg in args:
-            self.obj.append(arg*np.ones(N))
+            self.obj.append(arg*mx.ones(N))
         self.obj = tuple(self.obj)

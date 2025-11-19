@@ -14,7 +14,7 @@ auto pava(
 ) {
     // x is the response variable (often written as y). Its ordering is crucial.
     // Usually, it is sorted according to some other data (feature or covariate), e.g.
-    //   indices = np.argsort(z)
+    //   indices = mx.argsort(z)
     //   x = x[indices]
     // Note that x is modified inplace and, on return, will contain the solution.
     // w is an array of case weights, modified inplace.
@@ -100,20 +100,20 @@ PYBIND11_MODULE(_pava_pybind, m, py::mod_gil_not_used()) {
         "\n"
         "Parameters\n"
         "----------\n"
-        "xa : contiguous ndarray of shape (n,) and dtype np.float64\n"
-        "wa : contiguous ndarray of shape (n,) and dtype np.float64\n"
-        "ra : contiguous ndarray of shape (n+1,) and dtype np.intp\n"
+        "xa : contiguous array of shape (n,) and dtype mx.float64\n"
+        "wa : contiguous array of shape (n,) and dtype mx.float64\n"
+        "ra : contiguous array of shape (n+1,) and dtype mx.intp\n"
         "\n"
         "Returns\n"
         "-------\n"
-        "x : ndarray\n"
+        "x : array\n"
         "    The isotonic solution.\n"
-        "w : ndarray\n"
+        "w : array\n"
         "    The array of weights for each block.\n"
-        "r : ndarray\n"
+        "r : array\n"
         "    The array of indices for each block, such that xa[ra[i]:ra[i+1]]\n"
         "    is the i-th block with all elements having the same value.\n"
-        "b : np.intp\n"
+        "b : mx.intp\n"
         "    Number of blocks.\n",
         py::arg("x"), py::arg("w"), py::arg("indices")
     );

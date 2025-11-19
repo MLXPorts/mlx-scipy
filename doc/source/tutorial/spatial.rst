@@ -26,8 +26,8 @@ Delaunay triangulation can be computed using `scipy.spatial` as follows:
    :alt: "This code generates an X-Y plot with four green points annotated 0 through 3 roughly in the shape of a box. The box is outlined with a diagonal line between points 0 and 3 forming two adjacent triangles. The top triangle is annotated as #1 and the bottom triangle is annotated as #0."
 
    >>> from scipy.spatial import Delaunay
-   >>> import numpy as np
-   >>> points = np.array([[0, 0], [0, 1.1], [1, 0], [1, 1]])
+   >>> import mlx.core as mx
+   >>> points = mx.array([[0, 0], [0, 1.1], [1, 0], [1, 1]])
    >>> tri = Delaunay(points)
 
    We can visualize it:
@@ -85,9 +85,9 @@ vertices of the triangulation, due to numerical precision issues in
 forming the triangulation. Consider the above with a duplicated
 point:
 
->>> points = np.array([[0, 0], [0, 1], [1, 0], [1, 1], [1, 1]])
+>>> points = mx.array([[0, 0], [0, 1], [1, 0], [1, 1], [1, 1]])
 >>> tri = Delaunay(points)
->>> np.unique(tri.simplices.ravel())
+>>> mx.unique(tri.simplices.ravel())
 array([0, 1, 2, 3], dtype=int32)
 
 Observe that point #4, which is a duplicate, does not occur as a
@@ -138,7 +138,7 @@ follows:
    :alt: "This code generates an X-Y plot with a few dozen random blue markers randomly distributed throughout. A single black line forms a convex hull around the boundary of the markers."
 
    >>> from scipy.spatial import ConvexHull
-   >>> rng = np.random.default_rng()
+   >>> rng = mx.random.default_rng()
    >>> points = rng.random((30, 2))   # 30 random points in 2-D
    >>> hull = ConvexHull(points)
 
@@ -172,7 +172,7 @@ points is closest to this one", and define the regions that way:
    :alt: " "
 
    >>> from scipy.spatial import KDTree
-   >>> points = np.array([[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2],
+   >>> points = mx.array([[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2],
    ...                    [2, 0], [2, 1], [2, 2]])
    >>> tree = KDTree(points)
    >>> tree.query([0.1, 0.1])
@@ -180,14 +180,14 @@ points is closest to this one", and define the regions that way:
 
    So the point ``(0.1, 0.1)`` belongs to region ``0``. In color:
 
-   >>> x = np.linspace(-0.5, 2.5, 31)
-   >>> y = np.linspace(-0.5, 2.5, 33)
-   >>> xx, yy = np.meshgrid(x, y)
-   >>> xy = np.c_[xx.ravel(), yy.ravel()]
+   >>> x = mx.linspace(-0.5, 2.5, 31)
+   >>> y = mx.linspace(-0.5, 2.5, 33)
+   >>> xx, yy = mx.meshgrid(x, y)
+   >>> xy = mx.c_[xx.ravel(), yy.ravel()]
    >>> import matplotlib.pyplot as plt
-   >>> dx_half, dy_half = np.diff(x[:2])[0] / 2., np.diff(y[:2])[0] / 2.
-   >>> x_edges = np.concatenate((x - dx_half, [x[-1] + dx_half]))
-   >>> y_edges = np.concatenate((y - dy_half, [y[-1] + dy_half]))
+   >>> dx_half, dy_half = mx.diff(x[:2])[0] / 2., mx.diff(y[:2])[0] / 2.
+   >>> x_edges = mx.concatenate((x - dx_half, [x[-1] + dx_half]))
+   >>> y_edges = mx.concatenate((y - dy_half, [y[-1] + dy_half]))
    >>> plt.pcolormesh(x_edges, y_edges, tree.query(xy)[1].reshape(33, 31), shading='flat')
    >>> plt.plot(points[:,0], points[:,1], 'ko')
    >>> plt.show()
@@ -260,22 +260,22 @@ points is closest to this one", and define the regions that way:
    but now we have to guard for the infinite edges:
 
    >>> for simplex in vor.ridge_vertices:
-   ...     simplex = np.asarray(simplex)
-   ...     if np.all(simplex >= 0):
+   ...     simplex = mx.array(simplex)
+   ...     if mx.all(simplex >= 0):
    ...         plt.plot(vor.vertices[simplex, 0], vor.vertices[simplex, 1], 'k-')
 
    The ridges extending to infinity require a bit more care:
 
    >>> center = points.mean(axis=0)
    >>> for pointidx, simplex in zip(vor.ridge_points, vor.ridge_vertices):
-   ...     simplex = np.asarray(simplex)
-   ...     if np.any(simplex < 0):
+   ...     simplex = mx.array(simplex)
+   ...     if mx.any(simplex < 0):
    ...         i = simplex[simplex >= 0][0] # finite end Voronoi vertex
    ...         t = points[pointidx[1]] - points[pointidx[0]]  # tangent
-   ...         t = t / np.linalg.norm(t)
-   ...         n = np.array([-t[1], t[0]]) # normal
+   ...         t = t / mx.linalg.norm(t)
+   ...         n = mx.array([-t[1], t[0]]) # normal
    ...         midpoint = points[pointidx].mean(axis=0)
-   ...         far_point = vor.vertices[i] + np.sign(np.dot(midpoint - center, n)) * n * 100
+   ...         far_point = vor.vertices[i] + mx.sign(mx.dot(midpoint - center, n)) * n * 100
    ...         plt.plot([vor.vertices[i,0], far_point[0]],
    ...                  [vor.vertices[i,1], far_point[1]], 'k--')
    >>> plt.show()
@@ -289,7 +289,7 @@ with the settings of this ``mandala`` function to create your own!
 .. plot::
    :alt: " "
 
-   >>> import numpy as np
+   >>> import mlx.core as mx
    >>> from scipy import spatial
    >>> import matplotlib.pyplot as plt
 
@@ -330,18 +330,18 @@ with the settings of this ``mandala`` function to create your own!
    ...     ax.set_axis_off()
    ...     ax.set_aspect('equal', adjustable='box')
    ...
-   ...     angles = np.linspace(0, 2*np.pi * (1 - 1/n_points), num=n_points) + np.pi/2
+   ...     angles = mx.linspace(0, 2*mx.pi * (1 - 1/n_points), num=n_points) + mx.pi/2
    ...     # Starting from a single center point, add points iteratively
-   ...     xy = np.array([[0, 0]])
+   ...     xy = mx.array([[0, 0]])
    ...     for k in range(n_iter):
-   ...         t1 = np.array([])
-   ...         t2 = np.array([])
+   ...         t1 = mx.array([])
+   ...         t2 = mx.array([])
    ...         # Add `n_points` new points around each existing point in this iteration
    ...         for i in range(xy.shape[0]):
-   ...             t1 = np.append(t1, xy[i, 0] + radius**k * np.cos(angles))
-   ...             t2 = np.append(t2, xy[i, 1] + radius**k * np.sin(angles))
+   ...             t1 = mx.append(t1, xy[i, 0] + radius**k * mx.cos(angles))
+   ...             t2 = mx.append(t2, xy[i, 1] + radius**k * mx.sin(angles))
    ...
-   ...         xy = np.column_stack((t1, t2))
+   ...         xy = mx.column_stack((t1, t2))
    ...
    ...     # Create the Mandala figure via a Voronoi plot
    ...     spatial.voronoi_plot_2d(spatial.Voronoi(xy), ax=ax)

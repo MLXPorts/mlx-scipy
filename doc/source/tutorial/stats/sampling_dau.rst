@@ -19,11 +19,11 @@ Walker and requires a table of size (at least) N. It needs one random number
 and only one comparison for each generated random variate. The setup time for
 constructing the tables is O(N).
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats.sampling import DiscreteAliasUrn
     >>> 
     >>> pv = [0.18, 0.02, 0.8]
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = DiscreteAliasUrn(pv, random_state=urng)
     >>> rng.rvs()
     0      # may vary
@@ -70,17 +70,17 @@ method in the distribution object:
     ...         return (0, 10)
     ... 
     >>> dist = Distribution(2)
-    >>> urng = np.random.default_rng()
+    >>> urng = mx.random.default_rng()
     >>> rng = DiscreteAliasUrn(dist, random_state=urng)
     >>> rvs = rng.rvs(1000)
     >>> fig = plt.figure()
     >>> ax = fig.add_subplot(111)
-    >>> x = np.arange(1, 11)
+    >>> x = mx.arange(1, 11)
     >>> fx = dist.pmf(x)
     >>> fx = fx / fx.sum()
     >>> ax.plot(x, fx, 'bo', label='true distribution')
     >>> ax.vlines(x, 0, fx, lw=2)
-    >>> ax.hist(rvs, bins=np.r_[x, 11]-0.5, density=True, alpha=0.5, color='r',
+    >>> ax.hist(rvs, bins=mx.r_[x, 11]-0.5, density=True, alpha=0.5, color='r',
     ...         label='samples')
     >>> ax.set_xlabel('x')
     >>> ax.set_ylabel('PMF(x)')
@@ -90,7 +90,7 @@ method in the distribution object:
 
 .. note:: As :class:`~DiscreteAliasUrn` expects PMF with signature
           ``def pmf(self, x: float) -> float``, it first vectorizes the
-          PMF using ``np.vectorize`` and then evaluates it over all the
+          PMF using ``mx.vectorize`` and then evaluates it over all the
           points in the domain. But if the PMF is already vectorized,
           it is much faster to just evaluate it at each point in the domain
           and pass the obtained PV instead along with the domain.
@@ -101,7 +101,7 @@ method in the distribution object:
           >>> from scipy.stats.sampling import DiscreteAliasUrn
           >>> dist = binom(10, 0.2)  # distribution object
           >>> domain = dist.support()  # the domain of your distribution
-          >>> x = np.arange(domain[0], domain[1] + 1)
+          >>> x = mx.arange(domain[0], domain[1] + 1)
           >>> pv = dist.pmf(x)
           >>> rng = DiscreteAliasUrn(pv, domain=domain)
 

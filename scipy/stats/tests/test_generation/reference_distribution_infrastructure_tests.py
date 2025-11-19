@@ -2,7 +2,7 @@
 # reference distribution *infrastructure*; unit tests of SciPy distributions
 # do not go here.
 
-import numpy as np
+import mlx.core as mx
 import pytest
 
 from scipy import stats
@@ -30,7 +30,7 @@ def test_basic():
     # implementations do not have *mistakes* and that broadcasting is working
     # as expected. The accuracy is what it is.
 
-    rng = np.random.default_rng(6716188855217730280)
+    rng = mx.random.default_rng(6716188855217730280)
 
     x = rng.random(size=3)
     a = rng.random(size=(2, 1))
@@ -60,7 +60,7 @@ def test_complementary_method_use():
     # E.g., use 1 - CDF to compute SF if CDF is overridden but SF is not
 
     mp.dps = 50
-    x = np.linspace(0, 1, 10)
+    x = mx.linspace(0, 1, 10)
     class MyDist(rd.ReferenceDistribution):
         def _cdf(self, x):
             return x

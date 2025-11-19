@@ -1,6 +1,6 @@
 """Compare the speed of exact one-norm calculation vs. its estimation.
 """
-import numpy as np
+import mlx.core as mx
 
 from .common import Benchmark, safe_import
 
@@ -18,7 +18,7 @@ class BenchmarkOneNormEst(Benchmark):
     param_names = ['n', 'solver']
 
     def setup(self, n, solver):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         nrepeats = 100
         shape = (int(n), int(n))
 

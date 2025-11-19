@@ -5,7 +5,7 @@ import shutil
 import threading
 import textwrap
 
-import numpy as np
+import mlx.core as mx
 from numpy import array, transpose, pi
 from numpy.testing import (assert_equal, assert_allclose,
                            assert_array_equal, assert_array_almost_equal)
@@ -65,14 +65,14 @@ class TestMMIOArray:
         self.check_exact(a, (2, 2, 4, 'array', typeval, 'general'))
 
     def test_64bit_integer(self):
-        a = array([[2**31, 2**32], [2**63-2, 2**63-1]], dtype=np.int64)
-        if (np.intp(0).itemsize < 8) and mmwrite == scipy.io._mmio.mmwrite:
+        a = array([[2**31, 2**32], [2**63-2, 2**63-1]], dtype=mx.int64)
+        if (mx.intp(0).itemsize < 8) and mmwrite == scipy.io._mmio.mmwrite:
             assert_raises(OverflowError, mmwrite, self.fn, a)
         else:
             self.check_exact(a, (2, 2, 4, 'array', 'integer', 'general'))
 
     def test_64bit_unsigned_integer(self):
-        a = array([[2**31, 2**32], [2**64-2, 2**64-1]], dtype=np.uint64)
+        a = array([[2**31, 2**32], [2**64-2, 2**64-1]], dtype=mx.uint64)
         self.check_exact(a, (2, 2, 4, 'array', 'unsigned-integer', 'general'))
 
     @pytest.mark.parametrize('typeval, dtype', parametrize_args)
@@ -121,13 +121,13 @@ class TestMMIOArray:
 
     def test_random_symmetric_float(self):
         sz = (20, 20)
-        a = np.random.random(sz)
+        a = mx.random.random(sz)
         a = a + transpose(a)
         self.check(a, (20, 20, 400, 'array', 'real', 'symmetric'))
 
     def test_random_rectangular_float(self):
         sz = (20, 15)
-        a = np.random.random(sz)
+        a = mx.random.random(sz)
         self.check(a, (20, 15, 300, 'array', 'real', 'general'))
 
     @pytest.mark.fail_slow(10)
@@ -150,11 +150,11 @@ class TestMMIOArray:
             scipy.io.mmread(io.BytesIO(text))
 
     def test_gh13634_non_skew_symmetric_int(self):
-        self.check_exact(array([[1, 2], [-2, 99]], dtype=np.int32),
+        self.check_exact(array([[1, 2], [-2, 99]], dtype=mx.int32),
                          (2, 2, 4, 'array', 'integer', 'general'))
 
     def test_gh13634_non_skew_symmetric_float(self):
-        self.check(array([[1, 2], [-2, 99.]], dtype=np.float32),
+        self.check(array([[1, 2], [-2, 99.]], dtype=mx.float32),
                    (2, 2, 4, 'array', 'real', 'general'))
 
 
@@ -186,14 +186,14 @@ class TestMMIOSparseCSR(TestMMIOArray):
     def test_32bit_integer(self):
         a = scipy.sparse.csr_array(array([[2**31-1, -2**31+2],
                                           [2**31-3, 2**31-4]],
-                                         dtype=np.int32))
+                                         dtype=mx.int32))
         self.check_exact(a, (2, 2, 4, 'coordinate', 'integer', 'general'))
 
     def test_64bit_integer(self):
         a = scipy.sparse.csr_array(array([[2**32+1, 2**32+1],
                                           [-2**63+2, 2**63-2]],
-                                         dtype=np.int64))
-        if (np.intp(0).itemsize < 8) and mmwrite == scipy.io._mmio.mmwrite:
+                                         dtype=mx.int64))
+        if (mx.intp(0).itemsize < 8) and mmwrite == scipy.io._mmio.mmwrite:
             assert_raises(OverflowError, mmwrite, self.fn, a)
         else:
             self.check_exact(a, (2, 2, 4, 'coordinate', 'integer', 'general'))
@@ -201,13 +201,13 @@ class TestMMIOSparseCSR(TestMMIOArray):
     def test_32bit_unsigned_integer(self):
         a = scipy.sparse.csr_array(array([[2**31-1, 2**31-2],
                                           [2**31-3, 2**31-4]],
-                                         dtype=np.uint32))
+                                         dtype=mx.uint32))
         self.check_exact(a, (2, 2, 4, 'coordinate', 'unsigned-integer', 'general'))
 
     def test_64bit_unsigned_integer(self):
         a = scipy.sparse.csr_array(array([[2**32+1, 2**32+1],
                                           [2**64-2, 2**64-1]],
-                                         dtype=np.uint64))
+                                         dtype=mx.uint64))
         self.check_exact(a, (2, 2, 4, 'coordinate', 'unsigned-integer', 'general'))
 
     @pytest.mark.parametrize('typeval, dtype', parametrize_args)
@@ -256,20 +256,20 @@ class TestMMIOSparseCSR(TestMMIOArray):
 
     def test_random_symmetric_float(self):
         sz = (20, 20)
-        a = np.random.random(sz)
+        a = mx.random.random(sz)
         a = a + transpose(a)
         a = scipy.sparse.csr_array(a)
         self.check(a, (20, 20, 210, 'coordinate', 'real', 'symmetric'))
 
     def test_random_rectangular_float(self):
         sz = (20, 15)
-        a = np.random.random(sz)
+        a = mx.random.random(sz)
         a = scipy.sparse.csr_array(a)
         self.check(a, (20, 15, 300, 'coordinate', 'real', 'general'))
 
     def test_simple_pattern(self):
         a = scipy.sparse.csr_array([[0, 1.5], [3.0, 2.5]])
-        p = np.zeros_like(a.toarray())
+        p = mx.zeros_like(a.toarray())
         p[a.toarray() > 0] = 1
         info = (2, 2, 3, 'coordinate', 'pattern', 'general')
         mmwrite(self.fn, a, field='pattern')
@@ -284,11 +284,11 @@ class TestMMIOSparseCSR(TestMMIOArray):
         assert scipy.sparse.isspmatrix(b)
 
     def test_gh13634_non_skew_symmetric_int(self):
-        a = scipy.sparse.csr_array([[1, 2], [-2, 99]], dtype=np.int32)
+        a = scipy.sparse.csr_array([[1, 2], [-2, 99]], dtype=mx.int32)
         self.check_exact(a, (2, 2, 4, 'coordinate', 'integer', 'general'))
 
     def test_gh13634_non_skew_symmetric_float(self):
-        a = scipy.sparse.csr_array([[1, 2], [-2, 99.]], dtype=np.float32)
+        a = scipy.sparse.csr_array([[1, 2], [-2, 99.]], dtype=mx.float32)
         self.check(a, (2, 2, 4, 'coordinate', 'real', 'general'))
 
 
@@ -370,7 +370,7 @@ class TestMMIOReadLargeIntegers:
         with open(self.fn, 'w') as f:
             f.write(example)
         assert_equal(mminfo(self.fn), info)
-        if ((over32 and (np.intp(0).itemsize < 8) and mmwrite == scipy.io._mmio.mmwrite)
+        if ((over32 and (mx.intp(0).itemsize < 8) and mmwrite == scipy.io._mmio.mmwrite)
             or over64):
             assert_raises(OverflowError, mmread, self.fn)
         else:
@@ -381,7 +381,7 @@ class TestMMIOReadLargeIntegers:
 
     def test_read_32bit_integer_dense(self):
         a = array([[2**31-1, 2**31-1],
-                   [2**31-2, 2**31-2]], dtype=np.int64)
+                   [2**31-2, 2**31-2]], dtype=mx.int64)
         self.check_read(_32bit_integer_dense_example,
                         a,
                         (2, 2, 4, 'array', 'integer', 'general'),
@@ -391,7 +391,7 @@ class TestMMIOReadLargeIntegers:
 
     def test_read_32bit_integer_sparse(self):
         a = array([[2**31-1, 0],
-                   [0, 2**31-2]], dtype=np.int64)
+                   [0, 2**31-2]], dtype=mx.int64)
         self.check_read(_32bit_integer_sparse_example,
                         a,
                         (2, 2, 2, 'coordinate', 'integer', 'symmetric'),
@@ -401,7 +401,7 @@ class TestMMIOReadLargeIntegers:
 
     def test_read_64bit_integer_dense(self):
         a = array([[2**31, -2**31],
-                   [-2**63+2, 2**63-1]], dtype=np.int64)
+                   [-2**63+2, 2**63-1]], dtype=mx.int64)
         self.check_read(_64bit_integer_dense_example,
                         a,
                         (2, 2, 4, 'array', 'integer', 'general'),
@@ -411,7 +411,7 @@ class TestMMIOReadLargeIntegers:
 
     def test_read_64bit_integer_sparse_general(self):
         a = array([[2**31, 2**63-1],
-                   [0, 2**63-1]], dtype=np.int64)
+                   [0, 2**63-1]], dtype=mx.int64)
         self.check_read(_64bit_integer_sparse_general_example,
                         a,
                         (2, 2, 3, 'coordinate', 'integer', 'general'),
@@ -421,7 +421,7 @@ class TestMMIOReadLargeIntegers:
 
     def test_read_64bit_integer_sparse_symmetric(self):
         a = array([[2**31, -2**63+1],
-                   [-2**63+1, 2**63-1]], dtype=np.int64)
+                   [-2**63+1, 2**63-1]], dtype=mx.int64)
         self.check_read(_64bit_integer_sparse_symmetric_example,
                         a,
                         (2, 2, 3, 'coordinate', 'integer', 'symmetric'),
@@ -431,7 +431,7 @@ class TestMMIOReadLargeIntegers:
 
     def test_read_64bit_integer_sparse_skew(self):
         a = array([[2**31, -2**63+1],
-                   [2**63-1, 2**63-1]], dtype=np.int64)
+                   [2**63-1, 2**63-1]], dtype=mx.int64)
         self.check_read(_64bit_integer_sparse_skew_example,
                         a,
                         (2, 2, 3, 'coordinate', 'integer', 'skew-symmetric'),

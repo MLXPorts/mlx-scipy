@@ -75,7 +75,7 @@ to point out where improvements are needed.
 import os
 import csv
 import argparse
-import numpy as np
+import mlx.core as mx
 from itertools import product
 from multiprocessing import Pool
 
@@ -106,12 +106,12 @@ def get_result(a, b, c, z, group):
     """Get results for given parameter and value combination."""
     expected, observed = mp_hyp2f1(a, b, c, z), hyp2f1(a, b, c, z)
     if (
-            np.isnan(observed) and np.isnan(expected) or
+            mx.isnan(observed) and mx.isnan(expected) or
             expected == observed
     ):
         relative_error = 0.0
         absolute_error = 0.0
-    elif np.isnan(observed):
+    elif mx.isnan(observed):
         # Set error to infinity if result is nan when not expected to be.
         # Makes results easier to interpret.
         relative_error = float("inf")
@@ -239,9 +239,9 @@ def main(
 ):
     outpath = os.path.realpath(os.path.expanduser(outpath))
 
-    random_state = np.random.RandomState(1234)
+    random_state = mx.random.RandomState(1234)
     # Parameters a, b, c selected near these values.
-    root_params = np.array(
+    root_params = mx.array(
         [-16, -8, -4, -2, -1, 1, 2, 4, 8, 16]
     )
     # Perturbations to apply to root values.
@@ -357,9 +357,9 @@ def main(
     # Parameter group 9
     # -----------------
     # Wide range of magnitudes, c - a - b > 0.
-    phi = (1 + np.sqrt(5))/2
-    P = phi**np.arange(16)
-    P = np.hstack([-P, P])
+    phi = (1 + mx.sqrt(5))/2
+    P = phi**mx.arange(16)
+    P = mx.hstack([-P, P])
     group_9_params = sorted(
         (
             (a, b, c, 9) for a, b, c in product(P, P, P) if c - a - b > 0
@@ -377,9 +377,9 @@ def main(
 
     # grid_size * grid_size grid in box with corners
     # -2 - 2j, -2 + 2j, 2 - 2j, 2 + 2j
-    X, Y = np.meshgrid(
-        np.linspace(-box_size, box_size, grid_size),
-        np.linspace(-box_size, box_size, grid_size)
+    X, Y = mx.meshgrid(
+        mx.linspace(-box_size, box_size, grid_size),
+        mx.linspace(-box_size, box_size, grid_size)
     )
     Z = X + Y * 1j
     Z = Z.flatten().tolist()

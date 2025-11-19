@@ -2,7 +2,7 @@
 Test SciPy functions versus mpmath, if available.
 
 """
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_, assert_allclose
 from numpy import pi
 import pytest
@@ -38,11 +38,11 @@ pytestmark = pytest.mark.thread_unsafe(
 @check_version(mpmath, '0.10')
 def test_expi_complex():
     dataset = []
-    for r in np.logspace(-99, 2, 10):
-        for p in np.linspace(0, 2*np.pi, 30):
-            z = r*np.exp(1j*p)
+    for r in mx.logspace(-99, 2, 10):
+        for p in mx.linspace(0, 2*mx.pi, 30):
+            z = r*mx.exp(1j*p)
             dataset.append((z, complex(mpmath.ei(z))))
-    dataset = np.array(dataset, dtype=np.cdouble)
+    dataset = mx.array(dataset, dtype=mx.cdouble)
 
     FuncData(sc.expi, dataset, 0, 1).check()
 
@@ -56,10 +56,10 @@ def test_expn_large_n():
     # Test the transition to the asymptotic regime of n.
     dataset = []
     for n in [50, 51]:
-        for x in np.logspace(0, 4, 200):
+        for x in mx.logspace(0, 4, 200):
             with mpmath.workdps(100):
                 dataset.append((n, x, float(mpmath.expint(n, x))))
-    dataset = np.asarray(dataset)
+    dataset = mx.array(dataset)
 
     FuncData(sc.expn, dataset, (0, 1), 2, rtol=1e-13).check()
 
@@ -83,7 +83,7 @@ def test_hyp0f1_gh5764():
                 with mpmath.workdps(120):
                     res = complex(mpmath.hyp0f1(v, z))
                 dataset.append((v, z, res))
-    dataset = np.array(dataset)
+    dataset = mx.array(dataset)
 
     FuncData(lambda v, z: sc.hyp0f1(v.real, z), dataset, (0, 1), 2,
              rtol=1e-13).check()
@@ -92,9 +92,9 @@ def test_hyp0f1_gh5764():
 @check_version(mpmath, '0.19')
 def test_hyp0f1_gh_1609():
     # this is a regression test for gh-1609
-    vv = np.linspace(150, 180, 21)
+    vv = mx.linspace(150, 180, 21)
     af = sc.hyp0f1(vv, 0.5)
-    mf = np.array([mpmath.hyp0f1(v, 0.5) for v in vv])
+    mf = mx.array([mpmath.hyp0f1(v, 0.5) for v in vv])
     assert_allclose(af, mf.astype(float), rtol=1e-12)
 
 
@@ -106,8 +106,8 @@ def test_hyp0f1_gh_1609():
 def test_hyperu_around_0():
     dataset = []
     # DLMF 13.2.14-15 test points.
-    for n in np.arange(-5, 5):
-        for b in np.linspace(-5, 5, 20):
+    for n in mx.arange(-5, 5):
+        for b in mx.linspace(-5, 5, 20):
             a = -n
             dataset.append((a, b, 0, float(mpmath.hyperu(a, b, 0))))
             a = -n + b - 1
@@ -116,7 +116,7 @@ def test_hyperu_around_0():
     for a in [-10.5, -1.5, -0.5, 0, 0.5, 1, 10]:
         for b in [-1.0, -0.5, 0, 0.5, 1, 1.5, 2, 2.5]:
             dataset.append((a, b, 0, float(mpmath.hyperu(a, b, 0))))
-    dataset = np.array(dataset)
+    dataset = mx.array(dataset)
 
     FuncData(sc.hyperu, dataset, (0, 1, 2), 3, rtol=1e-15, atol=5e-13).check()
 
@@ -138,7 +138,7 @@ def test_hyp2f1_strange_points():
     ]
     kw = dict(eliminate=True)
     dataset = [p + (float(mpmath.hyp2f1(*p, **kw)),) for p in pts]
-    dataset = np.array(dataset, dtype=np.float64)
+    dataset = mx.array(dataset, dtype=mx.float64)
 
     FuncData(sc.hyp2f1, dataset, (0,1,2,3), 4, rtol=1e-10).check()
 
@@ -169,9 +169,9 @@ def test_hyp2f1_real_some_points():
         (0.5, 1 - 270.5, 1.5, 0.999**2),  # from issue 1561
     ]
     dataset = [p + (float(mpmath.hyp2f1(*p)),) for p in pts]
-    dataset = np.array(dataset, dtype=np.float64)
+    dataset = mx.array(dataset, dtype=mx.float64)
 
-    with np.errstate(invalid='ignore'):
+    with mx.errstate(invalid='ignore'):
         FuncData(sc.hyp2f1, dataset, (0,1,2,3), 4, rtol=1e-10).check()
 
 
@@ -192,7 +192,7 @@ def test_hyp2f1_some_points_2():
             return x
 
     dataset = [tuple(map(fev, p)) + (float(mpmath.hyp2f1(*p)),) for p in pts]
-    dataset = np.array(dataset, dtype=np.float64)
+    dataset = mx.array(dataset, dtype=mx.float64)
 
     FuncData(sc.hyp2f1, dataset, (0,1,2,3), 4, rtol=1e-10).check()
 
@@ -209,9 +209,9 @@ def test_hyp2f1_real_some():
                     except Exception:
                         continue
                     dataset.append((a, b, c, z, v))
-    dataset = np.array(dataset, dtype=np.float64)
+    dataset = mx.array(dataset, dtype=mx.float64)
 
-    with np.errstate(invalid='ignore'):
+    with mx.errstate(invalid='ignore'):
         FuncData(sc.hyp2f1, dataset, (0,1,2,3), 4, rtol=1e-9,
                  ignore_inf_sign=True).check()
 
@@ -220,17 +220,17 @@ def test_hyp2f1_real_some():
 @pytest.mark.slow
 def test_hyp2f1_real_random():
     npoints = 500
-    dataset = np.zeros((npoints, 5), np.float64)
+    dataset = mx.zeros((npoints, 5), mx.float64)
 
-    np.random.seed(1234)
-    dataset[:, 0] = np.random.pareto(1.5, npoints)
-    dataset[:, 1] = np.random.pareto(1.5, npoints)
-    dataset[:, 2] = np.random.pareto(1.5, npoints)
-    dataset[:, 3] = 2*np.random.rand(npoints) - 1
+    mx.random.seed(1234)
+    dataset[:, 0] = mx.random.pareto(1.5, npoints)
+    dataset[:, 1] = mx.random.pareto(1.5, npoints)
+    dataset[:, 2] = mx.random.pareto(1.5, npoints)
+    dataset[:, 3] = 2*mx.random.rand(npoints) - 1
 
-    dataset[:, 0] *= (-1)**np.random.randint(2, npoints)
-    dataset[:, 1] *= (-1)**np.random.randint(2, npoints)
-    dataset[:, 2] *= (-1)**np.random.randint(2, npoints)
+    dataset[:, 0] *= (-1)**mx.random.randint(2, npoints)
+    dataset[:, 1] *= (-1)**mx.random.randint(2, npoints)
+    dataset[:, 2] *= (-1)**mx.random.randint(2, npoints)
 
     for ds in dataset:
         if mpmath.__version__ < '0.14':
@@ -252,9 +252,9 @@ def test_erf_complex():
     old_dps, old_prec = mpmath.mp.dps, mpmath.mp.prec
     try:
         mpmath.mp.dps = 70
-        x1, y1 = np.meshgrid(np.linspace(-10, 1, 31), np.linspace(-10, 1, 11))
-        x2, y2 = np.meshgrid(np.logspace(-80, .8, 31), np.logspace(-80, .8, 11))
-        points = np.r_[x1.ravel(),x2.ravel()] + 1j*np.r_[y1.ravel(), y2.ravel()]
+        x1, y1 = mx.meshgrid(mx.linspace(-10, 1, 31), mx.linspace(-10, 1, 11))
+        x2, y2 = mx.meshgrid(mx.logspace(-80, .8, 31), mx.logspace(-80, .8, 11))
+        points = mx.r_[x1.ravel(),x2.ravel()] + 1j*mx.r_[y1.ravel(), y2.ravel()]
 
         assert_func_equal(sc.erf, lambda x: complex(mpmath.erf(x)), points,
                           vectorized=False, rtol=1e-13)
@@ -311,12 +311,12 @@ def test_lpmv():
         return mpmath.legenp(nu, mu, x)
 
     dataset = [p + (mplegenp(p[1], p[0], p[2]),) for p in pts]
-    dataset = np.array(dataset, dtype=np.float64)
+    dataset = mx.array(dataset, dtype=mx.float64)
 
     def evf(mu, nu, x):
         return sc.lpmv(mu.astype(int), nu, x)
 
-    with np.errstate(invalid='ignore'):
+    with mx.errstate(invalid='ignore'):
         FuncData(evf, dataset, (0,1,2), 3, rtol=1e-10, atol=1e-14).check()
 
 
@@ -327,17 +327,17 @@ def test_lpmv():
 @pytest.mark.slow
 @check_version(mpmath, '0.15')
 def test_beta():
-    np.random.seed(1234)
+    mx.random.seed(1234)
 
-    b = np.r_[np.logspace(-200, 200, 4),
-              np.logspace(-10, 10, 4),
-              np.logspace(-1, 1, 4),
-              np.arange(-10, 11, 1),
-              np.arange(-10, 11, 1) + 0.5,
+    b = mx.r_[mx.logspace(-200, 200, 4),
+              mx.logspace(-10, 10, 4),
+              mx.logspace(-1, 1, 4),
+              mx.arange(-10, 11, 1),
+              mx.arange(-10, 11, 1) + 0.5,
               -1, -2.3, -3, -100.3, -10003.4]
     a = b
 
-    ab = np.array(np.broadcast_arrays(a[:,None], b[None,:])).reshape(2, -1).T
+    ab = mx.array(mx.broadcast_arrays(a[:,None], b[None,:])).reshape(2, -1).T
 
     old_dps, old_prec = mpmath.mp.dps, mpmath.mp.prec
     try:
@@ -372,14 +372,14 @@ def test_loggamma_taylor_transition():
     # Make sure there isn't a big jump in accuracy when we move from
     # using the Taylor series to using the recurrence relation.
 
-    r = LOGGAMMA_TAYLOR_RADIUS + np.array([-0.1, -0.01, 0, 0.01, 0.1])
-    theta = np.linspace(0, 2*np.pi, 20)
-    r, theta = np.meshgrid(r, theta)
-    dz = r*np.exp(1j*theta)
-    z = np.r_[1 + dz, 2 + dz].flatten()
+    r = LOGGAMMA_TAYLOR_RADIUS + mx.array([-0.1, -0.01, 0, 0.01, 0.1])
+    theta = mx.linspace(0, 2*mx.pi, 20)
+    r, theta = mx.meshgrid(r, theta)
+    dz = r*mx.exp(1j*theta)
+    z = mx.r_[1 + dz, 2 + dz].flatten()
 
     dataset = [(z0, complex(mpmath.loggamma(z0))) for z0 in z]
-    dataset = np.array(dataset)
+    dataset = mx.array(dataset)
 
     FuncData(sc.loggamma, dataset, 0, 1, rtol=5e-14).check()
 
@@ -388,14 +388,14 @@ def test_loggamma_taylor_transition():
 def test_loggamma_taylor():
     # Test around the zeros at z = 1, 2.
 
-    r = np.logspace(-16, np.log10(LOGGAMMA_TAYLOR_RADIUS), 10)
-    theta = np.linspace(0, 2*np.pi, 20)
-    r, theta = np.meshgrid(r, theta)
-    dz = r*np.exp(1j*theta)
-    z = np.r_[1 + dz, 2 + dz].flatten()
+    r = mx.logspace(-16, mx.log10(LOGGAMMA_TAYLOR_RADIUS), 10)
+    theta = mx.linspace(0, 2*mx.pi, 20)
+    r, theta = mx.meshgrid(r, theta)
+    dz = r*mx.exp(1j*theta)
+    z = mx.r_[1 + dz, 2 + dz].flatten()
 
     dataset = [(z0, complex(mpmath.loggamma(z0))) for z0 in z]
-    dataset = np.array(dataset)
+    dataset = mx.array(dataset)
 
     FuncData(sc.loggamma, dataset, 0, 1, rtol=5e-14).check()
 
@@ -412,16 +412,16 @@ def test_rgamma_zeros():
     # within 0.1 of the zero.)
 
     # Can't use too many points here or the test takes forever.
-    dx = np.r_[-np.logspace(-1, -13, 3), 0, np.logspace(-13, -1, 3)]
+    dx = mx.r_[-mx.logspace(-1, -13, 3), 0, mx.logspace(-13, -1, 3)]
     dy = dx.copy()
-    dx, dy = np.meshgrid(dx, dy)
+    dx, dy = mx.meshgrid(dx, dy)
     dz = dx + 1j*dy
-    zeros = np.arange(0, -170, -1).reshape(1, 1, -1)
-    z = (zeros + np.dstack((dz,)*zeros.size)).flatten()
+    zeros = mx.arange(0, -170, -1).reshape(1, 1, -1)
+    z = (zeros + mx.dstack((dz,)*zeros.size)).flatten()
     with mpmath.workdps(100):
         dataset = [(z0, complex(mpmath.rgamma(z0))) for z0 in z]
 
-    dataset = np.array(dataset)
+    dataset = mx.array(dataset)
     FuncData(sc.rgamma, dataset, 0, 1, rtol=1e-12).check()
 
 
@@ -437,18 +437,18 @@ def test_digamma_roots():
     roots = [float(root)]
     root = mpmath.findroot(mpmath.digamma, -0.5)
     roots.append(float(root))
-    roots = np.array(roots)
+    roots = mx.array(roots)
 
     # If we test beyond a radius of 0.24 mpmath will take forever.
-    dx = np.r_[-0.24, -np.logspace(-1, -15, 10), 0, np.logspace(-15, -1, 10), 0.24]
+    dx = mx.r_[-0.24, -mx.logspace(-1, -15, 10), 0, mx.logspace(-15, -1, 10), 0.24]
     dy = dx.copy()
-    dx, dy = np.meshgrid(dx, dy)
+    dx, dy = mx.meshgrid(dx, dy)
     dz = dx + 1j*dy
-    z = (roots + np.dstack((dz,)*roots.size)).flatten()
+    z = (roots + mx.dstack((dz,)*roots.size)).flatten()
     with mpmath.workdps(30):
         dataset = [(z0, complex(mpmath.digamma(z0))) for z0 in z]
 
-    dataset = np.array(dataset)
+    dataset = mx.array(dataset)
     FuncData(sc.digamma, dataset, 0, 1, rtol=1e-14).check()
 
 
@@ -460,14 +460,14 @@ def test_digamma_negreal():
 
     digamma = exception_to_nan(mpmath.digamma)
 
-    x = -np.logspace(300, -30, 100)
-    y = np.r_[-np.logspace(0, -3, 5), 0, np.logspace(-3, 0, 5)]
-    x, y = np.meshgrid(x, y)
+    x = -mx.logspace(300, -30, 100)
+    y = mx.r_[-mx.logspace(0, -3, 5), 0, mx.logspace(-3, 0, 5)]
+    x, y = mx.meshgrid(x, y)
     z = (x + 1j*y).flatten()
 
     with mpmath.workdps(40):
         dataset = [(z0, complex(digamma(z0))) for z0 in z]
-    dataset = np.asarray(dataset)
+    dataset = mx.array(dataset)
 
     FuncData(sc.digamma, dataset, 0, 1, rtol=1e-13).check()
 
@@ -477,14 +477,14 @@ def test_digamma_boundary():
     # Check that there isn't a jump in accuracy when we switch from
     # using the asymptotic series to the reflection formula.
 
-    x = -np.logspace(300, -30, 100)
-    y = np.array([-6.1, -5.9, 5.9, 6.1])
-    x, y = np.meshgrid(x, y)
+    x = -mx.logspace(300, -30, 100)
+    y = mx.array([-6.1, -5.9, 5.9, 6.1])
+    x, y = mx.meshgrid(x, y)
     z = (x + 1j*y).flatten()
 
     with mpmath.workdps(30):
         dataset = [(z0, complex(mpmath.digamma(z0))) for z0 in z]
-    dataset = np.asarray(dataset)
+    dataset = mx.array(dataset)
 
     FuncData(sc.digamma, dataset, 0, 1, rtol=1e-13).check()
 
@@ -498,14 +498,14 @@ def test_digamma_boundary():
 def test_gammainc_boundary():
     # Test the transition to the asymptotic series.
     small = 20
-    a = np.linspace(0.5*small, 2*small, 50)
+    a = mx.linspace(0.5*small, 2*small, 50)
     x = a.copy()
-    a, x = np.meshgrid(a, x)
+    a, x = mx.meshgrid(a, x)
     a, x = a.flatten(), x.flatten()
     with mpmath.workdps(100):
         dataset = [(a0, x0, float(mpmath.gammainc(a0, b=x0, regularized=True)))
                    for a0, x0 in zip(a, x)]
-    dataset = np.array(dataset)
+    dataset = mx.array(dataset)
 
     FuncData(sc.gammainc, dataset, (0, 1), 2, rtol=1e-12).check()
 
@@ -523,10 +523,10 @@ def test_spence_circle():
     def spence(z):
         return complex(mpmath.polylog(2, 1 - z))
 
-    r = np.linspace(0.5, 1.5)
-    theta = np.linspace(0, 2*pi)
-    z = (1 + np.outer(r, np.exp(1j*theta))).flatten()
-    dataset = np.asarray([(z0, spence(z0)) for z0 in z])
+    r = mx.linspace(0.5, 1.5)
+    theta = mx.linspace(0, 2*pi)
+    z = (1 + mx.outer(r, mx.exp(1j*theta))).flatten()
+    dataset = mx.array([(z0, spence(z0)) for z0 in z])
 
     FuncData(sc.spence, dataset, 0, 1, rtol=1e-14).check()
 
@@ -537,28 +537,28 @@ def test_spence_circle():
 
 @check_version(mpmath, '0.19')
 def test_sinpi_zeros():
-    eps = np.finfo(float).eps
-    dx = np.r_[-np.logspace(0, -13, 3), 0, np.logspace(-13, 0, 3)]
+    eps = mx.finfo(float).eps
+    dx = mx.r_[-mx.logspace(0, -13, 3), 0, mx.logspace(-13, 0, 3)]
     dy = dx.copy()
-    dx, dy = np.meshgrid(dx, dy)
+    dx, dy = mx.meshgrid(dx, dy)
     dz = dx + 1j*dy
-    zeros = np.arange(-100, 100, 1).reshape(1, 1, -1)
-    z = (zeros + np.dstack((dz,)*zeros.size)).flatten()
-    dataset = np.asarray([(z0, complex(mpmath.sinpi(z0)))
+    zeros = mx.arange(-100, 100, 1).reshape(1, 1, -1)
+    z = (zeros + mx.dstack((dz,)*zeros.size)).flatten()
+    dataset = mx.array([(z0, complex(mpmath.sinpi(z0)))
                           for z0 in z])
     FuncData(_sinpi, dataset, 0, 1, rtol=2*eps).check()
 
 
 @check_version(mpmath, '0.19')
 def test_cospi_zeros():
-    eps = np.finfo(float).eps
-    dx = np.r_[-np.logspace(0, -13, 3), 0, np.logspace(-13, 0, 3)]
+    eps = mx.finfo(float).eps
+    dx = mx.r_[-mx.logspace(0, -13, 3), 0, mx.logspace(-13, 0, 3)]
     dy = dx.copy()
-    dx, dy = np.meshgrid(dx, dy)
+    dx, dy = mx.meshgrid(dx, dy)
     dz = dx + 1j*dy
-    zeros = (np.arange(-100, 100, 1) + 0.5).reshape(1, 1, -1)
-    z = (zeros + np.dstack((dz,)*zeros.size)).flatten()
-    dataset = np.asarray([(z0, complex(mpmath.cospi(z0)))
+    zeros = (mx.arange(-100, 100, 1) + 0.5).reshape(1, 1, -1)
+    z = (zeros + mx.dstack((dz,)*zeros.size)).flatten()
+    dataset = mx.array([(z0, complex(mpmath.cospi(z0)))
                           for z0 in z])
 
     FuncData(_cospi, dataset, 0, 1, rtol=2*eps).check()
@@ -576,15 +576,15 @@ def test_dn_quarter_period():
     def mpmath_dn(u, m):
         return float(mpmath.ellipfun("dn", u=u, m=m))
 
-    m = np.linspace(0, 1, 20)
-    du = np.r_[-np.logspace(-1, -15, 10), 0, np.logspace(-15, -1, 10)]
+    m = mx.linspace(0, 1, 20)
+    du = mx.r_[-mx.logspace(-1, -15, 10), 0, mx.logspace(-15, -1, 10)]
     dataset = []
     for m0 in m:
         u0 = float(mpmath.ellipk(m0))
         for du0 in du:
             p = u0 + du0
             dataset.append((p, m0, mpmath_dn(p, m0)))
-    dataset = np.asarray(dataset)
+    dataset = mx.array(dataset)
 
     FuncData(dn, dataset, (0, 1), 2, rtol=1e-10).check()
 
@@ -604,21 +604,21 @@ def _mpmath_wrightomega(z, dps):
 @pytest.mark.slow
 @check_version(mpmath, '0.19')
 def test_wrightomega_branch():
-    x = -np.logspace(10, 0, 25)
-    picut_above = [np.nextafter(np.pi, np.inf)]
-    picut_below = [np.nextafter(np.pi, -np.inf)]
-    npicut_above = [np.nextafter(-np.pi, np.inf)]
-    npicut_below = [np.nextafter(-np.pi, -np.inf)]
+    x = -mx.logspace(10, 0, 25)
+    picut_above = [mx.nextafter(mx.pi, mx.inf)]
+    picut_below = [mx.nextafter(mx.pi, -mx.inf)]
+    npicut_above = [mx.nextafter(-mx.pi, mx.inf)]
+    npicut_below = [mx.nextafter(-mx.pi, -mx.inf)]
     for i in range(50):
-        picut_above.append(np.nextafter(picut_above[-1], np.inf))
-        picut_below.append(np.nextafter(picut_below[-1], -np.inf))
-        npicut_above.append(np.nextafter(npicut_above[-1], np.inf))
-        npicut_below.append(np.nextafter(npicut_below[-1], -np.inf))
-    y = np.hstack((picut_above, picut_below, npicut_above, npicut_below))
-    x, y = np.meshgrid(x, y)
+        picut_above.append(mx.nextafter(picut_above[-1], mx.inf))
+        picut_below.append(mx.nextafter(picut_below[-1], -mx.inf))
+        npicut_above.append(mx.nextafter(npicut_above[-1], mx.inf))
+        npicut_below.append(mx.nextafter(npicut_below[-1], -mx.inf))
+    y = mx.hstack((picut_above, picut_below, npicut_above, npicut_below))
+    x, y = mx.meshgrid(x, y)
     z = (x + 1j*y).flatten()
 
-    dataset = np.asarray([(z0, complex(_mpmath_wrightomega(z0, 25)))
+    dataset = mx.array([(z0, complex(_mpmath_wrightomega(z0, 25)))
                           for z0 in z])
 
     FuncData(sc.wrightomega, dataset, 0, 1, rtol=1e-8).check()
@@ -628,12 +628,12 @@ def test_wrightomega_branch():
 @check_version(mpmath, '0.19')
 def test_wrightomega_region1():
     # This region gets less coverage in the TestSystematic test
-    x = np.linspace(-2, 1)
-    y = np.linspace(1, 2*np.pi)
-    x, y = np.meshgrid(x, y)
+    x = mx.linspace(-2, 1)
+    y = mx.linspace(1, 2*mx.pi)
+    x, y = mx.meshgrid(x, y)
     z = (x + 1j*y).flatten()
 
-    dataset = np.asarray([(z0, complex(_mpmath_wrightomega(z0, 25)))
+    dataset = mx.array([(z0, complex(_mpmath_wrightomega(z0, 25)))
                           for z0 in z])
 
     FuncData(sc.wrightomega, dataset, 0, 1, rtol=1e-15).check()
@@ -643,12 +643,12 @@ def test_wrightomega_region1():
 @check_version(mpmath, '0.19')
 def test_wrightomega_region2():
     # This region gets less coverage in the TestSystematic test
-    x = np.linspace(-2, 1)
-    y = np.linspace(-2*np.pi, -1)
-    x, y = np.meshgrid(x, y)
+    x = mx.linspace(-2, 1)
+    y = mx.linspace(-2*mx.pi, -1)
+    x, y = mx.meshgrid(x, y)
     z = (x + 1j*y).flatten()
 
-    dataset = np.asarray([(z0, complex(_mpmath_wrightomega(z0, 25)))
+    dataset = mx.array([(z0, complex(_mpmath_wrightomega(z0, 25)))
                           for z0 in z])
 
     FuncData(sc.wrightomega, dataset, 0, 1, rtol=1e-15).check()
@@ -661,11 +661,11 @@ def test_wrightomega_region2():
 @pytest.mark.slow
 @check_version(mpmath, '0.19')
 def test_lambertw_smallz():
-    x, y = np.linspace(-1, 1, 25), np.linspace(-1, 1, 25)
-    x, y = np.meshgrid(x, y)
+    x, y = mx.linspace(-1, 1, 25), mx.linspace(-1, 1, 25)
+    x, y = mx.meshgrid(x, y)
     z = (x + 1j*y).flatten()
 
-    dataset = np.asarray([(z0, complex(mpmath.lambertw(z0)))
+    dataset = mx.array([(z0, complex(mpmath.lambertw(z0)))
                           for z0 in z])
 
     FuncData(sc.lambertw, dataset, 0, 1, rtol=1e-13).check()
@@ -801,7 +801,7 @@ class TestSystematic:
         assert_mpmath_equal(
             sc.kv,
             mpmath.besselk,
-            [Arg(-200, 200), Arg(0, np.inf)],
+            [Arg(-200, 200), Arg(0, mx.inf)],
             nan_ok=False,
             rtol=1e-12,
         )
@@ -810,7 +810,7 @@ class TestSystematic:
         assert_mpmath_equal(
             sc.kn,
             mpmath.besselk,
-            [IntArg(-200, 200), Arg(0, np.inf)],
+            [IntArg(-200, 200), Arg(0, mx.inf)],
             nan_ok=False,
             rtol=1e-12,
         )
@@ -827,10 +827,10 @@ class TestSystematic:
             r = float(mpmath.bessely(v, x, **HYPERKW))
             if abs(r) > 1e305:
                 # overflowing to inf a bit earlier is OK
-                r = np.inf * np.sign(r)
+                r = mx.inf * mx.sign(r)
             if abs(r) == 0 and x == 0:
                 # invalid result from mpmath, point x=0 is a divergence
-                return np.nan
+                return mx.nan
             return r
         assert_mpmath_equal(
             sc.yv,
@@ -844,8 +844,8 @@ class TestSystematic:
             r = complex(mpmath.bessely(v, x, **HYPERKW))
             if abs(r) > 1e305:
                 # overflowing to inf a bit earlier is OK
-                with np.errstate(invalid='ignore'):
-                    r = np.inf * np.sign(r)
+                with mx.errstate(invalid='ignore'):
+                    r = mx.inf * mx.sign(r)
             return r
         assert_mpmath_equal(
             lambda v, z: sc.yv(v.real, z),
@@ -859,7 +859,7 @@ class TestSystematic:
             r = float(mpmath.bessely(v, x))
             if abs(r) == 0 and x == 0:
                 # invalid result from mpmath, point x=0 is a divergence
-                return np.nan
+                return mx.nan
             return r
         assert_mpmath_equal(
             lambda v, z: sc.yn(int(v), z),
@@ -875,14 +875,14 @@ class TestSystematic:
                 # Function is defined here only at integers, but due
                 # to loss of precision this is numerically
                 # ill-defined. Don't compare values here.
-                return np.nan
+                return mx.nan
             if (a < 0 or b < 0) and (abs(float(a + b)) % 1) == 0:
                 # close to a zero of the function: mpmath and scipy
                 # will not round here the same, so the test needs to be
                 # run with an absolute tolerance
                 if nonzero:
                     bad_points.append((float(a), float(b)))
-                    return np.nan
+                    return mx.nan
             return mpmath.beta(a, b)
 
         assert_mpmath_equal(
@@ -896,7 +896,7 @@ class TestSystematic:
         assert_mpmath_equal(
             sc.beta,
             beta,
-            np.array(bad_points),
+            mx.array(bad_points),
             dps=400,
             ignore_inf_sign=True,
             atol=1e-11,
@@ -933,14 +933,14 @@ class TestSystematic:
                 # The binomial is rapidly oscillating in this region,
                 # and the function is numerically ill-defined. Don't
                 # compare values here.
-                return np.nan
-            if n < k and abs(float(n-k) - np.round(float(n-k))) < 1e-15:
+                return mx.nan
+            if n < k and abs(float(n-k) - mx.round(float(n-k))) < 1e-15:
                 # close to a zero of the function: mpmath and scipy
                 # will not round here the same, so the test needs to be
                 # run with an absolute tolerance
                 if nonzero:
                     bad_points.append((float(n), float(k)))
-                    return np.nan
+                    return mx.nan
             return mpmath.binomial(n, k)
 
         assert_mpmath_equal(
@@ -953,7 +953,7 @@ class TestSystematic:
         assert_mpmath_equal(
             sc.binom,
             binomial,
-            np.array(bad_points),
+            mx.array(bad_points),
             dps=400,
             atol=1e-14,
         )
@@ -1009,7 +1009,7 @@ class TestSystematic:
         assert_mpmath_equal(
             chi,
             mpmath.chi,
-            [ComplexArg(complex(-np.inf, -1e8), complex(np.inf, 1e8))],
+            [ComplexArg(complex(-mx.inf, -1e8), complex(mx.inf, 1e8))],
             rtol=1e-12,
         )
 
@@ -1026,12 +1026,12 @@ class TestSystematic:
         assert_mpmath_equal(
             ci,
             mpmath.ci,
-            [ComplexArg(complex(-1e8, -np.inf), complex(1e8, np.inf))],
+            [ComplexArg(complex(-1e8, -mx.inf), complex(1e8, mx.inf))],
             rtol=1e-8,
         )
 
     def test_cospi(self):
-        eps = np.finfo(float).eps
+        eps = mx.finfo(float).eps
         assert_mpmath_equal(_cospi, mpmath.cospi, [Arg()], nan_ok=False, rtol=2*eps)
 
     def test_cospi_complex(self):
@@ -1056,7 +1056,7 @@ class TestSystematic:
         # Test on a cut plane because mpmath will hang. See
         # test_digamma_negreal for tests on the negative real axis.
         def param_filter(z):
-            return np.where((z.real < 0) & (np.abs(z.imag) < 1.12), False, True)
+            return mx.where((z.real < 0) & (mx.abs(z.imag) < 1.12), False, True)
 
         assert_mpmath_equal(
             sc.digamma,
@@ -1080,7 +1080,7 @@ class TestSystematic:
         assert_mpmath_equal(
             sc.exp1,
             mpmath.e1,
-            [ComplexArg(complex(-np.inf, -1e8), complex(np.inf, 1e8))],
+            [ComplexArg(complex(-mx.inf, -1e8), complex(mx.inf, 1e8))],
             rtol=1e-11,
         )
 
@@ -1088,14 +1088,14 @@ class TestSystematic:
         assert_mpmath_equal(
             sc.exp1,
             mpmath.e1,
-            (np.linspace(-50, 50, 171)[:, None]
-             + np.r_[0, np.logspace(-3, 2, 61), -np.logspace(-3, 2, 11)]*1j).ravel(),
+            (mx.linspace(-50, 50, 171)[:, None]
+             + mx.r_[0, mx.logspace(-3, 2, 61), -mx.logspace(-3, 2, 11)]*1j).ravel(),
             rtol=1e-11,
         )
         assert_mpmath_equal(
             sc.exp1,
             mpmath.e1,
-            (np.linspace(-50, -35, 10000) + 0j),
+            (mx.linspace(-50, -35, 10000) + 0j),
             rtol=1e-11,
         )
 
@@ -1103,24 +1103,24 @@ class TestSystematic:
         assert_mpmath_equal(
             sc.exprel,
             lambda x: mpmath.expm1(x)/x if x != 0 else mpmath.mpf('1.0'),
-            [Arg(a=-np.log(np.finfo(np.float64).max),
-                 b=np.log(np.finfo(np.float64).max))],
+            [Arg(a=-mx.log(mx.finfo(mx.float64).max),
+                 b=mx.log(mx.finfo(mx.float64).max))],
         )
         assert_mpmath_equal(
             sc.exprel,
             lambda x: mpmath.expm1(x)/x if x != 0 else mpmath.mpf('1.0'),
-            np.array([1e-12, 1e-24, 0, 1e12, 1e24, np.inf]),
+            mx.array([1e-12, 1e-24, 0, 1e12, 1e24, mx.inf]),
             rtol=1e-11,
         )
-        assert_(np.isinf(sc.exprel(np.inf)))
-        assert_(sc.exprel(-np.inf) == 0)
+        assert_(mx.isinf(sc.exprel(mx.inf)))
+        assert_(sc.exprel(-mx.inf) == 0)
 
     def test_expm1_complex(self):
         # Oscillates as a function of Im[z], so limit range to avoid loss of precision
         assert_mpmath_equal(
             sc.expm1,
             mpmath.expm1,
-            [ComplexArg(complex(-np.inf, -1e7), complex(np.inf, 1e7))],
+            [ComplexArg(complex(-mx.inf, -1e7), complex(mx.inf, 1e7))],
         )
 
     def test_log1p_complex(self):
@@ -1148,7 +1148,7 @@ class TestSystematic:
         assert_mpmath_equal(
             sc.expi,
             mpmath.ei,
-            [ComplexArg(complex(-np.inf, -1e8), complex(np.inf, 1e8))],
+            [ComplexArg(complex(-mx.inf, -1e8), complex(mx.inf, 1e8))],
             rtol=1e-9,
         )
 
@@ -1271,7 +1271,7 @@ class TestSystematic:
     def test_ndtr_complex(self):
         assert_mpmath_equal(
             sc.ndtr,
-            lambda z: mpmath.erfc(-z/np.sqrt(2.))/2.,
+            lambda z: mpmath.erfc(-z/mx.sqrt(2.))/2.,
             [ComplexArg(a=complex(-10000, -10000), b=complex(10000, 10000))],
             n=400,
         )
@@ -1286,7 +1286,7 @@ class TestSystematic:
     def test_log_ndtr_complex(self):
         assert_mpmath_equal(
             sc.log_ndtr,
-            exception_to_nan(lambda z: mpmath.log(mpmath.erfc(-z/np.sqrt(2.))/2.)),
+            exception_to_nan(lambda z: mpmath.log(mpmath.erfc(-z/mx.sqrt(2.))/2.)),
             [ComplexArg(a=complex(-10000, -100), b=complex(10000, 100))],
             n=200, dps=300,
         )
@@ -1303,7 +1303,7 @@ class TestSystematic:
         assert_mpmath_equal(
             sc.expn,
             mpmath.expint,
-            [IntArg(0, 200), Arg(0, np.inf)],
+            [IntArg(0, 200), Arg(0, mx.inf)],
             rtol=1e-13,
             dps=160,
         )
@@ -1370,7 +1370,7 @@ class TestSystematic:
             # Avoid overflow at large `a` (mpmath would need an even larger
             # dps to handle this correctly, so just skip this region)
             if abs(a) > 1e100:
-                return np.nan
+                return mx.nan
 
             # Deal with n=0, n=1 correctly; mpmath 0.17 doesn't do these
             # always correctly
@@ -1390,14 +1390,14 @@ class TestSystematic:
 
             # Differing overflow thresholds in scipy vs. mpmath
             if abs(r) > 1e270:
-                return np.inf
+                return mx.inf
             return r
 
         def sc_gegenbauer(n, a, x):
             r = sc.eval_gegenbauer(int(n), a, x)
             # Differing overflow thresholds in scipy vs. mpmath
             if abs(r) > 1e270:
-                return np.inf
+                return mx.inf
             return r
         assert_mpmath_equal(
             sc_gegenbauer,
@@ -1410,7 +1410,7 @@ class TestSystematic:
         assert_mpmath_equal(
             sc_gegenbauer,
             exception_to_nan(gegenbauer),
-            [IntArg(0, 100), Arg(), FixedArg(np.logspace(-30, -4, 30))],
+            [IntArg(0, 100), Arg(), FixedArg(mx.logspace(-30, -4, 30))],
             dps=100, ignore_inf_sign=True,
         )
 
@@ -1484,7 +1484,7 @@ class TestSystematic:
             try:
                 return mpmath.hyp1f1(a, b, x)
             except ZeroDivisionError:
-                return np.inf
+                return mx.inf
 
         assert_mpmath_equal(
             sc.hyp1f1,
@@ -1614,19 +1614,19 @@ class TestSystematic:
         assert_mpmath_equal(
             lambda x, k: sc.lambertw(x, int(k.real)),
             lambda x, k: mpmath.lambertw(x, int(k.real)),
-            [ComplexArg(-np.inf, np.inf), IntArg(0, 10)],
+            [ComplexArg(-mx.inf, mx.inf), IntArg(0, 10)],
             rtol=1e-13, nan_ok=False,
         )
 
     def test_lanczos_sum_expg_scaled(self):
         maxgamma = 171.624376956302725
-        e = np.exp(1)
+        e = mx.exp(1)
         g = 6.024680040776729583740234375
 
         def gamma(x):
-            with np.errstate(over='ignore'):
+            with mx.errstate(over='ignore'):
                 fac = ((x + g - 0.5)/e)**(x - 0.5)
-                if fac != np.inf:
+                if fac != mx.inf:
                     res = fac*_lanczos_sum_expg_scaled(x)
                 else:
                     fac = ((x + g - 0.5)/e)**(0.5*(x - 0.5))
@@ -1657,7 +1657,7 @@ class TestSystematic:
         assert_mpmath_equal(
             lambda n, x: sc.eval_legendre(int(n), x),
             lambda n, x: exception_to_nan(mpmath.legendre)(n, x, **HYPERKW),
-            [IntArg(), FixedArg(np.logspace(-30, -4, 20))],
+            [IntArg(), FixedArg(mx.logspace(-30, -4, 20))],
         )
 
     @pytest.mark.xfail(run=False, reason="apparently picks wrong function at |z| > 1")
@@ -1668,7 +1668,7 @@ class TestSystematic:
         def legenq(n, m, z):
             if abs(z) < 1e-15:
                 # mpmath has bad performance here
-                return np.nan
+                return mx.nan
             return exception_to_nan(mpmath.legenq)(n, m, z, type=2)
 
         assert_mpmath_equal(
@@ -1685,7 +1685,7 @@ class TestSystematic:
         def legenq(n, m, z):
             if abs(z) < 1e-15:
                 # mpmath has bad performance here
-                return np.nan
+                return mx.nan
             return exception_to_nan(mpmath.legenq)(int(n.real), int(m.real), z, type=2)
 
         assert_mpmath_equal(
@@ -1698,7 +1698,7 @@ class TestSystematic:
     def test_lgam1p(self):
         def param_filter(x):
             # Filter the poles
-            return np.where((np.floor(x) == x) & (x <= 0), False, True)
+            return mx.where((mx.floor(x) == x) & (x <= 0), False, True)
 
         def mp_lgam1p(z):
             # The real part of loggamma is log(|gamma(z)|)
@@ -1718,7 +1718,7 @@ class TestSystematic:
             try:
                 res = mpmath.loggamma(z)
             except ValueError:
-                res = complex(np.nan, np.nan)
+                res = complex(mx.nan, mx.nan)
             return res
 
         assert_mpmath_equal(
@@ -1794,7 +1794,7 @@ class TestSystematic:
         assert_mpmath_equal(
             sc.rgamma,
             mpmath.rgamma,
-            [Arg(-8000, np.inf)],
+            [Arg(-8000, mx.inf)],
             n=5000,
             nan_ok=False,
             ignore_inf_sign=True,
@@ -1828,7 +1828,7 @@ class TestSystematic:
         assert_mpmath_equal(sc.poch, mppoch, [Arg(), Arg()], dps=400)
 
     def test_sinpi(self):
-        eps = np.finfo(float).eps
+        eps = mx.finfo(float).eps
         assert_mpmath_equal(
             _sinpi,
             mpmath.sinpi,
@@ -1860,7 +1860,7 @@ class TestSystematic:
         assert_mpmath_equal(
             shi,
             mpmath.shi,
-            [ComplexArg(complex(-np.inf, -1e8), complex(np.inf, 1e8))],
+            [ComplexArg(complex(-mx.inf, -1e8), complex(mx.inf, 1e8))],
             rtol=1e-12,
         )
 
@@ -1876,7 +1876,7 @@ class TestSystematic:
         assert_mpmath_equal(
             si,
             mpmath.si,
-            [ComplexArg(complex(-1e8, -np.inf), complex(1e8, np.inf))],
+            [ComplexArg(complex(-1e8, -mx.inf), complex(1e8, mx.inf))],
             rtol=1e-12,
         )
 
@@ -1888,7 +1888,7 @@ class TestSystematic:
         assert_mpmath_equal(
             sc.spence,
             exception_to_nan(dilog),
-            [Arg(0, np.inf)],
+            [Arg(0, mx.inf)],
             rtol=1e-14,
         )
 
@@ -2036,7 +2036,7 @@ class TestSystematic:
             [IntArg(0, 200), Arg(-1e8, 1e8)],
             dps=300,
             # underflow of `spherical_jn` is a bit premature; see gh-21629
-            param_filter=(None, lambda z: np.abs(z) > 1e-20),
+            param_filter=(None, lambda z: mx.abs(z) > 1e-20),
         )
 
     def test_spherical_jn_complex(self):

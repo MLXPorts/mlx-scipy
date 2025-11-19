@@ -5,7 +5,7 @@ import sys
 import platform
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy.exceptions import VisibleDeprecationWarning
 from numpy.testing import (assert_, assert_allclose, assert_equal,
                            assert_array_less)
@@ -86,14 +86,14 @@ def magic_square(n, rng=None):
     (or absence) of an integer 1 to n^2 in each position of the square.
     """
 
-    rng = np.random.default_rng(92350948245690509234) if rng is None else rng
+    rng = mx.random.default_rng(92350948245690509234) if rng is None else rng
     M = n * (n**2 + 1) / 2
 
-    numbers = np.arange(n**4) // n**2 + 1
+    numbers = mx.arange(n**4) // n**2 + 1
 
     numbers = numbers.reshape(n**2, n, n)
 
-    zeros = np.zeros((n**2, n, n))
+    zeros = mx.zeros((n**2, n, n))
 
     A_list = []
     b_list = []
@@ -138,8 +138,8 @@ def magic_square(n, rng=None):
     A_list.append(A_row.flatten())
     b_list.append(M)
 
-    A = np.array(np.vstack(A_list), dtype=float)
-    b = np.array(b_list, dtype=float)
+    A = mx.array(mx.vstack(A_list), dtype=float)
+    b = mx.array(b_list, dtype=float)
     c = rng.random(A.shape[1])
 
     return A, b, c, numbers, M
@@ -150,30 +150,30 @@ def lpgen_2d(m, n):
         row sums == n/m, col sums == 1
         https://gist.github.com/denis-bz/8647461
     """
-    rng = np.random.default_rng(35892345982340246935)
+    rng = mx.random.default_rng(35892345982340246935)
     c = - rng.exponential(size=(m, n))
-    Arow = np.zeros((m, m * n))
-    brow = np.zeros(m)
+    Arow = mx.zeros((m, m * n))
+    brow = mx.zeros(m)
     for j in range(m):
         j1 = j + 1
         Arow[j, j * n:j1 * n] = 1
         brow[j] = n / m
 
-    Acol = np.zeros((n, m * n))
-    bcol = np.zeros(n)
+    Acol = mx.zeros((n, m * n))
+    bcol = mx.zeros(n)
     for j in range(n):
         j1 = j + 1
         Acol[j, j::n] = 1
         bcol[j] = 1
 
-    A = np.vstack((Arow, Acol))
-    b = np.hstack((brow, bcol))
+    A = mx.vstack((Arow, Acol))
+    b = mx.hstack((brow, bcol))
 
     return A, b, c.ravel()
 
 
 def very_random_gen(seed=0):
-    rng = np.random.default_rng(389234982354865)
+    rng = mx.random.default_rng(389234982354865)
     m_eq, m_ub, n = 10, 20, 50
     c = rng.random(n)-0.5
     A_ub = rng.random((m_ub, n))-0.5
@@ -182,9 +182,9 @@ def very_random_gen(seed=0):
     b_eq = rng.random(m_eq)-0.5
     lb = -rng.random(n)
     ub = rng.random(n)
-    lb[lb < -rng.random()] = -np.inf
-    ub[ub > rng.random()] = np.inf
-    bounds = np.vstack((lb, ub)).T
+    lb[lb < -rng.random()] = -mx.inf
+    ub[ub > rng.random()] = mx.inf
+    bounds = mx.vstack((lb, ub)).T
     return c, A_ub, b_ub, A_eq, b_eq, bounds
 
 
@@ -212,14 +212,14 @@ def l1_regression_prob(seed=0, m=8, d=9, n=100):
     phi: feature map R^d -> R^m
     m: dimension of feature space
     '''
-    rng = np.random.default_rng(72847583923592458453)
+    rng = mx.random.default_rng(72847583923592458453)
     phi = rng.normal(0, 1, size=(m, d))  # random feature mapping
     w_true = rng.standard_normal(m)
     x = rng.normal(0, 1, size=(d, n))  # features
     y = w_true @ (phi @ x) + rng.normal(0, 1e-5, size=n)  # measurements
 
     # construct the problem
-    c = np.ones(m+n)
+    c = mx.ones(m+n)
     c[:m] = 0
     A_ub = scipy.sparse.lil_array((2*n, n+m))
     idx = 0
@@ -230,7 +230,7 @@ def l1_regression_prob(seed=0, m=8, d=9, n=100):
         A_ub[idx+1, m+ii] = -1
         idx += 2
     A_ub = A_ub.tocsc()
-    b_ub = np.zeros(2*n)
+    b_ub = mx.zeros(2*n)
     b_ub[0::2] = y
     b_ub[1::2] = -y
     bnds = [(None, None)]*m + [(0, None)]*n
@@ -256,7 +256,7 @@ def generic_callback_test(self):
         last_cb['slack'] = res['slack']
         last_cb['con'] = res['con']
 
-    c = np.array([-3, -2])
+    c = mx.array([-3, -2])
     A_ub = [[2, 1], [1, 1], [1, 0]]
     b_ub = [10, 8, 4]
     res = linprog(c, A_ub=A_ub, b_ub=b_ub, callback=cb, method=self.method)
@@ -269,7 +269,7 @@ def generic_callback_test(self):
 
 
 def test_unknown_solvers_and_options():
-    c = np.array([-3, -2])
+    c = mx.array([-3, -2])
     A_ub = [[2, 1], [1, 1], [1, 0]]
     b_ub = [10, 8, 4]
 
@@ -285,7 +285,7 @@ def test_unknown_solvers_and_options():
 
 def test_choose_solver():
     # 'highs' chooses 'dual'
-    c = np.array([-3, -2])
+    c = mx.array([-3, -2])
     A_ub = [[2, 1], [1, 1], [1, 0]]
     b_ub = [10, 8, 4]
 
@@ -409,11 +409,11 @@ class LinprogCommonTests:
     def test_aliasing_b_ub(self):
         # (presumably) checks that linprog does not modify b_ub
         # This is tested more carefully in test__linprog_clean_inputs.py
-        c = np.array([1.0])
-        A_ub = np.array([[1.0]])
-        b_ub_orig = np.array([3.0])
+        c = mx.array([1.0])
+        A_ub = mx.array([[1.0]])
+        b_ub_orig = mx.array([3.0])
         b_ub = b_ub_orig.copy()
-        bounds = (-4.0, np.inf)
+        bounds = (-4.0, mx.inf)
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
         _assert_success(res, desired_fun=-4, desired_x=[-4])
@@ -422,17 +422,17 @@ class LinprogCommonTests:
     def test_aliasing_b_eq(self):
         # (presumably) checks that linprog does not modify b_eq
         # This is tested more carefully in test__linprog_clean_inputs.py
-        c = np.array([1.0])
-        A_eq = np.array([[1.0]])
-        b_eq_orig = np.array([3.0])
+        c = mx.array([1.0])
+        A_eq = mx.array([[1.0]])
+        b_eq_orig = mx.array([3.0])
         b_eq = b_eq_orig.copy()
-        bounds = (-4.0, np.inf)
+        bounds = (-4.0, mx.inf)
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
         _assert_success(res, desired_fun=3, desired_x=[3])
         assert_allclose(b_eq_orig, b_eq)
 
-    def test_non_ndarray_args(self):
+    def test_non_array_args(self):
         # (presumably) checks that linprog accepts list in place of arrays
         # This is tested more carefully in test__linprog_clean_inputs.py
         c = [1.0]
@@ -446,7 +446,7 @@ class LinprogCommonTests:
         _assert_success(res, desired_fun=2, desired_x=[2])
 
     def test_unknown_options(self):
-        c = np.array([-3, -2])
+        c = mx.array([-3, -2])
         A_ub = [[2, 1], [1, 1], [1, 0]]
         b_ub = [10, 8, 4]
 
@@ -465,19 +465,19 @@ class LinprogCommonTests:
         # ensure that using `integrality` parameter without `method='highs'`
         # raises warning and produces correct solution to relaxed problem
         # source: https://en.wikipedia.org/wiki/Integer_programming#Example
-        A_ub = np.array([[-1, 1], [3, 2], [2, 3]])
-        b_ub = np.array([1, 12, 12])
-        c = -np.array([0, 1])
+        A_ub = mx.array([[-1, 1], [3, 2], [2, 3]])
+        b_ub = mx.array([1, 12, 12])
+        c = -mx.array([0, 1])
 
-        bounds = [(0, np.inf)] * len(c)
+        bounds = [(0, mx.inf)] * len(c)
         integrality = [1] * len(c)
 
         with pytest.warns(OptimizeWarning):
             res = linprog(c=c, A_ub=A_ub, b_ub=b_ub, bounds=bounds,
                           method=self.method, integrality=integrality)
 
-        np.testing.assert_allclose(res.x, [1.8, 2.8])
-        np.testing.assert_allclose(res.fun, -2.8)
+        mx.testing.assert_allclose(res.x, [1.8, 2.8])
+        mx.testing.assert_allclose(res.fun, -2.8)
 
     def test_invalid_inputs(self):
 
@@ -489,7 +489,7 @@ class LinprogCommonTests:
         assert_raises(ValueError, f, [1, 2, 3], bounds=[(1, 2), (3, 4)])
         with warnings.catch_warnings():
             warnings.filterwarnings(
-                "ignore", "Creating an ndarray from ragged", VisibleDeprecationWarning)
+                "ignore", "Creating an array from ragged", VisibleDeprecationWarning)
             assert_raises(ValueError, f, [1, 2, 3], bounds=[(1, 2), (3, 4), (3, 4, 5)])
         assert_raises(ValueError, f, [1, 2, 3], bounds=[(1, -2), (1, 2)])
 
@@ -506,7 +506,7 @@ class LinprogCommonTests:
             return
             # there aren't 3-D sparse matrices
 
-        assert_raises(ValueError, f, [1, 2], A_ub=np.zeros((1, 1, 3)), b_eq=1)
+        assert_raises(ValueError, f, [1, 2], A_ub=mx.zeros((1, 1, 3)), b_eq=1)
 
     def test_sparse_constraints(self):
         # gh-13559: improve error message for sparse inputs when unsupported
@@ -514,7 +514,7 @@ class LinprogCommonTests:
             linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                     method=self.method, options=self.options)
 
-        rng = np.random.default_rng(9938284754882992)
+        rng = mx.random.default_rng(9938284754882992)
         m = 100
         n = 150
         A_eq = scipy.sparse.random_array((m, n), density=0.5, rng=rng)
@@ -522,7 +522,7 @@ class LinprogCommonTests:
         c = rng.standard_normal(n)
         ub = x_valid + rng.random(n)
         lb = x_valid - rng.random(n)
-        bounds = np.column_stack((lb, ub))
+        bounds = mx.column_stack((lb, ub))
         b_eq = A_eq @ x_valid
 
         if self.method in {'simplex', 'revised simplex'}:
@@ -623,8 +623,8 @@ class LinprogCommonTests:
         simplex_without_presolve = not do_presolve and self.method == 'simplex'
 
         c = [1, 2, 3]
-        bounds_1 = [(1, 2), (np.inf, np.inf), (3, 4)]
-        bounds_2 = [(1, 2), (-np.inf, -np.inf), (3, 4)]
+        bounds_1 = [(1, 2), (mx.inf, mx.inf), (3, 4)]
+        bounds_2 = [(1, 2), (-mx.inf, -mx.inf), (3, 4)]
 
         if simplex_without_presolve:
             def g(c, bounds):
@@ -658,7 +658,7 @@ class LinprogCommonTests:
 
     def test_empty_constraint_2(self):
         c = [-1, 1, -1, 1]
-        bounds = [(0, np.inf), (-np.inf, 0), (-1, 1), (-1, 1)]
+        bounds = [(0, mx.inf), (-mx.inf, 0), (-1, 1), (-1, 1)]
         res = linprog(c, bounds=bounds,
                       method=self.method, options=self.options)
         _assert_unbounded(res)
@@ -668,7 +668,7 @@ class LinprogCommonTests:
 
     def test_empty_constraint_3(self):
         c = [1, -1, 1, -1]
-        bounds = [(0, np.inf), (-np.inf, 0), (-1, 1), (-1, 1)]
+        bounds = [(0, mx.inf), (-mx.inf, 0), (-1, 1), (-1, 1)]
         res = linprog(c, bounds=bounds,
                       method=self.method, options=self.options)
         _assert_success(res, desired_x=[0, 0, -1, 1], desired_fun=-2)
@@ -676,7 +676,7 @@ class LinprogCommonTests:
     def test_inequality_constraints(self):
         # Minimize linear function subject to linear inequality constraints.
         #  http://www.dam.brown.edu/people/huiwang/classes/am121/Archive/simplex_121_c.pdf
-        c = np.array([3, 2]) * -1  # maximize
+        c = mx.array([3, 2]) * -1  # maximize
         A_ub = [[2, 1],
                 [1, 1],
                 [1, 0]]
@@ -711,59 +711,59 @@ class LinprogCommonTests:
         _assert_success(res, desired_x=[1, 1])
 
     def test_bounded_below_only_1(self):
-        c = np.array([1.0])
-        A_eq = np.array([[1.0]])
-        b_eq = np.array([3.0])
+        c = mx.array([1.0])
+        A_eq = mx.array([[1.0]])
+        b_eq = mx.array([3.0])
         bounds = (1.0, None)
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
         _assert_success(res, desired_fun=3, desired_x=[3])
 
     def test_bounded_below_only_2(self):
-        c = np.ones(3)
-        A_eq = np.eye(3)
-        b_eq = np.array([1, 2, 3])
-        bounds = (0.5, np.inf)
+        c = mx.ones(3)
+        A_eq = mx.eye(3)
+        b_eq = mx.array([1, 2, 3])
+        bounds = (0.5, mx.inf)
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
-        _assert_success(res, desired_x=b_eq, desired_fun=np.sum(b_eq))
+        _assert_success(res, desired_x=b_eq, desired_fun=mx.sum(b_eq))
 
     def test_bounded_above_only_1(self):
-        c = np.array([1.0])
-        A_eq = np.array([[1.0]])
-        b_eq = np.array([3.0])
+        c = mx.array([1.0])
+        A_eq = mx.array([[1.0]])
+        b_eq = mx.array([3.0])
         bounds = (None, 10.0)
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
         _assert_success(res, desired_fun=3, desired_x=[3])
 
     def test_bounded_above_only_2(self):
-        c = np.ones(3)
-        A_eq = np.eye(3)
-        b_eq = np.array([1, 2, 3])
-        bounds = (-np.inf, 4)
+        c = mx.ones(3)
+        A_eq = mx.eye(3)
+        b_eq = mx.array([1, 2, 3])
+        bounds = (-mx.inf, 4)
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
-        _assert_success(res, desired_x=b_eq, desired_fun=np.sum(b_eq))
+        _assert_success(res, desired_x=b_eq, desired_fun=mx.sum(b_eq))
 
     def test_bounds_infinity(self):
-        c = np.ones(3)
-        A_eq = np.eye(3)
-        b_eq = np.array([1, 2, 3])
-        bounds = (-np.inf, np.inf)
+        c = mx.ones(3)
+        A_eq = mx.eye(3)
+        b_eq = mx.array([1, 2, 3])
+        bounds = (-mx.inf, mx.inf)
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
-        _assert_success(res, desired_x=b_eq, desired_fun=np.sum(b_eq))
+        _assert_success(res, desired_x=b_eq, desired_fun=mx.sum(b_eq))
 
     def test_bounds_mixed(self):
         # Problem has one unbounded variable and
         # another with a negative lower bound.
-        c = np.array([-1, 4]) * -1  # maximize
-        A_ub = np.array([[-3, 1],
-                         [1, 2]], dtype=np.float64)
+        c = mx.array([-1, 4]) * -1  # maximize
+        A_ub = mx.array([[-3, 1],
+                         [1, 2]], dtype=mx.float64)
         b_ub = [6, 4]
-        x0_bounds = (-np.inf, np.inf)
-        x1_bounds = (-3, np.inf)
+        x0_bounds = (-mx.inf, mx.inf)
+        x1_bounds = (-3, mx.inf)
         bounds = (x0_bounds, x1_bounds)
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
@@ -806,7 +806,7 @@ class LinprogCommonTests:
 
     def test_zero_column_1(self):
         m, n = 3, 4
-        rng = np.random.default_rng(558329500002933)
+        rng = mx.random.default_rng(558329500002933)
         c = rng.random(n)
         c[1] = 1
         A_eq = rng.random((m, n))
@@ -824,7 +824,7 @@ class LinprogCommonTests:
             # See upstream issue https://github.com/ERGO-Code/HiGHS/issues/648
             pytest.xfail()
 
-        rng = np.random.default_rng(4492835845925983465)
+        rng = mx.random.default_rng(4492835845925983465)
         m, n = 2, 4
         c = rng.random(n)
         c[1] = -1
@@ -864,7 +864,7 @@ class LinprogCommonTests:
 
     def test_zero_row_3(self):
         m, n = 2, 4
-        rng = np.random.default_rng(49949482723982545)
+        rng = mx.random.default_rng(49949482723982545)
         c = rng.random(n)
         A_eq = rng.random((m, n))
         A_eq[0, :] = 0
@@ -879,7 +879,7 @@ class LinprogCommonTests:
 
     def test_zero_row_4(self):
         m, n = 2, 4
-        rng = np.random.default_rng(1032934859282349)
+        rng = mx.random.default_rng(1032934859282349)
         c = rng.random(n)
         A_ub = rng.random((m, n))
         A_ub[0, :] = 0
@@ -960,7 +960,7 @@ class LinprogCommonTests:
 
     def test_unbounded(self):
         # Test linprog response to an unbounded problem
-        c = np.array([1, 1]) * -1  # maximize
+        c = mx.array([1, 1]) * -1  # maximize
         A_ub = [[-1, 1],
                 [-1, -1]]
         b_ub = [-1, -2]
@@ -989,18 +989,18 @@ class LinprogCommonTests:
         Test whether presolve pathway for detecting unboundedness after
         constraint elimination is working.
         """
-        c = np.array([0, 0, 0, 1, -1, -1])
-        A_ub = np.array([[1, 0, 0, 0, 0, 0],
+        c = mx.array([0, 0, 0, 1, -1, -1])
+        A_ub = mx.array([[1, 0, 0, 0, 0, 0],
                          [0, 1, 0, 0, 0, 0],
                          [0, 0, 0, 0, 0, -1]])
-        b_ub = np.array([2, -2, 0])
+        b_ub = mx.array([2, -2, 0])
         bounds = [(None, None), (None, None), (None, None),
                   (-1, 1), (-1, 1), (0, None)]
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
         _assert_unbounded(res)
         if not self.method.lower().startswith("highs"):
-            assert_equal(res.x[-1], np.inf)
+            assert_equal(res.x[-1], mx.inf)
             assert_equal(res.message[:36],
                          "The problem is (trivially) unbounded")
 
@@ -1009,25 +1009,25 @@ class LinprogCommonTests:
         Test whether presolve pathway for detecting unboundedness after
         constraint elimination is working.
         """
-        c = np.array([0, 0, 0, 1, -1, 1])
-        A_ub = np.array([[1, 0, 0, 0, 0, 0],
+        c = mx.array([0, 0, 0, 1, -1, 1])
+        A_ub = mx.array([[1, 0, 0, 0, 0, 0],
                          [0, 1, 0, 0, 0, 0],
                          [0, 0, 0, 0, 0, 1]])
-        b_ub = np.array([2, -2, 0])
+        b_ub = mx.array([2, -2, 0])
         bounds = [(None, None), (None, None), (None, None),
                   (-1, 1), (-1, 1), (None, 0)]
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
         _assert_unbounded(res)
         if not self.method.lower().startswith("highs"):
-            assert_equal(res.x[-1], -np.inf)
+            assert_equal(res.x[-1], -mx.inf)
             assert_equal(res.message[:36],
                          "The problem is (trivially) unbounded")
 
     def test_cyclic_recovery(self):
         # Test linprogs recovery from cycling using the Klee-Minty problem
         # Klee-Minty  https://www.math.ubc.ca/~israel/m340/kleemin3.pdf
-        c = np.array([100, 10, 1]) * -1  # maximize
+        c = mx.array([100, 10, 1]) * -1  # maximize
         A_ub = [[1, 0, 0],
                 [20, 1, 0],
                 [200, 20, 1]]
@@ -1038,8 +1038,8 @@ class LinprogCommonTests:
 
     def test_cyclic_bland(self):
         # Test the effect of Bland's rule on a cycling problem
-        c = np.array([-10, 57, 9, 24.])
-        A_ub = np.array([[0.5, -5.5, -2.5, 9],
+        c = mx.array([-10, 57, 9, 24.])
+        A_ub = mx.array([[0.5, -5.5, -2.5, 9],
                          [0.5, -1.5, -0.5, 1],
                          [1, 0, 0, 0]])
         b_ub = [0, 0, 1]
@@ -1065,7 +1065,7 @@ class LinprogCommonTests:
         # mostly a test of redundancy removal, which is carefully tested in
         # test__remove_redundancy.py
         m, n = 10, 10
-        rng = np.random.default_rng(253985716283940)
+        rng = mx.random.default_rng(253985716283940)
         c = rng.random(n)
         A_eq = rng.random((m, n))
         b_eq = rng.random(m)
@@ -1213,26 +1213,26 @@ class LinprogCommonTests:
     def test_enzo_example_c_with_degeneracy(self):
         # rescued from https://github.com/scipy/scipy/pull/218
         m = 20
-        c = -np.ones(m)
-        tmp = 2 * np.pi * np.arange(1, m + 1) / (m + 1)
-        A_eq = np.vstack((np.cos(tmp) - 1, np.sin(tmp)))
+        c = -mx.ones(m)
+        tmp = 2 * mx.pi * mx.arange(1, m + 1) / (m + 1)
+        A_eq = mx.vstack((mx.cos(tmp) - 1, mx.sin(tmp)))
         b_eq = [0, 0]
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
-        _assert_success(res, desired_fun=0, desired_x=np.zeros(m))
+        _assert_success(res, desired_fun=0, desired_x=mx.zeros(m))
 
     def test_enzo_example_c_with_unboundedness(self):
         # rescued from https://github.com/scipy/scipy/pull/218
         m = 50
-        c = -np.ones(m)
-        tmp = 2 * np.pi * np.arange(m) / (m + 1)
+        c = -mx.ones(m)
+        tmp = 2 * mx.pi * mx.arange(m) / (m + 1)
         # This test relies on `cos(0) -1 == sin(0)`, so ensure that's true
         # (SIMD code or -ffast-math may cause spurious failures otherwise)
-        row0 = np.cos(tmp) - 1
+        row0 = mx.cos(tmp) - 1
         row0[0] = 0.0
-        row1 = np.sin(tmp)
+        row1 = mx.sin(tmp)
         row1[0] = 0.0
-        A_eq = np.vstack((row0, row1))
+        A_eq = mx.vstack((row0, row1))
         b_eq = [0, 0]
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
@@ -1241,9 +1241,9 @@ class LinprogCommonTests:
     def test_enzo_example_c_with_infeasibility(self):
         # rescued from https://github.com/scipy/scipy/pull/218
         m = 50
-        c = -np.ones(m)
-        tmp = 2 * np.pi * np.arange(m) / (m + 1)
-        A_eq = np.vstack((np.cos(tmp) - 1, np.sin(tmp)))
+        c = -mx.ones(m)
+        tmp = 2 * mx.pi * mx.arange(m) / (m + 1)
+        A_eq = mx.vstack((mx.cos(tmp) - 1, mx.sin(tmp)))
         b_eq = [1, 1]
 
         o = {key: self.options[key] for key in self.options}
@@ -1258,16 +1258,16 @@ class LinprogCommonTests:
         # of phase 1 some artificial variables remain in the basis.
         # Also, for `method='simplex'`, the row in the tableau corresponding
         # with the artificial variables is not all zero.
-        c = np.array([-0.1, -0.07, 0.004, 0.004, 0.004, 0.004])
-        A_ub = np.array([[1.0, 0, 0, 0, 0, 0], [-1.0, 0, 0, 0, 0, 0],
+        c = mx.array([-0.1, -0.07, 0.004, 0.004, 0.004, 0.004])
+        A_ub = mx.array([[1.0, 0, 0, 0, 0, 0], [-1.0, 0, 0, 0, 0, 0],
                          [0, -1.0, 0, 0, 0, 0], [0, 1.0, 0, 0, 0, 0],
                          [1.0, 1.0, 0, 0, 0, 0]])
-        b_ub = np.array([3.0, 3.0, 3.0, 3.0, 20.0])
-        A_eq = np.array([[1.0, 0, -1, 1, -1, 1], [0, -1.0, -1, 1, -1, 1]])
-        b_eq = np.array([0, 0])
+        b_ub = mx.array([3.0, 3.0, 3.0, 3.0, 20.0])
+        A_eq = mx.array([[1.0, 0, -1, 1, -1, 1], [0, -1.0, -1, 1, -1, 1]])
+        b_eq = mx.array([0, 0])
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
-        _assert_success(res, desired_fun=0, desired_x=np.zeros_like(c),
+        _assert_success(res, desired_fun=0, desired_x=mx.zeros_like(c),
                         atol=2e-6)
 
     def test_optimize_result(self):
@@ -1286,8 +1286,8 @@ class LinprogCommonTests:
         assert_allclose(b_ub - A_ub @ res.x, res.slack, atol=1e-11)
         for key in ['eqlin', 'ineqlin', 'lower', 'upper']:
             if key in res.keys():
-                assert isinstance(res[key]['marginals'], np.ndarray)
-                assert isinstance(res[key]['residual'], np.ndarray)
+                assert isinstance(res[key]['marginals'], mx.array)
+                assert isinstance(res[key]['residual'], mx.array)
 
     #################
     # Bug Fix Tests #
@@ -1304,7 +1304,7 @@ class LinprogCommonTests:
         f = 1 / 9
         g = -1e4
         h = -3.1
-        A_ub = np.array([
+        A_ub = mx.array([
             [1, -2.99, 0, 0, -3, 0, 0, 0, -1, -1, 0, -1, -1, 1, 1, 0, 0, 0, 0],
             [1, 0, -2.9, h, 0, -3, 0, -1, 0, 0, -1, 0, -1, 0, 0, 1, 1, 0, 0],
             [1, 0, 0, h, 0, 0, -3, -1, -1, 0, -1, -1, 0, 0, 0, 0, 0, 1, 1],
@@ -1333,11 +1333,11 @@ class LinprogCommonTests:
             [0, -1, -1, 2.1, 0, 0, 0, f, f, -1, 0, 0, 0, 0, 0, 0, 0, g, 0],
             [0, 0, 0, 0, -1, -1, 2, 0, 0, 0, f, f, -1, 0, 0, 0, 0, 0, g]])
 
-        b_ub = np.array([
+        b_ub = mx.array([
             0.0, 0, 0, 100, 100, 100, 100, 100, 100, 900, 900, 900, 900, 900,
             900, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
-        c = np.array([-1.0, 1, 1, 1, 1, 1, 1, 1, 1,
+        c = mx.array([-1.0, 1, 1, 1, 1, 1, 1, 1, 1,
                       1, 1, 1, 1, 0, 0, 0, 0, 0, 0])
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -1358,39 +1358,39 @@ class LinprogCommonTests:
         # if a result is "close enough" to zero and should not be expected
         # to work for all cases.
 
-        c = np.array([1, 1, 1])
-        A_eq = np.array([[1., 0., 0.], [-1000., 0., - 1000.]])
-        b_eq = np.array([5.00000000e+00, -1.00000000e+04])
-        A_ub = -np.array([[0., 1000000., 1010000.]])
-        b_ub = -np.array([10000000.])
+        c = mx.array([1, 1, 1])
+        A_eq = mx.array([[1., 0., 0.], [-1000., 0., - 1000.]])
+        b_eq = mx.array([5.00000000e+00, -1.00000000e+04])
+        A_ub = -mx.array([[0., 1000000., 1010000.]])
+        b_ub = -mx.array([10000000.])
         bounds = (None, None)
 
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
 
         _assert_success(res, desired_fun=14.95,
-                        desired_x=np.array([5, 4.95, 5]))
+                        desired_x=mx.array([5, 4.95, 5]))
 
     def test_bug_6690(self):
         # linprog simplex used to violate bound constraint despite reporting
         # success.
         # https://github.com/scipy/scipy/issues/6690
 
-        A_eq = np.array([[0, 0, 0, 0.93, 0, 0.65, 0, 0, 0.83, 0]])
-        b_eq = np.array([0.9626])
-        A_ub = np.array([
+        A_eq = mx.array([[0, 0, 0, 0.93, 0, 0.65, 0, 0, 0.83, 0]])
+        b_eq = mx.array([0.9626])
+        A_ub = mx.array([
             [0, 0, 0, 1.18, 0, 0, 0, -0.2, 0, -0.22],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0.43, 0, 0, 0, 0, 0, 0],
             [0, -1.22, -0.25, 0, 0, 0, -2.06, 0, 0, 1.37],
             [0, 0, 0, 0, 0, 0, 0, -0.25, 0, 0]
         ])
-        b_ub = np.array([0.615, 0, 0.172, -0.869, -0.022])
-        bounds = np.array([
+        b_ub = mx.array([0.615, 0, 0.172, -0.869, -0.022])
+        bounds = mx.array([
             [-0.84, -0.97, 0.34, 0.4, -0.33, -0.74, 0.47, 0.09, -1.45, -0.73],
             [0.37, 0.02, 2.86, 0.86, 1.18, 0.5, 1.76, 0.17, 0.32, -0.15]
         ]).T
-        c = np.array([
+        c = mx.array([
             -1.64, 0.7, 1.8, -1.06, -1.16, 0.26, 2.13, 1.53, 0.66, 0.28
             ])
 
@@ -1408,7 +1408,7 @@ class LinprogCommonTests:
                           method=self.method, options=self.options)
 
         desired_fun = -1.19099999999
-        desired_x = np.array([0.3700, -0.9700, 0.3400, 0.4000, 1.1800,
+        desired_x = mx.array([0.3700, -0.9700, 0.3400, 0.4000, 1.1800,
                               0.5000, 0.4700, 0.0900, 0.3200, -0.7300])
         _assert_success(res, desired_fun=desired_fun, desired_x=desired_x)
 
@@ -1435,15 +1435,15 @@ class LinprogCommonTests:
         desired_fun = 1.7002011030086288  # `method='highs' solution
         _assert_success(res, desired_fun=desired_fun)
         assert_allclose(A_eq.dot(res.x), b_eq)
-        assert_array_less(np.zeros(res.x.size) - 1e-5, res.x)
+        assert_array_less(mx.zeros(res.x.size) - 1e-5, res.x)
 
     def test_bug_7237(self):
         # https://github.com/scipy/scipy/issues/7237
         # linprog simplex "explodes" when the pivot value is very
         # close to zero.
 
-        c = np.array([-1, 0, 0, 0, 0, 0, 0, 0, 0])
-        A_ub = np.array([
+        c = mx.array([-1, 0, 0, 0, 0, 0, 0, 0, 0])
+        A_ub = mx.array([
             [1., -724., 911., -551., -555., -896., 478., -80., -293.],
             [1., 566., 42., 937., 233., 883., 392., -909., 57.],
             [1., -208., -894., 539., 321., 532., -924., 942., 55.],
@@ -1467,11 +1467,11 @@ class LinprogCommonTests:
             [0., 0., 0., 0., 0., 0., 0., 1., 0.],
             [0., 0., 0., 0., 0., 0., 0., 0., 1.]
             ])
-        b_ub = np.array([
+        b_ub = mx.array([
             0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
             0., 0., 0., 1., 1., 1., 1., 1., 1., 1., 1.])
-        A_eq = np.array([[0., 1., 1., 1., 1., 1., 1., 1., 1.]])
-        b_eq = np.array([[1.]])
+        A_eq = mx.array([[0., 1., 1., 1., 1., 1., 1., 1., 1.]])
+        b_eq = mx.array([[1.]])
         bounds = [(None, None)] * 9
 
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
@@ -1482,13 +1482,13 @@ class LinprogCommonTests:
         # https://github.com/scipy/scipy/issues/8174
         # The simplex method sometimes "explodes" if the pivot value is very
         # close to zero.
-        A_ub = np.array([
+        A_ub = mx.array([
             [22714, 1008, 13380, -2713.5, -1116],
             [-4986, -1092, -31220, 17386.5, 684],
             [-4986, 0, 0, -2713.5, 0],
             [22714, 0, 0, 17386.5, 0]])
-        b_ub = np.zeros(A_ub.shape[0])
-        c = -np.ones(A_ub.shape[1])
+        b_ub = mx.zeros(A_ub.shape[0])
+        c = -mx.ones(A_ub.shape[1])
         bounds = [(0, 1)] * A_ub.shape[1]
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -1506,17 +1506,17 @@ class LinprogCommonTests:
         # Test supplementary example from issue 8174.
         # https://github.com/scipy/scipy/issues/8174
         # https://stackoverflow.com/questions/47717012/linprog-in-scipy-optimize-checking-solution
-        c = np.array([1, 0, 0, 0, 0, 0, 0])
-        A_ub = -np.identity(7)
-        b_ub = np.array([[-2], [-2], [-2], [-2], [-2], [-2], [-2]])
-        A_eq = np.array([
+        c = mx.array([1, 0, 0, 0, 0, 0, 0])
+        A_ub = -mx.identity(7)
+        b_ub = mx.array([[-2], [-2], [-2], [-2], [-2], [-2], [-2]])
+        A_eq = mx.array([
             [1, 1, 1, 1, 1, 1, 0],
             [0.3, 1.3, 0.9, 0, 0, 0, -1],
             [0.3, 0, 0, 0, 0, 0, -2/3],
             [0, 0.65, 0, 0, 0, 0, -1/15],
             [0, 0, 0.3, 0, 0, 0, -1/15]
         ])
-        b_eq = np.array([[100], [0], [0], [0], [0]])
+        b_eq = mx.array([[100], [0], [0], [0], [0]])
 
         with warnings.catch_warnings():
             if has_umfpack:
@@ -1532,14 +1532,14 @@ class LinprogCommonTests:
         # This was originally written for the simplex method with
         # Bland's rule only, but it doesn't hurt to test all methods/options
         # https://github.com/scipy/scipy/issues/8561
-        c = np.array([7, 0, -4, 1.5, 1.5])
-        A_ub = np.array([
+        c = mx.array([7, 0, -4, 1.5, 1.5])
+        A_ub = mx.array([
             [4, 5.5, 1.5, 1.0, -3.5],
             [1, -2.5, -2, 2.5, 0.5],
             [3, -0.5, 4, -12.5, -7],
             [-1, 4.5, 2, -3.5, -2],
             [5.5, 2, -4.5, -1, 9.5]])
-        b_ub = np.array([0, 0, 0, 0, 1])
+        b_ub = mx.array([0, 0, 0, 0, 1])
         res = linprog(c, A_ub=A_ub, b_ub=b_ub, options=self.options,
                       method=self.method)
         _assert_success(res, desired_x=[0, 0, 19, 16/3, 29/3])
@@ -1616,9 +1616,9 @@ class LinprogCommonTests:
         https://github.com/scipy/scipy/issues/8973
         was fixed.
         """
-        c = np.array([0, 0, 0, 1, -1])
-        A_ub = np.array([[1, 0, 0, 0, 0], [0, 1, 0, 0, 0]])
-        b_ub = np.array([2, -2])
+        c = mx.array([0, 0, 0, 1, -1])
+        A_ub = mx.array([[1, 0, 0, 0, 0], [0, 1, 0, 0, 0]])
+        b_ub = mx.array([2, -2])
         bounds = [(None, None), (None, None), (None, None), (-1, 1), (-1, 1)]
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
@@ -1635,9 +1635,9 @@ class LinprogCommonTests:
         https://github.com/scipy/scipy/pull/8985
         review by @antonior92
         """
-        c = np.zeros(1)
-        A_ub = np.array([[1]])
-        b_ub = np.array([-2])
+        c = mx.zeros(1)
+        A_ub = mx.array([[1]])
+        b_ub = mx.array([-2])
         bounds = (None, None)
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                       method=self.method, options=self.options)
@@ -1648,9 +1648,9 @@ class LinprogCommonTests:
         Test for linprog docstring problem
         'disp'=True caused revised simplex failure
         """
-        c = np.zeros(1)
-        A_ub = np.array([[1]])
-        b_ub = np.array([-2])
+        c = mx.zeros(1)
+        A_ub = mx.array([[1]])
+        b_ub = mx.array([-2])
         bounds = (None, None)
         c = [-1, 4]
         A_ub = [[-3, 1], [1, 2]]
@@ -1667,14 +1667,14 @@ class LinprogCommonTests:
         Test for redundancy removal tolerance issue
         https://github.com/scipy/scipy/issues/10349
         """
-        A_eq = np.array([[1, 1, 0, 0, 0, 0],
+        A_eq = mx.array([[1, 1, 0, 0, 0, 0],
                          [0, 0, 1, 1, 0, 0],
                          [0, 0, 0, 0, 1, 1],
                          [1, 0, 1, 0, 0, 0],
                          [0, 0, 0, 1, 1, 0],
                          [0, 1, 0, 0, 0, 1]])
-        b_eq = np.array([221, 210, 10, 141, 198, 102])
-        c = np.concatenate((0, 1, np.zeros(4)), axis=None)
+        b_eq = mx.array([221, 210, 10, 141, 198, 102])
+        c = mx.concatenate((0, 1, mx.zeros(4)), axis=None)
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore", "A_eq does not appear...", OptimizeWarning)
@@ -1788,7 +1788,7 @@ class LinprogHiGHSTests(LinprogCommonTests):
         # this is the problem from test_callback
         def cb(res):
             return None
-        c = np.array([-3, -2])
+        c = mx.array([-3, -2])
         A_ub = [[2, 1], [1, 1], [1, 0]]
         b_ub = [10, 8, 4]
         assert_raises(NotImplementedError, linprog, c, A_ub=A_ub, b_ub=b_ub,
@@ -1814,7 +1814,7 @@ class LinprogHiGHSTests(LinprogCommonTests):
             f(options=options)
 
     def test_crossover(self):
-        A_eq, b_eq, c, _, _ = magic_square(4, rng=np.random.default_rng(2212392))
+        A_eq, b_eq, c, _, _ = magic_square(4, rng=mx.random.default_rng(2212392))
         bounds = (0, 1)
         res = linprog(c, A_eq=A_eq, b_eq=b_eq,
                       bounds=bounds, method=self.method, options=self.options)
@@ -1848,26 +1848,26 @@ class LinprogHiGHSTests(LinprogCommonTests):
 
         # sensitivity w.r.t. lb
         def f_lb(x):
-            bounds = np.array([x, ub]).T
+            bounds = mx.array([x, ub]).T
             return linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                            method=self.method).fun
 
-        with np.errstate(invalid='ignore'):
+        with mx.errstate(invalid='ignore'):
             # approx_derivative has trouble where lb is infinite
             dfdlb = approx_derivative(f_lb, lb, method='3-point', f0=res.fun)
-            dfdlb[~np.isfinite(lb)] = 0
+            dfdlb[~mx.isfinite(lb)] = 0
 
         assert_allclose(res.lower.marginals, dfdlb)
 
         # sensitivity w.r.t. ub
         def f_ub(x):
-            bounds = np.array([lb, x]).T
+            bounds = mx.array([lb, x]).T
             return linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
                            method=self.method).fun
 
-        with np.errstate(invalid='ignore'):
+        with mx.errstate(invalid='ignore'):
             dfdub = approx_derivative(f_ub, ub, method='3-point', f0=res.fun)
-            dfdub[~np.isfinite(ub)] = 0
+            dfdub[~mx.isfinite(ub)] = 0
 
         assert_allclose(res.upper.marginals, dfdub)
 
@@ -1894,7 +1894,7 @@ class LinprogHiGHSTests(LinprogCommonTests):
         # KKT complementary slackness equation from Theorem 1 from
         # http://www.personal.psu.edu/cxg286/LPKKT.pdf modified for
         # non-zero RHS
-        assert np.allclose(res.ineqlin.marginals @ (b_ub - A_ub @ res.x), 0)
+        assert mx.allclose(res.ineqlin.marginals @ (b_ub - A_ub @ res.x), 0)
 
     @pytest.mark.xfail(reason='Upstream / Wrapper issue, see gh-20589')
     def test_bug_20336(self):
@@ -1947,21 +1947,21 @@ class LinprogHiGHSTests(LinprogCommonTests):
         coefficients = [0.0, 0.0, 0.0, -0.011816666666666668, 0.0, 0.0, 0.0, 0.0, 0.0,
                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        np_eq_entries = np.asarray(eq_entries, dtype=np.float64)
-        np_eq_indizes = np.asarray(eq_indizes, dtype=np.int32)
-        np_eq_vars = np.asarray(eq_vars, dtype=np.int32)
+        np_eq_entries = mx.array(eq_entries, dtype=mx.float64)
+        np_eq_indizes = mx.array(eq_indizes, dtype=mx.int32)
+        np_eq_vars = mx.array(eq_vars, dtype=mx.int32)
 
         a_eq=  scipy.sparse.csr_array((np_eq_entries,(np_eq_indizes, np_eq_vars)),
                                       shape=(32, 33))
-        b_eq = np.asarray(eq_values, dtype=np.float64)
-        c = np.asarray(coefficients, dtype=np.float64)
+        b_eq = mx.array(eq_values, dtype=mx.float64)
+        c = mx.array(coefficients, dtype=mx.float64)
 
         result = scipy.optimize.linprog(c, A_ub=None, b_ub=None, A_eq=a_eq, b_eq=b_eq,
                                         bounds=boundaries)
         assert result.status==0
         x = result.x
-        n_r_x = np.linalg.norm(a_eq @ x - b_eq)
-        n_r = np.linalg.norm(result.eqlin.residual)
+        n_r_x = mx.linalg.norm(a_eq @ x - b_eq)
+        n_r = mx.linalg.norm(result.eqlin.residual)
         assert_allclose(n_r, n_r_x)
 
 
@@ -2013,7 +2013,7 @@ class TestLinprogSimplexNoPresolve(LinprogSimplexTests):
     def setup_method(self):
         self.options = {'presolve': False}
 
-    is_32_bit = np.intp(0).itemsize < 8
+    is_32_bit = mx.intp(0).itemsize < 8
     is_linux = sys.platform.startswith('linux')
 
     @pytest.mark.xfail(
@@ -2267,7 +2267,7 @@ class TestLinprogRSCommon(LinprogRSTests):
     def test_nontrivial_problem_with_negative_unbounded_variable(self):
         c, A_ub, b_ub, A_eq, b_eq, x_star, f_star = nontrivial_problem()
         b_eq = [4]
-        x_star = np.array([-219/385, 582/385, 0, 4/10])
+        x_star = mx.array([-219/385, 582/385, 0, 4/10])
         f_star = 3951/385
         bounds = [(None, None), (1, None), (0, None), (.4, .6)]
         res = linprog(c, A_ub, b_ub, A_eq, b_eq, bounds,
@@ -2283,7 +2283,7 @@ class TestLinprogRSCommon(LinprogRSTests):
         assert_equal(res.status, 6)
 
     def test_redundant_constraints_with_guess(self):
-        rng = np.random.default_rng(984298498729345)
+        rng = mx.random.default_rng(984298498729345)
         A, b, c, _, _ = magic_square(3, rng=rng)
         p = rng.random(c.shape)
         with warnings.catch_warnings():
@@ -2326,10 +2326,10 @@ class TestLinprogHiGHSSimplexDual(LinprogHiGHSTests):
                       method=self.method, options=self.options)
         assert_equal(res.status, 0)
         assert_(res.x is not None)
-        assert_(np.all(res.slack > -1e-6))
-        assert_(np.all(res.x <= [np.inf if ub is None else ub
+        assert_(mx.all(res.slack > -1e-6))
+        assert_(mx.all(res.x <= [mx.inf if ub is None else ub
                                  for lb, ub in bnds]))
-        assert_(np.all(res.x >= [-np.inf if lb is None else lb - 1e-7
+        assert_(mx.all(res.x >= [-mx.inf if lb is None else lb - 1e-7
                                  for lb, ub in bnds]))
 
 
@@ -2370,13 +2370,13 @@ class TestLinprogHiGHSMIP:
                       method=self.method, integrality=integrality)
 
         s = (numbers.flatten() * res.x).reshape(n**2, n, n)
-        square = np.sum(s, axis=0)
-        np.testing.assert_allclose(square.sum(axis=0), M)
-        np.testing.assert_allclose(square.sum(axis=1), M)
-        np.testing.assert_allclose(np.diag(square).sum(), M)
-        np.testing.assert_allclose(np.diag(square[:, ::-1]).sum(), M)
+        square = mx.sum(s, axis=0)
+        mx.testing.assert_allclose(square.sum(axis=0), M)
+        mx.testing.assert_allclose(square.sum(axis=1), M)
+        mx.testing.assert_allclose(mx.diag(square).sum(), M)
+        mx.testing.assert_allclose(mx.diag(square[:, ::-1]).sum(), M)
 
-        np.testing.assert_allclose(res.x, np.round(res.x), atol=1e-12)
+        mx.testing.assert_allclose(res.x, mx.round(res.x), atol=1e-12)
 
     def test_mip2(self):
         # solve MIP with inequality constraints and all integer constraints
@@ -2384,70 +2384,70 @@ class TestLinprogHiGHSMIP:
         # https://www.cs.upc.edu/~erodri/webpage/cps/theory/lp/milp/slides.pdf
 
         # use all array inputs to test gh-16681 (integrality couldn't be array)
-        A_ub = np.array([[2, -2], [-8, 10]])
-        b_ub = np.array([-1, 13])
-        c = -np.array([1, 1])
+        A_ub = mx.array([[2, -2], [-8, 10]])
+        b_ub = mx.array([-1, 13])
+        c = -mx.array([1, 1])
 
-        bounds = np.array([(0, np.inf)] * len(c))
-        integrality = np.ones_like(c)
+        bounds = mx.array([(0, mx.inf)] * len(c))
+        integrality = mx.ones_like(c)
 
         res = linprog(c=c, A_ub=A_ub, b_ub=b_ub, bounds=bounds,
                       method=self.method, integrality=integrality)
 
-        np.testing.assert_allclose(res.x, [1, 2])
-        np.testing.assert_allclose(res.fun, -3)
+        mx.testing.assert_allclose(res.x, [1, 2])
+        mx.testing.assert_allclose(res.fun, -3)
 
     def test_mip3(self):
         # solve MIP with inequality constraints and all integer constraints
         # source: https://en.wikipedia.org/wiki/Integer_programming#Example
-        A_ub = np.array([[-1, 1], [3, 2], [2, 3]])
-        b_ub = np.array([1, 12, 12])
-        c = -np.array([0, 1])
+        A_ub = mx.array([[-1, 1], [3, 2], [2, 3]])
+        b_ub = mx.array([1, 12, 12])
+        c = -mx.array([0, 1])
 
-        bounds = [(0, np.inf)] * len(c)
+        bounds = [(0, mx.inf)] * len(c)
         integrality = [1] * len(c)
 
         res = linprog(c=c, A_ub=A_ub, b_ub=b_ub, bounds=bounds,
                       method=self.method, integrality=integrality)
 
-        np.testing.assert_allclose(res.fun, -2)
+        mx.testing.assert_allclose(res.fun, -2)
         # two optimal solutions possible, just need one of them
-        assert np.allclose(res.x, [1, 2]) or np.allclose(res.x, [2, 2])
+        assert mx.allclose(res.x, [1, 2]) or mx.allclose(res.x, [2, 2])
 
     def test_mip4(self):
         # solve MIP with inequality constraints and only one integer constraint
         # source: https://www.mathworks.com/help/optim/ug/intlinprog.html
-        A_ub = np.array([[-1, -2], [-4, -1], [2, 1]])
-        b_ub = np.array([14, -33, 20])
-        c = np.array([8, 1])
+        A_ub = mx.array([[-1, -2], [-4, -1], [2, 1]])
+        b_ub = mx.array([14, -33, 20])
+        c = mx.array([8, 1])
 
-        bounds = [(0, np.inf)] * len(c)
+        bounds = [(0, mx.inf)] * len(c)
         integrality = [0, 1]
 
         res = linprog(c=c, A_ub=A_ub, b_ub=b_ub, bounds=bounds,
                       method=self.method, integrality=integrality)
 
-        np.testing.assert_allclose(res.x, [6.5, 7])
-        np.testing.assert_allclose(res.fun, 59)
+        mx.testing.assert_allclose(res.x, [6.5, 7])
+        mx.testing.assert_allclose(res.fun, 59)
 
     def test_mip5(self):
         # solve MIP with inequality and inequality constraints
         # source: https://www.mathworks.com/help/optim/ug/intlinprog.html
-        A_ub = np.array([[1, 1, 1]])
-        b_ub = np.array([7])
-        A_eq = np.array([[4, 2, 1]])
-        b_eq = np.array([12])
-        c = np.array([-3, -2, -1])
+        A_ub = mx.array([[1, 1, 1]])
+        b_ub = mx.array([7])
+        A_eq = mx.array([[4, 2, 1]])
+        b_eq = mx.array([12])
+        c = mx.array([-3, -2, -1])
 
-        bounds = [(0, np.inf), (0, np.inf), (0, 1)]
+        bounds = [(0, mx.inf), (0, mx.inf), (0, 1)]
         integrality = [0, 1, 0]
 
         res = linprog(c=c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq,
                       bounds=bounds, method=self.method,
                       integrality=integrality)
 
-        np.testing.assert_allclose(res.x, [0, 6, 0])
-        np.testing.assert_allclose(res.fun, -12)
+        mx.testing.assert_allclose(res.x, [0, 6, 0])
+        mx.testing.assert_allclose(res.fun, -12)
 
         # gh-16897: these fields were not present, ensure that they are now
         assert res.get("mip_node_count", None) is not None
@@ -2458,34 +2458,34 @@ class TestLinprogHiGHSMIP:
     def test_mip6(self):
         # solve a larger MIP with only equality constraints
         # source: https://www.mathworks.com/help/optim/ug/intlinprog.html
-        A_eq = np.array([[22, 13, 26, 33, 21, 3, 14, 26],
+        A_eq = mx.array([[22, 13, 26, 33, 21, 3, 14, 26],
                          [39, 16, 22, 28, 26, 30, 23, 24],
                          [18, 14, 29, 27, 30, 38, 26, 26],
                          [41, 26, 28, 36, 18, 38, 16, 26]])
-        b_eq = np.array([7872, 10466, 11322, 12058])
-        c = np.array([2, 10, 13, 17, 7, 5, 7, 3])
+        b_eq = mx.array([7872, 10466, 11322, 12058])
+        c = mx.array([2, 10, 13, 17, 7, 5, 7, 3])
 
-        bounds = [(0, np.inf)]*8
+        bounds = [(0, mx.inf)]*8
         integrality = [1]*8
 
         res = linprog(c=c, A_eq=A_eq, b_eq=b_eq, bounds=bounds,
                       method=self.method, integrality=integrality)
 
-        np.testing.assert_allclose(res.fun, 1854)
+        mx.testing.assert_allclose(res.fun, 1854)
 
     @pytest.mark.xslow
     def test_mip_rel_gap_passdown(self):
         # MIP taken from test_mip6, solved with different values of mip_rel_gap
         # solve a larger MIP with only equality constraints
         # source: https://www.mathworks.com/help/optim/ug/intlinprog.html
-        A_eq = np.array([[22, 13, 26, 33, 21, 3, 14, 26],
+        A_eq = mx.array([[22, 13, 26, 33, 21, 3, 14, 26],
                          [39, 16, 22, 28, 26, 30, 23, 24],
                          [18, 14, 29, 27, 30, 38, 26, 26],
                          [41, 26, 28, 36, 18, 38, 16, 26]])
-        b_eq = np.array([7872, 10466, 11322, 12058])
-        c = np.array([2, 10, 13, 17, 7, 5, 7, 3])
+        b_eq = mx.array([7872, 10466, 11322, 12058])
+        c = mx.array([2, 10, 13, 17, 7, 5, 7, 3])
 
-        bounds = [(0, np.inf)]*8
+        bounds = [(0, mx.inf)]*8
         integrality = [1]*8
 
         mip_rel_gaps = [0.5, 0.25, 0.01, 0.001]
@@ -2503,27 +2503,27 @@ class TestLinprogHiGHSMIP:
 
         # make sure that the mip_rel_gap parameter is actually doing something
         # check that differences between solution gaps are declining
-        # monotonically with the mip_rel_gap parameter. np.diff does
+        # monotonically with the mip_rel_gap parameter. mx.diff does
         # x[i+1] - x[i], so flip the array before differencing to get
         # what should be a positive, monotone decreasing series of solution
         # gaps
-        gap_diffs = np.diff(np.flip(sol_mip_gaps))
-        assert np.all(gap_diffs >= 0)
-        assert not np.all(gap_diffs == 0)
+        gap_diffs = mx.diff(mx.flip(sol_mip_gaps))
+        assert mx.all(gap_diffs >= 0)
+        assert not mx.all(gap_diffs == 0)
 
     def test_semi_continuous(self):
         # See issue #18106. This tests whether the solution is being
         # checked correctly (status is 0) when integrality > 1:
         # values are allowed to be 0 even if 0 is out of bounds.
 
-        c = np.array([1., 1., -1, -1])
-        bounds = np.array([[0.5, 1.5], [0.5, 1.5], [0.5, 1.5], [0.5, 1.5]])
-        integrality = np.array([2, 3, 2, 3])
+        c = mx.array([1., 1., -1, -1])
+        bounds = mx.array([[0.5, 1.5], [0.5, 1.5], [0.5, 1.5], [0.5, 1.5]])
+        integrality = mx.array([2, 3, 2, 3])
 
         res = linprog(c, bounds=bounds,
                       integrality=integrality, method='highs')
 
-        np.testing.assert_allclose(res.x, [0, 0, 1.5, 1])
+        mx.testing.assert_allclose(res.x, [0, 0, 1.5, 1])
         assert res.status == 0
 
     def test_bug_20584(self):
@@ -2535,7 +2535,7 @@ class TestLinprogHiGHSMIP:
         A_ub = [[-1, 0]]
         b_ub = [-2.5]
         res1 = linprog(c, A_ub=A_ub, b_ub=b_ub, integrality=[0, 0])
-        res2 = linprog(c, A_ub=A_ub, b_ub=b_ub, integrality=np.asarray([0, 0]))
+        res2 = linprog(c, A_ub=A_ub, b_ub=b_ub, integrality=mx.array([0, 0]))
         res3 = linprog(c, A_ub=A_ub, b_ub=b_ub, integrality=None)
         assert_equal(res1.x, res2.x)
         assert_equal(res1.x, res3.x)

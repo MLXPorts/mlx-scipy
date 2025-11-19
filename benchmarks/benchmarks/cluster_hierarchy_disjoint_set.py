@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 try:
     from scipy.cluster.hierarchy import DisjointSet
@@ -14,9 +14,9 @@ class Bench(Benchmark):
 
     def setup(self, n):
         # Create random edges
-        rng = np.random.RandomState(seed=0)
+        rng = mx.random.RandomState(seed=0)
         self.edges = rng.randint(0, 10 * n, (n, 2))
-        self.nodes = np.unique(self.edges)
+        self.nodes = mx.unique(self.edges)
         self.disjoint_set = DisjointSet(self.nodes)
 
         self.pre_merged = DisjointSet(self.nodes)

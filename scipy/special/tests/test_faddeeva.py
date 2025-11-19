@@ -1,6 +1,6 @@
 import pytest
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 import scipy.special as sc
 from scipy.special._testutils import FuncData
@@ -9,21 +9,21 @@ from scipy.special._testutils import FuncData
 class TestVoigtProfile:
 
     @pytest.mark.parametrize('x, sigma, gamma', [
-        (np.nan, 1, 1),
-        (0, np.nan, 1),
-        (0, 1, np.nan),
-        (1, np.nan, 0),
-        (np.nan, 1, 0),
-        (1, 0, np.nan),
-        (np.nan, 0, 1),
-        (np.nan, 0, 0)
+        (mx.nan, 1, 1),
+        (0, mx.nan, 1),
+        (0, 1, mx.nan),
+        (1, mx.nan, 0),
+        (mx.nan, 1, 0),
+        (1, 0, mx.nan),
+        (mx.nan, 0, 1),
+        (mx.nan, 0, 0)
     ])
     def test_nan(self, x, sigma, gamma):
-        assert np.isnan(sc.voigt_profile(x, sigma, gamma))
+        assert mx.isnan(sc.voigt_profile(x, sigma, gamma))
 
     @pytest.mark.parametrize('x, desired', [
-        (-np.inf, 0),
-        (np.inf, 0)
+        (-mx.inf, 0),
+        (mx.inf, 0)
     ])
     def test_inf(self, x, desired):
         assert sc.voigt_profile(x, 1, 1) == desired
@@ -33,7 +33,7 @@ class TestVoigtProfile:
         #
         # PDF[VoigtDistribution[gamma, sigma], x]
         #
-        points = np.array([
+        points = mx.array([
             [-7.89, 45.06, 6.66, 0.0077921073660388806401],
             [-0.05, 7.98, 24.13, 0.012068223646769913478],
             [-13.98, 16.83, 42.37, 0.0062442236362132357833],
@@ -55,7 +55,7 @@ class TestVoigtProfile:
         ).check()
 
     def test_symmetry(self):
-        x = np.linspace(0, 10, 20)
+        x = mx.linspace(0, 10, 20)
         assert_allclose(
             sc.voigt_profile(x, 1, 1),
             sc.voigt_profile(-x, 1, 1),
@@ -64,7 +64,7 @@ class TestVoigtProfile:
         )
 
     @pytest.mark.parametrize('x, sigma, gamma, desired', [
-        (0, 0, 0, np.inf),
+        (0, 0, 0, mx.inf),
         (1, 0, 0, 0)
     ])
     def test_corner_cases(self, x, sigma, gamma, desired):
@@ -76,7 +76,7 @@ class TestVoigtProfile:
         (0, 0, 1e-16, 1e-16)
     ])
     def test_continuity(self, sigma1, gamma1, sigma2, gamma2):
-        x = np.linspace(1, 10, 20)
+        x = mx.linspace(1, 10, 20)
         assert_allclose(
             sc.voigt_profile(x, sigma1, gamma1),
             sc.voigt_profile(x, sigma2, gamma2),

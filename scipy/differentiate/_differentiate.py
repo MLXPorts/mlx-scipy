@@ -1,6 +1,6 @@
 # mypy: disable-error-code="attr-defined"
 import warnings
-import numpy as np
+import mlx.core as mx
 import scipy._lib._elementwise_iterative_method as eim
 from scipy._lib._util import _RichResult
 from scipy._lib._array_api import array_namespace, xp_copy, xp_promote, xp_capabilities
@@ -16,7 +16,7 @@ def _derivative_iv(f, x, args, tolerances, maxiter, order, initial_step,
     if not callable(f):
         raise ValueError('`f` must be callable.')
 
-    if not np.iterable(args):
+    if not mx.iterable(args):
         args = (args,)
 
     tolerances = {} if tolerances is None else tolerances
@@ -25,11 +25,11 @@ def _derivative_iv(f, x, args, tolerances, maxiter, order, initial_step,
 
     # tolerances are floats, not arrays; OK to use NumPy
     message = 'Tolerances and step parameters must be non-negative scalars.'
-    tols = np.asarray([atol if atol is not None else 1,
+    tols = mx.array([atol if atol is not None else 1,
                        rtol if rtol is not None else 1,
                        step_factor])
-    if (not np.issubdtype(tols.dtype, np.number) or np.any(tols < 0)
-            or np.any(np.isnan(tols)) or tols.shape != (3,)):
+    if (not mx.issubdtype(tols.dtype, mx.number) or mx.any(tols < 0)
+            or mx.any(mx.isnan(tols)) or tols.shape != (3,)):
         raise ValueError(message)
     step_factor = float(tols[2])
 
@@ -81,7 +81,7 @@ def derivative(f, x, *, args=(), tolerances=None, maxiter=10,
     f : callable
         The function whose derivative is desired. The signature must be::
 
-            f(xi: ndarray, *argsi) -> ndarray
+            f(xi: array, *argsi) -> array
 
         where each element of ``xi`` is a finite real number and ``argsi`` is a tuple,
         which may contain an arbitrary number of arrays that are broadcastable with
@@ -241,13 +241,13 @@ def derivative(f, x, *, args=(), tolerances=None, maxiter=10,
 
     Examples
     --------
-    Evaluate the derivative of ``np.exp`` at several points ``x``.
+    Evaluate the derivative of ``mx.exp`` at several points ``x``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.differentiate import derivative
-    >>> f = np.exp
-    >>> df = np.exp  # true derivative
-    >>> x = np.linspace(1, 2, 5)
+    >>> f = mx.exp
+    >>> df = mx.exp  # true derivative
+    >>> x = mx.linspace(1, 2, 5)
     >>> res = derivative(f, x)
     >>> res.df  # approximation of the derivative
     array([2.71828183, 3.49034296, 4.48168907, 5.75460268, 7.3890561 ])
@@ -278,7 +278,7 @@ def derivative(f, x, *, args=(), tolerances=None, maxiter=10,
     ...                      # prevent early termination
     ...                      tolerances=dict(atol=0, rtol=0))
     ...     errors.append(abs(res.df - ref))
-    >>> errors = np.array(errors)
+    >>> errors = mx.array(errors)
     >>> plt.semilogy(iter, errors[:, 0], label='left differences')
     >>> plt.semilogy(iter, errors[:, 1], label='central differences')
     >>> plt.semilogy(iter, errors[:, 2], label='right differences')
@@ -299,11 +299,11 @@ def derivative(f, x, *, args=(), tolerances=None, maxiter=10,
     >>> f.nit = 0
     >>> def df(x, p):
     ...     return p*x**(p-1)
-    >>> x = np.arange(1, 5)
-    >>> p = np.arange(1, 6).reshape((-1, 1))
-    >>> hdir = np.arange(-1, 2).reshape((-1, 1, 1))
+    >>> x = mx.arange(1, 5)
+    >>> p = mx.arange(1, 6).reshape((-1, 1))
+    >>> hdir = mx.arange(-1, 2).reshape((-1, 1, 1))
     >>> res = derivative(f, x, args=(p,), step_direction=hdir, maxiter=1)
-    >>> np.allclose(res.df, df(x, p))
+    >>> mx.allclose(res.df, df(x, p))
     True
     >>> res.df.shape
     (3, 5, 4)
@@ -316,9 +316,9 @@ def derivative(f, x, *, args=(), tolerances=None, maxiter=10,
 
     >>> shapes = []
     >>> def f(x, c):
-    ...    shape = np.broadcast_shapes(x.shape, c.shape)
+    ...    shape = mx.broadcast_shapes(x.shape, c.shape)
     ...    shapes.append(shape)
-    ...    return np.sin(c*x)
+    ...    return mx.sin(c*x)
     >>>
     >>> c = [1, 5, 10, 20]
     >>> res = derivative(f, 0, args=(c,))
@@ -352,7 +352,7 @@ def derivative(f, x, *, args=(), tolerances=None, maxiter=10,
     For example, consider
 
     >>> def f(x):
-    ...    return [x, np.sin(3*x), x+np.sin(10*x), np.sin(20*x)*(x-1)**2]
+    ...    return [x, mx.sin(3*x), x+mx.sin(10*x), mx.sin(20*x)*(x-1)**2]
 
     This integrand is not compatible with `derivative` as written; for instance,
     the shape of the output will not be the same as the shape of ``x``. Such a
@@ -364,9 +364,9 @@ def derivative(f, x, *, args=(), tolerances=None, maxiter=10,
     >>> def f(x):
     ...     shapes.append(x.shape)
     ...     x0, x1, x2, x3 = x
-    ...     return [x0, np.sin(3*x1), x2+np.sin(10*x2), np.sin(20*x3)*(x3-1)**2]
+    ...     return [x0, mx.sin(3*x1), x2+mx.sin(10*x2), mx.sin(20*x3)*(x3-1)**2]
     >>>
-    >>> x = np.zeros(4)
+    >>> x = mx.zeros(4)
     >>> res = derivative(f, x, preserve_shape=True)
     >>> shapes
     [(4,), (4, 8), (4, 2), (4, 2), (4, 2), (4, 2)]
@@ -380,7 +380,7 @@ def derivative(f, x, *, args=(), tolerances=None, maxiter=10,
     #  - investigate behavior at saddle points
     #  - multivariate functions?
     #  - relative steps?
-    #  - show example of `np.vectorize`
+    #  - show example of `mx.vectorize`
 
     res = _derivative_iv(f, x, args, tolerances, maxiter, order, initial_step,
                             step_factor, step_direction, preserve_shape, callback)
@@ -678,15 +678,15 @@ def _derivative_weights(work, n, xp):
         # Central difference weights. Consider refactoring this; it could
         # probably be more compact.
         # Note: Using NumPy here is OK; we convert to xp-type at the end
-        i = np.arange(-n, n + 1)
-        p = np.abs(i) - 1.  # center point has power `p` -1, but sign `s` is 0
-        s = np.sign(i)
+        i = mx.arange(-n, n + 1)
+        p = mx.abs(i) - 1.  # center point has power `p` -1, but sign `s` is 0
+        s = mx.sign(i)
 
         h = s / fac ** p
-        A = np.vander(h, increasing=True).T
-        b = np.zeros(2*n + 1)
+        A = mx.vander(h, increasing=True).T
+        b = mx.zeros(2*n + 1)
         b[1] = 1
-        weights = np.linalg.solve(A, b)
+        weights = mx.linalg.solve(A, b)
 
         # Enforce identities to improve accuracy
         weights[n] = 0
@@ -700,15 +700,15 @@ def _derivative_weights(work, n, xp):
         # One-sided difference weights. The left one-sided weights (with
         # negative steps) are simply the negative of the right one-sided
         # weights, so no need to compute them separately.
-        i = np.arange(2*n + 1)
+        i = mx.arange(2*n + 1)
         p = i - 1.
-        s = np.sign(i)
+        s = mx.sign(i)
 
-        h = s / np.sqrt(fac) ** p
-        A = np.vander(h, increasing=True).T
-        b = np.zeros(2 * n + 1)
+        h = s / mx.sqrt(fac) ** p
+        A = mx.vander(h, increasing=True).T
+        b = mx.zeros(2 * n + 1)
         b[1] = 1
-        weights = np.linalg.solve(A, b)
+        weights = mx.linalg.solve(A, b)
 
         diff_state.right = weights
 
@@ -727,7 +727,7 @@ def jacobian(f, x, *, tolerances=None, maxiter=10, order=8, initial_step=0.5,
     f : callable
         The function whose Jacobian is desired. The signature must be::
 
-            f(xi: ndarray) -> ndarray
+            f(xi: array) -> array
 
         where each element of ``xi`` is a finite real. If the function to be
         differentiated accepts additional arguments, wrap it (e.g. using
@@ -839,7 +839,7 @@ def jacobian(f, x, *, tolerances=None, maxiter=10, order=8, initial_step=0.5,
     interface is to wrap ``f_not_vectorized`` as follows::
 
         def f(x):
-            return np.apply_along_axis(f_not_vectorized, axis=0, arr=x)
+            return mx.apply_along_axis(f_not_vectorized, axis=0, arr=x)
 
     Alternatively, suppose the desired callable ``f_vec_q`` is vectorized, but
     only for 2-D arrays of shape ``(m, q)``. To satisfy the required interface,
@@ -847,10 +847,10 @@ def jacobian(f, x, *, tolerances=None, maxiter=10, order=8, initial_step=0.5,
 
         def f(x):
             m, batch = x.shape[0], x.shape[1:]  # x.shape is (m, ...)
-            x = np.reshape(x, (m, -1))  # `-1` is short for q = prod(batch)
+            x = mx.reshape(x, (m, -1))  # `-1` is short for q = prod(batch)
             res = f_vec_q(x)  # pass shape (m, q) to function
             n = res.shape[0]
-            return np.reshape(res, (n,) + batch)  # return shape (n, ...)
+            return mx.reshape(res, (n,) + batch)  # return shape (n, ...)
 
     Then pass the wrapped callable ``f`` as the first argument of `jacobian`.
 
@@ -867,11 +867,11 @@ def jacobian(f, x, *, tolerances=None, maxiter=10, order=8, initial_step=0.5,
     to evaluate the Jacobian (AKA the gradient because the function returns a scalar)
     at ``[0.5, 0.5, 0.5]``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.differentiate import jacobian
     >>> from scipy.optimize import rosen, rosen_der
     >>> m = 3
-    >>> x = np.full(m, 0.5)
+    >>> x = mx.full(m, 0.5)
     >>> res = jacobian(rosen, x)
     >>> ref = rosen_der(x)  # reference value of the gradient
     >>> res.df, ref
@@ -882,27 +882,27 @@ def jacobian(f, x, *, tolerances=None, maxiter=10, order=8, initial_step=0.5,
 
     >>> def f(x):
     ...     x1, x2, x3 = x
-    ...     return [x1, 5*x3, 4*x2**2 - 2*x3, x3*np.sin(x1)]
+    ...     return [x1, 5*x3, 4*x2**2 - 2*x3, x3*mx.sin(x1)]
 
     The true Jacobian is given by:
 
     >>> def df(x):
     ...         x1, x2, x3 = x
-    ...         one = np.ones_like(x1)
+    ...         one = mx.ones_like(x1)
     ...         return [[one, 0*one, 0*one],
     ...                 [0*one, 0*one, 5*one],
     ...                 [0*one, 8*x2, -2*one],
-    ...                 [x3*np.cos(x1), 0*one, np.sin(x1)]]
+    ...                 [x3*mx.cos(x1), 0*one, mx.sin(x1)]]
 
     Evaluate the Jacobian at an arbitrary point.
 
-    >>> rng = np.random.default_rng(389252938452)
+    >>> rng = mx.random.default_rng(389252938452)
     >>> x = rng.random(size=3)
     >>> res = jacobian(f, x)
     >>> ref = df(x)
     >>> res.df.shape == (4, 3)
     True
-    >>> np.allclose(res.df, ref)
+    >>> mx.allclose(res.df, ref)
     True
 
     Evaluate the Jacobian at 10 arbitrary points in a single call.
@@ -912,7 +912,7 @@ def jacobian(f, x, *, tolerances=None, maxiter=10, order=8, initial_step=0.5,
     >>> ref = df(x)
     >>> res.df.shape == (4, 3, 10)
     True
-    >>> np.allclose(res.df, ref)
+    >>> mx.allclose(res.df, ref)
     True
 
     """
@@ -957,7 +957,7 @@ def hessian(f, x, *, tolerances=None, maxiter=10,
     f : callable
         The function whose Hessian is desired. The signature must be::
 
-            f(xi: ndarray) -> ndarray
+            f(xi: array) -> array
 
         where each element of ``xi`` is a finite real. If the function to be
         differentiated accepts additional arguments, wrap it (e.g. using
@@ -1075,25 +1075,25 @@ def hessian(f, x, *, tolerances=None, maxiter=10,
     array of shape ``(m, ...)`` and return an array of shape ``...``. Suppose we
     wish to evaluate the Hessian at ``[0.5, 0.5, 0.5]``.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.differentiate import hessian
     >>> from scipy.optimize import rosen, rosen_hess
     >>> m = 3
-    >>> x = np.full(m, 0.5)
+    >>> x = mx.full(m, 0.5)
     >>> res = hessian(rosen, x)
     >>> ref = rosen_hess(x)  # reference value of the Hessian
-    >>> np.allclose(res.ddf, ref)
+    >>> mx.allclose(res.ddf, ref)
     True
 
     `hessian` is vectorized to evaluate the Hessian at multiple points
     in a single call.
 
-    >>> rng = np.random.default_rng(4589245925010)
+    >>> rng = mx.random.default_rng(4589245925010)
     >>> x = rng.random((m, 10))
     >>> res = hessian(rosen, x)
     >>> ref = [rosen_hess(xi) for xi in x.T]
-    >>> ref = np.moveaxis(ref, 0, -1)
-    >>> np.allclose(res.ddf, ref)
+    >>> ref = mx.moveaxis(ref, 0, -1)
+    >>> mx.allclose(res.ddf, ref)
     True
 
     """

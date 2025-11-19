@@ -1,6 +1,6 @@
 from ._basic import _dispatch
 from scipy._lib.uarray import Dispatchable
-import numpy as np
+import mlx.core as mx
 
 __all__ = ['dct', 'idct', 'dst', 'idst', 'dctn', 'idctn', 'dstn', 'idstn']
 
@@ -45,7 +45,7 @@ def dctn(x, type=2, s=None, axes=None, norm=None, overwrite_x=False,
 
     Returns
     -------
-    y : ndarray of real
+    y : array of real
         The transformed input array.
 
     See Also
@@ -59,15 +59,15 @@ def dctn(x, type=2, s=None, axes=None, norm=None, overwrite_x=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fft import dctn, idctn
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> y = rng.standard_normal((16, 16))
-    >>> np.allclose(y, idctn(dctn(y)))
+    >>> mx.allclose(y, idctn(dctn(y)))
     True
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -110,7 +110,7 @@ def idctn(x, type=2, s=None, axes=None, norm=None, overwrite_x=False,
 
     Returns
     -------
-    y : ndarray of real
+    y : array of real
         The transformed input array.
 
     See Also
@@ -124,15 +124,15 @@ def idctn(x, type=2, s=None, axes=None, norm=None, overwrite_x=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fft import dctn, idctn
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> y = rng.standard_normal((16, 16))
-    >>> np.allclose(y, idctn(dctn(y)))
+    >>> mx.allclose(y, idctn(dctn(y)))
     True
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -175,7 +175,7 @@ def dstn(x, type=2, s=None, axes=None, norm=None, overwrite_x=False,
 
     Returns
     -------
-    y : ndarray of real
+    y : array of real
         The transformed input array.
 
     See Also
@@ -189,15 +189,15 @@ def dstn(x, type=2, s=None, axes=None, norm=None, overwrite_x=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fft import dstn, idstn
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> y = rng.standard_normal((16, 16))
-    >>> np.allclose(y, idstn(dstn(y)))
+    >>> mx.allclose(y, idstn(dstn(y)))
     True
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -240,7 +240,7 @@ def idstn(x, type=2, s=None, axes=None, norm=None, overwrite_x=False,
 
     Returns
     -------
-    y : ndarray of real
+    y : array of real
         The transformed input array.
 
     See Also
@@ -254,15 +254,15 @@ def idstn(x, type=2, s=None, axes=None, norm=None, overwrite_x=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fft import dstn, idstn
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> y = rng.standard_normal((16, 16))
-    >>> np.allclose(y, idstn(dstn(y)))
+    >>> mx.allclose(y, idstn(dstn(y)))
     True
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -299,7 +299,7 @@ def dct(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False, workers=None,
 
     Returns
     -------
-    y : ndarray of real
+    y : array of real
         The transformed input array.
 
     See Also
@@ -342,7 +342,7 @@ def dct(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False, workers=None,
     If ``orthogonalize=True``, ``x[0]`` and ``x[N-1]`` are multiplied by a
     scaling factor of :math:`\sqrt{2}`, and ``y[0]`` and ``y[N-1]`` are divided
     by :math:`\sqrt{2}`. When combined with ``norm="ortho"``, this makes the
-    corresponding matrix of coefficients orthonormal (``O @ O.T = np.eye(N)``).
+    corresponding matrix of coefficients orthonormal (``O @ O.T = mx.eye(N)``).
 
     .. note::
        The DCT-I is only supported for input size > 1.
@@ -358,7 +358,7 @@ def dct(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False, workers=None,
 
     If ``orthogonalize=True``, ``y[0]`` is divided by :math:`\sqrt{2}` which,
     when combined with ``norm="ortho"``, makes the corresponding matrix of
-    coefficients orthonormal (``O @ O.T = np.eye(N)``).
+    coefficients orthonormal (``O @ O.T = mx.eye(N)``).
 
     **Type III**
 
@@ -371,7 +371,7 @@ def dct(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False, workers=None,
 
     If ``orthogonalize=True``, ``x[0]`` terms are multiplied by
     :math:`\sqrt{2}` which, when combined with ``norm="ortho"``, makes the
-    corresponding matrix of coefficients orthonormal (``O @ O.T = np.eye(N)``).
+    corresponding matrix of coefficients orthonormal (``O @ O.T = mx.eye(N)``).
 
     The (unnormalized) DCT-III is the inverse of the (unnormalized) DCT-II, up
     to a factor `2N`. The orthonormalized DCT-III is exactly the inverse of
@@ -405,14 +405,14 @@ def dct(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False, workers=None,
     Half of the FFT input is used to generate half of the FFT output:
 
     >>> from scipy.fft import fft, dct
-    >>> import numpy as np
-    >>> fft(np.array([4., 3., 5., 10., 5., 3.])).real
+    >>> import mlx.core as mx
+    >>> fft(mx.array([4., 3., 5., 10., 5., 3.])).real
     array([ 30.,  -8.,   6.,  -2.,   6.,  -8.])
-    >>> dct(np.array([4., 3., 5., 10.]), 1)
+    >>> dct(mx.array([4., 3., 5., 10.]), 1)
     array([ 30.,  -8.,   6.,  -2.])
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -450,7 +450,7 @@ def idct(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False,
 
     Returns
     -------
-    idct : ndarray of real
+    idct : array of real
         The transformed input array.
 
     See Also
@@ -485,14 +485,14 @@ def idct(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False,
     input is used to generate half of the IFFT output:
 
     >>> from scipy.fft import ifft, idct
-    >>> import numpy as np
-    >>> ifft(np.array([ 30.,  -8.,   6.,  -2.,   6.,  -8.])).real
+    >>> import mlx.core as mx
+    >>> ifft(mx.array([ 30.,  -8.,   6.,  -2.,   6.,  -8.])).real
     array([  4.,   3.,   5.,  10.,   5.,   3.])
-    >>> idct(np.array([ 30.,  -8.,   6.,  -2.]), 1)
+    >>> idct(mx.array([ 30.,  -8.,   6.,  -2.]), 1)
     array([  4.,   3.,   5.,  10.])
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -530,7 +530,7 @@ def dst(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False, workers=None,
 
     Returns
     -------
-    dst : ndarray of reals
+    dst : array of reals
         The transformed input array.
 
     See Also
@@ -584,7 +584,7 @@ def dst(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False, workers=None,
 
     If ``orthogonalize=True``, ``y[-1]`` is divided :math:`\sqrt{2}` which, when
     combined with ``norm="ortho"``, makes the corresponding matrix of
-    coefficients orthonormal (``O @ O.T = np.eye(N)``).
+    coefficients orthonormal (``O @ O.T = mx.eye(N)``).
 
     **Type III**
 
@@ -599,7 +599,7 @@ def dst(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False, workers=None,
 
     If ``orthogonalize=True``, ``x[-1]`` is multiplied by :math:`\sqrt{2}`
     which, when combined with ``norm="ortho"``, makes the corresponding matrix
-    of coefficients orthonormal (``O @ O.T = np.eye(N)``).
+    of coefficients orthonormal (``O @ O.T = mx.eye(N)``).
 
     The (unnormalized) DST-III is the inverse of the (unnormalized) DST-II, up
     to a factor :math:`2N`. The orthonormalized DST-III is exactly the inverse of the
@@ -625,9 +625,9 @@ def dst(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False, workers=None,
     --------
     Compute the DST of a simple 1D array:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fft import dst
-    >>> x = np.array([1, -1, 1, -1])
+    >>> x = mx.array([1, -1, 1, -1])
     >>> dst(x, type=2)
     array([0., 0., 0., 8.])
 
@@ -640,7 +640,7 @@ def dst(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False, workers=None,
            https://en.wikipedia.org/wiki/Discrete_sine_transform
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -678,7 +678,7 @@ def idst(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False,
 
     Returns
     -------
-    idst : ndarray of real
+    idst : array of real
         The transformed input array.
 
     See Also
@@ -703,4 +703,4 @@ def idst(x, type=2, n=None, axis=-1, norm=None, overwrite_x=False,
     other's inverses.
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)

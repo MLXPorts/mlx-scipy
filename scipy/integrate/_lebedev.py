@@ -26,7 +26,7 @@
 #
 # Brainlessly translated to Python
 
-import numpy as np
+import mlx.core as mx
 from numpy import pi, zeros, sqrt
 
 from scipy._lib._array_api import xp_capabilities
@@ -5371,10 +5371,10 @@ def lebedev_rule(n):
 
     Returns
     -------
-    x : ndarray of shape ``(3, m)``
+    x : array of shape ``(3, m)``
         Sample points on the unit sphere in Cartesian coordinates.
         ``m`` is the "degree" corresponding with the specified order; see Notes.
-    w : ndarray of shape ``(m,)``
+    w : array of shape ``(m,)``
         Weights
 
     Notes
@@ -5413,19 +5413,19 @@ def lebedev_rule(n):
     Show the convergence to the expected result as the order increases:
 
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.integrate import lebedev_rule
     >>>
     >>> def f(x):
-    ...     return np.exp(x[0])
+    ...     return mx.exp(x[0])
     >>>
     >>> res = []
-    >>> orders = np.arange(3, 20, 2)
+    >>> orders = mx.arange(3, 20, 2)
     >>> for n in orders:
     ...     x, w = lebedev_rule(n)
     ...     res.append(w @ f(x))
     >>>
-    >>> ref = np.full_like(res, 14.7680137457653)
+    >>> ref = mx.full_like(res, 14.7680137457653)
     >>> err = abs(res - ref)/abs(ref)
     >>> plt.semilogy(orders, err)
     >>> plt.xlabel('order $n$')
@@ -5447,7 +5447,7 @@ def lebedev_rule(n):
 
     degree = order_degree_map[n]
     res = get_lebedev_sphere(degree)
-    x = np.stack((res.x, res.y, res.z))
+    x = mx.stack((res.x, res.y, res.z))
     w = res.w
 
     return x, w

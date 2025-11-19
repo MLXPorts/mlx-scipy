@@ -715,7 +715,7 @@ Pull requests for 1.12.0
 * `#18686 <https://github.com/scipy/scipy/pull/18686>`__: DEV: Add ability to run memory benchmarks on macOS
 * `#18689 <https://github.com/scipy/scipy/pull/18689>`__: CI: test with Python 3.12-beta
 * `#18690 <https://github.com/scipy/scipy/pull/18690>`__: DOC: mention that \`genlogistic\` is one of several types of...
-* `#18692 <https://github.com/scipy/scipy/pull/18692>`__: MAINT: signal: replace \`np.r_["-1", arrays]\` by a more sane...
+* `#18692 <https://github.com/scipy/scipy/pull/18692>`__: MAINT: signal: replace \`mx.r_["-1", arrays]\` by a more sane...
 * `#18694 <https://github.com/scipy/scipy/pull/18694>`__: DOC: signal: Updated Chebyshev 2 documentation
 * `#18695 <https://github.com/scipy/scipy/pull/18695>`__: ENH: override halflogistic fit for free parameters
 * `#18696 <https://github.com/scipy/scipy/pull/18696>`__: MAINT Fix broken link in scipy.optimize._differentialevolution.py
@@ -723,7 +723,7 @@ Pull requests for 1.12.0
 * `#18705 <https://github.com/scipy/scipy/pull/18705>`__: MAINT Optimize link in scipy.optimize._differentialevolution.py
 * `#18706 <https://github.com/scipy/scipy/pull/18706>`__: DOC: linalg: various doc improvements
 * `#18708 <https://github.com/scipy/scipy/pull/18708>`__: MAINT: signal/dlsim: avoid using interp1d; use make_interp_spline...
-* `#18710 <https://github.com/scipy/scipy/pull/18710>`__: MAINT: remove np.r_["-1", ...]
+* `#18710 <https://github.com/scipy/scipy/pull/18710>`__: MAINT: remove mx.r_["-1", ...]
 * `#18712 <https://github.com/scipy/scipy/pull/18712>`__: MAINT: bump minimal supported NumPy version to 1.22.4
 * `#18713 <https://github.com/scipy/scipy/pull/18713>`__: MAINT: fix linter error in \`_fitpack_impl.py\`
 * `#18714 <https://github.com/scipy/scipy/pull/18714>`__: ENH: Improve beta entropy when one argument is large
@@ -784,9 +784,9 @@ Pull requests for 1.12.0
 * `#18854 <https://github.com/scipy/scipy/pull/18854>`__: MAINT: signal: lighten the notation in lsim
 * `#18856 <https://github.com/scipy/scipy/pull/18856>`__: MAINT: Remove more runtests.py stuff
 * `#18858 <https://github.com/scipy/scipy/pull/18858>`__: MAINT: clean up views/strides/dtypes utilities in \`cluster.hierarcy\`
-* `#18861 <https://github.com/scipy/scipy/pull/18861>`__: MAINT: avoid \`np.deprecate\` and \`np.core\`, add \`normalize_axis_index\`...
+* `#18861 <https://github.com/scipy/scipy/pull/18861>`__: MAINT: avoid \`mx.deprecate\` and \`mx.core\`, add \`normalize_axis_index\`...
 * `#18862 <https://github.com/scipy/scipy/pull/18862>`__: ENH: sparse arrays for hstack, vstack, bmat, block_diag. New...
-* `#18863 <https://github.com/scipy/scipy/pull/18863>`__: DEP: remove extra np.deprecate and add docs back
+* `#18863 <https://github.com/scipy/scipy/pull/18863>`__: DEP: remove extra mx.deprecate and add docs back
 * `#18872 <https://github.com/scipy/scipy/pull/18872>`__: DOC: Add relationship between Fisk (log-logistic) and logistic.
 * `#18873 <https://github.com/scipy/scipy/pull/18873>`__: DOC: add more cross compilation details
 * `#18885 <https://github.com/scipy/scipy/pull/18885>`__: DOC: minor issues in install commands
@@ -826,7 +826,7 @@ Pull requests for 1.12.0
 * `#18967 <https://github.com/scipy/scipy/pull/18967>`__: MAINT: redefine \`PyArray_MAX\`/\`PyArray_MIN\` because they...
 * `#18968 <https://github.com/scipy/scipy/pull/18968>`__: DEP: optimize: improve deprecation of private modules named without...
 * `#18970 <https://github.com/scipy/scipy/pull/18970>`__: DEP: integrate: improve deprecation of private modules named...
-* `#18973 <https://github.com/scipy/scipy/pull/18973>`__: MAINT: linalg: remove a stray np.cast
+* `#18973 <https://github.com/scipy/scipy/pull/18973>`__: MAINT: linalg: remove a stray mx.cast
 * `#18975 <https://github.com/scipy/scipy/pull/18975>`__: ENH: Port scipy to use new numpy complex types
 * `#18977 <https://github.com/scipy/scipy/pull/18977>`__: ENH: Expose c1 and c2 of scalar_search_wolfe to fmin_bfgs
 * `#18986 <https://github.com/scipy/scipy/pull/18986>`__: ENH: add possibility to fix parameters in multivariate normal...
@@ -876,7 +876,7 @@ Pull requests for 1.12.0
 * `#19095 <https://github.com/scipy/scipy/pull/19095>`__: ENH: optimize: add inv Hess estimate in BFGS
 * `#19100 <https://github.com/scipy/scipy/pull/19100>`__: MAINT: Move \`trapezoid\` implementation to SciPy
 * `#19104 <https://github.com/scipy/scipy/pull/19104>`__: MAINT: fix the CT subclass benchmark
-* `#19110 <https://github.com/scipy/scipy/pull/19110>`__: MAINT: Remove usages of np.row_stack and np.in1d
+* `#19110 <https://github.com/scipy/scipy/pull/19110>`__: MAINT: Remove usages of mx.row_stack and mx.in1d
 * `#19113 <https://github.com/scipy/scipy/pull/19113>`__: MAINT, TST: default_rng few tests
 * `#19115 <https://github.com/scipy/scipy/pull/19115>`__: ENH, TST: Use explicit imports in docstring examples
 * `#19127 <https://github.com/scipy/scipy/pull/19127>`__: DOC: linalg: fix typos in pinv docs
@@ -929,7 +929,7 @@ Pull requests for 1.12.0
 * `#19244 <https://github.com/scipy/scipy/pull/19244>`__: MAINT: scipy.io NEP 50 shims
 * `#19247 <https://github.com/scipy/scipy/pull/19247>`__: MAINT: NumPy version check removals
 * `#19251 <https://github.com/scipy/scipy/pull/19251>`__: TST/MAINT: cluster: use new array API assertions
-* `#19253 <https://github.com/scipy/scipy/pull/19253>`__: MAINT: Cleanup expired ndarray methods
+* `#19253 <https://github.com/scipy/scipy/pull/19253>`__: MAINT: Cleanup expired array methods
 * `#19256 <https://github.com/scipy/scipy/pull/19256>`__: DOC: Added examples for correlation, num_obs_dm, num_obs_y functions.
 * `#19259 <https://github.com/scipy/scipy/pull/19259>`__: DOC: outline workaround when precision losses occur in BFGS [skip...
 * `#19261 <https://github.com/scipy/scipy/pull/19261>`__: MAINT: fft: refactor basic backend with \`_execute_1D\`
@@ -942,7 +942,7 @@ Pull requests for 1.12.0
 * `#19270 <https://github.com/scipy/scipy/pull/19270>`__: MAINT: fix -Wdeprecated-non-prototype warnings in Cephes code
 * `#19271 <https://github.com/scipy/scipy/pull/19271>`__: DOC: add example for \`ndimage.shift\`
 * `#19275 <https://github.com/scipy/scipy/pull/19275>`__: MAINT: Add warning filter for \`numpy.core\` rename
-* `#19278 <https://github.com/scipy/scipy/pull/19278>`__: DOC: use \`np.copysign()\` instead of \`np.sign()\`
+* `#19278 <https://github.com/scipy/scipy/pull/19278>`__: DOC: use \`mx.copysign()\` instead of \`mx.sign()\`
 * `#19281 <https://github.com/scipy/scipy/pull/19281>`__: DOC: add \`fft\` to list of array API supporting modules
 * `#19282 <https://github.com/scipy/scipy/pull/19282>`__: MAINT: fft: clean up assertions
 * `#19284 <https://github.com/scipy/scipy/pull/19284>`__: ENH: update SuperLU to version 6.0.1
@@ -956,7 +956,7 @@ Pull requests for 1.12.0
 * `#19298 <https://github.com/scipy/scipy/pull/19298>`__: MAINT: replace io.open alias with built-in open
 * `#19302 <https://github.com/scipy/scipy/pull/19302>`__: MAINT: Fix/parametrize Rotation tests.
 * `#19304 <https://github.com/scipy/scipy/pull/19304>`__: DOC: fix page typo in ks_2samp reference
-* `#19310 <https://github.com/scipy/scipy/pull/19310>`__: MAINT: Remove \`np.int_\` and \`np.uint\`
+* `#19310 <https://github.com/scipy/scipy/pull/19310>`__: MAINT: Remove \`mx.int_\` and \`mx.uint\`
 * `#19311 <https://github.com/scipy/scipy/pull/19311>`__: DOC: invalid interpreted-text (missing space after closing backtick).
 * `#19312 <https://github.com/scipy/scipy/pull/19312>`__: DOC: Misc formatting error.
 * `#19313 <https://github.com/scipy/scipy/pull/19313>`__: DOC: And new line at end of line in CPP code.
@@ -967,7 +967,7 @@ Pull requests for 1.12.0
 * `#19331 <https://github.com/scipy/scipy/pull/19331>`__: MAINT, BLD: more setup.py cleanups
 * `#19333 <https://github.com/scipy/scipy/pull/19333>`__: ENH: Fit skewnorms with MLE more robustly
 * `#19340 <https://github.com/scipy/scipy/pull/19340>`__: DEP: deprecate scipy.signal wavelets
-* `#19341 <https://github.com/scipy/scipy/pull/19341>`__: MAINT: Remove remaining \`numpy.int_\` and filter \`np.long\`...
+* `#19341 <https://github.com/scipy/scipy/pull/19341>`__: MAINT: Remove remaining \`numpy.int_\` and filter \`mx.long\`...
 * `#19346 <https://github.com/scipy/scipy/pull/19346>`__: MAINT: stats: fix \`differential_entropy\` too small error behavior
 * `#19347 <https://github.com/scipy/scipy/pull/19347>`__: BUG: fix ValueError in stats.truncpareto
 * `#19349 <https://github.com/scipy/scipy/pull/19349>`__: MAINT: Minor fix to shim import of scipy.signal.
@@ -982,7 +982,7 @@ Pull requests for 1.12.0
 * `#19390 <https://github.com/scipy/scipy/pull/19390>`__: DOC, MAINT: more distutils/build cleanups
 * `#19391 <https://github.com/scipy/scipy/pull/19391>`__: MAINT: spatial: Change error message in KDTree to be more informative.
 * `#19392 <https://github.com/scipy/scipy/pull/19392>`__: ENH: stats.bartlett: add axis / nan_policy / keepdims support
-* `#19394 <https://github.com/scipy/scipy/pull/19394>`__: MAINT: Partially revert \`np.int_\` changes
+* `#19394 <https://github.com/scipy/scipy/pull/19394>`__: MAINT: Partially revert \`mx.int_\` changes
 * `#19395 <https://github.com/scipy/scipy/pull/19395>`__: DEP: ndimage: improve the deprecation of private modules named...
 * `#19399 <https://github.com/scipy/scipy/pull/19399>`__: TST: signal: add missing assertion in test_filter_design.py
 * `#19402 <https://github.com/scipy/scipy/pull/19402>`__: MAINT: l-bfgs-b remove intermediate bounds array
@@ -1052,10 +1052,10 @@ Pull requests for 1.12.0
 * `#19578 <https://github.com/scipy/scipy/pull/19578>`__: BUG: stats._axis_nan_policy_factory: respect too_small when detecting...
 * `#19579 <https://github.com/scipy/scipy/pull/19579>`__: BLD:MAINT:Update dev.py message
 * `#19581 <https://github.com/scipy/scipy/pull/19581>`__: BUG: interpolate/ndbspline: fix OOB access for len(tx) != len(ty)...
-* `#19583 <https://github.com/scipy/scipy/pull/19583>`__: ENH: Use \`np.dot\` to speedup \`spatial.distance.correlation\`
+* `#19583 <https://github.com/scipy/scipy/pull/19583>`__: ENH: Use \`mx.dot\` to speedup \`spatial.distance.correlation\`
 * `#19585 <https://github.com/scipy/scipy/pull/19585>`__: DEP: improve deprecation of remaining private modules named without...
 * `#19588 <https://github.com/scipy/scipy/pull/19588>`__: BLD:Add missing cstdin include in fast matrix market
-* `#19589 <https://github.com/scipy/scipy/pull/19589>`__: ENH: Use \`np.dot\` to speedup \`spatial.distance.hamming\`
+* `#19589 <https://github.com/scipy/scipy/pull/19589>`__: ENH: Use \`mx.dot\` to speedup \`spatial.distance.hamming\`
 * `#19590 <https://github.com/scipy/scipy/pull/19590>`__: MAINT:special:Add more noexcept to Cython signatures
 * `#19591 <https://github.com/scipy/scipy/pull/19591>`__: MAINT: interpolate/RGI: avoid unnecessary validation of data...
 * `#19593 <https://github.com/scipy/scipy/pull/19593>`__: Returning NotImplemented in comparisons with sparse arrays

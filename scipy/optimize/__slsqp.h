@@ -389,7 +389,7 @@ static char doc_nnls[] = ("Compute the nonnegative least squares solution.\n\n"
 
 static char doc_slsqp[] = (
     "Sequential Least Squares Programming (SLSQP) optimizer.\n\n"
-    "    x, info = slsqp(S: dict, funx: np.float64, "
+    "    x, info = slsqp(S: dict, funx: mx.float64, "
     "gradx: NDArray, C: NDarray, d: NDArray, "
     "sol: NDArray, xl: NDArray, xu: NDArray, buffer: NDArray, indices: NDArray)"
     "\n\n");

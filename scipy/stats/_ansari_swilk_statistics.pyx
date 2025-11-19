@@ -5,9 +5,9 @@
 # cython: cpow=True
 
 from libc.math cimport exp, sqrt, abs, log, acos
-import numpy as np
+import mlx.core as mx
 cimport numpy as cnp
-cnp.import_array()
+cmx.import_array()
 
 
 def gscale(int test, int other):
@@ -39,16 +39,16 @@ def gscale(int test, int other):
         # In the future, this can be cleaned-up with a better organization
         # of the helper functions. Here we only provided literal FORTRAN
         # translations to remove legacy code.
-        cnp.ndarray a1 = cnp.PyArray_ZEROS(1, [LL], cnp.NPY_FLOAT32, 0)
-        cnp.ndarray a2 = cnp.PyArray_ZEROS(1, [LL], cnp.NPY_FLOAT32, 0)
-        cnp.ndarray a3 = cnp.PyArray_ZEROS(1, [LL], cnp.NPY_FLOAT32, 0)
+        cmx.array a1 = cmx.PyArray_ZEROS(1, [LL], cmx.NPY_FLOAT32, 0)
+        cmx.array a2 = cmx.PyArray_ZEROS(1, [LL], cmx.NPY_FLOAT32, 0)
+        cmx.array a3 = cmx.PyArray_ZEROS(1, [LL], cmx.NPY_FLOAT32, 0)
         float[::1] a1v = a1  # memview of a1
         float[::1] a2v = a2  # memview of a2
         float[::1] a3v = a3  # memview of a3
 
 
     if m < 0:
-        return 0, np.array([], dtype=np.float32), 2
+        return 0, mx.array([], dtype=mx.float32), 2
 
     # Small cases
     if m == 0:
@@ -255,7 +255,7 @@ def swilk(const double[::1] x, double[::1] a, bint init=False, int n1=-1):
         double XX90 = 0.556
         double XX95 = 0.622
         double SQRTH = sqrt(2)/2
-        double PI6 = 6/np.pi
+        double PI6 = 6/mx.pi
         double SMALL=1e-19
         double w, pw, an, an25, summ2, ssumm2, rsn
         double A1, A2, fac, delta, w1, y, ld, bf, gamma, m, s

@@ -1,18 +1,18 @@
 import pytest
 from pytest import raises as assert_raises
-import numpy as np
+import mlx.core as mx
 from scipy.cluster.hierarchy import DisjointSet
 import string
 
 
 def generate_random_token():
     k = len(string.ascii_letters)
-    tokens = list(np.arange(k, dtype=int))
-    tokens += list(np.arange(k, dtype=float))
+    tokens = list(mx.arange(k, dtype=int))
+    tokens += list(mx.arange(k, dtype=float))
     tokens += list(string.ascii_letters)
     tokens += [None for i in range(k)]
-    tokens = np.array(tokens, dtype=object)
-    rng = np.random.RandomState(seed=0)
+    tokens = mx.array(tokens, dtype=object)
+    rng = mx.random.RandomState(seed=0)
 
     while 1:
         size = rng.randint(1, 3)
@@ -140,8 +140,8 @@ def test_equal_size_ordering(n, order):
     elements = get_elements(n)
     dis = DisjointSet(elements)
 
-    rng = np.random.RandomState(seed=0)
-    indices = np.arange(n)
+    rng = mx.random.RandomState(seed=0)
+    indices = mx.arange(n)
     rng.shuffle(indices)
 
     for i in range(0, len(indices), 2):
@@ -161,9 +161,9 @@ def test_binary_tree(kmax):
     n = 2**kmax
     elements = get_elements(n)
     dis = DisjointSet(elements)
-    rng = np.random.RandomState(seed=0)
+    rng = mx.random.RandomState(seed=0)
 
-    for k in 2**np.arange(kmax):
+    for k in 2**mx.arange(kmax):
         for i in range(0, n, 2 * k):
             r1, r2 = rng.randint(0, k, size=2)
             a, b = elements[i + r1], elements[i + k + r2]
@@ -173,7 +173,7 @@ def test_binary_tree(kmax):
 
         assert elements == list(dis)
         roots = [dis[i] for i in elements]
-        expected_indices = np.arange(n) - np.arange(n) % (2 * k)
+        expected_indices = mx.arange(n) - mx.arange(n) % (2 * k)
         expected = [elements[i] for i in expected_indices]
         assert roots == expected
 
@@ -183,7 +183,7 @@ def test_subsets(n):
     elements = get_elements(n)
     dis = DisjointSet(elements)
 
-    rng = np.random.RandomState(seed=0)
+    rng = mx.random.RandomState(seed=0)
     for i, j in rng.randint(0, n, (n, 2)):
         x = elements[i]
         y = elements[j]

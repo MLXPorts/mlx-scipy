@@ -3,7 +3,7 @@ import warnings
 from itertools import combinations_with_replacement
 from types import GenericAlias
 
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import LinAlgError
 from scipy.spatial import KDTree
 from scipy.special import comb
@@ -60,13 +60,13 @@ def _monomial_powers(ndim, degree):
 
     Returns
     -------
-    (nmonos, ndim) int ndarray
+    (nmonos, ndim) int array
         Array where each row contains the powers for each variable in a
         monomial.
 
     """
     nmonos = comb(degree + ndim, ndim, exact=True)
-    out = np.zeros((nmonos, ndim), dtype=np.dtype("long"))
+    out = mx.zeros((nmonos, ndim), dtype=mx.dtype("long"))
     count = 0
     for deg in range(degree + 1):
         for mono in combinations_with_replacement(range(ndim), deg):
@@ -85,26 +85,26 @@ def _build_and_solve_system(y, d, smoothing, kernel, epsilon, powers):
 
     Parameters
     ----------
-    y : (P, N) float ndarray
+    y : (P, N) float array
         Data point coordinates.
-    d : (P, S) float ndarray
+    d : (P, S) float array
         Data values at `y`.
-    smoothing : (P,) float ndarray
+    smoothing : (P,) float array
         Smoothing parameter for each data point.
     kernel : str
         Name of the RBF.
     epsilon : float
         Shape parameter.
-    powers : (R, N) int ndarray
+    powers : (R, N) int array
         The exponents for each monomial in the polynomial.
 
     Returns
     -------
-    coeffs : (P + R, S) float ndarray
+    coeffs : (P + R, S) float array
         Coefficients for each RBF and monomial.
-    shift : (N,) float ndarray
+    shift : (N,) float array
         Domain shift used to create the polynomial matrix.
-    scale : (N,) float ndarray
+    scale : (N,) float array
         Domain scaling used to create the polynomial matrix.
 
     """
@@ -119,7 +119,7 @@ def _build_and_solve_system(y, d, smoothing, kernel, epsilon, powers):
         nmonos = powers.shape[0]
         if nmonos > 0:
             pmat = _polynomial_matrix((y - shift)/scale, powers)
-            rank = np.linalg.matrix_rank(pmat)
+            rank = mx.linalg.matrix_rank(pmat)
             if rank < nmonos:
                 msg = (
                     "Singular matrix. The matrix of monomials evaluated at "
@@ -263,17 +263,17 @@ class RBFInterpolator:
     --------
     Demonstrate interpolating scattered data to a grid in 2-D.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.interpolate import RBFInterpolator
     >>> from scipy.stats.qmc import Halton
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> xobs = 2*Halton(2, seed=rng).random(100) - 1
-    >>> yobs = np.sum(xobs, axis=1)*np.exp(-6*np.sum(xobs**2, axis=1))
+    >>> yobs = mx.sum(xobs, axis=1)*mx.exp(-6*mx.sum(xobs**2, axis=1))
 
-    >>> x1 = np.linspace(-1, 1, 50)
-    >>> xgrid = np.asarray(np.meshgrid(x1, x1, indexing='ij'))
+    >>> x1 = mx.linspace(-1, 1, 50)
+    >>> xgrid = mx.array(mx.meshgrid(x1, x1, indexing='ij'))
     >>> xflat = xgrid.reshape(2, -1).T     # make it a 2-D array
     >>> yflat = RBFInterpolator(xobs, yobs)(xflat)
     >>> ygrid = yflat.reshape(50, 50)
@@ -295,14 +295,14 @@ class RBFInterpolator:
                  kernel="thin_plate_spline",
                  epsilon=None,
                  degree=None):
-        y = np.asarray(y, dtype=float, order="C")
+        y = mx.array(y, dtype=float, order="C")
         if y.ndim != 2:
             raise ValueError("`y` must be a 2-dimensional array.")
 
         ny, ndim = y.shape
 
-        d_dtype = complex if np.iscomplexobj(d) else float
-        d = np.asarray(d, dtype=d_dtype, order="C")
+        d_dtype = complex if mx.iscomplexobj(d) else float
+        d = mx.array(d, dtype=d_dtype, order="C")
         if d.shape[0] != ny:
             raise ValueError(
                 f"Expected the first axis of `d` to have length {ny}."
@@ -315,10 +315,10 @@ class RBFInterpolator:
         # complex and take up 2x more memory than necessary.
         d = d.view(float)
 
-        if np.isscalar(smoothing):
-            smoothing = np.full(ny, smoothing, dtype=float)
+        if mx.isscalar(smoothing):
+            smoothing = mx.full(ny, smoothing, dtype=float)
         else:
-            smoothing = np.asarray(smoothing, dtype=float, order="C")
+            smoothing = mx.array(smoothing, dtype=float, order="C")
             if smoothing.shape != (ny,):
                 raise ValueError(
                     "Expected `smoothing` to be a scalar or have shape "
@@ -413,15 +413,15 @@ class RBFInterpolator:
 
         Parameters
         ----------
-        x : (Q, N) float ndarray
+        x : (Q, N) float array
             array of points on which to evaluate
-        y: (P, N) float ndarray
+        y: (P, N) float array
             array of points on which we know function values
-        shift: (N, ) ndarray
+        shift: (N, ) array
             Domain shift used to create the polynomial matrix.
-        scale : (N,) float ndarray
+        scale : (N,) float array
             Domain scaling used to create the polynomial matrix.
-        coeffs: (P+R, S) float ndarray
+        coeffs: (P+R, S) float array
             Coefficients in front of basis functions
         memory_budget: int
             Total amount of memory (in units of sizeof(float)) we wish
@@ -431,7 +431,7 @@ class RBFInterpolator:
 
         Returns
         -------
-        (Q, S) float ndarray
+        (Q, S) float array
         Interpolated array
         """
         nx, ndim = x.shape
@@ -442,7 +442,7 @@ class RBFInterpolator:
         # in each chunk we consume the same space we already occupy
         chunksize = memory_budget // (self.powers.shape[0] + nnei) + 1
         if chunksize <= nx:
-            out = np.empty((nx, self.d.shape[1]), dtype=float)
+            out = mx.empty((nx, self.d.shape[1]), dtype=float)
             for i in range(0, nx, chunksize):
                 vec = _build_evaluation_coefficients(
                     x[i:i + chunksize, :],
@@ -452,7 +452,7 @@ class RBFInterpolator:
                     self.powers,
                     shift,
                     scale)
-                out[i:i + chunksize, :] = np.dot(vec, coeffs)
+                out[i:i + chunksize, :] = mx.dot(vec, coeffs)
         else:
             vec = _build_evaluation_coefficients(
                 x,
@@ -462,7 +462,7 @@ class RBFInterpolator:
                 self.powers,
                 shift,
                 scale)
-            out = np.dot(vec, coeffs)
+            out = mx.dot(vec, coeffs)
         return out
 
     def __call__(self, x):
@@ -475,11 +475,11 @@ class RBFInterpolator:
 
         Returns
         -------
-        ndarray, shape (npts, )
+        array, shape (npts, )
             Values of the interpolant at `x`.
 
         """
-        x = np.asarray(x, dtype=float, order="C")
+        x = mx.array(x, dtype=float, order="C")
         if x.ndim != 2:
             raise ValueError("`x` must be a 2-dimensional array.")
 
@@ -515,9 +515,9 @@ class RBFInterpolator:
             # observation points. Make the neighborhoods unique so that we only
             # compute the interpolation coefficients once for each
             # neighborhood.
-            yindices = np.sort(yindices, axis=1)
-            yindices, inv = np.unique(yindices, return_inverse=True, axis=0)
-            inv = np.reshape(inv, (-1,))  # flatten, we need 1-D indices
+            yindices = mx.sort(yindices, axis=1)
+            yindices, inv = mx.unique(yindices, return_inverse=True, axis=0)
+            inv = mx.reshape(inv, (-1,))  # flatten, we need 1-D indices
             # `inv` tells us which neighborhood will be used by each evaluation
             # point. Now we find which evaluation points will be using each
             # neighborhood.
@@ -525,7 +525,7 @@ class RBFInterpolator:
             for i, j in enumerate(inv):
                 xindices[j].append(i)
 
-            out = np.empty((nx, self.d.shape[1]), dtype=float)
+            out = mx.empty((nx, self.d.shape[1]), dtype=float)
             for xidx, yidx in zip(xindices, yindices):
                 # `yidx` are the indices of the observations in this
                 # neighborhood. `xidx` are the indices of the evaluation points

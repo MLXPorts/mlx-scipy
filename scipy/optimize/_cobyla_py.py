@@ -12,7 +12,7 @@ Functions
 
 from inspect import signature
 
-import numpy as np
+import mlx.core as mx
 from ._optimize import (OptimizeResult, _check_unknown_options,
     _prepare_scalar_function)
 from ._constraints import NonlinearConstraint
@@ -33,7 +33,7 @@ def fmin_cobyla(func, x0, cons, args=(), consargs=None, rhobeg=1.0,
     ----------
     func : callable
         Function to minimize. In the form func(x, \\*args).
-    x0 : ndarray
+    x0 : array
         Initial guess.
     cons : sequence
         Constraint functions; must all be ``>=0`` (a single function
@@ -63,7 +63,7 @@ def fmin_cobyla(func, x0, cons, args=(), consargs=None, rhobeg=1.0,
 
     Returns
     -------
-    x : ndarray
+    x : array
         The argument that minimises `f`.
 
     See also
@@ -167,7 +167,7 @@ def fmin_cobyla(func, x0, cons, args=(), consargs=None, rhobeg=1.0,
         # Use default argument, otherwise the last `con` is captured by all wrapped_con
         def wrapped_con(x, confunc=con):
             return confunc(x, *consargs)
-        nlcs.append(NonlinearConstraint(wrapped_con, 0, np.inf))
+        nlcs.append(NonlinearConstraint(wrapped_con, 0, mx.inf))
 
     # options
     opts = {'rhobeg': rhobeg,
@@ -186,7 +186,7 @@ def fmin_cobyla(func, x0, cons, args=(), consargs=None, rhobeg=1.0,
 
 def _minimize_cobyla(fun, x0, args=(), constraints=(),
                      rhobeg=1.0, tol=1e-4, maxiter=1000,
-                     disp=0, catol=None, f_target=-np.inf,
+                     disp=0, catol=None, f_target=-mx.inf,
                      callback=None, bounds=None, **unknown_options):
     """
     Minimize a scalar function of one or more variables using the
@@ -249,12 +249,12 @@ def _minimize_cobyla(fun, x0, args=(), constraints=(),
         sig = signature(callback)
         if set(sig.parameters) == {"intermediate_result"}:
             def wrapped_callback_intermediate(x, f, nf, tr, cstrv, nlconstrlist):
-                intermediate_result = OptimizeResult(x=np.copy(x), fun=f, nfev=nf,
+                intermediate_result = OptimizeResult(x=mx.copy(x), fun=f, nfev=nf,
                                                      nit=tr, maxcv=cstrv)
                 callback(intermediate_result=intermediate_result)
         else:
             def wrapped_callback_intermediate(x, f, nf, tr, cstrv, nlconstrlist):
-                callback(np.copy(x))
+                callback(mx.copy(x))
         def wrapped_callback(x, f, nf, tr, cstrv, nlconstrlist):
             try:
                 wrapped_callback_intermediate(x, f, nf, tr, cstrv, nlconstrlist)
@@ -265,7 +265,7 @@ def _minimize_cobyla(fun, x0, args=(), constraints=(),
         wrapped_callback = None
 
 
-    ctol = catol if catol is not None else np.sqrt(np.finfo(float).eps)
+    ctol = catol if catol is not None else mx.sqrt(mx.finfo(float).eps)
     options = {
         'rhobeg': rhobeg,
         'rhoend': rhoend,

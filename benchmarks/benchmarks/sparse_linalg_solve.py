@@ -1,7 +1,7 @@
 """
 Check the speed of the conjugate gradient solver.
 """
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal
 
 from .common import Benchmark, safe_import
@@ -44,7 +44,7 @@ class Bench(Benchmark):
         if solver == 'dense' and n >= 25:
             raise NotImplementedError()
 
-        self.b = np.ones(n*n)
+        self.b = mx.ones(n*n)
         self.P_sparse = _create_sparse_poisson2d(n)
 
         if solver == 'dense':
@@ -65,9 +65,9 @@ class Lgmres(Benchmark):
     param_names = ['n', 'm']
 
     def setup(self, n, m):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         self.A = sparse.eye(n, n) + sparse.rand(n, n, density=0.01, random_state=rng)
-        self.b = np.ones(n)
+        self.b = mx.ones(n)
 
     def time_inner(self, n, m):
         lgmres(self.A, self.b, inner_m=m, maxiter=1)

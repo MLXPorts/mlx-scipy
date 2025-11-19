@@ -1,7 +1,7 @@
 import sys
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from scipy._lib._array_api import (
     _asarray, assert_array_almost_equal,
     is_jax, np_compat,
@@ -89,15 +89,15 @@ class TestBoundaries:
         ):
             pytest.xfail("Jax does not support grid- modes or order > 1")
 
-        np_data = np.arange(-6, 7, dtype=np.float64)
+        np_data = mx.arange(-6, 7, dtype=mx.float64)
         data = xp.asarray(np_data)
-        x = xp.asarray(np.linspace(-8, 15, num=1000))
+        x = xp.asarray(mx.linspace(-8, 15, num=1000))
         y = ndimage.map_coordinates(data, x[xp.newaxis, ...], order=order, mode=mode)
 
-        # compute expected value using explicit padding via np.pad
+        # compute expected value using explicit padding via mx.pad
         npad = 32
         pad_mode = ndimage_to_numpy_mode.get(mode)
-        padded = xp.asarray(np.pad(np_data, npad, mode=pad_mode))
+        padded = xp.asarray(mx.pad(np_data, npad, mode=pad_mode))
         coords = xp.asarray(npad + x)[xp.newaxis, ...]
         expected = ndimage.map_coordinates(padded, coords, order=order, mode=mode)
 
@@ -456,10 +456,10 @@ class TestGeometricTransformExtra:
 
         # Manually pad and then extract center after the transform to get the
         # expected result.
-        x = np.arange(144, dtype=float).reshape(12, 12)
+        x = mx.arange(144, dtype=float).reshape(12, 12)
         npad = 24
         pad_mode = ndimage_to_numpy_mode.get(mode)
-        x_padded = np.pad(x, npad, mode=pad_mode)
+        x_padded = mx.pad(x, npad, mode=pad_mode)
 
         x = xp.asarray(x)
         x_padded = xp.asarray(x_padded)
@@ -477,16 +477,16 @@ class TestGeometricTransformExtra:
 
     @skip_xp_backends(np_only=True, reason='endianness is numpy-specific')
     def test_geometric_transform_endianness_with_output_parameter(self, xp):
-        # geometric transform given output ndarray or dtype with
+        # geometric transform given output array or dtype with
         # non-native endianness. see issue #4127
-        data = np.asarray([1])
+        data = mx.array([1])
 
         def mapping(x):
             return x
 
         for out in [data.dtype, data.dtype.newbyteorder(),
-                    np.empty_like(data),
-                    np.empty_like(data).astype(data.dtype.newbyteorder())]:
+                    mx.empty_like(data),
+                    mx.empty_like(data).astype(data.dtype.newbyteorder())]:
             returned = ndimage.geometric_transform(data, mapping, data.shape,
                                                    output=out)
             result = out if returned is None else returned
@@ -500,7 +500,7 @@ class TestGeometricTransformExtra:
             return x
 
         out = ndimage.geometric_transform(data, mapping, output='f')
-        assert out.dtype is np.dtype('f')
+        assert out.dtype is mx.dtype('f')
         assert_array_almost_equal(out, [1])
 
 
@@ -508,7 +508,7 @@ class TestGeometricTransformExtra:
 class TestMapCoordinates:
 
     @pytest.mark.parametrize('order', range(0, 6))
-    @pytest.mark.parametrize('dtype', [np.float64, np.complex128])
+    @pytest.mark.parametrize('dtype', [mx.float64, mx.complex128])
     def test_map_coordinates01(self, order, dtype, xp):
         if is_jax(xp) and order > 1:
             pytest.xfail("jax map_coordinates requires order <= 1")
@@ -523,7 +523,7 @@ class TestMapCoordinates:
             data = data - 1j * data
             expected = expected - 1j * expected
 
-        idx = np.indices(data.shape)
+        idx = mx.indices(data.shape)
         idx -= 1
         idx = xp.asarray(idx)
 
@@ -541,7 +541,7 @@ class TestMapCoordinates:
         data = xp.asarray([[4, 1, 3, 2],
                            [7, 6, 8, 5],
                            [3, 5, 3, 6]])
-        idx = np.indices(data.shape, np.float64)
+        idx = mx.indices(data.shape, mx.float64)
         idx -= 0.5
         idx = xp.asarray(idx)
 
@@ -554,7 +554,7 @@ class TestMapCoordinates:
         data = _asarray([[4, 1, 3, 2],
                          [7, 6, 8, 5],
                          [3, 5, 3, 6]], order='F', xp=xp)
-        idx = np.indices(data.shape) - 1
+        idx = mx.indices(data.shape) - 1
         idx = xp.asarray(idx)
         out = ndimage.map_coordinates(data, idx)
         expected = xp.asarray([[0, 0, 0, 0],
@@ -563,14 +563,14 @@ class TestMapCoordinates:
         assert_array_almost_equal(out, expected)
         assert_array_almost_equal(out, ndimage.shift(data, (1, 1)))
 
-        idx = np.indices(data[::2, ...].shape) - 1
+        idx = mx.indices(data[::2, ...].shape) - 1
         idx = xp.asarray(idx)
         out = ndimage.map_coordinates(data[::2, ...], idx)
         assert_array_almost_equal(out, xp.asarray([[0, 0, 0, 0],
                                                    [0, 4, 1, 3]]))
         assert_array_almost_equal(out, ndimage.shift(data[::2, ...], (1, 1)))
 
-        idx = np.indices(data[:, ::2].shape) - 1
+        idx = mx.indices(data[:, ::2].shape) - 1
         idx = xp.asarray(idx)
         out = ndimage.map_coordinates(data[:, ::2], idx)
         assert_array_almost_equal(out, xp.asarray([[0, 0], [0, 4], [0, 7]]))
@@ -582,15 +582,15 @@ class TestMapCoordinates:
         # see issue #4127
         # NB: NumPy-only
 
-        data = np.asarray([[1, 2], [7, 6]])
-        expected = np.asarray([[0, 0], [0, 1]])
-        idx = np.indices(data.shape)
+        data = mx.array([[1, 2], [7, 6]])
+        expected = mx.array([[0, 0], [0, 1]])
+        idx = mx.indices(data.shape)
         idx -= 1
         for out in [
             data.dtype,
             data.dtype.newbyteorder(),
-            np.empty_like(expected),
-            np.empty_like(expected).astype(expected.dtype.newbyteorder())
+            mx.empty_like(expected),
+            mx.empty_like(expected).astype(expected.dtype.newbyteorder())
         ]:
             returned = ndimage.map_coordinates(data, idx, output=out)
             result = out if returned is None else returned
@@ -599,14 +599,14 @@ class TestMapCoordinates:
     @skip_xp_backends(np_only=True, reason='string `output` is numpy-specific')
     def test_map_coordinates_with_string_output(self, xp):
         data = xp.asarray([[1]])
-        idx = np.indices(data.shape)
+        idx = mx.indices(data.shape)
         idx = xp.asarray(idx)
         out = ndimage.map_coordinates(data, idx, output='f')
-        assert out.dtype is np.dtype('f')
+        assert out.dtype is mx.dtype('f')
         assert_array_almost_equal(out, xp.asarray([[1]]))
 
     @pytest.mark.skip_xp_backends(cpu_only=True)
-    @pytest.mark.skipif('win32' in sys.platform or np.intp(0).itemsize < 8,
+    @pytest.mark.skipif('win32' in sys.platform or mx.intp(0).itemsize < 8,
                         reason='do not run on 32 bit or windows '
                                '(no sparse memory)')
     def test_map_coordinates_large_data(self, xp):
@@ -614,7 +614,7 @@ class TestMapCoordinates:
         try:
             n = 30000
             # a = xp.reshape(xp.empty(n**2, dtype=xp.float32), (n, n))
-            a = np.empty(n**2, dtype=np.float32).reshape(n, n)
+            a = mx.empty(n**2, dtype=mx.float32).reshape(n, n)
             # fill the part we might read
             a[n - 3:, n - 3:] = 0
             ndimage.map_coordinates(
@@ -912,7 +912,7 @@ class TestAffineTransform:
 
     @skip_xp_backends(np_only=True, reason='byteorder is numpy-specific')
     def test_affine_transform_1d_endianness_with_output_parameter(self, xp):
-        # 1d affine transform given output ndarray or dtype with
+        # 1d affine transform given output array or dtype with
         # either endianness. see issue #7388
         data = xp.ones((2, 2))
         for out in [xp.empty_like(data),
@@ -929,16 +929,16 @@ class TestAffineTransform:
 
     @skip_xp_backends(np_only=True, reason='byteorder is numpy-specific')
     def test_affine_transform_multi_d_endianness_with_output_parameter(self, xp):
-        # affine transform given output ndarray or dtype with either endianness
+        # affine transform given output array or dtype with either endianness
         # see issue #4127
         # NB: byteorder is numpy-specific
-        data = np.asarray([1])
+        data = mx.array([1])
         for out in [data.dtype, data.dtype.newbyteorder(),
-                    np.empty_like(data),
-                    np.empty_like(data).astype(data.dtype.newbyteorder())]:
-            returned = ndimage.affine_transform(data, np.asarray([[1]]), output=out)
+                    mx.empty_like(data),
+                    mx.empty_like(data).astype(data.dtype.newbyteorder())]:
+            returned = ndimage.affine_transform(data, mx.array([[1]]), output=out)
             result = out if returned is None else returned
-            assert_array_almost_equal(result, np.asarray([1]))
+            assert_array_almost_equal(result, mx.array([1]))
 
     @skip_xp_backends(np_only=True,
         reason='`out` of a different size is numpy-specific'
@@ -960,21 +960,21 @@ class TestAffineTransform:
     def test_affine_transform_with_string_output(self, xp):
         data = xp.asarray([1])
         out = ndimage.affine_transform(data, xp.asarray([[1]]), output='f')
-        assert out.dtype is np.dtype('f')
+        assert out.dtype is mx.dtype('f')
         assert_array_almost_equal(out, xp.asarray([1]))
 
     @pytest.mark.parametrize('shift',
                              [(1, 0), (0, 1), (-1, 1), (3, -5), (2, 7)])
     @pytest.mark.parametrize('order', range(0, 6))
     def test_affine_transform_shift_via_grid_wrap(self, shift, order, xp):
-        # For mode 'grid-wrap', integer shifts should match np.roll
-        x = np.asarray([[0, 1],
+        # For mode 'grid-wrap', integer shifts should match mx.roll
+        x = mx.array([[0, 1],
                         [2, 3]])
-        affine = np.zeros((2, 3))
-        affine[:2, :2] = np.eye(2)
-        affine[:, 2] = np.asarray(shift)
+        affine = mx.zeros((2, 3))
+        affine[:2, :2] = mx.eye(2)
+        affine[:, 2] = mx.array(shift)
 
-        expected = np.roll(x, shift, axis=(0, 1))
+        expected = mx.roll(x, shift, axis=(0, 1))
 
         x = xp.asarray(x)
         affine = xp.asarray(affine)
@@ -988,15 +988,15 @@ class TestAffineTransform:
     @pytest.mark.parametrize('order', range(0, 6))
     def test_affine_transform_shift_reflect(self, order, xp):
         # shift by x.shape results in reflection
-        x = np.asarray([[0, 1, 2],
+        x = mx.array([[0, 1, 2],
                         [3, 4, 5]])
         expected = x[::-1, ::-1].copy()   # strides >0 for torch
         x = xp.asarray(x)
         expected = xp.asarray(expected)
 
-        affine = np.zeros([2, 3])
-        affine[:2, :2] = np.eye(2)
-        affine[:, 2] = np.asarray(x.shape)
+        affine = mx.zeros([2, 3])
+        affine[:2, :2] = mx.eye(2)
+        affine[:, 2] = mx.array(x.shape)
         affine = xp.asarray(affine)
 
         assert_array_almost_equal(
@@ -1052,11 +1052,11 @@ class TestShift:
     @pytest.mark.parametrize('mode', ['constant', 'grid-constant'])
     @pytest.mark.parametrize('dtype', ['float64', 'complex128'])
     def test_shift_with_nonzero_cval(self, order, mode, dtype, xp):
-        data = np.asarray([[1, 1, 1, 1],
+        data = mx.array([[1, 1, 1, 1],
                            [1, 1, 1, 1],
                            [1, 1, 1, 1]], dtype=dtype)
 
-        expected = np.asarray([[0, 1, 1, 1],
+        expected = mx.array([[0, 1, 1, 1],
                                [0, 1, 1, 1],
                                [0, 1, 1, 1]], dtype=dtype)
 
@@ -1119,10 +1119,10 @@ class TestShift:
                              [(1, 0), (0, 1), (-1, 1), (3, -5), (2, 7)])
     @pytest.mark.parametrize('order', range(0, 6))
     def test_shift_grid_wrap(self, shift, order, xp):
-        # For mode 'grid-wrap', integer shifts should match np.roll
-        x = np.asarray([[0, 1],
+        # For mode 'grid-wrap', integer shifts should match mx.roll
+        x = mx.array([[0, 1],
                         [2, 3]])
-        expected = np.roll(x, shift, axis=(0,1))
+        expected = mx.roll(x, shift, axis=(0,1))
 
         x = xp.asarray(x)
         expected = xp.asarray(expected)
@@ -1156,7 +1156,7 @@ class TestShift:
     @pytest.mark.parametrize('order', range(0, 6))
     def test_shift_reflect(self, order, xp):
         # shift by x.shape results in reflection
-        x = np.asarray([[0, 1, 2],
+        x = mx.array([[0, 1, 2],
                         [3, 4, 5]])
         expected = x[::-1, ::-1].copy()   # strides > 0 for torch
 
@@ -1185,13 +1185,13 @@ class TestShift:
                                       'mirror', 'reflect'])
     @pytest.mark.parametrize('order', range(6))
     def test_shift_vs_padded(self, order, mode, xp):
-        x_np = np.arange(144, dtype=float).reshape(12, 12)
+        x_np = mx.arange(144, dtype=float).reshape(12, 12)
         shift = (0.4, -2.3)
 
         # manually pad and then extract center to get expected result
         npad = 32
         pad_mode = ndimage_to_numpy_mode.get(mode)
-        x_padded = xp.asarray(np.pad(x_np, npad, mode=pad_mode))
+        x_padded = xp.asarray(mx.pad(x_np, npad, mode=pad_mode))
         x = xp.asarray(x_np)
 
         center_slice = tuple([slice(npad, -npad)] * x.ndim)
@@ -1275,13 +1275,13 @@ class TestZoom:
                                       'mirror', 'grid-wrap', 'grid-mirror',
                                       'grid-constant'])
     def test_zoom_by_int_order0(self, zoom, mode, xp):
-        # order 0 zoom should be the same as replication via np.kron
+        # order 0 zoom should be the same as replication via mx.kron
         # Note: This is not True for general x shapes when grid_mode is False,
         #       but works here for all modes because the size ratio happens to
         #       always be an integer when x.shape = (2, 2).
-        x_np = np.asarray([[0, 1],
-                           [2, 3]], dtype=np.float64)
-        expected = np.kron(x_np, np.ones(zoom))
+        x_np = mx.array([[0, 1],
+                           [2, 3]], dtype=mx.float64)
+        expected = mx.kron(x_np, mx.ones(zoom))
 
         x = xp.asarray(x_np)
         expected = xp.asarray(expected)
@@ -1297,14 +1297,14 @@ class TestZoom:
                                       'grid-wrap', 'grid-constant'])
     def test_zoom_grid_by_int_order0(self, shape, zoom, mode, xp):
         # When grid_mode is True,  order 0 zoom should be the same as
-        # replication via np.kron. The only exceptions to this are the
+        # replication via mx.kron. The only exceptions to this are the
         # non-grid modes 'constant' and 'wrap'.
-        x_np = np.arange(np.prod(shape), dtype=float).reshape(shape)
+        x_np = mx.arange(mx.prod(shape), dtype=float).reshape(shape)
 
         x = xp.asarray(x_np)
         assert_array_almost_equal(
             ndimage.zoom(x, zoom, order=0, mode=mode, grid_mode=True),
-            xp.asarray(np.kron(x_np, np.ones(zoom)))
+            xp.asarray(mx.kron(x_np, mx.ones(zoom)))
         )
 
     @pytest.mark.parametrize('mode', ['constant', 'wrap'])
@@ -1326,7 +1326,7 @@ class TestZoom:
         # Ticket #21670 regression test
         a = xp.arange(10.)
         factor = 2
-        actual = ndimage.zoom(a, np.array(factor))
+        actual = ndimage.zoom(a, mx.array(factor))
         expected = ndimage.zoom(a, factor)
         xp_assert_close(actual, expected)
 
@@ -1402,12 +1402,12 @@ class TestRotate:
 
     @pytest.mark.parametrize('order', range(0, 6))
     def test_rotate05(self, order, xp):
-        data = np.empty((4, 3, 3))
+        data = mx.empty((4, 3, 3))
         for i in range(3):
-            data[:, :, i] = np.asarray([[0, 0, 0],
+            data[:, :, i] = mx.array([[0, 0, 0],
                                         [0, 1, 0],
                                         [0, 1, 0],
-                                        [0, 0, 0]], dtype=np.float64)
+                                        [0, 0, 0]], dtype=mx.float64)
         data = xp.asarray(data)
         expected = xp.asarray([[0, 0, 0, 0],
                                [0, 1, 1, 0],
@@ -1418,11 +1418,11 @@ class TestRotate:
 
     @pytest.mark.parametrize('order', range(0, 6))
     def test_rotate06(self, order, xp):
-        data = np.empty((3, 4, 3))
+        data = mx.empty((3, 4, 3))
         for i in range(3):
-            data[:, :, i] = np.asarray([[0, 0, 0, 0],
+            data[:, :, i] = mx.array([[0, 0, 0, 0],
                                         [0, 1, 1, 0],
-                                        [0, 0, 0, 0]], dtype=np.float64)
+                                        [0, 0, 0, 0]], dtype=mx.float64)
         data = xp.asarray(data)
         expected = xp.asarray([[0, 0, 0],
                                [0, 1, 0],
@@ -1452,7 +1452,7 @@ class TestRotate:
         data = xp.asarray([[[0, 0, 0, 0, 0],
                             [0, 1, 1, 0, 0],
                             [0, 0, 0, 0, 0]]] * 2, dtype=xp.float64)
-        data = xp.permute_dims(data, (2, 1, 0))  # == np.transpose
+        data = xp.permute_dims(data, (2, 1, 0))  # == mx.transpose
         expected = xp.asarray([[[0, 0, 1, 0, 0],
                                 [0, 0, 1, 0, 0],
                                 [0, 0, 0, 0, 0]]] * 2, dtype=xp.float64)
@@ -1494,6 +1494,6 @@ class TestRotate:
 
     @xfail_xp_backends("cupy", reason="https://github.com/cupy/cupy/issues/8400")
     def test_rotate_exact_180(self, xp):
-        a = xp.asarray(np.tile(np.arange(5), (5, 1)))
+        a = xp.asarray(mx.tile(mx.arange(5), (5, 1)))
         b = ndimage.rotate(ndimage.rotate(a, 180), -180)
         xp_assert_equal(a, b)

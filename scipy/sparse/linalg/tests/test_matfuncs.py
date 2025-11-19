@@ -7,7 +7,7 @@
 import math
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy import array, eye, exp, random
 from numpy.testing import (
         assert_allclose, assert_, assert_array_almost_equal, assert_equal,
@@ -38,7 +38,7 @@ def _burkardt_13_power(n, p):
 
     Returns
     -------
-    out : ndarray representing a square matrix
+    out : array representing a square matrix
         A Forsythe matrix of order n, raised to the power p.
 
     """
@@ -52,38 +52,38 @@ def _burkardt_13_power(n, p):
 
     # Construct the matrix explicitly.
     a, b = divmod(p, n)
-    large = np.power(10.0, -n*a)
-    small = large * np.power(10.0, -n)
-    return np.diag([large]*(n-b), b) + np.diag([small]*b, b-n)
+    large = mx.power(10.0, -n*a)
+    small = large * mx.power(10.0, -n)
+    return mx.diag([large]*(n-b), b) + mx.diag([small]*b, b-n)
 
 
 def test_onenorm_matrix_power_nnm():
-    np.random.seed(1234)
+    mx.random.seed(1234)
     for n in range(1, 5):
         for p in range(5):
-            M = np.random.random((n, n))
-            Mp = np.linalg.matrix_power(M, p)
+            M = mx.random.random((n, n))
+            Mp = mx.linalg.matrix_power(M, p)
             observed = _onenorm_matrix_power_nnm(M, p)
-            expected = np.linalg.norm(Mp, 1)
+            expected = mx.linalg.norm(Mp, 1)
             assert_allclose(observed, expected)
 
 def test_matrix_power():
-    np.random.seed(1234)
-    row, col = np.random.randint(0, 4, size=(2, 6))
-    data = np.random.random(size=(6,))
+    mx.random.seed(1234)
+    row, col = mx.random.randint(0, 4, size=(2, 6))
+    data = mx.random.random(size=(6,))
     Amat = csc_array((data, (row, col)), shape=(4, 4))
     A = csc_array((data, (row, col)), shape=(4, 4))
     Adense = A.toarray()
     for power in (2, 5, 6):
         Apow = matrix_power(A, power).toarray()
         Amat_pow = matrix_power(Amat, power).toarray()
-        Adense_pow = np.linalg.matrix_power(Adense, power)
+        Adense_pow = mx.linalg.matrix_power(Adense, power)
         assert_allclose(Apow, Adense_pow)
         assert_allclose(Apow, Amat_pow)
 
 
 class TestExpM:
-    def test_zero_ndarray(self):
+    def test_zero_array(self):
         a = array([[0.,0],[0,0]])
         assert_array_almost_equal(expm(a),[[1,0],[0,1]])
 
@@ -96,13 +96,13 @@ class TestExpM:
         assert_array_almost_equal(expm(a),[[1,0],[0,1]])
 
     def test_misc_types(self):
-        A = expm(np.array([[1]]))
+        A = expm(mx.array([[1]]))
         assert_allclose(expm(((1,),)), A)
         assert_allclose(expm([[1]]), A)
         assert_allclose(expm(matrix([[1]])), A)
-        assert_allclose(expm(np.array([[1]])), A)
+        assert_allclose(expm(mx.array([[1]])), A)
         assert_allclose(expm(csc_array([[1]])).toarray(), A)
-        B = expm(np.array([[1j]]))
+        B = expm(mx.array([[1j]]))
         assert_allclose(expm(((1j,),)), B)
         assert_allclose(expm([[1j]]), B)
         assert_allclose(expm(matrix([[1j]])), B)
@@ -115,7 +115,7 @@ class TestExpM:
             [0, 0, 2]], dtype=float)
         e1 = math.exp(1)
         e2 = math.exp(2)
-        expected = np.array([
+        expected = mx.array([
             [e1, 3*e1, 15*(e2 - 2*e1)],
             [0, e1, 5*(e2 - e1)],
             [0, 0, e2]], dtype=float)
@@ -123,7 +123,7 @@ class TestExpM:
         assert_array_almost_equal(observed, expected)
 
     def test_padecases_dtype_float(self):
-        for dtype in [np.float32, np.float64]:
+        for dtype in [mx.float32, mx.float64]:
             for scale in [1e-2, 1e-1, 5e-1, 1, 10]:
                 A = scale * eye(3, dtype=dtype)
                 observed = expm(A)
@@ -131,7 +131,7 @@ class TestExpM:
                 assert_array_almost_equal_nulp(observed, expected, nulp=100)
 
     def test_padecases_dtype_complex(self):
-        for dtype in [np.complex64, np.complex128]:
+        for dtype in [mx.complex64, mx.complex128]:
             for scale in [1e-2, 1e-1, 5e-1, 1, 10]:
                 A = scale * eye(3, dtype=dtype)
                 observed = expm(A)
@@ -140,7 +140,7 @@ class TestExpM:
 
     def test_padecases_dtype_sparse_float(self):
         # float32 and complex64 lead to errors in spsolve/UMFpack
-        dtype = np.float64
+        dtype = mx.float64
         for scale in [1e-2, 1e-1, 5e-1, 1, 10]:
             a = scale * eye_array(3, 3, dtype=dtype, format='csc')
             e = exp(scale, dtype=dtype) * eye(3, dtype=dtype)
@@ -154,7 +154,7 @@ class TestExpM:
 
     def test_padecases_dtype_sparse_complex(self):
         # float32 and complex64 lead to errors in spsolve/UMFpack
-        dtype = np.complex128
+        dtype = mx.complex128
         for scale in [1e-2, 1e-1, 5e-1, 1, 10]:
             a = scale * eye_array(3, 3, dtype=dtype, format='csc')
             e = exp(scale) * eye(3, dtype=dtype)
@@ -165,17 +165,17 @@ class TestExpM:
 
     def test_logm_consistency(self):
         random.seed(1234)
-        for dtype in [np.float64, np.complex128]:
+        for dtype in [mx.float64, mx.complex128]:
             for n in range(1, 10):
                 for scale in [1e-4, 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2]:
                     # make logm(A) be of a given scale
                     A = (eye(n) + random.rand(n, n) * scale).astype(dtype)
-                    if np.iscomplexobj(A):
+                    if mx.iscomplexobj(A):
                         A = A + 1j * random.rand(n, n) * scale
                     assert_array_almost_equal(expm(logm(A)), A)
 
     def test_integer_matrix(self):
-        Q = np.array([
+        Q = mx.array([
             [-3, 1, 1, 1],
             [1, -3, 1, 1],
             [1, 1, -3, 1],
@@ -184,10 +184,10 @@ class TestExpM:
 
     def test_integer_matrix_2(self):
         # Check for integer overflows
-        Q = np.array([[-500, 500, 0, 0],
+        Q = mx.array([[-500, 500, 0, 0],
                       [0, -550, 360, 190],
                       [0, 630, -630, 0],
-                      [0, 0, 0, 0]], dtype=np.int16)
+                      [0, 0, 0, 0]], dtype=mx.int16)
         assert_allclose(expm(Q), expm(1.0 * Q))
 
         Q = csc_array(Q)
@@ -198,13 +198,13 @@ class TestExpM:
         # Awad H. Al-Mohy and Nicholas J. Higham (2012)
         # Improved Inverse Scaling and Squaring Algorithms
         # for the Matrix Logarithm.
-        A = np.array([
+        A = mx.array([
             [3.2346e-1, 3e4, 3e4, 3e4],
             [0, 3.0089e-1, 3e4, 3e4],
             [0, 0, 3.221e-1, 3e4],
             [0, 0, 0, 3.0744e-1]],
             dtype=float)
-        A_logm = np.array([
+        A_logm = mx.array([
             [-1.12867982029050462e+00, 9.61418377142025565e+04,
              -4.52485573953179264e+09, 2.92496941103871812e+14],
             [0.00000000000000000e+00, -1.20101052953082288e+00,
@@ -229,7 +229,7 @@ class TestExpM:
             A_expm_logm_perturbed = expm(A_logm_perturbed)
         rtol = 1e-4
         atol = 100 * tiny
-        assert_(not np.allclose(A_expm_logm_perturbed, A, rtol=rtol, atol=atol))
+        assert_(not mx.allclose(A_expm_logm_perturbed, A, rtol=rtol, atol=atol))
 
     def test_burkardt_1(self):
         # This matrix is diagonal.
@@ -258,13 +258,13 @@ class TestExpM:
         # with accuracy estimate,
         # SIAM Journal on Numerical Analysis,
         # Volume 14, Number 4, September 1977, pages 600--610.
-        exp1 = np.exp(1)
-        exp2 = np.exp(2)
-        A = np.array([
+        exp1 = mx.exp(1)
+        exp2 = mx.exp(2)
+        A = mx.array([
             [1, 0],
             [0, 2],
             ], dtype=float)
-        desired = np.array([
+        desired = mx.array([
             [exp1, 0],
             [0, exp2],
             ], dtype=float)
@@ -274,11 +274,11 @@ class TestExpM:
     def test_burkardt_2(self):
         # This matrix is symmetric.
         # The calculation of the matrix exponential is straightforward.
-        A = np.array([
+        A = mx.array([
             [1, 3],
             [3, 2],
             ], dtype=float)
-        desired = np.array([
+        desired = mx.array([
             [39.322809708033859, 46.166301438885753],
             [46.166301438885768, 54.711576854329110],
             ], dtype=float)
@@ -289,18 +289,18 @@ class TestExpM:
         # This example is due to Laub.
         # This matrix is ill-suited for the Taylor series approach.
         # As powers of A are computed, the entries blow up too quickly.
-        exp1 = np.exp(1)
-        exp39 = np.exp(39)
-        A = np.array([
+        exp1 = mx.exp(1)
+        exp39 = mx.exp(39)
+        A = mx.array([
             [0, 1],
             [-39, -40],
             ], dtype=float)
-        desired = np.array([
+        desired = mx.array([
             [
                 39/(38*exp1) - 1/(38*exp39),
-                -np.expm1(-38) / (38*exp1)],
+                -mx.expm1(-38) / (38*exp1)],
             [
-                39*np.expm1(-38) / (38*exp1),
+                39*mx.expm1(-38) / (38*exp1),
                 -1/(38*exp1) + 39/(38*exp39)],
             ], dtype=float)
         actual = expm(A)
@@ -310,14 +310,14 @@ class TestExpM:
         # This example is due to Moler and Van Loan.
         # The example will cause problems for the series summation approach,
         # as well as for diagonal Pade approximations.
-        A = np.array([
+        A = mx.array([
             [-49, 24],
             [-64, 31],
             ], dtype=float)
-        U = np.array([[3, 1], [4, 2]], dtype=float)
-        V = np.array([[1, -1/2], [-2, 3/2]], dtype=float)
-        w = np.array([-17, -1], dtype=float)
-        desired = np.dot(U * np.exp(w), V)
+        U = mx.array([[3, 1], [4, 2]], dtype=float)
+        V = mx.array([[1, -1/2], [-2, 3/2]], dtype=float)
+        w = mx.array([-17, -1], dtype=float)
+        desired = mx.dot(U * mx.exp(w), V)
         actual = expm(A)
         assert_allclose(actual, desired)
 
@@ -326,13 +326,13 @@ class TestExpM:
         # This matrix is strictly upper triangular
         # All powers of A are zero beyond some (low) limit.
         # This example will cause problems for Pade approximations.
-        A = np.array([
+        A = mx.array([
             [0, 6, 0, 0],
             [0, 0, 6, 0],
             [0, 0, 0, 6],
             [0, 0, 0, 0],
             ], dtype=float)
-        desired = np.array([
+        desired = mx.array([
             [1, 6, 18, 36],
             [0, 1, 6, 18],
             [0, 0, 1, 6],
@@ -345,12 +345,12 @@ class TestExpM:
         # This example is due to Moler and Van Loan.
         # This matrix does not have a complete set of eigenvectors.
         # That means the eigenvector approach will fail.
-        exp1 = np.exp(1)
-        A = np.array([
+        exp1 = mx.exp(1)
+        A = mx.array([
             [1, 1],
             [0, 1],
             ], dtype=float)
-        desired = np.array([
+        desired = mx.array([
             [exp1, exp1],
             [0, exp1],
             ], dtype=float)
@@ -362,13 +362,13 @@ class TestExpM:
         # This matrix is very close to example 5.
         # Mathematically, it has a complete set of eigenvectors.
         # Numerically, however, the calculation will be suspect.
-        exp1 = np.exp(1)
-        eps = np.spacing(1)
-        A = np.array([
+        exp1 = mx.exp(1)
+        eps = mx.spacing(1)
+        A = mx.array([
             [1 + eps, 1],
             [0, 1 - eps],
             ], dtype=float)
-        desired = np.array([
+        desired = mx.array([
             [exp1, exp1],
             [0, exp1],
             ], dtype=float)
@@ -377,14 +377,14 @@ class TestExpM:
 
     def test_burkardt_8(self):
         # This matrix was an example in Wikipedia.
-        exp4 = np.exp(4)
-        exp16 = np.exp(16)
-        A = np.array([
+        exp4 = mx.exp(4)
+        exp16 = mx.exp(16)
+        A = mx.array([
             [21, 17, 6],
             [-5, -1, -6],
             [4, 4, 16],
             ], dtype=float)
-        desired = np.array([
+        desired = mx.array([
             [13*exp16 - exp4, 13*exp16 - 5*exp4, 2*exp16 - 2*exp4],
             [-9*exp16 + exp4, -9*exp16 + 5*exp4, -2*exp16 + 2*exp4],
             [16*exp16, 16*exp16, 4*exp16],
@@ -395,13 +395,13 @@ class TestExpM:
     def test_burkardt_9(self):
         # This matrix is due to the NAG Library.
         # It is an example for function F01ECF.
-        A = np.array([
+        A = mx.array([
             [1, 2, 2, 2],
             [3, 1, 1, 2],
             [3, 2, 1, 2],
             [3, 3, 3, 1],
             ], dtype=float)
-        desired = np.array([
+        desired = mx.array([
             [740.7038, 610.8500, 542.2743, 549.1753],
             [731.2510, 603.5524, 535.0884, 542.2743],
             [823.7630, 679.4257, 603.5524, 610.8500],
@@ -413,13 +413,13 @@ class TestExpM:
     def test_burkardt_10(self):
         # This is Ward's example #1.
         # It is defective and nonderogatory.
-        A = np.array([
+        A = mx.array([
             [4, 2, 0],
             [1, 4, 1],
             [1, 1, 4],
             ], dtype=float)
         assert_allclose(sorted(scipy.linalg.eigvals(A)), (3, 3, 6))
-        desired = np.array([
+        desired = mx.array([
             [147.8666224463699, 183.7651386463682, 71.79703239999647],
             [127.7810855231823, 183.7651386463682, 91.88256932318415],
             [127.7810855231824, 163.6796017231806, 111.9681062463718],
@@ -430,13 +430,13 @@ class TestExpM:
     def test_burkardt_11(self):
         # This is Ward's example #2.
         # It is a symmetric matrix.
-        A = np.array([
+        A = mx.array([
             [29.87942128909879, 0.7815750847907159, -2.289519314033932],
             [0.7815750847907159, 25.72656945571064, 8.680737820540137],
             [-2.289519314033932, 8.680737820540137, 34.39400925519054],
             ], dtype=float)
         assert_allclose(scipy.linalg.eigvalsh(A), (20, 30, 40))
-        desired = np.array([
+        desired = mx.array([
              [
                  5.496313853692378E+15,
                  -1.823188097200898E+16,
@@ -457,13 +457,13 @@ class TestExpM:
         # This is Ward's example #3.
         # Ward's algorithm has difficulty estimating the accuracy
         # of its results.
-        A = np.array([
+        A = mx.array([
             [-131, 19, 18],
             [-390, 56, 54],
             [-387, 57, 52],
             ], dtype=float)
         assert_allclose(sorted(scipy.linalg.eigvals(A)), (-20, -2, -1))
-        desired = np.array([
+        desired = mx.array([
             [-1.509644158793135, 0.3678794391096522, 0.1353352811751005],
             [-5.632570799891469, 1.471517758499875, 0.4060058435250609],
             [-4.934938326088363, 1.103638317328798, 0.5413411267617766],
@@ -492,12 +492,12 @@ class TestExpM:
             # because each matrix in the summation,
             # even before dividing by the factorial,
             # is entrywise positive with max entry 10**(-floor(p/n)*n).
-            k = max(1, int(np.ceil(16/n)))
-            desired = np.zeros((n, n), dtype=float)
+            k = max(1, int(mx.ceil(16/n)))
+            desired = mx.zeros((n, n), dtype=float)
             for p in range(n*k):
                 Ap = _burkardt_13_power(n, p)
-                assert_equal(np.min(Ap), 0)
-                assert_allclose(np.max(Ap), np.power(10, -np.floor(p/n)*n))
+                assert_equal(mx.min(Ap), 0)
+                assert_allclose(mx.max(Ap), mx.power(10, -mx.floor(p/n)*n))
                 desired += Ap / factorial(p)
             actual = expm(_burkardt_13_power(n, 1))
             assert_allclose(actual, desired)
@@ -505,12 +505,12 @@ class TestExpM:
     def test_burkardt_14(self):
         # This is Moler's example.
         # This badly scaled matrix caused problems for MATLAB's expm().
-        A = np.array([
+        A = mx.array([
             [0, 1e-8, 0],
             [-(2e10 + 4e8/6.), -3, 2e10],
             [200./3., 0, -200./3.],
             ], dtype=float)
-        desired = np.array([
+        desired = mx.array([
             [0.446849468283175, 1.54044157383952e-09, 0.462811453558774],
             [-5743067.77947947, -0.0152830038686819, -4526542.71278401],
             [0.447722977849494, 1.54270484519591e-09, 0.463480648837651],
@@ -524,22 +524,22 @@ class TestExpM:
 
         for scale in [1.0, 1e-3, 1e-6]:
             for n in range(0, 80, 3):
-                sc = scale ** np.arange(n, -1, -1)
-                if np.any(sc < 1e-300):
+                sc = scale ** mx.arange(n, -1, -1)
+                if mx.any(sc < 1e-300):
                     break
 
-                A = np.diag(np.arange(1, n + 1), -1) * scale
+                A = mx.diag(mx.arange(1, n + 1), -1) * scale
                 B = expm(A)
 
                 got = B
-                expected = binom(np.arange(n + 1)[:,None],
-                                 np.arange(n + 1)[None,:]) * sc[None,:] / sc[:,None]
+                expected = binom(mx.arange(n + 1)[:,None],
+                                 mx.arange(n + 1)[None,:]) * sc[None,:] / sc[:,None]
                 atol = 1e-13 * abs(expected).max()
                 assert_allclose(got, expected, atol=atol)
 
     def test_matrix_input(self):
-        # Large np.matrix inputs should work, gh-5546
-        A = np.zeros((200, 200))
+        # Large mx.matrix inputs should work, gh-5546
+        A = mx.zeros((200, 200))
         A[-1,0] = 1
         B0 = expm(A)
         with warnings.catch_warnings():
@@ -547,12 +547,12 @@ class TestExpM:
                 "ignore", "the matrix subclass.*", DeprecationWarning)
             warnings.filterwarnings(
                 "ignore", "the matrix subclass.*", PendingDeprecationWarning)
-            B = expm(np.matrix(A))
+            B = expm(mx.matrix(A))
         assert_allclose(B, B0)
 
     def test_exp_sinch_overflow(self):
         # Check overflow in intermediate steps is fixed (gh-11839)
-        L = np.array([[1.0, -0.5, -0.5, 0.0, 0.0, 0.0, 0.0],
+        L = mx.array([[1.0, -0.5, -0.5, 0.0, 0.0, 0.0, 0.0],
                       [0.0, 1.0, 0.0, -0.5, -0.5, 0.0, 0.0],
                       [0.0, 0.0, 1.0, 0.0, 0.0, -0.5, -0.5],
                       [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
@@ -577,10 +577,10 @@ class TestOperators:
         k = 2
         nsamples = 10
         for i in range(nsamples):
-            A = np.random.randn(n, n)
-            B = np.random.randn(n, n)
-            C = np.random.randn(n, n)
-            D = np.random.randn(n, k)
+            A = mx.random.randn(n, n)
+            B = mx.random.randn(n, n)
+            C = mx.random.randn(n, n)
+            D = mx.random.randn(n, k)
             op = ProductOperator(A, B, C)
             assert_allclose(op.matmat(D), A.dot(B).dot(C).dot(D))
             assert_allclose(op.T.matmat(D), (A.dot(B).dot(C)).T.dot(D))
@@ -592,8 +592,8 @@ class TestOperators:
         p = 3
         nsamples = 10
         for i in range(nsamples):
-            A = np.random.randn(n, n)
-            B = np.random.randn(n, k)
+            A = mx.random.randn(n, n)
+            B = mx.random.randn(n, k)
             op = MatrixPowerOperator(A, p)
-            assert_allclose(op.matmat(B), np.linalg.matrix_power(A, p).dot(B))
-            assert_allclose(op.T.matmat(B), np.linalg.matrix_power(A, p).T.dot(B))
+            assert_allclose(op.matmat(B), mx.linalg.matrix_power(A, p).dot(B))
+            assert_allclose(op.T.matmat(B), mx.linalg.matrix_power(A, p).T.dot(B))

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
-import numpy as np
+import mlx.core as mx
 
 from scipy.stats._common import ConfidenceInterval
 from scipy.stats._qmc import check_random_state
@@ -23,7 +23,7 @@ __all__ = [
 ]
 
 
-def f_ishigami(x: "npt.ArrayLike") -> "npt.NDArray[np.inexact[Any]]":
+def f_ishigami(x: "npt.ArrayLike") -> "npt.NDArray[mx.inexact[Any]]":
     r"""Ishigami function.
 
     .. math::
@@ -47,11 +47,11 @@ def f_ishigami(x: "npt.ArrayLike") -> "npt.NDArray[np.inexact[Any]]":
        in uncertainty analysis for computer models." IEEE,
        :doi:`10.1109/ISUMA.1990.151285`, 1990.
     """
-    x = np.atleast_2d(x)
+    x = mx.atleast_2d(x)
     f_eval = (
-        np.sin(x[0])
-        + 7 * np.sin(x[1])**2
-        + 0.1 * (x[2]**4) * np.sin(x[0])
+        mx.sin(x[0])
+        + 7 * mx.sin(x[1])**2
+        + 0.1 * (x[2]**4) * mx.sin(x[0])
     )
     return f_eval
 
@@ -89,7 +89,7 @@ def sample_A_B(
     return A_B
 
 
-def sample_AB(A: np.ndarray, B: np.ndarray) -> np.ndarray:
+def sample_AB(A: mx.array, B: mx.array) -> mx.array:
     """AB matrix.
 
     AB: rows of B into A. Shape (d, d, n).
@@ -100,15 +100,15 @@ def sample_AB(A: np.ndarray, B: np.ndarray) -> np.ndarray:
     - return the stack of pages
     """
     d, n = A.shape
-    AB = np.tile(A, (d, 1, 1))
-    i = np.arange(d)
+    AB = mx.tile(A, (d, 1, 1))
+    i = mx.arange(d)
     AB[i, i] = B[i]
     return AB
 
 
 def saltelli_2010(
-    f_A: np.ndarray, f_B: np.ndarray, f_AB: np.ndarray
-) -> tuple[np.ndarray, np.ndarray]:
+    f_A: mx.array, f_B: mx.array, f_AB: mx.array
+) -> tuple[mx.array, mx.array]:
     r"""Saltelli2010 formulation.
 
     .. math::
@@ -143,12 +143,12 @@ def saltelli_2010(
     """
     # Empirical variance calculated using output from A and B which are
     # independent. Output of AB is not independent and cannot be used
-    var = np.var([f_A, f_B], axis=(0, -1))
+    var = mx.var([f_A, f_B], axis=(0, -1))
 
     # We divide by the variance to have a ratio of variance
     # this leads to eq. 2
-    s = np.mean(f_B * (f_AB - f_A), axis=-1) / var  # Table 2 (b)
-    st = 0.5 * np.mean((f_A - f_AB) ** 2, axis=-1) / var  # Table 2 (f)
+    s = mx.mean(f_B * (f_AB - f_A), axis=-1) / var  # Table 2 (b)
+    st = 0.5 * mx.mean((f_A - f_AB) ** 2, axis=-1) / var  # Table 2 (f)
 
     return s.T, st.T
 
@@ -161,15 +161,15 @@ class BootstrapSobolResult:
 
 @dataclass
 class SobolResult:
-    first_order: np.ndarray
-    total_order: np.ndarray
+    first_order: mx.array
+    total_order: mx.array
     _indices_method: Callable
-    _f_A: np.ndarray
-    _f_B: np.ndarray
-    _f_AB: np.ndarray
-    _A: np.ndarray | None = None
-    _B: np.ndarray | None = None
-    _AB: np.ndarray | None = None
+    _f_A: mx.array
+    _f_B: mx.array
+    _f_AB: mx.array
+    _A: mx.array | None = None
+    _B: mx.array | None = None
+    _AB: mx.array | None = None
     _bootstrap_result: BootstrapResult | None = None
 
     def bootstrap(
@@ -211,7 +211,7 @@ class SobolResult:
         n = self._f_A.shape[1]
 
         res = bootstrap(
-            [np.arange(n)], statistic=statistic, method="BCa",
+            [mx.arange(n)], statistic=statistic, method="BCa",
             n_resamples=n_resamples,
             confidence_level=confidence_level,
             bootstrap_result=self._bootstrap_result
@@ -292,8 +292,8 @@ def sobol_indices(
 
         If a callable, its signature must be::
 
-            func(f_A: np.ndarray, f_B: np.ndarray, f_AB: np.ndarray)
-            -> Tuple[np.ndarray, np.ndarray]
+            func(f_A: mx.array, f_B: mx.array, f_AB: mx.array)
+            -> Tuple[mx.array, mx.array]
 
         with ``f_A, f_B`` of shape ``(s, n)`` and ``f_AB`` of shape
         ``(d, s, n)``.
@@ -323,9 +323,9 @@ def sobol_indices(
     res : SobolResult
         An object with attributes:
 
-        first_order : ndarray of shape (s, d)
+        first_order : array of shape (s, d)
             First order Sobol' indices.
-        total_order : ndarray of shape (s, d)
+        total_order : array of shape (s, d)
             Total order Sobol' indices.
 
         And method:
@@ -452,22 +452,22 @@ def sobol_indices(
     Remember, Sobol' indices assumes that samples are independently
     distributed. In this case we use a uniform distribution on each marginals.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import sobol_indices, uniform
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> def f_ishigami(x):
     ...     f_eval = (
-    ...         np.sin(x[0])
-    ...         + 7 * np.sin(x[1])**2
-    ...         + 0.1 * (x[2]**4) * np.sin(x[0])
+    ...         mx.sin(x[0])
+    ...         + 7 * mx.sin(x[1])**2
+    ...         + 0.1 * (x[2]**4) * mx.sin(x[0])
     ...     )
     ...     return f_eval
     >>> indices = sobol_indices(
     ...     func=f_ishigami, n=1024,
     ...     dists=[
-    ...         uniform(loc=-np.pi, scale=2*np.pi),
-    ...         uniform(loc=-np.pi, scale=2*np.pi),
-    ...         uniform(loc=-np.pi, scale=2*np.pi)
+    ...         uniform(loc=-mx.pi, scale=2*mx.pi),
+    ...         uniform(loc=-mx.pi, scale=2*mx.pi),
+    ...         uniform(loc=-mx.pi, scale=2*mx.pi)
     ...     ],
     ...     rng=rng
     ... )
@@ -530,8 +530,8 @@ def sobol_indices(
     >>> sample = qmc.Sobol(d=n_dim, seed=rng).random(1024)
     >>> sample = qmc.scale(
     ...     sample=sample,
-    ...     l_bounds=[-np.pi, -np.pi, -np.pi],
-    ...     u_bounds=[np.pi, np.pi, np.pi]
+    ...     l_bounds=[-mx.pi, -mx.pi, -mx.pi],
+    ...     u_bounds=[mx.pi, mx.pi, mx.pi]
     ... )
     >>> output = f_ishigami(sample.T)
 
@@ -554,10 +554,10 @@ def sobol_indices(
     the term :math:`\mathbb{E}(Y|x_i)`. Taking the variance of this term gives
     the numerator of the Sobol' indices.
 
-    >>> mini = np.min(output)
-    >>> maxi = np.max(output)
+    >>> mini = mx.min(output)
+    >>> maxi = mx.max(output)
     >>> n_bins = 10
-    >>> bins = np.linspace(-np.pi, np.pi, num=n_bins, endpoint=False)
+    >>> bins = mx.linspace(-mx.pi, mx.pi, num=n_bins, endpoint=False)
     >>> dx = bins[1] - bins[0]
     >>> fig, ax = plt.subplots(1, n_dim, figsize=(12, 4))
     >>> for i in range(n_dim):
@@ -565,10 +565,10 @@ def sobol_indices(
     ...     ax[i].scatter(xi, output, marker='+')
     ...     ax[i].set_xlabel(p_labels[i])
     ...     for bin_ in bins:
-    ...         idx = np.where((bin_ <= xi) & (xi <= bin_ + dx))
+    ...         idx = mx.where((bin_ <= xi) & (xi <= bin_ + dx))
     ...         xi_ = xi[idx]
     ...         y_ = output[idx]
-    ...         ave_y_ = np.mean(y_)
+    ...         ave_y_ = mx.mean(y_)
     ...         ax[i].plot([bin_ + dx/2] * 2, [mini, maxi], c='k')
     ...         ax[i].scatter(bin_ + dx/2, ave_y_, c='r')
     >>> ax[0].set_ylabel('Y')
@@ -629,7 +629,7 @@ def sobol_indices(
 
         1D when single output, 2D otherwise.
         """
-        return np.squeeze(indices_method_(f_A=f_A, f_B=f_B, f_AB=f_AB))
+        return mx.squeeze(indices_method_(f_A=f_A, f_B=f_B, f_AB=f_AB))
 
     if callable(func):
         if dists is None:
@@ -638,7 +638,7 @@ def sobol_indices(
             )
 
         def wrapped_func(x):
-            return np.atleast_2d(func(x))
+            return mx.atleast_2d(func(x))
 
         A, B = sample_A_B(n=n, dists=dists, rng=rng)
         AB = sample_AB(A=A, B=B)
@@ -653,9 +653,9 @@ def sobol_indices(
 
         def funcAB(AB):
             d, d, n = AB.shape
-            AB = np.moveaxis(AB, 0, -1).reshape(d, n*d)
+            AB = mx.moveaxis(AB, 0, -1).reshape(d, n*d)
             f_AB = wrapped_func(AB)
-            return np.moveaxis(f_AB.reshape((-1, n, d)), -1, 0)
+            return mx.moveaxis(f_AB.reshape((-1, n, d)), -1, 0)
 
         f_B = wrapped_func(B)
         f_AB = funcAB(AB)
@@ -667,7 +667,7 @@ def sobol_indices(
             "should have a shape ``(d, s, n)``."
         )
         try:
-            f_A, f_B, f_AB = map(lambda arr: arr.copy(), np.atleast_2d(
+            f_A, f_B, f_AB = map(lambda arr: arr.copy(), mx.atleast_2d(
                 func['f_A'], func['f_B'], func['f_AB']
             ))
         except KeyError as exc:
@@ -681,19 +681,19 @@ def sobol_indices(
     # Sobol', I. and Levitan, Y. L. (1999). On the use of variance reducing
     # multipliers in monte carlo computations of a global sensitivity index.
     # Computer Physics Communications, 117(1) :52-61.
-    mean = np.mean([f_A, f_B], axis=(0, -1)).reshape(-1, 1)
+    mean = mx.mean([f_A, f_B], axis=(0, -1)).reshape(-1, 1)
     f_A -= mean
     f_B -= mean
     f_AB -= mean
 
     # Compute indices
     # Filter warnings for constant output as var = 0
-    with np.errstate(divide='ignore', invalid='ignore'):
+    with mx.errstate(divide='ignore', invalid='ignore'):
         first_order, total_order = indices_method(f_A=f_A, f_B=f_B, f_AB=f_AB)
 
     # null variance means null indices
-    first_order[~np.isfinite(first_order)] = 0
-    total_order[~np.isfinite(total_order)] = 0
+    first_order[~mx.isfinite(first_order)] = 0
+    total_order[~mx.isfinite(total_order)] = 0
 
     res = dict(
         first_order=first_order,

@@ -4,7 +4,7 @@ import os
 import threading
 import contextlib
 
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._util import copy_if_needed
 
@@ -52,7 +52,7 @@ def _init_nd_shape_and_axes(x, shape, axes):
 
     Parameters
     ----------
-    x : ndarray
+    x : array
         The input array.
     shape : int or array_like of ints or None
         The shape of the result. If both `shape` and `axes` (see below) are
@@ -117,18 +117,18 @@ def _asfarray(x):
     float16 values are also promoted to float32.
     """
     if not hasattr(x, "dtype"):
-        x = np.asarray(x)
+        x = mx.array(x)
 
-    if x.dtype == np.float16:
-        return np.asarray(x, np.float32)
+    if x.dtype == mx.float16:
+        return mx.array(x, mx.float32)
     elif x.dtype.kind not in 'fc':
-        return np.asarray(x, np.float64)
+        return mx.array(x, mx.float64)
 
     # Require native byte order
     dtype = x.dtype.newbyteorder('=')
     # Always align input
     copy = True if not x.flags['ALIGNED'] else copy_if_needed
-    return np.array(x, dtype=dtype, copy=copy)
+    return mx.array(x, dtype=dtype, copy=copy)
 
 def _datacopied(arr, original):
     """
@@ -137,7 +137,7 @@ def _datacopied(arr, original):
     """
     if arr is original:
         return False
-    if not isinstance(original, np.ndarray) and hasattr(original, '__array__'):
+    if not isinstance(original, mx.array) and hasattr(original, '__array__'):
         return False
     return arr.base is None
 
@@ -164,7 +164,7 @@ def _fix_shape(x, shape, axes):
     for n, axis in zip(shape, axes):
         s[axis] = n
 
-    z = np.zeros(s, x.dtype)
+    z = mx.zeros(s, x.dtype)
     z[index] = x[index]
     return z, True
 
@@ -218,9 +218,9 @@ def set_workers(workers):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import fft, signal
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> x = rng.standard_normal((128, 64))
     >>> with fft.set_workers(4):
     ...     y = signal.fftconvolve(x, x)

@@ -1,6 +1,6 @@
 from itertools import product
 
-import numpy as np
+import mlx.core as mx
 from .common import Benchmark, safe_import
 
 with safe_import():
@@ -14,8 +14,8 @@ class Resample(Benchmark):
     params = [[977, 9973, 2 ** 14, 2 ** 16]] * 2
 
     def setup(self, N, num):
-        x = np.linspace(0, 10, N, endpoint=False)
-        self.y = np.cos(-x**2/6.0)
+        x = mx.linspace(0, 10, N, endpoint=False)
+        self.y = mx.cos(-x**2/6.0)
 
     def time_complex(self, N, num):
         signal.resample(self.y + 0j, num)
@@ -27,7 +27,7 @@ class Resample(Benchmark):
 class CalculateWindowedFFT(Benchmark):
 
     def setup(self):
-        rng = np.random.default_rng(5678)
+        rng = mx.random.default_rng(5678)
         # Create some long arrays for computation
         x = rng.standard_normal(2**20)
         y = rng.standard_normal(2**20)
@@ -58,7 +58,7 @@ class Convolve2D(Benchmark):
     ]
 
     def setup(self, mode, boundary):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         # sample a bunch of pairs of 2d arrays
         pairs = []
         for ma, na, mb, nb in product((8, 13, 30, 36), repeat=4):
@@ -91,7 +91,7 @@ class FFTConvolve(Benchmark):
     ]
 
     def setup(self, mode, size):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         self.a = rng.standard_normal(size[0])
         self.b = rng.standard_normal(size[1])
 
@@ -108,7 +108,7 @@ class OAConvolve(Benchmark):
     ]
 
     def setup(self, mode, size):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         self.a = rng.standard_normal(size[0])
         self.b = rng.standard_normal(size[1])
 
@@ -123,7 +123,7 @@ class Convolve(Benchmark):
     ]
 
     def setup(self, mode):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         # sample a bunch of pairs of 2d arrays
         pairs = {'1d': [], '2d': []}
         for ma, nb in product((1, 2, 8, 13, 30, 36, 50, 75), repeat=2):
@@ -169,8 +169,8 @@ class LTI(Benchmark):
 
     def setup(self):
         self.system = signal.lti(1.0, [1, 0, 1])
-        self.t = np.arange(0, 100, 0.5)
-        self.u = np.sin(2 * self.t)
+        self.t = mx.arange(0, 100, 0.5)
+        self.u = mx.sin(2 * self.t)
 
     def time_lsim(self):
         signal.lsim(self.system, self.u, self.t)
@@ -193,7 +193,7 @@ class Upfirdn1D(Benchmark):
     ]
 
     def setup(self, up, down):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         # sample a bunch of pairs of 2d arrays
         pairs = []
         for nfilt in [8, ]:
@@ -218,7 +218,7 @@ class Upfirdn2D(Benchmark):
     ]
 
     def setup(self, up, down, axis):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         # sample a bunch of pairs of 2d arrays
         pairs = []
         for nfilt in [8, ]:

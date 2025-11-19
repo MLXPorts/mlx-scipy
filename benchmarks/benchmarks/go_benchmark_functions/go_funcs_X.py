@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy import abs, sum, sin, cos, pi, exp, arange, prod, sqrt
 from .go_benchmark import Benchmark
 
@@ -45,7 +45,7 @@ class XinSheYang01(Benchmark):
         self.nfev += 1
 
         i = arange(1.0, self.N + 1.0)
-        return sum(np.random.random(self.N) * (abs(x) ** i))
+        return sum(mx.random.random(self.N) * (abs(x) ** i))
 
 
 class XinSheYang02(Benchmark):

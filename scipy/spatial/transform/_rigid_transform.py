@@ -4,7 +4,7 @@ from collections.abc import Iterable, Iterator
 from types import EllipsisType, ModuleType, NotImplementedType
 from collections.abc import Callable
 
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._array_api import (
     array_namespace,
@@ -25,7 +25,7 @@ from scipy._lib._util import broadcastable
 
 __all__ = ["RigidTransform"]
 
-backend_registry = {array_namespace(np.empty(0)): cython_backend}
+backend_registry = {array_namespace(mx.empty(0)): cython_backend}
 
 
 def select_backend(xp: ModuleType, cython_compatible: bool):
@@ -204,7 +204,7 @@ class RigidTransform:
 
     >>> from scipy.spatial.transform import RigidTransform as Tf
     >>> from scipy.spatial.transform import Rotation as R
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     The following function can be used to plot transforms with Matplotlib
     by showing how they transform the standard x, y, z coordinate axes:
@@ -214,7 +214,7 @@ class RigidTransform:
     >>> def plot_transformed_axes(ax, tf, name=None, scale=1):
     ...     r = tf.rotation
     ...     t = tf.translation
-    ...     loc = np.array([t, t])
+    ...     loc = mx.array([t, t])
     ...     for i, (axis, c) in enumerate(zip((ax.xaxis, ax.yaxis, ax.zaxis),
     ...                                       colors)):
     ...         axlabel = axis.axis_name
@@ -222,7 +222,7 @@ class RigidTransform:
     ...         axis.label.set_color(c)
     ...         axis.line.set_color(c)
     ...         axis.set_tick_params(colors=c)
-    ...         line = np.zeros((2, 3))
+    ...         line = mx.zeros((2, 3))
     ...         line[1, i] = scale
     ...         line_rot = r.apply(line)
     ...         line_plot = line_rot + loc
@@ -256,7 +256,7 @@ class RigidTransform:
     From A's perspective, B is at [-2, 0, 0] and rotated +90 degrees about the
     x-axis, which is exactly the transform A <- B.
 
-    >>> t_A_B = np.array([-2, 0, 0])
+    >>> t_A_B = mx.array([-2, 0, 0])
     >>> r_A_B = R.from_euler('xyz', [90, 0, 0], degrees=True)
     >>> tf_A_B = Tf.from_components(t_A_B, r_A_B)
 
@@ -276,7 +276,7 @@ class RigidTransform:
     1) Translating B by 2 units in its +z direction.
     2) Rotating B by +30 degrees around its z-axis.
 
-    >>> t_B_C = np.array([0, 0, 2])
+    >>> t_B_C = mx.array([0, 0, 2])
     >>> r_B_C = R.from_euler('xyz', [0, 0, 30], degrees=True)
     >>> tf_B_C = Tf.from_components(t_B_C, r_B_C)
 
@@ -309,7 +309,7 @@ class RigidTransform:
     Now we can define a point in A and use the above transforms to get its
     coordinates in B and C:
 
-    >>> p1_A = np.array([1, 0, 0])  # +1 in x_A direction
+    >>> p1_A = mx.array([1, 0, 0])  # +1 in x_A direction
     >>> p1_B = tf_B_A.apply(p1_A)
     >>> p1_C = tf_C_A.apply(p1_A)
     >>> print(p1_A)  # Original point 1 in A
@@ -321,7 +321,7 @@ class RigidTransform:
 
     We can also do the reverse. We define a point in C and transform it to A:
 
-    >>> p2_C = np.array([0, 1, 0])  # +1 in y_C direction
+    >>> p2_C = mx.array([0, 1, 0])  # +1 in y_C direction
     >>> p2_A = tf_A_C.apply(p2_C)
     >>> print(p2_C)  # Original point 2 in C
     [0 1 0]
@@ -452,11 +452,11 @@ class RigidTransform:
         Examples
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Creating a transform from a single matrix:
 
-        >>> m = np.array([[0, 1, 0, 2],
+        >>> m = mx.array([[0, 1, 0, 2],
         ...               [0, 0, 1, 3],
         ...               [1, 0, 0, 4],
         ...               [0, 0, 0, 1]])
@@ -471,7 +471,7 @@ class RigidTransform:
 
         Creating a transform from an N-dimensional array of matrices:
 
-        >>> m = np.tile(np.eye(4), (2, 5, 1, 1))  # Shape (2, 5, 4, 4)
+        >>> m = mx.tile(mx.eye(4), (2, 5, 1, 1))  # Shape (2, 5, 4, 4)
         >>> tf = Tf.from_matrix(m)
         >>> tf.shape
         (2, 5)
@@ -483,7 +483,7 @@ class RigidTransform:
         Matrices with a rotation component that is not proper orthogonal are
         orthogonalized using singular value decomposition before initialization:
 
-        >>> tf = Tf.from_matrix(np.diag([2, 2, 2, 1]))
+        >>> tf = Tf.from_matrix(mx.diag([2, 2, 2, 1]))
         >>> tf.as_matrix()
         array([[1., 0., 0., 0.],
                [0., 1., 0., 0.],
@@ -516,7 +516,7 @@ class RigidTransform:
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Creating a transform from a single rotation:
 
@@ -532,7 +532,7 @@ class RigidTransform:
         The upper 3x3 submatrix of the transformation matrix is the rotation
         matrix:
 
-        >>> np.allclose(tf.as_matrix()[:3, :3], r.as_matrix(), atol=1e-12)
+        >>> mx.allclose(tf.as_matrix()[:3, :3], r.as_matrix(), atol=1e-12)
         True
 
         Creating multiple transforms from a rotation with N leading dimensions:
@@ -587,12 +587,12 @@ class RigidTransform:
         Examples
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Creating a transform from a single translation vector:
 
-        >>> t = np.array([2, 3, 4])
-        >>> t + np.array([1, 0, 0])
+        >>> t = mx.array([2, 3, 4])
+        >>> t + mx.array([1, 0, 0])
         array([3, 3, 4])
         >>> tf = Tf.from_translation(t)
         >>> tf.apply([1, 0, 0])
@@ -608,21 +608,21 @@ class RigidTransform:
                [0., 1., 0., 3.],
                [0., 0., 1., 4.],
                [0., 0., 0., 1.]])
-        >>> np.allclose(tf.as_matrix()[:3, 3], t)
+        >>> mx.allclose(tf.as_matrix()[:3, 3], t)
         True
 
         Creating multiple transforms from an N-dimensional array of translation
         vectors:
 
-        >>> t = np.array([[2, 3, 4], [1, 0, 0]])
-        >>> t + np.array([1, 0, 0])
+        >>> t = mx.array([[2, 3, 4], [1, 0, 0]])
+        >>> t + mx.array([1, 0, 0])
         array([[3, 3, 4],
                [2, 0, 0]])
         >>> tf = Tf.from_translation(t)
         >>> tf.apply([1, 0, 0])
         array([[3., 3., 4.],
                [2., 0., 0.]])
-        >>> np.allclose(tf.as_matrix()[:, :3, 3], t)
+        >>> mx.allclose(tf.as_matrix()[:, :3, 3], t)
         True
         >>> tf.single
         False
@@ -672,11 +672,11 @@ class RigidTransform:
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Creating from a single rotation and translation:
 
-        >>> t = np.array([2, 3, 4])
+        >>> t = mx.array([2, 3, 4])
         >>> r = R.from_euler("ZYX", [90, 30, 0], degrees=True)
         >>> r.as_matrix()
         array([[ 0.       , -1.,  0.        ],
@@ -746,7 +746,7 @@ class RigidTransform:
         Examples
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Creating from a single 6d vector of exponential coordinates:
 
@@ -763,7 +763,7 @@ class RigidTransform:
 
         A vector of zeros represents the identity transform:
 
-        >>> tf = Tf.from_exp_coords(np.zeros(6))
+        >>> tf = Tf.from_exp_coords(mx.zeros(6))
         >>> tf.as_matrix()
         array([[1., 0., 0., 0.],
                [0., 1., 0., 0.],
@@ -838,7 +838,7 @@ class RigidTransform:
         Examples
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Creating from a single unit dual quaternion:
 
@@ -884,7 +884,7 @@ class RigidTransform:
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Creating a single identity transform:
 
@@ -905,11 +905,11 @@ class RigidTransform:
         The identity transform when composed with another transform has no
         effect:
 
-        >>> rng = np.random.default_rng(123)
+        >>> rng = mx.random.default_rng(123)
         >>> t = rng.random(3)
         >>> r = R.random(rng=rng)
         >>> tf = Tf.from_components(t, r)
-        >>> np.allclose((Tf.identity() * tf).as_matrix(),
+        >>> mx.allclose((Tf.identity() * tf).as_matrix(),
         ...             tf.as_matrix(), atol=1e-12)
         True
 
@@ -931,9 +931,9 @@ class RigidTransform:
         2
         """
         if num is None:
-            matrix = np.eye(4)
+            matrix = mx.eye(4)
         else:
-            matrix = np.tile(np.eye(4), (num, 1, 1))
+            matrix = mx.tile(mx.eye(4), (num, 1, 1))
         # No need for a backend call here since identity is easy to construct and we are
         # currently not offering a backend-specific identity matrix
         return RigidTransform._from_raw_matrix(matrix, array_namespace(matrix))
@@ -1001,19 +1001,19 @@ class RigidTransform:
 
         Returns
         -------
-        matrix : numpy.ndarray, shape (..., 4, 4)
+        matrix : mx.array, shape (..., 4, 4)
             Transformation matrices with the same leading dimensions as the transform.
 
         Examples
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         A transformation matrix is a 4x4 matrix formed from a 3x3 rotation
         matrix and a 3x1 translation vector:
 
-        >>> t = np.array([2, 3, 4])
+        >>> t = mx.array([2, 3, 4])
         >>> r = R.from_matrix([[0, 0, 1],
         ...                    [1, 0, 0],
         ...                    [0, 1, 0]])
@@ -1065,7 +1065,7 @@ class RigidTransform:
 
         Returns
         -------
-        translation : numpy.ndarray, shape (..., 3)
+        translation : mx.array, shape (..., 3)
             The translation of the transform.
         rotation : `Rotation` instance
             The rotation of the transform.
@@ -1074,11 +1074,11 @@ class RigidTransform:
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Recover the rotation and translation from a transform:
 
-        >>> t = np.array([2, 3, 4])
+        >>> t = mx.array([2, 3, 4])
         >>> r = R.from_matrix([[0, 0, 1],
         ...                    [1, 0, 0],
         ...                    [0, 1, 0]])
@@ -1117,7 +1117,7 @@ class RigidTransform:
 
         Returns
         -------
-        exp_coords : numpy.ndarray, shape (..., 6)
+        exp_coords : mx.array, shape (..., 6)
             Exponential coordinate vectors with the same leading dimensions as the
             transform. The first three components define the rotation and the last
             three components define the translation.
@@ -1125,7 +1125,7 @@ class RigidTransform:
         Examples
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Get exponential coordinates of the identity matrix:
 
@@ -1156,7 +1156,7 @@ class RigidTransform:
 
         Returns
         -------
-        dual_quat : numpy.ndarray, shape (..., 8)
+        dual_quat : mx.array, shape (..., 8)
             Unit dual quaternion vectors with the same leading dimensions as the
             transform. The real part is stored in the first four components and the
             dual part in the last four components.
@@ -1164,7 +1164,7 @@ class RigidTransform:
         Examples
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Get identity dual quaternion (we use scalar-last by default):
 
@@ -1201,14 +1201,14 @@ class RigidTransform:
         Examples
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> tf = Tf.identity(3)
         >>> len(tf)
         3
 
         An N-dimensional array of transforms returns its first dimension size:
 
-        >>> t = np.ones((5, 2, 3, 1, 3))
+        >>> t = mx.ones((5, 2, 3, 1, 3))
         >>> tf = Tf.from_translation(t)
         >>> len(tf)
         5
@@ -1370,7 +1370,7 @@ class RigidTransform:
 
         This function supports composition of multiple transforms at a time using
         broadcasting rules. The resulting shape for two `RigidTransform` instances
-        ``p`` and ``q`` is `np.broadcast_shapes(p.shape, q.shape)`.
+        ``p`` and ``q`` is `mx.broadcast_shapes(p.shape, q.shape)`.
 
         Parameters
         ----------
@@ -1387,7 +1387,7 @@ class RigidTransform:
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Compose two transforms:
 
@@ -1428,8 +1428,8 @@ class RigidTransform:
 
         Broadcasting rules apply when composing multiple transforms at a time.
 
-        >>> tf1 = Tf.from_translation(np.ones((5, 1, 3)))  # Shape (5, 1, 3)
-        >>> tf2 = Tf.from_translation(np.ones((1, 4, 3)))  # Shape (1, 4, 3)
+        >>> tf1 = Tf.from_translation(mx.ones((5, 1, 3)))  # Shape (5, 1, 3)
+        >>> tf2 = Tf.from_translation(mx.ones((1, 4, 3)))  # Shape (1, 4, 3)
         >>> tf = tf1 * tf2  # Shape (5, 4, 3)
         >>> tf.translation.shape
         (5, 4, 3)
@@ -1501,7 +1501,7 @@ class RigidTransform:
         Examples
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         A power of 2 returns the transform composed with itself:
 
@@ -1519,7 +1519,7 @@ class RigidTransform:
 
         >>> (tf ** -2).translation
         array([-2., -4., -6.])
-        >>> np.allclose((tf ** -2).as_matrix(), (tf.inv() ** 2).as_matrix(),
+        >>> mx.allclose((tf ** -2).as_matrix(), (tf.inv() ** 2).as_matrix(),
         ...             atol=1e-12)
         True
 
@@ -1580,11 +1580,11 @@ class RigidTransform:
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         A transform composed with its inverse results in an identity transform:
 
-        >>> rng = np.random.default_rng(seed=123)
+        >>> rng = mx.random.default_rng(seed=123)
         >>> t = rng.random(3)
         >>> r = R.random(rng=rng)
         >>> tf = Tf.from_components(t, r)
@@ -1608,7 +1608,7 @@ class RigidTransform:
         >>> t_inv = -t  # inverse translation
         >>> tf_r_inv = Tf.from_rotation(r_inv)
         >>> tf_t_inv = Tf.from_translation(t_inv)
-        >>> np.allclose((tf_r_inv * tf_t_inv).as_matrix(),
+        >>> mx.allclose((tf_r_inv * tf_t_inv).as_matrix(),
         ...             tf.inv().as_matrix(),
         ...             atol=1e-12)
         True
@@ -1656,7 +1656,7 @@ class RigidTransform:
 
         Returns
         -------
-        transformed_vector : numpy.ndarray, shape (..., 3)
+        transformed_vector : mx.array, shape (..., 3)
             The transformed vector(s) with shape determined by broadcasting
             the transform and vector shapes together.
 
@@ -1664,15 +1664,15 @@ class RigidTransform:
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         Apply a single transform to a vector. Here the transform is just a
         translation, so the result is the vector added to the translation
         vector.
 
-        >>> t = np.array([1, 2, 3])
+        >>> t = mx.array([1, 2, 3])
         >>> tf = Tf.from_translation(t)
-        >>> t + np.array([1, 0, 0])
+        >>> t + mx.array([1, 0, 0])
         array([2, 2, 3])
         >>> tf.apply([1, 0, 0])
         array([2., 2., 3.])
@@ -1686,7 +1686,7 @@ class RigidTransform:
         Apply the inverse of a transform to a vector, so the result is the
         negative of the translation vector added to the vector.
 
-        >>> -t + np.array([1, 0, 0])
+        >>> -t + mx.array([1, 0, 0])
         array([0, -2, -3])
         >>> tf.apply([1, 0, 0], inverse=True)
         array([0., -2., -3.])
@@ -1694,8 +1694,8 @@ class RigidTransform:
         Broadcasting is supported when applying multiple transforms to an N-dimensional
         array of vectors.
 
-        >>> tf = Tf.from_translation(np.ones((4, 5, 1, 3)))
-        >>> vectors = np.zeros((2, 3))
+        >>> tf = Tf.from_translation(mx.ones((4, 5, 1, 3)))
+        >>> vectors = mx.zeros((2, 3))
         >>> tf.apply(vectors).shape
         (4, 5, 2, 3)
 
@@ -1714,7 +1714,7 @@ class RigidTransform:
         the translation vector added to the vector, and then rotated by the
         inverse rotation.
 
-        >>> r.inv().apply(-t + np.array([1, 0, 0]))
+        >>> r.inv().apply(-t + mx.array([1, 0, 0]))
         array([-1.73205081, -1.        , -3.        ])
         >>> tf.apply([1, 0, 0], inverse=True)
         array([-1.73205081, -1.        , -3.        ])
@@ -1749,14 +1749,14 @@ class RigidTransform:
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         The rotation component is extracted from the transform:
 
-        >>> t = np.array([1, 0, 0])
+        >>> t = mx.array([1, 0, 0])
         >>> r = R.random(3)
         >>> tf = Tf.from_components(t, r)
-        >>> np.allclose(tf.rotation.as_matrix(), r.as_matrix())
+        >>> mx.allclose(tf.rotation.as_matrix(), r.as_matrix())
         True
         """
         if self._single:
@@ -1773,21 +1773,21 @@ class RigidTransform:
 
         Returns
         -------
-        translation : numpy.ndarray, shape (..., 3)
+        translation : mx.array, shape (..., 3)
             Translation vectors with the same leading dimensions as the transform.
 
         Examples
         --------
         >>> from scipy.spatial.transform import RigidTransform as Tf
         >>> from scipy.spatial.transform import Rotation as R
-        >>> import numpy as np
+        >>> import mlx.core as mx
 
         The translation component is extracted from the transform:
 
-        >>> t = np.array([[1, 0, 0], [2, 0, 0], [3, 0, 0]])
+        >>> t = mx.array([[1, 0, 0], [2, 0, 0], [3, 0, 0]])
         >>> r = R.random()
         >>> tf = Tf.from_components(t, r)
-        >>> np.allclose(tf.translation, t)
+        >>> mx.allclose(tf.translation, t)
         True
         """
         if self._single:

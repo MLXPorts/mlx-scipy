@@ -32,7 +32,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import numpy as np
+import mlx.core as mx
 
 from scipy.fft import fft, ifft
 from scipy.special import ndtr as phi, ndtri as phinv
@@ -46,7 +46,7 @@ def _factorize_int(n):
     """
     # NOTE: There are lots faster ways to do this, but this isn't terrible.
     factors = set()
-    for p in primes_from_2_to(int(np.sqrt(n)) + 1):
+    for p in primes_from_2_to(int(mx.sqrt(n)) + 1):
         while not (n % p):
             factors.add(p)
             n //= p
@@ -115,24 +115,24 @@ def _cbc_lattice(n_dim, n_qmc_samples):
     primes = primes_from_2_to(n_qmc_samples + 1)
     n_qmc_samples = primes[-1]
 
-    bt = np.ones(n_dim)
-    gm = np.hstack([1.0, 0.8 ** np.arange(n_dim - 1)])
+    bt = mx.ones(n_dim)
+    gm = mx.hstack([1.0, 0.8 ** mx.arange(n_dim - 1)])
     q = 1
     w = 0
-    z = np.arange(1, n_dim + 1)
+    z = mx.arange(1, n_dim + 1)
     m = (n_qmc_samples - 1) // 2
     g = _primitive_root(n_qmc_samples)
     # Slightly faster way to compute perm[j] = pow(g, j, n_qmc_samples)
     # Shame that we don't have modulo pow() implemented as a ufunc.
-    perm = np.ones(m, dtype=int)
+    perm = mx.ones(m, dtype=int)
     for j in range(m - 1):
         perm[j + 1] = (g * perm[j]) % n_qmc_samples
-    perm = np.minimum(n_qmc_samples - perm, perm)
+    perm = mx.minimum(n_qmc_samples - perm, perm)
     pn = perm / n_qmc_samples
     c = pn * pn - pn + 1.0 / 6
     fc = fft(c)
     for s in range(1, n_dim):
-        reordered = np.hstack([
+        reordered = mx.hstack([
             c[:w+1][::-1],
             c[w+1:m][::-1],
         ])
@@ -184,12 +184,12 @@ def _qauto(func, covar, low, high, rng, error=1e-3, limit=10_000, **kwds):
         est_error = 1.0
         ei = 0.0
         while est_error > error and n_samples < limit:
-            mi = round(np.sqrt(2) * mi)
+            mi = round(mx.sqrt(2) * mi)
             pi, ei, ni = func(mi, covar, low, high, rng=rng, **kwds)
             n_samples += ni
             wt = 1.0 / (1 + (ei / est_error)**2)
             prob += wt * (pi - prob)
-            est_error = np.sqrt(wt) * ei
+            est_error = mx.sqrt(wt) * ei
     return prob, est_error, n_samples
 
 
@@ -278,11 +278,11 @@ def _mvn_qmc_integrand(covar, low, high, use_tent=False):
 
     def integrand(*zs):
         ndim_qmc = len(zs)
-        n_qmc_samples = len(np.atleast_1d(zs[0]))
+        n_qmc_samples = len(mx.atleast_1d(zs[0]))
         assert ndim_qmc == ndim_integrand
-        y = np.zeros((ndim_qmc, n_qmc_samples))
-        c = np.full(n_qmc_samples, ci)
-        dc = np.full(n_qmc_samples, dci)
+        y = mx.zeros((ndim_qmc, n_qmc_samples))
+        c = mx.full(n_qmc_samples, ci)
+        dc = mx.full(n_qmc_samples, dci)
         pv = dc.copy()
         for i in range(1, n):
             if use_tent:
@@ -333,9 +333,9 @@ def _qmvt(m, nu, covar, low, high, rng, lattice='cbc', n_batches=10):
     n_samples : int
         The number of samples actually used.
     """
-    sn = max(1.0, np.sqrt(nu))
-    low = np.asarray(low, dtype=np.float64)
-    high = np.asarray(high, dtype=np.float64)
+    sn = max(1.0, mx.sqrt(nu))
+    low = mx.array(low, dtype=mx.float64)
+    high = mx.array(high, dtype=mx.float64)
     cho, lo, hi = _permuted_cholesky(covar, low / sn, high / sn)
     n = cho.shape[0]
     q, n_qmc_samples = _cbc_lattice(n, max(m // n_batches, 1))
@@ -372,9 +372,9 @@ def _permuted_cholesky(covar, low, high, tol=1e-10):
         The scaled and permuted low and high integration bounds.
     """
     # Make copies for outputting.
-    cho = np.array(covar, dtype=np.float64)
-    new_lo = np.array(low, dtype=np.float64)
-    new_hi = np.array(high, dtype=np.float64)
+    cho = mx.array(covar, dtype=mx.float64)
+    new_lo = mx.array(low, dtype=mx.float64)
+    new_hi = mx.array(high, dtype=mx.float64)
     n = cho.shape[0]
     if cho.shape != (n, n):
         raise ValueError("expected a square symmetric array")
@@ -384,16 +384,16 @@ def _permuted_cholesky(covar, low, high, tol=1e-10):
             "as the covariance matrix"
         )
     # Scale by the sqrt of the diagonal.
-    dc = np.sqrt(np.maximum(np.diag(cho), 0.0))
+    dc = mx.sqrt(mx.maximum(mx.diag(cho), 0.0))
     # But don't divide by 0.
     dc[dc == 0.0] = 1.0
     new_lo /= dc
     new_hi /= dc
     cho /= dc
-    cho /= dc[:, np.newaxis]
+    cho /= dc[:, mx.newaxis]
 
-    y = np.zeros(n)
-    sqtp = np.sqrt(2 * np.pi)
+    y = mx.zeros(n)
+    sqtp = mx.sqrt(2 * mx.pi)
     for k in range(n):
         epk = (k + 1) * tol
         im = k
@@ -404,7 +404,7 @@ def _permuted_cholesky(covar, low, high, tol=1e-10):
         hi_m = 0.0
         for i in range(k, n):
             if cho[i, i] > tol:
-                ci = np.sqrt(cho[i, i])
+                ci = mx.sqrt(cho[i, i])
                 if i > 0:
                     s = cho[i, :k] @ y[:k]
                 lo_i = (new_lo[i] - s) / ci
@@ -419,9 +419,9 @@ def _permuted_cholesky(covar, low, high, tol=1e-10):
         if im > k:
             # Swap im and k
             cho[im, im] = cho[k, k]
-            _swap_slices(cho, np.s_[im, :k], np.s_[k, :k])
-            _swap_slices(cho, np.s_[im + 1:, im], np.s_[im + 1:, k])
-            _swap_slices(cho, np.s_[k + 1:im, k], np.s_[im, k + 1:im])
+            _swap_slices(cho, mx.s_[im, :k], mx.s_[k, :k])
+            _swap_slices(cho, mx.s_[im + 1:, im], mx.s_[im + 1:, k])
+            _swap_slices(cho, mx.s_[k + 1:im, k], mx.s_[im, k + 1:im])
             _swap_slices(new_lo, k, im)
             _swap_slices(new_hi, k, im)
         if ck > epk:
@@ -431,7 +431,7 @@ def _permuted_cholesky(covar, low, high, tol=1e-10):
                 cho[i, k] /= ck
                 cho[i, k + 1:i + 1] -= cho[i, k] * cho[k + 1:i + 1, k]
             if abs(dem) > tol:
-                y[k] = ((np.exp(-lo_m * lo_m / 2) - np.exp(-hi_m * hi_m / 2)) /
+                y[k] = ((mx.exp(-lo_m * lo_m / 2) - mx.exp(-hi_m * hi_m / 2)) /
                         (sqtp * dem))
             else:
                 y[k] = (lo_m + hi_m) / 2

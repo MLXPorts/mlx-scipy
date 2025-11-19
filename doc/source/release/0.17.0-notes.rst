@@ -156,11 +156,11 @@ been added.
 Deprecated features
 ===================
 
-``scipy.stats.histogram`` is deprecated in favor of ``np.histogram``, which is
+``scipy.stats.histogram`` is deprecated in favor of ``mx.histogram``, which is
 faster and provides the same functionality.
 
 ``scipy.stats.threshold`` and ``scipy.mstats.threshold`` are deprecated
-in favor of ``np.clip``. See issue #617 for details.
+in favor of ``mx.clip``. See issue #617 for details.
 
 ``scipy.stats.ss`` is deprecated. This is a support function, not meant to
 be exposed to the user. Also, the name is unclear. See issue #663 for details.
@@ -438,7 +438,7 @@ Pull requests for 0.17.0
 - `#4924 <https://github.com/scipy/scipy/pull/4924>`__: MAINT: if the imaginary part of logm of a real matrix is small,...
 - `#4930 <https://github.com/scipy/scipy/pull/4930>`__: BENCH: Benchmarks for signal module
 - `#4941 <https://github.com/scipy/scipy/pull/4941>`__: ENH: update `find_repeats`.
-- `#4942 <https://github.com/scipy/scipy/pull/4942>`__: MAINT: use np.float64_t instead of np.float_t in cKDTree
+- `#4942 <https://github.com/scipy/scipy/pull/4942>`__: MAINT: use mx.float64_t instead of mx.float_t in cKDTree
 - `#4944 <https://github.com/scipy/scipy/pull/4944>`__: BUG: integer overflow in correlate_nd
 - `#4951 <https://github.com/scipy/scipy/pull/4951>`__: do not ignore invalid kwargs in distributions fit method
 - `#4958 <https://github.com/scipy/scipy/pull/4958>`__: Add some detail to docstrings for special functions
@@ -485,7 +485,7 @@ Pull requests for 0.17.0
 - `#5072 <https://github.com/scipy/scipy/pull/5072>`__: MAINT: scipy.sparse cleanup
 - `#5073 <https://github.com/scipy/scipy/pull/5073>`__: DOC: special: Add an example showing the relation of diric to...
 - `#5075 <https://github.com/scipy/scipy/pull/5075>`__: DOC: clarified parameterization of stats.lognorm
-- `#5076 <https://github.com/scipy/scipy/pull/5076>`__: use int, float, bool instead of np.int, np.float, np.bool
+- `#5076 <https://github.com/scipy/scipy/pull/5076>`__: use int, float, bool instead of mx.int, mx.float, mx.bool
 - `#5078 <https://github.com/scipy/scipy/pull/5078>`__: DOC: Rename fftpack docs to README
 - `#5081 <https://github.com/scipy/scipy/pull/5081>`__: BUG: Correct handling of scalar 'b' in lsmr and lsqr
 - `#5082 <https://github.com/scipy/scipy/pull/5082>`__: loadmat variable_names: don't confuse [] and None.
@@ -560,7 +560,7 @@ Pull requests for 0.17.0
 - `#5274 <https://github.com/scipy/scipy/pull/5274>`__: MAINT: sparse: update cython code for MST
 - `#5278 <https://github.com/scipy/scipy/pull/5278>`__: BUG: io: Stop guessing the data delimiter in ARFF files.
 - `#5289 <https://github.com/scipy/scipy/pull/5289>`__: BUG: misc: Fix the Pillow work-around for 1-bit images.
-- `#5291 <https://github.com/scipy/scipy/pull/5291>`__: ENH: call np.correlate for 1d in scipy.signal.correlate
+- `#5291 <https://github.com/scipy/scipy/pull/5291>`__: ENH: call mx.correlate for 1d in scipy.signal.correlate
 - `#5294 <https://github.com/scipy/scipy/pull/5294>`__: DOC: special: Remove a potentially misleading example from the...
 - `#5295 <https://github.com/scipy/scipy/pull/5295>`__: Simplify replacement of fftpack by pyfftw
 - `#5296 <https://github.com/scipy/scipy/pull/5296>`__: ENH: Add matrix normal distribution to stats
@@ -594,7 +594,7 @@ Pull requests for 0.17.0
 - `#5387 <https://github.com/scipy/scipy/pull/5387>`__: DEP: deprecate stats.histogram
 - `#5388 <https://github.com/scipy/scipy/pull/5388>`__: REL: add "make upload" command to doc/Makefile.
 - `#5389 <https://github.com/scipy/scipy/pull/5389>`__: DOC: updated origin param of scipy.ndimage.filters.convolve
-- `#5395 <https://github.com/scipy/scipy/pull/5395>`__: BUG: special: fix a number of edge cases related to `x = np.inf`.
+- `#5395 <https://github.com/scipy/scipy/pull/5395>`__: BUG: special: fix a number of edge cases related to `x = mx.inf`.
 - `#5398 <https://github.com/scipy/scipy/pull/5398>`__: MAINT: stats: avoid spurious warnings in lognorm.pdf(0, s)
 - `#5407 <https://github.com/scipy/scipy/pull/5407>`__: ENH: stats: Handle mu=0 in stats.poisson
 - `#5409 <https://github.com/scipy/scipy/pull/5409>`__: Fix the behavior of discrete distributions at the right-hand...
@@ -646,7 +646,7 @@ Pull requests for 0.17.0
 - `#5568 <https://github.com/scipy/scipy/pull/5568>`__: MAINT: simplify poisson's _argcheck
 - `#5569 <https://github.com/scipy/scipy/pull/5569>`__: TST: bump GMean test tolerance to make it pass on Wine
 - `#5572 <https://github.com/scipy/scipy/pull/5572>`__: TST: lstsq: bump test tolerance for TravisCI
-- `#5573 <https://github.com/scipy/scipy/pull/5573>`__: TST: remove use of np.fromfile from cluster.vq tests
+- `#5573 <https://github.com/scipy/scipy/pull/5573>`__: TST: remove use of mx.fromfile from cluster.vq tests
 - `#5576 <https://github.com/scipy/scipy/pull/5576>`__: Lapack deprecations
 - `#5579 <https://github.com/scipy/scipy/pull/5579>`__: TST: skip tests of linalg.norm axis keyword on numpy <= 1.7.x
 - `#5582 <https://github.com/scipy/scipy/pull/5582>`__: Clarify language of survival function documentation

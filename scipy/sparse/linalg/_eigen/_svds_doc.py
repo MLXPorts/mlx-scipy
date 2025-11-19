@@ -28,7 +28,7 @@ def _svds_arpack_doc(A, k=6, ncv=None, tol=0, which='LM', v0=None,
     which : {'LM', 'SM'}
         Which `k` singular values to find: either the largest magnitude ('LM')
         or smallest magnitude ('SM') singular values.
-    v0 : ndarray, optional
+    v0 : array, optional
         The starting vector for iteration:
         an (approximate) left singular vector if ``N > M`` and a right singular
         vector otherwise. Must be of length ``min(M, N)``.
@@ -65,11 +65,11 @@ def _svds_arpack_doc(A, k=6, ncv=None, tol=0, which='LM', v0=None,
 
     Returns
     -------
-    u : ndarray, shape=(M, k)
+    u : array, shape=(M, k)
         Unitary matrix having left singular vectors as columns.
-    s : ndarray, shape=(k,)
+    s : array, shape=(k,)
         The singular values.
-    vh : ndarray, shape=(k, N)
+    vh : array, shape=(k, N)
         Unitary matrix having right singular vectors as rows.
 
     Notes
@@ -82,11 +82,11 @@ def _svds_arpack_doc(A, k=6, ncv=None, tol=0, which='LM', v0=None,
     --------
     Construct a matrix ``A`` from singular values and vectors.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import ortho_group
     >>> from scipy.sparse import csc_array, diags_array
     >>> from scipy.sparse.linalg import svds
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> orthogonal = csc_array(ortho_group.rvs(10, random_state=rng))
     >>> s = [0.0001, 0.001, 3, 4, 5]  # singular values
     >>> u = orthogonal[:, :5]         # left singular vectors
@@ -97,30 +97,30 @@ def _svds_arpack_doc(A, k=6, ncv=None, tol=0, which='LM', v0=None,
     matrix.
 
     >>> u2, s2, vT2 = svds(A, k=3, solver='arpack')
-    >>> A2 = u2 @ np.diag(s2) @ vT2
-    >>> np.allclose(A2, A.toarray(), atol=1e-3)
+    >>> A2 = u2 @ mx.diag(s2) @ vT2
+    >>> mx.allclose(A2, A.toarray(), atol=1e-3)
     True
 
     With all five singular values/vectors, we can reproduce the original
     matrix.
 
     >>> u3, s3, vT3 = svds(A, k=5, solver='arpack')
-    >>> A3 = u3 @ np.diag(s3) @ vT3
-    >>> np.allclose(A3, A.toarray())
+    >>> A3 = u3 @ mx.diag(s3) @ vT3
+    >>> mx.allclose(A3, A.toarray())
     True
 
     The singular values match the expected singular values, and the singular
     vectors are as expected up to a difference in sign.
 
-    >>> (np.allclose(s3, s) and
-    ...  np.allclose(np.abs(u3), np.abs(u.toarray())) and
-    ...  np.allclose(np.abs(vT3), np.abs(vT.toarray())))
+    >>> (mx.allclose(s3, s) and
+    ...  mx.allclose(mx.abs(u3), mx.abs(u.toarray())) and
+    ...  mx.allclose(mx.abs(vT3), mx.abs(vT.toarray())))
     True
 
     The singular vectors are also orthogonal.
 
-    >>> (np.allclose(u3.T @ u3, np.eye(5)) and
-    ...  np.allclose(vT3 @ vT3.T, np.eye(5)))
+    >>> (mx.allclose(u3.T @ u3, mx.eye(5)) and
+    ...  mx.allclose(vT3 @ vT3.T, mx.eye(5)))
     True
     """
     pass
@@ -152,7 +152,7 @@ def _svds_lobpcg_doc(A, k=6, ncv=None, tol=0, which='LM', v0=None,
     which : {'LM', 'SM'}
         Which `k` singular values to find: either the largest magnitude ('LM')
         or smallest magnitude ('SM') singular values.
-    v0 : ndarray, optional
+    v0 : array, optional
         If `k` is 1, the starting vector for iteration:
         an (approximate) left singular vector if ``N > M`` and a right singular
         vector otherwise. Must be of length ``min(M, N)``.
@@ -189,11 +189,11 @@ def _svds_lobpcg_doc(A, k=6, ncv=None, tol=0, which='LM', v0=None,
 
     Returns
     -------
-    u : ndarray, shape=(M, k)
+    u : array, shape=(M, k)
         Unitary matrix having left singular vectors as columns.
-    s : ndarray, shape=(k,)
+    s : array, shape=(k,)
         The singular values.
-    vh : ndarray, shape=(k, N)
+    vh : array, shape=(k, N)
         Unitary matrix having right singular vectors as rows.
 
     Notes
@@ -206,11 +206,11 @@ def _svds_lobpcg_doc(A, k=6, ncv=None, tol=0, which='LM', v0=None,
     --------
     Construct a matrix ``A`` from singular values and vectors.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import ortho_group
     >>> from scipy.sparse import csc_array, diags_array
     >>> from scipy.sparse.linalg import svds
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> orthogonal = csc_array(ortho_group.rvs(10, random_state=rng))
     >>> s = [0.0001, 0.001, 3, 4, 5]  # singular values
     >>> u = orthogonal[:, :5]         # left singular vectors
@@ -221,30 +221,30 @@ def _svds_lobpcg_doc(A, k=6, ncv=None, tol=0, which='LM', v0=None,
     matrix.
 
     >>> u2, s2, vT2 = svds(A, k=3, solver='lobpcg')
-    >>> A2 = u2 @ np.diag(s2) @ vT2
-    >>> np.allclose(A2, A.toarray(), atol=1e-3)
+    >>> A2 = u2 @ mx.diag(s2) @ vT2
+    >>> mx.allclose(A2, A.toarray(), atol=1e-3)
     True
 
     With all five singular values/vectors, we can reproduce the original
     matrix.
 
     >>> u3, s3, vT3 = svds(A, k=5, solver='lobpcg')
-    >>> A3 = u3 @ np.diag(s3) @ vT3
-    >>> np.allclose(A3, A.toarray())
+    >>> A3 = u3 @ mx.diag(s3) @ vT3
+    >>> mx.allclose(A3, A.toarray())
     True
 
     The singular values match the expected singular values, and the singular
     vectors are as expected up to a difference in sign.
 
-    >>> (np.allclose(s3, s) and
-    ...  np.allclose(np.abs(u3), np.abs(u.todense())) and
-    ...  np.allclose(np.abs(vT3), np.abs(vT.todense())))
+    >>> (mx.allclose(s3, s) and
+    ...  mx.allclose(mx.abs(u3), mx.abs(u.todense())) and
+    ...  mx.allclose(mx.abs(vT3), mx.abs(vT.todense())))
     True
 
     The singular vectors are also orthogonal.
 
-    >>> (np.allclose(u3.T @ u3, np.eye(5)) and
-    ...  np.allclose(vT3 @ vT3.T, np.eye(5)))
+    >>> (mx.allclose(u3.T @ u3, mx.eye(5)) and
+    ...  mx.allclose(vT3 @ vT3.T, mx.eye(5)))
     True
 
     """
@@ -280,7 +280,7 @@ def _svds_propack_doc(A, k=6, ncv=None, tol=0, which='LM', v0=None,
         Which `k` singular values to find: either the largest magnitude ('LM')
         or smallest magnitude ('SM') singular values. Note that choosing
         ``which='SM'`` will force the ``irl`` option to be set ``True``.
-    v0 : ndarray, optional
+    v0 : array, optional
         Starting vector for iterations: must be of length ``A.shape[0]``.
         If not specified, PROPACK will generate a starting vector.
     maxiter : int, optional
@@ -313,11 +313,11 @@ def _svds_propack_doc(A, k=6, ncv=None, tol=0, which='LM', v0=None,
 
     Returns
     -------
-    u : ndarray, shape=(M, k)
+    u : array, shape=(M, k)
         Unitary matrix having left singular vectors as columns.
-    s : ndarray, shape=(k,)
+    s : array, shape=(k,)
         The singular values.
-    vh : ndarray, shape=(k, N)
+    vh : array, shape=(k, N)
         Unitary matrix having right singular vectors as rows.
 
     Notes
@@ -337,11 +337,11 @@ def _svds_propack_doc(A, k=6, ncv=None, tol=0, which='LM', v0=None,
     --------
     Construct a matrix ``A`` from singular values and vectors.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import ortho_group
     >>> from scipy.sparse import csc_array, diags_array
     >>> from scipy.sparse.linalg import svds
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> orthogonal = csc_array(ortho_group.rvs(10, random_state=rng))
     >>> s = [0.0001, 0.001, 3, 4, 5]  # singular values
     >>> u = orthogonal[:, :5]         # left singular vectors
@@ -352,30 +352,30 @@ def _svds_propack_doc(A, k=6, ncv=None, tol=0, which='LM', v0=None,
     matrix.
 
     >>> u2, s2, vT2 = svds(A, k=3, solver='propack')
-    >>> A2 = u2 @ np.diag(s2) @ vT2
-    >>> np.allclose(A2, A.todense(), atol=1e-3)
+    >>> A2 = u2 @ mx.diag(s2) @ vT2
+    >>> mx.allclose(A2, A.todense(), atol=1e-3)
     True
 
     With all five singular values/vectors, we can reproduce the original
     matrix.
 
     >>> u3, s3, vT3 = svds(A, k=5, solver='propack')
-    >>> A3 = u3 @ np.diag(s3) @ vT3
-    >>> np.allclose(A3, A.todense())
+    >>> A3 = u3 @ mx.diag(s3) @ vT3
+    >>> mx.allclose(A3, A.todense())
     True
 
     The singular values match the expected singular values, and the singular
     vectors are as expected up to a difference in sign.
 
-    >>> (np.allclose(s3, s) and
-    ...  np.allclose(np.abs(u3), np.abs(u.toarray())) and
-    ...  np.allclose(np.abs(vT3), np.abs(vT.toarray())))
+    >>> (mx.allclose(s3, s) and
+    ...  mx.allclose(mx.abs(u3), mx.abs(u.toarray())) and
+    ...  mx.allclose(mx.abs(vT3), mx.abs(vT.toarray())))
     True
 
     The singular vectors are also orthogonal.
 
-    >>> (np.allclose(u3.T @ u3, np.eye(5)) and
-    ...  np.allclose(vT3 @ vT3.T, np.eye(5)))
+    >>> (mx.allclose(u3.T @ u3, mx.eye(5)) and
+    ...  mx.allclose(vT3 @ vT3.T, mx.eye(5)))
     True
 
     """

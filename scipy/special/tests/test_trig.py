@@ -1,7 +1,7 @@
 import warnings
 
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_allclose
 
 from scipy.special._ufuncs import _sinpi as sinpi
@@ -9,9 +9,9 @@ from scipy.special._ufuncs import _cospi as cospi
 
 
 def test_integer_real_part():
-    x = np.arange(-100, 101)
-    y = np.hstack((-np.linspace(310, -30, 10), np.linspace(-30, 310, 10)))
-    x, y = np.meshgrid(x, y)
+    x = mx.arange(-100, 101)
+    y = mx.hstack((-mx.linspace(310, -30, 10), mx.linspace(-30, 310, 10)))
+    x, y = mx.meshgrid(x, y)
     z = x + 1j*y
     # In the following we should be *exactly* right
     res = sinpi(z)
@@ -21,9 +21,9 @@ def test_integer_real_part():
 
 
 def test_half_integer_real_part():
-    x = np.arange(-100, 101) + 0.5
-    y = np.hstack((-np.linspace(310, -30, 10), np.linspace(-30, 310, 10)))
-    x, y = np.meshgrid(x, y)
+    x = mx.arange(-100, 101) + 0.5
+    y = mx.hstack((-mx.linspace(310, -30, 10), mx.linspace(-30, 310, 10)))
+    x, y = mx.meshgrid(x, y)
     z = x + 1j*y
     # In the following we should be *exactly* right
     res = sinpi(z)
@@ -40,9 +40,9 @@ def test_intermediate_overlow():
                  complex(1e-35, 250),
                  complex(1e-301, 445)]
     # Data generated with mpmath
-    sinpi_std = [complex(-8.113438309924894e+295, -np.inf),
-                 complex(1.9507801934611995e+306, np.inf),
-                 complex(2.205958493464539e+306, np.inf)]
+    sinpi_std = [complex(-8.113438309924894e+295, -mx.inf),
+                 complex(1.9507801934611995e+306, mx.inf),
+                 complex(2.205958493464539e+306, mx.inf)]
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", "invalid value encountered in multiply", RuntimeWarning)
@@ -53,7 +53,7 @@ def test_intermediate_overlow():
 
     # Test for cosine, less interesting because cos(0) = 1.
     p = complex(0.5 + 1e-14, 227)
-    std = complex(-8.113438309924894e+295, -np.inf)
+    std = complex(-8.113438309924894e+295, -mx.inf)
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", "invalid value encountered in multiply", RuntimeWarning)
@@ -65,12 +65,12 @@ def test_intermediate_overlow():
 def test_zero_sign():
     y = sinpi(-0.0)
     assert y == 0.0
-    assert np.signbit(y)
+    assert mx.signbit(y)
 
     y = sinpi(0.0)
     assert y == 0.0
-    assert not np.signbit(y)
+    assert not mx.signbit(y)
 
     y = cospi(0.5)
     assert y == 0.0
-    assert not np.signbit(y)
+    assert not mx.signbit(y)

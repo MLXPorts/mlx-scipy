@@ -1,6 +1,6 @@
 from functools import partial
 
-import numpy as np
+import mlx.core as mx
 import scipy.fft
 from scipy.fft import _fftlog, _pocketfft, set_backend
 from scipy.fft.tests import mock_backend
@@ -16,12 +16,12 @@ fnames = ('fft', 'fft2', 'fftn',
           'dst', 'idst', 'dstn', 'idstn',
           'fht', 'ifht')
 
-np_funcs = (np.fft.fft, np.fft.fft2, np.fft.fftn,
-            np.fft.ifft, np.fft.ifft2, np.fft.ifftn,
-            np.fft.rfft, np.fft.rfft2, np.fft.rfftn,
-            np.fft.irfft, np.fft.irfft2, np.fft.irfftn,
-            np.fft.hfft, _pocketfft.hfft2, _pocketfft.hfftn,  # np has no hfftn
-            np.fft.ihfft, _pocketfft.ihfft2, _pocketfft.ihfftn,
+np_funcs = (mx.fft.fft, mx.fft.fft2, mx.fft.fftn,
+            mx.fft.ifft, mx.fft.ifft2, mx.fft.ifftn,
+            mx.fft.rfft, mx.fft.rfft2, mx.fft.rfftn,
+            mx.fft.irfft, mx.fft.irfft2, mx.fft.irfftn,
+            mx.fft.hfft, _pocketfft.hfft2, _pocketfft.hfftn,  # np has no hfftn
+            mx.fft.ihfft, _pocketfft.ihfft2, _pocketfft.ihfftn,
             _pocketfft.dct, _pocketfft.idct, _pocketfft.dctn, _pocketfft.idctn,
             _pocketfft.dst, _pocketfft.idst, _pocketfft.dstn, _pocketfft.idstn,
             # must provide required kwargs for fht, ifht
@@ -55,8 +55,8 @@ mocks = (mock_backend.fft, mock_backend.fft2, mock_backend.fftn,
 
 @pytest.mark.parametrize("func, np_func, mock", zip(funcs, np_funcs, mocks))
 def test_backend_call(func, np_func, mock):
-    x = np.arange(20).reshape((10,2))
-    answer = np_func(x.astype(np.float64))
+    x = mx.arange(20).reshape((10,2))
+    answer = np_func(x.astype(mx.float64))
     assert_allclose(func(x), answer, atol=1e-10)
 
     with set_backend(mock_backend, only=True):
@@ -85,7 +85,7 @@ plan_mocks = (mock_backend.fft, mock_backend.fft2, mock_backend.fftn,
 
 @pytest.mark.parametrize("func, mock", zip(plan_funcs, plan_mocks))
 def test_backend_plan(func, mock):
-    x = np.arange(20).reshape((10, 2))
+    x = mx.arange(20).reshape((10, 2))
 
     with pytest.raises(NotImplementedError, match='precomputed plan'):
         func(x, plan='foo')

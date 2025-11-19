@@ -1,20 +1,20 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import norm
 from numpy.testing import (assert_, assert_allclose, assert_equal)
 from scipy.linalg import polar, eigh
 
 
-diag2 = np.array([[2, 0], [0, 3]])
-a13 = np.array([[1, 2, 2]])
+diag2 = mx.array([[2, 0], [0, 3]])
+a13 = mx.array([[1, 2, 2]])
 
 precomputed_cases = [
     [[[0]], 'right', [[1]], [[0]]],
     [[[0]], 'left', [[1]], [[0]]],
     [[[9]], 'right', [[1]], [[9]]],
     [[[9]], 'left', [[1]], [[9]]],
-    [diag2, 'right', np.eye(2), diag2],
-    [diag2, 'left', np.eye(2), diag2],
+    [diag2, 'right', mx.eye(2), diag2],
+    [diag2, 'left', mx.eye(2), diag2],
     [a13, 'right', a13/norm(a13[0]), a13.T.dot(a13)/norm(a13[0])],
 ]
 
@@ -30,9 +30,9 @@ verify_cases = [
     [[1, 2, 3+2j], [3, 4-1j, -4j]],
     [[1, 2], [3-2j, 4+0.5j], [5, 5]],
     [[10000, 10, 1], [-1, 2, 3j], [0, 1, 2]],
-    np.empty((0, 0)),
-    np.empty((0, 2)),
-    np.empty((2, 0)),
+    mx.empty((0, 0)),
+    mx.empty((0, 2)),
+    mx.empty((2, 0)),
 ]
 
 
@@ -47,9 +47,9 @@ def check_precomputed_polar(a, side, expected_u, expected_p):
 def verify_polar(a):
     # Compute the polar decomposition, and then verify that
     # the result has all the expected properties.
-    product_atol = np.sqrt(np.finfo(float).eps)
+    product_atol = mx.sqrt(mx.finfo(float).eps)
 
-    aa = np.asarray(a)
+    aa = mx.array(a)
     m, n = aa.shape
 
     u, p = polar(a, side='right')
@@ -58,9 +58,9 @@ def verify_polar(a):
     # a = up
     assert_allclose(u.dot(p), a, atol=product_atol)
     if m >= n:
-        assert_allclose(u.conj().T.dot(u), np.eye(n), atol=1e-15)
+        assert_allclose(u.conj().T.dot(u), mx.eye(n), atol=1e-15)
     else:
-        assert_allclose(u.dot(u.conj().T), np.eye(m), atol=1e-15)
+        assert_allclose(u.dot(u.conj().T), mx.eye(m), atol=1e-15)
     # p is Hermitian positive semidefinite.
     assert_allclose(p.conj().T, p)
     evals = eigh(p, eigvals_only=True)
@@ -73,9 +73,9 @@ def verify_polar(a):
     # a = pu
     assert_allclose(p.dot(u), a, atol=product_atol)
     if m >= n:
-        assert_allclose(u.conj().T.dot(u), np.eye(n), atol=1e-15)
+        assert_allclose(u.conj().T.dot(u), mx.eye(n), atol=1e-15)
     else:
-        assert_allclose(u.dot(u.conj().T), np.eye(m), atol=1e-15)
+        assert_allclose(u.dot(u.conj().T), mx.eye(m), atol=1e-15)
     # p is Hermitian positive semidefinite.
     assert_allclose(p.conj().T, p)
     evals = eigh(p, eigvals_only=True)
@@ -92,19 +92,19 @@ def test_verify_cases():
     for a in verify_cases:
         verify_polar(a)
 
-@pytest.mark.parametrize('dt', [int, float, np.float32, complex, np.complex64])
+@pytest.mark.parametrize('dt', [int, float, mx.float32, complex, mx.complex64])
 @pytest.mark.parametrize('shape',  [(0, 0), (0, 2), (2, 0)])
 @pytest.mark.parametrize('side', ['left', 'right'])
 def test_empty(dt, shape, side):
-    a = np.empty(shape, dtype=dt)
+    a = mx.empty(shape, dtype=dt)
     m, n = shape
     p_shape = (m, m) if side == 'left' else (n, n)
 
     u, p = polar(a, side=side)
-    u_n, p_n = polar(np.eye(5, dtype=dt))
+    u_n, p_n = polar(mx.eye(5, dtype=dt))
 
     assert_equal(u.dtype, u_n.dtype)
     assert_equal(p.dtype, p_n.dtype)
     assert u.shape == shape
     assert p.shape == p_shape
-    assert np.all(p == 0)
+    assert mx.all(p == 0)

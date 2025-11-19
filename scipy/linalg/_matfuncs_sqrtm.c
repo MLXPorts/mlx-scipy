@@ -29,7 +29,7 @@ matrix_squareroot_s(const PyArrayObject* ap_Am, float* restrict ret_data, int* i
     npy_intp* shape = PyArray_SHAPE(ap_Am);      // Array shape
     npy_intp n = shape[ndim - 1];                // Slice size
     npy_intp* restrict strides = PyArray_STRIDES(ap_Am);
-    // Get the number of slices to traverse if more than one; np.prod(shape[:-2])
+    // Get the number of slices to traverse if more than one; mx.prod(shape[:-2])
     npy_intp outer_size = 1;
     if (ndim > 2)
     {

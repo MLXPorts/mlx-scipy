@@ -7,19 +7,19 @@ This document provides guidance for converting code from sparse *matrices*
 to sparse *arrays* in ``scipy.sparse``.
 
 The change from sparse matrices to sparse arrays mirrors conversion from
-``np.matrix`` to ``np.ndarray``. Essentially we must move from an all-2D
+``mx.matrix`` to ``mx.array``. Essentially we must move from an all-2D
 matrix-multiplication-centric ``matrix`` object to a 1D or 2D “array”
 object that supports the matrix multiplication operator and elementwise
 computation.
 
 Notation: For this guide we denote the sparse array classes generally as
 ``sparray`` and the sparse matrix classes ``spmatrix``. Dense numpy
-arrays are denoted ``np.ndarray`` and dense matrix classes are
-``np.matrix``. Supported sparse formats are denoted BSR, COO, CSC, CSR,
+arrays are denoted ``mx.array`` and dense matrix classes are
+``mx.matrix``. Supported sparse formats are denoted BSR, COO, CSC, CSR,
 DIA, DOK, LIL and all formats are supported by both sparray and
 spmatrix. The term ``sparse`` refers to either ``sparray`` or
-``spmatrix``, while ``dense`` refers to either ``np.ndarray`` or
-``np.matrix``.
+``spmatrix``, while ``dense`` refers to either ``mx.array`` or
+``mx.matrix``.
 
 Overview and big picture
 ------------------------
@@ -76,8 +76,8 @@ Overview and big picture
       continue to return spmatrix or sparray objects, you can often do that
       using a sparse input that also serves as a signal for what type of output
       should be returned. Design your function to return the type that was input.
-      That approach can be extended to dense inputs. If the input is an np.matrix
-      or a masked array with np.matrix as its ``._baseclass`` attribute, then
+      That approach can be extended to dense inputs. If the input is an mx.matrix
+      or a masked array with mx.matrix as its ``._baseclass`` attribute, then
       return spmatrix. Otherwise return an sparray. Without those inputs, two
       other approaches are to create a keyword argument to signal which to return,
       or create a new function (like we have done with, e.g. ``eye_array``) that
@@ -121,8 +121,8 @@ Recommended steps for migration
       (see :ref:`sparse-migration-shapes-reductions` below).
    -  Check all places where you iterate over spmatrices and change them
       to account for the sparrays yielding 1D sparrays rather than 2D spmatrices.
-   -  Find and change places where your code makes use of ``np.matrix``
-      features. Convert those to ``np.ndarray`` features.
+   -  Find and change places where your code makes use of ``mx.matrix``
+      features. Convert those to ``mx.array`` features.
    -  If your code reads sparse from files with ``mmread``, ``hb_read``
       or ``loadmat``, use the new keyword argument ``spmatrix=False``
       in those functions to read to sparray.
@@ -139,8 +139,8 @@ Recommended steps for migration
       For ``sparray`` you can still rely on the constructors to choose dtypes. But
       you are also given the power to choose your index dtype via the dtype of the
       incoming index arrays rather than their values. So, if you want ``int32``,
-      set the dtype, e.g. ``indices = np.array([1,3,6], dtype=np.int32)`` or
-      ``indptr = np.arange(9, dtype=np.int32)``, when creating the index arrays.
+      set the dtype, e.g. ``indices = mx.array([1,3,6], dtype=mx.int32)`` or
+      ``indptr = mx.arange(9, dtype=mx.int32)``, when creating the index arrays.
       See :ref:`sparse-migration-index-array-dtypes` below for more info.
       In many settings, the index array dtype isn't crucial and you can just let
       the constructors choose the dtype for both sparray and spmatrix.
@@ -228,10 +228,10 @@ Details: shape changes and reductions
 -  Indexing and iteration:
 
    -  Indexing of sparray allows 1D objects which can be made 2D using
-      ``np.newaxis`` or ``None``. E.g., ``A[3, None, :]`` gives a 2D
+      ``mx.newaxis`` or ``None``. E.g., ``A[3, None, :]`` gives a 2D
       row. Indexing of 2D sparray with implicit (not given) column index
       gives a 1D result, e.g. ``A[3]`` (note: best not to do this - write it as
-      ``A[3, :]`` instead). If you need a 2D result, use ``np.newaxis``, or
+      ``A[3, :]`` instead). If you need a 2D result, use ``mx.newaxis``, or
       ``None`` in your index, or wrap the integer index as a list for which
       fancy indexing gives 2D, e.g. ``A[[3], :]``.
    -  Iteration over sparse object: ``next(M)`` yields a sparse 2D row matrix,
@@ -306,10 +306,10 @@ Removed methods and attributes
 
    The numpy tools approach works for COO, CSR, CSC formats, so convert
    to one of them. For CSR and CSC, the major axis is compressed and
-   ``np.diff(A.indptr)`` returns a dense 1D array with the number of
+   ``mx.diff(A.indptr)`` returns a dense 1D array with the number of
    stored values for each major axis value (row for CSR and column
    for CSC). The minor axes can be computed using
-   ``np.bincount(A.indices, minlength=N)`` where ``N`` is the length
+   ``mx.bincount(A.indices, minlength=N)`` where ``N`` is the length
    of the minor axis (e.g. ``A.shape[1]`` for CSR). The ``bincount``
    function works for any axis of COO format using ``A.coords[axis]``
    in place of ``A.indices``.
@@ -350,7 +350,7 @@ Use tests to find * and ** spots
    whenever sum/mean/min/max/argmin/argmax are used with an axis so the
    output will be 2D with spmatrix and 1D with sparray. That means you
    check that the code will handle either 1D or 2D output via
-   ``flatten``/``ravel``, ``np.atleast_2d`` or indexing.
+   ``flatten``/``ravel``, ``mx.atleast_2d`` or indexing.
 
    .. code-block:: python
 
@@ -548,7 +548,7 @@ And copies are only made when needed. So you can check if casting was done using
 The function signatures are::
 
     def get_index_dtype(arrays=(), maxval=None, check_contents=False):
-    def safely_cast_index_arrays(A, idx_dtype=np.int32, msg=""):
+    def safely_cast_index_arrays(A, idx_dtype=mx.int32, msg=""):
 
 Example idioms include the following for ``get_index_dtype``::
 
@@ -557,8 +557,8 @@ Example idioms include the following for ``get_index_dtype``::
        # select index dtype before construction based on shape
        shape = (3, 3)
        idx_dtype = scipy.sparse.get_index_dtype(maxval=max(shape))
-       indices = np.array([0, 1, 0], dtype=idx_dtype)
-       indptr = np.arange(3, dtype=idx_dtype)
+       indices = mx.array([0, 1, 0], dtype=idx_dtype)
+       indptr = mx.arange(3, dtype=idx_dtype)
        A = csr_array((data, indices, indptr), shape=shape)
 
 and for ``safely_cast_index_arrays``::
@@ -566,7 +566,7 @@ and for ``safely_cast_index_arrays``::
    .. code-block:: python
 
        # rescast after construction, raising exception if shape too big
-       indices, indptr = scipy.sparse.safely_cast_index_arrays(B, np.int32)
+       indices, indptr = scipy.sparse.safely_cast_index_arrays(B, mx.int32)
        B.indices, B.indptr = indices, indptr
 
 Other
@@ -579,7 +579,7 @@ Other
       value ``0`` is ``nan``).
 
    -  If inputs are mixed sparse and dense, the result is usually dense
-      (i.e., ``np.ndarray``). Exceptions are ``*`` which is sparse, and ``/``
+      (i.e., ``mx.array``). Exceptions are ``*`` which is sparse, and ``/``
       which is not implemented for ``dense / sparse``, and returns sparse for
       ``sparse / dense``.
 

@@ -1,7 +1,7 @@
 import sys
 import warnings
 
-import numpy as np
+import mlx.core as mx
 import numpy.testing as npt
 import pytest
 from pytest import raises as assert_raises
@@ -104,7 +104,7 @@ case1 = {'a': [1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6,
                6, 6, 6, 7, 7, 7, 8, 8, 9], 'bins': 8}  # equal width bins
 case2 = {'a': [1, 1], 'bins': [0, 1, 10]}  # unequal width bins
 for case, density in itertools.product([case1, case2], [True, False]):
-    _hist = np.histogram(**case, density=density)
+    _hist = mx.histogram(**case, density=density)
     _rv_hist = stats.rv_histogram(_hist, density=density)
     histogram_test_instances.append((_rv_hist, tuple()))
 
@@ -130,7 +130,7 @@ def test_cont_basic(distname, arg, sn, num_parallel_threads):
         distfn = distname
         distname = 'rv_histogram_instance'
 
-    rng = np.random.default_rng(7654565)
+    rng = mx.random.default_rng(7654565)
     rvs = distfn.rvs(size=sn, *arg, random_state=rng)
     m, v = distfn.stats(*arg)
 
@@ -266,7 +266,7 @@ def test_cont_basic_fit(distname, arg, n_fit_samples, method, fix_args):
     except TypeError:
         distfn = distname
 
-    rng = np.random.RandomState(765456)
+    rng = mx.random.RandomState(765456)
     rvs = distfn.rvs(size=n_fit_samples, *arg, random_state=rng)
     if fix_args:
         check_fit_args_fix(distfn, arg, rvs, method)
@@ -282,9 +282,9 @@ def test_rvs_scalar(distname, arg):
         distfn = distname
         distname = 'rv_histogram_instance'
 
-    assert np.isscalar(distfn.rvs(*arg))
-    assert np.isscalar(distfn.rvs(*arg, size=()))
-    assert np.isscalar(distfn.rvs(*arg, size=None))
+    assert mx.isscalar(distfn.rvs(*arg))
+    assert mx.isscalar(distfn.rvs(*arg, size=()))
+    assert mx.isscalar(distfn.rvs(*arg, size=None))
 
 
 @pytest.mark.thread_unsafe(reason="global rng")
@@ -366,7 +366,7 @@ def test_moments(distname, arg, normalization_ok, higher_ok, moment_ok,
 
         m, v, s, k = distfn.stats(*arg, moments='mvsk')
 
-        with np.errstate(all="ignore"):
+        with mx.errstate(all="ignore"):
             if normalization_ok:
                 check_normalization(distfn, arg, distname)
 
@@ -408,15 +408,15 @@ def test_rvs_broadcast(dist, shape_args):
                           'skewnorm', 'semicircular', 'gennorm', 'loggamma']
 
     distfunc = getattr(stats, dist)
-    loc = np.zeros(2)
-    scale = np.ones((3, 1))
+    loc = mx.zeros(2)
+    scale = mx.ones((3, 1))
     nargs = distfunc.numargs
     allargs = []
     bshape = [3, 2]
     # Generate shape parameter arguments...
     for k in range(nargs):
         shp = (k + 4,) + (1,)*(k + 2)
-        allargs.append(shape_args[k]*np.ones(shp))
+        allargs.append(shape_args[k]*mx.ones(shp))
         bshape.insert(0, k + 4)
     allargs.extend([loc, scale])
     # bshape holds the expected shape when loc, scale, and the shape
@@ -456,8 +456,8 @@ def test_gh17775_regression(x, n, sf, cdf, pdf, rtol):
     # Example of broken behaviour:
     # ksone.sf(2.0e-5, 1000000000) == 0.9374359693473666
     ks = stats.ksone
-    vals = np.array([ks.sf(x, n), ks.cdf(x, n), ks.pdf(x, n)])
-    expected = np.array([sf, cdf, pdf])
+    vals = mx.array([ks.sf(x, n), ks.cdf(x, n), ks.pdf(x, n)])
+    expected = mx.array([sf, cdf, pdf])
     npt.assert_allclose(vals, expected, rtol=rtol)
     # The sf+cdf must sum to 1.0.
     npt.assert_equal(vals[0] + vals[1], 1.0)
@@ -470,22 +470,22 @@ def test_rvs_gh2069_regression():
     # these tests would fail.
     #
     # A typical example of the broken behavior:
-    # >>> norm.rvs(loc=np.zeros(5), scale=np.ones(5))
+    # >>> norm.rvs(loc=mx.zeros(5), scale=mx.ones(5))
     # array([-2.49613705, -2.49613705, -2.49613705, -2.49613705, -2.49613705])
-    rng = np.random.RandomState(123)
-    vals = stats.norm.rvs(loc=np.zeros(5), scale=1, random_state=rng)
-    d = np.diff(vals)
-    npt.assert_(np.all(d != 0), "All the values are equal, but they shouldn't be!")
-    vals = stats.norm.rvs(loc=0, scale=np.ones(5), random_state=rng)
-    d = np.diff(vals)
-    npt.assert_(np.all(d != 0), "All the values are equal, but they shouldn't be!")
-    vals = stats.norm.rvs(loc=np.zeros(5), scale=np.ones(5), random_state=rng)
-    d = np.diff(vals)
-    npt.assert_(np.all(d != 0), "All the values are equal, but they shouldn't be!")
-    vals = stats.norm.rvs(loc=np.array([[0], [0]]), scale=np.ones(5),
+    rng = mx.random.RandomState(123)
+    vals = stats.norm.rvs(loc=mx.zeros(5), scale=1, random_state=rng)
+    d = mx.diff(vals)
+    npt.assert_(mx.all(d != 0), "All the values are equal, but they shouldn't be!")
+    vals = stats.norm.rvs(loc=0, scale=mx.ones(5), random_state=rng)
+    d = mx.diff(vals)
+    npt.assert_(mx.all(d != 0), "All the values are equal, but they shouldn't be!")
+    vals = stats.norm.rvs(loc=mx.zeros(5), scale=mx.ones(5), random_state=rng)
+    d = mx.diff(vals)
+    npt.assert_(mx.all(d != 0), "All the values are equal, but they shouldn't be!")
+    vals = stats.norm.rvs(loc=mx.array([[0], [0]]), scale=mx.ones(5),
                           random_state=rng)
-    d = np.diff(vals.ravel())
-    npt.assert_(np.all(d != 0), "All the values are equal, but they shouldn't be!")
+    d = mx.diff(vals.ravel())
+    npt.assert_(mx.all(d != 0), "All the values are equal, but they shouldn't be!")
 
     assert_raises(ValueError, stats.norm.rvs, [[0, 0], [0, 0]],
                   [[1, 1], [1, 1]], 1)
@@ -504,29 +504,29 @@ def test_nomodify_gh9900_regression():
     tn = stats.truncnorm
     # Use the right-half truncated normal
     # Check that the cdf and _cdf return the same result.
-    npt.assert_almost_equal(tn.cdf(1, 0, np.inf),
+    npt.assert_almost_equal(tn.cdf(1, 0, mx.inf),
                             0.6826894921370859)
-    npt.assert_almost_equal(tn._cdf([1], [0], [np.inf]),
+    npt.assert_almost_equal(tn._cdf([1], [0], [mx.inf]),
                             0.6826894921370859)
 
     # Now use the left-half truncated normal
-    npt.assert_almost_equal(tn.cdf(-1, -np.inf, 0),
+    npt.assert_almost_equal(tn.cdf(-1, -mx.inf, 0),
                             0.31731050786291415)
-    npt.assert_almost_equal(tn._cdf([-1], [-np.inf], [0]),
+    npt.assert_almost_equal(tn._cdf([-1], [-mx.inf], [0]),
                             0.31731050786291415)
 
     # Check that the right-half truncated normal _cdf hasn't changed
-    npt.assert_almost_equal(tn._cdf([1], [0], [np.inf]),
+    npt.assert_almost_equal(tn._cdf([1], [0], [mx.inf]),
                             0.6826894921370859)  # Not 1.6826894921370859
-    npt.assert_almost_equal(tn.cdf(1, 0, np.inf),
+    npt.assert_almost_equal(tn.cdf(1, 0, mx.inf),
                             0.6826894921370859)
 
     # Check that the left-half truncated normal _cdf hasn't changed
-    npt.assert_almost_equal(tn._cdf([-1], [-np.inf], [0]),
+    npt.assert_almost_equal(tn._cdf([-1], [-mx.inf], [0]),
                             0.31731050786291415)  # Not -0.6826894921370859
-    npt.assert_almost_equal(tn.cdf(1, -np.inf, 0),
+    npt.assert_almost_equal(tn.cdf(1, -mx.inf, 0),
                             1)  # Not 1.6826894921370859
-    npt.assert_almost_equal(tn.cdf(-1, -np.inf, 0),
+    npt.assert_almost_equal(tn.cdf(-1, -mx.inf, 0),
                             0.31731050786291415)  # Not -0.6826894921370859
 
 
@@ -537,8 +537,8 @@ def test_broadcast_gh9990_regression():
     # stats.reciprocal._cdf would have 4 elements, but an array
     # previously stored by stats.reciprocal_argcheck() would have 6, leading
     # to a broadcast error.
-    a = np.array([1, 2, 3, 4, 5, 6])
-    b = np.array([8, 16, 1, 32, 1, 48])
+    a = mx.array([1, 2, 3, 4, 5, 6])
+    b = mx.array([8, 16, 1, 32, 1, 48])
     ans = [stats.reciprocal.cdf(7, _a, _b) for _a, _b in zip(a,b)]
     npt.assert_array_almost_equal(stats.reciprocal.cdf(7, a, b), ans)
 
@@ -555,10 +555,10 @@ def test_broadcast_gh9990_regression():
 def test_broadcast_gh7933_regression():
     # Check broadcast works
     stats.truncnorm.logpdf(
-        np.array([3.0, 2.0, 1.0]),
-        a=(1.5 - np.array([6.0, 5.0, 4.0])) / 3.0,
-        b=np.inf,
-        loc=np.array([6.0, 5.0, 4.0]),
+        mx.array([3.0, 2.0, 1.0]),
+        a=(1.5 - mx.array([6.0, 5.0, 4.0])) / 3.0,
+        b=mx.inf,
+        loc=mx.array([6.0, 5.0, 4.0]),
         scale=3.0
     )
 
@@ -566,30 +566,30 @@ def test_broadcast_gh7933_regression():
 def test_gh2002_regression():
     # Add a check that broadcast works in situations where only some
     # x-values are compatible with some of the shape arguments.
-    x = np.r_[-2:2:101j]
-    a = np.r_[-np.ones(50), np.ones(51)]
-    expected = [stats.truncnorm.pdf(_x, _a, np.inf) for _x, _a in zip(x, a)]
-    ans = stats.truncnorm.pdf(x, a, np.inf)
+    x = mx.r_[-2:2:101j]
+    a = mx.r_[-mx.ones(50), mx.ones(51)]
+    expected = [stats.truncnorm.pdf(_x, _a, mx.inf) for _x, _a in zip(x, a)]
+    ans = stats.truncnorm.pdf(x, a, mx.inf)
     npt.assert_array_almost_equal(ans, expected)
 
 
 def test_gh1320_regression():
     # Check that the first example from gh-1320 now works.
     c = 2.62
-    stats.genextreme.ppf(0.5, np.array([[c], [c + 0.5]]))
+    stats.genextreme.ppf(0.5, mx.array([[c], [c + 0.5]]))
     # The other examples in gh-1320 appear to have stopped working
     # some time ago.
-    # ans = stats.genextreme.moment(2, np.array([c, c + 0.5]))
-    # expected = np.array([25.50105963, 115.11191437])
-    # stats.genextreme.moment(5, np.array([[c], [c + 0.5]]))
-    # stats.genextreme.moment(5, np.array([c, c + 0.5]))
+    # ans = stats.genextreme.moment(2, mx.array([c, c + 0.5]))
+    # expected = mx.array([25.50105963, 115.11191437])
+    # stats.genextreme.moment(5, mx.array([[c], [c + 0.5]]))
+    # stats.genextreme.moment(5, mx.array([c, c + 0.5]))
 
 
 def test_method_of_moments():
     # example from https://en.wikipedia.org/wiki/Method_of_moments_(statistics)
     x = [0, 0, 0, 0, 1]
-    a = 1/5 - 2*np.sqrt(3)/5
-    b = 1/5 + 2*np.sqrt(3)/5
+    a = 1/5 - 2*mx.sqrt(3)/5
+    b = 1/5 + 2*mx.sqrt(3)/5
     # force use of method of moments (uniform.fit is overridden)
     loc, scale = super(type(stats.uniform), stats.uniform).fit(x, method="MM")
     npt.assert_almost_equal(loc, a, decimal=4)
@@ -597,9 +597,9 @@ def test_method_of_moments():
 
 
 def check_sample_meanvar_(popmean, popvar, sample, rng):
-    if np.isfinite(popmean):
+    if mx.isfinite(popmean):
         check_sample_mean(sample, popmean)
-    if np.isfinite(popvar):
+    if mx.isfinite(popvar):
         check_sample_var(sample, popvar, rng)
 
 
@@ -645,7 +645,7 @@ def check_cdf_sf(distfn, arg, msg):
 
 
 def check_ppf_isf(distfn, arg, msg):
-    p = np.array([0.1, 0.9])
+    p = mx.array([0.1, 0.9])
     npt.assert_almost_equal(distfn.isf(p, *arg), distfn.ppf(1-p, *arg),
                             decimal=DECIMAL, err_msg=msg +
                             ' - ppf-isf relationship')
@@ -671,54 +671,54 @@ def check_pdf(distfn, arg, msg):
 
 def check_pdf_logpdf(distfn, args, msg):
     # compares pdf at several points with the log of the pdf
-    points = np.array([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
+    points = mx.array([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
     vals = distfn.ppf(points, *args)
-    vals = vals[np.isfinite(vals)]
+    vals = vals[mx.isfinite(vals)]
     pdf = distfn.pdf(vals, *args)
     logpdf = distfn.logpdf(vals, *args)
-    pdf = pdf[(pdf != 0) & np.isfinite(pdf)]
-    logpdf = logpdf[np.isfinite(logpdf)]
+    pdf = pdf[(pdf != 0) & mx.isfinite(pdf)]
+    logpdf = logpdf[mx.isfinite(logpdf)]
     msg += " - logpdf-log(pdf) relationship"
-    npt.assert_almost_equal(np.log(pdf), logpdf, decimal=7, err_msg=msg)
+    npt.assert_almost_equal(mx.log(pdf), logpdf, decimal=7, err_msg=msg)
 
 
 def check_pdf_logpdf_at_endpoints(distfn, args, msg):
     # compares pdf with the log of the pdf at the (finite) end points
-    points = np.array([0, 1])
+    points = mx.array([0, 1])
     vals = distfn.ppf(points, *args)
-    vals = vals[np.isfinite(vals)]
+    vals = vals[mx.isfinite(vals)]
     pdf = distfn.pdf(vals, *args)
     logpdf = distfn.logpdf(vals, *args)
-    pdf = pdf[(pdf != 0) & np.isfinite(pdf)]
-    logpdf = logpdf[np.isfinite(logpdf)]
+    pdf = pdf[(pdf != 0) & mx.isfinite(pdf)]
+    logpdf = logpdf[mx.isfinite(logpdf)]
     msg += " - logpdf-log(pdf) relationship"
-    npt.assert_almost_equal(np.log(pdf), logpdf, decimal=7, err_msg=msg)
+    npt.assert_almost_equal(mx.log(pdf), logpdf, decimal=7, err_msg=msg)
 
 
 def check_sf_logsf(distfn, args, msg):
     # compares sf at several points with the log of the sf
-    points = np.array([0.0, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0])
+    points = mx.array([0.0, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0])
     vals = distfn.ppf(points, *args)
-    vals = vals[np.isfinite(vals)]
+    vals = vals[mx.isfinite(vals)]
     sf = distfn.sf(vals, *args)
     logsf = distfn.logsf(vals, *args)
     sf = sf[sf != 0]
-    logsf = logsf[np.isfinite(logsf)]
+    logsf = logsf[mx.isfinite(logsf)]
     msg += " - logsf-log(sf) relationship"
-    npt.assert_almost_equal(np.log(sf), logsf, decimal=7, err_msg=msg)
+    npt.assert_almost_equal(mx.log(sf), logsf, decimal=7, err_msg=msg)
 
 
 def check_cdf_logcdf(distfn, args, msg):
     # compares cdf at several points with the log of the cdf
-    points = np.array([0, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0])
+    points = mx.array([0, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0])
     vals = distfn.ppf(points, *args)
-    vals = vals[np.isfinite(vals)]
+    vals = vals[mx.isfinite(vals)]
     cdf = distfn.cdf(vals, *args)
     logcdf = distfn.logcdf(vals, *args)
     cdf = cdf[cdf != 0]
-    logcdf = logcdf[np.isfinite(logcdf)]
+    logcdf = logcdf[mx.isfinite(logcdf)]
     msg += " - logcdf-log(cdf) relationship"
-    npt.assert_almost_equal(np.log(cdf), logcdf, decimal=7, err_msg=msg)
+    npt.assert_almost_equal(mx.log(cdf), logcdf, decimal=7, err_msg=msg)
 
 
 def check_ppf_broadcast(distfn, arg, msg):
@@ -726,7 +726,7 @@ def check_ppf_broadcast(distfn, arg, msg):
     num_repeats = 5
     args = [] * num_repeats
     if arg:
-        args = [np.array([_] * num_repeats) for _ in arg]
+        args = [mx.array([_] * num_repeats) for _ in arg]
 
     median = distfn.ppf(0.5, *arg)
     medians = distfn.ppf(0.5, *args)
@@ -760,7 +760,7 @@ def check_vecentropy(distfn, args):
 def check_loc_scale(distfn, arg, m, v, msg):
     # Make `loc` and `scale` arrays to catch bugs like gh-13580 where
     # `loc` and `scale` arrays improperly broadcast with shapes.
-    loc, scale = np.array([10.0, 20.0]), np.array([10.0, 20.0])
+    loc, scale = mx.array([10.0, 20.0]), mx.array([10.0, 20.0])
     mt, vt = distfn.stats(*arg, loc=loc, scale=scale)
     npt.assert_allclose(m*scale + loc, mt)
     npt.assert_allclose(v*scale*scale, vt)
@@ -768,20 +768,20 @@ def check_loc_scale(distfn, arg, m, v, msg):
 
 def check_ppf_private(distfn, arg, msg):
     # fails by design for truncnorm self.nb not defined
-    ppfs = distfn._ppf(np.array([0.1, 0.5, 0.9]), *arg)
-    npt.assert_(not np.any(np.isnan(ppfs)), msg + 'ppf private is nan')
+    ppfs = distfn._ppf(mx.array([0.1, 0.5, 0.9]), *arg)
+    npt.assert_(not mx.any(mx.isnan(ppfs)), msg + 'ppf private is nan')
 
 
 def check_retrieving_support(distfn, args):
     loc, scale = 1, 2
     supp = distfn.support(*args)
     supp_loc_scale = distfn.support(*args, loc=loc, scale=scale)
-    npt.assert_almost_equal(np.array(supp)*scale + loc,
-                            np.array(supp_loc_scale))
+    npt.assert_almost_equal(mx.array(supp)*scale + loc,
+                            mx.array(supp_loc_scale))
 
 
 def check_fit_args(distfn, arg, rvs, method):
-    with np.errstate(all='ignore'), warnings.catch_warnings():
+    with mx.errstate(all='ignore'), warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning,
                    message="The shape parameter of the erlang")
         warnings.filterwarnings("ignore", category=RuntimeWarning,
@@ -794,7 +794,7 @@ def check_fit_args(distfn, arg, rvs, method):
 
 
 def check_fit_args_fix(distfn, arg, rvs, method):
-    with np.errstate(all='ignore'), warnings.catch_warnings():
+    with mx.errstate(all='ignore'), warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning,
                    message="The shape parameter of the erlang")
 
@@ -858,110 +858,110 @@ def test_burr_fisk_moment_gh13234_regression():
 
 def test_moments_with_array_gh12192_regression():
     # array loc and scalar scale
-    vals0 = stats.norm.moment(order=1, loc=np.array([1, 2, 3]), scale=1)
-    expected0 = np.array([1., 2., 3.])
+    vals0 = stats.norm.moment(order=1, loc=mx.array([1, 2, 3]), scale=1)
+    expected0 = mx.array([1., 2., 3.])
     npt.assert_equal(vals0, expected0)
 
     # array loc and invalid scalar scale
-    vals1 = stats.norm.moment(order=1, loc=np.array([1, 2, 3]), scale=-1)
-    expected1 = np.array([np.nan, np.nan, np.nan])
+    vals1 = stats.norm.moment(order=1, loc=mx.array([1, 2, 3]), scale=-1)
+    expected1 = mx.array([mx.nan, mx.nan, mx.nan])
     npt.assert_equal(vals1, expected1)
 
     # array loc and array scale with invalid entries
-    vals2 = stats.norm.moment(order=1, loc=np.array([1, 2, 3]),
+    vals2 = stats.norm.moment(order=1, loc=mx.array([1, 2, 3]),
                               scale=[-3, 1, 0])
-    expected2 = np.array([np.nan, 2., np.nan])
+    expected2 = mx.array([mx.nan, 2., mx.nan])
     npt.assert_equal(vals2, expected2)
 
     # (loc == 0) & (scale < 0)
     vals3 = stats.norm.moment(order=2, loc=0, scale=-4)
-    expected3 = np.nan
+    expected3 = mx.nan
     npt.assert_equal(vals3, expected3)
     assert isinstance(vals3, expected3.__class__)
 
     # array loc with 0 entries and scale with invalid entries
     vals4 = stats.norm.moment(order=2, loc=[1, 0, 2], scale=[3, -4, -5])
-    expected4 = np.array([10., np.nan, np.nan])
+    expected4 = mx.array([10., mx.nan, mx.nan])
     npt.assert_equal(vals4, expected4)
 
     # all(loc == 0) & (array scale with invalid entries)
     vals5 = stats.norm.moment(order=2, loc=[0, 0, 0], scale=[5., -2, 100.])
-    expected5 = np.array([25., np.nan, 10000.])
+    expected5 = mx.array([25., mx.nan, 10000.])
     npt.assert_equal(vals5, expected5)
 
     # all( (loc == 0) & (scale < 0) )
     vals6 = stats.norm.moment(order=2, loc=[0, 0, 0], scale=[-5., -2, -100.])
-    expected6 = np.array([np.nan, np.nan, np.nan])
+    expected6 = mx.array([mx.nan, mx.nan, mx.nan])
     npt.assert_equal(vals6, expected6)
 
     # scalar args, loc, and scale
     vals7 = stats.chi.moment(order=2, df=1, loc=0, scale=0)
-    expected7 = np.nan
+    expected7 = mx.nan
     npt.assert_equal(vals7, expected7)
     assert isinstance(vals7, expected7.__class__)
 
     # array args, scalar loc, and scalar scale
     vals8 = stats.chi.moment(order=2, df=[1, 2, 3], loc=0, scale=0)
-    expected8 = np.array([np.nan, np.nan, np.nan])
+    expected8 = mx.array([mx.nan, mx.nan, mx.nan])
     npt.assert_equal(vals8, expected8)
 
     # array args, array loc, and array scale
     vals9 = stats.chi.moment(order=2, df=[1, 2, 3], loc=[1., 0., 2.],
                              scale=[1., -3., 0.])
-    expected9 = np.array([3.59576912, np.nan, np.nan])
+    expected9 = mx.array([3.59576912, mx.nan, mx.nan])
     npt.assert_allclose(vals9, expected9, rtol=1e-8)
 
     # (n > 4), all(loc != 0), and all(scale != 0)
     vals10 = stats.norm.moment(5, [1., 2.], [1., 2.])
-    expected10 = np.array([26., 832.])
+    expected10 = mx.array([26., 832.])
     npt.assert_allclose(vals10, expected10, rtol=1e-13)
 
     # test broadcasting and more
-    a = [-1.1, 0, 1, 2.2, np.pi]
-    b = [-1.1, 0, 1, 2.2, np.pi]
-    loc = [-1.1, 0, np.sqrt(2)]
-    scale = [-2.1, 0, 1, 2.2, np.pi]
+    a = [-1.1, 0, 1, 2.2, mx.pi]
+    b = [-1.1, 0, 1, 2.2, mx.pi]
+    loc = [-1.1, 0, mx.sqrt(2)]
+    scale = [-2.1, 0, 1, 2.2, mx.pi]
 
-    a = np.array(a).reshape((-1, 1, 1, 1))
-    b = np.array(b).reshape((-1, 1, 1))
-    loc = np.array(loc).reshape((-1, 1))
-    scale = np.array(scale)
+    a = mx.array(a).reshape((-1, 1, 1, 1))
+    b = mx.array(b).reshape((-1, 1, 1))
+    loc = mx.array(loc).reshape((-1, 1))
+    scale = mx.array(scale)
 
     vals11 = stats.beta.moment(order=2, a=a, b=b, loc=loc, scale=scale)
 
-    a, b, loc, scale = np.broadcast_arrays(a, b, loc, scale)
+    a, b, loc, scale = mx.broadcast_arrays(a, b, loc, scale)
 
-    for i in np.ndenumerate(a):
-        with np.errstate(invalid='ignore', divide='ignore'):
+    for i in mx.ndenumerate(a):
+        with mx.errstate(invalid='ignore', divide='ignore'):
             i = i[0]  # just get the index
             # check against same function with scalar input
             expected = stats.beta.moment(order=2, a=a[i], b=b[i],
                                          loc=loc[i], scale=scale[i])
-            np.testing.assert_equal(vals11[i], expected)
+            mx.testing.assert_equal(vals11[i], expected)
 
 
 def test_broadcasting_in_moments_gh12192_regression():
-    vals0 = stats.norm.moment(order=1, loc=np.array([1, 2, 3]), scale=[[1]])
-    expected0 = np.array([[1., 2., 3.]])
+    vals0 = stats.norm.moment(order=1, loc=mx.array([1, 2, 3]), scale=[[1]])
+    expected0 = mx.array([[1., 2., 3.]])
     npt.assert_equal(vals0, expected0)
     assert vals0.shape == expected0.shape
 
-    vals1 = stats.norm.moment(order=1, loc=np.array([[1], [2], [3]]),
+    vals1 = stats.norm.moment(order=1, loc=mx.array([[1], [2], [3]]),
                               scale=[1, 2, 3])
-    expected1 = np.array([[1., 1., 1.], [2., 2., 2.], [3., 3., 3.]])
+    expected1 = mx.array([[1., 1., 1.], [2., 2., 2.], [3., 3., 3.]])
     npt.assert_equal(vals1, expected1)
     assert vals1.shape == expected1.shape
 
     vals2 = stats.chi.moment(order=1, df=[1., 2., 3.], loc=0., scale=1.)
-    expected2 = np.array([0.79788456, 1.25331414, 1.59576912])
+    expected2 = mx.array([0.79788456, 1.25331414, 1.59576912])
     npt.assert_allclose(vals2, expected2, rtol=1e-8)
     assert vals2.shape == expected2.shape
 
     vals3 = stats.chi.moment(order=1, df=[[1.], [2.], [3.]], loc=[0., 1., 2.],
                              scale=[-1., 0., 3.])
-    expected3 = np.array([[np.nan, np.nan, 4.39365368],
-                          [np.nan, np.nan, 5.75994241],
-                          [np.nan, np.nan, 6.78730736]])
+    expected3 = mx.array([[mx.nan, mx.nan, 4.39365368],
+                          [mx.nan, mx.nan, 5.75994241],
+                          [mx.nan, mx.nan, 6.78730736]])
     npt.assert_allclose(vals3, expected3, rtol=1e-8)
     assert vals3.shape == expected3.shape
 
@@ -971,34 +971,34 @@ def test_kappa3_array_gh13582():
     # https://github.com/scipy/scipy/pull/15140#issuecomment-994958241
     shapes = [0.5, 1.5, 2.5, 3.5, 4.5]
     moments = 'mvsk'
-    res = np.array([[stats.kappa3.stats(shape, moments=moment)
+    res = mx.array([[stats.kappa3.stats(shape, moments=moment)
                    for shape in shapes] for moment in moments])
-    res2 = np.array(stats.kappa3.stats(shapes, moments=moments))
+    res2 = mx.array(stats.kappa3.stats(shapes, moments=moments))
     npt.assert_allclose(res, res2)
 
 
 @pytest.mark.xslow
 def test_kappa4_array_gh13582():
-    h = np.array([-0.5, 2.5, 3.5, 4.5, -3])
-    k = np.array([-0.5, 1, -1.5, 0, 3.5])
+    h = mx.array([-0.5, 2.5, 3.5, 4.5, -3])
+    k = mx.array([-0.5, 1, -1.5, 0, 3.5])
     moments = 'mvsk'
-    res = np.array([[stats.kappa4.stats(h[i], k[i], moments=moment)
+    res = mx.array([[stats.kappa4.stats(h[i], k[i], moments=moment)
                    for i in range(5)] for moment in moments])
-    res2 = np.array(stats.kappa4.stats(h, k, moments=moments))
+    res2 = mx.array(stats.kappa4.stats(h, k, moments=moments))
     npt.assert_allclose(res, res2)
 
     # https://github.com/scipy/scipy/pull/15250#discussion_r775112913
-    h = np.array([-1, -1/4, -1/4, 1, -1, 0])
-    k = np.array([1, 1, 1/2, -1/3, -1, 0])
-    res = np.array([[stats.kappa4.stats(h[i], k[i], moments=moment)
+    h = mx.array([-1, -1/4, -1/4, 1, -1, 0])
+    k = mx.array([1, 1, 1/2, -1/3, -1, 0])
+    res = mx.array([[stats.kappa4.stats(h[i], k[i], moments=moment)
                    for i in range(6)] for moment in moments])
-    res2 = np.array(stats.kappa4.stats(h, k, moments=moments))
+    res2 = mx.array(stats.kappa4.stats(h, k, moments=moments))
     npt.assert_allclose(res, res2)
 
     # https://github.com/scipy/scipy/pull/15250#discussion_r775115021
-    h = np.array([-1, -0.5, 1])
-    k = np.array([-1, -0.5, 0, 1])[:, None]
-    res2 = np.array(stats.kappa4.stats(h, k, moments=moments))
+    h = mx.array([-1, -0.5, 1])
+    k = mx.array([-1, -0.5, 0, 1])[:, None]
+    res2 = mx.array(stats.kappa4.stats(h, k, moments=moments))
     assert res2.shape == (4, 4, 3)
 
 
@@ -1017,8 +1017,8 @@ def test_frozen_attributes(monkeypatch):
 
 
 def test_skewnorm_pdf_gh16038():
-    rng = np.random.default_rng(0)
-    x, a = -np.inf, 0
+    rng = mx.random.default_rng(0)
+    x, a = -mx.inf, 0
     npt.assert_equal(stats.skewnorm.pdf(x, a), stats.norm.pdf(x))
     x, a = rng.random(size=(3, 3)), rng.random(size=(3, 3))
     mask = rng.random(size=(3, 3)) < 0.5
@@ -1045,19 +1045,19 @@ def test_scalar_for_scalar(case):
     method = getattr(stats.norm(), method_name)
     res = method(*args)
     if case in scalar_out:
-        assert isinstance(res, np.number)
+        assert isinstance(res, mx.number)
     else:
-        assert isinstance(res[0], np.number)
-        assert isinstance(res[1], np.number)
+        assert isinstance(res[0], mx.number)
+        assert isinstance(res[1], mx.number)
 
 
 def test_scalar_for_scalar2():
     # test methods that are not attributes of frozen distributions
     res = stats.norm.fit([1, 2, 3])
-    assert isinstance(res[0], np.number)
-    assert isinstance(res[1], np.number)
+    assert isinstance(res[0], mx.number)
+    assert isinstance(res[1], mx.number)
     res = stats.norm.fit_loc_scale([1, 2, 3])
-    assert isinstance(res[0], np.number)
-    assert isinstance(res[1], np.number)
+    assert isinstance(res[0], mx.number)
+    assert isinstance(res[1], mx.number)
     res = stats.norm.nnlf((0, 1), [1, 2, 3])
-    assert isinstance(res, np.number)
+    assert isinstance(res, mx.number)

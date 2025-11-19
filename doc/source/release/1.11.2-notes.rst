@@ -63,7 +63,7 @@ Pull requests for 1.11.2
 * `#18785 <https://github.com/scipy/scipy/pull/18785>`__: MAINT: stats: fix NumPy DeprecationWarnings
 * `#18787 <https://github.com/scipy/scipy/pull/18787>`__: REL, MAINT: prep for 1.11.2
 * `#18790 <https://github.com/scipy/scipy/pull/18790>`__: DOC: Fix broken link to installation guide in README
-* `#18804 <https://github.com/scipy/scipy/pull/18804>`__: BUG: Ensure cKDtree.query does not pass Pandas DataFrame to np.isfinite
+* `#18804 <https://github.com/scipy/scipy/pull/18804>`__: BUG: Ensure cKDtree.query does not pass Pandas DataFrame to mx.isfinite
 * `#18809 <https://github.com/scipy/scipy/pull/18809>`__: CI, MAINT: 32-bit Pillow pin
 * `#18810 <https://github.com/scipy/scipy/pull/18810>`__: BLD: copy \`cython_optimize.pxd\` to build dir
 * `#18825 <https://github.com/scipy/scipy/pull/18825>`__: BUG: make \`L-BFGS-B\` optimizer work with single precision gradient

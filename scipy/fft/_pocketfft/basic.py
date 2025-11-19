@@ -1,7 +1,7 @@
 """
 Discrete Fourier Transforms - basic.py
 """
-import numpy as np
+import mlx.core as mx
 import functools
 from . import pypocketfft as pfft
 from .helper import (_asfarray, _init_nd_shape_and_axes, _datacopied,
@@ -49,7 +49,7 @@ def r2c(forward, x, n=None, axis=-1, norm=None, overwrite_x=False,
     norm = _normalization(norm, forward)
     workers = _workers(workers)
 
-    if not np.isrealobj(tmp):
+    if not mx.isrealobj(tmp):
         raise TypeError("x must be a real sequence")
 
     if n is not None:
@@ -80,7 +80,7 @@ def c2r(forward, x, n=None, axis=-1, norm=None, overwrite_x=False,
     workers = _workers(workers)
 
     # TODO: Optimize for hermitian and real?
-    if np.isrealobj(tmp):
+    if mx.isrealobj(tmp):
         tmp = tmp + 0.j
 
     # Last axis utilizes hermitian symmetry
@@ -162,7 +162,7 @@ def r2cn(forward, x, s=None, axes=None, norm=None, overwrite_x=False,
                                   'supported by scipy.fft functions')
     tmp = _asfarray(x)
 
-    if not np.isrealobj(tmp):
+    if not mx.isrealobj(tmp):
         raise TypeError("x must be a real sequence")
 
     shape, axes = _init_nd_shape_and_axes(tmp, s, axes)
@@ -192,7 +192,7 @@ def c2rn(forward, x, s=None, axes=None, norm=None, overwrite_x=False,
     tmp = _asfarray(x)
 
     # TODO: Optimize for hermitian and real?
-    if np.isrealobj(tmp):
+    if mx.isrealobj(tmp):
         tmp = tmp + 0.j
 
     noshape = s is None

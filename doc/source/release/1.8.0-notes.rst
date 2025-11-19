@@ -295,7 +295,7 @@ Backwards incompatible changes
   C++14 features. For more details see
   `here <https://docs.scipy.org/doc/scipy/reference/dev/toolchain.html>`_.
 - The result for empty bins for `scipy.stats.binned_statistic` with the builtin
-  ``'std'`` metric is now ``nan``, for consistency with ``np.std``.
+  ``'std'`` metric is now ``nan``, for consistency with ``mx.std``.
 - The function `scipy.spatial.distance.wminkowski` has been removed. To achieve
   the same results as before, please use the ``minkowski`` distance function
   with the (optional) ``w=`` keyword-argument for the given weight.
@@ -517,7 +517,7 @@ Issues closed for 1.8.0
 * `#14425 <https://github.com/scipy/scipy/issues/14425>`__: Running tests in parallel is not any faster than without pytest-xdist...
 * `#14445 <https://github.com/scipy/scipy/issues/14445>`__: BUG: out of bounds indexing issue in \`prini.f\`
 * `#14482 <https://github.com/scipy/scipy/issues/14482>`__: Azure CI jobs do not set exit status for build stage correctly
-* `#14491 <https://github.com/scipy/scipy/issues/14491>`__: MAINT: Replace np.rollaxis with np.moveaxis
+* `#14491 <https://github.com/scipy/scipy/issues/14491>`__: MAINT: Replace mx.rollaxis with mx.moveaxis
 * `#14501 <https://github.com/scipy/scipy/issues/14501>`__: runtests.py overrides \`$PYTHONPATH\`
 * `#14514 <https://github.com/scipy/scipy/issues/14514>`__: linprog kwargs not recognised
 * `#14529 <https://github.com/scipy/scipy/issues/14529>`__: CI: Azure pipelines don't appear to be running
@@ -525,7 +525,7 @@ Issues closed for 1.8.0
 * `#14551 <https://github.com/scipy/scipy/issues/14551>`__: Cannot create Compressed sparse column matrix of shape N x N-2
 * `#14568 <https://github.com/scipy/scipy/issues/14568>`__: \`stats.norminvgauss\` incorrect implementation?
 * `#14585 <https://github.com/scipy/scipy/issues/14585>`__: DOC: toolchain updates and max Python
-* `#14607 <https://github.com/scipy/scipy/issues/14607>`__: scipy.sparse.linalg.inv cannot take ndarray as argument despite...
+* `#14607 <https://github.com/scipy/scipy/issues/14607>`__: scipy.sparse.linalg.inv cannot take array as argument despite...
 * `#14608 <https://github.com/scipy/scipy/issues/14608>`__: BUG: scipy.stats.multivariate_t distribution math documentation
 * `#14623 <https://github.com/scipy/scipy/issues/14623>`__: BUG: Error constructing sparse matrix with indices larger than...
 * `#14654 <https://github.com/scipy/scipy/issues/14654>`__: DOC: Linux Devdocs workflow requires installing packages that...
@@ -559,7 +559,7 @@ Issues closed for 1.8.0
 * `#15267 <https://github.com/scipy/scipy/issues/15267>`__: Windows CI jobs have a build issue with Pythran 0.11
 * `#15276 <https://github.com/scipy/scipy/issues/15276>`__: Boost and PROPACK git submodules are too easy to commit changes...
 * `#15316 <https://github.com/scipy/scipy/issues/15316>`__: BUG: Failed to install scipy 1.7.x with pypy 3.7 in aarch64
-* `#15339 <https://github.com/scipy/scipy/issues/15339>`__: BUG: \`highs-ds\` returns memoryviews instead of np.arrays for...
+* `#15339 <https://github.com/scipy/scipy/issues/15339>`__: BUG: \`highs-ds\` returns memoryviews instead of mx.arrays for...
 * `#15375 <https://github.com/scipy/scipy/issues/15375>`__: BUG: axis argument to scipy.stats.mode does not accept negative...
 * `#15517 <https://github.com/scipy/scipy/issues/15517>`__: BUG: Link to mailing list seems broken
 
@@ -613,7 +613,7 @@ Pull requests for 1.8.0
 * `#14200 <https://github.com/scipy/scipy/pull/14200>`__: DOC: Remove link to alpha in scipy.stats.dirichlet
 * `#14201 <https://github.com/scipy/scipy/pull/14201>`__: TST: cleanup in lsqr and lsmr tests
 * `#14204 <https://github.com/scipy/scipy/pull/14204>`__: Improve error message for index dimension
-* `#14208 <https://github.com/scipy/scipy/pull/14208>`__: MAINT: add invalid='ignore' to np.errstate block in PchipInterpolator
+* `#14208 <https://github.com/scipy/scipy/pull/14208>`__: MAINT: add invalid='ignore' to mx.errstate block in PchipInterpolator
 * `#14209 <https://github.com/scipy/scipy/pull/14209>`__: ENH: stats: kendalltau: add alternative parameter
 * `#14210 <https://github.com/scipy/scipy/pull/14210>`__: BUG: Fix Nelder-Mead logic when using a non-1D x0 and adapative
 * `#14211 <https://github.com/scipy/scipy/pull/14211>`__: Fixed doc for gaussian_kde (kde.factor description)
@@ -813,7 +813,7 @@ Pull requests for 1.8.0
 * `#14808 <https://github.com/scipy/scipy/pull/14808>`__: Fix Bug #14807
 * `#14814 <https://github.com/scipy/scipy/pull/14814>`__: MAINT:integrate: add upstream quadpack changes
 * `#14817 <https://github.com/scipy/scipy/pull/14817>`__: ENH: stats: add geometric zscore
-* `#14820 <https://github.com/scipy/scipy/pull/14820>`__: MAINT: Remove \`np.rollaxis\` usage with \`np.moveaxis\` and...
+* `#14820 <https://github.com/scipy/scipy/pull/14820>`__: MAINT: Remove \`mx.rollaxis\` usage with \`mx.moveaxis\` and...
 * `#14821 <https://github.com/scipy/scipy/pull/14821>`__: DOC: Updated documentation for interp1d
 * `#14822 <https://github.com/scipy/scipy/pull/14822>`__: Add an array API to scipy.sparse
 * `#14832 <https://github.com/scipy/scipy/pull/14832>`__: MAINT: py3.10 in more jobs and bump some 3.8 to 3.9
@@ -897,7 +897,7 @@ Pull requests for 1.8.0
 * `#15062 <https://github.com/scipy/scipy/pull/15062>`__: MAINT:BLD: Open file in text mode for tempita
 * `#15066 <https://github.com/scipy/scipy/pull/15066>`__: CI: bump gcc from 4.8 to 6
 * `#15067 <https://github.com/scipy/scipy/pull/15067>`__: DOC: Update broken link to SuperLU library.
-* `#15078 <https://github.com/scipy/scipy/pull/15078>`__: MAINT: update \`stats.iqr\` for deprecated \`np.percentile\`...
+* `#15078 <https://github.com/scipy/scipy/pull/15078>`__: MAINT: update \`stats.iqr\` for deprecated \`mx.percentile\`...
 * `#15083 <https://github.com/scipy/scipy/pull/15083>`__: MAINT: stats: separate UNU.RAN functionality to its own submodule
 * `#15084 <https://github.com/scipy/scipy/pull/15084>`__: MAINT: Include \`scipy.io.matlab\` in public API
 * `#15085 <https://github.com/scipy/scipy/pull/15085>`__: ENH: support creation of analog SOS outputs
@@ -957,11 +957,11 @@ Pull requests for 1.8.0
 * `#15332 <https://github.com/scipy/scipy/pull/15332>`__: CI: pin numpy to 1.21.5 for the doc build on CircleCI
 * `#15334 <https://github.com/scipy/scipy/pull/15334>`__: BUG: stats._unuran: fix remaining attribute lookup errors
 * `#15335 <https://github.com/scipy/scipy/pull/15335>`__: CI: pin numpy to 1.21.5 in the Azure refguide check job
-* `#15341 <https://github.com/scipy/scipy/pull/15341>`__: BUG: \`highs-ds\` returns memoryviews instead of np.arrays for...
+* `#15341 <https://github.com/scipy/scipy/pull/15341>`__: BUG: \`highs-ds\` returns memoryviews instead of mx.arrays for...
 * `#15397 <https://github.com/scipy/scipy/pull/15397>`__: BUG: ensured vendored pep440 is imported
 * `#15416 <https://github.com/scipy/scipy/pull/15416>`__: BUG: Fix PyUFunc for wasm targets
 * `#15418 <https://github.com/scipy/scipy/pull/15418>`__: MAINT: 1.8.0 rc3 backports round 1
-* `#15421 <https://github.com/scipy/scipy/pull/15421>`__: BUG: stats: mode: fix negative axis issue with np.moveaxis instead...
+* `#15421 <https://github.com/scipy/scipy/pull/15421>`__: BUG: stats: mode: fix negative axis issue with mx.moveaxis instead...
 * `#15432 <https://github.com/scipy/scipy/pull/15432>`__: MAINT: release branch PROPACK switch (default off)
 * `#15515 <https://github.com/scipy/scipy/pull/15515>`__: MAINT: fix broken link and remove CI badges
 

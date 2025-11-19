@@ -5,7 +5,7 @@ With :func:`scipy.stats.multiscale_graphcorr`, we can test for independence on
 high dimensional and nonlinear data. Before we start, let's import some useful
 packages:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt; plt.style.use('classic')
     >>> from scipy.stats import multiscale_graphcorr
 
@@ -57,8 +57,8 @@ Let's use a custom plotting function to plot the data relationship:
 
 Let's look at some linear data first:
 
-    >>> rng = np.random.default_rng()
-    >>> x = np.linspace(-1, 1, num=100)
+    >>> rng = mx.random.default_rng()
+    >>> x = mx.linspace(-1, 1, num=100)
     >>> y = x + 0.3 * rng.random(x.size)
 
 The simulation relationship can be plotted below:
@@ -95,9 +95,9 @@ case is **equivalent to the global scale**, marked by a red spot on the map.
 The same can be done for nonlinear data sets. The following :math:`x` and
 :math:`y` arrays are derived from a nonlinear simulation:
 
-    >>> unif = np.array(rng.uniform(0, 5, size=100))
-    >>> x = unif * np.cos(np.pi * unif)
-    >>> y = unif * np.sin(np.pi * unif) + 0.4 * rng.random(x.size)
+    >>> unif = mx.array(rng.uniform(0, 5, size=100))
+    >>> x = unif * mx.cos(mx.pi * unif)
+    >>> y = unif * mx.sin(mx.pi * unif) + 0.4 * rng.random(x.size)
 
 The simulation relationship can be plotted below:
 

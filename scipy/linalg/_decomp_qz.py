@@ -78,11 +78,11 @@ def _qz(A, B, output='real', lwork=None, sort=None, overwrite_a=False,
         raise ValueError("argument must be 'real', or 'complex'")
 
     if check_finite:
-        a1 = mx.asarray_chkfinite(A)
-        b1 = mx.asarray_chkfinite(B)
+        a1 = mx.array_chkfinite(A)
+        b1 = mx.array_chkfinite(B)
     else:
-        a1 = mx.asarray(A)
-        b1 = mx.asarray(B)
+        a1 = mx.array(A)
+        b1 = mx.array(B)
 
     a_m, a_n = a1.shape
     b_m, b_n = b1.shape

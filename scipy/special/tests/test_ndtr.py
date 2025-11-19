@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_allclose
 import scipy.special as sc
 
@@ -14,10 +14,10 @@ class TestNdtri:
         assert sc.ndtri(0.5) == 0.0
 
     def test_asymptotes(self):
-        assert_equal(sc.ndtri([0.0, 1.0]), [-np.inf, np.inf])
+        assert_equal(sc.ndtri([0.0, 1.0]), [-mx.inf, mx.inf])
 
     def test_outside_of_domain(self):
-        assert all(np.isnan(sc.ndtri([-1.5, 1.5])))
+        assert all(mx.isnan(sc.ndtri([-1.5, 1.5])))
 
 
 class TestLogNdtr:
@@ -29,8 +29,8 @@ class TestLogNdtr:
     #
 
     def test_log_ndtr_moderate_le8(self):
-        x = np.array([-0.75, -0.25, 0, 0.5, 1.5, 2.5, 3, 4, 5, 7, 8])
-        expected = np.array([-1.4844482299196562,
+        x = mx.array([-0.75, -0.25, 0, 0.5, 1.5, 2.5, 3, 4, 5, 7, 8])
+        expected = mx.array([-1.4844482299196562,
                              -0.9130617648111351,
                              -0.6931471805599453,
                              -0.3689464152886564,
@@ -45,7 +45,7 @@ class TestLogNdtr:
         assert_allclose(y, expected, rtol=1e-14)
 
     def test_log_ndtr_values_8_16(self):
-        x = np.array([8.001, 8.06, 8.15, 8.5, 10, 12, 14, 16])
+        x = mx.array([8.001, 8.06, 8.15, 8.5, 10, 12, 14, 16])
         expected = [-6.170639424817055e-16,
                     -3.814722443652823e-16,
                     -1.819621363526629e-16,
@@ -58,7 +58,7 @@ class TestLogNdtr:
         assert_allclose(y, expected, rtol=5e-14)
 
     def test_log_ndtr_values_16_31(self):
-        x = np.array([16.15, 20.3, 21.4, 26.2, 30.9])
+        x = mx.array([16.15, 20.3, 21.4, 26.2, 30.9])
         expected = [-5.678084565148492e-59,
                     -6.429244467698346e-92,
                     -6.680402412553295e-102,
@@ -68,7 +68,7 @@ class TestLogNdtr:
         assert_allclose(y, expected, rtol=2e-13)
 
     def test_log_ndtr_values_gt31(self):
-        x = np.array([31.6, 32.8, 34.9, 37.1])
+        x = mx.array([31.6, 32.8, 34.9, 37.1])
         expected = [-1.846036234858162e-219,
                     -2.9440539964066835e-236,
                     -3.71721649450857e-267,

@@ -2,27 +2,27 @@
 ''' Utilities for generic processing of return arrays from read
 '''
 
-import numpy as np
+import mlx.core as mx
 cimport numpy as cnp
 
-cnp.import_array()
+cmx.import_array()
 
 
-cpdef object squeeze_element(cnp.ndarray arr):
+cpdef object squeeze_element(cmx.array arr):
     ''' Return squeezed element
 
-    The returned object may not be an ndarray - for example if we do
+    The returned object may not be an array - for example if we do
     ``arr.item`` to return a ``mat_struct`` object from a struct array '''
     if not arr.size:
-        return np.array([], dtype=arr.dtype)
-    cdef cnp.ndarray arr2 = np.squeeze(arr)
+        return mx.array([], dtype=arr.dtype)
+    cdef cmx.array arr2 = mx.squeeze(arr)
     # We want to squeeze 0d arrays, unless they are record arrays
     if arr2.ndim == 0 and arr2.dtype.kind != 'V':
         return arr2.item()
     return arr2
 
 
-cpdef cnp.ndarray chars_to_strings(in_arr):
+cpdef cmx.array chars_to_strings(in_arr):
     ''' Convert final axis of char array to strings
 
     Parameters
@@ -36,10 +36,10 @@ cpdef cnp.ndarray chars_to_strings(in_arr):
        dtype of 'UN' where N is the length of the last dimension of
        ``arr``
     '''
-    cdef cnp.ndarray arr = in_arr
+    cdef cmx.array arr = in_arr
     cdef int ndim = arr.ndim
-    cdef cnp.npy_intp *dims = arr.shape
-    cdef cnp.npy_intp last_dim = dims[ndim-1]
+    cdef cmx.npy_intp *dims = arr.shape
+    cdef cmx.npy_intp last_dim = dims[ndim-1]
     cdef object new_dt_str, out_shape
     if last_dim == 0: # deal with empty array case
         # Started with U1 - which is OK for us
@@ -55,6 +55,6 @@ cpdef cnp.ndarray chars_to_strings(in_arr):
         new_dt_str = arr.dtype.str[:-1] + str(last_dim)
         out_shape = in_arr.shape[:-1]
     # Copy to deal with F ordered arrays
-    arr = np.ascontiguousarray(arr)
+    arr = mx.ascontiguousarray(arr)
     arr = arr.view(new_dt_str)
     return arr.reshape(out_shape)

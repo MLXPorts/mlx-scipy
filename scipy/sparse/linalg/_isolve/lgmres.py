@@ -1,7 +1,7 @@
 # Copyright (C) 2009, Pauli Virtanen <pav@iki.fi>
 # Distributed under the same license as SciPy.
 
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import LinAlgError
 from scipy.linalg import get_blas_funcs
 from .iterative import _get_atol_rtol
@@ -24,14 +24,14 @@ def lgmres(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=1000, M=None, callback=
 
     Parameters
     ----------
-    A : {sparse array, ndarray, LinearOperator}
+    A : {sparse array, array, LinearOperator}
         The real or complex N-by-N matrix of the linear system.
         Alternatively, ``A`` can be a linear operator which can
         produce ``Ax`` using, e.g.,
         ``scipy.sparse.linalg.LinearOperator``.
-    b : ndarray
+    b : array
         Right hand side of the linear system. Has shape (N,) or (N,1).
-    x0 : ndarray
+    x0 : array
         Starting guess for the solution.
     rtol, atol : float, optional
         Parameters for the convergence test. For convergence,
@@ -40,7 +40,7 @@ def lgmres(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=1000, M=None, callback=
     maxiter : int, optional
         Maximum number of iterations.  Iteration will stop after maxiter
         steps even if the specified tolerance has not been achieved.
-    M : {sparse array, ndarray, LinearOperator}, optional
+    M : {sparse array, array, LinearOperator}, optional
         Preconditioner for A.  The preconditioner should approximate the
         inverse of A.  Effective preconditioning dramatically improves the
         rate of convergence, which implies that fewer iterations are needed
@@ -73,7 +73,7 @@ def lgmres(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=1000, M=None, callback=
 
     Returns
     -------
-    x : ndarray
+    x : array
         The converged solution.
     info : int
         Provides convergence information:
@@ -108,20 +108,20 @@ def lgmres(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=1000, M=None, callback=
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import lgmres
     >>> A = csc_array([[3, 2, 0], [1, -1, 0], [0, 5, 1]], dtype=float)
-    >>> b = np.array([2, 4, -1], dtype=float)
+    >>> b = mx.array([2, 4, -1], dtype=float)
     >>> x, exitCode = lgmres(A, b, atol=1e-5)
     >>> print(exitCode)            # 0 indicates successful convergence
     0
-    >>> np.allclose(A.dot(x), b)
+    >>> mx.allclose(A.dot(x), b)
     True
     """
     A,M,x,b = make_system(A,M,x0,b)
 
-    if not np.isfinite(b).all():
+    if not mx.isfinite(b).all():
         raise ValueError("RHS must contain only finite numbers")
 
     matvec = A.matvec
@@ -153,7 +153,7 @@ def lgmres(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=1000, M=None, callback=
 
         # -- determine input type routines
         if axpy is None:
-            if np.iscomplexobj(r_outer) and not np.iscomplexobj(x):
+            if mx.iscomplexobj(r_outer) and not mx.iscomplexobj(x):
                 x = x.astype(r_outer.dtype)
             axpy, dot, scal, nrm2 = get_blas_funcs(['axpy', 'dot', 'scal', 'nrm2'],
                                                    (x, r_outer))
@@ -185,7 +185,7 @@ def lgmres(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=1000, M=None, callback=
                                                outer_v=outer_v,
                                                prepend_outer_v=prepend_outer_v)
             y *= inner_res_0
-            if not np.isfinite(y).all():
+            if not mx.isfinite(y).all():
                 # Overflow etc. in computation. There's no way to
                 # recover from this, so we have to bail out.
                 raise LinAlgError()

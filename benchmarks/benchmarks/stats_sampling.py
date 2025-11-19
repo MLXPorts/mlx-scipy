@@ -1,6 +1,6 @@
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from .common import Benchmark, safe_import
 
 with safe_import():
@@ -39,10 +39,10 @@ class contdist2:
         self.mode = 0
 
     def pdf(self, x):
-        return 1./np.sqrt(2*np.pi) * np.exp(-0.5 * x*x)
+        return 1./mx.sqrt(2*mx.pi) * mx.exp(-0.5 * x*x)
 
     def dpdf(self, x):
-        return 1./np.sqrt(2*np.pi) * -x * np.exp(-0.5 * x*x)
+        return 1./mx.sqrt(2*mx.pi) * -x * mx.exp(-0.5 * x*x)
 
     def cdf(self, x):
         return special.ndtr(x)
@@ -89,15 +89,15 @@ class contdist4:
         self.mode = 0
 
     def pdf(self, x):
-        return 0.05 + 0.45 * (1 + np.sin(2*np.pi*x))
+        return 0.05 + 0.45 * (1 + mx.sin(2*mx.pi*x))
 
     def dpdf(self, x):
-        return 0.2 * 0.45 * (2*np.pi) * np.cos(2*np.pi*x)
+        return 0.2 * 0.45 * (2*mx.pi) * mx.cos(2*mx.pi*x)
 
     def cdf(self, x):
         return (0.05*(x + 1) +
-                0.9*(1. + 2.*np.pi*(1 + x) - np.cos(2.*np.pi*x)) /
-                (4.*np.pi))
+                0.9*(1. + 2.*mx.pi*(1 + x) - mx.cos(2.*mx.pi*x)) /
+                (4.*mx.pi))
 
     def support(self):
         return -1, 1
@@ -116,14 +116,14 @@ class contdist5:
         self.mode = 0
 
     def pdf(self, x):
-        return 0.2 * (0.05 + 0.45 * (1 + np.sin(2*np.pi*x)))
+        return 0.2 * (0.05 + 0.45 * (1 + mx.sin(2*mx.pi*x)))
 
     def dpdf(self, x):
-        return 0.2 * 0.45 * (2*np.pi) * np.cos(2*np.pi*x)
+        return 0.2 * 0.45 * (2*mx.pi) * mx.cos(2*mx.pi*x)
 
     def cdf(self, x):
-        return x/10. + 0.5 + 0.09/(2*np.pi) * (np.cos(10*np.pi) -
-                                               np.cos(2*np.pi*x))
+        return x/10. + 0.5 + 0.09/(2*mx.pi) * (mx.cos(10*mx.pi) -
+                                               mx.cos(2*mx.pi*x))
 
     def support(self):
         return -5, 5
@@ -143,7 +143,7 @@ class TransformedDensityRejection(Benchmark):
     params = [allcontdists, [0., -0.5]]
 
     def setup(self, dist, c):
-        self.urng = np.random.default_rng(0xfaad7df1c89e050200dbe258636b3265)
+        self.urng = mx.random.default_rng(0xfaad7df1c89e050200dbe258636b3265)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             try:
@@ -172,7 +172,7 @@ class SimpleRatioUniforms(Benchmark):
     params = [allcontdists, [0, 1]]
 
     def setup(self, dist, cdf_at_mode):
-        self.urng = np.random.default_rng(0xfaad7df1c89e050200dbe258636b3265)
+        self.urng = mx.random.default_rng(0xfaad7df1c89e050200dbe258636b3265)
         try:
             if cdf_at_mode:
                 cdf_at_mode = dist.cdf(dist.mode)
@@ -208,7 +208,7 @@ class NumericalInversePolynomial(Benchmark):
     params = [allcontdists]
 
     def setup(self, dist):
-        self.urng = np.random.default_rng(0xb235b58c1f616c59c18d8568f77d44d1)
+        self.urng = mx.random.default_rng(0xb235b58c1f616c59c18d8568f77d44d1)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             try:
@@ -235,7 +235,7 @@ class NumericalInverseHermite(Benchmark):
     params = [allcontdists, [3, 5]]
 
     def setup(self, dist, order):
-        self.urng = np.random.default_rng(0xb235b58c1f616c59c18d8568f77d44d1)
+        self.urng = mx.random.default_rng(0xb235b58c1f616c59c18d8568f77d44d1)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             try:
@@ -272,8 +272,8 @@ class DiscreteAliasUrn(Benchmark):
         distname, params = distribution
         dist = getattr(stats, distname)
         domain = dist.support(*params)
-        self.urng = np.random.default_rng(0x2fc9eb71cd5120352fa31b7a048aa867)
-        x = np.arange(domain[0], domain[1] + 1)
+        self.urng = mx.random.default_rng(0x2fc9eb71cd5120352fa31b7a048aa867)
+        x = mx.arange(domain[0], domain[1] + 1)
         self.pv = dist.pmf(x, *params)
         self.rng = sampling.DiscreteAliasUrn(self.pv, random_state=self.urng)
 
@@ -300,8 +300,8 @@ class DiscreteGuideTable(Benchmark):
         distname, params = distribution
         dist = getattr(stats, distname)
         domain = dist.support(*params)
-        self.urng = np.random.default_rng(0x2fc9eb71cd5120352fa31b7a048aa867)
-        x = np.arange(domain[0], domain[1] + 1)
+        self.urng = mx.random.default_rng(0x2fc9eb71cd5120352fa31b7a048aa867)
+        x = mx.arange(domain[0], domain[1] + 1)
         self.pv = dist.pmf(x, *params)
         self.rng = sampling.DiscreteGuideTable(self.pv, random_state=self.urng)
 

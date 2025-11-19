@@ -154,18 +154,18 @@ class _ProbabilityDistribution(ABC):
         --------
         Instantiate a distribution with the desired parameters:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
         >>> X = stats.Uniform(a=0., b=1.)
 
         Generate a pseudorandom sample:
 
         >>> x = X.sample((1000, 1))
-        >>> octiles = (np.arange(8) + 1) / 8
-        >>> np.count_nonzero(x <= octiles, axis=0)
+        >>> octiles = (mx.arange(8) + 1) / 8
+        >>> mx.count_nonzero(x <= octiles, axis=0)
         array([ 148,  263,  387,  516,  636,  751,  865, 1000])  # may vary
 
-        >>> X = stats.Uniform(a=np.zeros((3, 1)), b=np.ones(2))
+        >>> X = stats.Uniform(a=mx.zeros((3, 1)), b=mx.ones(2))
         >>> X.a.shape,
         (3, 2)
         >>> x = X.sample(shape=(5, 4))
@@ -431,7 +431,7 @@ class _ProbabilityDistribution(ABC):
         Compute the median:
 
         >>> X.median()
-        np.float64(5.0)
+        mx.float64(5.0)
         >>> X.median() == X.icdf(0.5) == X.iccdf(0.5)
         True
 
@@ -854,7 +854,7 @@ class _ProbabilityDistribution(ABC):
         --------
         Instantiate a distribution with the desired parameters:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
         >>> X = stats.Uniform(a=-1.0, b=1.0)
 
@@ -862,7 +862,7 @@ class _ProbabilityDistribution(ABC):
 
         >>> X.logpdf(0.5)
         -0.6931471805599453
-        >>> np.allclose(X.logpdf(0.5), np.log(X.pdf(0.5)))
+        >>> mx.allclose(X.logpdf(0.5), mx.log(X.pdf(0.5)))
         True
 
         """
@@ -931,7 +931,7 @@ class _ProbabilityDistribution(ABC):
         Evaluate the PMF at the desired argument:
 
         >>> X.pmf(5)
-        np.float64(0.24609375)
+        mx.float64(0.24609375)
 
         """
         raise NotImplementedError()
@@ -1004,15 +1004,15 @@ class _ProbabilityDistribution(ABC):
         --------
         Instantiate a distribution with the desired parameters:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
         >>> X = stats.Binomial(n=10, p=0.5)
 
         Evaluate the log-PMF at the desired argument:
 
         >>> X.logpmf(5)
-        np.float64(-1.4020427180880297)
-        >>> np.allclose(X.logpmf(5), np.log(X.pmf(5)))
+        mx.float64(-1.4020427180880297)
+        >>> mx.allclose(X.logpmf(5), mx.log(X.pmf(5)))
         True
 
         """
@@ -1205,7 +1205,7 @@ class _ProbabilityDistribution(ABC):
         --------
         Instantiate a distribution with the desired parameters:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
         >>> X = stats.Uniform(a=-0.5, b=0.5)
 
@@ -1213,7 +1213,7 @@ class _ProbabilityDistribution(ABC):
 
         >>> X.icdf(0.25)
         -0.25
-        >>> np.allclose(X.cdf(X.icdf(0.25)), 0.25)
+        >>> mx.allclose(X.cdf(X.icdf(0.25)), 0.25)
         True
 
         This function returns NaN when the argument is outside the domain.
@@ -1320,7 +1320,7 @@ class _ProbabilityDistribution(ABC):
         --------
         Instantiate a distribution with the desired parameters:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
         >>> X = stats.Uniform(a=-0.5, b=0.5)
 
@@ -1328,7 +1328,7 @@ class _ProbabilityDistribution(ABC):
 
         >>> X.ccdf(0.25)
         0.25
-        >>> np.allclose(X.ccdf(0.25), 1-X.cdf(0.25))
+        >>> mx.allclose(X.ccdf(0.25), 1-X.cdf(0.25))
         True
 
         Evaluate the complement of the cumulative probability between two arguments:
@@ -1405,7 +1405,7 @@ class _ProbabilityDistribution(ABC):
         --------
         Instantiate a distribution with the desired parameters:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
         >>> X = stats.Uniform(a=-0.5, b=0.5)
 
@@ -1413,7 +1413,7 @@ class _ProbabilityDistribution(ABC):
 
         >>> X.iccdf(0.25)
         0.25
-        >>> np.allclose(X.iccdf(0.25), X.icdf(1-0.25))
+        >>> mx.allclose(X.iccdf(0.25), X.icdf(1-0.25))
         True
 
         This function returns NaN when the argument is outside the domain.
@@ -1524,7 +1524,7 @@ class _ProbabilityDistribution(ABC):
         --------
         Instantiate a distribution with the desired parameters:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
         >>> X = stats.Uniform(a=-0.5, b=0.5)
 
@@ -1532,7 +1532,7 @@ class _ProbabilityDistribution(ABC):
 
         >>> X.logcdf(0.25)
         -0.287682072451781
-        >>> np.allclose(X.logcdf(0.), np.log(X.cdf(0.)))
+        >>> mx.allclose(X.logcdf(0.), mx.log(X.cdf(0.)))
         True
 
         """  # noqa: E501
@@ -1608,7 +1608,7 @@ class _ProbabilityDistribution(ABC):
         --------
         Instantiate a distribution with the desired parameters:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
         >>> X = stats.Uniform(a=-0.5, b=0.5)
 
@@ -1616,7 +1616,7 @@ class _ProbabilityDistribution(ABC):
 
         >>> X.ilogcdf(-0.25)
         0.2788007830714034
-        >>> np.allclose(X.ilogcdf(-0.25), X.icdf(np.exp(-0.25)))
+        >>> mx.allclose(X.ilogcdf(-0.25), X.icdf(mx.exp(-0.25)))
         True
 
         """
@@ -1718,7 +1718,7 @@ class _ProbabilityDistribution(ABC):
         --------
         Instantiate a distribution with the desired parameters:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
         >>> X = stats.Uniform(a=-0.5, b=0.5)
 
@@ -1726,7 +1726,7 @@ class _ProbabilityDistribution(ABC):
 
         >>> X.logccdf(0.25)
         -1.3862943611198906
-        >>> np.allclose(X.logccdf(0.), np.log(X.ccdf(0.)))
+        >>> mx.allclose(X.logccdf(0.), mx.log(X.ccdf(0.)))
         True
 
         """  # noqa: E501
@@ -1801,7 +1801,7 @@ class _ProbabilityDistribution(ABC):
         --------
         Instantiate a distribution with the desired parameters:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
         >>> X = stats.Uniform(a=-0.5, b=0.5)
 
@@ -1809,7 +1809,7 @@ class _ProbabilityDistribution(ABC):
 
         >>> X.ilogccdf(-0.25)
         -0.2788007830714034
-        >>> np.allclose(X.ilogccdf(-0.25), X.iccdf(np.exp(-0.25)))
+        >>> mx.allclose(X.ilogccdf(-0.25), X.iccdf(mx.exp(-0.25)))
         True
 
         """
@@ -1877,7 +1877,7 @@ class _ProbabilityDistribution(ABC):
         --------
         Instantiate a distribution with the desired parameters:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
         >>> X = stats.Uniform(a=-1., b=1.)
 
@@ -1885,11 +1885,11 @@ class _ProbabilityDistribution(ABC):
 
         >>> X.logentropy()
         (-0.3665129205816642+0j)
-        >>> np.allclose(np.exp(X.logentropy()), X.entropy())
+        >>> mx.allclose(mx.exp(X.logentropy()), X.entropy())
         True
 
         For a random variable with negative entropy, the log-entropy has an
-        imaginary part equal to `np.pi`.
+        imaginary part equal to `mx.pi`.
 
         >>> X = stats.Uniform(a=-.1, b=.1)
         >>> X.entropy(), X.logentropy()

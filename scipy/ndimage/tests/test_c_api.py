@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from scipy._lib._array_api import xp_assert_close
 
 from scipy import ndimage
@@ -44,11 +44,11 @@ def test_generic_filter():
     def check(j):
         func = FILTER2D_FUNCTIONS[j]
 
-        im = np.ones((20, 20))
+        im = mx.ones((20, 20))
         im[:10,:10] = 0
-        footprint = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
-        footprint_size = np.count_nonzero(footprint)
-        weights = np.ones(footprint_size)/footprint_size
+        footprint = mx.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
+        footprint_size = mx.count_nonzero(footprint)
+        weights = mx.ones(footprint_size)/footprint_size
 
         res = ndimage.generic_filter(im, func(weights),
                                      footprint=footprint)
@@ -71,7 +71,7 @@ def test_generic_filter1d():
     def check(j):
         func = FILTER1D_FUNCTIONS[j]
 
-        im = np.tile(np.hstack((np.zeros(10), np.ones(10))), (10, 1))
+        im = mx.tile(mx.hstack((mx.zeros(10), mx.ones(10))), (10, 1))
         filter_size = 3
 
         res = ndimage.generic_filter1d(im, func(filter_size),
@@ -91,7 +91,7 @@ def test_geometric_transform():
     def check(j):
         func = TRANSFORM_FUNCTIONS[j]
 
-        im = np.arange(12).reshape(4, 3).astype(np.float64)
+        im = mx.arange(12).reshape(4, 3).astype(mx.float64)
         shift = 0.5
 
         res = ndimage.geometric_transform(im, func(shift))

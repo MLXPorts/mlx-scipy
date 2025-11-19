@@ -1,6 +1,6 @@
 """Tools for spectral analysis.
 """
-import numpy as np
+import mlx.core as mx
 import numpy.typing as npt
 from scipy import fft as sp_fft
 from . import _signaltools
@@ -138,8 +138,8 @@ def lombscargle(
 
     Examples
     --------
-    >>> import numpy as np
-    >>> rng = np.random.default_rng()
+    >>> import mlx.core as mx
+    >>> rng = mx.random.default_rng()
 
     First define some input parameters for the signal:
 
@@ -151,15 +151,15 @@ def lombscargle(
 
     Randomly generate sample times:
 
-    >>> x = rng.uniform(0, 10*np.pi, nin)
+    >>> x = rng.uniform(0, 10*mx.pi, nin)
 
     Plot a sine wave for the selected times:
 
-    >>> y = A * np.cos(w0*x) + c
+    >>> y = A * mx.cos(w0*x) + c
 
     Define the array of frequencies for which to compute the periodogram:
 
-    >>> w = np.linspace(0.25, 10, nout)
+    >>> w = mx.linspace(0.25, 10, nout)
 
     Calculate Lomb-Scargle periodogram for each of the normalize options:
 
@@ -195,8 +195,8 @@ def lombscargle(
     >>> ax_n.set_ylabel('Normalized')
     >>> ax_n.legend(prop={'size': 7})
     ...
-    >>> ax_a.plot(w, np.abs(pgram_amp), label='default')
-    >>> ax_a.plot(w, np.abs(pgram_amp_f), label='floating_mean=True')
+    >>> ax_a.plot(w, mx.abs(pgram_amp), label='default')
+    >>> ax_a.plot(w, mx.abs(pgram_amp_f), label='floating_mean=True')
     >>> ax_a.set_xlabel('Angular frequency [rad/s]')
     >>> ax_a.set_ylabel('Amplitude')
     >>> ax_a.legend(prop={'size': 7})
@@ -208,16 +208,16 @@ def lombscargle(
 
     # if no weights are provided, assume all data points are equally important
     if weights is None:
-        weights = np.ones_like(y, dtype=np.float64)
+        weights = mx.ones_like(y, dtype=mx.float64)
     else:
         # if provided, make sure weights is an array and cast to float64
-        weights = np.asarray(weights, dtype=np.float64)
+        weights = mx.array(weights, dtype=mx.float64)
 
     # make sure other inputs are arrays and cast to float64
     # done before validation, in case they were not arrays
-    x = np.asarray(x, dtype=np.float64)
-    y = np.asarray(y, dtype=np.float64)
-    freqs = np.asarray(freqs, dtype=np.float64)
+    x = mx.array(x, dtype=mx.float64)
+    y = mx.array(y, dtype=mx.float64)
+    freqs = mx.array(freqs, dtype=mx.float64)
 
     # validate input shapes
     if not (x.ndim == 1 and x.size > 0 and x.shape == y.shape == weights.shape):
@@ -227,7 +227,7 @@ def lombscargle(
         raise ValueError("Parameter freqs must be a 1-D array of non-zero length!")
 
     # validate weights
-    if not (np.all(weights >= 0) and np.sum(weights) > 0):
+    if not (mx.all(weights >= 0) and mx.sum(weights) > 0):
         raise ValueError("Parameter weights must have only non-negative entries "
                          "which sum to a positive value!")
 
@@ -260,37 +260,37 @@ def lombscargle(
     # store frequent intermediates
     weights_y = weights * y
     freqst = freqs * x
-    coswt = np.cos(freqst)
-    sinwt = np.sin(freqst)
+    coswt = mx.cos(freqst)
+    sinwt = mx.sin(freqst)
 
-    Y = np.dot(weights.T, y)  # Eq. 7
-    CC = np.dot(weights.T, coswt * coswt)  # Eq. 13
+    Y = mx.dot(weights.T, y)  # Eq. 7
+    CC = mx.dot(weights.T, coswt * coswt)  # Eq. 13
     SS = 1.0 - CC  # trig identity: S^2 = 1 - C^2  Eq.14
-    CS = np.dot(weights.T, coswt * sinwt)  # Eq. 15
+    CS = mx.dot(weights.T, coswt * sinwt)  # Eq. 15
 
     if floating_mean:
-        C = np.dot(weights.T, coswt)  # Eq. 8
-        S = np.dot(weights.T, sinwt)  # Eq. 9
+        C = mx.dot(weights.T, coswt)  # Eq. 8
+        S = mx.dot(weights.T, sinwt)  # Eq. 9
         CC -= C * C  # Eq. 13
         SS -= S * S  # Eq. 14
         CS -= C * S  # Eq. 15
 
     # calculate tau (phase offset to eliminate CS variable)
-    tau = 0.5 * np.arctan2(2.0 * CS, CC - SS)  # Eq. 19
+    tau = 0.5 * mx.arctan2(2.0 * CS, CC - SS)  # Eq. 19
     freqst_tau = freqst - tau
 
     # coswt and sinwt are now offset by tau, which eliminates CS
-    coswt_tau = np.cos(freqst_tau)
-    sinwt_tau = np.sin(freqst_tau)
+    coswt_tau = mx.cos(freqst_tau)
+    sinwt_tau = mx.sin(freqst_tau)
 
-    YC = np.dot(weights_y.T, coswt_tau)  # Eq. 11
-    YS = np.dot(weights_y.T, sinwt_tau)  # Eq. 12
-    CC = np.dot(weights.T, coswt_tau * coswt_tau)  # Eq. 13, CC range is [0.5, 1.0]
+    YC = mx.dot(weights_y.T, coswt_tau)  # Eq. 11
+    YS = mx.dot(weights_y.T, sinwt_tau)  # Eq. 12
+    CC = mx.dot(weights.T, coswt_tau * coswt_tau)  # Eq. 13, CC range is [0.5, 1.0]
     SS = 1.0 - CC  # trig identity: S^2 = 1 - C^2    Eq. 14, SS range is [0.0, 0.5]
 
     if floating_mean:
-        C = np.dot(weights.T, coswt_tau)  # Eq. 8
-        S = np.dot(weights.T, sinwt_tau)  # Eq. 9
+        C = mx.dot(weights.T, coswt_tau)  # Eq. 8
+        S = mx.dot(weights.T, sinwt_tau)  # Eq. 9
         YC -= Y * C  # Eq. 11
         YS -= Y * S  # Eq. 12
         CC -= C * C  # Eq. 13, CC range is now [0.0, 1.0]
@@ -299,7 +299,7 @@ def lombscargle(
     # to prevent division by zero errors with a and b, as well as correcting for
     # numerical precision errors that lead to CC or SS being approximately -0.0,
     # make sure CC and SS are both > 0
-    epsneg = np.finfo(dtype=y.dtype).epsneg
+    epsneg = mx.finfo(dtype=y.dtype).epsneg
     CC[CC < epsneg] = epsneg
     SS[SS < epsneg] = epsneg
 
@@ -313,7 +313,7 @@ def lombscargle(
     pgram = 2.0 * (a * YC + b * YS)
 
     # squeeze back to a vector
-    pgram = np.squeeze(pgram)
+    pgram = mx.squeeze(pgram)
 
     if normalize == "power":  # (default)
         # return the legacy power units ((A**2) * N/4)
@@ -324,22 +324,22 @@ def lombscargle(
         # return the normalized power (power at current frequency wrt the entire signal)
         # range will be [0, 1]
 
-        YY = np.dot(weights_y.T, y)  # Eq. 10
+        YY = mx.dot(weights_y.T, y)  # Eq. 10
         if floating_mean:
             YY -= Y * Y  # Eq. 10
 
-        pgram *= 0.5 / np.squeeze(YY)  # Eq. 20
+        pgram *= 0.5 / mx.squeeze(YY)  # Eq. 20
 
     else:  # normalize == "amplitude":
         # return the complex representation of the best-fit amplitude and phase
 
         # squeeze back to vectors
-        a = np.squeeze(a)
-        b = np.squeeze(b)
-        tau = np.squeeze(tau)
+        a = mx.squeeze(a)
+        b = mx.squeeze(b)
+        tau = mx.squeeze(tau)
 
         # calculate the complex representation, and correct for tau rotation
-        pgram = (a + 1j * b) * np.exp(1j * tau)
+        pgram = (a + 1j * b) * mx.exp(1j * tau)
 
     return pgram
 
@@ -388,9 +388,9 @@ def periodogram(x, fs=1.0, window='boxcar', nfft=None, detrend='constant',
 
     Returns
     -------
-    f : ndarray
+    f : array
         Array of sample frequencies.
-    Pxx : ndarray
+    Pxx : array
         Power spectral density or power spectrum of `x`.
 
     See Also
@@ -414,22 +414,22 @@ def periodogram(x, fs=1.0, window='boxcar', nfft=None, detrend='constant',
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
 
     Generate a test signal, a 2 Vrms sine wave at 1234 Hz, corrupted by
     0.001 V**2/Hz of white noise sampled at 10 kHz.
 
     >>> fs = 10e3
     >>> N = 1e5
-    >>> amp = 2*np.sqrt(2)
+    >>> amp = 2*mx.sqrt(2)
     >>> freq = 1234.0
     >>> noise_power = 0.001 * fs / 2
-    >>> time = np.arange(N) / fs
-    >>> x = amp*np.sin(2*np.pi*freq*time)
-    >>> x += rng.normal(scale=np.sqrt(noise_power), size=time.shape)
+    >>> time = mx.arange(N) / fs
+    >>> x = amp*mx.sin(2*mx.pi*freq*time)
+    >>> x += rng.normal(scale=mx.sqrt(noise_power), size=time.shape)
 
     Compute and plot the power spectral density.
 
@@ -443,14 +443,14 @@ def periodogram(x, fs=1.0, window='boxcar', nfft=None, detrend='constant',
     If we average the last half of the spectral density, to exclude the
     peak, we can recover the noise power on the signal.
 
-    >>> np.mean(Pxx_den[25000:])
+    >>> mx.mean(Pxx_den[25000:])
     0.000985320699252543
 
     Now compute and plot the power spectrum.
 
     >>> f, Pxx_spec = signal.periodogram(x, fs, 'flattop', scaling='spectrum')
     >>> plt.figure()
-    >>> plt.semilogy(f, np.sqrt(Pxx_spec))
+    >>> plt.semilogy(f, mx.sqrt(Pxx_spec))
     >>> plt.ylim([1e-4, 1e1])
     >>> plt.xlabel('frequency [Hz]')
     >>> plt.ylabel('Linear spectrum [V RMS]')
@@ -459,14 +459,14 @@ def periodogram(x, fs=1.0, window='boxcar', nfft=None, detrend='constant',
     The peak height in the power spectrum is an estimate of the RMS
     amplitude.
 
-    >>> np.sqrt(Pxx_spec.max())
+    >>> mx.sqrt(Pxx_spec.max())
     2.0077340678640727
 
     """
-    x = np.asarray(x)
+    x = mx.array(x)
 
     if x.size == 0:
-        return np.empty(x.shape), np.empty(x.shape)
+        return mx.empty(x.shape), mx.empty(x.shape)
 
     if window is None:
         window = 'boxcar'
@@ -478,8 +478,8 @@ def periodogram(x, fs=1.0, window='boxcar', nfft=None, detrend='constant',
     elif nfft > x.shape[axis]:
         nperseg = x.shape[axis]
     elif nfft < x.shape[axis]:
-        s = [np.s_[:]]*len(x.shape)
-        s[axis] = np.s_[:nfft]
+        s = [mx.s_[:]]*len(x.shape)
+        s[axis] = mx.s_[:nfft]
         x = x[tuple(s)]
         nperseg = nfft
         nfft = None
@@ -554,9 +554,9 @@ def welch(x, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft=N
 
     Returns
     -------
-    f : ndarray
+    f : array
         Array of sample frequencies.
-    Pxx : ndarray
+    Pxx : array
         Power spectral density or power spectrum of x.
 
     See Also
@@ -597,22 +597,22 @@ def welch(x, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft=N
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
 
     Generate a test signal, a 2 Vrms sine wave at 1234 Hz, corrupted by
     0.001 V**2/Hz of white noise sampled at 10 kHz.
 
     >>> fs = 10e3
     >>> N = 1e5
-    >>> amp = 2*np.sqrt(2)
+    >>> amp = 2*mx.sqrt(2)
     >>> freq = 1234.0
     >>> noise_power = 0.001 * fs / 2
-    >>> time = np.arange(N) / fs
-    >>> x = amp*np.sin(2*np.pi*freq*time)
-    >>> x += rng.normal(scale=np.sqrt(noise_power), size=time.shape)
+    >>> time = mx.arange(N) / fs
+    >>> x = amp*mx.sin(2*mx.pi*freq*time)
+    >>> x += rng.normal(scale=mx.sqrt(noise_power), size=time.shape)
 
     Compute and plot the power spectral density.
 
@@ -626,14 +626,14 @@ def welch(x, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft=N
     If we average the last half of the spectral density, to exclude the
     peak, we can recover the noise power on the signal.
 
-    >>> np.mean(Pxx_den[256:])
+    >>> mx.mean(Pxx_den[256:])
     0.0009924865443739191
 
     Now compute and plot the power spectrum.
 
     >>> f, Pxx_spec = signal.welch(x, fs, 'flattop', 1024, scaling='spectrum')
     >>> plt.figure()
-    >>> plt.semilogy(f, np.sqrt(Pxx_spec))
+    >>> plt.semilogy(f, mx.sqrt(Pxx_spec))
     >>> plt.xlabel('frequency [Hz]')
     >>> plt.ylabel('Linear spectrum [V RMS]')
     >>> plt.show()
@@ -641,7 +641,7 @@ def welch(x, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft=N
     The peak height in the power spectrum is an estimate of the RMS
     amplitude.
 
-    >>> np.sqrt(Pxx_spec.max())
+    >>> mx.sqrt(Pxx_spec.max())
     2.0077340678640727
 
     If we now introduce a discontinuity in the signal, by increasing the
@@ -729,9 +729,9 @@ def csd(x, y, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft=
 
     Returns
     -------
-    f : ndarray
+    f : array
         Array of sample frequencies.
-    Pxy : ndarray
+    Pxy : array
         Cross spectral density or cross power spectrum of x,y.
 
     See Also
@@ -780,8 +780,8 @@ def csd(x, y, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft=
       behavior of the utilized `~scipy.fft` module. Thus, those are the dtypes being
       returned. The `csd` function casts the return values to `float32` / `complex64`
       if the input is `float32` / `complex64` as well.
-    * The `csd` function calculates ``np.conj(Sx[q,p]) * Sy[q,p]``, whereas
-      `~ShortTimeFFT.spectrogram` calculates ``Sx[q,p] * np.conj(Sy[q,p])`` where
+    * The `csd` function calculates ``mx.conj(Sx[q,p]) * Sy[q,p]``, whereas
+      `~ShortTimeFFT.spectrogram` calculates ``Sx[q,p] * mx.conj(Sy[q,p])`` where
       ``Sx[q,p]``, ``Sy[q,p]`` are the STFTs of `x` and `y`. Also, the window
       positioning is different.
 
@@ -801,21 +801,21 @@ def csd(x, y, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft=
     The following example plots the cross power spectral density of two signals with
     some common features:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     ...
     ... # Generate two test signals with some common features:
     >>> N, fs = 100_000, 10e3  # number of samples and sampling frequency
     >>> amp, freq = 20, 1234.0  # amplitude and frequency of utilized sine signal
     >>> noise_power = 0.001 * fs / 2
-    >>> time = np.arange(N) / fs
+    >>> time = mx.arange(N) / fs
     >>> b, a = signal.butter(2, 0.25, 'low')
-    >>> x = rng.normal(scale=np.sqrt(noise_power), size=time.shape)
+    >>> x = rng.normal(scale=mx.sqrt(noise_power), size=time.shape)
     >>> y = signal.lfilter(b, a, x)
-    >>> x += amp*np.sin(2*np.pi*freq*time)
-    >>> y += rng.normal(scale=0.1*np.sqrt(noise_power), size=time.shape)
+    >>> x += amp*mx.sin(2*mx.pi*freq*time)
+    >>> y += rng.normal(scale=0.1*mx.sqrt(noise_power), size=time.shape)
     ...
     ... # Compute and plot the magnitude of the cross spectral density:
     >>> nperseg, noverlap, win = 1024, 512, 'hann'
@@ -823,7 +823,7 @@ def csd(x, y, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft=
     >>> fig0, ax0 = plt.subplots(tight_layout=True)
     >>> ax0.set_title(f"CSD ({win.title()}-window, {nperseg=}, {noverlap=})")
     >>> ax0.set(xlabel="Frequency $f$ in kHz", ylabel="CSD Magnitude in V²/Hz")
-    >>> ax0.semilogy(f/1e3, np.abs(Pxy))
+    >>> ax0.semilogy(f/1e3, mx.abs(Pxy))
     >>> ax0.grid()
     >>> plt.show()
 
@@ -836,7 +836,7 @@ def csd(x, y, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft=
     >>> Sxy1 = SFT.spectrogram(y, x, detr='constant', k_offset=nperseg//2,
     ...                        p0=0, p1=(N-noverlap) // SFT.hop)
     >>> Pxy1 = Sxy1.mean(axis=-1)
-    >>> np.allclose(Pxy, Pxy1)  # same result as with csd()
+    >>> mx.allclose(Pxy, Pxy1)  # same result as with csd()
     True
 
     As discussed in the Notes section, the results of using an approach analogous to
@@ -849,27 +849,27 @@ def csd(x, y, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft=
     # The following lines are resembling the behavior of the originally utilized
     # `_spectral_helper()` function:
     same_data, axis = y is x, int(axis)
-    x = np.asarray(x)
+    x = mx.array(x)
 
     if not same_data:
-        y = np.asarray(y)
+        y = mx.array(y)
         # Check if we can broadcast the outer axes together
         x_outer, y_outer  = list(x.shape), list(y.shape)
         x_outer.pop(axis)
         y_outer.pop(axis)
         try:
-            outer_shape = np.broadcast_shapes(x_outer, y_outer)
+            outer_shape = mx.broadcast_shapes(x_outer, y_outer)
         except ValueError as e:
             raise ValueError('x and y cannot be broadcast together.') from e
         if x.size == 0 or y.size == 0:
             out_shape = outer_shape + (min([x.shape[axis], y.shape[axis]]),)
-            empty_out = np.moveaxis(np.empty(out_shape), -1, axis)
+            empty_out = mx.moveaxis(mx.empty(out_shape), -1, axis)
             return empty_out, empty_out
-        out_dtype = np.result_type(x, y, np.complex64)
+        out_dtype = mx.result_type(x, y, mx.complex64)
     else:  # x is y:
         if x.size == 0:
-            return np.empty(x.shape), np.empty(x.shape)
-        out_dtype = np.result_type(x, np.complex64)
+            return mx.empty(x.shape), mx.empty(x.shape)
+        out_dtype = mx.result_type(x, mx.complex64)
 
     n = x.shape[axis] if same_data else max(x.shape[axis], y.shape[axis])
     if isinstance(window, str) or isinstance(window, tuple):
@@ -882,7 +882,7 @@ def csd(x, y, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft=
             nperseg = n
         win = get_window(window, nperseg)
     else:
-        win = np.asarray(window)
+        win = mx.array(window)
         if nperseg is None:
             nperseg = len(win)
     if nperseg != len(win):
@@ -894,17 +894,17 @@ def csd(x, y, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft=
     noverlap = int(noverlap) if noverlap is not None else nperseg // 2
     if noverlap >= nperseg:
         raise ValueError(f"{noverlap=} must be less than {nperseg=}!")
-    if np.iscomplexobj(x) and return_onesided:
+    if mx.iscomplexobj(x) and return_onesided:
         return_onesided = False
 
     if x.shape[axis] < y.shape[axis]:  # zero-pad x to shape of y:
         z_shape = list(y.shape)
         z_shape[axis] = y.shape[axis] - x.shape[axis]
-        x = np.concatenate((x, np.zeros(z_shape)), axis=axis)
+        x = mx.concatenate((x, mx.zeros(z_shape)), axis=axis)
     elif y.shape[axis] < x.shape[axis]:  # zero-pad y to shape of x:
         z_shape = list(x.shape)
         z_shape[axis] = x.shape[axis] - y.shape[axis]
-        y = np.concatenate((y, np.zeros(z_shape)), axis=axis)
+        y = mx.concatenate((y, mx.zeros(z_shape)), axis=axis)
 
     # using cast() to make mypy happy:
     fft_mode = cast(FFT_MODE_TYPE, 'onesided' if return_onesided else 'twosided')
@@ -925,27 +925,27 @@ def csd(x, y, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft=
     # Hence, the doubling of the square is implemented here:
     if return_onesided:
         f_axis = Pxy.ndim - 1 + axis if axis < 0 else axis
-        Pxy = np.moveaxis(Pxy, f_axis, -1)
+        Pxy = mx.moveaxis(Pxy, f_axis, -1)
         Pxy[..., 1:-1 if SFT.mfft % 2 == 0 else None] *= 2
-        Pxy = np.moveaxis(Pxy, -1, f_axis)
+        Pxy = mx.moveaxis(Pxy, -1, f_axis)
 
     # Average over windows.
     if Pxy.shape[-1] > 1:
         if average == 'median':
-            # np.median must be passed real arrays for the desired result
+            # mx.median must be passed real arrays for the desired result
             bias = _median_bias(Pxy.shape[-1])
-            if np.iscomplexobj(Pxy):
-                Pxy = (np.median(np.real(Pxy), axis=-1) +
-                       np.median(np.imag(Pxy), axis=-1) * 1j)
+            if mx.iscomplexobj(Pxy):
+                Pxy = (mx.median(mx.real(Pxy), axis=-1) +
+                       mx.median(mx.imag(Pxy), axis=-1) * 1j)
             else:
-                Pxy = np.median(Pxy, axis=-1)
+                Pxy = mx.median(Pxy, axis=-1)
             Pxy /= bias
         elif average == 'mean':
             Pxy = Pxy.mean(axis=-1)
         else:
             raise ValueError(f"Parameter {average=} must be 'median' or 'mean'!")
     else:
-        Pxy = np.reshape(Pxy, Pxy.shape[:-1])
+        Pxy = mx.reshape(Pxy, Pxy.shape[:-1])
 
     # cast output type;
     Pxy = Pxy.astype(out_dtype)
@@ -1022,11 +1022,11 @@ def spectrogram(x, fs=1.0, window=('tukey_periodic', .25), nperseg=None, noverla
 
     Returns
     -------
-    f : ndarray
+    f : array
         Array of sample frequencies.
-    t : ndarray
+    t : array
         Array of segment times.
-    Sxx : ndarray
+    Sxx : array
         Spectrogram of x. By default, the last axis of Sxx corresponds
         to the segment times.
 
@@ -1060,11 +1060,11 @@ def spectrogram(x, fs=1.0, window=('tukey_periodic', .25), nperseg=None, noverla
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy.fft import fftshift
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
 
     Generate a test signal, a 2 Vrms sine wave whose frequency is slowly
     modulated around 3kHz, corrupted by white noise of exponentially
@@ -1072,13 +1072,13 @@ def spectrogram(x, fs=1.0, window=('tukey_periodic', .25), nperseg=None, noverla
 
     >>> fs = 10e3
     >>> N = 1e5
-    >>> amp = 2 * np.sqrt(2)
+    >>> amp = 2 * mx.sqrt(2)
     >>> noise_power = 0.01 * fs / 2
-    >>> time = np.arange(N) / float(fs)
-    >>> mod = 500*np.cos(2*np.pi*0.25*time)
-    >>> carrier = amp * np.sin(2*np.pi*3e3*time + mod)
-    >>> noise = rng.normal(scale=np.sqrt(noise_power), size=time.shape)
-    >>> noise *= np.exp(-time/5)
+    >>> time = mx.arange(N) / float(fs)
+    >>> mod = 500*mx.cos(2*mx.pi*0.25*time)
+    >>> carrier = amp * mx.sin(2*mx.pi*3e3*time + mod)
+    >>> noise = rng.normal(scale=mx.sqrt(noise_power), size=time.shape)
+    >>> noise *= mx.exp(-time/5)
     >>> x = carrier + noise
 
     Compute and plot the spectrogram.
@@ -1123,14 +1123,14 @@ def spectrogram(x, fs=1.0, window=('tukey_periodic', .25), nperseg=None, noverla
                                             mode='stft')
 
         if mode == 'magnitude':
-            Sxx = np.abs(Sxx)
+            Sxx = mx.abs(Sxx)
         elif mode in ['angle', 'phase']:
-            Sxx = np.angle(Sxx)
+            Sxx = mx.angle(Sxx)
             if mode == 'phase':
                 # Sxx has one additional dimension for time strides
                 if axis < 0:
                     axis -= 1
-                Sxx = np.unwrap(Sxx, axis=axis)
+                Sxx = mx.unwrap(Sxx, axis=axis)
 
         # mode =='complex' is same as `stft`, doesn't need modification
 
@@ -1148,12 +1148,12 @@ def check_COLA(window, nperseg, noverlap, tol=1e-10):
         `closest_STFT_dual_window` generalizes this function, as the following
         example shows:
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy.signal import check_COLA, closest_STFT_dual_window, windows
         ...
-        >>> w, w_rect, hop = windows.hann(12, sym=False), np.ones(12), 6
+        >>> w, w_rect, hop = windows.hann(12, sym=False), mx.ones(12), 6
         >>> dual_win, alpha = closest_STFT_dual_window(w, hop, w_rect, scaled=True)
-        >>> np.allclose(dual_win/alpha, w_rect, atol=1e-10, rtol=0)
+        >>> mx.allclose(dual_win/alpha, w_rect, atol=1e-10, rtol=0)
         True
         >>> check_COLA(w, len(w), len(w) - hop)  # equivalent legacy function call
         True
@@ -1267,7 +1267,7 @@ def check_COLA(window, nperseg, noverlap, tol=1e-10):
     if isinstance(window, str) or type(window) is tuple:
         win = get_window(window, nperseg)
     else:
-        win = np.asarray(window)
+        win = mx.array(window)
         if len(win.shape) != 1:
             raise ValueError('window must be 1-D')
         if win.shape[0] != nperseg:
@@ -1279,8 +1279,8 @@ def check_COLA(window, nperseg, noverlap, tol=1e-10):
     if nperseg % step != 0:
         binsums[:nperseg % step] += win[-(nperseg % step):]
 
-    deviation = binsums - np.median(binsums)
-    return np.max(np.abs(deviation)) < tol
+    deviation = binsums - mx.median(binsums)
+    return mx.max(mx.abs(deviation)) < tol
 
 
 def check_NOLA(window, nperseg, noverlap, tol=1e-10):
@@ -1344,7 +1344,7 @@ def check_NOLA(window, nperseg, noverlap, tol=1e-10):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
 
     Confirm NOLA condition for rectangular window of 75% (3/4) overlap:
@@ -1365,7 +1365,7 @@ def check_NOLA(window, nperseg, noverlap, tol=1e-10):
     As long as there is overlap, it takes quite a pathological window to fail
     NOLA:
 
-    >>> w = np.ones(64, dtype="float")
+    >>> w = mx.ones(64, dtype="float")
     >>> w[::2] = 0
     >>> signal.check_NOLA(w, 64, 32)
     False
@@ -1395,7 +1395,7 @@ def check_NOLA(window, nperseg, noverlap, tol=1e-10):
     if isinstance(window, str) or type(window) is tuple:
         win = get_window(window, nperseg)
     else:
-        win = np.asarray(window)
+        win = mx.array(window)
         if len(win.shape) != 1:
             raise ValueError('window must be 1-D')
         if win.shape[0] != nperseg:
@@ -1407,7 +1407,7 @@ def check_NOLA(window, nperseg, noverlap, tol=1e-10):
     if nperseg % step != 0:
         binsums[:nperseg % step] += win[-(nperseg % step):]**2
 
-    return np.min(binsums) > tol
+    return mx.min(binsums) > tol
 
 
 def stft(x, fs=1.0, window='hann_periodic', nperseg=256, noverlap=None, nfft=None,
@@ -1486,11 +1486,11 @@ def stft(x, fs=1.0, window='hann_periodic', nperseg=256, noverlap=None, nfft=Non
 
     Returns
     -------
-    f : ndarray
+    f : array
         Array of sample frequencies.
-    t : ndarray
+    t : array
         Array of segment times.
-    Zxx : ndarray
+    Zxx : array
         STFT of `x`. By default, the last axis of `Zxx` corresponds
         to the segment times.
 
@@ -1543,10 +1543,10 @@ def stft(x, fs=1.0, window='hann_periodic', nperseg=256, noverlap=None, nfft=Non
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
 
     Generate a test signal, a 2 Vrms sine wave whose frequency is slowly
     modulated around 3kHz, corrupted by white noise of exponentially
@@ -1554,20 +1554,20 @@ def stft(x, fs=1.0, window='hann_periodic', nperseg=256, noverlap=None, nfft=Non
 
     >>> fs = 10e3
     >>> N = 1e5
-    >>> amp = 2 * np.sqrt(2)
+    >>> amp = 2 * mx.sqrt(2)
     >>> noise_power = 0.01 * fs / 2
-    >>> time = np.arange(N) / float(fs)
-    >>> mod = 500*np.cos(2*np.pi*0.25*time)
-    >>> carrier = amp * np.sin(2*np.pi*3e3*time + mod)
-    >>> noise = rng.normal(scale=np.sqrt(noise_power),
+    >>> time = mx.arange(N) / float(fs)
+    >>> mod = 500*mx.cos(2*mx.pi*0.25*time)
+    >>> carrier = amp * mx.sin(2*mx.pi*3e3*time + mod)
+    >>> noise = rng.normal(scale=mx.sqrt(noise_power),
     ...                    size=time.shape)
-    >>> noise *= np.exp(-time/5)
+    >>> noise *= mx.exp(-time/5)
     >>> x = carrier + noise
 
     Compute and plot the STFT's magnitude.
 
     >>> f, t, Zxx = signal.stft(x, fs, nperseg=1000)
-    >>> plt.pcolormesh(t, f, np.abs(Zxx), vmin=0, vmax=amp, shading='gouraud')
+    >>> plt.pcolormesh(t, f, mx.abs(Zxx), vmin=0, vmax=amp, shading='gouraud')
     >>> plt.title('STFT Magnitude')
     >>> plt.ylabel('Frequency [Hz]')
     >>> plt.xlabel('Time [sec]')
@@ -1581,9 +1581,9 @@ def stft(x, fs=1.0, window='hann_periodic', nperseg=256, noverlap=None, nfft=Non
     ...                         scaling='psd')
     >>> # Integrate numerically over abs(Zxx)**2:
     >>> df, dt = f[1] - f[0], t[1] - t[0]
-    >>> E_Zxx = sum(np.sum(Zxx.real**2 + Zxx.imag**2, axis=0) * df) * dt
+    >>> E_Zxx = sum(mx.sum(Zxx.real**2 + Zxx.imag**2, axis=0) * df) * dt
     >>> # The energy is the same, but the numerical errors are quite large:
-    >>> np.isclose(E_x, E_Zxx, rtol=1e-2)
+    >>> mx.isclose(E_x, E_Zxx, rtol=1e-2)
     True
 
     """
@@ -1674,9 +1674,9 @@ def istft(Zxx, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft
 
     Returns
     -------
-    t : ndarray
+    t : array
         Array of output data times.
-    x : ndarray
+    x : array
         iSTFT of `Zxx`.
 
     See Also
@@ -1723,10 +1723,10 @@ def istft(Zxx, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
 
     Generate a test signal, a 2 Vrms sine wave at 50Hz corrupted by
     0.001 V**2/Hz of white noise sampled at 1024 Hz.
@@ -1734,11 +1734,11 @@ def istft(Zxx, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft
     >>> fs = 1024
     >>> N = 10*fs
     >>> nperseg = 512
-    >>> amp = 2 * np.sqrt(2)
+    >>> amp = 2 * mx.sqrt(2)
     >>> noise_power = 0.001 * fs / 2
-    >>> time = np.arange(N) / float(fs)
-    >>> carrier = amp * np.sin(2*np.pi*50*time)
-    >>> noise = rng.normal(scale=np.sqrt(noise_power),
+    >>> time = mx.arange(N) / float(fs)
+    >>> carrier = amp * mx.sin(2*mx.pi*50*time)
+    >>> noise = rng.normal(scale=mx.sqrt(noise_power),
     ...                    size=time.shape)
     >>> x = carrier + noise
 
@@ -1746,7 +1746,7 @@ def istft(Zxx, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft
 
     >>> f, t, Zxx = signal.stft(x, fs=fs, nperseg=nperseg)
     >>> plt.figure()
-    >>> plt.pcolormesh(t, f, np.abs(Zxx), vmin=0, vmax=amp, shading='gouraud')
+    >>> plt.pcolormesh(t, f, mx.abs(Zxx), vmin=0, vmax=amp, shading='gouraud')
     >>> plt.ylim([f[1], f[-1]])
     >>> plt.title('STFT Magnitude')
     >>> plt.ylabel('Frequency [Hz]')
@@ -1757,7 +1757,7 @@ def istft(Zxx, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft
     Zero the components that are 10% or less of the carrier magnitude,
     then convert back to a time series via inverse STFT
 
-    >>> Zxx = np.where(np.abs(Zxx) >= amp/10, Zxx, 0)
+    >>> Zxx = mx.where(mx.abs(Zxx) >= amp/10, Zxx, 0)
     >>> _, xrec = signal.istft(Zxx, fs)
 
     Compare the cleaned signal with the original and true carrier signals.
@@ -1782,8 +1782,8 @@ def istft(Zxx, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft
     >>> plt.show()
 
     """
-    # Make sure input is an ndarray of appropriate complex dtype
-    Zxx = np.asarray(Zxx) + 0j
+    # Make sure input is an array of appropriate complex dtype
+    Zxx = mx.array(Zxx) + 0j
     freq_axis = int(freq_axis)
     time_axis = int(time_axis)
 
@@ -1838,13 +1838,13 @@ def istft(Zxx, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft
         zouter = list(range(Zxx.ndim))
         for ax in sorted([time_axis, freq_axis], reverse=True):
             zouter.pop(ax)
-        Zxx = np.transpose(Zxx, zouter+[freq_axis, time_axis])
+        Zxx = mx.transpose(Zxx, zouter+[freq_axis, time_axis])
 
     # Get window as array
     if isinstance(window, str) or type(window) is tuple:
         win = get_window(window, nperseg)
     else:
-        win = np.asarray(window)
+        win = mx.array(window)
         if len(win.shape) != 1:
             raise ValueError('window must be 1-D')
         if win.shape[0] != nperseg:
@@ -1855,16 +1855,16 @@ def istft(Zxx, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft
 
     # Initialize output and normalization arrays
     outputlength = nperseg + (nseg-1)*nstep
-    x = np.zeros(list(Zxx.shape[:-2])+[outputlength], dtype=xsubs.dtype)
-    norm = np.zeros(outputlength, dtype=xsubs.dtype)
+    x = mx.zeros(list(Zxx.shape[:-2])+[outputlength], dtype=xsubs.dtype)
+    norm = mx.zeros(outputlength, dtype=xsubs.dtype)
 
-    if np.result_type(win, xsubs) != xsubs.dtype:
+    if mx.result_type(win, xsubs) != xsubs.dtype:
         win = win.astype(xsubs.dtype)
 
     if scaling == 'spectrum':
         xsubs *= win.sum()
     elif scaling == 'psd':
-        xsubs *= np.sqrt(fs * sum(win**2))
+        xsubs *= mx.sqrt(fs * sum(win**2))
     else:
         raise ValueError(f"Parameter {scaling=} not in ['spectrum', 'psd']!")
 
@@ -1881,13 +1881,13 @@ def istft(Zxx, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft
         norm = norm[..., nperseg//2:-(nperseg//2)]
 
     # Divide out normalization where non-tiny
-    if np.sum(norm > 1e-10) != len(norm):
+    if mx.sum(norm > 1e-10) != len(norm):
         warnings.warn(
             "NOLA condition failed, STFT may not be invertible."
             + (" Possibly due to missing boundary" if not boundary else ""),
             stacklevel=2
         )
-    x /= np.where(norm > 1e-10, norm, 1.0)
+    x /= mx.where(norm > 1e-10, norm, 1.0)
 
     if input_onesided:
         x = x.real
@@ -1897,9 +1897,9 @@ def istft(Zxx, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft
         if time_axis != Zxx.ndim-1:
             if freq_axis < time_axis:
                 time_axis -= 1
-            x = np.moveaxis(x, -1, time_axis)
+            x = mx.moveaxis(x, -1, time_axis)
 
-    time = np.arange(x.shape[0])/float(fs)
+    time = mx.arange(x.shape[0])/float(fs)
     return time, x
 
 
@@ -1951,9 +1951,9 @@ def coherence(x, y, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None,
 
     Returns
     -------
-    f : ndarray
+    f : array
         Array of sample frequencies.
-    Cxy : ndarray
+    Cxy : array
         Magnitude squared coherence of x and y.
 
     See Also
@@ -1984,10 +1984,10 @@ def coherence(x, y, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
 
     Generate two test signals with some common features.
 
@@ -1996,12 +1996,12 @@ def coherence(x, y, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None,
     >>> amp = 20
     >>> freq = 1234.0
     >>> noise_power = 0.001 * fs / 2
-    >>> time = np.arange(N) / fs
+    >>> time = mx.arange(N) / fs
     >>> b, a = signal.butter(2, 0.25, 'low')
-    >>> x = rng.normal(scale=np.sqrt(noise_power), size=time.shape)
+    >>> x = rng.normal(scale=mx.sqrt(noise_power), size=time.shape)
     >>> y = signal.lfilter(b, a, x)
-    >>> x += amp*np.sin(2*np.pi*freq*time)
-    >>> y += rng.normal(scale=0.1*np.sqrt(noise_power), size=time.shape)
+    >>> x += amp*mx.sin(2*mx.pi*freq*time)
+    >>> y += rng.normal(scale=0.1*mx.sqrt(noise_power), size=time.shape)
 
     Compute and plot the coherence.
 
@@ -2020,7 +2020,7 @@ def coherence(x, y, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None,
     _, Pxy = csd(x, y, fs=fs, window=window, nperseg=nperseg,
                  noverlap=noverlap, nfft=nfft, detrend=detrend, axis=axis)
 
-    Cxy = np.abs(Pxy)**2 / Pxx / Pyy
+    Cxy = mx.abs(Pxy)**2 / Pxx / Pyy
 
     return freqs, Cxy
 
@@ -2107,11 +2107,11 @@ def _spectral_helper(x, y, fs=1.0, window='hann', nperseg=None, noverlap=None,
 
     Returns
     -------
-    freqs : ndarray
+    freqs : array
         Array of sample frequencies.
-    t : ndarray
+    t : array
         Array of times corresponding to each data segment
-    result : ndarray
+    result : array
         Array of output data, contents dependent on *mode* kwarg.
 
     Notes
@@ -2142,13 +2142,13 @@ def _spectral_helper(x, y, fs=1.0, window='hann', nperseg=None, noverlap=None,
 
     axis = int(axis)
 
-    # Ensure we have np.arrays, get outdtype
-    x = np.asarray(x)
+    # Ensure we have mx.arrays, get outdtype
+    x = mx.array(x)
     if not same_data:
-        y = np.asarray(y)
-        outdtype = np.result_type(x, y, np.complex64)
+        y = mx.array(y)
+        outdtype = mx.result_type(x, y, mx.complex64)
     else:
-        outdtype = np.result_type(x, np.complex64)
+        outdtype = mx.result_type(x, mx.complex64)
 
     if not same_data:
         # Check if we can broadcast the outer axes together
@@ -2157,24 +2157,24 @@ def _spectral_helper(x, y, fs=1.0, window='hann', nperseg=None, noverlap=None,
         xouter.pop(axis)
         youter.pop(axis)
         try:
-            outershape = np.broadcast(np.empty(xouter), np.empty(youter)).shape
+            outershape = mx.broadcast(mx.empty(xouter), mx.empty(youter)).shape
         except ValueError as e:
             raise ValueError('x and y cannot be broadcast together.') from e
 
     if same_data:
         if x.size == 0:
-            return np.empty(x.shape), np.empty(x.shape), np.empty(x.shape)
+            return mx.empty(x.shape), mx.empty(x.shape), mx.empty(x.shape)
     else:
         if x.size == 0 or y.size == 0:
             outshape = outershape + (min([x.shape[axis], y.shape[axis]]),)
-            emptyout = np.moveaxis(np.empty(outshape), -1, axis)
+            emptyout = mx.moveaxis(mx.empty(outshape), -1, axis)
             return emptyout, emptyout, emptyout
 
     if x.ndim > 1:
         if axis != -1:
-            x = np.moveaxis(x, axis, -1)
+            x = mx.moveaxis(x, axis, -1)
             if not same_data and y.ndim > 1:
-                y = np.moveaxis(y, axis, -1)
+                y = mx.moveaxis(y, axis, -1)
 
     # Check if x and y are the same length, zero-pad if necessary
     if not same_data:
@@ -2182,11 +2182,11 @@ def _spectral_helper(x, y, fs=1.0, window='hann', nperseg=None, noverlap=None,
             if x.shape[-1] < y.shape[-1]:
                 pad_shape = list(x.shape)
                 pad_shape[-1] = y.shape[-1] - x.shape[-1]
-                x = np.concatenate((x, np.zeros(pad_shape)), -1)
+                x = mx.concatenate((x, mx.zeros(pad_shape)), -1)
             else:
                 pad_shape = list(y.shape)
                 pad_shape[-1] = x.shape[-1] - y.shape[-1]
-                y = np.concatenate((y, np.zeros(pad_shape)), -1)
+                y = mx.concatenate((y, mx.zeros(pad_shape)), -1)
 
     if nperseg is not None:  # if specified by user
         nperseg = int(nperseg)
@@ -2228,10 +2228,10 @@ def _spectral_helper(x, y, fs=1.0, window='hann', nperseg=None, noverlap=None,
         # I.e. make x.shape[-1] = nperseg + (nseg-1)*nstep, with integer nseg
         nadd = (-(x.shape[-1]-nperseg) % nstep) % nperseg
         zeros_shape = list(x.shape[:-1]) + [nadd]
-        x = np.concatenate((x, np.zeros(zeros_shape)), axis=-1)
+        x = mx.concatenate((x, mx.zeros(zeros_shape)), axis=-1)
         if not same_data:
             zeros_shape = list(y.shape[:-1]) + [nadd]
-            y = np.concatenate((y, np.zeros(zeros_shape)), axis=-1)
+            y = mx.concatenate((y, mx.zeros(zeros_shape)), axis=-1)
 
     # Handle detrending and window functions
     if not detrend:
@@ -2244,13 +2244,13 @@ def _spectral_helper(x, y, fs=1.0, window='hann', nperseg=None, noverlap=None,
         # Wrap this function so that it receives a shape that it could
         # reasonably expect to receive.
         def detrend_func(d):
-            d = np.moveaxis(d, -1, axis)
+            d = mx.moveaxis(d, -1, axis)
             d = detrend(d)
-            return np.moveaxis(d, axis, -1)
+            return mx.moveaxis(d, axis, -1)
     else:
         detrend_func = detrend
 
-    if np.result_type(win, np.complex64) != outdtype:
+    if mx.result_type(win, mx.complex64) != outdtype:
         win = win.astype(outdtype)
 
     if scaling == 'density':
@@ -2261,17 +2261,17 @@ def _spectral_helper(x, y, fs=1.0, window='hann', nperseg=None, noverlap=None,
         raise ValueError(f'Unknown scaling: {scaling!r}')
 
     if mode == 'stft':
-        scale = np.sqrt(scale)
+        scale = mx.sqrt(scale)
 
     if return_onesided:
-        if np.iscomplexobj(x):
+        if mx.iscomplexobj(x):
             sides = 'twosided'
             warnings.warn('Input data is complex, switching to return_onesided=False',
                           stacklevel=3)
         else:
             sides = 'onesided'
             if not same_data:
-                if np.iscomplexobj(y):
+                if mx.iscomplexobj(y):
                     sides = 'twosided'
                     warnings.warn('Input data is complex, switching to '
                                   'return_onesided=False',
@@ -2291,9 +2291,9 @@ def _spectral_helper(x, y, fs=1.0, window='hann', nperseg=None, noverlap=None,
         # All the same operations on the y data
         result_y = _fft_helper(y, win, detrend_func, nperseg, noverlap, nfft,
                                sides)
-        result = np.conjugate(result) * result_y
+        result = mx.conjugate(result) * result_y
     elif mode == 'psd':
-        result = np.conjugate(result) * result
+        result = mx.conjugate(result) * result
 
     result *= scale
     if sides == 'onesided' and mode == 'psd':
@@ -2303,7 +2303,7 @@ def _spectral_helper(x, y, fs=1.0, window='hann', nperseg=None, noverlap=None,
             # Last point is unpaired Nyquist freq point, don't double
             result[..., 1:-1] *= 2
 
-    time = np.arange(nperseg/2, x.shape[-1] - nperseg/2 + 1,
+    time = mx.arange(nperseg/2, x.shape[-1] - nperseg/2 + 1,
                      nperseg - noverlap)/float(fs)
     if boundary is not None:
         time -= (nperseg/2) / fs
@@ -2320,7 +2320,7 @@ def _spectral_helper(x, y, fs=1.0, window='hann', nperseg=None, noverlap=None,
         axis -= 1
 
     # Roll frequency axis back to axis where the data came from
-    result = np.moveaxis(result, -1, axis)
+    result = mx.moveaxis(result, -1, axis)
 
     return freqs, time, result
 
@@ -2343,7 +2343,7 @@ def _fft_helper(x, win, detrend_func, nperseg, noverlap, nfft, sides):
 
     Returns
     -------
-    result : ndarray
+    result : array
         Array of FFT data
 
     Notes
@@ -2354,10 +2354,10 @@ def _fft_helper(x, win, detrend_func, nperseg, noverlap, nfft, sides):
     """
     # Created sliding window view of array
     if nperseg == 1 and noverlap == 0:
-        result = x[..., np.newaxis]
+        result = x[..., mx.newaxis]
     else:
         step = nperseg - noverlap
-        result = np.lib.stride_tricks.sliding_window_view(
+        result = mx.lib.stride_tricks.sliding_window_view(
             x, window_shape=nperseg, axis=-1, writeable=True
         )
         result = result[..., 0::step, :]
@@ -2391,7 +2391,7 @@ def _triage_segments(window, nperseg, input_length):
 
     Parameters
     ----------
-    window : string, tuple, or ndarray
+    window : string, tuple, or array
         If window is specified by a string or tuple and nperseg is not
         specified, nperseg is set to the default of 256 and returns a window of
         that length.
@@ -2408,7 +2408,7 @@ def _triage_segments(window, nperseg, input_length):
 
     Returns
     -------
-    win : ndarray
+    win : array
         window. If function was called with string or tuple than this will hold
         the actual array used as a window.
 
@@ -2429,7 +2429,7 @@ def _triage_segments(window, nperseg, input_length):
             nperseg = input_length
         win = get_window(window, nperseg)
     else:
-        win = np.asarray(window)
+        win = mx.array(window)
         if len(win.shape) != 1:
             raise ValueError('window must be 1-D')
         if input_length < win.shape[-1]:
@@ -2467,5 +2467,5 @@ def _median_bias(n):
            inspiraling compact binaries", Physical Review D 85, 2012,
            :arxiv:`gr-qc/0509116`
     """
-    ii_2 = 2 * np.arange(1., (n-1) // 2 + 1)
-    return 1 + np.sum(1. / (ii_2 + 1) - 1. / ii_2)
+    ii_2 = 2 * mx.arange(1., (n-1) // 2 + 1)
+    return 1 + mx.sum(1. / (ii_2 + 1) - 1. / ii_2)

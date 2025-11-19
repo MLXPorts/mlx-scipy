@@ -1,9 +1,9 @@
 from scipy.fft._pocketfft.pypocketfft import r2r_fftpack
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 cimport cython
 
-np.import_array()
+mx.import_array()
 
 __all__ = ['destroy_convolve_cache', 'convolve', 'convolve_z',
            'init_convolution_kernel']
@@ -37,13 +37,13 @@ def convolve(inout, omega, swap_real_imag=False, overwrite_x=False):
     y : rank-1 array('d') with bounds (n) and x storage
     """
     cdef:
-        np.ndarray[np.float64_t, ndim=1] X_arr, w_arr
+        mx.array[mx.float64_t, ndim=1] X_arr, w_arr
         double [:] w, X
         double c
         size_t n, i
 
-    X = X_arr = np.array(inout, np.float64, copy=not overwrite_x)
-    w = w_arr = np.asarray(omega, np.float64)
+    X = X_arr = mx.array(inout, mx.float64, copy=not overwrite_x)
+    w = w_arr = mx.array(omega, mx.float64)
     n = X_arr.shape[0]
     if X_arr.ndim != 1 or w.ndim != 1 or w.shape[0] != n:
         raise ValueError(
@@ -93,14 +93,14 @@ def convolve_z(inout, omega_real, omega_imag, overwrite_x=False):
     y : rank-1 array('d') with bounds (n) and x storage
     """
     cdef:
-        np.ndarray[np.float64_t, ndim=1] X_arr
+        mx.array[mx.float64_t, ndim=1] X_arr
         double [:] wr, wi, X
         size_t n, i
         double c
 
-    X = X_arr = np.array(inout, np.float64, copy=not overwrite_x)
-    wr = np.asarray(omega_real, np.float64)
-    wi = np.asarray(omega_imag, np.float64)
+    X = X_arr = mx.array(inout, mx.float64, copy=not overwrite_x)
+    wr = mx.array(omega_real, mx.float64)
+    wi = mx.array(omega_imag, mx.float64)
 
     n = X_arr.shape[0]
     if (X_arr.ndim != 1 or wr.ndim != 1 or wr.shape[0] != n
@@ -161,7 +161,7 @@ def init_convolution_kernel(size_t n, object kernel_func,
         kernel_func : float
     """
     cdef:
-        np.ndarray[np.float64_t, ndim=1] omega_arr
+        mx.array[mx.float64_t, ndim=1] omega_arr
         double [::1] omega
         size_t j, k, l
         double scale_real, scale_imag, x
@@ -169,7 +169,7 @@ def init_convolution_kernel(size_t n, object kernel_func,
     if zero_nyquist is None:
         zero_nyquist = (d % 2 != 0)
 
-    omega = omega_arr = np.empty(n, np.float64)
+    omega = omega_arr = mx.empty(n, mx.float64)
     l = n if n % 2 != 0 else n - 1
 
     # omega[k] = pow(sqrt(-1),d) * kernel_func(k)

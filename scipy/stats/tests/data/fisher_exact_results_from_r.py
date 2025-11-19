@@ -5,10 +5,10 @@
 
 
 from collections import namedtuple
-import numpy as np
+import mlx.core as mx
 
 
-Inf = np.inf
+Inf = mx.inf
 
 Parameters = namedtuple('Parameters',
                         ['table', 'confidence_level', 'alternative'])

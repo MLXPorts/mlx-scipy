@@ -3,10 +3,10 @@ from cpython.pycapsule cimport (
     PyCapsule_New, PyCapsule_SetContext, PyCapsule_GetContext, PyCapsule_GetPointer
 )
 
-cimport numpy as np
+cimport mlx.core as mx
 from numpy cimport npy_intp as intp
 
-np.import_array()
+mx.import_array()
 
 cdef void _destructor(obj) noexcept:
     cdef void *callback_data = PyCapsule_GetContext(obj)

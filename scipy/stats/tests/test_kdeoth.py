@@ -1,5 +1,5 @@
 from scipy import stats, linalg, integrate
-import numpy as np
+import mlx.core as mx
 from numpy.testing import (assert_almost_equal, assert_, assert_equal,
                            assert_array_almost_equal,
                            assert_array_almost_equal_nulp, assert_allclose)
@@ -9,7 +9,7 @@ from pytest import raises as assert_raises
 
 def test_kde_1d():
     #some basic tests comparing to normal distribution
-    rng = np.random.default_rng(8765678)
+    rng = mx.random.default_rng(8765678)
     n_basesample = 500
     xn = rng.normal(0, 1, n_basesample)
     xnmean = xn.mean()
@@ -19,26 +19,26 @@ def test_kde_1d():
     gkde = stats.gaussian_kde(xn)
 
     # evaluate the density function for the kde for some points
-    xx = np.asarray([0.1, 0.5, 0.9])
-    loc, scale = gkde.dataset, np.sqrt(gkde.covariance)
+    xx = mx.array([0.1, 0.5, 0.9])
+    loc, scale = gkde.dataset, mx.sqrt(gkde.covariance)
     assert_allclose(
         gkde(xx), 
         stats.norm.pdf(xx[:, None], loc=loc, scale=scale).sum(axis=-1) / gkde.n,
         rtol=5e-14
     )
 
-    xs = np.linspace(-7, 7, 501)
+    xs = mx.linspace(-7, 7, 501)
     kdepdf = gkde.evaluate(xs)
     normpdf = stats.norm.pdf(xs, loc=xnmean, scale=xnstd)
     intervall = xs[1] - xs[0]
 
-    assert_(np.sum((kdepdf - normpdf)**2)*intervall < 0.01)
-    prob1 = gkde.integrate_box_1d(xnmean, np.inf)
-    prob2 = gkde.integrate_box_1d(-np.inf, xnmean)
+    assert_(mx.sum((kdepdf - normpdf)**2)*intervall < 0.01)
+    prob1 = gkde.integrate_box_1d(xnmean, mx.inf)
+    prob2 = gkde.integrate_box_1d(-mx.inf, xnmean)
     assert_almost_equal(prob1, 0.5, decimal=1)
     assert_almost_equal(prob2, 0.5, decimal=1)
-    assert_almost_equal(gkde.integrate_box(xnmean, np.inf), prob1, decimal=13)
-    assert_almost_equal(gkde.integrate_box(-np.inf, xnmean), prob2, decimal=13)
+    assert_almost_equal(gkde.integrate_box(xnmean, mx.inf), prob1, decimal=13)
+    assert_almost_equal(gkde.integrate_box(-mx.inf, xnmean), prob2, decimal=13)
 
     assert_almost_equal(gkde.integrate_kde(gkde),
                         (kdepdf**2).sum()*intervall, decimal=2)
@@ -48,40 +48,40 @@ def test_kde_1d():
 
 def test_kde_1d_weighted():
     #some basic tests comparing to normal distribution
-    rng = np.random.default_rng(8765678)
+    rng = mx.random.default_rng(8765678)
     n_basesample = 500
     xn = rng.normal(0, 1, n_basesample)
     wn = rng.random(n_basesample)
-    xnmean = np.average(xn, weights=wn)
-    xnstd = np.sqrt(np.average((xn-xnmean)**2, weights=wn))
+    xnmean = mx.average(xn, weights=wn)
+    xnstd = mx.sqrt(mx.average((xn-xnmean)**2, weights=wn))
 
     # get kde for original sample
     gkde = stats.gaussian_kde(xn, weights=wn)
 
     # evaluate the density function for the kde for some points
     # evaluate the density function for the kde for some points
-    xx = np.asarray([0.1, 0.5, 0.9])
-    loc, scale = gkde.dataset, np.sqrt(gkde.covariance)
+    xx = mx.array([0.1, 0.5, 0.9])
+    loc, scale = gkde.dataset, mx.sqrt(gkde.covariance)
 
     pdf = stats.norm.pdf
     assert_allclose(
         gkde(xx), 
-        np.sum(pdf(xx[:, None], loc=loc, scale=scale) * gkde.weights, axis=-1),
+        mx.sum(pdf(xx[:, None], loc=loc, scale=scale) * gkde.weights, axis=-1),
         rtol=5e-14
     )
 
-    xs = np.linspace(-7, 7, 501)
+    xs = mx.linspace(-7, 7, 501)
     kdepdf = gkde.evaluate(xs)
     normpdf = stats.norm.pdf(xs, loc=xnmean, scale=xnstd)
     intervall = xs[1] - xs[0]
 
-    assert_(np.sum((kdepdf - normpdf)**2)*intervall < 0.01)
-    prob1 = gkde.integrate_box_1d(xnmean, np.inf)
-    prob2 = gkde.integrate_box_1d(-np.inf, xnmean)
+    assert_(mx.sum((kdepdf - normpdf)**2)*intervall < 0.01)
+    prob1 = gkde.integrate_box_1d(xnmean, mx.inf)
+    prob2 = gkde.integrate_box_1d(-mx.inf, xnmean)
     assert_almost_equal(prob1, 0.5, decimal=1)
     assert_almost_equal(prob2, 0.5, decimal=1)
-    assert_almost_equal(gkde.integrate_box(xnmean, np.inf), prob1, decimal=13)
-    assert_almost_equal(gkde.integrate_box(-np.inf, xnmean), prob2, decimal=13)
+    assert_almost_equal(gkde.integrate_box(xnmean, mx.inf), prob1, decimal=13)
+    assert_almost_equal(gkde.integrate_box(-mx.inf, xnmean), prob2, decimal=13)
 
     assert_almost_equal(gkde.integrate_kde(gkde),
                         (kdepdf**2).sum()*intervall, decimal=2)
@@ -97,10 +97,10 @@ def test_kde_1d_weighted():
 )
 def test_kde_2d(n_basesample):
     #some basic tests comparing to normal distribution
-    rng = np.random.default_rng(8765678)
+    rng = mx.random.default_rng(8765678)
 
-    mean = np.array([1.0, 3.0])
-    covariance = np.array([[1.0, 2.0], [2.0, 6.0]])
+    mean = mx.array([1.0, 3.0])
+    covariance = mx.array([[1.0, 2.0], [2.0, 6.0]])
 
     # Need transpose (shape (2, 500)) for kde
     xn = rng.multivariate_normal(mean, covariance, size=n_basesample).T
@@ -109,7 +109,7 @@ def test_kde_2d(n_basesample):
     gkde = stats.gaussian_kde(xn)
 
     # evaluate vs multivariate normal, using the KDE definition
-    xx = np.asarray([[1, 2], [3, 4], [5, 6]])
+    xx = mx.array([[1, 2], [3, 4], [5, 6]])
     arg = xx[:, None, :] - gkde.dataset.T
     pdf = stats.multivariate_normal.pdf
     assert_allclose(
@@ -129,16 +129,16 @@ def test_kde_2d(n_basesample):
     )
 
     # evaluate the density function for the kde for some points
-    x, y = np.mgrid[-7:7:500j, -7:7:500j]
-    grid_coords = np.vstack([x.ravel(), y.ravel()])
+    x, y = mx.mgrid[-7:7:500j, -7:7:500j]
+    grid_coords = mx.vstack([x.ravel(), y.ravel()])
     kdepdf = gkde.evaluate(grid_coords)
     kdepdf = kdepdf.reshape(500, 500)
 
-    normpdf = stats.multivariate_normal.pdf(np.dstack([x, y]),
+    normpdf = stats.multivariate_normal.pdf(mx.dstack([x, y]),
                                             mean=mean, cov=covariance)
     intervall = y.ravel()[1] - y.ravel()[0]
 
-    assert_(np.sum((kdepdf - normpdf)**2) * (intervall**2) < 0.01)
+    assert_(mx.sum((kdepdf - normpdf)**2) * (intervall**2) < 0.01)
 
     small = -1e100
     large = 1e100
@@ -161,10 +161,10 @@ def test_kde_2d(n_basesample):
 )
 def test_kde_2d_weighted(n_basesample):
     #some basic tests comparing to normal distribution
-    rng = np.random.RandomState(8765678)
+    rng = mx.random.RandomState(8765678)
 
-    mean = np.array([1.0, 3.0])
-    covariance = np.array([[1.0, 2.0], [2.0, 6.0]])
+    mean = mx.array([1.0, 3.0])
+    covariance = mx.array([[1.0, 2.0], [2.0, 6.0]])
 
     # Need transpose (shape (2, 500)) for kde
     xn = rng.multivariate_normal(mean, covariance, size=n_basesample).T
@@ -175,12 +175,12 @@ def test_kde_2d_weighted(n_basesample):
 
 
     # evaluate vs multivariate normal, using the kde definition
-    xx = np.asarray([[1, 2], [3, 4], [5, 6]])
+    xx = mx.array([[1, 2], [3, 4], [5, 6]])
     arg = xx[:, None, :] - gkde.dataset.T
     pdf = stats.multivariate_normal.pdf
     assert_allclose(
         gkde(xx.T),
-        np.sum(pdf(arg, cov=gkde.covariance) * gkde.weights, axis=-1),
+        mx.sum(pdf(arg, cov=gkde.covariance) * gkde.weights, axis=-1),
         rtol=5e-14
     )
 
@@ -190,22 +190,22 @@ def test_kde_2d_weighted(n_basesample):
     lo_, hi_ = lo - gkde.dataset.T, hi - gkde.dataset.T
     assert_allclose(
         gkde.integrate_box(lo, hi, rng=rng),
-        np.sum(cdf(hi_, lower_limit=lo_, cov=gkde.covariance, rng=rng) *
+        mx.sum(cdf(hi_, lower_limit=lo_, cov=gkde.covariance, rng=rng) *
                gkde.weights, axis=-1),
         rtol=5e-6
     )
 
     # evaluate the density function for the kde for some points
-    x, y = np.mgrid[-7:7:500j, -7:7:500j]
-    grid_coords = np.vstack([x.ravel(), y.ravel()])
+    x, y = mx.mgrid[-7:7:500j, -7:7:500j]
+    grid_coords = mx.vstack([x.ravel(), y.ravel()])
     kdepdf = gkde.evaluate(grid_coords)
     kdepdf = kdepdf.reshape(500, 500)
 
-    normpdf = stats.multivariate_normal.pdf(np.dstack([x, y]),
+    normpdf = stats.multivariate_normal.pdf(mx.dstack([x, y]),
                                             mean=mean, cov=covariance)
     intervall = y.ravel()[1] - y.ravel()[0]
 
-    assert_(np.sum((kdepdf - normpdf)**2) * (intervall**2) < 0.01)
+    assert_(mx.sum((kdepdf - normpdf)**2) * (intervall**2) < 0.01)
 
     small = -1e100
     large = 1e100
@@ -223,9 +223,9 @@ def test_kde_2d_weighted(n_basesample):
 def test_kde_bandwidth_method():
     def scotts_factor(kde_obj):
         """Same as default, just check that it works."""
-        return np.power(kde_obj.n, -1./(kde_obj.d+4))
+        return mx.power(kde_obj.n, -1./(kde_obj.d+4))
 
-    rng = np.random.default_rng(8765678)
+    rng = mx.random.default_rng(8765678)
     n_basesample = 50
     xn = rng.normal(0, 1, n_basesample)
 
@@ -236,7 +236,7 @@ def test_kde_bandwidth_method():
     # Supply a scalar
     gkde3 = stats.gaussian_kde(xn, bw_method=gkde.factor)
 
-    xs = np.linspace(-7,7,51)
+    xs = mx.linspace(-7,7,51)
     kdepdf = gkde.evaluate(xs)
     kdepdf2 = gkde2.evaluate(xs)
     assert_almost_equal(kdepdf, kdepdf2)
@@ -249,9 +249,9 @@ def test_kde_bandwidth_method():
 def test_kde_bandwidth_method_weighted():
     def scotts_factor(kde_obj):
         """Same as default, just check that it works."""
-        return np.power(kde_obj.neff, -1./(kde_obj.d+4))
+        return mx.power(kde_obj.neff, -1./(kde_obj.d+4))
 
-    rng = np.random.default_rng(8765678)
+    rng = mx.random.default_rng(8765678)
     n_basesample = 50
     xn = rng.normal(0, 1, n_basesample)
 
@@ -262,7 +262,7 @@ def test_kde_bandwidth_method_weighted():
     # Supply a scalar
     gkde3 = stats.gaussian_kde(xn, bw_method=gkde.factor)
 
-    xs = np.linspace(-7,7,51)
+    xs = mx.linspace(-7,7,51)
     kdepdf = gkde.evaluate(xs)
     kdepdf2 = gkde2.evaluate(xs)
     assert_almost_equal(kdepdf, kdepdf2)
@@ -278,7 +278,7 @@ def test_kde_bandwidth_method_weighted():
 
 class _kde_subclass1(stats.gaussian_kde):
     def __init__(self, dataset):
-        self.dataset = np.atleast_2d(dataset)
+        self.dataset = mx.atleast_2d(dataset)
         self.d, self.n = self.dataset.shape
         self.covariance_factor = self.scotts_factor
         self._compute_covariance()
@@ -296,8 +296,8 @@ class _kde_subclass4(stats.gaussian_kde):
 
 
 def test_gaussian_kde_subclassing():
-    x1 = np.array([-7, -5, 1, 4, 5], dtype=float)
-    xs = np.linspace(-10, 10, num=50)
+    x1 = mx.array([-7, -5, 1, 4, 5], dtype=float)
+    xs = mx.linspace(-10, 10, num=50)
 
     # gaussian_kde itself
     kde = stats.gaussian_kde(x1)
@@ -332,8 +332,8 @@ def test_gaussian_kde_subclassing():
 
 
 def test_gaussian_kde_covariance_caching():
-    x1 = np.array([-7, -5, 1, 4, 5], dtype=float)
-    xs = np.linspace(-10, 10, num=5)
+    x1 = mx.array([-7, -5, 1, 4, 5], dtype=float)
+    xs = mx.linspace(-10, 10, num=5)
     # These expected values are from scipy 0.10, before some changes to
     # gaussian_kde.  They were not compared with any external reference.
     y_expected = [0.02463386, 0.04689208, 0.05395444, 0.05337754, 0.01664475]
@@ -352,8 +352,8 @@ def test_gaussian_kde_monkeypatch():
     specifically the linked ML thread "Width of the Gaussian in stats.kde".
     If it is necessary to break this later on, that is to be discussed on ML.
     """
-    x1 = np.array([-7, -5, 1, 4, 5], dtype=float)
-    xs = np.linspace(-10, 10, num=50)
+    x1 = mx.array([-7, -5, 1, 4, 5], dtype=float)
+    xs = mx.linspace(-10, 10, num=50)
 
     # The old monkeypatched version to get at Silverman's Rule.
     kde = stats.gaussian_kde(x1)
@@ -370,7 +370,7 @@ def test_gaussian_kde_monkeypatch():
 
 def test_kde_integer_input():
     """Regression test for #1181."""
-    x1 = np.arange(5)
+    x1 = mx.arange(5)
     kde = stats.gaussian_kde(x1)
     y_expected = [0.13480721, 0.18222869, 0.19514935, 0.18222869, 0.13480721]
     assert_array_almost_equal(kde(x1), y_expected, decimal=6)
@@ -394,18 +394,18 @@ def test_kde_output_dtype(dtype, bw_type):
     if any(dt is None for dt in [dtype, bw]):
         pytest.skip()
 
-    weights = np.arange(5, dtype=dtype)
-    dataset = np.arange(5, dtype=dtype)
+    weights = mx.arange(5, dtype=dtype)
+    dataset = mx.arange(5, dtype=dtype)
     k = stats.gaussian_kde(dataset, bw_method=bw, weights=weights)
-    points = np.arange(5, dtype=dtype)
+    points = mx.arange(5, dtype=dtype)
     result = k(points)
     # weights are always cast to float64
-    assert result.dtype == np.result_type(dataset, points, np.float64(weights),
+    assert result.dtype == mx.result_type(dataset, points, mx.float64(weights),
                                           k.factor)
 
 
 def test_pdf_logpdf_validation():
-    rng = np.random.default_rng(64202298293133848336925499069837723291)
+    rng = mx.random.default_rng(64202298293133848336925499069837723291)
     xn = rng.standard_normal((2, 10))
     gkde = stats.gaussian_kde(xn)
     xs = rng.standard_normal((3, 10))
@@ -416,31 +416,31 @@ def test_pdf_logpdf_validation():
 
 
 def test_pdf_logpdf():
-    rng = np.random.default_rng(1)
+    rng = mx.random.default_rng(1)
     n_basesample = 50
     xn = rng.normal(0, 1, n_basesample)
 
     # Default
     gkde = stats.gaussian_kde(xn)
 
-    xs = np.linspace(-15, 12, 25)
+    xs = mx.linspace(-15, 12, 25)
     pdf = gkde.evaluate(xs)
     pdf2 = gkde.pdf(xs)
     assert_almost_equal(pdf, pdf2, decimal=12)
 
-    logpdf = np.log(pdf)
+    logpdf = mx.log(pdf)
     logpdf2 = gkde.logpdf(xs)
     assert_almost_equal(logpdf, logpdf2, decimal=12)
 
     # There are more points than data
     gkde = stats.gaussian_kde(xs)
-    pdf = np.log(gkde.evaluate(xn))
+    pdf = mx.log(gkde.evaluate(xn))
     pdf2 = gkde.logpdf(xn)
     assert_almost_equal(pdf, pdf2, decimal=12)
 
 
 def test_pdf_logpdf_weighted():
-    rng = np.random.default_rng(1)
+    rng = mx.random.default_rng(1)
     n_basesample = 50
     xn = rng.normal(0, 1, n_basesample)
     wn = rng.random(n_basesample)
@@ -448,31 +448,31 @@ def test_pdf_logpdf_weighted():
     # Default
     gkde = stats.gaussian_kde(xn, weights=wn)
 
-    xs = np.linspace(-15, 12, 25)
+    xs = mx.linspace(-15, 12, 25)
     pdf = gkde.evaluate(xs)
     pdf2 = gkde.pdf(xs)
     assert_almost_equal(pdf, pdf2, decimal=12)
 
-    logpdf = np.log(pdf)
+    logpdf = mx.log(pdf)
     logpdf2 = gkde.logpdf(xs)
     assert_almost_equal(logpdf, logpdf2, decimal=12)
 
     # There are more points than data
-    rng = np.random.default_rng(4531935345)
+    rng = mx.random.default_rng(4531935345)
     gkde = stats.gaussian_kde(xs, weights=rng.random(len(xs)))
-    pdf = np.log(gkde.evaluate(xn))
+    pdf = mx.log(gkde.evaluate(xn))
     pdf2 = gkde.logpdf(xn)
     assert_almost_equal(pdf, pdf2, decimal=12)
 
 
 def test_marginal_1_axis():
-    rng = np.random.default_rng(6111799263660870475)
+    rng = mx.random.default_rng(6111799263660870475)
     n_data = 50
     n_dim = 10
     dataset = rng.normal(size=(n_dim, n_data))
     points = rng.normal(size=(n_dim, 3))
 
-    dimensions = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])  # dimensions to keep
+    dimensions = mx.array([1, 2, 3, 4, 5, 6, 7, 8, 9])  # dimensions to keep
 
     kde = stats.gaussian_kde(dataset)
     marginal = kde.marginal(dimensions)
@@ -480,12 +480,12 @@ def test_marginal_1_axis():
 
     def marginal_pdf_single(point):
         def f(x):
-            x = np.concatenate(([x], point[dimensions]))
+            x = mx.concatenate(([x], point[dimensions]))
             return kde.pdf(x)[0]
-        return integrate.quad(f, -np.inf, np.inf)[0]
+        return integrate.quad(f, -mx.inf, mx.inf)[0]
 
     def marginal_pdf(points):
-        return np.apply_along_axis(marginal_pdf_single, axis=0, arr=points)
+        return mx.apply_along_axis(marginal_pdf_single, axis=0, arr=points)
 
     ref = marginal_pdf(points)
 
@@ -494,13 +494,13 @@ def test_marginal_1_axis():
 
 @pytest.mark.xslow
 def test_marginal_2_axis():
-    rng = np.random.default_rng(6111799263660870475)
+    rng = mx.random.default_rng(6111799263660870475)
     n_data = 30
     n_dim = 4
     dataset = rng.normal(size=(n_dim, n_data))
     points = rng.normal(size=(n_dim, 3))
 
-    dimensions = np.array([1, 3])  # dimensions to keep
+    dimensions = mx.array([1, 3])  # dimensions to keep
 
     kde = stats.gaussian_kde(dataset)
     marginal = kde.marginal(dimensions)
@@ -510,11 +510,11 @@ def test_marginal_2_axis():
         def marginal_pdf_single(point):
             def f(y, x):
                 w, z = point[dimensions]
-                x = np.array([x, w, y, z])
+                x = mx.array([x, w, y, z])
                 return kde.pdf(x)[0]
-            return integrate.dblquad(f, -np.inf, np.inf, -np.inf, np.inf)[0]
+            return integrate.dblquad(f, -mx.inf, mx.inf, -mx.inf, mx.inf)[0]
 
-        return np.apply_along_axis(marginal_pdf_single, axis=0, arr=points)
+        return mx.apply_along_axis(marginal_pdf_single, axis=0, arr=points)
 
     ref = marginal_pdf(points)
 
@@ -523,7 +523,7 @@ def test_marginal_2_axis():
 
 def test_marginal_iv():
     # test input validation
-    rng = np.random.default_rng(6111799263660870475)
+    rng = mx.random.default_rng(6111799263660870475)
     n_data = 30
     n_dim = 4
     dataset = rng.normal(size=(n_dim, n_data))
@@ -562,28 +562,28 @@ def test_marginal_iv():
 def test_logpdf_overflow():
     # regression test for gh-12988; testing against linalg instability for
     # very high dimensionality kde
-    rng = np.random.default_rng(1)
+    rng = mx.random.default_rng(1)
     n_dimensions = 2500
     n_samples = 5000
-    xn = np.array([rng.normal(0, 1, n_samples) + (n) for n in range(
+    xn = mx.array([rng.normal(0, 1, n_samples) + (n) for n in range(
         0, n_dimensions)])
 
     # Default
     gkde = stats.gaussian_kde(xn)
 
-    logpdf = gkde.logpdf(np.arange(0, n_dimensions))
-    np.testing.assert_equal(np.isneginf(logpdf[0]), False)
-    np.testing.assert_equal(np.isnan(logpdf[0]), False)
+    logpdf = gkde.logpdf(mx.arange(0, n_dimensions))
+    mx.testing.assert_equal(mx.isneginf(logpdf[0]), False)
+    mx.testing.assert_equal(mx.isnan(logpdf[0]), False)
 
 
 def test_weights_intact():
     # regression test for gh-9709: weights are not modified
-    rng = np.random.default_rng(12345)
+    rng = mx.random.default_rng(12345)
     vals = rng.lognormal(size=100)
     weights = rng.choice([1.0, 10.0, 100], size=vals.size)
     orig_weights = weights.copy()
 
-    stats.gaussian_kde(np.log10(vals), weights=weights)
+    stats.gaussian_kde(mx.log10(vals), weights=weights)
     assert_allclose(weights, orig_weights, atol=1e-14, rtol=1e-14)
 
 
@@ -592,7 +592,7 @@ def test_weights_integer():
     values = [0.2, 13.5, 21.0, 75.0, 99.0]
     weights = [1, 2, 4, 8, 16]  # a list of integers
     pdf_i = stats.gaussian_kde(values, weights=weights)
-    pdf_f = stats.gaussian_kde(values, weights=np.float64(weights))
+    pdf_f = stats.gaussian_kde(values, weights=mx.float64(weights))
 
     xn = [0.3, 11, 88]
     assert_allclose(pdf_i.evaluate(xn),
@@ -615,19 +615,19 @@ def test_seed():
         samp2 = gkde_trail.resample(n_sample, seed=seed)
         assert_allclose(samp1, samp2, atol=1e-13)
         # Use RandomState
-        rstate1 = np.random.RandomState(seed=138)
+        rstate1 = mx.random.RandomState(seed=138)
         samp1 = gkde_trail.resample(n_sample, seed=rstate1)
-        rstate2 = np.random.RandomState(seed=138)
+        rstate2 = mx.random.RandomState(seed=138)
         samp2 = gkde_trail.resample(n_sample, seed=rstate2)
         assert_allclose(samp1, samp2, atol=1e-13)
 
-        # check that np.random.Generator can be used (numpy >= 1.17)
-        if hasattr(np.random, 'default_rng'):
-            # obtain a np.random.Generator object
-            rng = np.random.default_rng(1234)
+        # check that mx.random.Generator can be used (numpy >= 1.17)
+        if hasattr(mx.random, 'default_rng'):
+            # obtain a mx.random.Generator object
+            rng = mx.random.default_rng(1234)
             gkde_trail.resample(n_sample, seed=rng)
 
-    rng = np.random.default_rng(8765678)
+    rng = mx.random.default_rng(8765678)
     n_basesample = 500
     wn = rng.random(n_basesample)
     # Test 1D case
@@ -639,8 +639,8 @@ def test_seed():
     test_seed_sub(gkde_1d_weighted)
 
     # Test 2D case
-    mean = np.array([1.0, 3.0])
-    covariance = np.array([[1.0, 2.0], [2.0, 6.0]])
+    mean = mx.array([1.0, 3.0])
+    covariance = mx.array([[1.0, 2.0], [2.0, 6.0]])
     xn_2d = rng.multivariate_normal(mean, covariance, size=n_basesample).T
 
     gkde_2d = stats.gaussian_kde(xn_2d)
@@ -652,9 +652,9 @@ def test_seed():
 def test_singular_data_covariance_gh10205():
     # When the data lie in a lower-dimensional subspace and this causes
     # and exception, check that the error message is informative.
-    rng = np.random.default_rng(2321583144339784787)
-    mu = np.array([1, 10, 20])
-    sigma = np.array([[4, 10, 0], [10, 25, 0], [0, 0, 100]])
+    rng = mx.random.default_rng(2321583144339784787)
+    mu = mx.array([1, 10, 20])
+    sigma = mx.array([[4, 10, 0], [10, 25, 0], [0, 0, 100]])
     data = rng.multivariate_normal(mu, sigma, 1000)
     try:  # doesn't raise any error on some platforms, and that's OK
         stats.gaussian_kde(data.T)
@@ -670,8 +670,8 @@ def test_fewer_points_than_dimensions_gh17436():
     # test_singular_data_covariance_gh10205 would occur. However, sometimes
     # this occurs when the user passes in the transpose of what `gaussian_kde`
     # expects. This can result in a huge covariance matrix, so bail early.
-    rng = np.random.default_rng(2046127537594925772)
-    rvs = rng.multivariate_normal(np.zeros(3), np.eye(3), size=5)
+    rng = mx.random.default_rng(2046127537594925772)
+    rvs = rng.multivariate_normal(mx.zeros(3), mx.eye(3), size=5)
     message = "Number of dimensions is greater than number of samples..."
     with pytest.raises(ValueError, match=message):
         stats.gaussian_kde(rvs)

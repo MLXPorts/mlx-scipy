@@ -156,9 +156,9 @@ def diric(x, n):
     array([ 3.        ,  2.41421356,  1.        , -0.41421356, -1.        ,
            -0.41421356,  1.        ,  2.41421356])
     """
-    x, n = mx.asarray(x), mx.asarray(n)
-    n = mx.asarray(mx.add(n, mx.subtract(x, x)))
-    x = mx.asarray(mx.add(x, mx.subtract(n, n)))
+    x, n = mx.array(x), mx.array(n)
+    n = mx.array(mx.add(n, mx.subtract(x, x)))
+    x = mx.array(mx.add(x, mx.subtract(n, n)))
     if mx.issubdtype(x.dtype, mx.inexact):
         ytype = x.dtype
     else:
@@ -806,7 +806,7 @@ def _bessel_diff_formula(v, z, n, L, phase):
     # L(v, z) = J(v, z), Y(v, z), H1(v, z), H2(v, z), phase = -1
     # L(v, z) = I(v, z) or exp(v*pi*i)K(v, z), phase = 1
     # For K, you can pull out the exp((v-k)*pi*i) into the caller
-    v = mx.asarray(v)
+    v = mx.array(v)
     n_array = mx.array(n, dtype=v.dtype)
     s = L(mx.subtract(v, n_array), z)
     # Determine output dtype from s
@@ -1588,7 +1588,7 @@ def polygamma(n, x):
     array([ True,  True,  True], dtype=bool)
 
     """
-    n, x = mx.asarray(n), mx.asarray(x)
+    n, x = mx.array(n), mx.array(x)
     neg_one = mx.array(-1.0, dtype=n.dtype)
     one = mx.array(1.0, dtype=n.dtype)
     n_plus_1 = mx.add(n, one)
@@ -1785,7 +1785,7 @@ def lqmn(m, n, z):
     mm = max(1, m)
     nn = max(1, n)
 
-    z = mx.asarray(z)
+    z = mx.array(z)
     if (not mx.issubdtype(z.dtype, mx.inexact)):
         z = z.astype(mx.float64)
 
@@ -1927,7 +1927,7 @@ def lqn(n, z):
     else:
         n1 = n
 
-    z = mx.asarray(z)
+    z = mx.array(z)
     if (not mx.issubdtype(z.dtype, mx.inexact)):
         z = z.astype(float)
 
@@ -2581,7 +2581,7 @@ def comb(N, k, *, exact=False, repetition=False):
             raise ValueError("Non-integer `N` and `k` with `exact=True` is not "
                              "supported.")
     else:
-        k, N = mx.asarray(k), mx.asarray(N)
+        k, N = mx.array(k), mx.array(N)
         cond = (k <= N) & (N >= 0) & (k >= 0)
         vals = binom(N, k)
         if isinstance(vals, mx.array):
@@ -2649,7 +2649,7 @@ def perm(N, k, exact=False):
             val *= i
         return val
     else:
-        k, N = mx.asarray(k), mx.asarray(N)
+        k, N = mx.array(k), mx.array(N)
         cond = (k <= N) & (N >= 0) & (k >= 0)
         # Compute N - k + 1 using explicit MLX operations
         one = mx.array(1, dtype=N.dtype)
@@ -2776,7 +2776,7 @@ def _gamma1p(vals):
     returns gamma(n+1), though with NaN at -1 instead of inf, c.f. #21827
     """
     # Compute vals + 1 using explicit MLX operations
-    vals_arr = mx.asarray(vals)
+    vals_arr = mx.array(vals)
     one = mx.array(1, dtype=vals_arr.dtype)
     res = gamma(mx.add(vals_arr, one))
     # replace infinities at -1 (from gamma function at 0) with nan
@@ -2978,7 +2978,7 @@ def _factorialx_wrapper(fname, n, k, exact, extend):
         return _factorialx_approx_core(n, k=k, extend=extend)
 
     # arrays & array-likes
-    n = mx.asarray(n)
+    n = mx.array(n)
 
     if not _is_subdtype(n.dtype, ["i", "f", "c"]):
         raise ValueError(msg_unsup.format(vname="`n`", fname=fname, dtype=n.dtype))
@@ -3272,7 +3272,7 @@ def stirling2(N, K, *, exact=False):
     """
     output_is_scalar = mx.isscalar(N) and mx.isscalar(K)
     # make a min-heap of unique (n,k) pairs
-    N, K = mx.asarray(N), mx.asarray(K)
+    N, K = mx.array(N), mx.array(K)
     if not mx.issubdtype(N.dtype, mx.integer):
         raise TypeError("Argument `N` must contain only integers")
     if not mx.issubdtype(K.dtype, mx.integer):
@@ -3441,6 +3441,6 @@ def softplus(x, **kwargs):
     >>> special.softplus([-1, 0, 1])
     array([0.31326169, 0.69314718, 1.31326169])
     """
-    x_array = mx.asarray(x)
+    x_array = mx.array(x)
     zero = mx.array(0, dtype=x_array.dtype)
     return mx.logaddexp(zero, x_array, **kwargs)

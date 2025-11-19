@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from .common import Benchmark, safe_import
 
 from scipy.integrate import quad, cumulative_simpson, nquad, quad_vec, cubature
@@ -35,23 +35,23 @@ class SolveBVP(Benchmark):
 
     def fun_flow(self, x, y, p):
         A = p[0]
-        return np.vstack((
+        return mx.vstack((
             y[1], y[2], 100 * (y[1] ** 2 - y[0] * y[2] - A),
             y[4], -100 * y[0] * y[4] - 1, y[6], -70 * y[0] * y[6]
         ))
 
     def bc_flow(self, ya, yb, p):
-        return np.array([
+        return mx.array([
             ya[0], ya[1], yb[0] - 1, yb[1], ya[3], yb[3], ya[5], yb[5] - 1])
 
     def time_flow(self):
-        x = np.linspace(0, 1, 10)
-        y = np.ones((7, x.size))
+        x = mx.linspace(0, 1, 10)
+        y = mx.ones((7, x.size))
         solve_bvp(self.fun_flow, self.bc_flow, x, y, p=[1], tol=self.TOL)
 
     def fun_peak(self, x, y):
         eps = 1e-3
-        return np.vstack((
+        return mx.vstack((
             y[1],
             -(4 * x * y[1] + 2 * y[0]) / (eps + x**2)
         ))
@@ -59,26 +59,26 @@ class SolveBVP(Benchmark):
     def bc_peak(self, ya, yb):
         eps = 1e-3
         v = (1 + eps) ** -1
-        return np.array([ya[0] - v, yb[0] - v])
+        return mx.array([ya[0] - v, yb[0] - v])
 
     def time_peak(self):
-        x = np.linspace(-1, 1, 5)
-        y = np.zeros((2, x.size))
+        x = mx.linspace(-1, 1, 5)
+        y = mx.zeros((2, x.size))
         solve_bvp(self.fun_peak, self.bc_peak, x, y, tol=self.TOL)
 
     def fun_gas(self, x, y):
         alpha = 0.8
-        return np.vstack((
+        return mx.vstack((
             y[1],
             -2 * x * y[1] * (1 - alpha * y[0]) ** -0.5
         ))
 
     def bc_gas(self, ya, yb):
-        return np.array([ya[0] - 1, yb[0]])
+        return mx.array([ya[0] - 1, yb[0]])
 
     def time_gas(self):
-        x = np.linspace(0, 3, 5)
-        y = np.empty((2, x.size))
+        x = mx.linspace(0, 3, 5)
+        y = mx.empty((2, x.size))
         y[0] = 0.5
         y[1] = -0.5
         solve_bvp(self.fun_gas, self.bc_gas, x, y, tol=self.TOL)
@@ -109,24 +109,24 @@ class Quad(Benchmark):
                                                     address))
 
     def time_quad_python(self):
-        quad(self.f_python, 0, np.pi)
+        quad(self.f_python, 0, mx.pi)
 
     def time_quad_cython(self):
-        quad(self.f_cython, 0, np.pi)
+        quad(self.f_cython, 0, mx.pi)
 
     def time_quad_ctypes(self):
-        quad(self.f_ctypes, 0, np.pi)
+        quad(self.f_ctypes, 0, mx.pi)
 
     def time_quad_cffi(self):
-        quad(self.f_cffi, 0, np.pi)
+        quad(self.f_cffi, 0, mx.pi)
 
 
 class CumulativeSimpson(Benchmark):
 
     def setup(self) -> None:
-        x, self.dx = np.linspace(0, 5, 1000, retstep=True)
-        self.y = np.sin(2*np.pi*x)
-        self.y2 = np.tile(self.y, (100, 100, 1))
+        x, self.dx = mx.linspace(0, 5, 1000, retstep=True)
+        self.y = mx.sin(2*mx.pi*x)
+        self.y2 = mx.tile(self.y, (100, 100, 1))
 
     def time_1d(self) -> None:
         cumulative_simpson(self.y, dx=self.dx)
@@ -143,21 +143,21 @@ class NquadSphere(Benchmark):
     param_names = ["rtol"]
 
     def setup(self, rtol):
-        self.a = np.array([0, 0, 0])
-        self.b = np.array([1, 2*np.pi, np.pi])
+        self.a = mx.array([0, 0, 0])
+        self.b = mx.array([1, 2*mx.pi, mx.pi])
         self.rtol = rtol
         self.atol = 0
 
     def f(self, r, theta, phi):
-        return r**2 * np.sin(phi)
+        return r**2 * mx.sin(phi)
 
     def time_sphere(self, rtol):
         nquad(
             func=self.f,
             ranges=[
                 (0, 1),
-                (0, 2*np.pi),
-                (0, np.pi),
+                (0, 2*mx.pi),
+                (0, mx.pi),
             ],
             opts={
                 "epsabs": self.rtol,
@@ -185,11 +185,11 @@ class NquadOscillatory(Benchmark):
         self.ranges = [(0, 1) for _ in range(self.ndim)]
 
     def f(self, *x):
-        x_arr = np.array(x)
+        x_arr = mx.array(x)
         r = 0.5
-        alphas = np.repeat(0.1, self.ndim)
+        alphas = mx.repeat(0.1, self.ndim)
 
-        return np.cos(2*np.pi*r + np.sum(alphas * x_arr, axis=-1))
+        return mx.cos(2*mx.pi*r + mx.sum(alphas * x_arr, axis=-1))
 
     def time_oscillatory(self, ndim, rtol):
         nquad(
@@ -224,10 +224,10 @@ class QuadVecOscillatory(Benchmark):
         self.pool = ThreadPoolExecutor(2)
 
     def f(self, x):
-        r = np.repeat(0.5, self.fdim)
-        alphas = np.repeat(0.1, self.fdim)
+        r = mx.repeat(0.5, self.fdim)
+        alphas = mx.repeat(0.1, self.fdim)
 
-        return np.cos(2*np.pi*r + alphas * x)
+        return mx.cos(2*mx.pi*r + alphas * x)
 
     def time_plain(self, fdim, rtol):
         quad_vec(
@@ -271,8 +271,8 @@ class CubatureSphere(Benchmark):
     param_names = ["rule", "rtol"]
 
     def setup(self, rule, rtol):
-        self.a = np.array([0, 0, 0])
-        self.b = np.array([1, 2*np.pi, np.pi])
+        self.a = mx.array([0, 0, 0])
+        self.b = mx.array([1, 2*mx.pi, mx.pi])
         self.rule = rule
         self.rtol = rtol
         self.atol = 0
@@ -282,7 +282,7 @@ class CubatureSphere(Benchmark):
         r = x[:, 0]
         phi = x[:, 2]
 
-        return r**2 * np.sin(phi)
+        return r**2 * mx.sin(phi)
 
     def time_plain(self, rule, rtol):
         cubature(
@@ -345,8 +345,8 @@ class CubatureOscillatory(Benchmark):
         self.rtol = rtol
         self.atol = 0
 
-        self.a = np.zeros(self.ndim)
-        self.b = np.repeat(1, self.ndim)
+        self.a = mx.zeros(self.ndim)
+        self.b = mx.repeat(1, self.ndim)
         self.rule = rule
 
         self.pool = ThreadPoolExecutor(2)
@@ -360,11 +360,11 @@ class CubatureOscillatory(Benchmark):
     def f(self, x):
         npoints, ndim = x.shape[0], x.shape[-1]
 
-        r = np.repeat(0.5, self.fdim)
-        alphas = np.repeat(0.1, self.fdim * ndim).reshape(self.fdim, ndim)
+        r = mx.repeat(0.5, self.fdim)
+        alphas = mx.repeat(0.1, self.fdim * ndim).reshape(self.fdim, ndim)
         x_reshaped = x.reshape(npoints, *([1]*(len(alphas.shape) - 1)), ndim)
 
-        return np.cos(2*np.pi*r + np.sum(alphas * x_reshaped, axis=-1))
+        return mx.cos(2*mx.pi*r + mx.sum(alphas * x_reshaped, axis=-1))
 
     def time_plain(self, rule, ndim, fdim, rtol):
         cubature(

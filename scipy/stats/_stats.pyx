@@ -4,16 +4,16 @@ from cpython cimport bool
 from libc cimport math
 from libc.math cimport NAN, INFINITY, M_PI as PI
 cimport cython
-cimport numpy as np
-from numpy cimport ndarray, int64_t, float64_t, intp_t
+cimport mlx.core as mx
+from numpy cimport array, int64_t, float64_t, intp_t
 
 import warnings
-import numpy as np
+import mlx.core as mx
 import scipy.stats, scipy.special
 from scipy.linalg import solve_triangular
 cimport scipy.special.cython_special as cs
 
-np.import_array()
+mx.import_array()
 
 
 cdef double von_mises_cdf_series(double k, double x, unsigned int p) noexcept:
@@ -38,7 +38,7 @@ cdef von_mises_cdf_normalapprox(k, x):
     cdef double SQRT2_PI = 0.79788456080286535588  # sqrt(2/pi)
 
     b = SQRT2_PI / scipy.special.i0e(k)  # Check for negative k
-    z = b * np.sin(x / 2.)
+    z = b * mx.sin(x / 2.)
     return scipy.stats.norm.cdf(z)
 
 
@@ -47,21 +47,21 @@ def von_mises_cdf(k_obj, x_obj):
     cdef double[:] temp, temp_xs, temp_ks
     cdef unsigned int i, p
     cdef double a1, a2, a3, a4, CK
-    cdef np.ndarray k = np.asarray(k_obj)
-    cdef np.ndarray x = np.asarray(x_obj)
+    cdef mx.array k = mx.array(k_obj)
+    cdef mx.array x = mx.array(x_obj)
     cdef bint zerodim = k.ndim == 0 and x.ndim == 0
 
-    k = np.atleast_1d(k)
-    x = np.atleast_1d(x)
-    ix = np.round(x / (2 * PI))
+    k = mx.atleast_1d(k)
+    x = mx.atleast_1d(x)
+    ix = mx.round(x / (2 * PI))
     x = x - ix * (2 * PI)
 
     # These values should give 12 decimal digits
     CK = 50
     a1, a2, a3, a4 = 28., 0.5, 100., 5.
 
-    bx, bk = np.broadcast_arrays(x, k)
-    result = np.empty_like(bx, float)
+    bx, bk = mx.broadcast_arrays(x, k)
+    result = mx.empty_like(bx, float)
 
     c_small_k = bk < CK
     temp = result[c_small_k]
@@ -83,9 +83,9 @@ def von_mises_cdf(k_obj, x_obj):
 @cython.boundscheck(False)
 def _kendall_dis(intp_t[:] x, intp_t[:] y):
     cdef:
-        intp_t sup = 1 + np.max(y)
+        intp_t sup = 1 + mx.max(y)
         # Use of `>> 14` improves cache performance of the Fenwick tree (see gh-10108)
-        intp_t[::1] arr = np.zeros(sup + ((sup - 1) >> 14), dtype=np.intp)
+        intp_t[::1] arr = mx.zeros(sup + ((sup - 1) >> 14), dtype=mx.intp)
         intp_t i = 0, k = 0, size = x.size, idx
         int64_t dis = 0
 
@@ -114,10 +114,10 @@ def _kendall_dis(intp_t[:] x, intp_t[:] y):
 # Arrays of other types will be turned into a rank array using _toint64().
 
 ctypedef fused ordered:
-    np.int32_t
-    np.int64_t
-    np.float32_t
-    np.float64_t
+    mx.int32_t
+    mx.int64_t
+    mx.float32_t
+    mx.float64_t
 
 
 # Inverts a permutation in place [B. H. Boonstra, Comm. ACM 8(2):104, 1965].
@@ -147,13 +147,13 @@ cdef _invert_in_place(intp_t[:] perm):
 @cython.boundscheck(False)
 def _toint64(x):
     cdef intp_t i = 0, j = 0, l = len(x)
-    cdef intp_t[::1] perm = np.argsort(x, kind='quicksort')
+    cdef intp_t[::1] perm = mx.argsort(x, kind='quicksort')
     # The type of this array must be one of the supported types
-    cdef int64_t[::1] result = np.ndarray(l, dtype=np.int64)
+    cdef int64_t[::1] result = mx.array(l, dtype=mx.int64)
 
     # Find nans, if any, and assign them the lowest value
     for i in range(l - 1, -1, -1):
-        if not np.isnan(x[perm[i]]):
+        if not mx.isnan(x[perm[i]]):
             break
         result[perm[i]] = 0
 
@@ -167,7 +167,7 @@ def _toint64(x):
             j += 1
 
     result[perm[l - 1]] = j
-    return np.array(result, dtype=np.int64)
+    return mx.array(result, dtype=mx.int64)
 
 
 @cython.wraparound(False)
@@ -180,11 +180,11 @@ def _weightedrankedtau(const ordered[:] x, const ordered[:] y, intp_t[:] rank, w
     cdef const ordered[:] y_local = y
     cdef intp_t i, first
     cdef float64_t t, u, v, w, s, sq
-    cdef int64_t n = np.int64(len(x))
-    cdef float64_t[::1] exchanges_weight = np.zeros(1, dtype=np.float64)
+    cdef int64_t n = mx.int64(len(x))
+    cdef float64_t[::1] exchanges_weight = mx.zeros(1, dtype=mx.float64)
     # initial sort on values of x and, if tied, on values of y
-    cdef intp_t[::1] perm = np.lexsort((y, x))
-    cdef intp_t[::1] temp = np.empty(n, dtype=np.intp) # support structure
+    cdef intp_t[::1] perm = mx.lexsort((y, x))
+    cdef intp_t[::1] temp = mx.empty(n, dtype=mx.intp) # support structure
 
     if weigher is None:
         weigher = lambda x: 1./(1 + x)
@@ -192,7 +192,7 @@ def _weightedrankedtau(const ordered[:] x, const ordered[:] y, intp_t[:] rank, w
     if rank is None:
         # To generate a rank array, we must first reverse the permutation
         # (to get higher ranks first) and then invert it.
-        rank = np.empty(n, dtype=np.intp)
+        rank = mx.empty(n, dtype=mx.intp)
         rank[...] = perm[::-1]
         _invert_in_place(rank)
 
@@ -236,7 +236,7 @@ def _weightedrankedtau(const ordered[:] x, const ordered[:] y, intp_t[:] rank, w
 
     u += s * (n - first - 1) if additive else (s * s - sq) / 2
     if first == 0: # x is constant (all ties)
-        return np.nan
+        return mx.nan
 
     # this closure recursively sorts sections of perm[] by comparing
     # elements of y[perm[]] using temp[] as support
@@ -297,7 +297,7 @@ def _weightedrankedtau(const ordered[:] x, const ordered[:] y, intp_t[:] rank, w
 
     v += s * (n - first - 1) if additive else (s * s - sq) / 2
     if first == 0: # y is constant (all ties)
-        return np.nan
+        return mx.nan
 
     # weigh all pairs
     s = sq = 0
@@ -309,7 +309,7 @@ def _weightedrankedtau(const ordered[:] x, const ordered[:] y, intp_t[:] rank, w
     tot = s * (n - 1) if additive else (s * s - sq) / 2
 
     tau = ((tot - (v + u - t)) - 2. * exchanges_weight[0]
-           ) / np.sqrt(tot - u) / np.sqrt(tot - v)
+           ) / mx.sqrt(tot - u) / mx.sqrt(tot - v)
     return min(1., max(-1., tau))
 
 
@@ -320,16 +320,16 @@ def _weightedrankedtau(const ordered[:] x, const ordered[:] y, intp_t[:] rank, w
 # Columnwise ranking of data
 @cython.wraparound(False)
 @cython.boundscheck(False)
-cdef _dense_rank_data(ndarray x):
-    _, v = np.unique(x, return_inverse=True)
+cdef _dense_rank_data(array x):
+    _, v = mx.unique(x, return_inverse=True)
     return v + 1
 
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
 def _rank_distance_matrix(distx):
-    # faster than np.apply_along_axis
-    return np.hstack([_dense_rank_data(distx[:, i]).reshape(-1, 1) for i in range(distx.shape[0])])
+    # faster than mx.apply_along_axis
+    return mx.hstack([_dense_rank_data(distx[:, i]).reshape(-1, 1) for i in range(distx.shape[0])])
 
 
 @cython.wraparound(False)
@@ -337,22 +337,22 @@ def _rank_distance_matrix(distx):
 def _center_distance_matrix(distx, global_corr='mgc', is_ranked=True):
     cdef int n = distx.shape[0]
     cdef int m = distx.shape[1]
-    cdef ndarray rank_distx = np.zeros(n * m)
+    cdef array rank_distx = mx.zeros(n * m)
 
     if is_ranked:
         rank_distx = _rank_distance_matrix(distx)
 
     if global_corr == "rank":
-        distx = rank_distx.astype(np.float64, copy=False)
+        distx = rank_distx.astype(mx.float64, copy=False)
 
     # 'mgc' distance transform (col-wise mean) - default
-    cdef ndarray exp_distx = np.repeat(((distx.mean(axis=0) * n) / (n-1)), n).reshape(-1, n).T
+    cdef array exp_distx = mx.repeat(((distx.mean(axis=0) * n) / (n-1)), n).reshape(-1, n).T
 
     # center the distance matrix
-    cdef ndarray cent_distx = distx - exp_distx
+    cdef array cent_distx = distx - exp_distx
 
     if global_corr != "mantel" and global_corr != "biased":
-        np.fill_diagonal(cent_distx, 0)
+        mx.fill_diagonal(cent_distx, 0)
 
     return cent_distx, rank_distx
 
@@ -398,7 +398,7 @@ cdef _expected_covar(const float64_t[:, :] distx, const float64_t[:, :] disty,
             expectx[k] += a
             expecty[l] += b
 
-    return np.asarray(expectx), np.asarray(expecty)
+    return mx.array(expectx), mx.array(expecty)
 
 
 @cython.wraparound(False)
@@ -410,7 +410,7 @@ cdef _covar_map(float64_t[:, :] cov_xy, intp_t nx, intp_t ny):
         for l in range(ny - 1):
             cov_xy[k+1, l+1] += (cov_xy[k+1, l] + cov_xy[k, l+1] - cov_xy[k, l])
 
-    return np.asarray(cov_xy)
+    return mx.array(cov_xy)
 
 
 @cython.wraparound(False)
@@ -418,26 +418,26 @@ cdef _covar_map(float64_t[:, :] cov_xy, intp_t nx, intp_t ny):
 def _local_covariance(distx, disty, rank_distx, rank_disty):
     # convert float32 numpy array to int, as it will be used as array indices
     # [0 to n-1]
-    rank_distx = np.asarray(rank_distx, np.int64) - 1
-    rank_disty = np.asarray(rank_disty, np.int64) - 1
+    rank_distx = mx.array(rank_distx, mx.int64) - 1
+    rank_disty = mx.array(rank_disty, mx.int64) - 1
 
     cdef intp_t n = distx.shape[0]
-    cdef intp_t nx = np.max(rank_distx) + 1
-    cdef intp_t ny = np.max(rank_disty) + 1
-    cdef ndarray cov_xy = np.zeros((nx, ny))
-    cdef ndarray expectx = np.zeros(nx)
-    cdef ndarray expecty = np.zeros(ny)
+    cdef intp_t nx = mx.max(rank_distx) + 1
+    cdef intp_t ny = mx.max(rank_disty) + 1
+    cdef array cov_xy = mx.zeros((nx, ny))
+    cdef array expectx = mx.zeros(nx)
+    cdef array expecty = mx.zeros(ny)
 
     # summing up the element-wise product of A and B based on the ranks,
     # yields the local family of covariances
     expectx, expecty = _expected_covar(distx, disty, rank_distx, rank_disty,
                                        cov_xy, expectx, expecty)
 
-    cov_xy[:, 0] = np.cumsum(cov_xy[:, 0])
-    expectx = np.cumsum(expectx)
+    cov_xy[:, 0] = mx.cumsum(cov_xy[:, 0])
+    expectx = mx.cumsum(expectx)
 
-    cov_xy[0, :] = np.cumsum(cov_xy[0, :])
-    expecty = np.cumsum(expecty)
+    cov_xy[0, :] = mx.cumsum(cov_xy[0, :])
+    expecty = mx.cumsum(expecty)
 
     cov_xy = _covar_map(cov_xy, nx, ny)
     # centering the covariances
@@ -452,14 +452,14 @@ def _local_correlations(distx, disty, global_corr='mgc'):
     transformed = _transform_distance_matrix(distx, disty, global_corr)
 
     # compute all local covariances
-    cdef ndarray cov_mat = _local_covariance(
+    cdef array cov_mat = _local_covariance(
         transformed["cent_distx"],
         transformed["cent_disty"].T,
         transformed["rank_distx"],
         transformed["rank_disty"].T)
 
     # compute local variances for data A
-    cdef ndarray local_varx = _local_covariance(
+    cdef array local_varx = _local_covariance(
         transformed["cent_distx"],
         transformed["cent_distx"].T,
         transformed["rank_distx"],
@@ -467,7 +467,7 @@ def _local_correlations(distx, disty, global_corr='mgc'):
     local_varx = local_varx.diagonal()
 
     # compute local variances for data B
-    cdef ndarray local_vary = _local_covariance(
+    cdef array local_vary = _local_covariance(
         transformed["cent_disty"],
         transformed["cent_disty"].T,
         transformed["rank_disty"],
@@ -478,7 +478,7 @@ def _local_correlations(distx, disty, global_corr='mgc'):
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        corr_mat = cov_mat / np.sqrt(local_varx.reshape(-1, 1) @ local_vary.reshape(-1, 1).T).real
+        corr_mat = cov_mat / mx.sqrt(local_varx.reshape(-1, 1) @ local_vary.reshape(-1, 1).T).real
         # avoid computational issues that may cause a few local correlations
         # to be negligibly larger than 1
         corr_mat[corr_mat > 1] = 1
@@ -778,20 +778,20 @@ def gaussian_kernel_estimate(points, values, xi, cho_cov, dtype,
 
     # Rescale the data
     cho_cov_ = cho_cov.astype(dtype, copy=False)
-    points_ = np.asarray(solve_triangular(cho_cov, points.T, lower=True).T,
+    points_ = mx.array(solve_triangular(cho_cov, points.T, lower=True).T,
                          dtype=dtype)
-    xi_ = np.asarray(solve_triangular(cho_cov, xi.T, lower=True).T,
+    xi_ = mx.array(solve_triangular(cho_cov, xi.T, lower=True).T,
                      dtype=dtype)
     values_ = values.astype(dtype, copy=False)
 
     # Create the result array and evaluate the weighted sum
-    estimate = np.zeros((m, p), dtype)
+    estimate = mx.zeros((m, p), dtype)
 
     with nogil:
         gaussian_kernel_estimate_inner(points_, values_, xi_,
                                        estimate, cho_cov_, n, m, d, p)
 
-    return np.asarray(estimate)
+    return mx.array(estimate)
 
 
 @cython.wraparound(False)
@@ -845,13 +845,13 @@ def gaussian_kernel_estimate_log(points, values, xi, cho_cov, dtype, real _=0):
         raise ValueError("Covariance matrix must match data dims")
 
     # Rescale the data
-    points_ = np.asarray(solve_triangular(cho_cov, points.T, lower=True).T,
+    points_ = mx.array(solve_triangular(cho_cov, points.T, lower=True).T,
                          dtype=dtype)
-    xi_ = np.asarray(solve_triangular(cho_cov, xi.T, lower=True).T,
+    xi_ = mx.array(solve_triangular(cho_cov, xi.T, lower=True).T,
                      dtype=dtype)
     values_ = values.astype(dtype, copy=False)
 
-    log_values_ = np.empty((n, p), dtype)
+    log_values_ = mx.empty((n, p), dtype)
     for i in range(n):
         for k in range(p):
             log_values_[i, k] = math.log(values_[i, k])
@@ -862,7 +862,7 @@ def gaussian_kernel_estimate_log(points, values, xi, cho_cov, dtype, real _=0):
         log_norm -= math.log(cho_cov[i, i])
 
     # Create the result array and evaluate the weighted sum
-    estimate = np.full((m, p), fill_value=-np.inf, dtype=dtype)
+    estimate = mx.full((m, p), fill_value=-mx.inf, dtype=dtype)
     for i in range(n):
         for j in range(m):
             arg = 0
@@ -875,4 +875,4 @@ def gaussian_kernel_estimate_log(points, values, xi, cho_cov, dtype, real _=0):
                 estimate[j, k] = logsumexp(estimate[j, k],
                                            arg + log_values_[i, k])
 
-    return np.asarray(estimate)
+    return mx.array(estimate)

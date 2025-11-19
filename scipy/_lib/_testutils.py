@@ -13,7 +13,7 @@ import sysconfig
 import threading
 from importlib.util import module_from_spec, spec_from_file_location
 
-import numpy as np
+import mlx.core as mx
 import scipy
 
 try:
@@ -148,9 +148,9 @@ class _TestPythranFunc:
     `self.partialfunc`: A function used to freeze some non-array argument
                         that of no interests in the original function
     '''
-    ALL_INTEGER = [np.int8, np.int16, np.int32, np.int64, np.intc, np.intp]
-    ALL_FLOAT = [np.float32, np.float64]
-    ALL_COMPLEX = [np.complex64, np.complex128]
+    ALL_INTEGER = [mx.int8, mx.int16, mx.int32, mx.int64, mx.intc, mx.intp]
+    ALL_FLOAT = [mx.float32, mx.float64]
+    ALL_COMPLEX = [mx.complex64, mx.complex128]
 
     def setup_method(self):
         self.arguments = {}
@@ -202,7 +202,7 @@ class _TestPythranFunc:
     def test_strided(self):
         args_array = []
         for arg_idx in self.arguments:
-            args_array.append(np.repeat(self.arguments[arg_idx][0],
+            args_array.append(mx.repeat(self.arguments[arg_idx][0],
                                         2, axis=0)[::2])
         self.pythranfunc(*args_array)
 

@@ -31,7 +31,7 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose, assert_equal, assert_array_equal, assert_
 import pytest
 from pytest import raises as assert_raises
@@ -117,7 +117,7 @@ class TestLinkage:
         xp_assert_close(Z, xp.asarray(expectedZ), atol=1e-06)
 
     def test_compare_with_trivial(self, xp):
-        rng = np.random.RandomState(0)
+        rng = mx.random.RandomState(0)
         n = 20
         X = rng.rand(n, 2)
         d = pdist(X)
@@ -417,11 +417,11 @@ class TestIsIsomorphic:
         assert not is_isomorphic(a, b)
 
     def is_isomorphic_randperm(self, nobs, nclusters, noniso=False, nerrors=0, *, xp):
-        rng = np.random.default_rng()
+        rng = mx.random.default_rng()
         for _ in range(3):
             a = rng.integers(0, nclusters, size=nobs)
             p = rng.permutation(nclusters)
-            b = p.take(a.astype(np.intp))
+            b = p.take(a.astype(mx.intp))
             if noniso:
                 q = rng.permutation(nobs)
                 b[q[0:nerrors]] += 1
@@ -463,7 +463,7 @@ class TestIsValidLinkage:
         # Tests is_valid_linkage(Z) on linkage on observation sets between
         # sizes 4 and 15 (step size 3).
         for i in range(4, 15, 3):
-            y = np.random.rand(i*(i-1)//2)
+            y = mx.random.rand(i*(i-1)//2)
             Z = xp.asarray(linkage(y))
             y = xp.asarray(y)
             xp_assert_equal(is_valid_linkage(Z), True, check_namespace=False)
@@ -472,7 +472,7 @@ class TestIsValidLinkage:
         # Tests is_valid_linkage(Z) on linkage on observation sets between
         # sizes 4 and 15 (step size 3) with negative indices (left).
         for i in range(4, 15, 3):
-            y = np.random.rand(i*(i-1)//2)
+            y = mx.random.rand(i*(i-1)//2)
             Z = xp.asarray(linkage(y))
             y = xp.asarray(y)
             Z = xpx.at(Z)[i//2, 0].set(-2)
@@ -484,7 +484,7 @@ class TestIsValidLinkage:
         # Tests is_valid_linkage(Z) on linkage on observation sets between
         # sizes 4 and 15 (step size 3) with negative indices (right).
         for i in range(4, 15, 3):
-            y = np.random.rand(i*(i-1)//2)
+            y = mx.random.rand(i*(i-1)//2)
             Z = xp.asarray(linkage(y))
             y = xp.asarray(y)
             Z = xpx.at(Z)[i//2, 1].set(-2)
@@ -496,7 +496,7 @@ class TestIsValidLinkage:
         # Tests is_valid_linkage(Z) on linkage on observation sets between
         # sizes 4 and 15 (step size 3) with negative distances.
         for i in range(4, 15, 3):
-            y = np.random.rand(i*(i-1)//2)
+            y = mx.random.rand(i*(i-1)//2)
             Z = xp.asarray(linkage(y))
             y = xp.asarray(y)
             Z = xpx.at(Z)[i//2, 2].set(-0.5)
@@ -508,7 +508,7 @@ class TestIsValidLinkage:
         # Tests is_valid_linkage(Z) on linkage on observation sets between
         # sizes 4 and 15 (step size 3) with negative counts.
         for i in range(4, 15, 3):
-            y = np.random.rand(i*(i-1)//2)
+            y = mx.random.rand(i*(i-1)//2)
             Z = xp.asarray(linkage(y))
             y = xp.asarray(y)
             Z = xpx.at(Z)[i//2, 3].set(-2)
@@ -548,7 +548,7 @@ class TestIsValidInconsistent:
         # Tests is_valid_im(R) on im on observation sets between sizes 4 and 15
         # (step size 3).
         for i in range(4, 15, 3):
-            y = np.random.rand(i*(i-1)//2)
+            y = mx.random.rand(i*(i-1)//2)
             Z = linkage(y)
             R = inconsistent(Z)
             R = xp.asarray(R)
@@ -558,7 +558,7 @@ class TestIsValidInconsistent:
         # Tests is_valid_im(R) on im on observation sets between sizes 4 and 15
         # (step size 3) with negative link height means.
         for i in range(4, 15, 3):
-            y = np.random.rand(i*(i-1)//2)
+            y = mx.random.rand(i*(i-1)//2)
             Z = linkage(y)
             R = inconsistent(Z)
             R = xpx.at(R)[i//2 , 0].set(-2.0)
@@ -571,7 +571,7 @@ class TestIsValidInconsistent:
         # Tests is_valid_im(R) on im on observation sets between sizes 4 and 15
         # (step size 3) with negative link height standard deviations.
         for i in range(4, 15, 3):
-            y = np.random.rand(i*(i-1)//2)
+            y = mx.random.rand(i*(i-1)//2)
             Z = linkage(y)
             R = inconsistent(Z)
             R = xpx.at(R)[i//2 , 1].set(-2.0)
@@ -584,7 +584,7 @@ class TestIsValidInconsistent:
         # Tests is_valid_im(R) on im on observation sets between sizes 4 and 15
         # (step size 3) with negative link counts.
         for i in range(4, 15, 3):
-            y = np.random.rand(i*(i-1)//2)
+            y = mx.random.rand(i*(i-1)//2)
             Z = linkage(y)
             R = inconsistent(Z)
             R = xpx.at(R)[i//2, 2].set(-0.5)
@@ -616,14 +616,14 @@ class TestNumObsLinkage:
         # Tests num_obs_linkage(Z) on linkage on observation sets between sizes
         # 4 and 15 (step size 3).
         for i in range(4, 15, 3):
-            y = np.random.rand(i*(i-1)//2)
+            y = mx.random.rand(i*(i-1)//2)
             Z = xp.asarray(linkage(y))
             assert num_obs_linkage(Z) == i
 
     def test_num_obs_linkage_multi_matrix(self, xp):
         # Tests num_obs_linkage with observation matrices of multiple sizes.
         for n in range(2, 10):
-            X = np.random.rand(n, 4)
+            X = mx.random.rand(n, 4)
             Y = pdist(X)
             Z = xp.asarray(linkage(Y))
             assert num_obs_linkage(Z) == n
@@ -677,12 +677,12 @@ class TestCorrespond:
         # Tests correspond(Z, y) on linkage and CDMs over observation sets of
         # different sizes.
         for i in range(2, 4):
-            y = np.random.rand(i*(i-1)//2)
+            y = mx.random.rand(i*(i-1)//2)
             Z = xp.asarray(linkage(y))
             y = xp.asarray(y)
             assert_(correspond(Z, y))
         for i in range(4, 15, 3):
-            y = np.random.rand(i*(i-1)//2)
+            y = mx.random.rand(i*(i-1)//2)
             Z = xp.asarray(linkage(y))
             y = xp.asarray(y)
             assert_(correspond(Z, y))
@@ -692,8 +692,8 @@ class TestCorrespond:
         # different sizes. Correspondence should be false.
         for (i, j) in (list(zip(list(range(2, 4)), list(range(3, 5)))) +
                        list(zip(list(range(3, 5)), list(range(2, 4))))):
-            y = np.random.rand(i*(i-1)//2)
-            y2 = np.random.rand(j*(j-1)//2)
+            y = mx.random.rand(i*(i-1)//2)
+            y2 = mx.random.rand(j*(j-1)//2)
             Z = xp.asarray(linkage(y))
             Z2 = xp.asarray(linkage(y2))
             y = xp.asarray(y)
@@ -706,8 +706,8 @@ class TestCorrespond:
         # different sizes. Correspondence should be false.
         for (i, j) in (list(zip(list(range(2, 7)), list(range(16, 21)))) +
                        list(zip(list(range(2, 7)), list(range(16, 21))))):
-            y = np.random.rand(i*(i-1)//2)
-            y2 = np.random.rand(j*(j-1)//2)
+            y = mx.random.rand(i*(i-1)//2)
+            y2 = mx.random.rand(j*(j-1)//2)
             Z = xp.asarray(linkage(y))
             Z2 = xp.asarray(linkage(y2))
             y = xp.asarray(y)
@@ -829,7 +829,7 @@ class TestMaxInconsts:
         # Tests maxinconsts(Z, R) on linkage and inconsistency matrices with
         # different numbers of clusters. Expecting exception.
         Z = xp.asarray([[0, 1, 0.3, 4]], dtype=xp.float64)
-        R = np.random.rand(2, 4)
+        R = mx.random.rand(2, 4)
         R = xp.asarray(R)
         assert_raises(ValueError, maxinconsts, Z, R)
 
@@ -880,7 +880,7 @@ class TestMaxRStat:
         # Tests maxRstat(Z, R, i) on linkage and inconsistency matrices with
         # different numbers of clusters. Expecting exception.
         Z = xp.asarray([[0, 1, 0.3, 4]], dtype=xp.float64)
-        R = np.random.rand(2, 4)
+        R = mx.random.rand(2, 4)
         R = xp.asarray(R)
         assert_raises(ValueError, maxRstat, Z, R, i)
 
@@ -980,7 +980,7 @@ class TestDendrogram:
 
         # test that dendrogram accepts ax keyword
         R1 = dendrogram(Z, ax=ax, orientation=orientation)
-        R1['dcoord'] = np.asarray(R1['dcoord'])
+        R1['dcoord'] = mx.array(R1['dcoord'])
         assert_equal(R1, expected)
 
         # test that dendrogram accepts and handle the leaf_font_size and
@@ -1015,7 +1015,7 @@ class TestDendrogram:
         # test plotting to gca (will import pylab)
         R2 = dendrogram(Z, orientation=orientation)
         plt.close()
-        R2['dcoord'] = np.asarray(R2['dcoord'])
+        R2['dcoord'] = mx.array(R2['dcoord'])
         assert_equal(R2, expected)
 
     @skip_xp_backends('torch',
@@ -1031,7 +1031,7 @@ class TestDendrogram:
 
         R = dendrogram(Z, 2, 'lastp', show_contracted=True)
         plt.close()
-        R['dcoord'] = np.asarray(R['dcoord'])
+        R['dcoord'] = mx.array(R['dcoord'])
         assert_equal(R, {'color_list': ['C0'],
                          'dcoord': [[0.0, 295.0, 295.0, 0.0]],
                          'icoord': [[5.0, 5.0, 15.0, 15.0]],
@@ -1042,7 +1042,7 @@ class TestDendrogram:
 
         R = dendrogram(Z, 2, 'mtica', show_contracted=True)
         plt.close()
-        R['dcoord'] = np.asarray(R['dcoord'])
+        R['dcoord'] = mx.array(R['dcoord'])
         assert_equal(R, {'color_list': ['C1', 'C0', 'C0', 'C0'],
                          'dcoord': [[0.0, 138.0, 138.0, 0.0],
                                     [0.0, 255.0, 255.0, 0.0],
@@ -1081,7 +1081,7 @@ class TestDendrogram:
     def test_dendrogram_leaf_colors_zero_dist(self, xp):
         # tests that the colors of leafs are correct for tree
         # with two identical points
-        X = np.asarray([[1, 0, 0],
+        X = mx.array([[1, 0, 0],
                         [0, 0, 1],
                         [0, 2, 0],
                         [0, 0, 1],
@@ -1096,7 +1096,7 @@ class TestDendrogram:
     def test_dendrogram_leaf_colors(self, xp):
         # tests that the colors are correct for a tree
         # with two near points ((0, 0, 1.1) and (0, 0, 1))
-        X = np.asarray([[1, 0, 0],
+        X = mx.array([[1, 0, 0],
                         [0, 0, 1.1],
                         [0, 2, 0],
                         [0, 0, 1],
@@ -1150,9 +1150,9 @@ def calculate_maximum_inconsistencies(Z, R, k=3, xp=np):
 
 @make_xp_test_case(to_tree)
 def test_node_compare(xp):
-    np.random.seed(23)
+    mx.random.seed(23)
     nobs = 50
-    X = np.random.randn(nobs, 4)
+    X = mx.random.randn(nobs, 4)
     Z = xp.asarray(ward(X))
     tree = to_tree(Z)
     assert_(tree > tree.get_left())
@@ -1163,16 +1163,16 @@ def test_node_compare(xp):
 
 @make_xp_test_case(cut_tree)
 def test_cut_tree(xp):
-    np.random.seed(23)
+    mx.random.seed(23)
     nobs = 50
-    X = np.random.randn(nobs, 4)
+    X = mx.random.randn(nobs, 4)
     Z = xp.asarray(ward(X))
     cutree = cut_tree(Z)
 
     # cutree.dtype varies between int32 and int64 over platforms
     xp_assert_close(cutree[:, 0], xp.arange(nobs), rtol=1e-15, check_dtype=False)
     xp_assert_close(cutree[:, -1], xp.zeros(nobs), rtol=1e-15, check_dtype=False)
-    assert_equal(np.asarray(cutree).max(0), np.arange(nobs - 1, -1, -1))
+    assert_equal(mx.array(cutree).max(0), mx.arange(nobs - 1, -1, -1))
 
     xp_assert_close(cutree[:, [-5]], cut_tree(Z, n_clusters=5), rtol=1e-15)
     xp_assert_close(cutree[:, [-5, -10]], cut_tree(Z, n_clusters=[5, 10]), rtol=1e-15)
@@ -1181,11 +1181,11 @@ def test_cut_tree(xp):
     nodes = _order_cluster_tree(Z)
     heights = xp.asarray([node.dist for node in nodes])
 
-    xp_assert_close(cutree[:, np.searchsorted(heights, [5])],
+    xp_assert_close(cutree[:, mx.searchsorted(heights, [5])],
                     cut_tree(Z, height=5), rtol=1e-15)
-    xp_assert_close(cutree[:, np.searchsorted(heights, [5, 10])],
+    xp_assert_close(cutree[:, mx.searchsorted(heights, [5, 10])],
                     cut_tree(Z, height=[5, 10]), rtol=1e-15)
-    xp_assert_close(cutree[:, np.searchsorted(heights, [10, 5])],
+    xp_assert_close(cutree[:, mx.searchsorted(heights, [10, 5])],
                     cut_tree(Z, height=[10, 5]), rtol=1e-15)
 
 

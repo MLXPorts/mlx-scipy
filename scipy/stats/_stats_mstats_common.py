@@ -1,5 +1,5 @@
 import warnings
-import numpy as np
+import mlx.core as mx
 from . import distributions
 from .._lib._array_api import xp_capabilities
 from .._lib._bunch import _make_tuple_bunch
@@ -46,8 +46,8 @@ def theilslopes(y, x=None, alpha=0.95, method='separate'):
         Method to be used for computing estimate for intercept.
         Following methods are supported,
 
-            * 'joint': Uses np.median(y - slope * x) as intercept.
-            * 'separate': Uses np.median(y) - slope * np.median(x)
+            * 'joint': Uses mx.median(y - slope * x) as intercept.
+            * 'separate': Uses mx.median(y) - slope * mx.median(x)
                           as intercept.
 
         The default is 'separate'.
@@ -101,12 +101,12 @@ def theilslopes(y, x=None, alpha=0.95, method='separate'):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
     >>> import matplotlib.pyplot as plt
 
-    >>> x = np.linspace(-5, 5, num=150)
-    >>> y = x + np.random.normal(size=x.size)
+    >>> x = mx.linspace(-5, 5, num=150)
+    >>> y = x + mx.random.normal(size=x.size)
     >>> y[11:15] += 10  # add outliers
     >>> y[-5:] -= 7
 
@@ -136,29 +136,29 @@ def theilslopes(y, x=None, alpha=0.95, method='separate'):
         raise ValueError("method must be either 'joint' or 'separate'."
                          f"'{method}' is invalid.")
     # We copy both x and y so we can use _find_repeats.
-    y = np.array(y, dtype=float, copy=True).ravel()
+    y = mx.array(y, dtype=float, copy=True).ravel()
     if x is None:
-        x = np.arange(len(y), dtype=float)
+        x = mx.arange(len(y), dtype=float)
     else:
-        x = np.array(x, dtype=float, copy=True).ravel()
+        x = mx.array(x, dtype=float, copy=True).ravel()
         if len(x) != len(y):
             raise ValueError("Array shapes are incompatible for broadcasting.")
     if len(x) < 2:
         raise ValueError("`x` and `y` must have length at least 2.")
 
     # Compute sorted slopes only when deltax > 0
-    deltax = x[:, np.newaxis] - x
-    deltay = y[:, np.newaxis] - y
+    deltax = x[:, mx.newaxis] - x
+    deltay = y[:, mx.newaxis] - y
     slopes = deltay[deltax > 0] / deltax[deltax > 0]
     if not slopes.size:
         msg = "All `x` coordinates are identical."
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
     slopes.sort()
-    medslope = np.median(slopes)
+    medslope = mx.median(slopes)
     if method == 'joint':
-        medinter = np.median(y - medslope * x)
+        medinter = mx.median(y - medslope * x)
     else:
-        medinter = np.median(y) - medslope * np.median(x)
+        medinter = mx.median(y) - medslope * mx.median(x)
     # Now compute confidence intervals
     if alpha > 0.5:
         alpha = 1. - alpha
@@ -175,12 +175,12 @@ def theilslopes(y, x=None, alpha=0.95, method='separate'):
                      sum(k * (k-1) * (2*k + 5) for k in nyreps))
     # Find the confidence interval indices in `slopes`
     try:
-        sigma = np.sqrt(sigsq)
-        Ru = min(int(np.round((nt - z*sigma)/2.)), len(slopes)-1)
-        Rl = max(int(np.round((nt + z*sigma)/2.)) - 1, 0)
+        sigma = mx.sqrt(sigsq)
+        Ru = min(int(mx.round((nt - z*sigma)/2.)), len(slopes)-1)
+        Rl = max(int(mx.round((nt + z*sigma)/2.)) - 1, 0)
         delta = slopes[[Rl, Ru]]
     except (ValueError, IndexError):
-        delta = (np.nan, np.nan)
+        delta = (mx.nan, mx.nan)
 
     return TheilslopesResult(slope=medslope, intercept=medinter,
                              low_slope=delta[0], high_slope=delta[1])
@@ -189,18 +189,18 @@ def theilslopes(y, x=None, alpha=0.95, method='separate'):
 def _find_repeats(arr):
     # This function assumes it may clobber its input.
     if len(arr) == 0:
-        return np.array(0, np.float64), np.array(0, np.intp)
+        return mx.array(0, mx.float64), mx.array(0, mx.intp)
 
     # XXX This cast was previously needed for the Fortran implementation,
     # should we ditch it?
-    arr = np.asarray(arr, np.float64).ravel()
+    arr = mx.array(arr, mx.float64).ravel()
     arr.sort()
 
-    # Taken from NumPy 1.9's np.unique.
-    change = np.concatenate(([True], arr[1:] != arr[:-1]))
+    # Taken from NumPy 1.9's mx.unique.
+    change = mx.concatenate(([True], arr[1:] != arr[:-1]))
     unique = arr[change]
-    change_idx = np.concatenate(np.nonzero(change) + ([arr.size],))
-    freq = np.diff(change_idx)
+    change_idx = mx.concatenate(mx.nonzero(change) + ([arr.size],))
+    freq = mx.diff(change_idx)
     atleast2 = freq > 1
     return unique[atleast2], freq[atleast2]
 
@@ -280,12 +280,12 @@ def siegelslopes(y, x=None, method="hierarchical"):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
     >>> import matplotlib.pyplot as plt
 
-    >>> x = np.linspace(-5, 5, num=150)
-    >>> y = x + np.random.normal(size=x.size)
+    >>> x = mx.linspace(-5, 5, num=150)
+    >>> y = x + mx.random.normal(size=x.size)
     >>> y[11:15] += 10  # add outliers
     >>> y[-5:] -= 7
 
@@ -308,18 +308,18 @@ def siegelslopes(y, x=None, method="hierarchical"):
     """
     if method not in ['hierarchical', 'separate']:
         raise ValueError("method can only be 'hierarchical' or 'separate'")
-    y = np.asarray(y).ravel()
+    y = mx.array(y).ravel()
     if x is None:
-        x = np.arange(len(y), dtype=float)
+        x = mx.arange(len(y), dtype=float)
     else:
-        x = np.asarray(x, dtype=float).ravel()
+        x = mx.array(x, dtype=float).ravel()
         if len(x) != len(y):
             raise ValueError("Array shapes are incompatible for broadcasting.")
     if len(x) < 2:
         raise ValueError("`x` and `y` must have length at least 2.")
 
-    dtype = np.result_type(x, y, np.float32)  # use at least float32
+    dtype = mx.result_type(x, y, mx.float32)  # use at least float32
     y, x = y.astype(dtype), x.astype(dtype)
     medslope, medinter = siegelslopes_pythran(y, x, method)
-    medslope, medinter = np.asarray(medslope)[()], np.asarray(medinter)[()]
+    medslope, medinter = mx.array(medslope)[()], mx.array(medinter)[()]
     return SiegelslopesResult(slope=medslope, intercept=medinter)

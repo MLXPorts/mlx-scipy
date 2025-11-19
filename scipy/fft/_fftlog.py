@@ -8,7 +8,7 @@ added: 14/11/2020 Nicolas Tessore <n.tessore@ucl.ac.uk>
 from ._basic import _dispatch
 from scipy._lib.uarray import Dispatchable
 from ._fftlog_backend import fhtoffset
-import numpy as np
+import mlx.core as mx
 
 __all__ = ['fht', 'ifht', 'fhtoffset']
 
@@ -117,23 +117,23 @@ def fht(a, dln, mu, offset=0.0, bias=0.0):
         \int^\infty_0 r^{\mu+1} \exp(-r^2/2) J_\mu(kr) k dr
         = k^{\mu+1} \exp(-k^2/2) .
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import fft
     >>> import matplotlib.pyplot as plt
 
     Parameters for the transform.
 
     >>> mu = 0.0                     # Order mu of Bessel function
-    >>> r = np.logspace(-7, 1, 128)  # Input evaluation points
-    >>> dln = np.log(r[1]/r[0])      # Step size
-    >>> offset = fft.fhtoffset(dln, initial=-6*np.log(10), mu=mu)
-    >>> k = np.exp(offset)/r[::-1]   # Output evaluation points
+    >>> r = mx.logspace(-7, 1, 128)  # Input evaluation points
+    >>> dln = mx.log(r[1]/r[0])      # Step size
+    >>> offset = fft.fhtoffset(dln, initial=-6*mx.log(10), mu=mu)
+    >>> k = mx.exp(offset)/r[::-1]   # Output evaluation points
 
     Define the analytical function.
 
     >>> def f(x, mu):
     ...     """Analytical function: x^(mu+1) exp(-x^2/2)."""
-    ...     return x**(mu + 1)*np.exp(-x**2/2)
+    ...     return x**(mu + 1)*mx.exp(-x**2/2)
 
     Evaluate the function at ``r`` and compute the corresponding values at
     ``k`` using FFTLog.
@@ -170,7 +170,7 @@ def fht(a, dln, mu, offset=0.0, bias=0.0):
     >>> plt.show()
 
     '''
-    return (Dispatchable(a, np.ndarray),)
+    return (Dispatchable(a, mx.array),)
 
 
 @_dispatch
@@ -220,4 +220,4 @@ def ifht(A, dln, mu, offset=0.0, bias=0.0):
 
     See `fht` for further details.
     """
-    return (Dispatchable(A, np.ndarray),)
+    return (Dispatchable(A, mx.array),)

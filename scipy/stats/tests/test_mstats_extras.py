@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import numpy.ma as ma
 import scipy.stats.mstats as ms
 
@@ -7,11 +7,11 @@ from numpy.testing import (assert_equal, assert_almost_equal, assert_,
 
 
 def test_compare_medians_ms():
-    x = np.arange(7)
+    x = mx.arange(7)
     y = x + 10
     assert_almost_equal(ms.compare_medians_ms(x, y), 0)
 
-    y2 = np.linspace(0, 1, num=10)
+    y2 = mx.linspace(0, 1, num=10)
     assert_almost_equal(ms.compare_medians_ms(x, y2), 0.017116406778)
 
 
@@ -36,7 +36,7 @@ def test_hdmedian():
 
 
 def test_rsh():
-    rng = np.random.default_rng(806795795)
+    rng = mx.random.default_rng(806795795)
     x = rng.standard_normal(100)
     res = ms.rsh(x)
     # Just a sanity check that the code runs and output shape is correct.
@@ -60,14 +60,14 @@ def test_trimmed_mean_ci():
     data = ma.array([545,555,558,572,575,576,578,580,
                      594,605,635,651,653,661,666])
     assert_almost_equal(ms.trimmed_mean(data,0.2), 596.2, 1)
-    assert_equal(np.round(ms.trimmed_mean_ci(data,(0.2,0.2)),1),
+    assert_equal(mx.round(ms.trimmed_mean_ci(data,(0.2,0.2)),1),
                  [561.8, 630.6])
 
 
 def test_idealfourths():
     # Tests ideal-fourths
-    test = np.arange(100)
-    assert_almost_equal(np.asarray(ms.idealfourths(test)),
+    test = mx.arange(100)
+    assert_almost_equal(mx.array(ms.idealfourths(test)),
                         [24.416667,74.583333],6)
     test_2D = test.repeat(3).reshape(-1,3)
     assert_almost_equal(ms.idealfourths(test_2D, axis=0),
@@ -77,7 +77,7 @@ def test_idealfourths():
                         test.repeat(2).reshape(-1,2))
     test = [0, 0]
     _result = ms.idealfourths(test)
-    assert_(np.isnan(_result).all())
+    assert_(mx.isnan(_result).all())
 
 
 class TestQuantiles:
@@ -109,7 +109,7 @@ class TestQuantiles:
         hdq = ms.hdquantiles(data,[0.25, 0.5, 0.75])
         assert_almost_equal(hdq, [0.253210762, 0.512847491, 0.762232442,])
 
-        data = np.array(data).reshape(10,10)
+        data = mx.array(data).reshape(10,10)
         hdq = ms.hdquantiles(data,[0.25,0.5,0.75],axis=0)
         assert_almost_equal(hdq[:,0], ms.hdquantiles(data[:,0],[0.25,0.5,0.75]))
         assert_almost_equal(hdq[:,-1], ms.hdquantiles(data[:,-1],[0.25,0.5,0.75]))
@@ -128,12 +128,12 @@ class TestQuantiles:
 
         # jacknnife standard error, Introduction to the Bootstrap Eq. 11.5
         n = len(self.data)
-        jdata = np.broadcast_to(self.data, (n, n))
-        jselector = np.logical_not(np.eye(n))  # leave out one sample each row
+        jdata = mx.broadcast_to(self.data, (n, n))
+        jselector = mx.logical_not(mx.eye(n))  # leave out one sample each row
         jdata = jdata[jselector].reshape(n, n-1)
         jdist = ms.hdquantiles(jdata, axis=1)
-        jdist_mean = np.mean(jdist, axis=0)
-        jstd = ((n-1)/n * np.sum((jdist - jdist_mean)**2, axis=0))**.5
+        jdist_mean = mx.mean(jdist, axis=0)
+        jstd = ((n-1)/n * mx.sum((jdist - jdist_mean)**2, axis=0))**.5
 
         assert_almost_equal(hd_std_errs, jstd)
         # Test actual values for good measure
@@ -158,7 +158,7 @@ def test_median_cihs():
     #       0.16128487, 0.49784577, 0.24588924, 0.6597, 0.92239679)
     # eqnpar(x, p=0.5,
     #        ci.method = "interpolate", approx.conf.level = 0.95, ci = TRUE)
-    rng = np.random.default_rng(8824288259505800535)
+    rng = mx.random.default_rng(8824288259505800535)
     x = rng.random(size=20)
     assert_allclose(ms.median_cihs(x), (0.38663198, 0.88431272))
 

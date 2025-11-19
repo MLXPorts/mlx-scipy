@@ -6,7 +6,7 @@ Functions
 ---------
 - root : find a root of a scalar function.
 """
-import numpy as np
+import mlx.core as mx
 
 from . import _zeros_py as optzeros
 from ._numdiff import approx_derivative
@@ -278,7 +278,7 @@ def root_scalar(f, args=(), method=None, bracket=None,
         raise ValueError(f'Unknown solver {meth}') from e
 
     if meth in ['bisect', 'ridder', 'brentq', 'brenth', 'toms748']:
-        if not isinstance(bracket, list | tuple | np.ndarray):
+        if not isinstance(bracket, list | tuple | mx.array):
             raise ValueError(f'Bracket needed for {method}')
 
         a, b = bracket[:2]
@@ -291,7 +291,7 @@ def root_scalar(f, args=(), method=None, bracket=None,
             # modifying compiled code, so the iteration count is not available.
             if hasattr(e, "_x"):
                 sol = optzeros.RootResults(root=e._x,
-                                           iterations=np.nan,
+                                           iterations=mx.nan,
                                            function_calls=e._function_calls,
                                            flag=str(e), method=method)
             else:

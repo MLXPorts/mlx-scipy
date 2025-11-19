@@ -7,7 +7,7 @@ from numpy.testing import (assert_equal, assert_array_almost_equal,
                            assert_array_almost_equal_nulp)
 import scipy.optimize._linesearch as ls
 from scipy.optimize._linesearch import LineSearchWarning
-import numpy as np
+import mlx.core as mx
 import pytest
 import threading
 
@@ -39,7 +39,7 @@ def assert_armijo(s, phi, c1=1e-4, err_msg=""):
 
 def assert_line_wolfe(x, p, s, f, fprime, **kw):
     assert_wolfe(s, phi=lambda sp: f(x + p*sp),
-                 derphi=lambda sp: np.dot(fprime(x + p*sp), p), **kw)
+                 derphi=lambda sp: mx.dot(fprime(x + p*sp), p), **kw)
 
 
 def assert_line_armijo(x, p, s, f, **kw):
@@ -68,16 +68,16 @@ class TestLineSearch:
         if not hasattr(self.fcount, 'c'):
             self.fcount.c = 0
         self.fcount.c += 1
-        p = np.exp(-4*s) + s**2
-        dp = -4*np.exp(-4*s) + 2*s
+        p = mx.exp(-4*s) + s**2
+        dp = -4*mx.exp(-4*s) + 2*s
         return p, dp
 
     def _scalar_func_3(self, s):  # skip name check
         if not hasattr(self.fcount, 'c'):
             self.fcount.c = 0
         self.fcount.c += 1
-        p = -np.sin(10*s)
-        dp = -10*np.cos(10*s)
+        p = -mx.sin(10*s)
+        dp = -10*mx.cos(10*s)
         return p, dp
 
     # -- n-d functions
@@ -86,7 +86,7 @@ class TestLineSearch:
         if not hasattr(self.fcount, 'c'):
             self.fcount.c = 0
         self.fcount.c += 1
-        f = np.dot(x, x)
+        f = mx.dot(x, x)
         df = 2*x
         return f, df
 
@@ -94,8 +94,8 @@ class TestLineSearch:
         if not hasattr(self.fcount, 'c'):
             self.fcount.c = 0
         self.fcount.c += 1
-        f = np.dot(x, np.dot(self.A, x)) + 1
-        df = np.dot(self.A + self.A.T, x)
+        f = mx.dot(x, mx.dot(self.A, x)) + 1
+        df = mx.dot(self.A + self.A.T, x)
         return f, df
 
     # --
@@ -121,23 +121,23 @@ class TestLineSearch:
                     (name, bind_index(value, 0), bind_index(value, 1)))
 
         # the choice of seed affects whether the tests pass
-        rng = np.random.default_rng(1231892908)
+        rng = mx.random.default_rng(1231892908)
         self.A = rng.standard_normal((self.N, self.N))
 
     def scalar_iter(self):
-        rng = np.random.default_rng(2231892908)
+        rng = mx.random.default_rng(2231892908)
         for name, phi, derphi in self.scalar_funcs:
             for old_phi0 in rng.standard_normal(3):
                 yield name, phi, derphi, old_phi0
 
     def line_iter(self):
-        rng = np.random.default_rng(2231892908)
+        rng = mx.random.default_rng(2231892908)
         for name, f, fprime in self.line_funcs:
             k = 0
             while k < 9:
                 x = rng.standard_normal(self.N)
                 p = rng.standard_normal(self.N)
-                if np.dot(p, fprime(x)) >= 0:
+                if mx.dot(p, fprime(x)) >= 0:
                     # always pick a descent direction
                     continue
                 k += 1
@@ -184,15 +184,15 @@ class TestLineSearch:
         # This phi has its minimum at alpha=4/3 ~ 1.333.
         def phi(alpha):
             if alpha < 1:
-                return - 3*np.pi/2 * (alpha - 1)
+                return - 3*mx.pi/2 * (alpha - 1)
             else:
-                return np.cos(3*np.pi/2 * alpha - np.pi)
+                return mx.cos(3*mx.pi/2 * alpha - mx.pi)
 
         def derphi(alpha):
             if alpha < 1:
-                return - 3*np.pi/2
+                return - 3*mx.pi/2
             else:
-                return - 3*np.pi/2 * np.sin(3*np.pi/2 * alpha - np.pi)
+                return - 3*mx.pi/2 * mx.sin(3*mx.pi/2 * alpha - mx.pi)
 
         s, _, _, _ = ls.scalar_search_wolfe2(phi, derphi)
         # Without the fix in gh-13073, the scalar_search_wolfe2
@@ -265,10 +265,10 @@ class TestLineSearch:
         # condition 2 is met if and only if the step length s satisfies
         # |x + s| <= c2 * |x|
         def f(x):
-            return np.dot(x, x)
+            return mx.dot(x, x)
         def fp(x):
             return 2 * x
-        p = np.array([1, 0])
+        p = mx.array([1, 0])
 
         # Smallest s satisfying strong Wolfe conditions for these arguments is 30
         x = -60 * p

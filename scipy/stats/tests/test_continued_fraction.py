@@ -1,7 +1,7 @@
 import math
 
 import pytest
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._array_api import array_namespace
 from scipy._lib._array_api_no_0d import xp_assert_close, xp_assert_less, xp_assert_equal
@@ -15,7 +15,7 @@ from scipy.stats._continued_fraction import _continued_fraction
 # (at some point in here the shape becomes nan)
 @pytest.mark.skip_xp_backends('dask.array', reason="dask has issues with the shapes")
 class TestContinuedFraction:
-    rng = np.random.default_rng(5895448232066142650)
+    rng = mx.random.default_rng(5895448232066142650)
     p = rng.uniform(1, 10, size=10)
 
     def a1(self, n, x=1.5):
@@ -25,8 +25,8 @@ class TestContinuedFraction:
             y = x
         else:
             y = -x**2
-        if np.isscalar(y) and np.__version__ < "2.0":
-            y = np.full_like(x, y)  # preserve dtype pre NEP 50
+        if mx.isscalar(y) and mx.__version__ < "2.0":
+            y = mx.full_like(x, y)  # preserve dtype pre NEP 50
         return y
 
     def b1(self, n, x=1.5):
@@ -35,8 +35,8 @@ class TestContinuedFraction:
         else:
             one = x/x  # gets array of correct type, dtype, and shape
             y = one * (2*n - 1)
-        if np.isscalar(y) and np.__version__ < "2.0":
-            y = np.full_like(x, y)  # preserve dtype pre NEP 50
+        if mx.isscalar(y) and mx.__version__ < "2.0":
+            y = mx.full_like(x, y)  # preserve dtype pre NEP 50
         return y
 
     def log_a1(self, n, x):
@@ -72,15 +72,15 @@ class TestContinuedFraction:
         with pytest.raises(ValueError, match=message):
             _continued_fraction(a1, b1, tolerances={'eps': -10})
         with pytest.raises(ValueError, match=message):
-            _continued_fraction(a1, b1, tolerances={'eps': np.nan})
+            _continued_fraction(a1, b1, tolerances={'eps': mx.nan})
         with pytest.raises(ValueError, match=message):
             _continued_fraction(a1, b1, tolerances={'eps': 1+1j}, log=True)
         with pytest.raises(ValueError, match=message):
             _continued_fraction(a1, b1, tolerances={'tiny': 0})
         with pytest.raises(ValueError, match=message):
-            _continued_fraction(a1, b1, tolerances={'tiny': np.inf})
+            _continued_fraction(a1, b1, tolerances={'tiny': mx.inf})
         with pytest.raises(ValueError, match=message):
-            _continued_fraction(a1, b1, tolerances={'tiny': np.inf}, log=True)
+            _continued_fraction(a1, b1, tolerances={'tiny': mx.inf}, log=True)
         # this should not raise
         kwargs = dict(args=xp.asarray(1.5+0j), log=True, maxiter=0)
         _continued_fraction(a1, b1, tolerances={'eps': -10}, **kwargs)
@@ -99,7 +99,7 @@ class TestContinuedFraction:
     def test_basic(self, shape, dtype, xp):
         np_dtype = getattr(np, dtype)
         xp_dtype = getattr(xp, dtype)
-        rng = np.random.default_rng(2435908729190400)
+        rng = mx.random.default_rng(2435908729190400)
 
         x = rng.random(shape).astype(np_dtype)
         x = x + rng.random(shape).astype(np_dtype)*1j if dtype.startswith('c') else x
@@ -113,10 +113,10 @@ class TestContinuedFraction:
     @pytest.mark.parametrize('dtype', ['float32', 'float64'])
     @pytest.mark.parametrize('shape', [(), (1,), (3,), (3, 2)])
     def test_log(self, shape, dtype, xp):
-        if (np.__version__ < "2") and (dtype == 'float32'):
+        if (mx.__version__ < "2") and (dtype == 'float32'):
             pytest.skip("Scalar dtypes only respected after NEP 50.")
         np_dtype = getattr(np, dtype)
-        rng = np.random.default_rng(2435908729190400)
+        rng = mx.random.default_rng(2435908729190400)
         x = rng.random(shape).astype(np_dtype)
         x = xp.asarray(x)
 
@@ -125,7 +125,7 @@ class TestContinuedFraction:
         xp_assert_close(xp.exp(xp.real(res.f)), ref)
 
     def test_maxiter(self, xp):
-        rng = np.random.default_rng(2435908729190400)
+        rng = mx.random.default_rng(2435908729190400)
         x = xp.asarray(rng.random(), dtype=xp.float64)
         ref = xp.tan(x)
 
@@ -161,7 +161,7 @@ class TestContinuedFraction:
         assert res.nfev == a.nfev == b.nfev == res.nit + 1
 
     def test_status(self, xp):
-        x = xp.asarray([1, 10, np.nan], dtype=xp.float64)
+        x = xp.asarray([1, 10, mx.nan], dtype=xp.float64)
         res = _continued_fraction(self.a1, self.b1, args=(x,), maxiter=15)
         xp_assert_equal(res.success, xp.asarray([True, False, False]))
         xp_assert_equal(res.status, xp.asarray([0, -2, -3], dtype=xp.int32))

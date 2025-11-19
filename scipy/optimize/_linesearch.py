@@ -14,7 +14,7 @@ Functions
 from warnings import warn
 
 from ._dcsrch import DCSRCH
-import numpy as np
+import mlx.core as mx
 
 __all__ = ['LineSearchWarning', 'line_search_wolfe1', 'line_search_wolfe2',
            'scalar_search_wolfe1', 'scalar_search_wolfe2',
@@ -86,9 +86,9 @@ def line_search_wolfe1(f, fprime, xk, pk, gfk=None,
     def derphi(s):
         gval[0] = fprime(xk + s*pk, *args)
         gc[0] += 1
-        return np.dot(gval[0], pk)
+        return mx.dot(gval[0], pk)
 
-    derphi0 = np.dot(gfk, pk)
+    derphi0 = mx.dot(gfk, pk)
 
     stp, fval, old_fval = scalar_search_wolfe1(
             phi, derphi, old_fval, old_old_fval, derphi0,
@@ -194,12 +194,12 @@ def line_search_wolfe2(f, myfprime, xk, pk, gfk=None, old_fval=None,
         Objective function.
     myfprime : callable f'(x,*args)
         Objective function gradient.
-    xk : ndarray
+    xk : array
         Starting point.
-    pk : ndarray
+    pk : array
         Search direction. The search direction must be a descent direction
         for the algorithm to converge.
-    gfk : ndarray, optional
+    gfk : array, optional
         Gradient value for x=xk (xk being the current parameter
         estimate). Will be recomputed if omitted.
     old_fval : float, optional
@@ -259,7 +259,7 @@ def line_search_wolfe2(f, myfprime, xk, pk, gfk=None, old_fval=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import line_search
 
     A objective function and its gradient are defined.
@@ -271,8 +271,8 @@ def line_search_wolfe2(f, myfprime, xk, pk, gfk=None, old_fval=None,
 
     We can find alpha that satisfies strong Wolfe conditions.
 
-    >>> start_point = np.array([1.8, 1.7])
-    >>> search_gradient = np.array([-1.0, -1.0])
+    >>> start_point = mx.array([1.8, 1.7])
+    >>> search_gradient = mx.array([-1.0, -1.0])
     >>> line_search(obj_func, obj_grad, start_point, search_gradient)
     (1.0, 2, 1, 1.1300000000000001, 6.13, [1.6, 1.4])
 
@@ -292,11 +292,11 @@ def line_search_wolfe2(f, myfprime, xk, pk, gfk=None, old_fval=None,
         gc[0] += 1
         gval[0] = fprime(xk + alpha * pk, *args)  # store for later use
         gval_alpha[0] = alpha
-        return np.dot(gval[0], pk)
+        return mx.dot(gval[0], pk)
 
     if gfk is None:
         gfk = fprime(xk, *args)
-    derphi0 = np.dot(gfk, pk)
+    derphi0 = mx.dot(gfk, pk)
 
     if extra_condition is not None:
         # Add the current gradient as argument, to avoid needless
@@ -484,26 +484,26 @@ def _cubicmin(a, fa, fpa, b, fb, c, fc):
     """
     # f(x) = A *(x-a)^3 + B*(x-a)^2 + C*(x-a) + D
 
-    with np.errstate(divide='raise', over='raise', invalid='raise'):
+    with mx.errstate(divide='raise', over='raise', invalid='raise'):
         try:
             C = fpa
             db = b - a
             dc = c - a
             denom = (db * dc) ** 2 * (db - dc)
-            d1 = np.empty((2, 2))
+            d1 = mx.empty((2, 2))
             d1[0, 0] = dc ** 2
             d1[0, 1] = -db ** 2
             d1[1, 0] = -dc ** 3
             d1[1, 1] = db ** 3
-            [A, B] = np.dot(d1, np.asarray([fb - fa - C * db,
+            [A, B] = mx.dot(d1, mx.array([fb - fa - C * db,
                                             fc - fa - C * dc]).flatten())
             A /= denom
             B /= denom
             radical = B * B - 3 * A * C
-            xmin = a + (-B + np.sqrt(radical)) / (3 * A)
+            xmin = a + (-B + mx.sqrt(radical)) / (3 * A)
         except ArithmeticError:
             return None
-    if not np.isfinite(xmin):
+    if not mx.isfinite(xmin):
         return None
     return xmin
 
@@ -515,7 +515,7 @@ def _quadmin(a, fa, fpa, b, fb):
 
     """
     # f(x) = B*(x-a)^2 + C*(x-a) + D
-    with np.errstate(divide='raise', over='raise', invalid='raise'):
+    with mx.errstate(divide='raise', over='raise', invalid='raise'):
         try:
             D = fa
             C = fpa
@@ -524,7 +524,7 @@ def _quadmin(a, fa, fpa, b, fb):
             xmin = a - C / (2.0 * B)
         except ArithmeticError:
             return None
-    if not np.isfinite(xmin):
+    if not mx.isfinite(xmin):
         return None
     return xmin
 
@@ -654,7 +654,7 @@ def line_search_armijo(f, xk, pk, gfk, old_fval, args=(), c1=1e-4, alpha0=1):
     Wright and Nocedal in 'Numerical Optimization', 1999, pp. 56-57
 
     """
-    xk = np.atleast_1d(xk)
+    xk = mx.atleast_1d(xk)
     fc = [0]
 
     def phi(alpha1):
@@ -666,7 +666,7 @@ def line_search_armijo(f, xk, pk, gfk, old_fval, args=(), c1=1e-4, alpha0=1):
     else:
         phi0 = old_fval  # compute f(xk) -- done in past loop
 
-    derphi0 = np.dot(gfk, pk)
+    derphi0 = mx.dot(gfk, pk)
     alpha, phi1 = scalar_search_armijo(phi, phi0, derphi0, c1=c1,
                                        alpha0=alpha0)
     return alpha, fc[0], phi1
@@ -721,7 +721,7 @@ def scalar_search_armijo(phi, phi0, derphi0, c1=1e-4, alpha0=1, amin=0):
             alpha1**3 * (phi_a0 - phi0 - derphi0*alpha0)
         b = b / factor
 
-        alpha2 = (-b + np.sqrt(abs(b**2 - 3 * a * derphi0))) / (3.0*a)
+        alpha2 = (-b + mx.sqrt(abs(b**2 - 3 * a * derphi0))) / (3.0*a)
         phi_a2 = phi(alpha2)
 
         if (phi_a2 <= phi0 + c1*alpha2*derphi0):
@@ -753,9 +753,9 @@ def _nonmonotone_line_search_cruz(f, x_k, d, prev_fs, eta,
     f : callable
         Function returning a tuple ``(f, F)`` where ``f`` is the value
         of a merit function and ``F`` the residual.
-    x_k : ndarray
+    x_k : array
         Initial position.
-    d : ndarray
+    d : array
         Search direction.
     prev_fs : float
         List of previous merit function values. Should have ``len(prev_fs) <= M``
@@ -769,11 +769,11 @@ def _nonmonotone_line_search_cruz(f, x_k, d, prev_fs, eta,
     -------
     alpha : float
         Step length
-    xp : ndarray
+    xp : array
         Next position
     fp : float
         Merit function value at next position
-    Fp : ndarray
+    Fp : array
         Residual at next position
 
     References
@@ -809,8 +809,8 @@ def _nonmonotone_line_search_cruz(f, x_k, d, prev_fs, eta,
 
         alpha_tm = alpha_m**2 * f_k / (fp + (2*alpha_m - 1)*f_k)
 
-        alpha_p = np.clip(alpha_tp, tau_min * alpha_p, tau_max * alpha_p)
-        alpha_m = np.clip(alpha_tm, tau_min * alpha_m, tau_max * alpha_m)
+        alpha_p = mx.clip(alpha_tp, tau_min * alpha_p, tau_max * alpha_p)
+        alpha_m = mx.clip(alpha_tm, tau_min * alpha_m, tau_max * alpha_m)
 
     return alpha, xp, fp, Fp
 
@@ -826,9 +826,9 @@ def _nonmonotone_line_search_cheng(f, x_k, d, f_k, C, Q, eta,
     f : callable
         Function returning a tuple ``(f, F)`` where ``f`` is the value
         of a merit function and ``F`` the residual.
-    x_k : ndarray
+    x_k : array
         Initial position.
-    d : ndarray
+    d : array
         Search direction.
     f_k : float
         Initial merit function value.
@@ -844,11 +844,11 @@ def _nonmonotone_line_search_cheng(f, x_k, d, f_k, C, Q, eta,
     -------
     alpha : float
         Step length
-    xp : ndarray
+    xp : array
         Next position
     fp : float
         Merit function value at next position
-    Fp : ndarray
+    Fp : array
         Residual at next position
     C : float
         New value for the control parameter C
@@ -885,8 +885,8 @@ def _nonmonotone_line_search_cheng(f, x_k, d, f_k, C, Q, eta,
 
         alpha_tm = alpha_m**2 * f_k / (fp + (2*alpha_m - 1)*f_k)
 
-        alpha_p = np.clip(alpha_tp, tau_min * alpha_p, tau_max * alpha_p)
-        alpha_m = np.clip(alpha_tm, tau_min * alpha_m, tau_max * alpha_m)
+        alpha_p = mx.clip(alpha_tp, tau_min * alpha_p, tau_max * alpha_p)
+        alpha_m = mx.clip(alpha_tm, tau_min * alpha_m, tau_max * alpha_m)
 
     # Update C and Q
     Q_next = nu * Q + 1

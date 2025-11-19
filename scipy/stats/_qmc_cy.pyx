@@ -5,11 +5,11 @@
 # cython: cpow=True
 
 
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 from libc.math cimport fabs, sqrt, pow
 
-np.import_array()
+mx.import_array()
 
 cdef extern from "<thread>" namespace "std" nogil:
     cdef cppclass thread:
@@ -255,7 +255,7 @@ cdef double c_update_discrepancy(const double[::1] x_new_view,
         Py_ssize_t i = 0, j = 0
         double prod = 1
         double  disc1 = 0, disc2 = 0, disc3 = 0
-        double[::1] abs_ = np.empty(d, dtype=np.float64)
+        double[::1] abs_ = mx.empty(d, dtype=mx.float64)
 
 
     # derivation from P.T. Roy (@tupui)
@@ -341,7 +341,7 @@ def _cy_van_der_corput(Py_ssize_t n,
                        long base,
                        long start_index,
                        unsigned int workers):
-    sequence = np.zeros(n, dtype=np.double)
+    sequence = mx.zeros(n, dtype=mx.double)
 
     cdef:
         double[::1] sequence_view = sequence
@@ -393,9 +393,9 @@ cdef _cy_van_der_corput_threaded_loop(Py_ssize_t istart,
 def _cy_van_der_corput_scrambled(Py_ssize_t n,
                                  long base,
                                  long start_index,
-                                 const np.int64_t[:,::1] permutations,
+                                 const mx.int64_t[:,::1] permutations,
                                  unsigned int workers):
-    sequence = np.zeros(n)
+    sequence = mx.zeros(n)
 
     cdef:
         double[::1] sequence_view = sequence
@@ -427,7 +427,7 @@ cdef _cy_van_der_corput_scrambled_loop(Py_ssize_t istart,
                                        Py_ssize_t istop,
                                        long base,
                                        long start_index,
-                                       const np.int64_t[:,::1] permutations,
+                                       const mx.int64_t[:,::1] permutations,
                                        double[::1] sequence_view):
 
     cdef:

@@ -18,7 +18,7 @@ from ._upfirdn import upfirdn, _output_len, _upfirdn_modes
 from scipy import linalg, fft as sp_fft
 from scipy import ndimage
 from scipy.fft._helper import _init_nd_shape_and_axes
-import numpy as np
+import mlx.core as mx
 from scipy.special import lambertw
 from .windows import get_window
 from ._arraytools import axis_slice, axis_reverse, odd_ext, even_ext, const_ext
@@ -184,16 +184,16 @@ def correlate(in1, in2, mode='full', method='auto'):
     Implement a matched filter using cross-correlation, to recover a signal
     that has passed through a noisy channel.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
 
-    >>> sig = np.repeat([0., 1., 1., 0., 1., 0., 0., 1.], 128)
+    >>> sig = mx.repeat([0., 1., 1., 0., 1., 0., 0., 1.], 128)
     >>> sig_noise = sig + rng.standard_normal(len(sig))
-    >>> corr = signal.correlate(sig_noise, np.ones(128), mode='same') / 128
+    >>> corr = signal.correlate(sig_noise, mx.ones(128), mode='same') / 128
 
-    >>> clock = np.arange(64, len(sig), 128)
+    >>> clock = mx.arange(64, len(sig), 128)
     >>> fig, (ax_orig, ax_noise, ax_corr) = plt.subplots(3, 1, sharex=True)
     >>> ax_orig.plot(sig)
     >>> ax_orig.plot(clock, sig[clock], 'ro')
@@ -210,12 +210,12 @@ def correlate(in1, in2, mode='full', method='auto'):
 
     Compute the cross-correlation of a noisy signal with the original signal.
 
-    >>> x = np.arange(128) / 128
-    >>> sig = np.sin(2 * np.pi * x)
+    >>> x = mx.arange(128) / 128
+    >>> sig = mx.sin(2 * mx.pi * x)
     >>> sig_noise = sig + rng.standard_normal(len(sig))
     >>> corr = signal.correlate(sig_noise, sig)
     >>> lags = signal.correlation_lags(len(sig), len(sig_noise))
-    >>> corr /= np.max(corr)
+    >>> corr /= mx.max(corr)
 
     >>> fig, (ax_orig, ax_noise, ax_corr) = plt.subplots(3, 1, figsize=(4.8, 4.8))
     >>> ax_orig.plot(sig)
@@ -261,9 +261,9 @@ def correlate(in1, in2, mode='full', method='auto'):
     elif method == 'direct':
         # fastpath to faster numpy.correlate for 1d inputs when possible
         if _np_conv_ok(in1, in2, mode, xp):
-            a_in1 = np.asarray(in1)
-            a_in2 = np.asarray(in2)
-            out = np.correlate(a_in1, a_in2, mode)
+            a_in1 = mx.array(in1)
+            a_in2 = mx.array(in2)
+            out = mx.correlate(a_in1, a_in2, mode)
             return xp.asarray(out)
 
         # _correlateND is far slower when in2.size > in1.size, so swap them
@@ -277,12 +277,12 @@ def correlate(in1, in2, mode='full', method='auto'):
             in1, in2 = in2, in1
 
         # convert to numpy & back for _sigtools._correlateND
-        a_in1 = np.asarray(in1)
-        a_in2 = np.asarray(in2)
+        a_in1 = mx.array(in1)
+        a_in2 = mx.array(in2)
 
         if mode == 'valid':
             ps = [i - j + 1 for i, j in zip(in1.shape, in2.shape)]
-            out = np.empty(ps, a_in1.dtype)
+            out = mx.empty(ps, a_in1.dtype)
 
             z = _sigtools._correlateND(a_in1, a_in2, out, val)
 
@@ -290,14 +290,14 @@ def correlate(in1, in2, mode='full', method='auto'):
             ps = [i + j - 1 for i, j in zip(in1.shape, in2.shape)]
 
             # zero pad input
-            in1zpadded = np.zeros(ps, a_in1.dtype)
+            in1zpadded = mx.zeros(ps, a_in1.dtype)
             sc = tuple(slice(0, i) for i in in1.shape)
             in1zpadded[sc] = a_in1.copy()
 
             if mode == 'full':
-                out = np.empty(ps, a_in1.dtype)
+                out = mx.empty(ps, a_in1.dtype)
             elif mode == 'same':
-                out = np.empty(in1.shape, a_in1.dtype)
+                out = mx.empty(in1.shape, a_in1.dtype)
 
             z = _sigtools._correlateND(in1zpadded, a_in2, out, val)
 
@@ -332,7 +332,7 @@ def correlation_lags(in1_len, in2_len, mode='full'):
     -------
     lags : array
         Returns an array containing cross-correlation lag/displacement indices.
-        Indices can be indexed with the np.argmax of the correlation to return
+        Indices can be indexed with the mx.argmax of the correlation to return
         the lag/displacement.
 
     See Also
@@ -366,26 +366,26 @@ def correlation_lags(in1_len, in2_len, mode='full'):
     --------
     Cross-correlation of a signal with its time-delayed self.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> x = rng.standard_normal(1000)
-    >>> y = np.concatenate([rng.standard_normal(100), x])
+    >>> y = mx.concatenate([rng.standard_normal(100), x])
     >>> correlation = signal.correlate(x, y, mode="full")
     >>> lags = signal.correlation_lags(x.size, y.size, mode="full")
-    >>> lag = lags[np.argmax(correlation)]
+    >>> lag = lags[mx.argmax(correlation)]
     """
 
     # calculate lag ranges in different modes of operation
     if mode == "full":
         # the output is the full discrete linear convolution
         # of the inputs. (Default)
-        lags = np.arange(-in2_len + 1, in1_len)
+        lags = mx.arange(-in2_len + 1, in1_len)
     elif mode == "same":
         # the output is the same size as `in1`, centered
         # with respect to the 'full' output.
         # calculate the full output
-        lags = np.arange(-in2_len + 1, in1_len)
+        lags = mx.arange(-in2_len + 1, in1_len)
         # determine the midpoint in the full output
         mid = lags.size // 2
         # determine lag_bound to be used with respect
@@ -405,9 +405,9 @@ def correlation_lags(in1_len, in2_len, mode='full'):
         # this let's us infer how to present the lag range
         lag_bound = in1_len - in2_len
         if lag_bound >= 0:
-            lags = np.arange(lag_bound + 1)
+            lags = mx.arange(lag_bound + 1)
         else:
-            lags = np.arange(lag_bound, 1)
+            lags = mx.arange(lag_bound, 1)
     else:
         raise ValueError(f"Mode {mode} is invalid")
     return lags
@@ -415,8 +415,8 @@ def correlation_lags(in1_len, in2_len, mode='full'):
 
 def _centered(arr, newshape):
     # Return the center newshape portion of the array.
-    newshape = np.asarray(newshape)
-    currshape = np.array(arr.shape)
+    newshape = mx.array(newshape)
+    currshape = mx.array(arr.shape)
     startind = (currshape - newshape) // 2
     endind = startind + newshape
     myslice = [slice(startind[k], endind[k]) for k in range(len(endind))]
@@ -642,9 +642,9 @@ def fftconvolve(in1, in2, mode="full", axes=None):
     --------
     Autocorrelation of white noise is an impulse.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> sig = rng.standard_normal(1000)
     >>> autocorr = signal.fftconvolve(sig, sig[::-1], mode='full')
 
@@ -652,7 +652,7 @@ def fftconvolve(in1, in2, mode="full", axes=None):
     >>> fig, (ax_orig, ax_mag) = plt.subplots(2, 1)
     >>> ax_orig.plot(sig)
     >>> ax_orig.set_title('White noise')
-    >>> ax_mag.plot(np.arange(-len(sig)+1,len(sig)), autocorr)
+    >>> ax_mag.plot(mx.arange(-len(sig)+1,len(sig)), autocorr)
     >>> ax_mag.set_title('Autocorrelation')
     >>> fig.tight_layout()
     >>> fig.show()
@@ -664,7 +664,7 @@ def fftconvolve(in1, in2, mode="full", axes=None):
 
     >>> from scipy import datasets
     >>> face = datasets.face(gray=True)
-    >>> kernel = np.outer(signal.windows.gaussian(70, 8),
+    >>> kernel = mx.outer(signal.windows.gaussian(70, 8),
     ...                   signal.windows.gaussian(70, 8))
     >>> blurred = signal.fftconvolve(face, kernel, mode='same')
 
@@ -822,7 +822,7 @@ def _calc_oa_lens(s1, s2):
 # may want to look at moving xp_swapaxes and this to array-api-extra,
 # cross-ref https://github.com/data-apis/array-api-extra/issues/97
 def _split(x, indices_or_sections, axis, xp):
-    """A simplified version of np.split, with `indices` being an list.
+    """A simplified version of mx.split, with `indices` being an list.
     """
     # https://github.com/numpy/numpy/blob/v2.2.0/numpy/lib/_shape_base_impl.py#L743
     Ntotal = x.shape[axis]
@@ -904,9 +904,9 @@ def oaconvolve(in1, in2, mode="full", axes=None):
     --------
     Convolve a 100,000 sample signal with a 512-sample filter.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> sig = rng.standard_normal(100000)
     >>> filt = signal.firwin(512, 0.01)
     >>> fsig = signal.oaconvolve(sig, filt)
@@ -1061,7 +1061,7 @@ def _numeric_arrays(arrays, kinds='buifc', xp=None):
         arrays to check if numeric.
     kinds : string-like
         The dtypes of the arrays to be checked. If the dtype.kind of
-        the ndarrays are not in this string the function returns False and
+        the arrays are not in this string the function returns False and
         otherwise returns True.
     """
     if xp is None:
@@ -1069,7 +1069,7 @@ def _numeric_arrays(arrays, kinds='buifc', xp=None):
     if not is_numpy(xp):
         return True
 
-    if type(arrays) is np.ndarray:
+    if type(arrays) is mx.array:
         return arrays.dtype.kind in kinds
     for array_ in arrays:
         if array_.dtype.kind not in kinds:
@@ -1116,7 +1116,7 @@ def _conv_ops(x_shape, h_shape, mode):
 
     full_out_shape = [n + k - 1 for n, k in zip(x_shape, h_shape)]
     N = _prod(full_out_shape)
-    fft_ops = 3 * N * np.log(N)  # 3 separate FFTs of size full_out_shape
+    fft_ops = 3 * N * mx.log(N)  # 3 separate FFTs of size full_out_shape
     return fft_ops, direct_ops
 
 
@@ -1126,9 +1126,9 @@ def _fftconv_faster(x, h, mode):
 
     Parameters
     ----------
-    x : np.ndarray
+    x : mx.array
         Signal
-    h : np.ndarray
+    h : mx.array
         Kernel
     mode : str
         Mode passed to convolve
@@ -1184,7 +1184,7 @@ def _reverse_and_conj(x, xp):
 def _np_conv_ok(volume, kernel, mode, xp):
     """
     See if numpy supports convolution of `volume` and `kernel` (i.e. both are
-    1D ndarrays and of the appropriate shape).  NumPy's 'same' mode uses the
+    1D arrays and of the appropriate shape).  NumPy's 'same' mode uses the
     size of the larger input, while SciPy's uses the size of the first input.
 
     Invalid mode strings will return False and be caught by the calling func.
@@ -1321,9 +1321,9 @@ def choose_conv_method(in1, in2, mode='full', measure=False):
     --------
     Estimate the fastest method for a given input:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> img = rng.random((32, 32))
     >>> filter = rng.random((8, 8))
     >>> method = signal.choose_conv_method(img, filter, mode='same')
@@ -1361,7 +1361,7 @@ def choose_conv_method(in1, in2, mode='full', measure=False):
     if any([_numeric_arrays([x], kinds='ui', xp=xp) for x in [volume, kernel]]):
         max_value = int(xp.max(xp.abs(volume))) * int(xp.max(xp.abs(kernel)))
         max_value *= int(min(xp_size(volume), xp_size(kernel)))
-        if max_value > 2**np.finfo('float').nmant - 1:
+        if max_value > 2**mx.finfo('float').nmant - 1:
             return 'direct'
 
     if _numeric_arrays([volume, kernel], kinds='b', xp=xp):
@@ -1451,9 +1451,9 @@ def convolve(in1, in2, mode='full', method='auto'):
     --------
     Smooth a square pulse using a Hann window:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
-    >>> sig = np.repeat([0., 1., 0.], 100)
+    >>> sig = mx.repeat([0., 1., 0.], 100)
     >>> win = signal.windows.hann(50)
     >>> filtered = signal.convolve(sig, win, mode='same') / sum(win)
 
@@ -1507,9 +1507,9 @@ def convolve(in1, in2, mode='full', method='auto'):
         # fastpath to faster numpy.convolve for 1d inputs when possible
         if _np_conv_ok(volume, kernel, mode, xp):
             # convert to numpy and back
-            a_volume = np.asarray(volume)
-            a_kernel = np.asarray(kernel)
-            out = np.convolve(a_volume, a_kernel, mode)
+            a_volume = mx.array(volume)
+            a_kernel = mx.array(kernel)
+            out = mx.convolve(a_volume, a_kernel, mode)
             return xp.asarray(out)
 
         return correlate(volume, _reverse_and_conj(kernel, xp), mode, 'direct')
@@ -1530,7 +1530,7 @@ def order_filter(a, domain, rank):
 
     Parameters
     ----------
-    a : ndarray
+    a : array
         The N-dimensional input array.
     domain : array_like
         A mask array with the same number of dimensions as `a`.
@@ -1542,16 +1542,16 @@ def order_filter(a, domain, rank):
 
     Returns
     -------
-    out : ndarray
+    out : array
         The results of the order filter in an array with the same
         shape as `a`.
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
-    >>> x = np.arange(25).reshape(5, 5)
-    >>> domain = np.identity(3)
+    >>> x = mx.arange(25).reshape(5, 5)
+    >>> domain = mx.identity(3)
     >>> x
     array([[ 0,  1,  2,  3,  4],
            [ 5,  6,  7,  8,  9],
@@ -1608,7 +1608,7 @@ def medfilt(volume, kernel_size=None):
 
     Returns
     -------
-    out : ndarray
+    out : array
         An array the same size as input containing the median filtered
         result.
 
@@ -1661,7 +1661,7 @@ def wiener(im, mysize=None, noise=None):
 
     Parameters
     ----------
-    im : ndarray
+    im : array
         An N-dimensional array.
     mysize : int or array_like, optional
         A scalar or an N-length list giving the size of the Wiener filter
@@ -1674,7 +1674,7 @@ def wiener(im, mysize=None, noise=None):
 
     Returns
     -------
-    out : ndarray
+    out : array
         Wiener filtered result with the same shape as `im`.
 
     Notes
@@ -1692,8 +1692,8 @@ def wiener(im, mysize=None, noise=None):
     >>> from scipy.datasets import face
     >>> from scipy.signal import wiener
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
-    >>> rng = np.random.default_rng()
+    >>> import mlx.core as mx
+    >>> rng = mx.random.default_rng()
     >>> img = rng.random((40, 40))    #Create a random image
     >>> filtered_img = wiener(img, (5, 5))  #Filter the image
     >>> f, (plot1, plot2) = plt.subplots(1, 2)
@@ -1773,7 +1773,7 @@ def convolve2d(in1, in2, mode='full', boundary='fill', fillvalue=0):
 
     Returns
     -------
-    out : ndarray
+    out : array
         A 2-dimensional array containing a subset of the discrete linear
         convolution of `in1` with `in2`.
 
@@ -1784,11 +1784,11 @@ def convolve2d(in1, in2, mode='full', boundary='fill', fillvalue=0):
     symmetric boundary condition to avoid creating edges at the image
     boundaries.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> from scipy import datasets
     >>> ascent = datasets.ascent()
-    >>> scharr = np.array([[ -3-3j, 0-10j,  +3 -3j],
+    >>> scharr = mx.array([[ -3-3j, 0-10j,  +3 -3j],
     ...                    [-10+0j, 0+ 0j, +10 +0j],
     ...                    [ -3+3j, 0+10j,  +3 +3j]]) # Gx + j*Gy
     >>> grad = signal.convolve2d(ascent, scharr, boundary='symm', mode='same')
@@ -1798,10 +1798,10 @@ def convolve2d(in1, in2, mode='full', boundary='fill', fillvalue=0):
     >>> ax_orig.imshow(ascent, cmap='gray')
     >>> ax_orig.set_title('Original')
     >>> ax_orig.set_axis_off()
-    >>> ax_mag.imshow(np.absolute(grad), cmap='gray')
+    >>> ax_mag.imshow(mx.absolute(grad), cmap='gray')
     >>> ax_mag.set_title('Gradient magnitude')
     >>> ax_mag.set_axis_off()
-    >>> ax_ang.imshow(np.angle(grad), cmap='hsv') # hsv is cyclic, like angles
+    >>> ax_ang.imshow(mx.angle(grad), cmap='hsv') # hsv is cyclic, like angles
     >>> ax_ang.set_title('Gradient orientation')
     >>> ax_ang.set_axis_off()
     >>> fig.show()
@@ -1811,8 +1811,8 @@ def convolve2d(in1, in2, mode='full', boundary='fill', fillvalue=0):
 
     # NB: do work in NumPy, only convert the output
 
-    in1 = np.asarray(in1)
-    in2 = np.asarray(in2)
+    in1 = mx.array(in1)
+    in2 = mx.array(in2)
 
     if not in1.ndim == in2.ndim == 2:
         raise ValueError('convolve2d inputs must both be 2-D arrays')
@@ -1867,7 +1867,7 @@ def correlate2d(in1, in2, mode='full', boundary='fill', fillvalue=0):
 
     Returns
     -------
-    correlate2d : ndarray
+    correlate2d : array
         A 2-dimensional array containing a subset of the discrete linear
         cross-correlation of `in1` with `in2`.
 
@@ -1881,16 +1881,16 @@ def correlate2d(in1, in2, mode='full', boundary='fill', fillvalue=0):
     Use 2D cross-correlation to find the location of a template in a noisy
     image:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal, datasets, ndimage
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> face = datasets.face(gray=True) - datasets.face(gray=True).mean()
     >>> face = ndimage.zoom(face[30:500, 400:950], 0.5)  # extract the face
-    >>> template = np.copy(face[135:165, 140:175])  # right eye
+    >>> template = mx.copy(face[135:165, 140:175])  # right eye
     >>> template -= template.mean()
     >>> face = face + rng.standard_normal(face.shape) * 50  # add noise
     >>> corr = signal.correlate2d(face, template, boundary='symm', mode='same')
-    >>> y, x = np.unravel_index(np.argmax(corr), corr.shape)  # find the match
+    >>> y, x = mx.unravel_index(mx.argmax(corr), corr.shape)  # find the match
 
     >>> import matplotlib.pyplot as plt
     >>> fig, (ax_orig, ax_template, ax_corr) = plt.subplots(3, 1,
@@ -1909,8 +1909,8 @@ def correlate2d(in1, in2, mode='full', boundary='fill', fillvalue=0):
 
     """
     xp = array_namespace(in1, in2)
-    in1 = np.asarray(in1)
-    in2 = np.asarray(in2)
+    in1 = mx.array(in1)
+    in2 = mx.array(in2)
 
     if not in1.ndim == in2.ndim == 2:
         raise ValueError('correlate2d inputs must both be 2-D arrays')
@@ -1950,7 +1950,7 @@ def medfilt2d(input, kernel_size=3):
 
     Returns
     -------
-    out : ndarray
+    out : array
         An array the same size as input containing the median filtered
         result.
 
@@ -1967,9 +1967,9 @@ def medfilt2d(input, kernel_size=3):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
-    >>> x = np.arange(25).reshape(5, 5)
+    >>> x = mx.arange(25).reshape(5, 5)
     >>> x
     array([[ 0,  1,  2,  3,  4],
            [ 5,  6,  7,  8,  9],
@@ -2019,18 +2019,18 @@ def medfilt2d(input, kernel_size=3):
     """
     xp = array_namespace(input)
 
-    image = np.asarray(input)
+    image = mx.array(input)
 
     # checking dtype.type, rather than just dtype, is necessary for
-    # excluding np.longdouble with MS Visual C.
-    if image.dtype.type not in (np.ubyte, np.float32, np.float64):
+    # excluding mx.longdouble with MS Visual C.
+    if image.dtype.type not in (mx.ubyte, mx.float32, mx.float64):
         return xp.asarray(medfilt(image, kernel_size))
 
     if kernel_size is None:
         kernel_size = [3] * 2
-    kernel_size = np.asarray(kernel_size)
+    kernel_size = mx.array(kernel_size)
     if kernel_size.shape == ():
-        kernel_size = np.repeat(kernel_size.item(), 2)
+        kernel_size = mx.repeat(kernel_size.item(), 2)
 
     for size in kernel_size:
         if (size % 2) != 1:
@@ -2124,14 +2124,14 @@ def lfilter(b, a, x, axis=-1, zi=None):
     --------
     Generate a noisy signal to be filtered:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
-    >>> t = np.linspace(-1, 1, 201)
-    >>> x = (np.sin(2*np.pi*0.75*t*(1-t) + 2.1) +
-    ...      0.1*np.sin(2*np.pi*1.25*t + 1) +
-    ...      0.18*np.cos(2*np.pi*3.85*t))
+    >>> rng = mx.random.default_rng()
+    >>> t = mx.linspace(-1, 1, 201)
+    >>> x = (mx.sin(2*mx.pi*0.75*t*(1-t) + 2.1) +
+    ...      0.1*mx.sin(2*mx.pi*1.25*t + 1) +
+    ...      0.18*mx.cos(2*mx.pi*3.85*t))
     >>> xn = x + rng.standard_normal(len(t)) * 0.08
 
     Create an order 3 lowpass butterworth filter:
@@ -2166,11 +2166,11 @@ def lfilter(b, a, x, axis=-1, zi=None):
     """
     xp = array_namespace(b, a, x, zi)
 
-    b = np.atleast_1d(b)
-    a = np.atleast_1d(a)
-    x = np.asarray(x)
+    b = mx.atleast_1d(b)
+    a = mx.atleast_1d(a)
+    x = mx.array(x)
     if zi is not None:
-       zi = np.asarray(zi)
+       zi = mx.array(zi)
 
     if not (b.ndim == 1 and xp_size(b) > 0):
         raise ValueError(f"Parameter b is not a non-empty 1d array, since {b.shape=}!")
@@ -2181,14 +2181,14 @@ def lfilter(b, a, x, axis=-1, zi=None):
         # This path only supports types fdgFDGO to mirror _linear_filter below.
         # Any of b, a, x, or zi can set the dtype, but there is no default
         # casting of other types; instead a NotImplementedError is raised.
-        b = np.asarray(b)
-        a = np.asarray(a)
+        b = mx.array(b)
+        a = mx.array(a)
         x = _validate_x(x)
         inputs = [b, a, x]
         if zi is not None:
             # _linear_filter does not broadcast zi, but does do expansion of
             # singleton dims.
-            zi = np.asarray(zi)
+            zi = mx.array(zi)
             if zi.ndim != x.ndim:
                 raise ValueError("Dimensions of parameters x and zi must match, but " +
                                  f"{x.ndim=}, {zi.ndim=}!")
@@ -2210,21 +2210,21 @@ def lfilter(b, a, x, axis=-1, zi=None):
                     else:
                         raise ValueError('Unexpected shape for parameter zi: expected '
                                          f'{expected_shape}, found {zi.shape}.')
-                zi = np.lib.stride_tricks.as_strided(zi, expected_shape,
+                zi = mx.lib.stride_tricks.as_strided(zi, expected_shape,
                                                      strides)
             inputs.append(zi)
-        dtype = np.result_type(*inputs)
+        dtype = mx.result_type(*inputs)
 
         if dtype.char not in 'fdgFDGO':
             raise NotImplementedError("Parameter's dtypes produced result type " +
                                       f"'{dtype}', which is not supported!")
 
-        b = np.array(b, dtype=dtype)
-        a = np.asarray(a, dtype=dtype)
+        b = mx.array(b, dtype=dtype)
+        a = mx.array(a, dtype=dtype)
         b /= a[0]
-        x = np.asarray(x, dtype=dtype)
+        x = mx.array(x, dtype=dtype)
 
-        out_full = np.apply_along_axis(lambda y: np.convolve(b, y), axis, x)
+        out_full = mx.apply_along_axis(lambda y: mx.convolve(b, y), axis, x)
         ind = out_full.ndim * [slice(None)]
         if zi is not None:
             ind[axis] = slice(zi.shape[axis])
@@ -2279,7 +2279,7 @@ def lfiltic(b, a, y, x=None):
 
     Returns
     -------
-    zi : ndarray
+    zi : array
         The state vector ``zi = {z_0[-1], z_1[-1], ..., z_K-1[-1]}``,
         where ``K = max(M, N)``.
 
@@ -2358,9 +2358,9 @@ def deconvolve(signal, divisor):
 
     Returns
     -------
-    quotient : ndarray
+    quotient : array
         Quotient, typically the recovered original signal
-    remainder : ndarray
+    remainder : array
         Remainder
 
     See Also
@@ -2432,7 +2432,7 @@ def hilbert(x, N=None, axis=-1):
 
     Returns
     -------
-    xa : ndarray
+    xa : array
         Analytic signal of `x`, of each 1-D array along `axis`
 
     Notes
@@ -2447,8 +2447,8 @@ def hilbert(x, N=None, axis=-1):
 
     In other words, the negative half of the frequency spectrum is zeroed
     out, turning the real-valued signal into a complex-valued signal.  The Hilbert
-    transformed signal can be obtained from ``np.imag(hilbert(x))``, and the
-    original signal from ``np.real(hilbert(x))``.
+    transformed signal can be obtained from ``mx.imag(hilbert(x))``, and the
+    original signal from ``mx.real(hilbert(x))``.
 
     References
     ----------
@@ -2473,14 +2473,14 @@ def hilbert(x, N=None, axis=-1):
     Let's create a chirp of which the frequency increases from 20 Hz to 100 Hz and
     apply an amplitude modulation:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.signal import hilbert, chirp
     ...
     >>> duration, fs = 1, 400  # 1 s signal with sampling frequency of 400 Hz
-    >>> t = np.arange(int(fs*duration)) / fs  # timestamps of samples
+    >>> t = mx.arange(int(fs*duration)) / fs  # timestamps of samples
     >>> signal = chirp(t, 20.0, t[-1], 100.0)
-    >>> signal *= (1.0 + 0.5 * np.sin(2.0*np.pi*3.0*t) )
+    >>> signal *= (1.0 + 0.5 * mx.sin(2.0*mx.pi*3.0*t) )
 
     The amplitude envelope is given by the magnitude of the analytic signal. The
     instantaneous frequency can be obtained by differentiating the
@@ -2488,9 +2488,9 @@ def hilbert(x, N=None, axis=-1):
     to the phase angle of the analytic signal.
 
     >>> analytic_signal = hilbert(signal)
-    >>> amplitude_envelope = np.abs(analytic_signal)
-    >>> instantaneous_phase = np.unwrap(np.angle(analytic_signal))
-    >>> instantaneous_frequency = np.diff(instantaneous_phase) / (2.0*np.pi) * fs
+    >>> amplitude_envelope = mx.abs(analytic_signal)
+    >>> instantaneous_phase = mx.unwrap(mx.angle(analytic_signal))
+    >>> instantaneous_frequency = mx.diff(instantaneous_phase) / (2.0*mx.pi) * fs
     ...
     >>> fig, (ax0, ax1) = plt.subplots(nrows=2, sharex='all', tight_layout=True)
     >>> ax0.set_title("Amplitude-modulated Chirp Signal")
@@ -2556,7 +2556,7 @@ def hilbert2(x, N=None, axes=(-2, -1)):
 
     Returns
     -------
-    xa : ndarray
+    xa : array
         Analytic signal of `x` taken along given axes.
 
     Notes
@@ -2626,12 +2626,12 @@ def hilbert2(x, N=None, axes=(-2, -1)):
     has a value of one and the constant offset component produces only a non-zero
     component at the ``(0,0)`` bin.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fft import fft2, fftshift, ifftshift
     >>> from scipy.signal import hilbert2
     ...
     >>> # Input signal is unit impulse with a constant offset:
-    >>> x = np.ones((5, 5)) / 5
+    >>> x = mx.ones((5, 5)) / 5
     >>> x[0, 0] += 1
     ...
     >>> X = fftshift(fft2(x))  # Zero frequency bin is at center
@@ -2643,7 +2643,7 @@ def hilbert2(x, N=None, axes=(-2, -1)):
      [1.-0.j 1.-0.j 1.+0.j 1.+0.j 1.+0.j]]
     >>> x_a = hilbert2(x)
     >>> X_a = fftshift(fft2(x_a))
-    >>> print(np.round(X_a, 3))
+    >>> print(mx.round(X_a, 3))
     [[ 0.+0.j  0.+0.j -0.+0.j  0.+0.j  0.+0.j]
      [ 0.+0.j  0.+0.j -0.+0.j  0.+0.j  0.+0.j]
      [ 0.+0.j  0.+0.j  6.+0.j  2.+0.j  2.+0.j]
@@ -2661,19 +2661,19 @@ def hilbert2(x, N=None, axes=(-2, -1)):
     >>> from scipy.fft import fft2, fftshift, ifft2, ifftshift
     >>> from scipy.signal import hilbert2
     ...
-    >>> # Create a real signal by ensuring `Z[-p,-q] == np.conj(Z[p,q])` holds:
-    >>> Z = np.array([[0, 0, 0, 0, 0],
+    >>> # Create a real signal by ensuring `Z[-p,-q] == mx.conj(Z[p,q])` holds:
+    >>> Z = mx.array([[0, 0, 0, 0, 0],
     ...               [0, 0, 0, 1, 0],
     ...               [0, 0, 0, 0, 0],
     ...               [0, 1, 0, 0, 0],
     ...               [0, 0, 0, 0, 0]]) * 25
     >>> z = ifft2(ifftshift(Z))
-    >>> np.allclose(z.imag, 0)  # z is a real signal
+    >>> mx.allclose(z.imag, 0)  # z is a real signal
     True
-    >>> np.sum(z.real**2)  # z.real is non-zero
-    np.float64(50.0)
+    >>> mx.sum(z.real**2)  # z.real is non-zero
+    mx.float64(50.0)
     >>> z_a = hilbert2(z.real)
-    >>> np.allclose(z_a, 0)  # analytic signal is zero
+    >>> mx.allclose(z_a, 0)  # analytic signal is zero
     True
 
     """
@@ -2720,7 +2720,7 @@ def envelope(z, bp_in: tuple[int | None, int | None] = (1, None), *,
 
     Parameters
     ----------
-    z : ndarray
+    z : array
         Real- or complex-valued input signal, which is assumed to be made up of ``n``
         samples and having sampling interval ``T``. `z` may also be a multidimensional
         array with the time axis being defined by `axis`.
@@ -2751,7 +2751,7 @@ def envelope(z, bp_in: tuple[int | None, int | None] = (1, None), *,
 
     Returns
     -------
-    ndarray
+    array
         If parameter `residual` is ``None`` then an array ``z_env`` with the same shape
         as the input `z` is returned, containing its envelope. Otherwise, an array with
         shape ``(2, *z.shape)``, containing the arrays ``z_env`` and ``z_res``, stacked
@@ -2792,7 +2792,7 @@ def envelope(z, bp_in: tuple[int | None, int | None] = (1, None), *,
 
     If the envelope of a complex-valued signal `z` with no bandpass filtering is
     desired, i.e., ``bp_in=(None, None)``, then the envelope corresponds to the
-    absolute value. Hence, it is more efficient to use ``np.abs(z)`` instead of this
+    absolute value. Hence, it is more efficient to use ``mx.abs(z)`` instead of this
     function.
 
     Although computing the envelope based on the analytic signal [1]_ is the natural
@@ -2842,22 +2842,22 @@ def envelope(z, bp_in: tuple[int | None, int | None] = (1, None), *,
     ``x_drift``. Hence, they cannot be completely separated by a bandpass filter.
 
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal.windows import gaussian
     >>> from scipy.signal import envelope
     ...
     >>> n, n_out = 500, 40  # number of signal samples and envelope samples
     >>> T = 2 / n  # sampling interval for 2 s duration
-    >>> t = np.arange(n) * T  # time stamps
+    >>> t = mx.arange(n) * T  # time stamps
     >>> a_x = gaussian(len(t), 0.4/T)  # instantaneous amplitude
-    >>> phi_x = 30*np.pi*t + 35*np.cos(2*np.pi*0.25*t)  # instantaneous phase
-    >>> x_carrier = a_x * np.cos(phi_x)
+    >>> phi_x = 30*mx.pi*t + 35*mx.cos(2*mx.pi*0.25*t)  # instantaneous phase
+    >>> x_carrier = a_x * mx.cos(phi_x)
     >>> x_drift = 0.3 * gaussian(len(t), 0.4/T)  # drift
     >>> x = x_carrier + x_drift
     ...
     >>> bp_in = (int(4 * (n*T)), None)  # 4 Hz highpass input filter
     >>> x_env, x_res = envelope(x, bp_in, n_out=n_out)
-    >>> t_out = np.arange(n_out) * (n / n_out) * T
+    >>> t_out = mx.arange(n_out) * (n / n_out) * T
     ...
     >>> fg0, ax0 = plt.subplots(1, 1, tight_layout=True)
     >>> ax0.set_title(r"$4\,$Hz Highpass Envelope of Drifting Signal")
@@ -2891,22 +2891,22 @@ def envelope(z, bp_in: tuple[int | None, int | None] = (1, None), *,
     signals are interpreted as being the real part of a complex-valued analytic signal.
 
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal.windows import gaussian
     >>> from scipy.signal import envelope
     ...
     >>> n, T = 1000, 1/1000  # number of samples and sampling interval
-    >>> t = np.arange(n) * T  # time stamps for 1 s duration
+    >>> t = mx.arange(n) * T  # time stamps for 1 s duration
     >>> f_c = 3  # Carrier frequency for signal
-    >>> z = gaussian(len(t), 0.3/T) * np.exp(2j*np.pi*f_c*t)  # analytic signal
+    >>> z = gaussian(len(t), 0.3/T) * mx.exp(2j*mx.pi*f_c*t)  # analytic signal
     >>> z_re = z.real + 0j  # complex signal with zero imaginary part
     ...
     >>> e_a, e_r = (envelope(z_, (None, None), residual=None) for z_ in (z, z_re))
     ...
     >>> # Generate grids to visualize envelopes as 2d and 3d surfaces:
-    >>> E2d_t, E2_amp = np.meshgrid(t, [-1, 1])
-    >>> E2d_1 = np.ones_like(E2_amp)
-    >>> E3d_t, E3d_phi = np.meshgrid(t, np.linspace(-np.pi, np.pi, 300))
+    >>> E2d_t, E2_amp = mx.meshgrid(t, [-1, 1])
+    >>> E2d_1 = mx.ones_like(E2_amp)
+    >>> E3d_t, E3d_phi = mx.meshgrid(t, mx.linspace(-mx.pi, mx.pi, 300))
     >>> ma = 1.8  # maximum axis values in real and imaginary direction
     ...
     >>> fg0 = plt.figure(figsize=(6.2, 4.))
@@ -2924,7 +2924,7 @@ def envelope(z, bp_in: tuple[int | None, int | None] = (1, None), *,
     ...     ax_.plot(t, z_.imag, 'C0-', zs=+ma, zdir='y', alpha=0.5, label="Imag.")
     ...     ax_.plot_surface(E2d_t, ma*E2d_1, e_*E2_amp, color='C1', alpha=0.25)
     ...     ax_.plot(t, z_.real, z_.imag, 'C0-', label="Signal")
-    ...     ax_.plot_surface(E3d_t, e_*np.cos(E3d_phi), e_*np.sin(E3d_phi),
+    ...     ax_.plot_surface(E3d_t, e_*mx.cos(E3d_phi), e_*mx.sin(E3d_phi),
     ...                      color='C1', alpha=0.5, shade=True, label="Envelope")
     ...     ax_.view_init(elev=22.7, azim=-114.3)
     >>> fg0.subplots_adjust(left=0.08, right=0.97, wspace=0.15)
@@ -3006,9 +3006,9 @@ def _cmplx_sort(p):
 
     Returns
     -------
-    p_sorted : ndarray
+    p_sorted : array
         Sorted roots.
-    indx : ndarray
+    indx : array
         Array of indices needed to sort the input `p`.
 
     Examples
@@ -3021,9 +3021,9 @@ def _cmplx_sort(p):
     >>> indx
     array([0, 2, 3, 1])
     """
-    p = np.asarray(p)
-    indx = np.argsort(abs(p))
-    return np.take(p, indx, 0), indx
+    p = mx.array(p)
+    indx = mx.argsort(abs(p))
+    return mx.take(p, indx, 0), indx
 
 
 def unique_roots(p, tol=1e-3, rtype='min'):
@@ -3050,9 +3050,9 @@ def unique_roots(p, tol=1e-3, rtype='min'):
 
     Returns
     -------
-    unique : ndarray
+    unique : array
         The list of unique roots.
-    multiplicity : ndarray
+    multiplicity : array
         The multiplicity of each root.
 
     Notes
@@ -3079,25 +3079,25 @@ def unique_roots(p, tol=1e-3, rtype='min'):
     array([ 1.305])
     """
     if rtype in ['max', 'maximum']:
-        reduce = np.max
+        reduce = mx.max
     elif rtype in ['min', 'minimum']:
-        reduce = np.min
+        reduce = mx.min
     elif rtype in ['avg', 'mean']:
-        reduce = np.mean
+        reduce = mx.mean
     else:
         raise ValueError("`rtype` must be one of "
                          "{'max', 'maximum', 'min', 'minimum', 'avg', 'mean'}")
 
-    p = np.asarray(p)
+    p = mx.array(p)
 
-    points = np.empty((len(p), 2))
-    points[:, 0] = np.real(p)
-    points[:, 1] = np.imag(p)
+    points = mx.empty((len(p), 2))
+    points[:, 0] = mx.real(p)
+    points[:, 1] = mx.imag(p)
     tree = cKDTree(points)
 
     p_unique = []
     p_multiplicity = []
-    used = np.zeros(len(p), dtype=bool)
+    used = mx.zeros(len(p), dtype=bool)
     for i in range(len(p)):
         if used[i]:
             continue
@@ -3110,7 +3110,7 @@ def unique_roots(p, tol=1e-3, rtype='min'):
 
         used[group] = True
 
-    return np.asarray(p_unique), np.asarray(p_multiplicity)
+    return mx.array(p_unique), mx.array(p_multiplicity)
 
 
 def invres(r, p, k, tol=1e-3, rtype='avg'):
@@ -3159,9 +3159,9 @@ def invres(r, p, k, tol=1e-3, rtype='avg'):
 
     Returns
     -------
-    b : ndarray
+    b : array
         Numerator polynomial coefficients.
-    a : ndarray
+    a : array
         Denominator polynomial coefficients.
 
     See Also
@@ -3169,9 +3169,9 @@ def invres(r, p, k, tol=1e-3, rtype='avg'):
     residue, invresz, unique_roots
 
     """
-    r = np.atleast_1d(r)
-    p = np.atleast_1d(p)
-    k = np.trim_zeros(np.atleast_1d(k), 'f')
+    r = mx.atleast_1d(r)
+    p = mx.atleast_1d(p)
+    k = mx.trim_zeros(mx.atleast_1d(k), 'f')
 
     unique_poles, multiplicity = _group_poles(p, tol, rtype)
     factors, denominator = _compute_factors(unique_poles, multiplicity,
@@ -3180,34 +3180,34 @@ def invres(r, p, k, tol=1e-3, rtype='avg'):
     if len(k) == 0:
         numerator = 0
     else:
-        numerator = np.polymul(k, denominator)
+        numerator = mx.polymul(k, denominator)
 
     for residue, factor in zip(r, factors):
-        numerator = np.polyadd(numerator, residue * factor)
+        numerator = mx.polyadd(numerator, residue * factor)
 
     return numerator, denominator
 
 
 def _compute_factors(roots, multiplicity, include_powers=False):
     """Compute the total polynomial divided by factors for each root."""
-    current = np.array([1])
+    current = mx.array([1])
     suffixes = [current]
     for pole, mult in zip(roots[-1:0:-1], multiplicity[-1:0:-1]):
-        monomial = np.array([1, -pole])
+        monomial = mx.array([1, -pole])
         for _ in range(mult):
-            current = np.polymul(current, monomial)
+            current = mx.polymul(current, monomial)
         suffixes.append(current)
     suffixes = suffixes[::-1]
 
     factors = []
-    current = np.array([1])
+    current = mx.array([1])
     for pole, mult, suffix in zip(roots, multiplicity, suffixes):
-        monomial = np.array([1, -pole])
+        monomial = mx.array([1, -pole])
         block = []
         for i in range(mult):
             if i == 0 or include_powers:
-                block.append(np.polymul(current, suffix))
-            current = np.polymul(current, monomial)
+                block.append(mx.polymul(current, suffix))
+            current = mx.polymul(current, monomial)
         factors.extend(reversed(block))
 
     return factors, current
@@ -3221,23 +3221,23 @@ def _compute_residues(poles, multiplicity, numerator):
     for pole, mult, factor in zip(poles, multiplicity,
                                   denominator_factors):
         if mult == 1:
-            residues.append(np.polyval(numerator, pole) /
-                            np.polyval(factor, pole))
+            residues.append(mx.polyval(numerator, pole) /
+                            mx.polyval(factor, pole))
         else:
             numer = numerator.copy()
-            monomial = np.array([1, -pole])
-            factor, d = np.polydiv(factor, monomial)
+            monomial = mx.array([1, -pole])
+            factor, d = mx.polydiv(factor, monomial)
 
             block = []
             for _ in range(mult):
-                numer, n = np.polydiv(numer, monomial)
+                numer, n = mx.polydiv(numer, monomial)
                 r = n[0] / d[0]
-                numer = np.polysub(numer, r * factor)
+                numer = mx.polysub(numer, r * factor)
                 block.append(r)
 
             residues.extend(reversed(block))
 
-    return np.asarray(residues)
+    return mx.array(residues)
 
 
 def residue(b, a, tol=1e-3, rtype='avg'):
@@ -3285,12 +3285,12 @@ def residue(b, a, tol=1e-3, rtype='avg'):
 
     Returns
     -------
-    r : ndarray
+    r : array
         Residues corresponding to the poles. For repeated poles, the residues
         are ordered to correspond to ascending by power fractions.
-    p : ndarray
+    p : array
         Poles ordered by magnitude in ascending order.
-    k : ndarray
+    k : array
         Coefficients of the direct polynomial term.
 
     See Also
@@ -3316,30 +3316,30 @@ def residue(b, a, tol=1e-3, rtype='avg'):
            review of computational methodology and efficiency", Journal of
            Computational and Applied Mathematics, Vol. 9, 1983.
     """
-    b = np.asarray(b)
-    a = np.asarray(a)
-    if (np.issubdtype(b.dtype, np.complexfloating)
-            or np.issubdtype(a.dtype, np.complexfloating)):
+    b = mx.array(b)
+    a = mx.array(a)
+    if (mx.issubdtype(b.dtype, mx.complexfloating)
+            or mx.issubdtype(a.dtype, mx.complexfloating)):
         b = b.astype(complex)
         a = a.astype(complex)
     else:
         b = b.astype(float)
         a = a.astype(float)
 
-    b = np.trim_zeros(np.atleast_1d(b), 'f')
-    a = np.trim_zeros(np.atleast_1d(a), 'f')
+    b = mx.trim_zeros(mx.atleast_1d(b), 'f')
+    a = mx.trim_zeros(mx.atleast_1d(a), 'f')
 
     if a.size == 0:
         raise ValueError("Denominator `a` is zero.")
 
-    poles = np.roots(a)
+    poles = mx.roots(a)
     if b.size == 0:
-        return np.zeros(poles.shape), _cmplx_sort(poles)[0], np.array([])
+        return mx.zeros(poles.shape), _cmplx_sort(poles)[0], mx.array([])
 
     if len(b) < len(a):
-        k = np.empty(0)
+        k = mx.empty(0)
     else:
-        k, b = np.polydiv(b, a)
+        k, b = mx.polydiv(b, a)
 
     unique_poles, multiplicity = unique_roots(poles, tol=tol, rtype=rtype)
     unique_poles, order = _cmplx_sort(unique_poles)
@@ -3399,30 +3399,30 @@ def residuez(b, a, tol=1e-3, rtype='avg'):
 
     Returns
     -------
-    r : ndarray
+    r : array
         Residues corresponding to the poles. For repeated poles, the residues
         are ordered to correspond to ascending by power fractions.
-    p : ndarray
+    p : array
         Poles ordered by magnitude in ascending order.
-    k : ndarray
+    k : array
         Coefficients of the direct polynomial term.
 
     See Also
     --------
     invresz, residue, unique_roots
     """
-    b = np.asarray(b)
-    a = np.asarray(a)
-    if (np.issubdtype(b.dtype, np.complexfloating)
-            or np.issubdtype(a.dtype, np.complexfloating)):
+    b = mx.array(b)
+    a = mx.array(a)
+    if (mx.issubdtype(b.dtype, mx.complexfloating)
+            or mx.issubdtype(a.dtype, mx.complexfloating)):
         b = b.astype(complex)
         a = a.astype(complex)
     else:
         b = b.astype(float)
         a = a.astype(float)
 
-    b = np.trim_zeros(np.atleast_1d(b), 'b')
-    a = np.trim_zeros(np.atleast_1d(a), 'b')
+    b = mx.trim_zeros(mx.atleast_1d(b), 'b')
+    a = mx.trim_zeros(mx.atleast_1d(a), 'b')
 
     if a.size == 0:
         raise ValueError("Denominator `a` is zero.")
@@ -3430,17 +3430,17 @@ def residuez(b, a, tol=1e-3, rtype='avg'):
         raise ValueError("First coefficient of determinant `a` must be "
                          "non-zero.")
 
-    poles = np.roots(a)
+    poles = mx.roots(a)
     if b.size == 0:
-        return np.zeros(poles.shape), _cmplx_sort(poles)[0], np.array([])
+        return mx.zeros(poles.shape), _cmplx_sort(poles)[0], mx.array([])
 
     b_rev = b[::-1]
     a_rev = a[::-1]
 
     if len(b_rev) < len(a_rev):
-        k_rev = np.empty(0)
+        k_rev = mx.empty(0)
     else:
-        k_rev, b_rev = np.polydiv(b_rev, a_rev)
+        k_rev, b_rev = mx.polydiv(b_rev, a_rev)
 
     unique_poles, multiplicity = unique_roots(poles, tol=tol, rtype=rtype)
     unique_poles, order = _cmplx_sort(unique_poles)
@@ -3449,10 +3449,10 @@ def residuez(b, a, tol=1e-3, rtype='avg'):
     residues = _compute_residues(1 / unique_poles, multiplicity, b_rev)
 
     index = 0
-    powers = np.empty(len(residues), dtype=int)
+    powers = mx.empty(len(residues), dtype=int)
     for pole, mult in zip(unique_poles, multiplicity):
         poles[index:index + mult] = pole
-        powers[index:index + mult] = 1 + np.arange(mult)
+        powers[index:index + mult] = 1 + mx.arange(mult)
         index += mult
 
     residues *= (-poles) ** powers / a_rev[0]
@@ -3462,11 +3462,11 @@ def residuez(b, a, tol=1e-3, rtype='avg'):
 
 def _group_poles(poles, tol, rtype):
     if rtype in ['max', 'maximum']:
-        reduce = np.max
+        reduce = mx.max
     elif rtype in ['min', 'minimum']:
-        reduce = np.min
+        reduce = mx.min
     elif rtype in ['avg', 'mean']:
-        reduce = np.mean
+        reduce = mx.mean
     else:
         raise ValueError("`rtype` must be one of "
                          "{'max', 'maximum', 'min', 'minimum', 'avg', 'mean'}")
@@ -3488,7 +3488,7 @@ def _group_poles(poles, tol, rtype):
     unique.append(reduce(block))
     multiplicity.append(len(block))
 
-    return np.asarray(unique), np.asarray(multiplicity)
+    return mx.array(unique), mx.array(multiplicity)
 
 
 def invresz(r, p, k, tol=1e-3, rtype='avg'):
@@ -3536,9 +3536,9 @@ def invresz(r, p, k, tol=1e-3, rtype='avg'):
 
     Returns
     -------
-    b : ndarray
+    b : array
         Numerator polynomial coefficients.
-    a : ndarray
+    a : array
         Denominator polynomial coefficients.
 
     See Also
@@ -3546,9 +3546,9 @@ def invresz(r, p, k, tol=1e-3, rtype='avg'):
     residuez, unique_roots, invres
 
     """
-    r = np.atleast_1d(r)
-    p = np.atleast_1d(p)
-    k = np.trim_zeros(np.atleast_1d(k), 'b')
+    r = mx.atleast_1d(r)
+    p = mx.atleast_1d(p)
+    k = mx.trim_zeros(mx.atleast_1d(k), 'b')
 
     unique_poles, multiplicity = _group_poles(p, tol, rtype)
     factors, denominator = _compute_factors(unique_poles, multiplicity,
@@ -3557,10 +3557,10 @@ def invresz(r, p, k, tol=1e-3, rtype='avg'):
     if len(k) == 0:
         numerator = 0
     else:
-        numerator = np.polymul(k[::-1], denominator[::-1])
+        numerator = mx.polymul(k[::-1], denominator[::-1])
 
     for residue, factor in zip(r, factors):
-        numerator = np.polyadd(numerator, residue * factor[::-1])
+        numerator = mx.polyadd(numerator, residue * factor[::-1])
 
     return numerator[::-1], denominator
 
@@ -3587,7 +3587,7 @@ def resample(x, num, t=None, axis=0, window=None, domain='time'):
         If `t` is not ``None``, then the timestamps of the resampled signal are also
         returned. `t` must contain at least the first two timestamps of the input
         signal `x` (all others are ignored). The timestamps of the output signal are
-        determined by ``t[0] + T * n_x / num * np.arange(num)`` with
+        determined by ``t[0] + T * n_x / num * mx.arange(num)`` with
         ``T = t[1] - t[0]``. Default is ``None``.
     axis : int, optional
         The time/frequency axis of `x` along which the resampling take place.
@@ -3611,10 +3611,10 @@ def resample(x, num, t=None, axis=0, window=None, domain='time'):
 
     Returns
     -------
-    x_r : ndarray
+    x_r : array
         The resampled signal made up of `num` samples and sampling interval
         ``T * n_x / num``.
-    t_r : ndarray, optional
+    t_r : array, optional
         The `num` equidistant timestamps of `x_r`.
         This is only returned if paramater `t` is not ``None``.
 
@@ -3636,7 +3636,7 @@ def resample(x, num, t=None, axis=0, window=None, domain='time'):
     function is determined by taking the average of the negative and the positive
     frequency component. This ensures that real-valued signals and complex signals with
     zero imaginary part are treated identically. I.e., passing `x` or passing
-    ``x.astype(np.complex128)`` produce the same numeric result.
+    ``x.astype(mx.complex128)`` produce the same numeric result.
 
     If the number of input  or output samples are prime or have few prime factors, this
     function may be slow due to utilizing FFTs. Consult `~scipy.fft.prev_fast_len` and
@@ -3656,16 +3656,16 @@ def resample(x, num, t=None, axis=0, window=None, domain='time'):
     interpreting the signal being periodic. The red square in the plot illustrates that
     periodictiy by showing the first sample of the next cycle of the signal.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.signal import resample
     ...
     >>> n0, n1 = 20, 100  # number of samples
-    >>> t0 = np.linspace(0, 10, n0, endpoint=False)  # input time stamps
-    >>> x0 = np.cos(-t0**2/6)  # input signal
+    >>> t0 = mx.linspace(0, 10, n0, endpoint=False)  # input time stamps
+    >>> x0 = mx.cos(-t0**2/6)  # input signal
     ...
     >>> x1 = resample(x0, n1)  # resampled signal
-    >>> t1 = np.linspace(0, 10, n1, endpoint=False)  # timestamps of x1
+    >>> t1 = mx.linspace(0, 10, n1, endpoint=False)  # timestamps of x1
     ...
     >>> fig0, ax0 = plt.subplots(1, 1, tight_layout=True)
     >>> ax0.set_title(f"Resampling $x(t)$ from {n0} samples to {n1} samples")
@@ -3691,22 +3691,22 @@ def resample(x, num, t=None, axis=0, window=None, domain='time'):
     by the naive approach as well as this function's result.
 
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fft import fftshift, fftfreq, fft, rfft, irfft
     >>> from scipy.signal import resample, resample_poly
     ... 
     >>> fac, T0, T1 = 8, 1, 1/8  # upsampling factor and sampling intervals
     >>> for n0 in (15, 16):  # number of samples of input signal
     ...     n1 = fac * n0  # number of samples of upsampled signal
-    ...     t0, t1 = T0 * np.arange(n0), T1 * np.arange(n1)  # time stamps
-    ...     x0 = np.zeros(n0)  # input signal has two non-zero sample values
+    ...     t0, t1 = T0 * mx.arange(n0), T1 * mx.arange(n1)  # time stamps
+    ...     x0 = mx.zeros(n0)  # input signal has two non-zero sample values
     ...     x0[n0//2], x0[n0//2+1] = n0 // 2, -(n0 // 2)
     ... 
     ...     x1n = irfft(rfft(x0), n=n1) * n1 / n0  # naive resampling
     ...     x1r = resample(x0, n1)  # resample signal
     ... 
     ...     # Determine magnitude spectrum:
-    ...     x0_up = np.zeros_like(x1r)  # upsampling without antialiasing filter
+    ...     x0_up = mx.zeros_like(x1r)  # upsampling without antialiasing filter
     ...     x0_up[::n1 // n0] = x0
     ...     X0, X0_up = (fftshift(fft(x_)) / n0 for x_ in (x0, x0_up))
     ...     XX1 = (fftshift(fft(x_)) / n1 for x_ in (x1n, x1r))
@@ -3754,16 +3754,16 @@ def resample(x, num, t=None, axis=0, window=None, domain='time'):
     resulting one-sided magnitude spectra.
 
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.fft import rfftfreq, rfft
     >>> from scipy.signal import resample, resample_poly
     ... 
     >>> n0 = 19937 # number of input samples - prime
     >>> n1 = 128  # number of output samples - fast FFT length
     >>> T0, T1 = 1/n0, 1/n1  # sampling intervals
-    >>> t0, t1 = np.arange(n0)*T0, np.arange(n1)*T1  # time stamps
+    >>> t0, t1 = mx.arange(n0)*T0, mx.arange(n1)*T1  # time stamps
     ... 
-    >>> x0 = np.zeros(n0)  # Input has one non-zero sample
+    >>> x0 = mx.zeros(n0)  # Input has one non-zero sample
     >>> x0[0] = n0
     >>> 
     >>> x1r = resample(x0, n1)  # slow due to n0 being prime
@@ -3893,7 +3893,7 @@ def resample_poly(x, up, down, axis=0, window=('kaiser', 5.0),
         Changes assumptions on values beyond the boundary. If `constant`,
         assumed to be `cval` (default zero). If `line` assumed to continue a
         linear trend defined by the first and last points. `mean`, `median`,
-        `maximum` and `minimum` work as in `np.pad` and assume that the values
+        `maximum` and `minimum` work as in `mx.pad` and assume that the values
         beyond the boundary are the mean, median, maximum or minimum
         respectively of the array along the axis.
 
@@ -3947,15 +3947,15 @@ def resample_poly(x, up, down, axis=0, window=('kaiser', 5.0),
     sample of the next cycle for the FFT method, and gets closer to zero
     for the polyphase method:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
 
-    >>> x = np.linspace(0, 10, 20, endpoint=False)
-    >>> y = np.cos(-x**2/6.0)
+    >>> x = mx.linspace(0, 10, 20, endpoint=False)
+    >>> y = mx.cos(-x**2/6.0)
     >>> f_fft = signal.resample(y, 100)
     >>> f_poly = signal.resample_poly(y, 100, 20)
-    >>> xnew = np.linspace(0, 10, 100, endpoint=False)
+    >>> xnew = mx.linspace(0, 10, 100, endpoint=False)
 
     >>> plt.plot(xnew, f_fft, 'b.-', xnew, f_poly, 'r.-')
     >>> plt.plot(x, y, 'ko-')
@@ -3966,12 +3966,12 @@ def resample_poly(x, up, down, axis=0, window=('kaiser', 5.0),
     This default behaviour can be changed by using the padtype option:
 
     >>> N = 5
-    >>> x = np.linspace(0, 1, N, endpoint=False)
-    >>> y = 2 + x**2 - 1.7*np.sin(x) + .2*np.cos(11*x)
-    >>> y2 = 1 + x**3 + 0.1*np.sin(x) + .1*np.cos(11*x)
-    >>> Y = np.stack([y, y2], axis=-1)
+    >>> x = mx.linspace(0, 1, N, endpoint=False)
+    >>> y = 2 + x**2 - 1.7*mx.sin(x) + .2*mx.cos(11*x)
+    >>> y2 = 1 + x**3 + 0.1*mx.sin(x) + .1*mx.cos(11*x)
+    >>> Y = mx.stack([y, y2], axis=-1)
     >>> up = 4
-    >>> xr = np.linspace(0, 1, N*up, endpoint=False)
+    >>> xr = mx.linspace(0, 1, N*up, endpoint=False)
 
     >>> y2 = signal.resample_poly(Y, up, 1, padtype='constant')
     >>> y3 = signal.resample_poly(Y, up, 1, padtype='mean')
@@ -4047,7 +4047,7 @@ def resample_poly(x, up, down, axis=0, window=('kaiser', 5.0),
 
     # XXX consider using stats.quantile, which is natively Array API compatible
     def _median(x, *args, **kwds):
-        return xp.asarray(np.median(np.asarray(x), *args, **kwds))
+        return xp.asarray(mx.median(mx.array(x), *args, **kwds))
 
     # Remove background depending on the padtype option
     funcs = {'mean': xp.mean, 'median': _median,
@@ -4083,7 +4083,7 @@ def resample_poly(x, up, down, axis=0, window=('kaiser', 5.0),
 
 
 def _angle(z, xp):
-    """np.angle replacement
+    """mx.angle replacement
     """
     # XXX: https://github.com/data-apis/array-api/issues/595
     zimag = xp.imag(z) if xp.isdtype(z.dtype, 'complex floating') else 0.
@@ -4175,9 +4175,9 @@ def vectorstrength(events, period):
     return strength, phase
 
 
-def detrend(data: np.ndarray, axis: int = -1,
+def detrend(data: mx.array, axis: int = -1,
             type: Literal['linear', 'constant'] = 'linear',
-            bp: ArrayLike | int = 0, overwrite_data: bool = False) -> np.ndarray:
+            bp: ArrayLike | int = 0, overwrite_data: bool = False) -> mx.array:
     r"""Remove linear or constant trend along axis from data.
 
     Parameters
@@ -4205,7 +4205,7 @@ def detrend(data: np.ndarray, axis: int = -1,
 
     Returns
     -------
-    ret : ndarray
+    ret : array
         The detrended input data.
 
     Notes
@@ -4224,11 +4224,11 @@ def detrend(data: np.ndarray, axis: int = -1,
     The following example detrends the function :math:`x(t) = \sin(\pi t) + 1/4`:
 
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import detrend
     ...
-    >>> t = np.linspace(-0.5, 0.5, 21)
-    >>> x = np.sin(np.pi*t) + 1/4
+    >>> t = mx.linspace(-0.5, 0.5, 21)
+    >>> x = mx.sin(mx.pi*t) + 1/4
     ...
     >>> x_d_const = detrend(x, type='constant')
     >>> x_d_linear = detrend(x, type='linear')
@@ -4247,11 +4247,11 @@ def detrend(data: np.ndarray, axis: int = -1,
     Alternatively, NumPy's `~numpy.polynomial.polynomial.Polynomial` can be used for
     detrending as well:
 
-    >>> pp0 = np.polynomial.Polynomial.fit(t, x, deg=0)  # fit degree 0 polynomial
-    >>> np.allclose(x_d_const, x - pp0(t))  # compare with constant detrend
+    >>> pp0 = mx.polynomial.Polynomial.fit(t, x, deg=0)  # fit degree 0 polynomial
+    >>> mx.allclose(x_d_const, x - pp0(t))  # compare with constant detrend
     True
-    >>> pp1 = np.polynomial.Polynomial.fit(t, x, deg=1)  # fit degree 1 polynomial
-    >>> np.allclose(x_d_linear, x - pp1(t))  # compare with linear detrend
+    >>> pp1 = mx.polynomial.Polynomial.fit(t, x, deg=1)  # fit degree 1 polynomial
+    >>> mx.allclose(x_d_linear, x - pp1(t))  # compare with linear detrend
     True
 
     Note that `~numpy.polynomial.polynomial.Polynomial` also allows fitting higher
@@ -4267,19 +4267,19 @@ def detrend(data: np.ndarray, axis: int = -1,
     else:
        xp = array_namespace(data, bp)
 
-    data = np.asarray(data)
+    data = mx.array(data)
     dtype = data.dtype.char
     if dtype not in 'dfDF':
         dtype = 'd'
     if type in ['constant', 'c']:
-        ret = data - np.mean(data, axis, keepdims=True)
+        ret = data - mx.mean(data, axis, keepdims=True)
         return xp.asarray(ret)
     else:
         dshape = data.shape
         N = dshape[axis]
-        bp = np.asarray(bp)
-        bp = np.sort(np.unique(np.concatenate(np.atleast_1d(0, bp, N))))
-        if np.any(bp > N):
+        bp = mx.array(bp)
+        bp = mx.sort(mx.unique(mx.concatenate(mx.atleast_1d(0, bp, N))))
+        if mx.any(bp > N):
             raise ValueError("Breakpoints must be less than length "
                              "of data along given axis.")
 
@@ -4288,7 +4288,7 @@ def detrend(data: np.ndarray, axis: int = -1,
         rnk = len(dshape)
         if axis < 0:
             axis = axis + rnk
-        newdata = np.moveaxis(data, axis, 0)
+        newdata = mx.moveaxis(data, axis, 0)
         newdata_shape = newdata.shape
         newdata = newdata.reshape(N, -1)
 
@@ -4301,15 +4301,15 @@ def detrend(data: np.ndarray, axis: int = -1,
         # Find leastsq fit and remove it for each piece
         for m in range(len(bp) - 1):
             Npts = bp[m + 1] - bp[m]
-            A = np.ones((Npts, 2), dtype)
-            A[:, 0] = np.arange(1, Npts + 1, dtype=dtype) / Npts
+            A = mx.ones((Npts, 2), dtype)
+            A[:, 0] = mx.arange(1, Npts + 1, dtype=dtype) / Npts
             sl = slice(bp[m], bp[m + 1])
             coef, resids, rank, s = linalg.lstsq(A, newdata[sl])
             newdata[sl] = newdata[sl] - A @ coef
 
         # Put data back in original shape.
         newdata = newdata.reshape(newdata_shape)
-        ret = np.moveaxis(newdata, 0, axis)
+        ret = mx.moveaxis(newdata, 0, axis)
         return xp.asarray(ret)
 
 
@@ -4332,7 +4332,7 @@ def lfilter_zi(b, a):
 
     Returns
     -------
-    zi : 1-D ndarray
+    zi : 1-D array
         The initial state for the filter.
 
     See Also
@@ -4431,7 +4431,7 @@ def lfilter_zi(b, a):
         b = xp.concat((b, xp.zeros(n - b.shape[0], dtype=b.dtype)))
 
     dt = xp.result_type(a, b)
-    IminusA = np.eye(n - 1) - linalg.companion(a).T
+    IminusA = mx.eye(n - 1) - linalg.companion(a).T
     IminusA = xp.asarray(IminusA, dtype=dt)
     B = b[1:] - a[1:] * b[0]
     # Solve zi = A*zi + B
@@ -4440,7 +4440,7 @@ def lfilter_zi(b, a):
     # For future reference: we could also use the following
     # explicit formulas to solve the linear system:
     #
-    # zi = np.zeros(n - 1)
+    # zi = mx.zeros(n - 1)
     # zi[0] = B.sum() / IminusA[:,0].sum()
     # asum = 1.0
     # csum = 0.0
@@ -4472,7 +4472,7 @@ def sosfilt_zi(sos):
 
     Returns
     -------
-    zi : ndarray
+    zi : array
         Initial conditions suitable for use with ``sosfilt``, shape
         ``(n_sections, 2)``.
 
@@ -4489,13 +4489,13 @@ def sosfilt_zi(sos):
     Filter a rectangular pulse that begins at time 0, with and without
     the use of the `zi` argument of `scipy.signal.sosfilt`.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
 
     >>> sos = signal.butter(9, 0.125, output='sos')
     >>> zi = signal.sosfilt_zi(sos)
-    >>> x = (np.arange(250) < 100).astype(int)
+    >>> x = (mx.arange(250) < 100).astype(int)
     >>> f1 = signal.sosfilt(sos, x)
     >>> f2, zo = signal.sosfilt(sos, x, zi=zi)
 
@@ -4543,11 +4543,11 @@ def _filtfilt_gust(b, a, x, axis=-1, irlen=None):
 
     Parameters
     ----------
-    b : scalar or 1-D ndarray
+    b : scalar or 1-D array
         Numerator coefficients of the filter.
-    a : scalar or 1-D ndarray
+    a : scalar or 1-D array
         Denominator coefficients of the filter.
-    x : ndarray
+    x : array
         Data to be filtered.
     axis : int, optional
         Axis of `x` to be filtered.  Default is -1.
@@ -4558,11 +4558,11 @@ def _filtfilt_gust(b, a, x, axis=-1, irlen=None):
 
     Returns
     -------
-    y : ndarray
+    y : array
         The filtered data.
-    x0 : ndarray
+    x0 : array
         Initial condition for the forward filter.
-    x1 : ndarray
+    x1 : array
         Initial condition for the backward filter.
 
     Notes
@@ -4579,19 +4579,19 @@ def _filtfilt_gust(b, a, x, axis=-1, irlen=None):
     # In the comments, "Gustafsson's paper" and [1] refer to the
     # paper referenced in the docstring.
 
-    b = np.atleast_1d(b)
-    a = np.atleast_1d(a)
+    b = mx.atleast_1d(b)
+    a = mx.atleast_1d(a)
 
     order = max(len(b), len(a)) - 1
     if order == 0:
         # The filter is just scalar multiplication, with no state.
         scale = (b[0] / a[0])**2
         y = scale * x
-        return y, np.array([]), np.array([])
+        return y, mx.array([]), mx.array([])
 
     if axis != -1 or axis != x.ndim - 1:
         # Move the axis containing the data to the end.
-        x = np.swapaxes(x, axis, x.ndim - 1)
+        x = mx.swapaxes(x, axis, x.ndim - 1)
 
     # n is the number of samples in the data to be filtered.
     n = x.shape[-1]
@@ -4609,10 +4609,10 @@ def _filtfilt_gust(b, a, x, axis=-1, irlen=None):
     # necessarily the same, so he has both O_f and O_b.  We use the same
     # filter in both directions, so we only need O. The same comment
     # applies to S below.
-    Obs = np.zeros((m, order))
-    zi = np.zeros(order)
+    Obs = mx.zeros((m, order))
+    zi = mx.zeros(order)
     zi[0] = 1
-    Obs[:, 0] = lfilter(b, a, np.zeros(m), zi=zi)[0]
+    Obs[:, 0] = lfilter(b, a, mx.zeros(m), zi=zi)[0]
     for k in range(1, order):
         Obs[k:, k] = Obs[:-k, 0]
 
@@ -4634,10 +4634,10 @@ def _filtfilt_gust(b, a, x, axis=-1, irlen=None):
 
     # M is [(S^R - O), (O^R - S)]
     if m == n:
-        M = np.hstack((Sr - Obs, Obsr - S))
+        M = mx.hstack((Sr - Obs, Obsr - S))
     else:
         # Matrix described in section IV of [1].
-        M = np.zeros((2*m, 2*order))
+        M = mx.zeros((2*m, 2*order))
         M[:m, :order] = Sr - Obs
         M[m:, order:] = Obsr - S
 
@@ -4656,7 +4656,7 @@ def _filtfilt_gust(b, a, x, axis=-1, irlen=None):
     else:
         start_m = delta_y_bf_fb[..., :m]
         end_m = delta_y_bf_fb[..., -m:]
-        delta = np.concatenate((start_m, end_m), axis=-1)
+        delta = mx.concatenate((start_m, end_m), axis=-1)
 
     # ic_opt holds the "optimal" initial conditions.
     # The following code computes the result shown in the formula
@@ -4673,9 +4673,9 @@ def _filtfilt_gust(b, a, x, axis=-1, irlen=None):
     # Now compute the filtered signal using equation (7) of [1].
     # First, form [S^R, O^R] and call it W.
     if m == n:
-        W = np.hstack((Sr, Obsr))
+        W = mx.hstack((Sr, Obsr))
     else:
-        W = np.zeros((2*m, 2*order))
+        W = mx.zeros((2*m, 2*order))
         W[:m, :order] = Sr
         W[m:, order:] = Obsr
 
@@ -4702,9 +4702,9 @@ def _filtfilt_gust(b, a, x, axis=-1, irlen=None):
     x1 = ic_opt[..., -order:]
     if axis != -1 or axis != x.ndim - 1:
         # Restore the data axis to its original position.
-        x0 = np.swapaxes(x0, axis, x.ndim - 1)
-        x1 = np.swapaxes(x1, axis, x.ndim - 1)
-        y_opt = np.swapaxes(y_opt, axis, x.ndim - 1)
+        x0 = mx.swapaxes(x0, axis, x.ndim - 1)
+        x1 = mx.swapaxes(x1, axis, x.ndim - 1)
+        y_opt = mx.swapaxes(y_opt, axis, x.ndim - 1)
 
     return y_opt, x0, x1
 
@@ -4760,7 +4760,7 @@ def filtfilt(b, a, x, axis=-1, padtype='odd', padlen=None, method='pad',
 
     Returns
     -------
-    y : ndarray
+    y : array
         The filtered output with the same shape as `x`.
 
     See Also
@@ -4794,16 +4794,16 @@ def filtfilt(b, a, x, axis=-1, padtype='odd', padlen=None, method='pad',
     --------
     The examples will use several functions from `scipy.signal`.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
 
     First we create a one second signal that is the sum of two pure sine
     waves, with frequencies 5 Hz and 250 Hz, sampled at 2000 Hz.
 
-    >>> t = np.linspace(0, 1.0, 2001)
-    >>> xlow = np.sin(2 * np.pi * 5 * t)
-    >>> xhigh = np.sin(2 * np.pi * 250 * t)
+    >>> t = mx.linspace(0, 1.0, 2001)
+    >>> xlow = mx.sin(2 * mx.pi * 5 * t)
+    >>> xhigh = mx.sin(2 * mx.pi * 250 * t)
     >>> x = xlow + xhigh
 
     Now create a lowpass Butterworth filter with a cutoff of 0.125 times
@@ -4812,7 +4812,7 @@ def filtfilt(b, a, x, axis=-1, padtype='odd', padlen=None, method='pad',
 
     >>> b, a = signal.butter(8, 0.125)
     >>> y = signal.filtfilt(b, a, x, padlen=150)
-    >>> np.abs(y - xlow).max()
+    >>> mx.abs(y - xlow).max()
     9.1086182074789912e-06
 
     We get a fairly clean result for this artificial example because
@@ -4829,7 +4829,7 @@ def filtfilt(b, a, x, axis=-1, padtype='odd', padlen=None, method='pad',
 
     `sig` is a random input signal to be filtered.
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> n = 60
     >>> sig = rng.standard_normal(n)**3 + 3*rng.standard_normal(n).cumsum()
 
@@ -4851,8 +4851,8 @@ def filtfilt(b, a, x, axis=-1, padtype='odd', padlen=None, method='pad',
 
     >>> z, p, k = signal.tf2zpk(b, a)
     >>> eps = 1e-9
-    >>> r = np.max(np.abs(p))
-    >>> approx_impulse_len = int(np.ceil(np.log(eps) / np.log(r)))
+    >>> r = mx.max(mx.abs(p))
+    >>> approx_impulse_len = int(mx.ceil(mx.log(eps) / mx.log(r)))
     >>> approx_impulse_len
     137
 
@@ -4863,15 +4863,15 @@ def filtfilt(b, a, x, axis=-1, padtype='odd', padlen=None, method='pad',
     >>> x = rng.standard_normal(4000)
     >>> y1 = signal.filtfilt(b, a, x, method='gust')
     >>> y2 = signal.filtfilt(b, a, x, method='gust', irlen=approx_impulse_len)
-    >>> print(np.max(np.abs(y1 - y2)))
+    >>> print(mx.max(mx.abs(y1 - y2)))
     2.875334415008979e-10
 
     """
     xp = array_namespace(b, a, x)
 
-    b = np.atleast_1d(np.asarray(b))
-    a = np.atleast_1d(np.asarray(a))
-    x = np.asarray(x)
+    b = mx.atleast_1d(mx.array(b))
+    a = mx.atleast_1d(mx.array(a))
+    x = mx.array(x)
 
     if method not in ["pad", "gust"]:
         raise ValueError("method must be 'pad' or 'gust'.")
@@ -4892,7 +4892,7 @@ def filtfilt(b, a, x, axis=-1, padtype='odd', padlen=None, method='pad',
     # to lfilter.
     zi_shape = [1] * x.ndim
     zi_shape[axis] = zi.size
-    zi = np.reshape(zi, zi_shape)
+    zi = mx.reshape(zi, zi_shape)
     x0 = axis_slice(ext, stop=1, axis=axis)
 
     # Forward filter.
@@ -4952,7 +4952,7 @@ def _validate_pad(padtype, padlen, x, axis, ntaps):
 
 
 def _validate_x(x):
-    x = np.asarray(x)
+    x = mx.array(x)
     if x.ndim == 0:
         raise ValueError('x must be at least 1-D')
     return x
@@ -4990,9 +4990,9 @@ def sosfilt(sos, x, axis=-1, zi=None):
 
     Returns
     -------
-    y : ndarray
+    y : array
         The output of the digital filter.
-    zf : ndarray, optional
+    zf : array, optional
         If `zi` is None, this is not returned, otherwise, `zf` holds the
         final filter delay values.
 
@@ -5037,12 +5037,12 @@ def sosfilt(sos, x, axis=-1, zi=None):
     x_zi_shape = tuple([n_sections] + x_zi_shape)
     inputs = [sos, x]
     if zi is not None:
-        inputs.append(np.asarray(zi))
-    dtype = np.result_type(*inputs)
+        inputs.append(mx.array(zi))
+    dtype = mx.result_type(*inputs)
     if dtype.char not in 'fdgFDGO':
         raise NotImplementedError(f"input type '{dtype}' not supported")
     if zi is not None:
-        zi = np.asarray(zi, dtype=dtype)
+        zi = mx.array(zi, dtype=dtype)
 
         # make a copy so that we can operate in place
         # NB: 1. use xp_copy to paper over numpy 1/2 copy= keyword
@@ -5057,22 +5057,22 @@ def sosfilt(sos, x, axis=-1, zi=None):
             )
         return_zi = True
     else:
-        zi = np.zeros(x_zi_shape, dtype=dtype)
+        zi = mx.zeros(x_zi_shape, dtype=dtype)
         return_zi = False
     axis = axis % x.ndim  # make positive
-    x = np.moveaxis(x, axis, -1)
-    zi = np.moveaxis(zi, (0, axis + 1), (-2, -1))
+    x = mx.moveaxis(x, axis, -1)
+    zi = mx.moveaxis(zi, (0, axis + 1), (-2, -1))
     x_shape, zi_shape = x.shape, zi.shape
-    x = np.reshape(x, (-1, x.shape[-1]))
-    x = np.array(x, dtype, order='C')  # make a copy, can modify in place
-    zi = np.ascontiguousarray(np.reshape(zi, (-1, n_sections, 2)))
+    x = mx.reshape(x, (-1, x.shape[-1]))
+    x = mx.array(x, dtype, order='C')  # make a copy, can modify in place
+    zi = mx.ascontiguousarray(mx.reshape(zi, (-1, n_sections, 2)))
     sos = sos.astype(dtype, copy=False)
     _sosfilt(sos, x, zi)
     x = x.reshape(x_shape)
-    x = np.moveaxis(x, -1, axis)
+    x = mx.moveaxis(x, -1, axis)
     if return_zi:
         zi = zi.reshape(zi_shape)
-        zi = np.moveaxis(zi, (-2, -1), (0, axis + 1))
+        zi = mx.moveaxis(zi, (-2, -1), (0, axis + 1))
         out = (xp.asarray(x), xp.asarray(zi))
     else:
         out = xp.asarray(x)
@@ -5119,7 +5119,7 @@ def sosfiltfilt(sos, x, axis=-1, padtype='odd', padlen=None):
 
     Returns
     -------
-    y : ndarray
+    y : array
         The filtered output with the same shape as `x`.
 
     See Also
@@ -5132,15 +5132,15 @@ def sosfiltfilt(sos, x, axis=-1, padtype='odd', padlen=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import sosfiltfilt, butter
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
 
     Create an interesting signal to filter.
 
     >>> n = 201
-    >>> t = np.linspace(0, 1, n)
+    >>> t = mx.linspace(0, 1, n)
     >>> x = 1 + (t < 0.5) - 0.25*t**2 + 0.05*rng.standard_normal(n)
 
     Create a lowpass Butterworth filter, and use it to filter `x`.
@@ -5228,7 +5228,7 @@ def decimate(x, q, n=None, ftype='iir', axis=-1, zero_phase=True):
 
     Returns
     -------
-    y : ndarray
+    y : array
         The down-sampled signal.
 
     See Also
@@ -5249,7 +5249,7 @@ def decimate(x, q, n=None, ftype='iir', axis=-1, zero_phase=True):
     Examples
     --------
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
 
@@ -5267,13 +5267,13 @@ def decimate(x, q, n=None, ftype='iir', axis=-1, zero_phase=True):
 
     Create cosine wave.
 
-    >>> x = np.linspace(0, wave_duration, samples, endpoint=False)
-    >>> y = np.cos(x*np.pi*freq*2)
+    >>> x = mx.linspace(0, wave_duration, samples, endpoint=False)
+    >>> y = mx.cos(x*mx.pi*freq*2)
 
     Decimate cosine wave.
 
     >>> ydem = signal.decimate(y, q)
-    >>> xnew = np.linspace(0, wave_duration, samples_decimated, endpoint=False)
+    >>> xnew = mx.linspace(0, wave_duration, samples_decimated, endpoint=False)
 
     Plot original and decimated waves.
 
@@ -5284,31 +5284,31 @@ def decimate(x, q, n=None, ftype='iir', axis=-1, zero_phase=True):
 
     """
 
-    x = np.asarray(x)
+    x = mx.array(x)
     q = operator.index(q)
 
     if n is not None:
         n = operator.index(n)
 
     result_type = x.dtype
-    if not np.issubdtype(result_type, np.inexact) \
-       or result_type.type == np.float16:
+    if not mx.issubdtype(result_type, mx.inexact) \
+       or result_type.type == mx.float16:
         # upcast integers and float16 to float64
-        result_type = np.float64
+        result_type = mx.float64
 
     if ftype == 'fir':
         if n is None:
             half_len = 10 * q  # reasonable cutoff for our sinc-like function
             n = 2 * half_len
         b, a = firwin(n+1, 1. / q, window='hamming'), 1.
-        b = np.asarray(b, dtype=result_type)
-        a = np.asarray(a, dtype=result_type)
+        b = mx.array(b, dtype=result_type)
+        a = mx.array(a, dtype=result_type)
     elif ftype == 'iir':
         iir_use_sos = True
         if n is None:
             n = 8
         sos = cheby1(n, 0.05, 0.8 / q, output='sos')
-        sos = np.asarray(sos, dtype=result_type)
+        sos = mx.array(sos, dtype=result_type)
     elif isinstance(ftype, dlti):
         system = ftype._as_zpk()
         if system.poles.shape[0] == 0:
@@ -5316,9 +5316,9 @@ def decimate(x, q, n=None, ftype='iir', axis=-1, zero_phase=True):
             system = ftype._as_tf()
             b, a = system.num, system.den
             ftype = 'fir'
-        elif (any(np.iscomplex(system.poles))
-              or any(np.iscomplex(system.poles))
-              or np.iscomplex(system.gain)):
+        elif (any(mx.iscomplex(system.poles))
+              or any(mx.iscomplex(system.poles))
+              or mx.iscomplex(system.gain)):
             # sosfilt & sosfiltfilt don't handle complex coeffs
             iir_use_sos = False
             system = ftype._as_tf()
@@ -5326,7 +5326,7 @@ def decimate(x, q, n=None, ftype='iir', axis=-1, zero_phase=True):
         else:
             iir_use_sos = True
             sos = zpk2sos(system.zeros, system.poles, system.gain)
-            sos = np.asarray(sos, dtype=result_type)
+            sos = mx.array(sos, dtype=result_type)
     else:
         raise ValueError('invalid ftype')
 

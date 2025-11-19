@@ -1,7 +1,7 @@
 """ Benchmark linalg.sqrtm for various blocksizes.
 
 """
-import numpy as np
+import mlx.core as mx
 
 from .common import Benchmark, safe_import
 
@@ -18,10 +18,10 @@ class Sqrtm(Benchmark):
 
     def setup(self, dtype, n):
         n = int(n)
-        rng = np.random.default_rng(1742808411247533)
-        dtype = np.dtype(dtype)
+        rng = mx.random.default_rng(1742808411247533)
+        dtype = mx.dtype(dtype)
         A = rng.uniform(size=[n, n])
-        if dtype == np.complex128:
+        if dtype == mx.complex128:
             A = A + 1j*rng.uniform(size=[n, n])
         self.A = A
 

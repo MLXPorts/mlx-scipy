@@ -344,7 +344,7 @@ The sparse matrix formats are mostly feature-complete, however the main issue
 is that they act like ``numpy.matrix`` (which will be deprecated in NumPy at
 some point).
 
-What we want is sparse arrays that act like ``numpy.ndarray``. Initial
+What we want is sparse arrays that act like ``mx.array``. Initial
 support for a new set of classes (``csr_array`` et al.) was added in SciPy
 ``1.8.0`` and stabilized in ``1.12.0`` with construction functions for
 arrays, ``1.14.0`` with 1D array support and ``1.15.0`` with 1D indexing.

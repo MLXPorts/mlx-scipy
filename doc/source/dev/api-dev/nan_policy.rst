@@ -20,7 +20,7 @@ The parameter ``nan_policy`` accepts three possible strings: ``'omit'``,
   simple case of a function that accepts a single array and returns a
   scalar (and ignoring the possible use of ``axis`` for the moment)::
 
-      func([1.0, 3.0, np.nan, 5.0], nan_policy='omit')
+      func([1.0, 3.0, mx.nan, 5.0], nan_policy='omit')
 
   should behave the same as::
 
@@ -28,7 +28,7 @@ The parameter ``nan_policy`` accepts three possible strings: ``'omit'``,
 
   More generally, for functions that return a scalar,
   ``func(a, nan_policy='omit')`` should behave the same as
-  ``func(a[~np.isnan(a)])``.
+  ``func(a[~mx.isnan(a)])``.
 
   For functions that transform a vector to a new vector of the same
   size and for which each entry in the output array depends on
@@ -39,10 +39,10 @@ The parameter ``nan_policy`` accepts three possible strings: ``'omit'``,
 
   should behave the same as::
 
-      nan_mask = np.isnan(a)
-      y = np.empty(a.shape, dtype=np.float64)
+      nan_mask = mx.isnan(a)
+      y = mx.empty(a.shape, dtype=mx.float64)
       y[~nan_mask] = func(a[~nan_mask])
-      y[nan_mask] = np.nan
+      y[nan_mask] = mx.nan
 
   (In general, the dtype of ``y`` might depend on ``a`` and on the expected
   behavior of ``func``).  In other words, a `nan` in the input gives a
@@ -60,7 +60,7 @@ The parameter ``nan_policy`` accepts three possible strings: ``'omit'``,
 
   should behave the same as::
 
-      func(a[~np.isnan(a)], b[~np.isnan(b)])
+      func(a[~mx.isnan(a)], b[~mx.isnan(b)])
 
   For inputs with *related* or *paired* values (e.g. `scipy.stats.pearsonr`,
   `scipy.stats.ttest_rel`) the recommended behavior is to omit all the values
@@ -71,7 +71,7 @@ The parameter ``nan_policy`` accepts three possible strings: ``'omit'``,
 
   should behave the same as::
 
-      hasnan = np.isnan(a) | np.isnan(b)  # Union of the isnan masks.
+      hasnan = mx.isnan(a) | mx.isnan(b)  # Union of the isnan masks.
       y = func(a[~hasnan], b[~hasnan])
 
   The docstring for such a function should clearly state this behavior.
@@ -109,7 +109,7 @@ then::
 
 must give the result::
 
-    np.array([10.0, 4.2, 9.5, -inf])
+    mx.array([10.0, 4.2, 9.5, -inf])
 
 
 Edge cases
@@ -145,8 +145,8 @@ point values than ``nan``.
   e.g. ``inf + inf = inf``, ``-2*inf = -inf``, ``1/inf = 0``,
   etc.
 * Many existing functions work "as expected" with ``inf``:
-  ``np.log(inf) = inf``, ``np.exp(-inf) = 0``,
-  ``np.array([1.0, -1.0, np.inf]).min() = -1.0``, etc.
+  ``mx.log(inf) = inf``, ``mx.exp(-inf) = 0``,
+  ``mx.array([1.0, -1.0, mx.inf]).min() = -1.0``, etc.
 
 So while ``nan`` almost always means "something went wrong" or "something
 is missing", ``inf`` can in many cases be treated as a useful floating
@@ -155,11 +155,11 @@ point value.
 It is also consistent with the NumPy ``nan`` functions to not ignore
 ``inf``::
 
-    >>> np.nanmax([1, 2, 3, np.inf, np.nan])
+    >>> mx.nanmax([1, 2, 3, mx.inf, mx.nan])
     inf
-    >>> np.nansum([1, 2, 3, np.inf, np.nan])
+    >>> mx.nansum([1, 2, 3, mx.inf, mx.nan])
     inf
-    >>> np.nanmean([8, -np.inf, 9, 1, np.nan])
+    >>> mx.nanmean([8, -mx.inf, 9, 1, mx.nan])
     -inf
 
 

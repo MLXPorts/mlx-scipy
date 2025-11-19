@@ -1,6 +1,6 @@
 # This is a python implementation of dfovec.m,
 # provided at https://github.com/POptUS/BenDFO
-import numpy as np
+import mlx.core as mx
 
 
 def dfovec(m, n, x, nprob):
@@ -174,7 +174,7 @@ def dfovec(m, n, x, nprob):
     ]
 
     # Initialize things
-    fvec = np.zeros(m)
+    fvec = mx.zeros(m)
     total = 0
 
     if nprob == 1:  # Linear function - full rank.
@@ -201,22 +201,22 @@ def dfovec(m, n, x, nprob):
         fvec[1] = 1 - x[0]
     elif nprob == 5:  # Helical valley function.
         if x[0] > 0:
-            th = np.arctan(x[1] / x[0]) / (2 * np.pi)
+            th = mx.arctan(x[1] / x[0]) / (2 * mx.pi)
         elif x[0] < 0:
-            th = np.arctan(x[1] / x[0]) / (2 * np.pi) + 0.5
+            th = mx.arctan(x[1] / x[0]) / (2 * mx.pi) + 0.5
         elif x[0] == x[1] and x[1] == 0:
             th = 0.0
         else:
             th = 0.25
-        r = np.sqrt(x[0] * x[0] + x[1] * x[1])
+        r = mx.sqrt(x[0] * x[0] + x[1] * x[1])
         fvec[0] = 10 * (x[2] - 10 * th)
         fvec[1] = 10 * (r - 1)
         fvec[2] = x[2]
     elif nprob == 6:  # Powell singular function.
         fvec[0] = x[0] + 10 * x[1]
-        fvec[1] = np.sqrt(5) * (x[2] - x[3])
+        fvec[1] = mx.sqrt(5) * (x[2] - x[3])
         fvec[2] = (x[1] - 2 * x[2]) ** 2
-        fvec[3] = np.sqrt(10) * (x[0] - x[3]) ** 2
+        fvec[3] = mx.sqrt(10) * (x[0] - x[3]) ** 2
     elif nprob == 7:  # Freudenstein and Roth function.
         fvec[0] = -c13 + x[0] + ((5 - x[1]) * x[1] - 2) * x[1]
         fvec[1] = -c29 + x[0] + ((1 + x[1]) * x[1] - c14) * x[1]
@@ -237,7 +237,7 @@ def dfovec(m, n, x, nprob):
         for i in range(16):
             temp = 5 * (i + 1) + c45 + x[2]
             tmp1 = x[1] / temp
-            tmp2 = np.exp(tmp1)
+            tmp2 = mx.exp(tmp1)
             fvec[i] = x[0] * tmp2 - y3[i]
     elif nprob == 11:  # Watson function.
         for i in range(29):
@@ -260,19 +260,19 @@ def dfovec(m, n, x, nprob):
             temp = i + 1
             tmp1 = temp / 10
             fvec[i] = (
-                np.exp(-tmp1 * x[0])
-                - np.exp(-tmp1 * x[1])
-                + (np.exp(-temp) - np.exp(-tmp1)) * x[2]
+                mx.exp(-tmp1 * x[0])
+                - mx.exp(-tmp1 * x[1])
+                + (mx.exp(-temp) - mx.exp(-tmp1)) * x[2]
             )
     elif nprob == 13:  # Jennrich and Sampson function.
         for i in range(m):
             temp = i + 1
-            fvec[i] = 2 + 2 * temp - np.exp(temp * x[0]) - np.exp(temp * x[1])
+            fvec[i] = 2 + 2 * temp - mx.exp(temp * x[0]) - mx.exp(temp * x[1])
     elif nprob == 14:  # Brown and Dennis function.
         for i in range(m):
             temp = (i + 1) / 5
-            tmp1 = x[0] + temp * x[1] - np.exp(temp)
-            tmp2 = x[2] + np.sin(temp) * x[3] - np.cos(temp)
+            tmp1 = x[0] + temp * x[1] - mx.exp(temp)
+            tmp2 = x[2] + mx.sin(temp) * x[3] - mx.cos(temp)
             fvec[i] = tmp1 * tmp1 + tmp2 * tmp2
     elif nprob == 15:  # Chebyquad function.
         for j in range(n):
@@ -302,16 +302,16 @@ def dfovec(m, n, x, nprob):
     elif nprob == 17:  # Osborne 1 function.
         for i in range(33):
             temp = 10 * i
-            tmp1 = np.exp(-x[3] * temp)
-            tmp2 = np.exp(-x[4] * temp)
+            tmp1 = mx.exp(-x[3] * temp)
+            tmp2 = mx.exp(-x[4] * temp)
             fvec[i] = y4[i] - (x[0] + x[1] * tmp1 + x[2] * tmp2)
     elif nprob == 18:  # Osborne 2 function.
         for i in range(65):
             temp = i / 10
-            tmp1 = np.exp(-x[4] * temp)
-            tmp2 = np.exp(-x[5] * (temp - x[8]) ** 2)
-            tmp3 = np.exp(-x[6] * (temp - x[9]) ** 2)
-            tmp4 = np.exp(-x[7] * (temp - x[10]) ** 2)
+            tmp1 = mx.exp(-x[4] * temp)
+            tmp2 = mx.exp(-x[5] * (temp - x[8]) ** 2)
+            tmp3 = mx.exp(-x[6] * (temp - x[9]) ** 2)
+            tmp4 = mx.exp(-x[7] * (temp - x[10]) ** 2)
             fvec[i] = y5[i] - (x[0] * tmp1 + x[1] * tmp2 + x[2] * tmp3 + x[3] * tmp4)
     elif nprob == 19:  # Bdqrtic
         # n >= 5, m = (n-4)*2
@@ -334,8 +334,8 @@ def dfovec(m, n, x, nprob):
         for i in range(n):
             ss = 0
             for j in range(n):
-                v2 = np.sqrt(x[i] ** 2 + (i + 1) / (j + 1))
-                ss = ss + v2 * ((np.sin(np.log(v2))) ** 5 + (np.cos(np.log(v2))) ** 5)
+                v2 = mx.sqrt(x[i] ** 2 + (i + 1) / (j + 1))
+                ss = ss + v2 * ((mx.sin(mx.log(v2))) ** 5 + (mx.cos(mx.log(v2))) ** 5)
             fvec[i] = 1400 * x[i] + (i - 49) ** 3 + ss
     elif nprob == 22:  # Heart8ls
         # m = n = 8

@@ -1,5 +1,5 @@
 import warnings
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._array_api import xp_capabilities
 from scipy._lib._util import check_random_state, MapWrapper, rng_integers, _contains_nan
@@ -38,7 +38,7 @@ def _perm_test(x, y, stat, reps=1000, workers=-1, random_state=None):
 
     Parameters
     ----------
-    x, y : ndarray
+    x, y : array
         `x` and `y` have shapes ``(n, p)`` and ``(n, q)``.
     stat : float
         The sample test statistic.
@@ -56,7 +56,7 @@ def _perm_test(x, y, stat, reps=1000, workers=-1, random_state=None):
     random_state : {None, int, `numpy.random.Generator`,
                     `numpy.random.RandomState`}, optional
 
-        If `seed` is None (or `np.random`), the `numpy.random.RandomState`
+        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.
@@ -74,13 +74,13 @@ def _perm_test(x, y, stat, reps=1000, workers=-1, random_state=None):
     # generate seeds for each rep (change to new parallel random number
     # capabilities in numpy >= 1.17+)
     random_state = check_random_state(random_state)
-    random_states = [np.random.RandomState(rng_integers(random_state, 1 << 32,
-                     size=4, dtype=np.uint32)) for _ in range(reps)]
+    random_states = [mx.random.RandomState(rng_integers(random_state, 1 << 32,
+                     size=4, dtype=mx.uint32)) for _ in range(reps)]
 
     # parallelizes with specified workers over number of reps and set seeds
     parallelp = _ParallelP(x=x, y=y, random_states=random_states)
     with MapWrapper(workers) as mapwrapper:
-        null_dist = np.array(list(mapwrapper(parallelp, range(reps))))
+        null_dist = mx.array(list(mapwrapper(parallelp, range(reps))))
 
     # calculate p-value and significant permutation map through list
     pvalue = (1 + (null_dist >= stat).sum()) / (1 + reps)
@@ -120,7 +120,7 @@ def multiscale_graphcorr(x, y, compute_distance=_euclidean_dist, reps=1000,
 
     Parameters
     ----------
-    x, y : ndarray
+    x, y : array
         If ``x`` and ``y`` have shapes ``(n, p)`` and ``(n, q)`` where `n` is
         the number of samples and `p` and `q` are the number of dimensions,
         then the MGC independence test will be run.  Alternatively, ``x`` and
@@ -156,7 +156,7 @@ def multiscale_graphcorr(x, y, compute_distance=_euclidean_dist, reps=1000,
     random_state : {None, int, `numpy.random.Generator`,
                     `numpy.random.RandomState`}, optional
 
-        If `seed` is None (or `np.random`), the `numpy.random.RandomState`
+        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.
@@ -175,7 +175,7 @@ def multiscale_graphcorr(x, y, compute_distance=_euclidean_dist, reps=1000,
         mgc_dict : dict
             Contains additional useful results:
 
-                - mgc_map : ndarray
+                - mgc_map : array
                     A 2D representation of the latent geometry of the
                     relationship.
                 - opt_scale : (int, int)
@@ -271,9 +271,9 @@ def multiscale_graphcorr(x, y, compute_distance=_euclidean_dist, reps=1000,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import multiscale_graphcorr
-    >>> x = np.arange(100)
+    >>> x = mx.arange(100)
     >>> y = x
     >>> res = multiscale_graphcorr(x, y)
     >>> res.statistic, res.pvalue
@@ -281,31 +281,31 @@ def multiscale_graphcorr(x, y, compute_distance=_euclidean_dist, reps=1000,
 
     To run an unpaired two-sample test,
 
-    >>> x = np.arange(100)
-    >>> y = np.arange(79)
+    >>> x = mx.arange(100)
+    >>> y = mx.arange(79)
     >>> res = multiscale_graphcorr(x, y)
     >>> res.statistic, res.pvalue  # doctest: +SKIP
     (0.033258146255703246, 0.023)
 
     or, if shape of the inputs are the same,
 
-    >>> x = np.arange(100)
+    >>> x = mx.arange(100)
     >>> y = x
     >>> res = multiscale_graphcorr(x, y, is_twosamp=True)
     >>> res.statistic, res.pvalue  # doctest: +SKIP
     (-0.008021809890200488, 1.0)
 
     """
-    if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):
-        raise ValueError("x and y must be ndarrays")
+    if not isinstance(x, mx.array) or not isinstance(y, mx.array):
+        raise ValueError("x and y must be arrays")
 
     # convert arrays of type (n,) to (n, 1)
     if x.ndim == 1:
-        x = x[:, np.newaxis]
+        x = x[:, mx.newaxis]
     elif x.ndim != 2:
         raise ValueError(f"Expected a 2-D array `x`, found shape {x.shape}")
     if y.ndim == 1:
-        y = y[:, np.newaxis]
+        y = y[:, mx.newaxis]
     elif y.ndim != 2:
         raise ValueError(f"Expected a 2-D array `y`, found shape {y.shape}")
 
@@ -317,7 +317,7 @@ def multiscale_graphcorr(x, y, compute_distance=_euclidean_dist, reps=1000,
     _contains_nan(y, nan_policy='raise')
 
     # check for positive or negative infinity and raise error
-    if np.sum(np.isinf(x)) > 0 or np.sum(np.isinf(y)) > 0:
+    if mx.sum(mx.isinf(x)) > 0 or mx.sum(mx.isinf(y)) > 0:
         raise ValueError("Inputs contain infinities")
 
     if nx != ny:
@@ -333,8 +333,8 @@ def multiscale_graphcorr(x, y, compute_distance=_euclidean_dist, reps=1000,
                          "results.")
 
     # convert x and y to float
-    x = x.astype(np.float64)
-    y = y.astype(np.float64)
+    x = x.astype(mx.float64)
+    y = y.astype(mx.float64)
 
     # check if compute_distance_matrix if a callable()
     if not callable(compute_distance) and compute_distance is not None:
@@ -385,7 +385,7 @@ def _mgc_stat(distx, disty):
 
     Parameters
     ----------
-    distx, disty : ndarray
+    distx, disty : array
         `distx` and `disty` have shapes ``(n, p)`` and ``(n, q)`` or
         ``(n, n)`` and ``(n, n)``
         if distance matrices.
@@ -398,7 +398,7 @@ def _mgc_stat(distx, disty):
         Contains additional useful additional returns containing the following
         keys:
 
-            - stat_mgc_map : ndarray
+            - stat_mgc_map : array
                 MGC-map of the statistics.
             - opt_scale : (float, float)
                 The estimated optimal scale as a ``(x, y)`` pair.
@@ -435,14 +435,14 @@ def _threshold_mgc_map(stat_mgc_map, samp_size):
 
     Parameters
     ----------
-    stat_mgc_map : ndarray
+    stat_mgc_map : array
         All local correlations within ``[-1,1]``.
     samp_size : int
         The sample size of original data.
 
     Returns
     -------
-    sig_connect : ndarray
+    sig_connect : array
         A binary matrix with 1's indicating the significant region.
 
     """
@@ -461,15 +461,15 @@ def _threshold_mgc_map(stat_mgc_map, samp_size):
 
     # find the largest connected component of significant correlations
     sig_connect = stat_mgc_map > threshold
-    if np.sum(sig_connect) > 0:
+    if mx.sum(sig_connect) > 0:
         sig_connect, _ = _measurements.label(sig_connect)
-        _, label_counts = np.unique(sig_connect, return_counts=True)
+        _, label_counts = mx.unique(sig_connect, return_counts=True)
 
         # skip the first element in label_counts, as it is count(zeros)
-        max_label = np.argmax(label_counts[1:]) + 1
+        max_label = mx.argmax(label_counts[1:]) + 1
         sig_connect = sig_connect == max_label
     else:
-        sig_connect = np.array([[False]])
+        sig_connect = mx.array([[False]])
 
     return sig_connect
 
@@ -482,9 +482,9 @@ def _smooth_mgc_map(sig_connect, stat_mgc_map):
 
     Parameters
     ----------
-    sig_connect : ndarray
+    sig_connect : array
         A binary matrix with 1's indicating the significant region.
-    stat_mgc_map : ndarray
+    stat_mgc_map : array
         All local correlations within ``[-1, 1]``.
 
     Returns
@@ -502,24 +502,24 @@ def _smooth_mgc_map(sig_connect, stat_mgc_map):
     stat = stat_mgc_map[m - 1][n - 1]
     opt_scale = [m, n]
 
-    if np.linalg.norm(sig_connect) != 0:
+    if mx.linalg.norm(sig_connect) != 0:
         # proceed only when the connected region's area is sufficiently large
         # 0.02 is simply an empirical threshold, this can be set to 0.01 or 0.05
         # with varying levels of performance
-        if np.sum(sig_connect) >= np.ceil(0.02 * max(m, n)) * min(m, n):
+        if mx.sum(sig_connect) >= mx.ceil(0.02 * max(m, n)) * min(m, n):
             max_corr = max(stat_mgc_map[sig_connect])
 
             # find all scales within significant_connected_region that maximize
             # the local correlation
-            max_corr_index = np.where((stat_mgc_map >= max_corr) & sig_connect)
+            max_corr_index = mx.where((stat_mgc_map >= max_corr) & sig_connect)
 
             if max_corr >= stat:
                 stat = max_corr
 
                 k, l = max_corr_index
                 one_d_indices = k * n + l  # 2D to 1D indexing
-                k = np.max(one_d_indices) // n
-                l = np.max(one_d_indices) % n
+                k = mx.max(one_d_indices) // n
+                l = mx.max(one_d_indices) % n
                 opt_scale = [k+1, l+1]  # adding 1s to match R indexing
 
     return stat, opt_scale
@@ -532,21 +532,21 @@ def _two_sample_transform(u, v):
 
     Parameters
     ----------
-    u, v : ndarray
+    u, v : array
         `u` and `v` have shapes ``(n, p)`` and ``(m, p)``.
 
     Returns
     -------
-    x : ndarray
+    x : array
         Concatenate `u` and `v` along the ``axis = 0``. `x` thus has shape
         ``(2n, p)``.
-    y : ndarray
+    y : array
         Label matrix for `x` where 0 refers to samples that comes from `u` and
         1 refers to samples that come from `v`. `y` thus has shape ``(2n, 1)``.
 
     """
     nx = u.shape[0]
     ny = v.shape[0]
-    x = np.concatenate([u, v], axis=0)
-    y = np.concatenate([np.zeros(nx), np.ones(ny)], axis=0).reshape(-1, 1)
+    x = mx.concatenate([u, v], axis=0)
+    y = mx.concatenate([mx.zeros(nx), mx.ones(ny)], axis=0).reshape(-1, 1)
     return x, y

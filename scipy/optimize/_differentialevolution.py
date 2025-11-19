@@ -5,7 +5,7 @@ Added by Andrew Nelson 2014
 from functools import partial
 import warnings
 
-import numpy as np
+import mlx.core as mx
 
 from scipy.optimize import OptimizeResult, minimize
 from scipy.optimize._constraints import (Bounds, new_bounds_to_old,
@@ -19,7 +19,7 @@ from scipy._lib._sparse import issparse
 __all__ = ['differential_evolution']
 
 
-_MACHEPS = np.finfo(np.float64).eps
+_MACHEPS = mx.finfo(mx.float64).eps
 
 
 @_transition_to_rng("seed", position_num=9)
@@ -82,7 +82,7 @@ def differential_evolution(func, bounds, args=(), strategy='best1bin',
         outlined in 'Notes'.
         Alternatively the differential evolution strategy can be customized by
         providing a callable that constructs a trial vector. The callable must
-        have the form ``strategy(candidate: int, population: np.ndarray, rng=None)``,
+        have the form ``strategy(candidate: int, population: mx.array, rng=None)``,
         where ``candidate`` is an integer specifying which entry of the
         population is being evolved, ``population`` is an array of shape
         ``(S, N)`` containing all the population members (where S is the
@@ -108,7 +108,7 @@ def differential_evolution(func, bounds, args=(), strategy='best1bin',
         of 2 after ``popsize * (N - N_equal)``.
     tol : float, optional
         Relative tolerance for convergence, the solving stops when
-        ``np.std(population_energies) <= atol + tol * np.abs(np.mean(population_energies))``,
+        ``mx.std(population_energies) <= atol + tol * mx.abs(mx.mean(population_energies))``,
         where and `atol` and `tol` are the absolute and relative tolerance
         respectively.
     mutation : float or tuple(float, float), optional
@@ -218,7 +218,7 @@ def differential_evolution(func, bounds, args=(), strategy='best1bin',
         convergence.
     atol : float, optional
         Absolute tolerance for convergence, the solving stops when
-        ``np.std(population_energies) <= atol + tol * np.abs(np.mean(population_energies))``,
+        ``mx.std(population_energies) <= atol + tol * mx.abs(mx.mean(population_energies))``,
         where and `atol` and `tol` are the absolute and relative tolerance
         respectively.
     updating : {'immediate', 'deferred'}, optional
@@ -410,7 +410,7 @@ def differential_evolution(func, bounds, args=(), strategy='best1bin',
     Let us consider the problem of minimizing the Rosenbrock function. This
     function is implemented in `rosen` in `scipy.optimize`.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import rosen, differential_evolution
     >>> bounds = [(0,2), (0, 2), (0, 2), (0, 2), (0, 2)]
     >>> result = differential_evolution(rosen, bounds)
@@ -433,7 +433,7 @@ def differential_evolution(func, bounds, args=(), strategy='best1bin',
     ``A @ x <= 1.9``, where ``A = array([[1, 1]])``.  This can be encoded as
     a `LinearConstraint` instance:
 
-    >>> lc = LinearConstraint([[1, 1]], -np.inf, 1.9)
+    >>> lc = LinearConstraint([[1, 1]], -mx.inf, 1.9)
 
     Specify limits using a `Bounds` object.
 
@@ -447,9 +447,9 @@ def differential_evolution(func, bounds, args=(), strategy='best1bin',
     (https://en.wikipedia.org/wiki/Test_functions_for_optimization).
 
     >>> def ackley(x):
-    ...     arg1 = -0.2 * np.sqrt(0.5 * (x[0] ** 2 + x[1] ** 2))
-    ...     arg2 = 0.5 * (np.cos(2. * np.pi * x[0]) + np.cos(2. * np.pi * x[1]))
-    ...     return -20. * np.exp(arg1) - np.exp(arg2) + 20. + np.e
+    ...     arg1 = -0.2 * mx.sqrt(0.5 * (x[0] ** 2 + x[1] ** 2))
+    ...     arg2 = 0.5 * (mx.cos(2. * mx.pi * x[0]) + mx.cos(2. * mx.pi * x[1]))
+    ...     return -20. * mx.exp(arg1) - mx.exp(arg2) + 20. + mx.e
     >>> bounds = [(-5, 5), (-5, 5)]
     >>> result = differential_evolution(ackley, bounds, rng=1)
     >>> result.x, result.fun
@@ -485,10 +485,10 @@ def differential_evolution(func, bounds, args=(), strategy='best1bin',
     >>> def custom_strategy_fn(candidate, population, rng=None):
     ...     parameter_count = population.shape(-1)
     ...     mutation, recombination = 0.7, 0.9
-    ...     trial = np.copy(population[candidate])
+    ...     trial = mx.copy(population[candidate])
     ...     fill_point = rng.choice(parameter_count)
     ...
-    ...     pool = np.arange(len(population))
+    ...     pool = mx.arange(len(population))
     ...     rng.shuffle(pool)
     ...
     ...     # two unique random numbers that aren't the same, and
@@ -508,7 +508,7 @@ def differential_evolution(func, bounds, args=(), strategy='best1bin',
     ...     crossovers = rng.uniform(size=parameter_count)
     ...     crossovers = crossovers < recombination
     ...     crossovers[fill_point] = True
-    ...     trial = np.where(crossovers, bprime, trial)
+    ...     trial = mx.where(crossovers, bprime, trial)
     ...     return trial
 
     """# noqa: E501
@@ -583,7 +583,7 @@ class DifferentialEvolutionSolver:
         Alternatively the differential evolution strategy can be customized
         by providing a callable that constructs a trial vector. The callable
         must have the form
-        ``strategy(candidate: int, population: np.ndarray, rng=None)``,
+        ``strategy(candidate: int, population: mx.array, rng=None)``,
         where ``candidate`` is an integer specifying which entry of the
         population is being evolved, ``population`` is an array of shape
         ``(S, N)`` containing all the population members (where S is the
@@ -605,7 +605,7 @@ class DifferentialEvolutionSolver:
         of 2 after ``popsize * (N - N_equal)``.
     tol : float, optional
         Relative tolerance for convergence, the solving stops when
-        ``np.std(population_energies) <= atol + tol * np.abs(np.mean(population_energies))``,
+        ``mx.std(population_energies) <= atol + tol * mx.abs(mx.mean(population_energies))``,
         where and `atol` and `tol` are the absolute and relative tolerance
         respectively.
     mutation : float or tuple(float, float), optional
@@ -643,7 +643,7 @@ class DifferentialEvolutionSolver:
         If this argument is passed by position or `seed` is passed by keyword, the
         behavior is:
 
-        - If `seed` is None (or `np.random`), the `numpy.random.RandomState`
+        - If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
           singleton is used.
         - If `seed` is an int, a new `RandomState` instance is used,
           seeded with `seed`.
@@ -728,7 +728,7 @@ class DifferentialEvolutionSolver:
         convergence.
     atol : float, optional
         Absolute tolerance for convergence, the solving stops when
-        ``np.std(pop) <= atol + tol * np.abs(np.mean(population_energies))``,
+        ``mx.std(pop) <= atol + tol * mx.abs(mx.mean(population_energies))``,
         where and `atol` and `tol` are the absolute and relative tolerance
         respectively.
     updating : {'immediate', 'deferred'}, optional
@@ -804,7 +804,7 @@ class DifferentialEvolutionSolver:
     def __init__(self, func, bounds, args=(),
                  strategy='best1bin', maxiter=1000, popsize=15,
                  tol=0.01, mutation=(0.5, 1), recombination=0.7, rng=None,
-                 maxfun=np.inf, callback=None, disp=False, polish=True,
+                 maxfun=mx.inf, callback=None, disp=False, polish=True,
                  init='latinhypercube', atol=0, updating='immediate',
                  workers=1, constraints=(), x0=None, *, integrality=None,
                  vectorized=False):
@@ -853,7 +853,7 @@ class DifferentialEvolutionSolver:
                 # send an array (N, S) to the user func,
                 # expect to receive (S,). Transposition is required because
                 # internally the population is held as (S, N)
-                return np.atleast_1d(func(x.T))
+                return mx.atleast_1d(func(x.T))
             workers = maplike_for_vectorized_func
 
         self._mapwrapper = MapWrapper(workers)
@@ -864,9 +864,9 @@ class DifferentialEvolutionSolver:
         # Mutation constant should be in [0, 2). If specified as a sequence
         # then dithering is performed.
         self.scale = mutation
-        if (not np.all(np.isfinite(mutation)) or
-                np.any(np.array(mutation) >= 2) or
-                np.any(np.array(mutation) < 0)):
+        if (not mx.all(mx.isfinite(mutation)) or
+                mx.any(mx.array(mutation) >= 2) or
+                mx.any(mx.array(mutation) < 0)):
             raise ValueError('The mutation constant must be a float in '
                              'U[0, 2), or specified as a tuple(min, max)'
                              ' where min < max and min, max are in U[0, 2).')
@@ -888,15 +888,15 @@ class DifferentialEvolutionSolver:
         # [(low_0, high_0), ..., (low_n, high_n]
         #     -> [[low_0, ..., low_n], [high_0, ..., high_n]]
         if isinstance(bounds, Bounds):
-            self.limits = np.array(new_bounds_to_old(bounds.lb,
+            self.limits = mx.array(new_bounds_to_old(bounds.lb,
                                                      bounds.ub,
                                                      len(bounds.lb)),
                                    dtype=float).T
         else:
-            self.limits = np.array(bounds, dtype='float').T
+            self.limits = mx.array(bounds, dtype='float').T
 
-        if (np.size(self.limits, 0) != 2 or not
-                np.all(np.isfinite(self.limits))):
+        if (mx.size(self.limits, 0) != 2 or not
+                mx.all(mx.isfinite(self.limits))):
             raise ValueError('bounds should be a sequence containing finite '
                              'real valued (min, max) pairs for each value'
                              ' in x')
@@ -905,7 +905,7 @@ class DifferentialEvolutionSolver:
             maxiter = 1000
         self.maxiter = maxiter
         if maxfun is None:  # the default used to be None
-            maxfun = np.inf
+            maxfun = mx.inf
         self.maxfun = maxfun
 
         # population is scaled to between [0, 1].
@@ -913,40 +913,40 @@ class DifferentialEvolutionSolver:
         # save these arguments for _scale_parameter and
         # _unscale_parameter. This is an optimization
         self.__scale_arg1 = 0.5 * (self.limits[0] + self.limits[1])
-        self.__scale_arg2 = np.fabs(self.limits[0] - self.limits[1])
-        with np.errstate(divide='ignore'):
+        self.__scale_arg2 = mx.fabs(self.limits[0] - self.limits[1])
+        with mx.errstate(divide='ignore'):
             # if lb == ub then the following line will be 1/0, which is why
             # we ignore the divide by zero warning. The result from 1/0 is
             # inf, so replace those values by 0.
             self.__recip_scale_arg2 = 1 / self.__scale_arg2
-            self.__recip_scale_arg2[~np.isfinite(self.__recip_scale_arg2)] = 0
+            self.__recip_scale_arg2[~mx.isfinite(self.__recip_scale_arg2)] = 0
 
-        self.parameter_count = np.size(self.limits, 1)
+        self.parameter_count = mx.size(self.limits, 1)
 
         self.random_number_generator = check_random_state(rng)
 
         # Which parameters are going to be integers?
-        if np.any(integrality):
+        if mx.any(integrality):
             # # user has provided a truth value for integer constraints
-            integrality = np.broadcast_to(
+            integrality = mx.broadcast_to(
                 integrality,
                 self.parameter_count
             )
-            integrality = np.asarray(integrality, bool)
+            integrality = mx.array(integrality, bool)
             # For integrality parameters change the limits to only allow
             # integer values lying between the limits.
-            lb, ub = np.copy(self.limits)
+            lb, ub = mx.copy(self.limits)
 
-            lb = np.ceil(lb)
-            ub = np.floor(ub)
+            lb = mx.ceil(lb)
+            ub = mx.floor(ub)
             if not (lb[integrality] <= ub[integrality]).all():
                 # there's a parameter that doesn't have an integer value
                 # lying between the limits
                 raise ValueError("One of the integrality constraints does not"
                                  " have any possible integer values between"
                                  " the lower/upper bounds.")
-            nlb = np.nextafter(lb[integrality] - 0.5, np.inf)
-            nub = np.nextafter(ub[integrality] + 0.5, -np.inf)
+            nlb = mx.nextafter(lb[integrality] - 0.5, mx.inf)
+            nub = mx.nextafter(ub[integrality] + 0.5, -mx.inf)
 
             self.integrality = integrality
             self.limits[0, self.integrality] = nlb
@@ -956,7 +956,7 @@ class DifferentialEvolutionSolver:
 
         # check for equal bounds
         eb = self.limits[0] == self.limits[1]
-        eb_count = np.count_nonzero(eb)
+        eb_count = mx.count_nonzero(eb)
 
         # default population initialization is a latin hypercube design, but
         # there are other population initializations possible.
@@ -978,7 +978,7 @@ class DifferentialEvolutionSolver:
                 self.init_population_lhs()
             elif init == 'sobol':
                 # must be Ns = 2**m for Sobol'
-                n_s = int(2 ** np.ceil(np.log2(self.num_population_members)))
+                n_s = int(2 ** mx.ceil(mx.log2(self.num_population_members)))
                 self.num_population_members = n_s
                 self.population_shape = (self.num_population_members,
                                          self.parameter_count)
@@ -995,7 +995,7 @@ class DifferentialEvolutionSolver:
         if x0 is not None:
             # scale to within unit interval and
             # ensure parameters are within bounds.
-            x0_scaled = self._unscale_parameters(np.asarray(x0))
+            x0_scaled = self._unscale_parameters(mx.array(x0))
             if ((x0_scaled > 1.0) | (x0_scaled < 0.0)).any():
                 raise ValueError(
                     "Some entries in x0 lay outside the specified bounds"
@@ -1017,15 +1017,15 @@ class DifferentialEvolutionSolver:
             self._wrapped_constraints = [
                 _ConstraintWrapper(constraints, self.x)
             ]
-        self.total_constraints = np.sum(
+        self.total_constraints = mx.sum(
             [c.num_constr for c in self._wrapped_constraints]
         )
-        self.constraint_violation = np.zeros((self.num_population_members, 1))
-        self.feasible = np.ones(self.num_population_members, bool)
+        self.constraint_violation = mx.zeros((self.num_population_members, 1))
+        self.feasible = mx.ones(self.num_population_members, bool)
 
         # an array to shuffle when selecting candidates. Create it here
         # rather than repeatedly creating it in _select_samples.
-        self._random_population_index = np.arange(self.num_population_members)
+        self._random_population_index = mx.arange(self.num_population_members)
         self.disp = disp
 
     def init_population_lhs(self):
@@ -1047,11 +1047,11 @@ class DifferentialEvolutionSolver:
         samples = (segsize * rng.uniform(size=self.population_shape)
 
         # Offset each segment to cover the entire parameter range [0, 1)
-                   + np.linspace(0., 1., self.num_population_members,
-                                 endpoint=False)[:, np.newaxis])
+                   + mx.linspace(0., 1., self.num_population_members,
+                                 endpoint=False)[:, mx.newaxis])
 
         # Create an array for population of candidate solutions.
-        self.population = np.zeros_like(samples)
+        self.population = mx.zeros_like(samples)
 
         # Initialize population of candidate solutions by permutation of the
         # random samples.
@@ -1060,8 +1060,8 @@ class DifferentialEvolutionSolver:
             self.population[:, j] = samples[order, j]
 
         # reset population energies
-        self.population_energies = np.full(self.num_population_members,
-                                           np.inf)
+        self.population_energies = mx.full(self.num_population_members,
+                                           mx.inf)
 
         # reset number of function evaluations counter
         self._nfev = 0
@@ -1096,8 +1096,8 @@ class DifferentialEvolutionSolver:
         self.population = sampler.random(n=self.num_population_members)
 
         # reset population energies
-        self.population_energies = np.full(self.num_population_members,
-                                           np.inf)
+        self.population_energies = mx.full(self.num_population_members,
+                                           mx.inf)
 
         # reset number of function evaluations counter
         self._nfev = 0
@@ -1111,8 +1111,8 @@ class DifferentialEvolutionSolver:
         self.population = rng.uniform(size=self.population_shape)
 
         # reset population energies
-        self.population_energies = np.full(self.num_population_members,
-                                           np.inf)
+        self.population_energies = mx.full(self.num_population_members,
+                                           mx.inf)
 
         # reset number of function evaluations counter
         self._nfev = 0
@@ -1123,31 +1123,31 @@ class DifferentialEvolutionSolver:
 
         Parameters
         ----------
-        init : np.ndarray
+        init : mx.array
             Array specifying subset of the initial population. The array should
             have shape (S, N), where N is the number of parameters.
             The population is clipped to the lower and upper bounds.
         """
         # make sure you're using a float array
-        popn = np.asarray(init, dtype=np.float64)
+        popn = mx.array(init, dtype=mx.float64)
 
-        if (np.size(popn, 0) < 5 or
+        if (mx.size(popn, 0) < 5 or
                 popn.shape[1] != self.parameter_count or
                 len(popn.shape) != 2):
             raise ValueError("The population supplied needs to have shape"
                              " (S, len(x)), where S > 4.")
 
         # scale values and clip to bounds, assigning to population
-        self.population = np.clip(self._unscale_parameters(popn), 0, 1)
+        self.population = mx.clip(self._unscale_parameters(popn), 0, 1)
 
-        self.num_population_members = np.size(self.population, 0)
+        self.num_population_members = mx.size(self.population, 0)
 
         self.population_shape = (self.num_population_members,
                                  self.parameter_count)
 
         # reset population energies
-        self.population_energies = np.full(self.num_population_members,
-                                           np.inf)
+        self.population_energies = mx.full(self.num_population_members,
+                                           mx.inf)
 
         # reset number of function evaluations counter
         self._nfev = 0
@@ -1165,21 +1165,21 @@ class DifferentialEvolutionSolver:
         The standard deviation of the population energies divided by their
         mean.
         """
-        if np.any(np.isinf(self.population_energies)):
-            return np.inf
-        return (np.std(self.population_energies) /
-                (np.abs(np.mean(self.population_energies)) + _MACHEPS))
+        if mx.any(mx.isinf(self.population_energies)):
+            return mx.inf
+        return (mx.std(self.population_energies) /
+                (mx.abs(mx.mean(self.population_energies)) + _MACHEPS))
 
     def converged(self):
         """
         Return True if the solver has converged.
         """
-        if np.any(np.isinf(self.population_energies)):
+        if mx.any(mx.isinf(self.population_energies)):
             return False
 
-        return (np.std(self.population_energies) <=
+        return (mx.std(self.population_energies) <=
                 self.atol +
-                self.tol * np.abs(np.mean(self.population_energies)))
+                self.tol * mx.abs(mx.mean(self.population_energies)))
 
     def solve(self):
         """
@@ -1205,11 +1205,11 @@ class DifferentialEvolutionSolver:
         status_message = _status_message['success']
 
         # The population may have just been initialized (all entries are
-        # np.inf). If it has you have to calculate the initial energies.
+        # mx.inf). If it has you have to calculate the initial energies.
         # Although this is also done in the evolve generator it's possible
         # that someone can set maxiter=0, at which point we still want the
         # initial energies to be calculated (the following loop isn't run).
-        if np.all(np.isinf(self.population_energies)):
+        if mx.all(mx.isinf(self.population_energies)):
             self.feasible, self.constraint_violation = (
                 self._calculate_population_feasibilities(self.population))
 
@@ -1263,9 +1263,9 @@ class DifferentialEvolutionSolver:
             nit=nit, message=status_message, warning_flag=warning_flag
         )
 
-        if self.polish and not np.all(self.integrality):
+        if self.polish and not mx.all(self.integrality):
             # can't polish if all the parameters are integers
-            if np.any(self.integrality):
+            if mx.any(self.integrality):
                 # set the lower/upper bounds equal so that any integrality
                 # constraints work.
                 limits, integrality = self.limits, self.integrality
@@ -1278,7 +1278,7 @@ class DifferentialEvolutionSolver:
                 polish_method = 'trust-constr'
 
                 constr_violation = self._constraint_violation_fn(DE_result.x)
-                if np.any(constr_violation > 0.):
+                if mx.any(constr_violation > 0.):
                     warnings.warn("differential evolution didn't find a "
                                   "solution satisfying the constraints, "
                                   "attempting to polish from the least "
@@ -1290,14 +1290,14 @@ class DifferentialEvolutionSolver:
             if not callable(pf):
                 pf = partial(minimize, method=polish_method)
                 def _f(x):
-                    return list(self._mapwrapper(self.func, np.atleast_2d(x)))[0]
+                    return list(self._mapwrapper(self.func, mx.atleast_2d(x)))[0]
 
                 if self.disp:
                     print(f"Polishing solution with '{polish_method}'")
 
             result = pf(
                 _f,
-                np.copy(DE_result.x),
+                mx.copy(DE_result.x),
                 bounds=Bounds(lb=self.limits[0], ub=self.limits[1]),
                 constraints=self.constraints
             )
@@ -1316,8 +1316,8 @@ class DifferentialEvolutionSolver:
             # within the bounds.
             if (result.fun < DE_result.fun and
                     result.success and
-                    np.all(result.x <= self.limits[1]) and
-                    np.all(self.limits[0] <= result.x)):
+                    mx.all(result.x <= self.limits[1]) and
+                    mx.all(self.limits[0] <= result.x)):
                 DE_result.fun = result.fun
                 DE_result.x = result.x
                 DE_result.jac = result.get("jac", None)
@@ -1328,8 +1328,8 @@ class DifferentialEvolutionSolver:
         if self._wrapped_constraints:
             DE_result.constr = [c.violation(DE_result.x) for
                                 c in self._wrapped_constraints]
-            DE_result.constr_violation = np.max(
-                np.concatenate(DE_result.constr))
+            DE_result.constr_violation = mx.max(
+                mx.concatenate(DE_result.constr))
             DE_result.maxcv = DE_result.constr_violation
             if DE_result.maxcv > 0:
                 # if the result is infeasible then success must be False
@@ -1357,7 +1357,7 @@ class DifferentialEvolutionSolver:
         if self._wrapped_constraints:
             result.constr = [c.violation(result.x)
                              for c in self._wrapped_constraints]
-            result.constr_violation = np.max(np.concatenate(result.constr))
+            result.constr_violation = mx.max(mx.concatenate(result.constr))
             result.maxcv = result.constr_violation
             if result.maxcv > 0:
                 result.success = False
@@ -1370,31 +1370,31 @@ class DifferentialEvolutionSolver:
 
         Parameters
         ----------
-        population : ndarray
+        population : array
             An array of parameter vectors normalised to [0, 1] using lower
-            and upper limits. Has shape ``(np.size(population, 0), N)``.
+            and upper limits. Has shape ``(mx.size(population, 0), N)``.
 
         Returns
         -------
-        energies : ndarray
+        energies : array
             An array of energies corresponding to each population member. If
             maxfun will be exceeded during this call, then the number of
             function evaluations will be reduced and energies will be
-            right-padded with np.inf. Has shape ``(np.size(population, 0),)``
+            right-padded with mx.inf. Has shape ``(mx.size(population, 0),)``
         """
-        num_members = np.size(population, 0)
+        num_members = mx.size(population, 0)
         # S is the number of function evals left to stay under the
         # maxfun budget
         S = min(num_members, self.maxfun - self._nfev)
 
-        energies = np.full(num_members, np.inf)
+        energies = mx.full(num_members, mx.inf)
 
         parameters_pop = self._scale_parameters(population)
         try:
             calc_energies = list(
                 self._mapwrapper(self.func, parameters_pop[0:S])
             )
-            calc_energies = np.squeeze(calc_energies)
+            calc_energies = mx.squeeze(calc_energies)
         except (TypeError, ValueError) as e:
             # wrong number of arguments for _mapwrapper
             # or wrong length returned from the mapper
@@ -1422,16 +1422,16 @@ class DifferentialEvolutionSolver:
     def _promote_lowest_energy(self):
         # swaps 'best solution' into first population entry
 
-        idx = np.arange(self.num_population_members)
+        idx = mx.arange(self.num_population_members)
         feasible_solutions = idx[self.feasible]
         if feasible_solutions.size:
             # find the best feasible solution
-            idx_t = np.argmin(self.population_energies[feasible_solutions])
+            idx_t = mx.argmin(self.population_energies[feasible_solutions])
             l = feasible_solutions[idx_t]
         else:
             # no solution was feasible, use 'best' infeasible solution, which
             # will violate constraints the least
-            l = np.argmin(np.sum(self.constraint_violation, axis=1))
+            l = mx.argmin(mx.sum(self.constraint_violation, axis=1))
 
         self.population_energies[[0, l]] = self.population_energies[[l, 0]]
         self.population[[0, l], :] = self.population[[l, 0], :]
@@ -1446,22 +1446,22 @@ class DifferentialEvolutionSolver:
 
         Parameters
         ----------
-        x : ndarray
+        x : array
             Solution vector(s). Has shape (S, N), or (N,), where S is the
             number of solutions to investigate and N is the number of
             parameters.
 
         Returns
         -------
-        cv : ndarray
+        cv : array
             Total violation of constraints. Has shape ``(S, M)``, where M is
             the total number of constraint components (which is not necessarily
             equal to len(self._wrapped_constraints)).
         """
         # how many solution vectors you're calculating constraint violations
         # for
-        S = np.size(x) // self.parameter_count
-        _out = np.zeros((S, self.total_constraints))
+        S = mx.size(x) // self.parameter_count
+        _out = mx.zeros((S, self.total_constraints))
         offset = 0
         for con in self._wrapped_constraints:
             # the input/output of the (vectorized) constraint function is
@@ -1492,7 +1492,7 @@ class DifferentialEvolutionSolver:
             # sequence of constraints for one solution (S=1, M>=1), or the
             # value of a single constraint for a sequence of solutions
             # (S>=1, M=1)
-            c = np.reshape(c, (S, con.num_constr))
+            c = mx.reshape(c, (S, con.num_constr))
             _out[:, offset:offset + con.num_constr] = c
             offset += con.num_constr
 
@@ -1504,34 +1504,34 @@ class DifferentialEvolutionSolver:
 
         Parameters
         ----------
-        population : ndarray
+        population : array
             An array of parameter vectors normalised to [0, 1] using lower
-            and upper limits. Has shape ``(np.size(population, 0), N)``.
+            and upper limits. Has shape ``(mx.size(population, 0), N)``.
 
         Returns
         -------
-        feasible, constraint_violation : ndarray, ndarray
+        feasible, constraint_violation : array, array
             Boolean array of feasibility for each population member, and an
             array of the constraint violation for each population member.
-            constraint_violation has shape ``(np.size(population, 0), M)``,
+            constraint_violation has shape ``(mx.size(population, 0), M)``,
             where M is the number of constraints.
         """
-        num_members = np.size(population, 0)
+        num_members = mx.size(population, 0)
         if not self._wrapped_constraints:
             # shortcut for no constraints
-            return np.ones(num_members, bool), np.zeros((num_members, 1))
+            return mx.ones(num_members, bool), mx.zeros((num_members, 1))
 
         # (S, N)
         parameters_pop = self._scale_parameters(population)
 
         if self.vectorized:
             # (S, M)
-            constraint_violation = np.array(
+            constraint_violation = mx.array(
                 self._constraint_violation_fn(parameters_pop)
             )
         else:
             # (S, 1, M)
-            constraint_violation = np.array([self._constraint_violation_fn(x)
+            constraint_violation = mx.array([self._constraint_violation_fn(x)
                                              for x in parameters_pop])
             # if you use the list comprehension in the line above it will
             # create an array of shape (S, 1, M), because each iteration
@@ -1539,7 +1539,7 @@ class DifferentialEvolutionSolver:
             # version returns (S, M). It's therefore necessary to remove axis 1
             constraint_violation = constraint_violation[:, 0]
 
-        feasible = ~(np.sum(constraint_violation, axis=1) > 0)
+        feasible = ~(mx.sum(constraint_violation, axis=1) > 0)
 
         return feasible, constraint_violation
 
@@ -1603,14 +1603,14 @@ class DifferentialEvolutionSolver:
 
         Returns
         -------
-        x : ndarray
+        x : array
             The best solution from the solver.
         fun : float
             Value of objective function obtained from the best solution.
         """
         # the population may have just been initialized (all entries are
-        # np.inf). If it has you have to calculate the initial energies
-        if np.all(np.isinf(self.population_energies)):
+        # mx.inf). If it has you have to calculate the initial energies
+        if mx.all(mx.isinf(self.population_energies)):
             self.feasible, self.constraint_violation = (
                 self._calculate_population_feasibilities(self.population))
 
@@ -1645,15 +1645,15 @@ class DifferentialEvolutionSolver:
                 if self._wrapped_constraints:
                     cv = self._constraint_violation_fn(parameters)
                     feasible = False
-                    energy = np.inf
-                    if not np.sum(cv) > 0:
+                    energy = mx.inf
+                    if not mx.sum(cv) > 0:
                         # solution is feasible
                         feasible = True
                         energy = self.func(parameters)
                         self._nfev += 1
                 else:
                     feasible = True
-                    cv = np.atleast_2d([0.])
+                    cv = mx.atleast_2d([0.])
                     energy = self.func(parameters)
                     self._nfev += 1
 
@@ -1663,7 +1663,7 @@ class DifferentialEvolutionSolver:
                                       self.feasible[candidate],
                                       self.constraint_violation[candidate]):
                     self.population[candidate] = trial
-                    self.population_energies[candidate] = np.squeeze(energy)
+                    self.population_energies[candidate] = mx.squeeze(energy)
                     self.feasible[candidate] = feasible
                     self.constraint_violation[candidate] = cv
 
@@ -1683,7 +1683,7 @@ class DifferentialEvolutionSolver:
             # 'deferred' approach, vectorised form.
             # create trial solutions
             trial_pop = self._mutate_many(
-                np.arange(self.num_population_members)
+                mx.arange(self.num_population_members)
             )
 
             # enforce bounds
@@ -1692,7 +1692,7 @@ class DifferentialEvolutionSolver:
             # determine the energies of the objective function, but only for
             # feasible trials
             feasible, cv = self._calculate_population_feasibilities(trial_pop)
-            trial_energies = np.full(self.num_population_members, np.inf)
+            trial_energies = mx.full(self.num_population_members, mx.inf)
 
             # only calculate for feasible entries
             trial_energies[feasible] = self._calculate_population_energies(
@@ -1702,17 +1702,17 @@ class DifferentialEvolutionSolver:
             loc = [self._accept_trial(*val) for val in
                    zip(trial_energies, feasible, cv, self.population_energies,
                        self.feasible, self.constraint_violation)]
-            loc = np.array(loc)
-            self.population = np.where(loc[:, np.newaxis],
+            loc = mx.array(loc)
+            self.population = mx.where(loc[:, mx.newaxis],
                                        trial_pop,
                                        self.population)
-            self.population_energies = np.where(loc,
+            self.population_energies = mx.where(loc,
                                                 trial_energies,
                                                 self.population_energies)
-            self.feasible = np.where(loc,
+            self.feasible = mx.where(loc,
                                      feasible,
                                      self.feasible)
-            self.constraint_violation = np.where(loc[:, np.newaxis],
+            self.constraint_violation = mx.where(loc[:, mx.newaxis],
                                                  cv,
                                                  self.constraint_violation)
 
@@ -1727,9 +1727,9 @@ class DifferentialEvolutionSolver:
         # trial either has shape (N, ) or (L, N), where L is the number of
         # solutions being scaled
         scaled = self.__scale_arg1 + (trial - 0.5) * self.__scale_arg2
-        if np.count_nonzero(self.integrality):
-            i = np.broadcast_to(self.integrality, scaled.shape)
-            scaled[i] = np.round(scaled[i])
+        if mx.count_nonzero(self.integrality):
+            i = mx.broadcast_to(self.integrality, scaled.shape)
+            scaled[i] = mx.round(scaled[i])
         return scaled
 
     def _unscale_parameters(self, parameters):
@@ -1738,26 +1738,26 @@ class DifferentialEvolutionSolver:
 
     def _ensure_constraint(self, trial):
         """Make sure the parameters lie between the limits."""
-        mask = np.bitwise_or(trial > 1, trial < 0)
-        if oob := np.count_nonzero(mask):
+        mask = mx.bitwise_or(trial > 1, trial < 0)
+        if oob := mx.count_nonzero(mask):
             trial[mask] = self.random_number_generator.uniform(size=oob)
 
     def _mutate_custom(self, candidate):
         rng = self.random_number_generator
         msg = (
             "strategy must have signature"
-            " f(candidate: int, population: np.ndarray, rng=None) returning an"
+            " f(candidate: int, population: mx.array, rng=None) returning an"
             " array of shape (N,)"
         )
         _population = self._scale_parameters(self.population)
-        if not len(np.shape(candidate)):
+        if not len(mx.shape(candidate)):
             # single entry in population
             trial = self.strategy(candidate, _population, rng=rng)
             if trial.shape != (self.parameter_count,):
                 raise RuntimeError(msg)
         else:
             S = candidate.shape[0]
-            trial = np.array(
+            trial = mx.array(
                 [self.strategy(c, _population, rng=rng) for c in candidate],
                 dtype=float
             )
@@ -1773,8 +1773,8 @@ class DifferentialEvolutionSolver:
         if callable(self.strategy):
             return self._mutate_custom(candidates)
 
-        trial = np.copy(self.population[candidates])
-        samples = np.array([self._select_samples(c, 5) for c in candidates])
+        trial = mx.copy(self.population[candidates])
+        samples = mx.array([self._select_samples(c, 5) for c in candidates])
 
         if self.strategy in ['currenttobest1exp', 'currenttobest1bin']:
             bprime = self.mutation_func(candidates, samples)
@@ -1789,9 +1789,9 @@ class DifferentialEvolutionSolver:
             # binomial crossover. The fill_point ensures at least one parameter
             # comes from bprime, preventing the possibility of no mutation
             # influence in the trial vector.
-            i = np.arange(S)
+            i = mx.arange(S)
             crossovers[i, fill_point[i]] = True
-            trial = np.where(crossovers, bprime, trial)
+            trial = mx.where(crossovers, bprime, trial)
             return trial
 
         elif self.strategy in self._exponential:
@@ -1821,7 +1821,7 @@ class DifferentialEvolutionSolver:
         fill_point = rng_integers(rng, self.parameter_count)
         samples = self._select_samples(candidate, 5)
 
-        trial = np.copy(self.population[candidate])
+        trial = mx.copy(self.population[candidate])
 
         if self.strategy in ['currenttobest1exp', 'currenttobest1bin']:
             bprime = self.mutation_func(candidate, samples)
@@ -1836,7 +1836,7 @@ class DifferentialEvolutionSolver:
             # comes from bprime, preventing the possibility of no mutation
             # influence in the trial vector.
             crossovers[fill_point] = True
-            trial = np.where(crossovers, bprime, trial)
+            trial = mx.where(crossovers, bprime, trial)
             return trial
 
         elif self.strategy in self._exponential:
@@ -1872,7 +1872,7 @@ class DifferentialEvolutionSolver:
     def _randtobest1(self, samples):
         """randtobest1bin, randtobest1exp"""
         r0, r1, r2 = samples[..., :3].T
-        bprime = np.copy(self.population[r0])
+        bprime = mx.copy(self.population[r0])
         bprime += self.scale * (self.population[0] - bprime)
         bprime += self.scale * (self.population[r1] -
                                 self.population[r2])
@@ -1936,7 +1936,7 @@ class _ConstraintWrapper:
         classes.
     bounds : 2-tuple
         Contains lower and upper bounds for the constraints --- lb and ub.
-        These are converted to ndarray and have a size equal to the number of
+        These are converted to array and have a size equal to the number of
         the constraints.
 
     Notes
@@ -1950,14 +1950,14 @@ class _ConstraintWrapper:
 
         if isinstance(constraint, NonlinearConstraint):
             def fun(x):
-                x = np.asarray(x)
-                return np.atleast_1d(constraint.fun(x))
+                x = mx.array(x)
+                return mx.atleast_1d(constraint.fun(x))
         elif isinstance(constraint, LinearConstraint):
             def fun(x):
                 if issparse(constraint.A):
                     A = constraint.A
                 else:
-                    A = np.atleast_2d(constraint.A)
+                    A = mx.atleast_2d(constraint.A)
 
                 res = A.dot(x)
                 # x either has shape (N, S) or (N)
@@ -1966,23 +1966,23 @@ class _ConstraintWrapper:
                 # However, if (M, N) is a matrix then:
                 # (M, N) * (N,)   --> (M, 1), we need this to be (M,)
                 if x.ndim == 1 and res.ndim == 2:
-                    # deal with case that constraint.A is an np.matrix
+                    # deal with case that constraint.A is an mx.matrix
                     # see gh20041
-                    res = np.asarray(res)[:, 0]
+                    res = mx.array(res)[:, 0]
 
                 return res
         elif isinstance(constraint, Bounds):
             def fun(x):
-                return np.asarray(x)
+                return mx.array(x)
         else:
             raise ValueError("`constraint` of an unknown type is passed.")
 
         self.fun = fun
 
-        lb = np.asarray(constraint.lb, dtype=float)
-        ub = np.asarray(constraint.ub, dtype=float)
+        lb = mx.array(constraint.lb, dtype=float)
+        ub = mx.array(constraint.ub, dtype=float)
 
-        x0 = np.asarray(x0)
+        x0 = mx.array(x0)
 
         # find out the number of constraints
         f0 = fun(x0)
@@ -1990,14 +1990,14 @@ class _ConstraintWrapper:
         self.parameter_count = x0.size
 
         if lb.ndim == 0:
-            lb = np.resize(lb, m)
+            lb = mx.resize(lb, m)
         if ub.ndim == 0:
-            ub = np.resize(ub, m)
+            ub = mx.resize(ub, m)
 
         self.bounds = (lb, ub)
 
     def __call__(self, x):
-        return np.atleast_1d(self.fun(x))
+        return mx.atleast_1d(self.fun(x))
 
     def violation(self, x):
         """How much the constraint is exceeded by.
@@ -2016,11 +2016,11 @@ class _ConstraintWrapper:
             Has shape (M, S) where M is the number of constraint components.
         """
         # expect ev to have shape (num_constr, S) or (num_constr,)
-        ev = self.fun(np.asarray(x))
+        ev = self.fun(mx.array(x))
 
         try:
-            excess_lb = np.maximum(self.bounds[0] - ev.T, 0)
-            excess_ub = np.maximum(ev.T - self.bounds[1], 0)
+            excess_lb = mx.maximum(self.bounds[0] - ev.T, 0)
+            excess_ub = mx.maximum(ev.T - self.bounds[1], 0)
         except ValueError as e:
             raise RuntimeError("An array returned from a Constraint has"
                                " the wrong shape. If `vectorized is False`"

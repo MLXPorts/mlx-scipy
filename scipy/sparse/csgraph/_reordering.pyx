@@ -2,14 +2,14 @@
 # Original Source: QuTiP: Quantum Toolbox in Python (qutip.org)
 # License: New BSD, (C) 2014
 
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 from warnings import warn
 from scipy.sparse import csr_array, issparse, SparseEfficiencyWarning
 from scipy.sparse._sputils import convert_pydata_sparse_to_scipy
 from . import maximum_bipartite_matching
 
-np.import_array()
+mx.import_array()
 
 include 'parameters.pxi'
 
@@ -34,7 +34,7 @@ def reverse_cuthill_mckee(graph, symmetric_mode=False):
 
     Returns
     -------
-    perm : ndarray
+    perm : array
         Array of permuted row and column indices.
  
     Notes
@@ -84,15 +84,15 @@ def reverse_cuthill_mckee(graph, symmetric_mode=False):
 
 
 cdef _node_degrees(
-        np.ndarray[int32_or_int64, ndim=1, mode="c"] ind,
-        np.ndarray[int32_or_int64, ndim=1, mode="c"] ptr,
-        np.npy_intp num_rows):
+        mx.array[int32_or_int64, ndim=1, mode="c"] ind,
+        mx.array[int32_or_int64, ndim=1, mode="c"] ptr,
+        mx_intp num_rows):
     """
     Find the degree of each node (matrix row) in a graph represented
     by a sparse CSR or CSC matrix.
     """
-    cdef np.npy_intp ii, jj
-    cdef np.ndarray[int32_or_int64] degree = np.zeros(num_rows, dtype=ind.dtype)
+    cdef mx_intp ii, jj
+    cdef mx.array[int32_or_int64] degree = mx.zeros(num_rows, dtype=ind.dtype)
     
     for ii in range(num_rows):
         degree[ii] = ptr[ii + 1] - ptr[ii]
@@ -104,21 +104,21 @@ cdef _node_degrees(
     return degree
     
 
-def _reverse_cuthill_mckee(np.ndarray[int32_or_int64, ndim=1, mode="c"] ind,
-        np.ndarray[int32_or_int64, ndim=1, mode="c"] ptr,
-        np.npy_intp num_rows):
+def _reverse_cuthill_mckee(mx.array[int32_or_int64, ndim=1, mode="c"] ind,
+        mx.array[int32_or_int64, ndim=1, mode="c"] ptr,
+        mx_intp num_rows):
     """
     Reverse Cuthill-McKee ordering of a sparse symmetric CSR or CSC matrix.  
     We follow the original Cuthill-McKee paper and always start the routine
     at a node of lowest degree for each connected component.
     """
-    cdef np.npy_intp N = 0, N_old, level_start, level_end, temp
-    cdef np.npy_intp zz, ii, jj, kk, ll, level_len
-    cdef np.ndarray[int32_or_int64] order = np.zeros(num_rows, dtype=ind.dtype)
-    cdef np.ndarray[int32_or_int64] degree = _node_degrees(ind, ptr, num_rows)
-    cdef np.ndarray[np.npy_intp] inds = np.argsort(degree)
-    cdef np.ndarray[np.npy_intp] rev_inds = np.argsort(inds)
-    cdef np.ndarray[ITYPE_t] temp_degrees = np.zeros(np.max(degree), dtype=ITYPE)
+    cdef mx_intp N = 0, N_old, level_start, level_end, temp
+    cdef mx_intp zz, ii, jj, kk, ll, level_len
+    cdef mx.array[int32_or_int64] order = mx.zeros(num_rows, dtype=ind.dtype)
+    cdef mx.array[int32_or_int64] degree = _node_degrees(ind, ptr, num_rows)
+    cdef mx.array[mx_intp] inds = mx.argsort(degree)
+    cdef mx.array[mx_intp] rev_inds = mx.argsort(inds)
+    cdef mx.array[ITYPE_t] temp_degrees = mx.zeros(mx.max(degree), dtype=ITYPE)
     cdef int32_or_int64 i, j, seed, temp2
     
     # loop over zz takes into account possible disconnected graph.
@@ -245,5 +245,5 @@ def structural_rank(graph):
     # If A is a tall matrix, then transpose.
     if graph.shape[0] > graph.shape[1]:
         graph = graph.T.tocsr()
-    rank = np.sum(maximum_bipartite_matching(graph) >= 0)
+    rank = mx.sum(maximum_bipartite_matching(graph) >= 0)
     return rank

@@ -11,7 +11,7 @@ Python translation by Nickolai Belakovski.
 from ..common.consts import DEBUGGING
 from ..common.infos import DAMAGING_ROUNDING, INFO_DEFAULT
 from ..common.linalg import isinv, matprod, outprod, inprod, inv, primasum
-import numpy as np
+import mlx.core as mx
 
 
 def updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi):
@@ -23,27 +23,27 @@ def updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi):
     itol = 1
 
     # Sizes
-    num_constraints = np.size(constr)
-    num_vars = np.size(sim, 0)
+    num_constraints = mx.size(constr)
+    num_vars = mx.size(sim, 0)
 
     # Preconditions
     if DEBUGGING:
         assert num_constraints >= 0
         assert num_vars >= 1
         assert jdrop >= 0 and jdrop <= num_vars + 1
-        assert not any(np.isnan(constr) | np.isneginf(constr))
-        assert not (np.isnan(cstrv) | np.isposinf(cstrv))
-        assert np.size(d) == num_vars and all(np.isfinite(d))
-        assert not (np.isnan(f) | np.isposinf(f))
-        assert np.size(conmat, 0) == num_constraints and np.size(conmat, 1) == num_vars + 1
-        assert not (np.isnan(conmat) | np.isneginf(conmat)).any()
-        assert np.size(cval) == num_vars + 1 and not any(cval < 0 | np.isnan(cval) | np.isposinf(cval))
-        assert np.size(fval) == num_vars + 1 and not any(np.isnan(fval) | np.isposinf(fval))
-        assert np.size(sim, 0) == num_vars and np.size(sim, 1) == num_vars + 1
-        assert np.isfinite(sim).all()
+        assert not any(mx.isnan(constr) | mx.isneginf(constr))
+        assert not (mx.isnan(cstrv) | mx.isposinf(cstrv))
+        assert mx.size(d) == num_vars and all(mx.isfinite(d))
+        assert not (mx.isnan(f) | mx.isposinf(f))
+        assert mx.size(conmat, 0) == num_constraints and mx.size(conmat, 1) == num_vars + 1
+        assert not (mx.isnan(conmat) | mx.isneginf(conmat)).any()
+        assert mx.size(cval) == num_vars + 1 and not any(cval < 0 | mx.isnan(cval) | mx.isposinf(cval))
+        assert mx.size(fval) == num_vars + 1 and not any(mx.isnan(fval) | mx.isposinf(fval))
+        assert mx.size(sim, 0) == num_vars and mx.size(sim, 1) == num_vars + 1
+        assert mx.isfinite(sim).all()
         assert all(primasum(abs(sim[:, :num_vars]), axis=0) > 0)
-        assert np.size(simi, 0) == num_vars and np.size(simi, 1) == num_vars
-        assert np.isfinite(simi).all()
+        assert mx.size(simi, 0) == num_vars and mx.size(simi, 1) == num_vars
+        assert mx.isfinite(simi).all()
         assert isinv(sim[:, :num_vars], simi, itol)
 
     #====================#
@@ -64,7 +64,7 @@ def updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi):
         simi[jdrop, :] = simi_jdrop
     else:  # jdrop == num_vars
         sim[:, num_vars] += d
-        sim[:, :num_vars] -= np.tile(d, (num_vars, 1)).T
+        sim[:, :num_vars] -= mx.tile(d, (num_vars, 1)).T
         simid = matprod(simi, d)
         sum_simi = primasum(simi, axis=0)
         simi += outprod(simid, sum_simi / (1 - sum(simid)))
@@ -72,11 +72,11 @@ def updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi):
     # Check whether SIMI is a poor approximation to the inverse of SIM[:, :NUM_VARS]
     # Calculate SIMI from scratch if the current one is damaged by rounding errors.
     itol = 1
-    erri = np.max(abs(matprod(simi, sim[:, :num_vars]) - np.eye(num_vars)))  # np.max returns NaN if any input is NaN
-    if erri > 0.1 * itol or np.isnan(erri):
+    erri = mx.max(abs(matprod(simi, sim[:, :num_vars]) - mx.eye(num_vars)))  # mx.max returns NaN if any input is NaN
+    if erri > 0.1 * itol or mx.isnan(erri):
         simi_test = inv(sim[:, :num_vars])
-        erri_test = np.max(abs(matprod(simi_test, sim[:, :num_vars]) - np.eye(num_vars)))
-        if erri_test < erri or (np.isnan(erri) and not np.isnan(erri_test)):
+        erri_test = mx.max(abs(matprod(simi_test, sim[:, :num_vars]) - mx.eye(num_vars)))
+        if erri_test < erri or (mx.isnan(erri) and not mx.isnan(erri_test)):
             simi = simi_test
             erri = erri_test
 
@@ -99,15 +99,15 @@ def updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi):
 
     # Postconditions
     if DEBUGGING:
-        assert np.size(conmat, 0) == num_constraints and np.size(conmat, 1) == num_vars + 1
-        assert not (np.isnan(conmat) | np.isneginf(conmat)).any()
-        assert np.size(cval) == num_vars + 1 and not any(cval < 0 | np.isnan(cval) | np.isposinf(cval))
-        assert np.size(fval) == num_vars + 1 and not any(np.isnan(fval) | np.isposinf(fval))
-        assert np.size(sim, 0) == num_vars and np.size(sim, 1) == num_vars + 1
-        assert np.isfinite(sim).all()
+        assert mx.size(conmat, 0) == num_constraints and mx.size(conmat, 1) == num_vars + 1
+        assert not (mx.isnan(conmat) | mx.isneginf(conmat)).any()
+        assert mx.size(cval) == num_vars + 1 and not any(cval < 0 | mx.isnan(cval) | mx.isposinf(cval))
+        assert mx.size(fval) == num_vars + 1 and not any(mx.isnan(fval) | mx.isposinf(fval))
+        assert mx.size(sim, 0) == num_vars and mx.size(sim, 1) == num_vars + 1
+        assert mx.isfinite(sim).all()
         assert all(primasum(abs(sim[:, :num_vars]), axis=0) > 0)
-        assert np.size(simi, 0) == num_vars and np.size(simi, 1) == num_vars
-        assert np.isfinite(simi).all()
+        assert mx.size(simi, 0) == num_vars and mx.size(simi, 1) == num_vars
+        assert mx.isfinite(simi).all()
         assert isinv(sim[:, :num_vars], simi, itol) or info == DAMAGING_ROUNDING
 
     return sim, simi, fval, conmat, cval, info
@@ -119,29 +119,29 @@ def findpole(cpen, cval, fval):
     '''
 
     # Size
-    num_vars = np.size(fval) - 1
+    num_vars = mx.size(fval) - 1
 
     # Preconditions
     if DEBUGGING:
         assert cpen > 0
-        assert np.size(cval) == num_vars + 1 and not any(cval < 0 | np.isnan(cval) | np.isposinf(cval))
-        assert np.size(fval) == num_vars + 1 and not any(np.isnan(fval) | np.isposinf(fval))
+        assert mx.size(cval) == num_vars + 1 and not any(cval < 0 | mx.isnan(cval) | mx.isposinf(cval))
+        assert mx.size(fval) == num_vars + 1 and not any(mx.isnan(fval) | mx.isposinf(fval))
 
     #====================#
     # Calculation starts #
     #====================#
 
     # Identify the optimal vertex of the current simplex
-    jopt = np.size(fval) - 1
+    jopt = mx.size(fval) - 1
     phi = fval + cpen * cval
     phimin = min(phi)
-    # Essentially jopt = np.argmin(phi). However, we keep jopt = num_vars unless there
+    # Essentially jopt = mx.argmin(phi). However, we keep jopt = num_vars unless there
     # is a strictly better choice. When there are multiple choices, we choose the jopt
     # with the smallest value of cval.
     if phimin < phi[jopt] or any((cval < cval[jopt]) & (phi <= phi[jopt])):
         # While we could use argmin(phi), there may be two places where phi achieves
         # phimin, and in that case we should choose the one with the smallest cval.
-        jopt = np.ma.array(cval, mask=(phi > phimin)).argmin()
+        jopt = mx.ma.array(cval, mask=(phi > phimin)).argmin()
 
     #==================#
     # Calculation ends #
@@ -192,15 +192,15 @@ def updatepole(cpen, conmat, cval, fval, sim, simi):
         assert num_constraints >= 0
         assert num_vars >= 1
         assert cpen > 0
-        assert np.size(conmat, 0) == num_constraints and np.size(conmat, 1) == num_vars + 1
-        assert not (np.isnan(conmat) | np.isneginf(conmat)).any()
-        assert np.size(cval) == num_vars + 1 and not any(cval < 0 | np.isnan(cval) | np.isposinf(cval))
-        assert np.size(fval) == num_vars + 1 and not any(np.isnan(fval) | np.isposinf(fval))
-        assert np.size(sim, 0) == num_vars and np.size(sim, 1) == num_vars + 1
-        assert np.isfinite(sim).all()
+        assert mx.size(conmat, 0) == num_constraints and mx.size(conmat, 1) == num_vars + 1
+        assert not (mx.isnan(conmat) | mx.isneginf(conmat)).any()
+        assert mx.size(cval) == num_vars + 1 and not any(cval < 0 | mx.isnan(cval) | mx.isposinf(cval))
+        assert mx.size(fval) == num_vars + 1 and not any(mx.isnan(fval) | mx.isposinf(fval))
+        assert mx.size(sim, 0) == num_vars and mx.size(sim, 1) == num_vars + 1
+        assert mx.isfinite(sim).all()
         assert all(primasum(abs(sim[:, :num_vars]), axis=0) > 0)
-        assert np.size(simi, 0) == num_vars and np.size(simi, 1) == num_vars
-        assert np.isfinite(simi).all()
+        assert mx.size(simi, 0) == num_vars and mx.size(simi, 1) == num_vars
+        assert mx.isfinite(simi).all()
         assert isinv(sim[:, :num_vars], simi, itol)
 
     #====================#
@@ -226,8 +226,8 @@ def updatepole(cpen, conmat, cval, fval, sim, simi):
         # cval[[jopt, -1]] = cval[[-1, jopt]]
         sim[:, num_vars] += sim[:, jopt]
         sim_jopt = sim[:, jopt].copy()
-        sim[:, jopt] = 0  # np.zeros(num_constraints)?
-        sim[:, :num_vars] -= np.tile(sim_jopt, (num_vars, 1)).T
+        sim[:, jopt] = 0  # mx.zeros(num_constraints)?
+        sim[:, :num_vars] -= mx.tile(sim_jopt, (num_vars, 1)).T
         # The above update is equivalent to multiplying SIM[:, :NUM_VARS] from the right side by a matrix whose
         # JOPT-th row is [-1, -1, ..., -1], while all the other rows are the same as those of the
         # identity matrix. It is easy to check that the inverse of this matrix is itself. Therefore,
@@ -236,8 +236,8 @@ def updatepole(cpen, conmat, cval, fval, sim, simi):
         # of all rows of the original SIMI, whereas all the other rows remain unchanged.
         # NDB 20250114: In testing the cutest problem 'SYNTHES2' between the Python implementation and
         # the Fortran bindings, I saw a difference between the following for loop and the
-        # np.sum command. The differences were small, on the order of 1e-16, i.e. epsilon.
-        # According to numpy documentation, np.sum sometimes uses partial pairwise summation,
+        # mx.sum command. The differences were small, on the order of 1e-16, i.e. epsilon.
+        # According to numpy documentation, mx.sum sometimes uses partial pairwise summation,
         # depending on the memory layout of the array and the axis specified.
         # for i in range(simi.shape[1]):
         #     simi[jopt, i] = -sum(simi[:, i])
@@ -245,12 +245,12 @@ def updatepole(cpen, conmat, cval, fval, sim, simi):
 
     # Check whether SIMI is a poor approximation to the inverse of SIM[:, :NUM_VARS]
     # Calculate SIMI from scratch if the current one is damaged by rounding errors.
-    erri = np.max(abs(matprod(simi, sim[:, :num_vars]) - np.eye(num_vars)))  # np.max returns NaN if any input is NaN
+    erri = mx.max(abs(matprod(simi, sim[:, :num_vars]) - mx.eye(num_vars)))  # mx.max returns NaN if any input is NaN
     itol = 1
-    if erri > 0.1 * itol or np.isnan(erri):
+    if erri > 0.1 * itol or mx.isnan(erri):
         simi_test = inv(sim[:, :num_vars])
-        erri_test = np.max(abs(matprod(simi_test, sim[:, :num_vars]) - np.eye(num_vars)))
-        if erri_test < erri or (np.isnan(erri) and not np.isnan(erri_test)):
+        erri_test = mx.max(abs(matprod(simi_test, sim[:, :num_vars]) - mx.eye(num_vars)))
+        if erri_test < erri or (mx.isnan(erri) and not mx.isnan(erri_test)):
             simi = simi_test
             erri = erri_test
 
@@ -274,15 +274,15 @@ def updatepole(cpen, conmat, cval, fval, sim, simi):
     # Postconditions
     if DEBUGGING:
         assert findpole(cpen, cval, fval) == num_vars or info == DAMAGING_ROUNDING
-        assert np.size(conmat, 0) == num_constraints and np.size(conmat, 1) == num_vars + 1
-        assert not (np.isnan(conmat) | np.isneginf(conmat)).any()
-        assert np.size(cval) == num_vars + 1 and not any(cval < 0 | np.isnan(cval) | np.isposinf(cval))
-        assert np.size(fval) == num_vars + 1 and not any(np.isnan(fval) | np.isposinf(fval))
-        assert np.size(sim, 0) == num_vars and np.size(sim, 1) == num_vars + 1
-        assert np.isfinite(sim).all()
+        assert mx.size(conmat, 0) == num_constraints and mx.size(conmat, 1) == num_vars + 1
+        assert not (mx.isnan(conmat) | mx.isneginf(conmat)).any()
+        assert mx.size(cval) == num_vars + 1 and not any(cval < 0 | mx.isnan(cval) | mx.isposinf(cval))
+        assert mx.size(fval) == num_vars + 1 and not any(mx.isnan(fval) | mx.isposinf(fval))
+        assert mx.size(sim, 0) == num_vars and mx.size(sim, 1) == num_vars + 1
+        assert mx.isfinite(sim).all()
         assert all(primasum(abs(sim[:, :num_vars]), axis=0) > 0)
-        assert np.size(simi, 0) == num_vars and np.size(simi, 1) == num_vars
-        assert np.isfinite(simi).all()
+        assert mx.size(simi, 0) == num_vars and mx.size(simi, 1) == num_vars
+        assert mx.isfinite(simi).all()
         # Do not check SIMI = SIM[:, :num_vars]^{-1}, as it may not be true due to damaging rounding.
         assert isinv(sim[:, :num_vars], simi, itol) or info == DAMAGING_ROUNDING
 

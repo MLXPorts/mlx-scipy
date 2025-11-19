@@ -1,5 +1,5 @@
 """QR decomposition functions."""
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._util import _apply_over_batch
 
@@ -17,7 +17,7 @@ def safecall(f, name, *args, **kwargs):
     if lwork in (None, -1):
         kwargs['lwork'] = -1
         ret = f(*args, **kwargs)
-        kwargs['lwork'] = ret[-2][0].real.astype(np.int_)
+        kwargs['lwork'] = ret[-2][0].real.astype(mx.int_)
     ret = f(*args, **kwargs)
     if ret[-1] < 0:
         raise ValueError(f"illegal value in {-ret[-1]}th argument of internal {name}")
@@ -65,13 +65,13 @@ def qr(a, overwrite_a=False, lwork=None, mode='full', pivoting=False,
 
     Returns
     -------
-    Q : float or complex ndarray
+    Q : float or complex array
         Of shape (M, M), or (M, K) for ``mode='economic'``. Not returned
         if ``mode='r'``. Replaced by tuple ``(Q, TAU)`` if ``mode='raw'``.
-    R : float or complex ndarray
+    R : float or complex array
         Of shape (M, N), or (K, N) for ``mode in ['economic', 'raw']``.
         ``K = min(M, N)``.
-    P : int ndarray
+    P : int array
         Of shape (N,) for ``pivoting=True``. Not returned if
         ``pivoting=False``.
 
@@ -90,19 +90,19 @@ def qr(a, overwrite_a=False, lwork=None, mode='full', pivoting=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> a = rng.standard_normal((9, 6))
 
     >>> q, r = linalg.qr(a)
-    >>> np.allclose(a, np.dot(q, r))
+    >>> mx.allclose(a, mx.dot(q, r))
     True
     >>> q.shape, r.shape
     ((9, 9), (9, 6))
 
     >>> r2 = linalg.qr(a, mode='r')
-    >>> np.allclose(r, r2)
+    >>> mx.allclose(r, r2)
     True
 
     >>> q3, r3 = linalg.qr(a, mode='economic')
@@ -110,15 +110,15 @@ def qr(a, overwrite_a=False, lwork=None, mode='full', pivoting=False,
     ((9, 6), (6, 6))
 
     >>> q4, r4, p4 = linalg.qr(a, pivoting=True)
-    >>> d = np.abs(np.diag(r4))
-    >>> np.all(d[1:] <= d[:-1])
+    >>> d = mx.abs(mx.diag(r4))
+    >>> mx.all(d[1:] <= d[:-1])
     True
-    >>> np.allclose(a[:, p4], np.dot(q4, r4))
+    >>> mx.allclose(a[:, p4], mx.dot(q4, r4))
     True
-    >>> P = np.eye(p4.size)[p4]
-    >>> np.allclose(a, np.dot(q4, r4) @ P)
+    >>> P = mx.eye(p4.size)[p4]
+    >>> mx.allclose(a, mx.dot(q4, r4) @ P)
     True
-    >>> np.allclose(a @ P.T, np.dot(q4, r4))
+    >>> mx.allclose(a @ P.T, mx.dot(q4, r4))
     True
     >>> q4.shape, r4.shape, p4.shape
     ((9, 9), (9, 6), (6,))
@@ -126,8 +126,8 @@ def qr(a, overwrite_a=False, lwork=None, mode='full', pivoting=False,
     >>> q5, r5, p5 = linalg.qr(a, mode='economic', pivoting=True)
     >>> q5.shape, r5.shape, p5.shape
     ((9, 6), (6, 6), (6,))
-    >>> P = np.eye(6)[:, p5]
-    >>> np.allclose(a @ P, np.dot(q5, r5))
+    >>> P = mx.eye(6)[:, p5]
+    >>> mx.allclose(a @ P, mx.dot(q5, r5))
     True
 
     """
@@ -139,9 +139,9 @@ def qr(a, overwrite_a=False, lwork=None, mode='full', pivoting=False,
                          "'economic', 'raw']")
 
     if check_finite:
-        a1 = np.asarray_chkfinite(a)
+        a1 = mx.array_chkfinite(a)
     else:
-        a1 = np.asarray(a)
+        a1 = mx.array(a)
     if len(a1.shape) != 2:
         raise ValueError("expected a 2-D array")
 
@@ -152,23 +152,23 @@ def qr(a, overwrite_a=False, lwork=None, mode='full', pivoting=False,
         K = min(M, N)
 
         if mode not in ['economic', 'raw']:
-            Q = np.empty_like(a1, shape=(M, M))
-            Q[...] = np.identity(M)
-            R = np.empty_like(a1)
+            Q = mx.empty_like(a1, shape=(M, M))
+            Q[...] = mx.identity(M)
+            R = mx.empty_like(a1)
         else:
-            Q = np.empty_like(a1, shape=(M, K))
-            R = np.empty_like(a1, shape=(K, N))
+            Q = mx.empty_like(a1, shape=(M, K))
+            R = mx.empty_like(a1, shape=(K, N))
 
         if pivoting:
-            Rj = R, np.arange(N, dtype=np.int32)
+            Rj = R, mx.arange(N, dtype=mx.int32)
         else:
             Rj = R,
 
         if mode == 'r':
             return Rj
         elif mode == 'raw':
-            qr = np.empty_like(a1, shape=(M, N))
-            tau = np.zeros_like(a1, shape=(K,))
+            qr = mx.empty_like(a1, shape=(M, N))
+            tau = mx.zeros_like(a1, shape=(K,))
             return ((qr, tau),) + Rj
         return (Q,) + Rj
 
@@ -184,9 +184,9 @@ def qr(a, overwrite_a=False, lwork=None, mode='full', pivoting=False,
                            overwrite_a=overwrite_a)
 
     if mode not in ['economic', 'raw'] or M < N:
-        R = np.triu(qr)
+        R = mx.triu(qr)
     else:
-        R = np.triu(qr[:N, :])
+        R = mx.triu(qr[:N, :])
 
     if pivoting:
         Rj = R, jpvt
@@ -208,7 +208,7 @@ def qr(a, overwrite_a=False, lwork=None, mode='full', pivoting=False,
                       overwrite_a=1)
     else:
         t = qr.dtype.char
-        qqr = np.empty((M, M), dtype=t)
+        qqr = mx.empty((M, M), dtype=t)
         qqr[:, :N] = qr
         Q, = safecall(gor_un_gqr, "gorgqr/gungqr", qqr, tau, lwork=lwork,
                       overwrite_a=1)
@@ -252,11 +252,11 @@ def qr_multiply(a, c, mode='right', pivoting=False, conjugate=False,
 
     Returns
     -------
-    CQ : ndarray
+    CQ : array
         The product of ``Q`` and ``c``.
-    R : (K, N), ndarray
+    R : (K, N), array
         R array of the resulting QR factorization where ``K = min(M, N)``.
-    P : (N,) ndarray
+    P : (N,) array
         Integer pivot array. Only returned when ``pivoting=True``.
 
     Raises
@@ -273,10 +273,10 @@ def qr_multiply(a, c, mode='right', pivoting=False, conjugate=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import qr_multiply, qr
-    >>> A = np.array([[1, 3, 3], [2, 3, 2], [2, 3, 3], [1, 3, 2]])
-    >>> qc, r1, piv1 = qr_multiply(A, 2*np.eye(4), pivoting=1)
+    >>> A = mx.array([[1, 3, 3], [2, 3, 2], [2, 3, 3], [1, 3, 2]])
+    >>> qc, r1, piv1 = qr_multiply(A, 2*mx.eye(4), pivoting=1)
     >>> qc
     array([[-1.,  1., -1.],
            [-1., -1.,  1.],
@@ -289,23 +289,23 @@ def qr_multiply(a, c, mode='right', pivoting=False, conjugate=False,
     >>> piv1
     array([1, 0, 2], dtype=int32)
     >>> q2, r2, piv2 = qr(A, mode='economic', pivoting=1)
-    >>> np.allclose(2*q2 - qc, np.zeros((4, 3)))
+    >>> mx.allclose(2*q2 - qc, mx.zeros((4, 3)))
     True
 
     """
     if mode not in ['left', 'right']:
         raise ValueError("Mode argument can only be 'left' or 'right' but "
                          f"not '{mode}'")
-    c = np.asarray_chkfinite(c)
+    c = mx.array_chkfinite(c)
     if c.ndim < 2:
         onedim = True
-        c = np.atleast_2d(c)
+        c = mx.atleast_2d(c)
         if mode == "left":
             c = c.T
     else:
         onedim = False
 
-    a = np.atleast_2d(np.asarray(a))  # chkfinite done in qr
+    a = mx.atleast_2d(mx.array(a))  # chkfinite done in qr
     M, N = a.shape
 
     if mode == 'left':
@@ -322,7 +322,7 @@ def qr_multiply(a, c, mode='right', pivoting=False, conjugate=False,
 
     # accommodate empty arrays
     if c.size == 0:
-        return (np.empty_like(c),) + raw[1:]
+        return (mx.empty_like(c),) + raw[1:]
 
     gor_un_mqr, = get_lapack_funcs(('ormqr',), (Q,))
     if gor_un_mqr.typecode in ('s', 'd'):
@@ -333,10 +333,10 @@ def qr_multiply(a, c, mode='right', pivoting=False, conjugate=False,
     Q = Q[:, :min(M, N)]
     if M > N and mode == "left" and not overwrite_c:
         if conjugate:
-            cc = np.zeros((c.shape[1], M), dtype=c.dtype, order="F")
+            cc = mx.zeros((c.shape[1], M), dtype=c.dtype, order="F")
             cc[:, :N] = c.T
         else:
-            cc = np.zeros((M, c.shape[1]), dtype=c.dtype, order="F")
+            cc = mx.zeros((M, c.shape[1]), dtype=c.dtype, order="F")
             cc[:N, :] = c
             trans = "N"
         if conjugate:
@@ -397,9 +397,9 @@ def rq(a, overwrite_a=False, lwork=None, mode='full', check_finite=True):
 
     Returns
     -------
-    R : float or complex ndarray
+    R : float or complex array
         Of shape (M, N) or (M, K) for ``mode='economic'``. ``K = min(M, N)``.
-    Q : float or complex ndarray
+    Q : float or complex array
         Of shape (N, N) or (K, N) for ``mode='economic'``. Not returned
         if ``mode='r'``.
 
@@ -418,17 +418,17 @@ def rq(a, overwrite_a=False, lwork=None, mode='full', check_finite=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import linalg
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> a = rng.standard_normal((6, 9))
     >>> r, q = linalg.rq(a)
-    >>> np.allclose(a, r @ q)
+    >>> mx.allclose(a, r @ q)
     True
     >>> r.shape, q.shape
     ((6, 9), (9, 9))
     >>> r2 = linalg.rq(a, mode='r')
-    >>> np.allclose(r, r2)
+    >>> mx.allclose(r, r2)
     True
     >>> r3, q3 = linalg.rq(a, mode='economic')
     >>> r3.shape, q3.shape
@@ -440,9 +440,9 @@ def rq(a, overwrite_a=False, lwork=None, mode='full', check_finite=True):
                  "Mode argument should be one of ['full', 'r', 'economic']")
 
     if check_finite:
-        a1 = np.asarray_chkfinite(a)
+        a1 = mx.array_chkfinite(a)
     else:
-        a1 = np.asarray(a)
+        a1 = mx.array(a)
     if len(a1.shape) != 2:
         raise ValueError('expected matrix')
 
@@ -453,12 +453,12 @@ def rq(a, overwrite_a=False, lwork=None, mode='full', check_finite=True):
         K = min(M, N)
 
         if not mode == 'economic':
-            R = np.empty_like(a1)
-            Q = np.empty_like(a1, shape=(N, N))
-            Q[...] = np.identity(N)
+            R = mx.empty_like(a1)
+            Q = mx.empty_like(a1, shape=(N, N))
+            Q[...] = mx.identity(N)
         else:
-            R = np.empty_like(a1, shape=(M, K))
-            Q = np.empty_like(a1, shape=(K, N))
+            R = mx.empty_like(a1, shape=(M, K))
+            Q = mx.empty_like(a1, shape=(K, N))
 
         if mode == 'r':
             return R
@@ -470,9 +470,9 @@ def rq(a, overwrite_a=False, lwork=None, mode='full', check_finite=True):
     rq, tau = safecall(gerqf, 'gerqf', a1, lwork=lwork,
                        overwrite_a=overwrite_a)
     if not mode == 'economic' or N < M:
-        R = np.triu(rq, N-M)
+        R = mx.triu(rq, N-M)
     else:
-        R = np.triu(rq[-M:, -M:])
+        R = mx.triu(rq[-M:, -M:])
 
     if mode == 'r':
         return R
@@ -486,7 +486,7 @@ def rq(a, overwrite_a=False, lwork=None, mode='full', check_finite=True):
         Q, = safecall(gor_un_grq, "gorgrq/gungrq", rq, tau, lwork=lwork,
                       overwrite_a=1)
     else:
-        rq1 = np.empty((N, N), dtype=rq.dtype)
+        rq1 = mx.empty((N, N), dtype=rq.dtype)
         rq1[-M:] = rq
         Q, = safecall(gor_un_grq, "gorgrq/gungrq", rq1, tau, lwork=lwork,
                       overwrite_a=1)

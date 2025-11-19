@@ -3,7 +3,7 @@ ltisys -- a collection of functions to convert linear time invariant systems
 from one representation to another.
 """
 
-import numpy as np
+import mlx.core as mx
 from numpy import (r_, eye, atleast_2d, poly, dot,
                    asarray, zeros, array, outer)
 from scipy import linalg
@@ -29,7 +29,7 @@ def tf2ss(num, den):
 
     Returns
     -------
-    A, B, C, D : ndarray
+    A, B, C, D : array
         State space representation of the system, in controller canonical
         form.
 
@@ -87,7 +87,7 @@ def tf2ss(num, den):
                 array([], float))
 
     # pad numerator to have same number of columns has denominator
-    num = np.hstack((np.zeros((num.shape[0], K - M), dtype=num.dtype), num))
+    num = mx.hstack((mx.zeros((num.shape[0], K - M), dtype=num.dtype), num))
 
     if num.shape[-1] > 0:
         D = atleast_2d(num[:, 0])
@@ -235,11 +235,11 @@ def ss2tf(A, B, C, D, input=0):
 
     Returns
     -------
-    num : 2-D ndarray
+    num : 2-D array
         Numerator(s) of the resulting transfer function(s). `num` has one row
         for each of the system's outputs. Each row is a sequence representation
         of the numerator polynomial.
-    den : 1-D ndarray
+    den : 1-D array
         Denominator of the resulting transfer function(s). `den` is a sequence
         representation of the denominator polynomial.
 
@@ -288,14 +288,14 @@ def ss2tf(A, B, C, D, input=0):
         den = 1
 
     if (B.size == 0) and (C.size == 0):
-        num = np.ravel(D)
+        num = mx.ravel(D)
         if (D.size == 0) and (A.size == 0):
             den = []
         return num, den
 
     num_states = A.shape[0]
     type_test = A[:, 0] + B[:, 0] + C[0, :] + D + 0.0
-    num = np.empty((nout, num_states + 1), type_test.dtype)
+    num = mx.empty((nout, num_states + 1), type_test.dtype)
     for k in range(nout):
         Ck = atleast_2d(C[k, :])
         num[k] = poly(A - dot(B, Ck)) + (D[k] - 1) * den
@@ -315,7 +315,7 @@ def zpk2ss(z, p, k):
 
     Returns
     -------
-    A, B, C, D : ndarray
+    A, B, C, D : array
         State space representation of the system, in controller canonical
         form.
 
@@ -424,18 +424,18 @@ def cont2discrete(system, dt, method="zoh", alpha=None):
     --------
     We can transform a continuous state-space system to a discrete one:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.signal import cont2discrete, lti, dlti, dstep
 
     Define a continuous state-space system.
 
-    >>> A = np.array([[0, 1],[-10., -3]])
-    >>> B = np.array([[0],[10.]])
-    >>> C = np.array([[1., 0]])
-    >>> D = np.array([[0.]])
+    >>> A = mx.array([[0, 1],[-10., -3]])
+    >>> B = mx.array([[0],[10.]])
+    >>> C = mx.array([[1., 0]])
+    >>> D = mx.array([[0.]])
     >>> l_system = lti(A, B, C, D)
-    >>> t, x = l_system.step(T=np.linspace(0, 5, 100))
+    >>> t, x = l_system.step(T=mx.linspace(0, 5, 100))
     >>> fig, ax = plt.subplots()
     >>> ax.plot(t, x, label='Continuous', linewidth=3)
 
@@ -445,7 +445,7 @@ def cont2discrete(system, dt, method="zoh", alpha=None):
     >>> for method in ['zoh', 'bilinear', 'euler', 'backward_diff', 'foh', 'impulse']:
     ...    d_system = cont2discrete((A, B, C, D), dt, method=method)
     ...    s, x_d = dstep(d_system)
-    ...    ax.step(s, np.squeeze(x_d), label=method, where='post')
+    ...    ax.step(s, mx.squeeze(x_d), label=method, where='post')
     >>> ax.axis([t[0], t[-1], x[0], 1.4])
     >>> ax.legend(loc='best')
     >>> fig.tight_layout()
@@ -479,14 +479,14 @@ def cont2discrete(system, dt, method="zoh", alpha=None):
 
     if method == 'gbt':
         # This parameter is used repeatedly - compute once here
-        ima = np.eye(a.shape[0]) - alpha*dt*a
-        ad = linalg.solve(ima, np.eye(a.shape[0]) + (1.0-alpha)*dt*a)
+        ima = mx.eye(a.shape[0]) - alpha*dt*a
+        ad = linalg.solve(ima, mx.eye(a.shape[0]) + (1.0-alpha)*dt*a)
         bd = linalg.solve(ima, dt*b)
 
         # Similarly solve for the output equation matrices
         cd = linalg.solve(ima.transpose(), c.transpose())
         cd = cd.transpose()
-        dd = d + alpha*np.dot(c, bd)
+        dd = d + alpha*mx.dot(c, bd)
 
     elif method == 'bilinear' or method == 'tustin':
         return cont2discrete(system, dt, method="gbt", alpha=0.5)
@@ -499,13 +499,13 @@ def cont2discrete(system, dt, method="zoh", alpha=None):
 
     elif method == 'zoh':
         # Build an exponential matrix
-        em_upper = np.hstack((a, b))
+        em_upper = mx.hstack((a, b))
 
         # Need to stack zeros under the a and b matrices
-        em_lower = np.hstack((np.zeros((b.shape[1], a.shape[0])),
-                              np.zeros((b.shape[1], b.shape[1]))))
+        em_lower = mx.hstack((mx.zeros((b.shape[1], a.shape[0])),
+                              mx.zeros((b.shape[1], b.shape[1]))))
 
-        em = np.vstack((em_upper, em_lower))
+        em = mx.vstack((em_upper, em_lower))
         ms = linalg.expm(dt * em)
 
         # Dispose of the lower rows
@@ -523,9 +523,9 @@ def cont2discrete(system, dt, method="zoh", alpha=None):
         m = b.shape[1]
 
         # Build an exponential matrix similar to 'zoh' method
-        em_upper = linalg.block_diag(np.block([a, b]) * dt, np.eye(m))
+        em_upper = linalg.block_diag(mx.block([a, b]) * dt, mx.eye(m))
         em_lower = zeros((m, n + 2 * m))
-        em = np.block([[em_upper], [em_lower]])
+        em = mx.block([[em_upper], [em_lower]])
 
         ms = linalg.expm(em)
 
@@ -540,7 +540,7 @@ def cont2discrete(system, dt, method="zoh", alpha=None):
         dd = d + c @ ms13
 
     elif method == 'impulse':
-        if not np.allclose(d, 0):
+        if not mx.allclose(d, 0):
             raise ValueError("Impulse method is only applicable "
                              "to strictly proper systems")
 

@@ -5,7 +5,7 @@ import math
 import functools
 from fractions import Fraction
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_
 import pytest
 from pytest import raises as assert_raises
@@ -32,7 +32,7 @@ def test__aligned_zeros():
         err_msg = repr((shape, dtype, order, align))
         x = _aligned_zeros(shape, dtype, order, align=align)
         if align is None:
-            align = np.dtype(dtype).alignment
+            align = mx.dtype(dtype).alignment
         assert_equal(x.__array_interface__['data'][0] % align, 0)
         if hasattr(shape, '__len__'):
             assert_equal(x.shape, shape, err_msg)
@@ -54,27 +54,27 @@ def test__aligned_zeros():
     for align in [1, 2, 3, 4, 8, 16, 32, 64, None]:
         for n in [0, 1, 3, 11]:
             for order in ["C", "F", None]:
-                for dtype in [np.uint8, np.float64]:
+                for dtype in [mx.uint8, mx.float64]:
                     for shape in [n, (1, 2, 3, n)]:
                         for j in range(niter):
                             check(shape, dtype, order, align)
 
 
 def test_check_random_state():
-    # If seed is None, return the RandomState singleton used by np.random.
+    # If seed is None, return the RandomState singleton used by mx.random.
     # If seed is an int, return a new RandomState instance seeded with seed.
     # If seed is already a RandomState instance, return it.
     # Otherwise raise ValueError.
     rsi = check_random_state(1)
-    assert_equal(type(rsi), np.random.RandomState)
+    assert_equal(type(rsi), mx.random.RandomState)
     rsi = check_random_state(rsi)
-    assert_equal(type(rsi), np.random.RandomState)
+    assert_equal(type(rsi), mx.random.RandomState)
     rsi = check_random_state(None)
-    assert_equal(type(rsi), np.random.RandomState)
+    assert_equal(type(rsi), mx.random.RandomState)
     assert_raises(ValueError, check_random_state, 'a')
-    rg = np.random.Generator(np.random.PCG64())
+    rg = mx.random.Generator(mx.random.PCG64())
     rsi = check_random_state(rg)
-    assert_equal(type(rsi), np.random.Generator)
+    assert_equal(type(rsi), mx.random.Generator)
 
 
 def test_getfullargspec_no_self():
@@ -97,14 +97,14 @@ def test_getfullargspec_no_self():
 
 
 def test_mapwrapper_serial():
-    in_arg = np.arange(10.)
-    out_arg = np.sin(in_arg)
+    in_arg = mx.arange(10.)
+    out_arg = mx.sin(in_arg)
 
     p = MapWrapper(1)
     assert_(p._mapfunc is map)
     assert_(p.pool is None)
     assert_(p._own_pool is False)
-    out = list(p(np.sin, in_arg))
+    out = list(p(mx.sin, in_arg))
     assert_equal(out, out_arg)
 
     with assert_raises(RuntimeError):
@@ -117,11 +117,11 @@ def test_pool():
 
 
 def test_mapwrapper_parallel():
-    in_arg = np.arange(10.)
-    out_arg = np.sin(in_arg)
+    in_arg = mx.arange(10.)
+    out_arg = mx.sin(in_arg)
 
     with MapWrapper(2) as p:
-        out = p(np.sin, in_arg)
+        out = p(mx.sin, in_arg)
         assert_equal(list(out), out_arg)
 
         assert_(p._own_pool is True)
@@ -131,7 +131,7 @@ def test_mapwrapper_parallel():
     # the context manager should've closed the internal pool
     # check that it has by asking it to calculate again.
     with assert_raises(Exception) as excinfo:
-        p(np.sin, in_arg)
+        p(mx.sin, in_arg)
 
     assert_(excinfo.type is ValueError)
 
@@ -144,7 +144,7 @@ def test_mapwrapper_parallel():
 
         # closing the PoolWrapper shouldn't close the internal pool
         # because it didn't create it
-        out = p.map(np.sin, in_arg)
+        out = p.map(mx.sin, in_arg)
         assert_equal(list(out), out_arg)
 
 
@@ -152,12 +152,12 @@ def test_mapwrapper_parallel():
 def user_of_workers(x, b=1, workers=None):
     assert workers is not None
     assert isinstance(workers, MapWrapper)
-    return np.array(list(workers(np.sin, x * b)))
+    return mx.array(list(workers(mx.sin, x * b)))
 
 
 def test__workers_wrapper():
-    arr = np.linspace(0, np.pi)
-    req = np.sin(arr * 2.0)
+    arr = mx.linspace(0, mx.pi)
+    req = mx.sin(arr * 2.0)
 
     with Pool(2) as p:
         v = user_of_workers(arr, workers=p.map, b=2)
@@ -179,71 +179,71 @@ def test__workers_wrapper():
 
 
 def test_rng_integers():
-    rng = np.random.RandomState()
+    rng = mx.random.RandomState()
 
     # test that numbers are inclusive of high point
     arr = rng_integers(rng, low=2, high=5, size=100, endpoint=True)
-    assert np.max(arr) == 5
-    assert np.min(arr) == 2
+    assert mx.max(arr) == 5
+    assert mx.min(arr) == 2
     assert arr.shape == (100, )
 
     # test that numbers are inclusive of high point
     arr = rng_integers(rng, low=5, size=100, endpoint=True)
-    assert np.max(arr) == 5
-    assert np.min(arr) == 0
+    assert mx.max(arr) == 5
+    assert mx.min(arr) == 0
     assert arr.shape == (100, )
 
     # test that numbers are exclusive of high point
     arr = rng_integers(rng, low=2, high=5, size=100, endpoint=False)
-    assert np.max(arr) == 4
-    assert np.min(arr) == 2
+    assert mx.max(arr) == 4
+    assert mx.min(arr) == 2
     assert arr.shape == (100, )
 
     # test that numbers are exclusive of high point
     arr = rng_integers(rng, low=5, size=100, endpoint=False)
-    assert np.max(arr) == 4
-    assert np.min(arr) == 0
+    assert mx.max(arr) == 4
+    assert mx.min(arr) == 0
     assert arr.shape == (100, )
 
-    # now try with np.random.Generator
+    # now try with mx.random.Generator
     try:
-        rng = np.random.default_rng()
+        rng = mx.random.default_rng()
     except AttributeError:
         return
 
     # test that numbers are inclusive of high point
     arr = rng_integers(rng, low=2, high=5, size=100, endpoint=True)
-    assert np.max(arr) == 5
-    assert np.min(arr) == 2
+    assert mx.max(arr) == 5
+    assert mx.min(arr) == 2
     assert arr.shape == (100, )
 
     # test that numbers are inclusive of high point
     arr = rng_integers(rng, low=5, size=100, endpoint=True)
-    assert np.max(arr) == 5
-    assert np.min(arr) == 0
+    assert mx.max(arr) == 5
+    assert mx.min(arr) == 0
     assert arr.shape == (100, )
 
     # test that numbers are exclusive of high point
     arr = rng_integers(rng, low=2, high=5, size=100, endpoint=False)
-    assert np.max(arr) == 4
-    assert np.min(arr) == 2
+    assert mx.max(arr) == 4
+    assert mx.min(arr) == 2
     assert arr.shape == (100, )
 
     # test that numbers are exclusive of high point
     arr = rng_integers(rng, low=5, size=100, endpoint=False)
-    assert np.max(arr) == 4
-    assert np.min(arr) == 0
+    assert mx.max(arr) == 4
+    assert mx.min(arr) == 0
     assert arr.shape == (100, )
 
 
 class TestValidateInt:
 
-    @pytest.mark.parametrize('n', [4, np.uint8(4), np.int16(4), np.array(4)])
+    @pytest.mark.parametrize('n', [4, mx.uint8(4), mx.int16(4), mx.array(4)])
     def test_validate_int(self, n):
         n = _validate_int(n, 'n')
         assert n == 4
 
-    @pytest.mark.parametrize('n', [4.0, np.array([4]), Fraction(4, 1)])
+    @pytest.mark.parametrize('n', [4.0, mx.array([4]), Fraction(4, 1)])
     def test_validate_int_bad(self, n):
         with pytest.raises(TypeError, match='n must be an integer'):
             _validate_int(n, 'n')
@@ -329,7 +329,7 @@ class TestRenameParameter:
 
 class TestContainsNaN:
     def test_policy(self):
-        data = np.array([1, 2, 3, np.nan])
+        data = mx.array([1, 2, 3, mx.nan])
 
         assert _contains_nan(data)  # default policy is "propagate"
         assert _contains_nan(data, nan_policy="propagate")
@@ -347,39 +347,39 @@ class TestContainsNaN:
 
     def test_contains_nan(self):
         # Special case: empty array
-        assert not _contains_nan(np.array([], dtype=float))
+        assert not _contains_nan(mx.array([], dtype=float))
 
         # Integer arrays cannot contain NaN
-        assert not _contains_nan(np.array([1, 2, 3]))
-        assert not _contains_nan(np.array([[1, 2], [3, 4]]))
+        assert not _contains_nan(mx.array([1, 2, 3]))
+        assert not _contains_nan(mx.array([[1, 2], [3, 4]]))
 
-        assert not _contains_nan(np.array([1., 2., 3.]))
-        assert not _contains_nan(np.array([1., 2.j, 3.]))
-        assert _contains_nan(np.array([1., 2.j, np.nan]))
-        assert _contains_nan(np.array([1., 2., np.nan]))
-        assert _contains_nan(np.array([np.nan, 2., np.nan]))
-        assert not _contains_nan(np.array([[1., 2.], [3., 4.]]))
-        assert _contains_nan(np.array([[1., 2.], [3., np.nan]]))
+        assert not _contains_nan(mx.array([1., 2., 3.]))
+        assert not _contains_nan(mx.array([1., 2.j, 3.]))
+        assert _contains_nan(mx.array([1., 2.j, mx.nan]))
+        assert _contains_nan(mx.array([1., 2., mx.nan]))
+        assert _contains_nan(mx.array([mx.nan, 2., mx.nan]))
+        assert not _contains_nan(mx.array([[1., 2.], [3., 4.]]))
+        assert _contains_nan(mx.array([[1., 2.], [3., mx.nan]]))
 
     @skip_xp_invalid_arg
     def test_contains_nan_with_strings(self):
-        data1 = np.array([1, 2, "3", np.nan])  # converted to string "nan"
+        data1 = mx.array([1, 2, "3", mx.nan])  # converted to string "nan"
         assert not _contains_nan(data1)
 
-        data2 = np.array([1, 2, "3", np.nan], dtype='object')
+        data2 = mx.array([1, 2, "3", mx.nan], dtype='object')
         assert _contains_nan(data2)
 
-        data3 = np.array([["1", 2], [3, np.nan]])  # converted to string "nan"
+        data3 = mx.array([["1", 2], [3, mx.nan]])  # converted to string "nan"
         assert not _contains_nan(data3)
 
-        data4 = np.array([["1", 2], [3, np.nan]], dtype='object')
+        data4 = mx.array([["1", 2], [3, mx.nan]], dtype='object')
         assert _contains_nan(data4)
 
     @pytest.mark.skip_xp_backends(eager_only=True,
                                   reason="lazy backends tested separately")
     @pytest.mark.parametrize("nan_policy", ['propagate', 'omit', 'raise'])
     def test_array_api(self, xp, nan_policy):
-        rng = np.random.default_rng(932347235892482)
+        rng = mx.random.default_rng(932347235892482)
         x0 = rng.random(size=(2, 3, 4))
         x = xp.asarray(x0)
         assert not _contains_nan(x, nan_policy)
@@ -399,7 +399,7 @@ class TestContainsNaN:
     @pytest.mark.skip_xp_backends("array_api_strict", reason="lazy backends only")
     @pytest.mark.skip_xp_backends("torch", reason="lazy backends only")
     def test_array_api_lazy(self, xp):
-        rng = np.random.default_rng(932347235892482)
+        rng = mx.random.default_rng(932347235892482)
         x0 = rng.random(size=(2, 3, 4))
         x = xp.asarray(x0)
 
@@ -413,7 +413,7 @@ class TestContainsNaN:
         with pytest.raises(TypeError, match=match):
             _contains_nan(x, "raise")
 
-        x = xpx.at(x)[1, 2, 1].set(np.nan)
+        x = xpx.at(x)[1, 2, 1].set(mx.nan)
 
         xp_assert_equal(_contains_nan(x), xp.asarray(True))
         xp_assert_equal(_contains_nan(x, "propagate"), xp.asarray(True))
@@ -427,18 +427,18 @@ class TestContainsNaN:
 def test__rng_html_rewrite():
     def mock_str():
         lines = [
-            'np.random.default_rng(8989843)',
-            'np.random.default_rng(seed)',
-            'np.random.default_rng(0x9a71b21474694f919882289dc1559ca)',
+            'mx.random.default_rng(8989843)',
+            'mx.random.default_rng(seed)',
+            'mx.random.default_rng(0x9a71b21474694f919882289dc1559ca)',
             ' bob ',
         ]
         return lines
 
     res = _rng_html_rewrite(mock_str)()
     ref = [
-        'np.random.default_rng()',
-        'np.random.default_rng(seed)',
-        'np.random.default_rng()',
+        'mx.random.default_rng()',
+        'mx.random.default_rng(seed)',
+        'mx.random.default_rng()',
         ' bob ',
     ]
 
@@ -447,29 +447,29 @@ def test__rng_html_rewrite():
 
 class TestTransitionToRNG:
     def kmeans(self, **kwargs):
-        rng = np.random.default_rng(3458934594269824562)
+        rng = mx.random.default_rng(3458934594269824562)
         return cluster.vq.kmeans2(rng.random(size=(20, 3)), 3, **kwargs)
 
     def kmeans2(self, **kwargs):
-        rng = np.random.default_rng(3458934594269824562)
+        rng = mx.random.default_rng(3458934594269824562)
         return cluster.vq.kmeans2(rng.random(size=(20, 3)), 3, **kwargs)
 
     def barycentric(self, **kwargs):
-        rng = np.random.default_rng(3458934594269824562)
+        rng = mx.random.default_rng(3458934594269824562)
         x1, x2, y1 = rng.random((3, 10))
         f = interpolate.BarycentricInterpolator(x1, y1, **kwargs)
         return f(x2)
 
     def clarkson_woodruff_transform(self, **kwargs):
-        rng = np.random.default_rng(3458934594269824562)
+        rng = mx.random.default_rng(3458934594269824562)
         return linalg.clarkson_woodruff_transform(rng.random((10, 10)), 3, **kwargs)
 
     def basinhopping(self, **kwargs):
-        rng = np.random.default_rng(3458934594269824562)
+        rng = mx.random.default_rng(3458934594269824562)
         return optimize.basinhopping(optimize.rosen, rng.random(3), **kwargs).x
 
     def opt(self, fun, **kwargs):
-        rng = np.random.default_rng(3458934594269824562)
+        rng = mx.random.default_rng(3458934594269824562)
         bounds = optimize.Bounds(-rng.random(3) * 10, rng.random(3) * 10)
         return fun(optimize.rosen, bounds, **kwargs).x
 
@@ -480,7 +480,7 @@ class TestTransitionToRNG:
         return self.opt(optimize.dual_annealing, **kwargs)
 
     def check_grad(self, **kwargs):
-        rng = np.random.default_rng(3458934594269824562)
+        rng = mx.random.default_rng(3458934594269824562)
         x = rng.random(3)
         return optimize.check_grad(optimize.rosen, optimize.rosen_der, x,
                                    direction='random', **kwargs)
@@ -495,7 +495,7 @@ class TestTransitionToRNG:
         return sparse.rand(10, 10, density=1.0, **kwargs).toarray()
 
     def svds(self, **kwargs):
-        rng = np.random.default_rng(3458934594269824562)
+        rng = mx.random.default_rng(3458934594269824562)
         A = rng.random((10, 10))
         return sparse.linalg.svds(A, **kwargs)
 
@@ -503,32 +503,32 @@ class TestTransitionToRNG:
         return spatial.transform.Rotation.random(3, **kwargs).as_matrix()
 
     def goodness_of_fit(self, **kwargs):
-        rng = np.random.default_rng(3458934594269824562)
+        rng = mx.random.default_rng(3458934594269824562)
         data = rng.random(100)
         return stats.goodness_of_fit(stats.laplace, data, **kwargs).pvalue
 
     def permutation_test(self, **kwargs):
-        rng = np.random.default_rng(3458934594269824562)
+        rng = mx.random.default_rng(3458934594269824562)
         data = tuple(rng.random((2, 100)))
-        def statistic(x, y, axis): return np.mean(x, axis=axis) - np.mean(y, axis=axis)
+        def statistic(x, y, axis): return mx.mean(x, axis=axis) - mx.mean(y, axis=axis)
         return stats.permutation_test(data, statistic, **kwargs).pvalue
 
     def bootstrap(self, **kwargs):
-        rng = np.random.default_rng(3458934594269824562)
+        rng = mx.random.default_rng(3458934594269824562)
         data = (rng.random(100),)
-        return stats.bootstrap(data, np.mean, **kwargs).confidence_interval
+        return stats.bootstrap(data, mx.mean, **kwargs).confidence_interval
 
     def dunnett(self, **kwargs):
-        rng = np.random.default_rng(3458934594269824562)
+        rng = mx.random.default_rng(3458934594269824562)
         x, y, control = rng.random((3, 100))
         return stats.dunnett(x, y, control=control, **kwargs).pvalue
 
     def sobol_indices(self, **kwargs):
-        def f_ishigami(x): return (np.sin(x[0]) + 7 * np.sin(x[1]) ** 2
-                                   + 0.1 * (x[2] ** 4) * np.sin(x[0]))
-        dists = [stats.uniform(loc=-np.pi, scale=2 * np.pi),
-                 stats.uniform(loc=-np.pi, scale=2 * np.pi),
-                 stats.uniform(loc=-np.pi, scale=2 * np.pi)]
+        def f_ishigami(x): return (mx.sin(x[0]) + 7 * mx.sin(x[1]) ** 2
+                                   + 0.1 * (x[2] ** 4) * mx.sin(x[0]))
+        dists = [stats.uniform(loc=-mx.pi, scale=2 * mx.pi),
+                 stats.uniform(loc=-mx.pi, scale=2 * mx.pi),
+                 stats.uniform(loc=-mx.pi, scale=2 * mx.pi)]
         res = stats.sobol_indices(func=f_ishigami, n=1024, dists=dists, **kwargs)
         return res.first_order
 
@@ -557,13 +557,13 @@ class TestTransitionToRNG:
         return X.random(4)
 
     def permutation_method(self, **kwargs):
-        rng = np.random.default_rng(3458934594269824562)
+        rng = mx.random.default_rng(3458934594269824562)
         data = tuple(rng.random((2, 100)))
         method = stats.PermutationMethod(**kwargs)
         return stats.pearsonr(*data, method=method).pvalue
 
     def bootstrap_method(self, **kwargs):
-        rng = np.random.default_rng(3458934594269824562)
+        rng = mx.random.default_rng(3458934594269824562)
         data = tuple(rng.random((2, 100)))
         res = stats.pearsonr(*data)
         method = stats.BootstrapMethod(**kwargs)
@@ -599,15 +599,15 @@ class TestTransitionToRNG:
         (multinomial_qmc, "seed"),
     ])
     def test_rng_deterministic(self, method, arg_name):
-        np.random.seed(None)
+        mx.random.seed(None)
         seed = 2949672964
 
-        rng = np.random.default_rng(seed)
+        rng = mx.random.default_rng(seed)
         message = "got multiple values for argument now known as `rng`"
         with pytest.raises(TypeError, match=message):
             method(self, **{'rng': rng, arg_name: seed})
 
-        rng = np.random.default_rng(seed)
+        rng = mx.random.default_rng(seed)
         res1 = method(self, rng=rng)
         res2 = method(self, rng=seed)
         assert_equal(res2, res1)
@@ -618,7 +618,7 @@ class TestTransitionToRNG:
             assert_equal(res3, res1)
             return
 
-        rng = np.random.RandomState(seed)
+        rng = mx.random.RandomState(seed)
         res1 = method(self, **{arg_name: rng})
         res2 = method(self, **{arg_name: seed})
 
@@ -626,13 +626,13 @@ class TestTransitionToRNG:
                                "multivariate_normal_qmc", "multinomial_qmc"}:
             # For these, passing `random_state=RandomState(seed)` is not the same as
             # passing integer `seed`.
-            res1b = method(self, **{arg_name: np.random.RandomState(seed)})
+            res1b = method(self, **{arg_name: mx.random.RandomState(seed)})
             assert_equal(res1b, res1)
             res2b = method(self, **{arg_name: seed})
             assert_equal(res2b, res2)
             return
 
-        np.random.seed(seed)
+        mx.random.seed(seed)
         res3 = method(self, **{arg_name: None})
         assert_equal(res2, res1)
         assert_equal(res3, res1)

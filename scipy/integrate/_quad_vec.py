@@ -4,7 +4,7 @@ import heapq
 import collections
 import functools
 
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._util import MapWrapper, _FunctionWrapper
 from scipy._lib._array_api import xp_capabilities
@@ -43,7 +43,7 @@ class SemiInfiniteFunc:
         z = self._sgn * (x - self._start) + 1
         if z == 0:
             # Can happen only if point not in range
-            return np.inf
+            return mx.inf
         return 1 / z
 
     def __call__(self, t):
@@ -79,7 +79,7 @@ class DoubleInfiniteFunc:
 
 
 def _max_norm(x):
-    return np.amax(abs(x))
+    return mx.amax(abs(x))
 
 
 def _get_sizeof(obj):
@@ -170,13 +170,13 @@ def quad_vec(f, a, b, epsabs=1e-200, epsrel=1e-8, norm='2', cache_size=100e6,
             failure (1), and failure due to rounding error (2).
         neval : int
             Number of function evaluations.
-        intervals : ndarray, shape (num_intervals, 2)
+        intervals : array, shape (num_intervals, 2)
             Start and end points of subdivision intervals.
-        integrals : ndarray, shape (num_intervals, ...)
+        integrals : array, shape (num_intervals, ...)
             Integral for each interval.
             Note that at most ``cache_size`` values are recorded,
             and the array may contains *nan* for missing items.
-        errors : ndarray, shape (num_intervals,)
+        errors : array, shape (num_intervals,)
             Estimated integration error for each interval.
 
     Notes
@@ -213,9 +213,9 @@ def quad_vec(f, a, b, epsabs=1e-200, epsrel=1e-8, norm='2', cache_size=100e6,
     We can compute integrations of a vector-valued function:
 
     >>> from scipy.integrate import quad_vec
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
-    >>> alpha = np.linspace(0.0, 2.0, num=30)
+    >>> alpha = mx.linspace(0.0, 2.0, num=30)
     >>> f = lambda x: x**alpha
     >>> x0, x1 = 0, 2
     >>> y, err = quad_vec(f, x0, x1)
@@ -231,10 +231,10 @@ def quad_vec(f, a, b, epsabs=1e-200, epsrel=1e-8, norm='2', cache_size=100e6,
     .. code-block:: python
 
         from scipy.integrate import quad_vec
-        import numpy as np
+        import mlx.core as mx
         import matplotlib.pyplot as plt
 
-        alpha = np.linspace(0.0, 2.0, num=30)
+        alpha = mx.linspace(0.0, 2.0, num=30)
         x0, x1 = 0, 2
         def f(x):
             return x**alpha
@@ -263,18 +263,18 @@ def quad_vec(f, a, b, epsabs=1e-200, epsrel=1e-8, norm='2', cache_size=100e6,
                   points=points,
                   quadrature='gk15' if quadrature is None else quadrature,
                   full_output=full_output)
-    if np.isfinite(a) and np.isinf(b):
+    if mx.isfinite(a) and mx.isinf(b):
         f2 = SemiInfiniteFunc(f, start=a, infty=b)
         if points is not None:
             kwargs['points'] = tuple(f2.get_t(xp) for xp in points)
         return quad_vec(f2, 0, 1, **kwargs)
-    elif np.isfinite(b) and np.isinf(a):
+    elif mx.isfinite(b) and mx.isinf(a):
         f2 = SemiInfiniteFunc(f, start=b, infty=a)
         if points is not None:
             kwargs['points'] = tuple(f2.get_t(xp) for xp in points)
         res = quad_vec(f2, 0, 1, **kwargs)
         return (-res[0],) + res[1:]
-    elif np.isinf(a) and np.isinf(b):
+    elif mx.isinf(a) and mx.isinf(b):
         sgn = -1 if b < a else 1
 
         # NB. explicitly split integral at t=0, which separates
@@ -291,13 +291,13 @@ def quad_vec(f, a, b, epsabs=1e-200, epsrel=1e-8, norm='2', cache_size=100e6,
             res = quad_vec(f2, 1, 1, **kwargs)
 
         return (res[0]*sgn,) + res[1:]
-    elif not (np.isfinite(a) and np.isfinite(b)):
+    elif not (mx.isfinite(a) and mx.isfinite(b)):
         raise ValueError(f"invalid integration bounds a={a}, b={b}")
 
     norm_funcs = {
         None: _max_norm,
         'max': _max_norm,
-        '2': np.linalg.norm
+        '2': mx.linalg.norm
     }
     if callable(norm):
         norm_func = norm
@@ -343,7 +343,7 @@ def quad_vec(f, a, b, epsabs=1e-200, epsrel=1e-8, norm='2', cache_size=100e6,
         if global_integral is None:
             if isinstance(ig, float | complex):
                 # Specialize for scalars
-                if norm_func in (_max_norm, np.linalg.norm):
+                if norm_func in (_max_norm, mx.linalg.norm):
                     norm_func = abs
 
             global_integral = ig
@@ -424,7 +424,7 @@ def quad_vec(f, a, b, epsabs=1e-200, epsrel=1e-8, norm='2', cache_size=100e6,
                     ier = ROUNDING_ERROR
                     break
 
-            if not (np.isfinite(global_error) and np.isfinite(rounding_error)):
+            if not (mx.isfinite(global_error) and mx.isfinite(rounding_error)):
                 ier = NOT_A_NUMBER
                 break
 
@@ -432,12 +432,12 @@ def quad_vec(f, a, b, epsabs=1e-200, epsrel=1e-8, norm='2', cache_size=100e6,
     err = global_error + rounding_error
 
     if full_output:
-        res_arr = np.asarray(res)
-        dummy = np.full(res_arr.shape, np.nan, dtype=res_arr.dtype)
-        integrals = np.array([interval_cache.get((z[1], z[2]), dummy)
+        res_arr = mx.array(res)
+        dummy = mx.full(res_arr.shape, mx.nan, dtype=res_arr.dtype)
+        integrals = mx.array([interval_cache.get((z[1], z[2]), dummy)
                                       for z in intervals], dtype=res_arr.dtype)
-        errors = np.array([-z[0] for z in intervals])
-        intervals = np.array([[z[1], z[2]] for z in intervals])
+        errors = mx.array([-z[0] for z in intervals])
+        intervals = mx.array([[z[1], z[2]] for z in intervals])
 
         info = _Bunch(neval=neval,
                       success=(ier == CONVERGED),

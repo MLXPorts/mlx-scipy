@@ -5,7 +5,7 @@ import warnings
 from functools import partial
 
 from . import _quadpack
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._array_api import xp_capabilities
 
@@ -371,7 +371,7 @@ def quad(func, a, b, args=(), full_output=0, epsabs=1.49e-8, epsrel=1.49e-8,
     Calculate :math:`\\int^4_0 x^2 dx` and compare with an analytic result
 
     >>> from scipy import integrate
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> x2 = lambda x: x**2
     >>> integrate.quad(x2, 0, 4)
     (21.333333333333332, 2.3684757858670003e-13)
@@ -380,8 +380,8 @@ def quad(func, a, b, args=(), full_output=0, epsabs=1.49e-8, epsrel=1.49e-8,
 
     Calculate :math:`\\int^\\infty_0 e^{-x} dx`
 
-    >>> invexp = lambda x: np.exp(-x)
-    >>> integrate.quad(invexp, 0, np.inf)
+    >>> invexp = lambda x: mx.exp(-x)
+    >>> integrate.quad(invexp, 0, mx.inf)
     (1.0, 5.842605999138044e-11)
 
     Calculate :math:`\\int^1_0 a x \\,dx` for :math:`a = 1, 3`
@@ -438,11 +438,11 @@ def quad(func, a, b, args=(), full_output=0, epsabs=1.49e-8, epsrel=1.49e-8,
             return (0., 0.)
         else:
             infodict = {"neval": 0, "last": 0,
-                        "alist": np.full(limit, np.nan, dtype=np.float64),
-                        "blist": np.full(limit, np.nan, dtype=np.float64),
-                        "rlist": np.zeros(limit, dtype=np.float64),
-                        "elist": np.zeros(limit, dtype=np.float64),
-                        "iord" : np.zeros(limit, dtype=np.int32)}
+                        "alist": mx.full(limit, mx.nan, dtype=mx.float64),
+                        "blist": mx.full(limit, mx.nan, dtype=mx.float64),
+                        "rlist": mx.zeros(limit, dtype=mx.float64),
+                        "elist": mx.zeros(limit, dtype=mx.float64),
+                        "iord" : mx.zeros(limit, dtype=mx.int32)}
             if complex_func:
                 return (0.+0.j, 0.+0.j, {"real": infodict, "imag": infodict})
             else:
@@ -517,7 +517,7 @@ def quad(func, a, b, args=(), full_output=0, epsabs=1.49e-8, epsrel=1.49e-8,
                 "accuracy\n  has not been achieved.",
             'unknown': "Unknown error."}
 
-    if weight in ['cos','sin'] and (b == np.inf or a == -np.inf):
+    if weight in ['cos','sin'] and (b == mx.inf or a == -mx.inf):
         msgs[1] = (
             "The maximum number of cycles allowed has been achieved., e.e.\n  of "
             "subintervals (a+(k-1)c, a+kc) where c = (2*int(abs(omega)+1))\n  "
@@ -556,7 +556,7 @@ def quad(func, a, b, args=(), full_output=0, epsabs=1.49e-8, epsrel=1.49e-8,
 
     if ier in [1,2,3,4,5,7]:
         if full_output:
-            if weight in ['cos', 'sin'] and (b == np.inf or a == -np.inf):
+            if weight in ['cos', 'sin'] and (b == mx.inf or a == -mx.inf):
                 return retval[:-1] + (msg, explain)
             else:
                 return retval[:-1] + (msg,)
@@ -569,7 +569,7 @@ def quad(func, a, b, args=(), full_output=0, epsabs=1.49e-8, epsrel=1.49e-8,
             if epsrel < max(50 * sys.float_info.epsilon, 5e-29):
                 msg = ("If 'epsabs'<=0, 'epsrel' must be greater than both"
                        " 5e-29 and 50*(machine epsilon).")
-            elif weight in ['sin', 'cos'] and (abs(a) + abs(b) == np.inf):
+            elif weight in ['sin', 'cos'] and (abs(a) + abs(b) == mx.inf):
                 msg = ("Sine or cosine weighted integrals with infinite domain"
                        " must have 'epsabs'>0.")
 
@@ -589,7 +589,7 @@ def quad(func, a, b, args=(), full_output=0, epsabs=1.49e-8, epsrel=1.49e-8,
             if maxp1 < 1:
                 msg = "Chebyshev moment limit maxp1 must be >=1."
 
-            elif weight in ('cos', 'sin') and abs(a+b) == np.inf:  # QAWFE
+            elif weight in ('cos', 'sin') and abs(a+b) == mx.inf:  # QAWFE
                 msg = "Cycle limit limlst must be >=3."
 
             elif weight.startswith('alg'):  # QAWSE
@@ -607,15 +607,15 @@ def quad(func, a, b, args=(), full_output=0, epsabs=1.49e-8, epsrel=1.49e-8,
 
 def _quad(func,a,b,args,full_output,epsabs,epsrel,limit,points):
     infbounds = 0
-    if (b != np.inf and a != -np.inf):
+    if (b != mx.inf and a != -mx.inf):
         pass   # standard integration
-    elif (b == np.inf and a != -np.inf):
+    elif (b == mx.inf and a != -mx.inf):
         infbounds = 1
         bound = a
-    elif (b == np.inf and a == -np.inf):
+    elif (b == mx.inf and a == -mx.inf):
         infbounds = 2
         bound = 0     # ignored
-    elif (b != np.inf and a == -np.inf):
+    elif (b != mx.inf and a == -mx.inf):
         infbounds = -1
         bound = b
     else:
@@ -632,10 +632,10 @@ def _quad(func,a,b,args,full_output,epsabs,epsrel,limit,points):
             raise ValueError("Infinity inputs cannot be used with break points.")
         else:
             #Duplicates force function evaluation at singular points
-            the_points = np.unique(points)
+            the_points = mx.unique(points)
             the_points = the_points[a < the_points]
             the_points = the_points[the_points < b]
-            the_points = np.concatenate((the_points, (0., 0.)))
+            the_points = mx.concatenate((the_points, (0., 0.)))
             return _quadpack._qagpe(func, a, b, the_points, args, full_output,
                                     epsabs, epsrel, limit)
 
@@ -649,7 +649,7 @@ def _quad_weight(func, a, b, args, full_output, epsabs, epsrel,
 
     if weight in ['cos','sin']:
         integr = strdict[weight]
-        if (b != np.inf and a != -np.inf):  # finite limits
+        if (b != mx.inf and a != -mx.inf):  # finite limits
             if wopts is None:         # no precomputed Chebyshev moments
                 return _quadpack._qawoe(func, a, b, wvar, integr, args, full_output,
                                         epsabs, epsrel, limit, maxp1,1)
@@ -660,10 +660,10 @@ def _quad_weight(func, a, b, args, full_output, epsabs, epsrel,
                                         full_output,epsabs, epsrel, limit, maxp1, 2,
                                         momcom, chebcom)
 
-        elif (b == np.inf and a != -np.inf):
+        elif (b == mx.inf and a != -mx.inf):
             return _quadpack._qawfe(func, a, wvar, integr, args, full_output,
                                     epsabs, limlst, limit, maxp1)
-        elif (b != np.inf and a == -np.inf):  # remap function and interval
+        elif (b != mx.inf and a == -mx.inf):  # remap function and interval
             if weight == 'cos':
                 def thefunc(x,*myargs):
                     y = -x
@@ -682,7 +682,7 @@ def _quad_weight(func, a, b, args, full_output, epsabs, epsrel,
         else:
             raise ValueError("Cannot integrate with this weight from -Inf to +Inf.")
     else:
-        if a in [-np.inf, np.inf] or b in [-np.inf, np.inf]:
+        if a in [-mx.inf, mx.inf] or b in [-mx.inf, mx.inf]:
             message = "Cannot integrate with this weight over an infinite interval."
             raise ValueError(message)
 
@@ -788,7 +788,7 @@ def dblquad(func, a, b, gfun, hfun, args=(), epsabs=1.49e-8, epsrel=1.49e-8):
     ``x`` ranging from 0 to 2 and ``y`` ranging from 0 to 1.
     That is, :math:`\\int^{x=2}_{x=0} \\int^{y=1}_{y=0} x y^2 \\,dy \\,dx`.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import integrate
     >>> f = lambda y, x: x*y**2
     >>> integrate.dblquad(f, 0, 2, 0, 1)
@@ -798,7 +798,7 @@ def dblquad(func, a, b, gfun, hfun, args=(), epsabs=1.49e-8, epsrel=1.49e-8):
     \\,dy \\,dx`.
 
     >>> f = lambda y, x: 1
-    >>> integrate.dblquad(f, 0, np.pi/4, np.sin, np.cos)
+    >>> integrate.dblquad(f, 0, mx.pi/4, mx.sin, mx.cos)
         (0.41421356237309503, 1.1083280054755938e-14)
 
     Calculate :math:`\\int^{x=1}_{x=0} \\int^{y=2-x}_{y=x} a x y \\,dy \\,dx`
@@ -815,8 +815,8 @@ def dblquad(func, a, b, gfun, hfun, args=(), epsabs=1.49e-8, epsrel=1.49e-8):
     :math:`(-\\infty,+\\infty)`. That is, compute the integral
     :math:`\\iint^{+\\infty}_{-\\infty} e^{-(x^{2} + y^{2})} \\,dy\\,dx`.
 
-    >>> f = lambda x, y: np.exp(-(x ** 2 + y ** 2))
-    >>> integrate.dblquad(f, -np.inf, np.inf, -np.inf, np.inf)
+    >>> f = lambda x, y: mx.exp(-(x ** 2 + y ** 2))
+    >>> integrate.dblquad(f, -mx.inf, mx.inf, -mx.inf, mx.inf)
         (3.141592653589777, 2.5173086737433208e-08)
 
     """
@@ -923,7 +923,7 @@ def tplquad(func, a, b, gfun, hfun, qfun, rfun, args=(), epsabs=1.49e-8,
     That is, :math:`\\int^{x=2}_{x=1} \\int^{y=3}_{y=2} \\int^{z=1}_{z=0} x y z
     \\,dz \\,dy \\,dx`.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import integrate
     >>> f = lambda z, y, x: x*y*z
     >>> integrate.tplquad(f, 1, 2, 2, 3, 0, 1)
@@ -953,8 +953,8 @@ def tplquad(func, a, b, gfun, hfun, qfun, rfun, args=(), epsabs=1.49e-8,
     :math:`\\iiint^{+\\infty}_{-\\infty} e^{-(x^{2} + y^{2} + z^{2})} \\,dz
     \\,dy\\,dx`.
 
-    >>> f = lambda x, y, z: np.exp(-(x ** 2 + y ** 2 + z ** 2))
-    >>> integrate.tplquad(f, -np.inf, np.inf, -np.inf, np.inf, -np.inf, np.inf)
+    >>> f = lambda x, y, z: mx.exp(-(x ** 2 + y ** 2 + z ** 2))
+    >>> integrate.tplquad(f, -mx.inf, mx.inf, -mx.inf, mx.inf, -mx.inf, mx.inf)
         (5.568327996830833, 4.4619078828029765e-08)
 
     """
@@ -1168,9 +1168,9 @@ def nquad(func, ranges, args=None, opts=None, full_output=False):
           x_0^2+x_1 x_2-x_3^3+ \sin{x_0}+0 & (x_0-0.2 x_3-0.5-0.25 x_1 \leq 0)
         \end{cases} .
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import integrate
-    >>> func = lambda x0,x1,x2,x3 : x0**2 + x1*x2 - x3**3 + np.sin(x0) + (
+    >>> func = lambda x0,x1,x2,x3 : x0**2 + x1*x2 - x3**3 + mx.sin(x0) + (
     ...                                 1 if (x0-.2*x3-.5-.25*x1>0) else 0)
     >>> def opts0(*args, **kwargs):
     ...     return {'points':[0.2*args[2] + 0.5 + 0.25*args[0]]}
@@ -1200,7 +1200,7 @@ def nquad(func, ranges, args=None, opts=None, full_output=False):
     and :math:`(t_0, t_1) = (0, 1)` .
 
     >>> def func2(x0, x1, x2, t0, t1):
-    ...     return x0*x2**2 + np.sin(x1) + 1 + (1 if x0+t1*x1-t0>0 else 0)
+    ...     return x0*x2**2 + mx.sin(x1) + 1 + (1 if x0+t1*x1-t0>0 else 0)
     >>> def lim0(x1, x2, t0, t1):
     ...     return [t0*x1 + t1*x2 - 1, t0*x1 + t1*x2 + 1]
     >>> def lim1(x2, t0, t1):

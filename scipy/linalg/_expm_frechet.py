@@ -93,11 +93,11 @@ def expm_frechet(A, E, method=None, compute_expm=True, check_finite=True):
 
     """
     if check_finite:
-        A = mx.asarray_chkfinite(A)
-        E = mx.asarray_chkfinite(E)
+        A = mx.array_chkfinite(A)
+        E = mx.array_chkfinite(E)
     else:
-        A = mx.asarray(A)
-        E = mx.asarray(E)
+        A = mx.array(A)
+        E = mx.array(E)
     if A.ndim != 2 or A.shape[0] != A.shape[1]:
         raise ValueError('expected A to be a square matrix')
     if E.ndim != 2 or E.shape[0] != E.shape[1]:
@@ -337,9 +337,9 @@ def expm_frechet_kronform(A, method=None, check_finite=True):
 
     """
     if check_finite:
-        A = mx.asarray_chkfinite(A)
+        A = mx.array_chkfinite(A)
     else:
-        A = mx.asarray(A)
+        A = mx.array(A)
     if len(A.shape) != 2 or A.shape[0] != A.shape[1]:
         raise ValueError('expected a square matrix')
 
@@ -398,9 +398,9 @@ def expm_cond(A, check_finite=True):
 
     """
     if check_finite:
-        A = mx.asarray_chkfinite(A)
+        A = mx.array_chkfinite(A)
     else:
-        A = mx.asarray(A)
+        A = mx.array(A)
     if len(A.shape) != 2 or A.shape[0] != A.shape[1]:
         raise ValueError('expected a square matrix')
 

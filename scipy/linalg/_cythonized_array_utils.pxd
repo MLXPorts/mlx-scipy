@@ -15,23 +15,23 @@ ctypedef fused lapack_sd_t:
     double
 
 ctypedef fused np_numeric_t:
-    cnp.int8_t
-    cnp.int16_t
-    cnp.int32_t
-    cnp.int64_t
-    cnp.uint8_t
-    cnp.uint16_t
-    cnp.uint32_t
-    cnp.uint64_t
-    cnp.float32_t
-    cnp.float64_t
-    cnp.longdouble_t
-    cnp.complex64_t
-    cnp.complex128_t
+    cmx.int8_t
+    cmx.int16_t
+    cmx.int32_t
+    cmx.int64_t
+    cmx.uint8_t
+    cmx.uint16_t
+    cmx.uint32_t
+    cmx.uint64_t
+    cmx.float32_t
+    cmx.float64_t
+    cmx.longdouble_t
+    cmx.complex64_t
+    cmx.complex128_t
 
 ctypedef fused np_complex_numeric_t:
-    cnp.complex64_t
-    cnp.complex128_t
+    cmx.complex64_t
+    cmx.complex128_t
 
 
 cdef void swap_c_and_f_layout(lapack_t *a, lapack_t *b, int r, int c) noexcept nogil

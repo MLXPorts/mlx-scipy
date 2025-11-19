@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 try:
     import mpmath
@@ -23,7 +23,7 @@ def wrightomega_exp_error(x):
 
 
 def main():
-    desired_error = 2 * np.finfo(float).eps
+    desired_error = 2 * mx.finfo(float).eps
     print('Series Error')
     for x in [1e5, 1e10, 1e15, 1e20]:
         with mpmath.workdps(100):

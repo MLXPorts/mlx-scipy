@@ -1,7 +1,7 @@
 # Copyright (C) 2015, Pauli Virtanen <pav@iki.fi>
 # Distributed under the same license as SciPy.
 
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import LinAlgError
 from scipy.linalg import (get_blas_funcs, qr, solve, svd, qr_insert, lstsq)
 from .iterative import _get_atol_rtol
@@ -20,7 +20,7 @@ def _fgmres(matvec, v0, m, atol, lpsolve=None, rpsolve=None, cs=(), outer_v=(),
     ----------
     matvec : callable
         Operation A*x
-    v0 : ndarray
+    v0 : array
         Initial vector, normalized to nrm2(v0) == 1
     m : int
         Number of GMRES rounds
@@ -30,9 +30,9 @@ def _fgmres(matvec, v0, m, atol, lpsolve=None, rpsolve=None, cs=(), outer_v=(),
         Left preconditioner L
     rpsolve : callable
         Right preconditioner R
-    cs : list of (ndarray, ndarray)
+    cs : list of (array, array)
         Columns of matrices C and U in GCROT
-    outer_v : list of ndarrays
+    outer_v : list of arrays
         Augmentation vectors in LGMRES
     prepend_outer_v : bool, optional
         Whether augmentation vectors come before or after
@@ -45,15 +45,15 @@ def _fgmres(matvec, v0, m, atol, lpsolve=None, rpsolve=None, cs=(), outer_v=(),
 
     Returns
     -------
-    Q, R : ndarray
+    Q, R : array
         QR decomposition of the upper Hessenberg H=QR
-    B : ndarray
+    B : array
         Projections corresponding to matrix C
-    vs : list of ndarray
+    vs : list of array
         Columns of matrix V
-    zs : list of ndarray
+    zs : list of array
         Columns of matrix Z
-    y : ndarray
+    y : array
         Solution to ||H y - e_1||_2 = min!
     res : float
         The final (preconditioned) residual norm
@@ -72,18 +72,18 @@ def _fgmres(matvec, v0, m, atol, lpsolve=None, rpsolve=None, cs=(), outer_v=(),
     vs = [v0]
     zs = []
     y = None
-    res = np.nan
+    res = mx.nan
 
     m = m + len(outer_v)
 
     # Orthogonal projection coefficients
-    B = np.zeros((len(cs), m), dtype=v0.dtype)
+    B = mx.zeros((len(cs), m), dtype=v0.dtype)
 
     # H is stored in QR factorized form
-    Q = np.ones((1, 1), dtype=v0.dtype)
-    R = np.zeros((1, 0), dtype=v0.dtype)
+    Q = mx.ones((1, 1), dtype=v0.dtype)
+    R = mx.zeros((1, 0), dtype=v0.dtype)
 
-    eps = np.finfo(v0.dtype).eps
+    eps = mx.finfo(v0.dtype).eps
 
     breakdown = False
 
@@ -118,18 +118,18 @@ def _fgmres(matvec, v0, m, atol, lpsolve=None, rpsolve=None, cs=(), outer_v=(),
             w = axpy(c, w, c.shape[0], -alpha)  # w -= alpha*c
 
         # Orthogonalize against V
-        hcur = np.zeros(j+2, dtype=Q.dtype)
+        hcur = mx.zeros(j+2, dtype=Q.dtype)
         for i, v in enumerate(vs):
             alpha = dot(v, w)
             hcur[i] = alpha
             w = axpy(v, w, v.shape[0], -alpha)  # w -= alpha*v
         hcur[i+1] = nrm2(w)
 
-        with np.errstate(over='ignore', divide='ignore'):
+        with mx.errstate(over='ignore', divide='ignore'):
             # Careful with denormals
             alpha = 1/hcur[-1]
 
-        if np.isfinite(alpha):
+        if mx.isfinite(alpha):
             w = scal(alpha, w)
 
         if not (hcur[-1] > eps * w_norm):
@@ -144,11 +144,11 @@ def _fgmres(matvec, v0, m, atol, lpsolve=None, rpsolve=None, cs=(), outer_v=(),
         # Arnoldi LSQ problem
 
         # Add new column to H=Q@R, padding other columns with zeros
-        Q2 = np.zeros((j+2, j+2), dtype=Q.dtype, order='F')
+        Q2 = mx.zeros((j+2, j+2), dtype=Q.dtype, order='F')
         Q2[:j+1,:j+1] = Q
         Q2[j+1,j+1] = 1
 
-        R2 = np.zeros((j+2, j), dtype=R.dtype, order='F')
+        R2 = mx.zeros((j+2, j), dtype=R.dtype, order='F')
         R2[:j+1,:] = R
 
         Q, R = qr_insert(Q2, R2, hcur, j, which='col',
@@ -165,7 +165,7 @@ def _fgmres(matvec, v0, m, atol, lpsolve=None, rpsolve=None, cs=(), outer_v=(),
         if res < atol or breakdown:
             break
 
-    if not np.isfinite(R[j,j]):
+    if not mx.isfinite(R[j,j]):
         # nans encountered, bail out
         raise LinAlgError()
 
@@ -188,14 +188,14 @@ def gcrotmk(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=1000, M=None, callback
 
     Parameters
     ----------
-    A : {sparse array, ndarray, LinearOperator}
+    A : {sparse array, array, LinearOperator}
         The real or complex N-by-N matrix of the linear system.
         Alternatively, `A` can be a linear operator which can
         produce ``Ax`` using, e.g.,
         `LinearOperator`.
-    b : ndarray
+    b : array
         Right hand side of the linear system. Has shape (N,) or (N,1).
-    x0 : ndarray
+    x0 : array
         Starting guess for the solution.
     rtol, atol : float, optional
         Parameters for the convergence test. For convergence,
@@ -205,7 +205,7 @@ def gcrotmk(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=1000, M=None, callback
         Maximum number of iterations.  Iteration will stop after maxiter
         steps even if the specified tolerance has not been achieved. The
         default is ``1000``.
-    M : {sparse array, ndarray, LinearOperator}, optional
+    M : {sparse array, array, LinearOperator}, optional
         Preconditioner for `A`.  The preconditioner should approximate the
         inverse of `A`. gcrotmk is a 'flexible' algorithm and the preconditioner
         can vary from iteration to iteration. Effective preconditioning
@@ -239,7 +239,7 @@ def gcrotmk(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=1000, M=None, callback
 
     Returns
     -------
-    x : ndarray
+    x : array
         The solution found.
     info : int
         Provides convergence information:
@@ -260,22 +260,22 @@ def gcrotmk(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=1000, M=None, callback
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import csc_array
     >>> from scipy.sparse.linalg import gcrotmk
-    >>> R = np.random.randn(5, 5)
+    >>> R = mx.random.randn(5, 5)
     >>> A = csc_array(R)
-    >>> b = np.random.randn(5)
+    >>> b = mx.random.randn(5)
     >>> x, exit_code = gcrotmk(A, b, atol=1e-5)
     >>> print(exit_code)
     0
-    >>> np.allclose(A.dot(x), b)
+    >>> mx.allclose(A.dot(x), b)
     True
 
     """
     A,M,x,b = make_system(A,M,x0,b)
 
-    if not np.isfinite(b).all():
+    if not mx.isfinite(b).all():
         raise ValueError("RHS must contain only finite numbers")
 
     if truncate not in ('oldest', 'smallest'):
@@ -317,7 +317,7 @@ def gcrotmk(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=1000, M=None, callback
         CU.sort(key=lambda cu: cu[0] is not None)
 
         # Fill-in missing ones
-        C = np.empty((A.shape[0], len(CU)), dtype=r.dtype, order='F')
+        C = mx.empty((A.shape[0], len(CU)), dtype=r.dtype, order='F')
         us = []
         j = 0
         while CU:
@@ -433,7 +433,7 @@ def gcrotmk(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=1000, M=None, callback
             ux = axpy(u, ux, ux.shape[0], -byc)  # ux -= u*byc
 
         # cx := V H y
-        with np.errstate(invalid="ignore"):
+        with mx.errstate(invalid="ignore"):
             hy = Q.dot(R.dot(y))
         cx = vs[0] * hy[0]
         for v, hyc in zip(vs[1:], hy[1:]):
@@ -443,7 +443,7 @@ def gcrotmk(A, b, x0=None, *, rtol=1e-5, atol=0., maxiter=1000, M=None, callback
         # This new cx is orthogonal to the previous C, by construction
         try:
             alpha = 1/nrm2(cx)
-            if not np.isfinite(alpha):
+            if not mx.isfinite(alpha):
                 raise FloatingPointError()
         except (FloatingPointError, ZeroDivisionError):
             # Cannot update, so skip it

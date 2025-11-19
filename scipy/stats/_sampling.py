@@ -1,6 +1,6 @@
 import math
 import numbers
-import numpy as np
+import mlx.core as mx
 from scipy import stats
 from scipy import special as sc
 from ._qmc import (check_random_state as check_random_state_qmc,
@@ -26,7 +26,7 @@ def argus_pdf(x, chi):
 def argus_gamma_trf(x, chi):
     if chi <= 5:
         return x
-    return np.sqrt(1.0 - 2 * x / chi**2)
+    return mx.sqrt(1.0 - 2 * x / chi**2)
 
 
 def argus_gamma_inv_trf(x, chi):
@@ -44,7 +44,7 @@ def betaprime_pdf(x, a, b):
         if a > 1:
             return 0
         elif a < 1:
-            return np.inf
+            return mx.inf
         else:
             return 1 / sc.beta(a, b)
 
@@ -57,23 +57,23 @@ def gamma_pdf(x, a):
     if x > 0:
         return math.exp(-math.lgamma(a) + (a - 1.0) * math.log(x) - x)
     else:
-        return 0 if a >= 1 else np.inf
+        return 0 if a >= 1 else mx.inf
 
 
 def invgamma_pdf(x, a):
     if x > 0:
         return math.exp(-(a + 1.0) * math.log(x) - math.lgamma(a) - 1 / x)
     else:
-        return 0 if a >= 1 else np.inf
+        return 0 if a >= 1 else mx.inf
 
 
 def burr_pdf(x, cc, dd):
-    # note: we use np.exp instead of math.exp, otherwise an overflow
+    # note: we use mx.exp instead of math.exp, otherwise an overflow
     # error can occur in the setup, e.g., for parameters
     # 1.89128135, 0.30195177, see test test_burr_overflow
     if x > 0:
         lx = math.log(x)
-        return np.exp(-(cc + 1) * lx - (dd + 1) * math.log1p(np.exp(-cc * lx)))
+        return mx.exp(-(cc + 1) * lx - (dd + 1) * math.log1p(mx.exp(-cc * lx)))
     else:
         return 0
 
@@ -96,7 +96,7 @@ def chi_pdf(x, a):
             - math.lgamma(0.5 * a)
         )
     else:
-        return 0 if a >= 1 else np.inf
+        return 0 if a >= 1 else mx.inf
 
 
 def chi2_pdf(x, df):
@@ -108,7 +108,7 @@ def chi2_pdf(x, df):
             - math.lgamma(0.5 * df)
         )
     else:
-        return 0 if df >= 1 else np.inf
+        return 0 if df >= 1 else mx.inf
 
 
 def alpha_pdf(x, a):
@@ -237,7 +237,7 @@ PINV_CONFIG = {
         "center": lambda a, b: max(0.1, (a - 1) / (b + 1)),
         "check_pinv_params": beta_valid_params,
         "rvs_transform": lambda x, *args: x / (1 + x),
-        "rvs_transform_inv": lambda x, *args: x / (1 - x) if x < 1 else np.inf,
+        "rvs_transform_inv": lambda x, *args: x / (1 - x) if x < 1 else mx.inf,
     },
     "betaprime": {
         "pdf": betaprime_pdf,
@@ -454,7 +454,7 @@ class FastGeneratorInversion:
             random numbers.
             If `random_state` is None, it uses ``self.random_state``.
             If `random_state` is an int,
-            ``np.random.default_rng(random_state)`` is used.
+            ``mx.random.default_rng(random_state)`` is used.
             If `random_state` is already a ``Generator`` or ``RandomState``
             instance then that instance is used.
 
@@ -547,7 +547,7 @@ class FastGeneratorInversion:
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
     >>> from scipy.stats.sampling import FastGeneratorInversion
 
@@ -571,7 +571,7 @@ class FastGeneratorInversion:
     Compare the PPF against approximation `ppf`.
 
     >>> q = [0.001, 0.2, 0.5, 0.8, 0.999]
-    >>> np.max(np.abs(gamma_frozen.ppf(q) - gamma_dist.ppf(q)))
+    >>> mx.max(mx.abs(gamma_frozen.ppf(q) - gamma_dist.ppf(q)))
     4.313394796895409e-08
 
     To confirm that the numerical inversion is accurate, we evaluate the
@@ -635,9 +635,9 @@ class FastGeneratorInversion:
         loc = dist.kwds.get("loc", 0)
         scale = dist.kwds.get("scale", 1)
         args = dist.args
-        if not np.isscalar(loc):
+        if not mx.isscalar(loc):
             raise ValueError("loc must be scalar.")
-        if not np.isscalar(scale):
+        if not mx.isscalar(scale):
             raise ValueError("scale must be scalar.")
 
         self._frozendist = getattr(stats, distname)(
@@ -647,7 +647,7 @@ class FastGeneratorInversion:
         )
         self._distname = distname
 
-        nargs = np.broadcast_arrays(args)[0].size
+        nargs = mx.broadcast_arrays(args)[0].size
         nargs_expected = self._frozendist.dist.numargs
         if nargs != nargs_expected:
             raise ValueError(
@@ -719,7 +719,7 @@ class FastGeneratorInversion:
 
     @loc.setter
     def loc(self, loc):
-        if not np.isscalar(loc):
+        if not mx.isscalar(loc):
             raise ValueError("loc must be scalar.")
         self._frozendist.kwds["loc"] = loc
         # update the adjusted domain that depends on loc and scale
@@ -731,7 +731,7 @@ class FastGeneratorInversion:
 
     @scale.setter
     def scale(self, scale):
-        if not np.isscalar(scale):
+        if not mx.isscalar(scale):
             raise ValueError("scale must be scalar.")
         self._frozendist.kwds["scale"] = scale
         # update the adjusted domain that depends on loc and scale
@@ -756,7 +756,7 @@ class FastGeneratorInversion:
                     raise ValueError(msg)
 
         if "center" in cfg.keys():
-            if not np.isscalar(cfg["center"]):
+            if not mx.isscalar(cfg["center"]):
                 self._center = cfg["center"](*args)
             else:
                 self._center = cfg["center"]
@@ -831,7 +831,7 @@ class FastGeneratorInversion:
 
         Note that this PPF is designed to generate random samples.
         """
-        q = np.asarray(q)
+        q = mx.array(q)
         if self._mirror_uniform:
             x = self._rng.ppf(1 - q)
         else:
@@ -862,7 +862,7 @@ class FastGeneratorInversion:
 
         Returns
         -------
-        rvs : ndarray or scalar
+        rvs : array or scalar
             Quasi-random variates. See Notes for shape information.
 
         Notes
@@ -908,7 +908,7 @@ class FastGeneratorInversion:
             tuple_size = (size,)
         # we do not use rng.qrvs directly since we need to be
         # able to apply the ppf to 1 - u
-        N = 1 if size is None else np.prod(size)
+        N = 1 if size is None else mx.prod(size)
         u = qmc_engine.random(N)
         if self._mirror_uniform:
             u = 1 - u
@@ -941,7 +941,7 @@ class FastGeneratorInversion:
             random numbers.
             If `random_state` is None, use ``self.random_state``.
             If `random_state` is an int,
-            ``np.random.default_rng(random_state)`` is used.
+            ``mx.random.default_rng(random_state)`` is used.
             If `random_state` is already a ``Generator`` or ``RandomState``
             instance then that instance is used.
 
@@ -969,7 +969,7 @@ class FastGeneratorInversion:
         that ``PPF(u)`` is close to zero or very large.
 
         By default, only the u-error is evaluated and the x-error is set to
-        ``np.nan``. Note that the evaluation of the x-error will be very slow
+        ``mx.nan``. Note that the evaluation of the x-error will be very slow
         if the implementation of the PPF is slow.
 
         Further information about these error measures can be found in [1]_.
@@ -984,7 +984,7 @@ class FastGeneratorInversion:
         Examples
         --------
 
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
         >>> from scipy.stats.sampling import FastGeneratorInversion
 
@@ -1006,15 +1006,15 @@ class FastGeneratorInversion:
         Compare the PPF against approximation `ppf`:
 
         >>> q = [0.001, 0.2, 0.4, 0.6, 0.8, 0.999]
-        >>> diff = np.abs(d_norm_frozen.ppf(q) - d_norm.ppf(q))
-        >>> x_error_abs = np.max(diff)
+        >>> diff = mx.abs(d_norm_frozen.ppf(q) - d_norm.ppf(q))
+        >>> x_error_abs = mx.max(diff)
         >>> x_error_abs
         1.2937954707581412e-08
 
         This is the absolute x-error evaluated at the points q. The relative
         error is given by
 
-        >>> x_error_rel = np.max(diff / np.abs(d_norm_frozen.ppf(q)))
+        >>> x_error_rel = mx.max(diff / mx.abs(d_norm_frozen.ppf(q)))
         >>> x_error_rel
         4.186725600453555e-09
 
@@ -1028,7 +1028,7 @@ class FastGeneratorInversion:
         4.507068014335139e-07  # may vary
 
         """
-        if not isinstance(size, numbers.Integral | np.integer):
+        if not isinstance(size, numbers.Integral | mx.integer):
             raise ValueError("size must be an integer.")
         # urng will be used to draw the samples for testing the error
         # it must not interfere with self.random_state. therefore, do not
@@ -1039,14 +1039,14 @@ class FastGeneratorInversion:
         if self._mirror_uniform:
             u = 1 - u
         x = self.ppf(u)
-        uerr = np.max(np.abs(self._cdf(x) - u))
+        uerr = mx.max(mx.abs(self._cdf(x) - u))
         if not x_error:
-            return uerr, np.nan
+            return uerr, mx.nan
         ppf_u = self._ppf(u)
-        x_error_abs = np.abs(self.ppf(u)-ppf_u)
-        x_error_rel = x_error_abs / np.abs(ppf_u)
-        x_error_combined = np.array([x_error_abs, x_error_rel]).min(axis=0)
-        return uerr, np.max(x_error_combined)
+        x_error_abs = mx.abs(self.ppf(u)-ppf_u)
+        x_error_rel = x_error_abs / mx.abs(ppf_u)
+        x_error_combined = mx.array([x_error_abs, x_error_rel]).min(axis=0)
+        return uerr, mx.max(x_error_combined)
 
     def support(self):
         """Support of the distribution.
@@ -1093,14 +1093,14 @@ class FastGeneratorInversion:
 
         Returns
         -------
-        y : ndarray
+        y : array
             CDF evaluated at x
 
         """
         y = self._frozendist.cdf(x)
         if self._p_domain == 1.0:
             return y
-        return np.clip((y - self._p_lower) / self._p_domain, 0, 1)
+        return mx.clip((y - self._p_lower) / self._p_domain, 0, 1)
 
     def _ppf(self, q):
         """Percent point function (inverse of `cdf`)
@@ -1118,8 +1118,8 @@ class FastGeneratorInversion:
         """
         if self._p_domain == 1.0:
             return self._frozendist.ppf(q)
-        x = self._frozendist.ppf(self._p_domain * np.array(q) + self._p_lower)
-        return np.clip(x, self._domain_adj[0], self._domain_adj[1])
+        x = self._frozendist.ppf(self._p_domain * mx.array(q) + self._p_lower)
+        return mx.clip(x, self._domain_adj[0], self._domain_adj[1])
 
 
 class RatioUniforms:
@@ -1143,7 +1143,7 @@ class RatioUniforms:
     random_state : {None, int, `numpy.random.Generator`,
                     `numpy.random.RandomState`}, optional
 
-        If `seed` is None (or `np.random`), the `numpy.random.RandomState`
+        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.
@@ -1214,19 +1214,19 @@ class RatioUniforms:
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
 
     >>> from scipy.stats.sampling import RatioUniforms
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
 
     Simulate normally distributed random variables. It is easy to compute the
     bounding rectangle explicitly in that case. For simplicity, we drop the
     normalization factor of the density.
 
-    >>> f = lambda x: np.exp(-x**2 / 2)
-    >>> v = np.sqrt(f(np.sqrt(2))) * np.sqrt(2)
-    >>> umax = np.sqrt(f(0))
+    >>> f = lambda x: mx.exp(-x**2 / 2)
+    >>> v = mx.sqrt(f(mx.sqrt(2))) * mx.sqrt(2)
+    >>> umax = mx.sqrt(f(0))
     >>> gen = RatioUniforms(f, umax=umax, vmin=-v, vmax=v, random_state=rng)
     >>> r = gen.rvs(size=2500)
 
@@ -1239,8 +1239,8 @@ class RatioUniforms:
     The exponential distribution provides another example where the bounding
     rectangle can be determined explicitly.
 
-    >>> gen = RatioUniforms(lambda x: np.exp(-x), umax=1, vmin=0,
-    ...                     vmax=2*np.exp(-1), random_state=rng)
+    >>> gen = RatioUniforms(lambda x: mx.exp(-x), umax=1, vmin=0,
+    ...                     vmax=2*mx.exp(-1), random_state=rng)
     >>> r = gen.rvs(1000)
     >>> stats.kstest(r, 'expon')[1]
     0.21121052054580314
@@ -1271,16 +1271,16 @@ class RatioUniforms:
 
         Returns
         -------
-        rvs : ndarray
+        rvs : array
             The random variates distributed according to the probability
             distribution defined by the pdf.
 
         """
-        size1d = tuple(np.atleast_1d(size))
-        N = np.prod(size1d)  # number of rvs needed, reshape upon return
+        size1d = tuple(mx.atleast_1d(size))
+        N = mx.prod(size1d)  # number of rvs needed, reshape upon return
 
         # start sampling using ratio of uniforms method
-        x = np.zeros(N)
+        x = mx.zeros(N)
         simulated, i = 0, 1
 
         # loop until N rvs have been generated: expected runtime is finite.
@@ -1296,7 +1296,7 @@ class RatioUniforms:
             # apply rejection method
             rvs = v1 / u1 + self._c
             accept = (u1**2 <= self._pdf(rvs))
-            num_accept = np.sum(accept)
+            num_accept = mx.sum(accept)
             if num_accept > 0:
                 x[simulated:(simulated + num_accept)] = rvs[accept]
                 simulated += num_accept
@@ -1311,4 +1311,4 @@ class RatioUniforms:
                 raise RuntimeError(msg)
             i += 1
 
-        return np.reshape(x, size1d)
+        return mx.reshape(x, size1d)

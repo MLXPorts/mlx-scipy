@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 from pytest import raises as assert_raises
 from scipy.optimize import nnls
@@ -7,19 +7,19 @@ import pytest
 
 class TestNNLS:
     def setup_method(self):
-        self.rng = np.random.default_rng(1685225766635251)
+        self.rng = mx.random.default_rng(1685225766635251)
 
     def test_nnls(self):
-        a = np.arange(25.0).reshape(-1, 5)
-        x = np.arange(5.0)
+        a = mx.arange(25.0).reshape(-1, 5)
+        x = mx.arange(5.0)
         y = a @ x
         x, res = nnls(a, y)
         assert res < 1e-7
-        assert np.linalg.norm((a @ x) - y) < 1e-7
+        assert mx.linalg.norm((a @ x) - y) < 1e-7
 
     def test_nnls_tall(self):
         a = self.rng.uniform(low=-10, high=10, size=[50, 10])
-        x = np.abs(self.rng.uniform(low=-2, high=2, size=[10]))
+        x = mx.abs(self.rng.uniform(low=-2, high=2, size=[10]))
         x[::2] = 0
         b = a @ x
         xact, rnorm = nnls(a, b)
@@ -30,7 +30,7 @@ class TestNNLS:
         # If too wide then problem becomes too ill-conditioned ans starts
         # emitting warnings, hence small m, n difference.
         a = self.rng.uniform(low=-10, high=10, size=[100, 120])
-        x = np.abs(self.rng.uniform(low=-2, high=2, size=[120]))
+        x = mx.abs(self.rng.uniform(low=-2, high=2, size=[120]))
         x[::2] = 0
         b = a @ x
         xact, rnorm = nnls(a, b)
@@ -46,13 +46,13 @@ class TestNNLS:
 
     def test_nnls_inner_loop_case1(self):
         # See gh-20168
-        n = np.array(
+        n = mx.array(
             [3, 2, 0, 1, 1, 1, 3, 8, 14, 16, 29, 23, 41, 47, 53, 57, 67, 76,
              103, 89, 97, 94, 85, 95, 78, 78, 78, 77, 73, 50, 50, 56, 68, 98,
              95, 112, 134, 145, 158, 172, 213, 234, 222, 215, 216, 216, 206,
              183, 135, 156, 110, 92, 63, 60, 52, 29, 20, 16, 12, 5, 5, 5, 1, 2,
              3, 0, 2])
-        k = np.array(
+        k = mx.array(
             [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
              0., 0., 0., 0.7205812007860187, 0., 1.4411624015720375,
              0.7205812007860187, 2.882324803144075, 5.76464960628815,
@@ -69,7 +69,7 @@ class TestNNLS:
              24.499760826724636, 17.29394881886445, 11.5292992125763,
              5.76464960628815, 5.044068405502131, 3.6029060039300935, 0.,
              2.882324803144075, 0., 0., 0.])
-        d = np.array(
+        d = mx.array(
             [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
              0., 0., 0., 0.003889242101538, 0., 0.007606268390096, 0.,
              0.025457371599973, 0.036952882091577, 0., 0.08518359183449,
@@ -86,31 +86,31 @@ class TestNNLS:
         # non-negativity constraints on the $d_i$. If $n_i$ is zero the
         # system is modified such that $d_i - d_{i+1}$ is then minimized.
         N = len(n)
-        A = np.diag(n) @ np.tril(np.ones((N, N)))
+        A = mx.diag(n) @ mx.tril(mx.ones((N, N)))
         w = n ** 0.5
 
         nz = (n == 0).nonzero()[0]
         A[nz, nz] = 1
-        A[nz, np.minimum(nz + 1, N - 1)] = -1
+        A[nz, mx.minimum(nz + 1, N - 1)] = -1
         w[nz] = 1
         k[nz] = 0
-        W = np.diag(w)
+        W = mx.diag(w)
 
         # Small perturbations can already make the infinite loop go away (just
         # uncomment the next line)
-        # k = k + 1e-10 * np.random.normal(size=N)
+        # k = k + 1e-10 * mx.random.normal(size=N)
         dact, _ = nnls(W @ A, W @ k)
         assert_allclose(dact, d, rtol=0., atol=1e-10)
 
     def test_nnls_inner_loop_case2(self):
         # See gh-20168
-        n = np.array(
+        n = mx.array(
             [1, 0, 1, 2, 2, 2, 3, 3, 5, 4, 14, 14, 19, 26, 36, 42, 36, 64, 64,
              64, 81, 85, 85, 95, 95, 95, 75, 76, 69, 81, 62, 59, 68, 64, 71, 67,
              74, 78, 118, 135, 153, 159, 210, 195, 218, 243, 236, 215, 196, 175,
              185, 149, 144, 103, 104, 75, 56, 40, 32, 26, 17, 9, 12, 8, 2, 1, 1,
              1])
-        k = np.array(
+        k = mx.array(
             [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
              0., 0., 0., 0., 0., 0.7064355064917867, 0., 0., 2.11930651947536,
              0.7064355064917867, 0., 3.5321775324589333, 7.064355064917867,
@@ -127,7 +127,7 @@ class TestNNLS:
              16.95445215580288, 9.890097090885014, 9.890097090885014,
              2.8257420259671466, 2.8257420259671466, 1.4128710129835733,
              0.7064355064917867, 1.4128710129835733])
-        d = np.array(
+        d = mx.array(
             [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
              0., 0., 0., 0., 0., 0.0021916146355674473, 0., 0.,
              0.011252740799789484, 0., 0., 0.037746623295934395,
@@ -144,26 +144,26 @@ class TestNNLS:
         # non-negativity constraints on the $d_i$. If $n_i$ is zero the
         # system is modified such that $d_i - d_{i+1}$ is then minimized.
         N = len(n)
-        A = np.diag(n) @ np.tril(np.ones((N, N)))
+        A = mx.diag(n) @ mx.tril(mx.ones((N, N)))
         w = n ** 0.5
 
         nz = (n == 0).nonzero()[0]
         A[nz, nz] = 1
-        A[nz, np.minimum(nz + 1, N - 1)] = -1
+        A[nz, mx.minimum(nz + 1, N - 1)] = -1
         w[nz] = 1
         k[nz] = 0
-        W = np.diag(w)
+        W = mx.diag(w)
 
         dact, _ = nnls(W @ A, W @ k)
 
-        p = np.cumsum(dact)
-        assert np.all(dact >= 0)
-        assert np.linalg.norm(k - n * p, ord=np.inf) < 28
+        p = mx.cumsum(dact)
+        assert mx.all(dact >= 0)
+        assert mx.linalg.norm(k - n * p, ord=mx.inf) < 28
         assert_allclose(dact, d, rtol=0., atol=1e-10)
 
     def test_nnls_gh20302(self):
         # See gh-20302
-        A = np.array(
+        A = mx.array(
             [0.33408569134321575, 0.11136189711440525, 0.049140798007949286,
              0.03712063237146841, 0.055680948557202625, 0.16642814595936478,
              0.11095209730624318, 0.09791993030943345, 0.14793612974165757,
@@ -313,9 +313,9 @@ class TestNNLS:
              371512945.9909363, -4162951345292.1514, 2.8048523486337994e-05,
              0.13183417571186926, 5817.462495763679, 439447252.3728975,
              9294740538175.03]).reshape(89, 5)
-        b = np.ones(89, dtype=np.float64)
+        b = mx.ones(89, dtype=mx.float64)
         sol, rnorm = nnls(A, b)
-        assert_allclose(sol, np.array([0.61124315, 8.22262829, 0., 0., 0.]))
+        assert_allclose(sol, mx.array([0.61124315, 8.22262829, 0., 0., 0.]))
         assert_allclose(rnorm, 1.0556460808977297)
 
     def test_nnls_gh21021_ex1(self):
@@ -340,29 +340,29 @@ class TestNNLS:
              -2.6654275476795966, 9.166315328199575]
 
         # Obtained from matlab's lstnonneg
-        des_sol = np.array([0., 118.017802006619, 45.1996532316584, 102.62156313537,
+        des_sol = mx.array([0., 118.017802006619, 45.1996532316584, 102.62156313537,
                             0., 55.8590204314398, 0., 29.7328833253434])
         sol, res = nnls(A, b)
         assert_allclose(sol, des_sol)
-        assert np.abs(np.linalg.norm(A@sol - b) - res) < 5e-14
+        assert mx.abs(mx.linalg.norm(A@sol - b) - res) < 5e-14
 
     def test_nnls_gh21021_ex2(self):
-        A = np.array([
+        A = mx.array([
             [0.2508259992635229, -0.24031300195203256],
             [0.510647748500133, 0.2872936081767836],
             [0.8196387904102849, -0.03520620107046682],
             [0.030739759120097084, -0.07768656359879388]])
-        b = np.array([24.456141951303913,
+        b = mx.array([24.456141951303913,
                       28.047143273432333,
                       41.10526799545987,
                       -1.2078282698324068])
 
         sol, res = nnls(A, b)
-        assert_allclose(sol, np.array([54.3047953202271, 0.0]))
-        assert np.abs(np.linalg.norm(A@sol - b) - res) < 5e-14
+        assert_allclose(sol, mx.array([54.3047953202271, 0.0]))
+        assert mx.abs(mx.linalg.norm(A@sol - b) - res) < 5e-14
 
     def test_nnls_gh21021_ex3(self):
-        A = np.array([
+        A = mx.array([
             [0.08247592017366788, 0.058398241636675674, -0.1031496693415968,
              0.03156983127072098, -0.029503680182026665],
             [0.21463607509982277, -0.2164518969308173, -0.10816833396662294,
@@ -414,7 +414,7 @@ class TestNNLS:
             [-0.01855218360922308, -0.050265869142888164, 0.2567912677240452,
              -0.2606428528561333, 0.25334396245022245]])
 
-        b = np.array([-7.876625373734849, -8.259856278691373, 3.2593082374900963,
+        b = mx.array([-7.876625373734849, -8.259856278691373, 3.2593082374900963,
                       16.30170376973345, 2.311892943629045, -1.595345202555738,
                       6.318582970536518, 3.0104212955340093, -6.286202915842167,
                       3.6382333725029294, 1.9012066681249356, -3.932236581436514,
@@ -425,42 +425,42 @@ class TestNNLS:
                       19.60887153608244])
 
         sol, res = nnls(A, b)
-        assert_allclose(sol, np.array([0.0, 0.0, 76.3611306173957, 0.0, 0.0]),
+        assert_allclose(sol, mx.array([0.0, 0.0, 76.3611306173957, 0.0, 0.0]),
                         atol=5e-14)
-        assert np.abs(np.linalg.norm(A@sol - b) - res) < 5e-14
+        assert mx.abs(mx.linalg.norm(A@sol - b) - res) < 5e-14
 
     def test_atol_deprecation_warning(self):
         """Test that using atol parameter triggers deprecation warning"""
-        a = np.array([[1, 0], [1, 0], [0, 1]])
-        b = np.array([2, 1, 1])
+        a = mx.array([[1, 0], [1, 0], [0, 1]])
+        b = mx.array([2, 1, 1])
 
         with pytest.warns(DeprecationWarning, match="{'atol'}"):
             nnls(a, b, atol=1e-8)
 
     def test_2D_singleton_RHS_input(self):
         # Test that a 2D singleton RHS input is accepted
-        A = np.array([[1.0, 0.5, -1.],
+        A = mx.array([[1.0, 0.5, -1.],
                       [1.0, 0.5, 0.0],
                       [-1., 0.0, 1.0]])
-        b = np.array([[-1.0, 2.0, 2.0]]).T
+        b = mx.array([[-1.0, 2.0, 2.0]]).T
         x, r = nnls(A, b)
-        assert_allclose(x, np.array([1.0, 2.0, 3.0]))
+        assert_allclose(x, mx.array([1.0, 2.0, 3.0]))
         assert_allclose(r, 0.0)
 
     def test_2D_not_singleton_RHS_input_2(self):
         # Test that a 2D but not a column vector RHS input is rejected
-        A = np.array([[1.0, 0.5, -1.],
+        A = mx.array([[1.0, 0.5, -1.],
                       [1.0, 0.5, 0.0],
                       [1.0, 0.5, 0.0],
                       [0.0, 0.0, 1.0]])
-        b = np.ones(shape=[4, 2], dtype=np.float64)
+        b = mx.ones(shape=[4, 2], dtype=mx.float64)
         with pytest.raises(ValueError, match="Expected a 1D array"):
             nnls(A, b)
 
     def test_gh_22791_32bit(self):
         # Scikit-learn got hit by this problem on 32-bit arch.
         desired = [0, 0, 1.05617285, 0, 0, 0, 0, 0.23123048, 0, 0, 0, 0.26128651]
-        rng = np.random.RandomState(42)
+        rng = mx.random.RandomState(42)
         n_samples, n_features = 5, 12
         X = rng.randn(n_samples, n_features)
         X[:2, :] = 0

@@ -1,5 +1,5 @@
 """Linear least squares with bound constraints on independent variables."""
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import norm
 from scipy.sparse import issparse, csr_array
 from scipy.sparse.linalg import LinearOperator, lsmr
@@ -14,13 +14,13 @@ from .bvls import bvls
 def prepare_bounds(bounds, n):
     if len(bounds) != 2:
         raise ValueError("`bounds` must contain 2 elements.")
-    lb, ub = (np.asarray(b, dtype=float) for b in bounds)
+    lb, ub = (mx.array(b, dtype=float) for b in bounds)
 
     if lb.ndim == 0:
-        lb = np.resize(lb, n)
+        lb = mx.resize(lb, n)
 
     if ub.ndim == 0:
-        ub = np.resize(ub, n)
+        ub = mx.resize(ub, n)
 
     return lb, ub
 
@@ -34,7 +34,7 @@ TERMINATION_MESSAGES = {
 }
 
 
-def lsq_linear(A, b, bounds=(-np.inf, np.inf), method='trf', tol=1e-10,
+def lsq_linear(A, b, bounds=(-mx.inf, mx.inf), method='trf', tol=1e-10,
                lsq_solver=None, lsmr_tol=None, max_iter=None,
                verbose=0, *, lsmr_maxiter=None,):
     r"""Solve a linear least-squares problem with bounds on the variables.
@@ -62,7 +62,7 @@ def lsq_linear(A, b, bounds=(-np.inf, np.inf), method='trf', tol=1e-10,
         - 2-tuple of array_like: Each element of the tuple must be either
           an array with the length equal to the number of parameters, or a
           scalar (in which case the bound is taken to be the same for all
-          parameters). Use ``np.inf`` with an appropriate sign to disable
+          parameters). Use ``mx.inf`` with an appropriate sign to disable
           bounds on all or some parameters.
 
     method : 'trf' or 'bvls', optional
@@ -127,16 +127,16 @@ def lsq_linear(A, b, bounds=(-np.inf, np.inf), method='trf', tol=1e-10,
     Returns
     -------
     OptimizeResult with the following fields defined:
-    x : ndarray, shape (n,)
+    x : array, shape (n,)
         Solution found.
     cost : float
         Value of the cost function at the solution.
-    fun : ndarray, shape (m,)
+    fun : array, shape (m,)
         Vector of residuals at the solution.
     optimality : float
         First-order optimality measure. The exact meaning depends on `method`,
         refer to the description of `tol` parameter.
-    active_mask : ndarray of int, shape (n,)
+    active_mask : array of int, shape (n,)
         Each component shows whether a corresponding constraint is active
         (that is, whether a variable is at the bound):
 
@@ -150,11 +150,11 @@ def lsq_linear(A, b, bounds=(-np.inf, np.inf), method='trf', tol=1e-10,
     unbounded_sol : tuple
         Unbounded least squares solution tuple returned by the least squares
         solver (set with `lsq_solver` option). If `lsq_solver` is not set or is
-        set to ``'exact'``, the tuple contains an ndarray of shape (n,) with
-        the unbounded solution, an ndarray with the sum of squared residuals,
-        an int with the rank of `A`, and an ndarray with the singular values
+        set to ``'exact'``, the tuple contains an array of shape (n,) with
+        the unbounded solution, an array with the sum of squared residuals,
+        an int with the rank of `A`, and an array with the singular values
         of `A` (see NumPy's ``linalg.lstsq`` for more information). If
-        `lsq_solver` is set to ``'lsmr'``, the tuple contains an ndarray of
+        `lsq_solver` is set to ``'lsmr'``, the tuple contains an array of
         shape (n,) with the unbounded solution, an int with the exit code,
         an int with the number of iterations, and five floats with
         various norms and the condition number of `A` (see SciPy's
@@ -225,10 +225,10 @@ def lsq_linear(A, b, bounds=(-np.inf, np.inf), method='trf', tol=1e-10,
     In this example, a problem with a large sparse arrays and bounds on the
     variables is solved.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import random_array
     >>> from scipy.optimize import lsq_linear
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     ...
     >>> m = 2000
     >>> n = 1000
@@ -256,23 +256,23 @@ def lsq_linear(A, b, bounds=(-np.inf, np.inf), method='trf', tol=1e-10,
     if issparse(A):
         A = csr_array(A)
     elif not isinstance(A, LinearOperator):
-        A = np.atleast_2d(np.asarray(A))
+        A = mx.atleast_2d(mx.array(A))
 
     if method == 'bvls':
         if lsq_solver == 'lsmr':
             raise ValueError("method='bvls' can't be used with "
                              "lsq_solver='lsmr'")
 
-        if not isinstance(A, np.ndarray):
+        if not isinstance(A, mx.array):
             raise ValueError("method='bvls' can't be used with `A` being "
                              "sparse or LinearOperator.")
 
     if lsq_solver is None:
-        if isinstance(A, np.ndarray):
+        if isinstance(A, mx.array):
             lsq_solver = 'exact'
         else:
             lsq_solver = 'lsmr'
-    elif lsq_solver == 'exact' and not isinstance(A, np.ndarray):
+    elif lsq_solver == 'exact' and not isinstance(A, mx.array):
         raise ValueError("`exact` solver can't be used when `A` is "
                          "sparse or LinearOperator.")
 
@@ -284,7 +284,7 @@ def lsq_linear(A, b, bounds=(-np.inf, np.inf), method='trf', tol=1e-10,
 
     m, n = A.shape
 
-    b = np.atleast_1d(b)
+    b = mx.atleast_1d(b)
     if b.ndim != 1:
         raise ValueError("`b` must have at most 1 dimension.")
 
@@ -300,7 +300,7 @@ def lsq_linear(A, b, bounds=(-np.inf, np.inf), method='trf', tol=1e-10,
     if lb.shape != (n,) and ub.shape != (n,):
         raise ValueError("Bounds have wrong shape.")
 
-    if np.any(lb >= ub):
+    if mx.any(lb >= ub):
         raise ValueError("Each lower bound must be strictly less than each "
                          "upper bound.")
 
@@ -312,7 +312,7 @@ def lsq_linear(A, b, bounds=(-np.inf, np.inf), method='trf', tol=1e-10,
         raise ValueError("`lsmr_tol` must be None, 'auto', or positive float.")
 
     if lsq_solver == 'exact':
-        unbd_lsq = np.linalg.lstsq(A, b, rcond=-1)
+        unbd_lsq = mx.linalg.lstsq(A, b, rcond=-1)
     elif lsq_solver == 'lsmr':
         first_lsmr_tol = lsmr_tol  # tol of first call to lsmr
         if lsmr_tol is None or lsmr_tol == 'auto':
@@ -323,11 +323,11 @@ def lsq_linear(A, b, bounds=(-np.inf, np.inf), method='trf', tol=1e-10,
 
     if in_bounds(x_lsq, lb, ub):
         r = A @ x_lsq - b
-        cost = 0.5 * np.dot(r, r)
+        cost = 0.5 * mx.dot(r, r)
         termination_status = 3
         termination_message = TERMINATION_MESSAGES[termination_status]
         g = compute_grad(A, r)
-        g_norm = norm(g, ord=np.inf)
+        g_norm = norm(g, ord=mx.inf)
 
         if verbose > 0:
             print(termination_message)
@@ -335,7 +335,7 @@ def lsq_linear(A, b, bounds=(-np.inf, np.inf), method='trf', tol=1e-10,
 
         return OptimizeResult(
             x=x_lsq, fun=r, cost=cost, optimality=g_norm,
-            active_mask=np.zeros(n), unbounded_sol=unbd_lsq,
+            active_mask=mx.zeros(n), unbounded_sol=unbd_lsq,
             nit=0, status=termination_status,
             message=termination_message, success=True)
 

@@ -2,7 +2,7 @@
 #define SPARSETOOLS_H
 
 #include <Python.h>
-#include "numpy/ndarrayobject.h"
+#include "numpy/arrayobject.h"
 
 #include <stdexcept>
 

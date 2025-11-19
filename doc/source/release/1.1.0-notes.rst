@@ -634,7 +634,7 @@ Pull requests for 1.1.0
 * `#8636 <https://github.com/scipy/scipy/pull/8636>`__: BUG: sparse.linalg/gcrotmk: avoid rounding error in termination...
 * `#8637 <https://github.com/scipy/scipy/pull/8637>`__: For pdf build
 * `#8639 <https://github.com/scipy/scipy/pull/8639>`__: CI: build pdf documentation on circleci
-* `#8640 <https://github.com/scipy/scipy/pull/8640>`__: TST: fix special test that was importing `np.testing.utils` (deprecated)
+* `#8640 <https://github.com/scipy/scipy/pull/8640>`__: TST: fix special test that was importing `mx.testing.utils` (deprecated)
 * `#8641 <https://github.com/scipy/scipy/pull/8641>`__: BUG: optimize: fixed sparse redundancy removal bug
 * `#8645 <https://github.com/scipy/scipy/pull/8645>`__: BUG: modified sigmaclip to avoid clipping of constant input in...
 * `#8647 <https://github.com/scipy/scipy/pull/8647>`__: TST: sparse: skip test_inplace_dense for numpy<1.13
@@ -650,7 +650,7 @@ Pull requests for 1.1.0
 * `#8676 <https://github.com/scipy/scipy/pull/8676>`__: BUG: optimize: partial fix to linprog fails to detect infeasibility...
 * `#8685 <https://github.com/scipy/scipy/pull/8685>`__: DOC: Add interp1d-next/previous example to tutorial
 * `#8687 <https://github.com/scipy/scipy/pull/8687>`__: TST: netcdf: explicit mmap=True in test
-* `#8688 <https://github.com/scipy/scipy/pull/8688>`__: BUG: signal, stats: use Python sum() instead of np.sum for summing...
+* `#8688 <https://github.com/scipy/scipy/pull/8688>`__: BUG: signal, stats: use Python sum() instead of mx.sum for summing...
 * `#8689 <https://github.com/scipy/scipy/pull/8689>`__: TST: bump tolerances in tests
 * `#8690 <https://github.com/scipy/scipy/pull/8690>`__: DEP: deprecate stats.itemfreq
 * `#8691 <https://github.com/scipy/scipy/pull/8691>`__: BLD: special: fix build vs. dd_real.h package
@@ -662,5 +662,5 @@ Pull requests for 1.1.0
 * `#8710 <https://github.com/scipy/scipy/pull/8710>`__: MAINT: fix an import cycle sparse -> special -> integrate ->...
 * `#8711 <https://github.com/scipy/scipy/pull/8711>`__: ENH: remove an avoidable overflow in scipy.stats.norminvgauss.pdf()
 * `#8716 <https://github.com/scipy/scipy/pull/8716>`__: BUG: interpolate: allow list inputs for make_interp_spline(...,...
-* `#8720 <https://github.com/scipy/scipy/pull/8720>`__: np.testing import that is compatible with numpy 1.15
+* `#8720 <https://github.com/scipy/scipy/pull/8720>`__: mx.testing import that is compatible with numpy 1.15
 * `#8724 <https://github.com/scipy/scipy/pull/8724>`__: CI: don't use pyproject.toml in the CI builds

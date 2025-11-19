@@ -1,7 +1,7 @@
 # This file contains unit tests for iv_ratio() and related functions.
 
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal, assert_allclose
 from scipy.special._ufuncs import (  # type: ignore[attr-defined]
     _iv_ratio as iv_ratio,
@@ -51,7 +51,7 @@ class TestIvRatio:
                 Distributions."  Journal of Machine Learning Research,
                 6(46):1345-1382.
             '''
-            r = np.arange(1, n+1) / (n+1)
+            r = mx.arange(1, n+1) / (n+1)
             return r * (2*v-r*r) / (1-r*r)
 
         for v in (0.5, 1, 2.34, 56.789):
@@ -62,36 +62,36 @@ class TestIvRatio:
         assert_allclose(iv_ratio(v, x), r, rtol=4e-16, atol=0)
 
     @pytest.mark.parametrize('v,x,r', [
-        (1, np.inf, 1),
-        (np.inf, 1, 0),
+        (1, mx.inf, 1),
+        (mx.inf, 1, 0),
     ])
     def test_inf(self, v, x, r):
         """If exactly one of v or x is inf and the other is within domain,
         should return 0 or 1 accordingly."""
         assert_equal(iv_ratio(v, x), r)
 
-    @pytest.mark.parametrize('v', [0.49, -np.inf, np.nan, np.inf])
-    @pytest.mark.parametrize('x', [-np.finfo(float).smallest_normal,
-                                   -np.finfo(float).smallest_subnormal,
-                                   -np.inf, np.nan, np.inf])
+    @pytest.mark.parametrize('v', [0.49, -mx.inf, mx.nan, mx.inf])
+    @pytest.mark.parametrize('x', [-mx.finfo(float).smallest_normal,
+                                   -mx.finfo(float).smallest_subnormal,
+                                   -mx.inf, mx.nan, mx.inf])
     def test_nan(self, v, x):
         """If at least one argument is out of domain, or if v = x = inf,
         the function should return nan."""
-        assert_equal(iv_ratio(v, x), np.nan)
+        assert_equal(iv_ratio(v, x), mx.nan)
 
-    @pytest.mark.parametrize('v', [0.5, 1, np.finfo(float).max, np.inf])
+    @pytest.mark.parametrize('v', [0.5, 1, mx.finfo(float).max, mx.inf])
     def test_zero_x(self, v):
         """If x is +/-0.0, return x to ensure iv_ratio is an odd function."""
         assert_equal(iv_ratio(v, 0.0), 0.0)
         assert_equal(iv_ratio(v, -0.0), -0.0)
 
     @pytest.mark.parametrize('v,x', [
-        (1, np.finfo(float).smallest_normal),
-        (1, np.finfo(float).smallest_subnormal),
-        (1, np.finfo(float).smallest_subnormal*2),
+        (1, mx.finfo(float).smallest_normal),
+        (1, mx.finfo(float).smallest_subnormal),
+        (1, mx.finfo(float).smallest_subnormal*2),
         (1e20, 123),
-        (np.finfo(float).max, 1),
-        (np.finfo(float).max, np.sqrt(np.finfo(float).max)),
+        (mx.finfo(float).max, 1),
+        (mx.finfo(float).max, mx.sqrt(mx.finfo(float).max)),
     ])
     def test_tiny_x(self, v, x):
         """If x is much less than v, the bounds
@@ -107,7 +107,7 @@ class TestIvRatio:
     @pytest.mark.parametrize('v,x', [
         (1, 1e16),
         (1e20, 1e40),
-        (np.sqrt(np.finfo(float).max), np.finfo(float).max),
+        (mx.sqrt(mx.finfo(float).max), mx.finfo(float).max),
     ])
     def test_huge_x(self, v, x):
         """If x is much greater than v, the bounds
@@ -121,9 +121,9 @@ class TestIvRatio:
         assert_equal(iv_ratio(v, x), 1.0)
 
     @pytest.mark.parametrize('v,x', [
-        (np.finfo(float).max, np.finfo(float).max),
-        (np.finfo(float).max / 3, np.finfo(float).max),
-        (np.finfo(float).max, np.finfo(float).max / 3),
+        (mx.finfo(float).max, mx.finfo(float).max),
+        (mx.finfo(float).max / 3, mx.finfo(float).max),
+        (mx.finfo(float).max, mx.finfo(float).max / 3),
     ])
     def test_huge_v_x(self, v, x):
         """If both x and v are very large, the bounds
@@ -137,7 +137,7 @@ class TestIvRatio:
         intermediate calculations.
         """
         t = x / v
-        expected = t / (1 + np.hypot(1, t))
+        expected = t / (1 + mx.hypot(1, t))
         assert_allclose(iv_ratio(v, x), expected, rtol=4e-16, atol=0)
 
 
@@ -170,36 +170,36 @@ class TestIvRatioC:
         assert_allclose(iv_ratio_c(v, x), r, rtol=1e-15, atol=0)
 
     @pytest.mark.parametrize('v,x,r', [
-        (1, np.inf, 0),
-        (np.inf, 1, 1),
+        (1, mx.inf, 0),
+        (mx.inf, 1, 1),
     ])
     def test_inf(self, v, x, r):
         """If exactly one of v or x is inf and the other is within domain,
         should return 0 or 1 accordingly."""
         assert_equal(iv_ratio_c(v, x), r)
 
-    @pytest.mark.parametrize('v', [0.49, -np.inf, np.nan, np.inf])
-    @pytest.mark.parametrize('x', [-np.finfo(float).smallest_normal,
-                                   -np.finfo(float).smallest_subnormal,
-                                   -np.inf, np.nan, np.inf])
+    @pytest.mark.parametrize('v', [0.49, -mx.inf, mx.nan, mx.inf])
+    @pytest.mark.parametrize('x', [-mx.finfo(float).smallest_normal,
+                                   -mx.finfo(float).smallest_subnormal,
+                                   -mx.inf, mx.nan, mx.inf])
     def test_nan(self, v, x):
         """If at least one argument is out of domain, or if v = x = inf,
         the function should return nan."""
-        assert_equal(iv_ratio_c(v, x), np.nan)
+        assert_equal(iv_ratio_c(v, x), mx.nan)
 
-    @pytest.mark.parametrize('v', [0.5, 1, np.finfo(float).max, np.inf])
+    @pytest.mark.parametrize('v', [0.5, 1, mx.finfo(float).max, mx.inf])
     def test_zero_x(self, v):
         """If x is +/-0.0, return 1."""
         assert_equal(iv_ratio_c(v, 0.0), 1.0)
         assert_equal(iv_ratio_c(v, -0.0), 1.0)
 
     @pytest.mark.parametrize('v,x', [
-        (1, np.finfo(float).smallest_normal),
-        (1, np.finfo(float).smallest_subnormal),
-        (1, np.finfo(float).smallest_subnormal*2),
+        (1, mx.finfo(float).smallest_normal),
+        (1, mx.finfo(float).smallest_subnormal),
+        (1, mx.finfo(float).smallest_subnormal*2),
         (1e20, 123),
-        (np.finfo(float).max, 1),
-        (np.finfo(float).max, np.sqrt(np.finfo(float).max)),
+        (mx.finfo(float).max, 1),
+        (mx.finfo(float).max, mx.sqrt(mx.finfo(float).max)),
     ])
     def test_tiny_x(self, v, x):
         """If x is much less than v, the bounds
@@ -215,7 +215,7 @@ class TestIvRatioC:
     @pytest.mark.parametrize('v,x', [
         (1, 1e16),
         (1e20, 1e40),
-        (np.sqrt(np.finfo(float).max), np.finfo(float).max),
+        (mx.sqrt(mx.finfo(float).max), mx.finfo(float).max),
     ])
     def test_huge_x(self, v, x):
         """If x is much greater than v, the bounds
@@ -229,9 +229,9 @@ class TestIvRatioC:
         assert_allclose(iv_ratio_c(v, x), (v-0.5)/x, rtol=1e-15, atol=0)
 
     @pytest.mark.parametrize('v,x', [
-        (np.finfo(float).max, np.finfo(float).max),
-        (np.finfo(float).max / 3, np.finfo(float).max),
-        (np.finfo(float).max, np.finfo(float).max / 3),
+        (mx.finfo(float).max, mx.finfo(float).max),
+        (mx.finfo(float).max / 3, mx.finfo(float).max),
+        (mx.finfo(float).max, mx.finfo(float).max / 3),
     ])
     def test_huge_v_x(self, v, x):
         """If both x and v are very large, the bounds
@@ -245,5 +245,5 @@ class TestIvRatioC:
         occurs during intermediate calculations.
         """
         t = x / v
-        expected = 1 - t / (1 + np.hypot(1, t))
+        expected = 1 - t / (1 + mx.hypot(1, t))
         assert_allclose(iv_ratio_c(v, x), expected, rtol=4e-16, atol=0)

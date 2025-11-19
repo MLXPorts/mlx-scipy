@@ -8,15 +8,15 @@ Translated to Cython by David Warde-Farley, October 2009.
 """
 
 cimport cython
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 from scipy.linalg.cython_blas cimport dgemm, sgemm
 
 from libc.math cimport sqrt
 
-ctypedef np.float64_t float64_t
-ctypedef np.float32_t float32_t
-ctypedef np.int32_t int32_t
+ctypedef mx.float64_t float64_t
+ctypedef mx.float32_t float32_t
+ctypedef mx.int32_t int32_t
 
 # Use Cython fused types for templating
 # Define supported data types as vq_type
@@ -25,7 +25,7 @@ ctypedef fused vq_type:
     float64_t
 
 # Initialize the NumPy C API
-np.import_array()
+mx.import_array()
 
 
 cdef inline vq_type vec_sqr(int n, vq_type *p) noexcept:
@@ -83,21 +83,21 @@ cdef int _vq(vq_type *obs, vq_type *code_book,
         _vq_small_nf(obs, code_book, ncodes, nfeat, nobs, codes, low_dist)
         return 0
 
-    cdef np.npy_intp i, j
+    cdef mx.npy_intp i, j
     cdef vq_type *p_obs
     cdef vq_type *p_codes
     cdef vq_type dist_sqr
-    cdef np.ndarray[vq_type, ndim=1] obs_sqr, codes_sqr
-    cdef np.ndarray[vq_type, ndim=2] M
+    cdef mx.array[vq_type, ndim=1] obs_sqr, codes_sqr
+    cdef mx.array[vq_type, ndim=2] M
 
     if vq_type is float32_t:
-        obs_sqr = np.ndarray(nobs, np.float32)
-        codes_sqr = np.ndarray(ncodes, np.float32)
-        M = np.ndarray((nobs, ncodes), np.float32)
+        obs_sqr = mx.array(nobs, mx.float32)
+        codes_sqr = mx.array(ncodes, mx.float32)
+        M = mx.array((nobs, ncodes), mx.float32)
     else:
-        obs_sqr = np.ndarray(nobs, np.float64)
-        codes_sqr = np.ndarray(ncodes, np.float64)
-        M = np.ndarray((nobs, ncodes), np.float64)
+        obs_sqr = mx.array(nobs, mx.float64)
+        codes_sqr = mx.array(ncodes, mx.float64)
+        M = mx.array((nobs, ncodes), mx.float64)
 
     p_obs = obs
     for i in range(nobs):
@@ -142,7 +142,7 @@ cdef void _vq_small_nf(vq_type *obs, vq_type *code_book,
     """
     # Temporary variables
     cdef vq_type dist_sqr, diff
-    cdef np.npy_intp i, j, k, obs_offset = 0, code_offset
+    cdef mx.npy_intp i, j, k, obs_offset = 0, code_offset
 
     # Index and pointer to keep track of the current position in
     # both arrays so that we don't have to always do index * nfeat.
@@ -174,15 +174,15 @@ cdef void _vq_small_nf(vq_type *obs, vq_type *code_book,
         obs_offset += nfeat
 
 
-def vq(np.ndarray obs, np.ndarray codes):
+def vq(mx.array obs, mx.array codes):
     """
-    Vector quantization ndarray wrapper. Only support float32 and float64.
+    Vector quantization array wrapper. Only support float32 and float64.
 
     Parameters
     ----------
-    obs : ndarray
+    obs : array
         The observation matrix. Each row is an observation.
-    codes : ndarray
+    codes : array
         The code book matrix.
 
     Notes
@@ -192,15 +192,15 @@ def vq(np.ndarray obs, np.ndarray codes):
     arrays are supported.
     """
     cdef int nobs, ncodes, nfeat
-    cdef np.ndarray outcodes, outdists
+    cdef mx.array outcodes, outdists
 
     # Ensure the arrays are contiguous
-    obs = np.ascontiguousarray(obs)
-    codes = np.ascontiguousarray(codes)
+    obs = mx.ascontiguousarray(obs)
+    codes = mx.ascontiguousarray(codes)
 
     if obs.dtype != codes.dtype:
         raise TypeError('observation and code should have same dtype')
-    if obs.dtype not in (np.float32, np.float64):
+    if obs.dtype not in (mx.float32, mx.float64):
         raise TypeError('type other than float or double not supported')
     if obs.ndim != codes.ndim:
         raise ValueError(
@@ -222,15 +222,15 @@ def vq(np.ndarray obs, np.ndarray codes):
 
     # Initialize outdists and outcodes array.
     # Outdists should be initialized as INF.
-    outdists = np.empty((nobs,), dtype=obs.dtype)
-    outcodes = np.empty((nobs,), dtype=np.int32)
-    outdists.fill(np.inf)
+    outdists = mx.empty((nobs,), dtype=obs.dtype)
+    outcodes = mx.empty((nobs,), dtype=mx.int32)
+    outdists.fill(mx.inf)
 
-    if obs.dtype.type is np.float32:
+    if obs.dtype.type is mx.float32:
         _vq(<float32_t *>obs.data, <float32_t *>codes.data,
             ncodes, nfeat, nobs, <int32_t *>outcodes.data,
             <float32_t *>outdists.data)
-    elif obs.dtype.type is np.float64:
+    elif obs.dtype.type is mx.float64:
         _vq(<float64_t *>obs.data, <float64_t *>codes.data,
             ncodes, nfeat, nobs, <int32_t *>outcodes.data,
             <float64_t *>outdists.data)
@@ -239,7 +239,7 @@ def vq(np.ndarray obs, np.ndarray codes):
 
 
 @cython.cdivision(True)
-cdef np.ndarray _update_cluster_means(vq_type *obs, int32_t *labels,
+cdef mx.array _update_cluster_means(vq_type *obs, int32_t *labels,
                                       vq_type *cb, int nobs, int nc, int nfeat):
     """
     The underlying function (template) of _vq.update_cluster_means.
@@ -261,16 +261,16 @@ cdef np.ndarray _update_cluster_means(vq_type *obs, int32_t *labels,
 
     Returns
     -------
-    has_members : ndarray
+    has_members : array
         A boolean array indicating which clusters have members.
     """
-    cdef np.npy_intp i, j, cluster_size, label
+    cdef mx.npy_intp i, j, cluster_size, label
     cdef vq_type *obs_p
     cdef vq_type *cb_p
-    cdef np.ndarray[int, ndim=1] obs_count
+    cdef mx.array[int, ndim=1] obs_count
 
     # Calculate the sums the numbers of obs in each cluster
-    obs_count = np.zeros(nc, np.intc)
+    obs_count = mx.zeros(nc, mx.intc)
     obs_p = obs
     for i in range(nobs):
         label = labels[i]
@@ -298,26 +298,26 @@ cdef np.ndarray _update_cluster_means(vq_type *obs, int32_t *labels,
     return obs_count > 0
 
 
-def update_cluster_means(np.ndarray obs, np.ndarray labels, int nc):
+def update_cluster_means(mx.array obs, mx.array labels, int nc):
     """
     The update-step of K-means. Calculate the mean of observations in each
     cluster.
 
     Parameters
     ----------
-    obs : ndarray
+    obs : array
         The observation matrix. Each row is an observation. Its dtype must be
         float32 or float64.
-    labels : ndarray
+    labels : array
         The label of each observation. Must be an 1d array.
     nc : int
         The number of centroids.
 
     Returns
     -------
-    cb : ndarray
+    cb : array
         The new code book.
-    has_members : ndarray
+    has_members : array
         A boolean array indicating which clusters have members.
 
     Notes
@@ -326,35 +326,35 @@ def update_cluster_means(np.ndarray obs, np.ndarray labels, int nc):
     in `has_members` will be `False`. The upper level function should decide
     how to deal with them.
     """
-    cdef np.ndarray has_members, cb
+    cdef mx.array has_members, cb
     cdef int nfeat
 
     # Ensure the arrays are contiguous
-    obs = np.ascontiguousarray(obs)
-    labels = np.ascontiguousarray(labels)
+    obs = mx.ascontiguousarray(obs)
+    labels = mx.ascontiguousarray(labels)
 
-    if obs.dtype not in (np.float32, np.float64):
+    if obs.dtype not in (mx.float32, mx.float64):
         raise TypeError('type other than float or double not supported')
-    if labels.dtype.type is not np.int32:
-        labels = labels.astype(np.int32)
+    if labels.dtype.type is not mx.int32:
+        labels = labels.astype(mx.int32)
     if labels.ndim != 1:
         raise ValueError('labels must be an 1d array')
 
     if obs.ndim == 1:
         nfeat = 1
-        cb = np.zeros(nc, dtype=obs.dtype)
+        cb = mx.zeros(nc, dtype=obs.dtype)
     elif obs.ndim == 2:
         nfeat = obs.shape[1]
-        cb = np.zeros((nc, nfeat), dtype=obs.dtype)
+        cb = mx.zeros((nc, nfeat), dtype=obs.dtype)
     else:
         raise ValueError('ndim different than 1 or 2 are not supported')
 
-    if obs.dtype.type is np.float32:
+    if obs.dtype.type is mx.float32:
         has_members = _update_cluster_means(<float32_t *>obs.data,
                                             <int32_t *>labels.data,
                                             <float32_t *>cb.data,
                                             obs.shape[0], nc, nfeat)
-    elif obs.dtype.type is np.float64:
+    elif obs.dtype.type is mx.float64:
         has_members = _update_cluster_means(<float64_t *>obs.data,
                                             <int32_t *>labels.data,
                                             <float64_t *>cb.data,

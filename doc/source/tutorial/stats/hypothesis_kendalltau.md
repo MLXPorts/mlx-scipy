@@ -35,11 +35,11 @@ observations are paired: each free proline measurement was taken from the same
 liver as the total collagen measurement at the same index.
 
 ```{code-cell}
-import numpy as np
+import mlx.core as mx
 # total collagen (mg/g dry weight of liver)
-x = np.array([7.1, 7.1, 7.2, 8.3, 9.4, 10.5, 11.4])
+x = mx.array([7.1, 7.1, 7.2, 8.3, 9.4, 10.5, 11.4])
 # free proline (μ mole/g dry weight of liver)
-y = np.array([2.8, 2.9, 2.8, 2.6, 3.5, 4.6, 5.0])
+y = mx.array([2.8, 2.9, 2.8, 2.6, 3.5, 4.6, 5.0])
 ```
 
 These data were analyzed in [^2] using Spearman's correlation coefficient,
@@ -71,8 +71,8 @@ approximated as the normal distribution with variance
 import matplotlib.pyplot as plt
 n = len(x)  # len(x) == len(y)
 var = (2*(2*n + 5))/(9*n*(n - 1))
-dist = stats.norm(scale=np.sqrt(var))
-z_vals = np.linspace(-1.25, 1.25, 100)
+dist = stats.norm(scale=mx.sqrt(var))
+z_vals = mx.linspace(-1.25, 1.25, 100)
 pdf = dist.pdf(z_vals)
 fig, ax = plt.subplots(figsize=(8, 5))
 
@@ -153,7 +153,7 @@ ref = stats.permutation_test((x,), statistic,
                              permutation_type='pairings')
 fig, ax = plt.subplots(figsize=(8, 5))
 plot(ax)
-bins = np.linspace(-1.25, 1.25, 25)
+bins = mx.linspace(-1.25, 1.25, 25)
 ax.hist(ref.null_distribution, bins=bins, density=True)
 ax.legend(['asymptotic approximation\n(many observations)',
            'exact null distribution'])

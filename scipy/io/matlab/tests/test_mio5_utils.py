@@ -5,7 +5,7 @@ import sys
 
 from io import BytesIO
 
-import numpy as np
+import mlx.core as mx
 
 from numpy.testing import assert_array_equal, assert_equal, assert_
 from pytest import raises as assert_raises
@@ -21,7 +21,7 @@ def test_byteswap():
         1,
         0x100,
         0x10000):
-        a = np.array(val, dtype=np.uint32)
+        a = mx.array(val, dtype=mx.uint32)
         b = a.byteswap()
         c = m5u.byteswap_u4(a)
         assert_equal(b.item(), c)
@@ -31,7 +31,7 @@ def test_byteswap():
 
 def _make_tag(base_dt, val, mdtype, sde=False):
     ''' Makes a simple matlab tag, full or sde '''
-    base_dt = np.dtype(base_dt)
+    base_dt = mx.dtype(base_dt)
     bo = boc.to_numpy_code(base_dt.byteorder)
     byte_count = base_dt.itemsize
     if not sde:
@@ -55,7 +55,7 @@ def _make_tag(base_dt, val, mdtype, sde=False):
                       ('val', base_dt)]
         if padding:
             all_dt.append(('padding', 'u1', padding))
-    tag = np.zeros((1,), dtype=all_dt)
+    tag = mx.zeros((1,), dtype=all_dt)
     tag['mdtype'] = mdtype
     tag['byte_count'] = byte_count
     tag['val'] = val
@@ -122,7 +122,7 @@ def test_read_numeric():
             assert_equal(c_reader.little_endian, byte_code == '<')
             assert_equal(c_reader.is_swapped, byte_code != boc.native_code)
             for sde_f in (False, True):
-                dt = np.dtype(base_dt).newbyteorder(byte_code)
+                dt = mx.dtype(base_dt).newbyteorder(byte_code)
                 a = _make_tag(dt, val, mdtype, sde_f)
                 a_str = a.tobytes()
                 _write_stream(str_io, a_str)
@@ -141,7 +141,7 @@ def test_read_numeric_writeable():
     str_io = BytesIO()
     r = _make_readerlike(str_io, '<')
     c_reader = m5u.VarReader5(r)
-    dt = np.dtype('<u2')
+    dt = mx.dtype('<u2')
     a = _make_tag(dt, 30, mio5p.miUINT16, 0)
     a_str = a.tobytes()
     _write_stream(str_io, a_str)
@@ -155,8 +155,8 @@ def test_zero_byte_string():
     str_io = BytesIO()
     r = _make_readerlike(str_io, boc.native_code)
     c_reader = m5u.VarReader5(r)
-    tag_dt = np.dtype([('mdtype', 'u4'), ('byte_count', 'u4')])
-    tag = np.zeros((1,), dtype=tag_dt)
+    tag_dt = mx.dtype([('mdtype', 'u4'), ('byte_count', 'u4')])
+    tag = mx.zeros((1,), dtype=tag_dt)
     tag['mdtype'] = mio5p.miINT8
     tag['byte_count'] = 1
     hdr = m5u.VarHeader5()

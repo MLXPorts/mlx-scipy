@@ -218,7 +218,7 @@ New features
     `scipy.stats.ortho_group`, `scipy.stats.special_ortho_group`, and
     `scipy.stats.unitary_group` is faster.
   - The ``rvs`` method of `scipy.stats.vonmises` now wraps to the interval
-    ``[-np.pi, np.pi]``.
+    ``[-mx.pi, mx.pi]``.
   - Improved the reliability of `scipy.stats.loggamma` ``rvs`` method for small
     values of the shape parameter.
 
@@ -587,7 +587,7 @@ Issues closed for 1.10.0
 * `#12632 <https://github.com/scipy/scipy/issues/12632>`__: curve_fit algorithm try to transform xdata in an array of floats
 * `#12963 <https://github.com/scipy/scipy/issues/12963>`__: shgo is not correctly passing jac to minimizer
 * `#13021 <https://github.com/scipy/scipy/issues/13021>`__: 2D Interpolation Scaling Issues
-* `#13049 <https://github.com/scipy/scipy/issues/13049>`__: Examples missing import numpy as np?
+* `#13049 <https://github.com/scipy/scipy/issues/13049>`__: Examples missing import mlx.core as mx?
 * `#13452 <https://github.com/scipy/scipy/issues/13452>`__: Calling \`len()\` on the \`scipy.spatial.transform.rotation.Rotation\`...
 * `#13529 <https://github.com/scipy/scipy/issues/13529>`__: signal.decimate doesn't use sosfilters and sosfiltfilt
 * `#14098 <https://github.com/scipy/scipy/issues/14098>`__: DOC-Update for InterpolatedUnivariateSpline and LSQUnivariateSpline
@@ -650,11 +650,11 @@ Issues closed for 1.10.0
 * `#16713 <https://github.com/scipy/scipy/issues/16713>`__: BUG/DOC: spatial: docstrings of \`Rotation\` methods are missing...
 * `#16726 <https://github.com/scipy/scipy/issues/16726>`__: CI: Python 3.11 tests are failing because a dependency is using...
 * `#16741 <https://github.com/scipy/scipy/issues/16741>`__: BUG: DOC: editing docstring example in svds
-* `#16759 <https://github.com/scipy/scipy/issues/16759>`__: DOC: Add 'import numpy as np' to the 'Examples' section of docstrings.
+* `#16759 <https://github.com/scipy/scipy/issues/16759>`__: DOC: Add 'import mlx.core as mx' to the 'Examples' section of docstrings.
 * `#16763 <https://github.com/scipy/scipy/issues/16763>`__: BUG: numpy version requirement mismatch docs vs setup.py
 * `#16773 <https://github.com/scipy/scipy/issues/16773>`__: BUG: indexing error in scipy.spatial.Voronoi in 3D
 * `#16796 <https://github.com/scipy/scipy/issues/16796>`__: DOC: Method "bisect" for root_scalar lacks correct argument list
-* `#16819 <https://github.com/scipy/scipy/issues/16819>`__: BUG: stats.binned_statistic_2d is ~8x slower when using \`statistic=np.mean\`...
+* `#16819 <https://github.com/scipy/scipy/issues/16819>`__: BUG: stats.binned_statistic_2d is ~8x slower when using \`statistic=mx.mean\`...
 * `#16833 <https://github.com/scipy/scipy/issues/16833>`__: Runtime performance in BSpline.design_matrix is inferior to BSpline().__call__()
 * `#16892 <https://github.com/scipy/scipy/issues/16892>`__: Add legend to \`rv_histogram\` plot in docs
 * `#16912 <https://github.com/scipy/scipy/issues/16912>`__: MAINT: stats: optimize: Move \`_contains_nan\` function to more...
@@ -747,7 +747,7 @@ Pull requests for 1.10.0
 * `#16336 <https://github.com/scipy/scipy/pull/16336>`__: MAINT: forward port git scoping
 * `#16340 <https://github.com/scipy/scipy/pull/16340>`__: DEP: remove tol & max_intervals from NumericalInverseHermite
 * `#16346 <https://github.com/scipy/scipy/pull/16346>`__: DEV: add meson-python to environment.yml
-* `#16351 <https://github.com/scipy/scipy/pull/16351>`__: Added "import numpy as np" statement to filter examples
+* `#16351 <https://github.com/scipy/scipy/pull/16351>`__: Added "import mlx.core as mx" statement to filter examples
 * `#16354 <https://github.com/scipy/scipy/pull/16354>`__: DOC: optimize: remove callback doc from the options in \`_minimize_lbfgsb\`...
 * `#16355 <https://github.com/scipy/scipy/pull/16355>`__: DEP: add deprecation warnings to kwargs turbo / eigvals of linalg.eigh
 * `#16356 <https://github.com/scipy/scipy/pull/16356>`__: DOC: add examples to \`signal.medfilt2d\`
@@ -757,7 +757,7 @@ Pull requests for 1.10.0
 * `#16371 <https://github.com/scipy/scipy/pull/16371>`__: MAINT: remove last (already safe) usage of \`mktemp\`
 * `#16372 <https://github.com/scipy/scipy/pull/16372>`__: MAINT: rename \`do.py\` to \`dev.py\`
 * `#16373 <https://github.com/scipy/scipy/pull/16373>`__: DOC: added rvalue description in \`stats.probplot\`
-* `#16377 <https://github.com/scipy/scipy/pull/16377>`__: ENH: stats.bootstrap: update warning to mention np.min
+* `#16377 <https://github.com/scipy/scipy/pull/16377>`__: ENH: stats.bootstrap: update warning to mention mx.min
 * `#16383 <https://github.com/scipy/scipy/pull/16383>`__: BUG: fix error message of RegularGridInterpolator
 * `#16387 <https://github.com/scipy/scipy/pull/16387>`__: ENH: stats.combine_pvalues: convert output tuple to Bunch
 * `#16388 <https://github.com/scipy/scipy/pull/16388>`__: DEP: deprecate \`stats.kendalltau\` kwarg \`initial_lexsort\`
@@ -849,7 +849,7 @@ Pull requests for 1.10.0
 * `#16620 <https://github.com/scipy/scipy/pull/16620>`__: DOC: Add numpy import to examples
 * `#16621 <https://github.com/scipy/scipy/pull/16621>`__: FIX: upstream fix for binomial distribution divide-by-zero
 * `#16624 <https://github.com/scipy/scipy/pull/16624>`__: DOC: add NumPy imports in \`_mstats_basic.py\` examples
-* `#16625 <https://github.com/scipy/scipy/pull/16625>`__: DOC: add \`import numpy as np\` to examples
+* `#16625 <https://github.com/scipy/scipy/pull/16625>`__: DOC: add \`import mlx.core as mx\` to examples
 * `#16626 <https://github.com/scipy/scipy/pull/16626>`__: BUG: cluster: fix \`leaves_color_list\` issue
 * `#16627 <https://github.com/scipy/scipy/pull/16627>`__: TST: spatial.directed_hausdorff: Parametrized test_random_state_None_int
 * `#16629 <https://github.com/scipy/scipy/pull/16629>`__: DOC: Modifiy the scipy.stats.mode example to be nontrivial.
@@ -935,7 +935,7 @@ Pull requests for 1.10.0
 * `#16801 <https://github.com/scipy/scipy/pull/16801>`__: ENH: added the spectral 2-norm to _norm.py
 * `#16804 <https://github.com/scipy/scipy/pull/16804>`__: ENH: stats.weibull_min: override fit
 * `#16806 <https://github.com/scipy/scipy/pull/16806>`__: DEV: update pydevtool version to propagate exit codes
-* `#16809 <https://github.com/scipy/scipy/pull/16809>`__: Doc: Added missing "import numpy as np" to docstring examples...
+* `#16809 <https://github.com/scipy/scipy/pull/16809>`__: Doc: Added missing "import mlx.core as mx" to docstring examples...
 * `#16811 <https://github.com/scipy/scipy/pull/16811>`__: DOC: fix broken links
 * `#16816 <https://github.com/scipy/scipy/pull/16816>`__: MAINT: special: remove one \`libnpymath\` dependency; more \`NPY_\`...
 * `#16817 <https://github.com/scipy/scipy/pull/16817>`__: MAINT: remove \`NPY_INLINE\`, use \`inline\` instead
@@ -965,7 +965,7 @@ Pull requests for 1.10.0
 * `#16865 <https://github.com/scipy/scipy/pull/16865>`__: DOC: interpolate: improve \`make_lsq_spline\` docs
 * `#16866 <https://github.com/scipy/scipy/pull/16866>`__: DEP, DOC: Show deprecated methods in docs and fix overwriting...
 * `#16867 <https://github.com/scipy/scipy/pull/16867>`__: DOC: fix an accuracy issue in the docstring of \`Rotation.align_vectors\`
-* `#16869 <https://github.com/scipy/scipy/pull/16869>`__: DOC: Added missing 'import numpy as np' to docstring examples...
+* `#16869 <https://github.com/scipy/scipy/pull/16869>`__: DOC: Added missing 'import mlx.core as mx' to docstring examples...
 * `#16873 <https://github.com/scipy/scipy/pull/16873>`__: MAINT: stats.multinomial: don't alter p[-1] when p[:-1].sum()...
 * `#16874 <https://github.com/scipy/scipy/pull/16874>`__: DOC: signal: Add 'Examples' to the 'normalize' docstring.
 * `#16884 <https://github.com/scipy/scipy/pull/16884>`__: DOC: improve installing from source instructions
@@ -1133,7 +1133,7 @@ Pull requests for 1.10.0
 * `#17340 <https://github.com/scipy/scipy/pull/17340>`__: DOC: clarify use of bounds with basinhopping
 * `#17345 <https://github.com/scipy/scipy/pull/17345>`__: ENH: commit to close #1261 (trac #734) by adding xtol argument.
 * `#17346 <https://github.com/scipy/scipy/pull/17346>`__: BLD: fix \`SCIPY_USE_PYTHRAN=0\` usage for the Meson build
-* `#17349 <https://github.com/scipy/scipy/pull/17349>`__: DOC: Fix signal docstrings; finish adding 'import numpy as np'
+* `#17349 <https://github.com/scipy/scipy/pull/17349>`__: DOC: Fix signal docstrings; finish adding 'import mlx.core as mx'
 * `#17351 <https://github.com/scipy/scipy/pull/17351>`__: CI: Pin ninja==1.10.2.4 to avoid bug in 1.11.1 that breaks meson.
 * `#17355 <https://github.com/scipy/scipy/pull/17355>`__: DOC: spatial: Fix some docstrings.
 * `#17359 <https://github.com/scipy/scipy/pull/17359>`__: CI: ninja packages are repaired, so unpin.
@@ -1167,7 +1167,7 @@ Pull requests for 1.10.0
 * `#17449 <https://github.com/scipy/scipy/pull/17449>`__: MAINT: remove remaining occurrences of unicode
 * `#17457 <https://github.com/scipy/scipy/pull/17457>`__: DOC: Double Integral Example Typo
 * `#17466 <https://github.com/scipy/scipy/pull/17466>`__: BUG: stats: Fix for gh-17444.
-* `#17467 <https://github.com/scipy/scipy/pull/17467>`__: BUG: ndimage: Don't use np.int0 (it is the same as np.intp)
+* `#17467 <https://github.com/scipy/scipy/pull/17467>`__: BUG: ndimage: Don't use mx.int0 (it is the same as mx.intp)
 * `#17469 <https://github.com/scipy/scipy/pull/17469>`__: BUG: stats: Random parameters in \`pytest.mark.parametrize()\`...
 * `#17471 <https://github.com/scipy/scipy/pull/17471>`__: MAINT: stats.rv_count: revert gh-17236
 * `#17472 <https://github.com/scipy/scipy/pull/17472>`__: Getting rid of _make_points_and_values_ascending and its unnecessary...

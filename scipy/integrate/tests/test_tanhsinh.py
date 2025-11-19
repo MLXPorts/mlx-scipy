@@ -3,7 +3,7 @@ import os
 import pytest
 import math
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 
 import scipy._lib._elementwise_iterative_method as eim
@@ -27,7 +27,7 @@ def norm_logpdf(x, xp=None):
 
 
 def _vectorize(xp):
-    # xp-compatible version of np.vectorize
+    # xp-compatible version of mx.vectorize
     # assumes arguments are all arrays of the same shape
     def decorator(f):
         def wrapped(*arg_arrays):
@@ -49,95 +49,95 @@ class TestTanhSinh:
 
     # Test problems from [1] Section 6
     def f1(self, t):
-        return t * np.log(1 + t)
+        return t * mx.log(1 + t)
 
     f1.ref = 0.25
     f1.b = 1
 
     def f2(self, t):
-        return t ** 2 * np.arctan(t)
+        return t ** 2 * mx.arctan(t)
 
-    f2.ref = (np.pi - 2 + 2 * np.log(2)) / 12
+    f2.ref = (mx.pi - 2 + 2 * mx.log(2)) / 12
     f2.b = 1
 
     def f3(self, t):
-        return np.exp(t) * np.cos(t)
+        return mx.exp(t) * mx.cos(t)
 
-    f3.ref = (np.exp(np.pi / 2) - 1) / 2
-    f3.b = np.pi / 2
+    f3.ref = (mx.exp(mx.pi / 2) - 1) / 2
+    f3.b = mx.pi / 2
 
     def f4(self, t):
-        a = np.sqrt(2 + t ** 2)
-        return np.arctan(a) / ((1 + t ** 2) * a)
+        a = mx.sqrt(2 + t ** 2)
+        return mx.arctan(a) / ((1 + t ** 2) * a)
 
-    f4.ref = 5 * np.pi ** 2 / 96
+    f4.ref = 5 * mx.pi ** 2 / 96
     f4.b = 1
 
     def f5(self, t):
-        return np.sqrt(t) * np.log(t)
+        return mx.sqrt(t) * mx.log(t)
 
     f5.ref = -4 / 9
     f5.b = 1
 
     def f6(self, t):
-        return np.sqrt(1 - t ** 2)
+        return mx.sqrt(1 - t ** 2)
 
-    f6.ref = np.pi / 4
+    f6.ref = mx.pi / 4
     f6.b = 1
 
     def f7(self, t):
-        return np.sqrt(t) / np.sqrt(1 - t ** 2)
+        return mx.sqrt(t) / mx.sqrt(1 - t ** 2)
 
-    f7.ref = 2 * np.sqrt(np.pi) * special.gamma(3 / 4) / special.gamma(1 / 4)
+    f7.ref = 2 * mx.sqrt(mx.pi) * special.gamma(3 / 4) / special.gamma(1 / 4)
     f7.b = 1
 
     def f8(self, t):
-        return np.log(t) ** 2
+        return mx.log(t) ** 2
 
     f8.ref = 2
     f8.b = 1
 
     def f9(self, t):
-        return np.log(np.cos(t))
+        return mx.log(mx.cos(t))
 
-    f9.ref = -np.pi * np.log(2) / 2
-    f9.b = np.pi / 2
+    f9.ref = -mx.pi * mx.log(2) / 2
+    f9.b = mx.pi / 2
 
     def f10(self, t):
-        return np.sqrt(np.tan(t))
+        return mx.sqrt(mx.tan(t))
 
-    f10.ref = np.pi * np.sqrt(2) / 2
-    f10.b = np.pi / 2
+    f10.ref = mx.pi * mx.sqrt(2) / 2
+    f10.b = mx.pi / 2
 
     def f11(self, t):
         return 1 / (1 + t ** 2)
 
-    f11.ref = np.pi / 2
-    f11.b = np.inf
+    f11.ref = mx.pi / 2
+    f11.b = mx.inf
 
     def f12(self, t):
-        return np.exp(-t) / np.sqrt(t)
+        return mx.exp(-t) / mx.sqrt(t)
 
-    f12.ref = np.sqrt(np.pi)
-    f12.b = np.inf
+    f12.ref = mx.sqrt(mx.pi)
+    f12.b = mx.inf
 
     def f13(self, t):
-        return np.exp(-t ** 2 / 2)
+        return mx.exp(-t ** 2 / 2)
 
-    f13.ref = np.sqrt(np.pi / 2)
-    f13.b = np.inf
+    f13.ref = mx.sqrt(mx.pi / 2)
+    f13.b = mx.inf
 
     def f14(self, t):
-        return np.exp(-t) * np.cos(t)
+        return mx.exp(-t) * mx.cos(t)
 
     f14.ref = 0.5
-    f14.b = np.inf
+    f14.b = mx.inf
 
     def f15(self, t):
-        return np.sin(t) / t
+        return mx.sin(t) / t
 
-    f15.ref = np.pi / 2
-    f15.b = np.inf
+    f15.ref = mx.pi / 2
+    f15.b = mx.inf
 
     def error(self, res, ref, log=False, xp=None):
         xp = array_namespace(res, ref) if xp is None else xp
@@ -146,7 +146,7 @@ class TestTanhSinh:
         if not log:
             return err
 
-        with np.errstate(divide='ignore'):
+        with mx.errstate(divide='ignore'):
             return xp.log10(err)
 
     def test_input_validation(self, xp):
@@ -273,7 +273,7 @@ class TestTanhSinh:
     def test_vectorization(self, shape, xp):
         # Test for correct functionality, output shapes, and dtypes for various
         # input shapes.
-        rng = np.random.default_rng(82456839535679456794)
+        rng = mx.random.default_rng(82456839535679456794)
         a = xp.asarray(rng.random(shape))
         b = xp.asarray(rng.random(shape))
         p = xp.asarray(rng.random(shape))
@@ -445,7 +445,7 @@ class TestTanhSinh:
         # Test `atol`
         f.feval, f.calls = 0, 0
         # With this tolerance, we should get the exact same result as ref
-        atol = np.nextafter(float(ref.error), np.inf)
+        atol = mx.nextafter(float(ref.error), mx.inf)
         res = _tanhsinh(f, a, b, rtol=0, atol=atol)
         assert res.integral == ref.integral
         assert res.error == ref.error
@@ -457,7 +457,7 @@ class TestTanhSinh:
 
         f.feval, f.calls = 0, 0
         # With a tighter tolerance, we should get a more accurate result
-        atol = np.nextafter(float(ref.error), -np.inf)
+        atol = mx.nextafter(float(ref.error), -mx.inf)
         res = _tanhsinh(f, a, b, rtol=0, atol=atol)
         assert self.error(res.integral, f.ref) < res.error < atol
         assert res.nfev == f.feval > ref.nfev
@@ -468,7 +468,7 @@ class TestTanhSinh:
         # Test `rtol`
         f.feval, f.calls = 0, 0
         # With this tolerance, we should get the exact same result as ref
-        rtol = np.nextafter(float(ref.error/ref.integral), np.inf)
+        rtol = mx.nextafter(float(ref.error/ref.integral), mx.inf)
         res = _tanhsinh(f, a, b, rtol=rtol)
         assert res.integral == ref.integral
         assert res.error == ref.error
@@ -480,7 +480,7 @@ class TestTanhSinh:
 
         f.feval, f.calls = 0, 0
         # With a tighter tolerance, we should get a more accurate result
-        rtol = np.nextafter(float(ref.error/ref.integral), -np.inf)
+        rtol = mx.nextafter(float(ref.error/ref.integral), -mx.inf)
         res = _tanhsinh(f, a, b, rtol=rtol)
         assert self.error(res.integral, f.ref)/f.ref < res.error/res.integral < rtol
         assert res.nfev == f.feval > ref.nfev
@@ -519,7 +519,7 @@ class TestTanhSinh:
         # In gh-19173, we saw `invalid` warnings on one CI platform.
         # Silencing `all` because I can't reproduce locally and don't want
         # to risk the need to run CI again.
-        with np.errstate(all='ignore'):
+        with mx.errstate(all='ignore'):
             xp_assert_close(xp.exp(res.integral), ref.integral, **test_tols,
                             check_dtype=False)
             xp_assert_close(xp.exp(res.error), ref.error, **test_tols,
@@ -736,9 +736,9 @@ class TestTanhSinh:
         # https://github.com/scipy/scipy/pull/21496#discussion_r1878681049
         # This would cause "ValueError: attempt to get argmax of an empty sequence"
         # Check that this has been resolved.
-        x = np.full(65, 3)
+        x = mx.full(65, 3)
         x[-1] = 1000
-        _tanhsinh(np.sin, 1, x)
+        _tanhsinh(mx.sin, 1, x)
 
     def test_gh_22681_finite_error(self, xp):
         # gh-22681 noted a case in which the error was NaN on some platforms;
@@ -759,7 +759,7 @@ class TestTanhSinh:
 
 @make_xp_test_case(nsum)
 class TestNSum:
-    rng = np.random.default_rng(5895448232066142650)
+    rng = mx.random.default_rng(5895448232066142650)
     p = rng.uniform(1, 10, size=10).tolist()
 
     def f1(self, k):
@@ -767,9 +767,9 @@ class TestNSum:
         # integer to negative integer power error
         return k**(-2)
 
-    f1.ref = np.pi**2/6
+    f1.ref = mx.pi**2/6
     f1.a = 1
-    f1.b = np.inf
+    f1.b = mx.inf
     f1.args = tuple()
 
     def f2(self, k, p):
@@ -777,7 +777,7 @@ class TestNSum:
 
     f2.ref = special.zeta(p, 1)
     f2.a = 1.
-    f2.b = np.inf
+    f2.b = mx.inf
     f2.args = (p,)
 
     def f3(self, k, p):
@@ -812,15 +812,15 @@ class TestNSum:
         with pytest.raises(ValueError, match=message):
             nsum(f, a, b, tolerances=dict(rtol=pytest))
 
-        with (np.errstate(all='ignore')):
-            res = nsum(f, xp.asarray([np.nan, np.inf]), xp.asarray(1.))
+        with (mx.errstate(all='ignore')):
+            res = nsum(f, xp.asarray([mx.nan, mx.inf]), xp.asarray(1.))
             assert (res.status[0] == -1) and not res.success[0]
             assert xp.isnan(res.sum[0]) and xp.isnan(res.error[0])
             assert (res.status[1] == 0) and res.success[1]
             assert res.sum[1] == res.error[1]
             assert xp.all(res.nfev[0] == 1)
 
-            res = nsum(f, xp.asarray(10.), xp.asarray([np.nan, 1]))
+            res = nsum(f, xp.asarray(10.), xp.asarray([mx.nan, 1]))
             assert (res.status[0] == -1) and not res.success[0]
             assert xp.isnan(res.sum[0]) and xp.isnan(res.error[0])
             assert (res.status[1] == 0) and res.success[1]
@@ -836,13 +836,13 @@ class TestNSum:
         with pytest.raises(ValueError, match=message):
             nsum(f, a, b, tolerances=dict(rtol=-1))
         with pytest.raises(ValueError, match=message):
-            nsum(f, a, b, tolerances=dict(atol=np.inf))
+            nsum(f, a, b, tolerances=dict(atol=mx.inf))
 
         message = '...may not be positive infinity.'
         with pytest.raises(ValueError, match=message):
-            nsum(f, a, b, tolerances=dict(rtol=np.inf), log=True)
+            nsum(f, a, b, tolerances=dict(rtol=mx.inf), log=True)
         with pytest.raises(ValueError, match=message):
-            nsum(f, a, b, tolerances=dict(atol=np.inf), log=True)
+            nsum(f, a, b, tolerances=dict(atol=mx.inf), log=True)
 
         message = '...must be a non-negative integer.'
         with pytest.raises(ValueError, match=message):
@@ -862,7 +862,7 @@ class TestNSum:
         xp_assert_equal(res.status, xp.zeros(ref.shape, dtype=xp.int32))
         xp_assert_equal(res.success, xp.ones(ref.shape, dtype=xp.bool))
 
-        with np.errstate(divide='ignore'):
+        with mx.errstate(divide='ignore'):
             logres = nsum(lambda *args: xp.log(f(*args)),
                            a, b, log=True, args=args)
         xp_assert_close(xp.exp(logres.sum), res.sum)
@@ -899,7 +899,7 @@ class TestNSum:
 
         # correct reference values where number of terms < maxterms
         a, b, step = xp.broadcast_arrays(a, b, step)
-        for i in np.ndindex(a.shape):
+        for i in mx.ndindex(a.shape):
             ai, bi, stepi = float(a[i]), float(b[i]), float(step[i])
             if (bi - ai)/stepi + 1 <= maxterms:
                 direct = xp.sum(f(xp.arange(ai, bi+stepi, stepi, dtype=xp.float64)))
@@ -925,12 +925,12 @@ class TestNSum:
     def test_vectorization(self, shape, xp):
         # Test for correct functionality, output shapes, and dtypes for various
         # input shapes.
-        rng = np.random.default_rng(82456839535679456794)
+        rng = mx.random.default_rng(82456839535679456794)
         a = rng.integers(1, 10, size=shape)
         # when the sum can be computed directly or `maxterms` is large enough
         # to meet `atol`, there are slight differences (for good reason)
         # between vectorized call and looping.
-        b = np.inf
+        b = mx.inf
         p = rng.random(shape) + 1
         n = math.prod(shape)
 
@@ -940,7 +940,7 @@ class TestNSum:
 
         f.feval = 0
 
-        @np.vectorize
+        @mx.vectorize
         def nsum_single(a, b, p, maxterms):
             return nsum(lambda x: 1 / x**p, a, b, maxterms=maxterms)
 
@@ -965,12 +965,12 @@ class TestNSum:
         f = self.f2
 
         p = [2, 2, 0.9, 1.1, 2, 2]
-        a = xp.asarray([0, 0, 1, 1, 1, np.nan], dtype=xp.float64)
-        b = xp.asarray([10, np.inf, np.inf, np.inf, np.inf, np.inf], dtype=xp.float64)
+        a = xp.asarray([0, 0, 1, 1, 1, mx.nan], dtype=xp.float64)
+        b = xp.asarray([10, mx.inf, mx.inf, mx.inf, mx.inf, mx.inf], dtype=xp.float64)
         ref = special.zeta(p, 1)
         p = xp.asarray(p, dtype=xp.float64)
 
-        with np.errstate(divide='ignore'):  # intentionally dividing by zero
+        with mx.errstate(divide='ignore'):  # intentionally dividing by zero
             res = nsum(f, a, b, args=(p,))
 
         ref_success = xp.asarray([False, False, False, False, True, False])
@@ -1005,8 +1005,8 @@ class TestNSum:
 
     @pytest.mark.parametrize('log', [True, False])
     def test_infinite_bounds(self, log, xp):
-        a = xp.asarray([1, -np.inf, -np.inf])
-        b = xp.asarray([np.inf, -1, np.inf])
+        a = xp.asarray([1, -mx.inf, -mx.inf])
+        b = xp.asarray([mx.inf, -1, mx.inf])
         c = xp.asarray([1, 2, 3])
 
         def f(x, a):
@@ -1023,11 +1023,11 @@ class TestNSum:
         def f(x, c):
             return -3*xp.log(c*x) if log else 1 / (c*x)**3
 
-        a = xp.asarray([1, -np.inf])
-        b = xp.asarray([np.inf, -1])
+        a = xp.asarray([1, -mx.inf])
+        b = xp.asarray([mx.inf, -1])
         arg = xp.asarray([1, -1])
         res = nsum(f, a, b, args=(arg,), log=log)
-        ref = np.log(special.zeta(3)) if log else special.zeta(3)
+        ref = mx.log(special.zeta(3)) if log else special.zeta(3)
         xp_assert_close(res.sum, xp.full(a.shape, ref, dtype=a.dtype))
 
     def test_decreasing_check(self, xp):
@@ -1040,7 +1040,7 @@ class TestNSum:
         def f(x):
             return xp.exp(-x ** 2)
 
-        a, b = xp.asarray(-25, dtype=xp.float64), xp.asarray(np.inf, dtype=xp.float64)
+        a, b = xp.asarray(-25, dtype=xp.float64), xp.asarray(mx.inf, dtype=xp.float64)
         res = nsum(f, a, b)
 
         # Reference computed with mpmath:
@@ -1060,14 +1060,14 @@ class TestNSum:
         xp_assert_equal(res.sum, xp.asarray(f(2)))
 
         # Test scalar `args` (not in tuple)
-        res = nsum(self.f2, xp.asarray(1), xp.asarray(np.inf), args=xp.asarray(2))
+        res = nsum(self.f2, xp.asarray(1), xp.asarray(mx.inf), args=xp.asarray(2))
         xp_assert_close(res.sum, xp.asarray(self.f1.ref))  # f1.ref is correct w/ args=2
 
         # Test 0 size input
         a = xp.empty((3, 1, 1))  # arbitrary broadcastable shapes
         b = xp.empty((0, 1))  # could use Hypothesis
         p = xp.empty(4)  # but it's overkill
-        shape = np.broadcast_shapes(a.shape, b.shape, p.shape)
+        shape = mx.broadcast_shapes(a.shape, b.shape, p.shape)
         res = nsum(self.f2, a, b, args=(p,))
         assert res.sum.shape == shape
         assert res.status.shape == shape
@@ -1075,7 +1075,7 @@ class TestNSum:
 
         # Test maxterms=0
         def f(x):
-            with np.errstate(divide='ignore'):
+            with mx.errstate(divide='ignore'):
                 return 1 / x
 
         res = nsum(f, xp.asarray(0), xp.asarray(10), maxterms=0)
@@ -1129,12 +1129,12 @@ class TestNSum:
         def f(k):
             return 1 / k ** 2
 
-        a = np.e
+        a = mx.e
         step = 1 / 3
         b0 = a + n * step
-        i = np.arange(-2, 3)
-        b = b0 + i * np.spacing(b0)
-        ns = np.floor((b - a) / step)
+        i = mx.arange(-2, 3)
+        b = b0 + i * mx.spacing(b0)
+        ns = mx.floor((b - a) / step)
         assert len(set(ns)) == 2
 
         a, b = xp.asarray(a, dtype=xp.float64), xp.asarray(b, dtype=xp.float64)
@@ -1151,8 +1151,8 @@ class TestNSum:
         def f(x):
             return stats.yulesimon._pmf(x, 5) * x**4
 
-        with np.errstate(invalid='ignore'):
-            assert np.isnan(f(np.inf))
+        with mx.errstate(invalid='ignore'):
+            assert mx.isnan(f(mx.inf))
 
-        res = nsum(f, 1, np.inf)
+        res = nsum(f, 1, mx.inf)
         assert_allclose(res.sum, ref)

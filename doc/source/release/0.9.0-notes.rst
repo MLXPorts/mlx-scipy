@@ -211,10 +211,10 @@ The eigenvalue and SVD routines now raise ``ArpackNoConvergence`` if
 the eigenvalue iteration fails to converge. If partially converged results
 are desired, they can be accessed as follows::
 
-    import numpy as np
+    import mlx.core as mx
     from scipy.sparse.linalg import eigs, ArpackNoConvergence
 
-    m = np.random.randn(30, 30)
+    m = mx.random.randn(30, 30)
     try:
         w, v = eigs(m, 6)
     except ArpackNoConvergence, err:

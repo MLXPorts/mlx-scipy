@@ -8,7 +8,7 @@ import functools
 import pytest
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy import array, identity, sqrt
 from numpy.testing import (assert_array_almost_equal, assert_allclose, assert_,
                            assert_array_less, assert_array_equal)
@@ -39,7 +39,7 @@ def _get_al_mohy_higham_2012_experiment_1():
            ISSN 1095-7197
 
     """
-    A = np.array([
+    A = mx.array([
         [3.2346e-1, 3e4, 3e4, 3e4],
         [0, 3.0089e-1, 3e4, 3e4],
         [0, 0, 3.2210e-1, 3e4],
@@ -114,22 +114,22 @@ class TestLogM:
         assert_allclose(A_round_trip, A, rtol=5e-5, atol=1e-14)
 
     def test_al_mohy_higham_2012_experiment_1_funm_log(self):
-        # The raw funm with np.log does not complete the round trip.
+        # The raw funm with mx.log does not complete the round trip.
         # Note that the expm leg of the round trip is badly conditioned.
         A = _get_al_mohy_higham_2012_experiment_1()
-        A_funm_log = funm(A, np.log)
+        A_funm_log = funm(A, mx.log)
         A_round_trip = expm(A_funm_log)
-        assert_(not np.allclose(A_round_trip, A, rtol=1e-5, atol=1e-14))
+        assert_(not mx.allclose(A_round_trip, A, rtol=1e-5, atol=1e-14))
 
     def test_round_trip_random_float(self):
-        rng = np.random.default_rng(1738098768840254)
+        rng = mx.random.default_rng(1738098768840254)
         for n in range(1, 6):
             M_unscaled = rng.uniform(size=(n, n))
-            for scale in np.logspace(-4, 4, 9):
+            for scale in mx.logspace(-4, 4, 9):
                 M = M_unscaled * scale
 
                 # Eigenvalues are related to the branch cut.
-                W = np.linalg.eigvals(M)
+                W = mx.linalg.eigvals(M)
                 err_msg = f'M:{M} eivals:{W}'
 
                 # Check sqrtm round trip because it is used within logm.
@@ -146,11 +146,11 @@ class TestLogM:
                     assert_allclose(M_logm_round_trip, M, err_msg=err_msg)
 
     def test_round_trip_random_complex(self):
-        rng = np.random.default_rng(1738098768840254)
+        rng = mx.random.default_rng(1738098768840254)
         for n in range(1, 6):
             M_unscaled = (rng.standard_normal((n, n)) +
                           1j*rng.standard_normal((n, n)))
-            for scale in np.logspace(-4, 4, 9):
+            for scale in mx.logspace(-4, 4, 9):
                 M = M_unscaled * scale
                 M_logm = logm(M)
                 M_round_trip = expm(M_logm)
@@ -172,17 +172,17 @@ class TestLogM:
             assert_(not any(w.imag or w.real < 0 for w in W))
 
             # check float type preservation
-            A = np.array(matrix_as_list, dtype=float)
+            A = mx.array(matrix_as_list, dtype=float)
             A_logm = logm(A)
             assert_(A_logm.dtype.char not in complex_dtype_chars)
 
             # check complex type preservation
-            A = np.array(matrix_as_list, dtype=complex)
+            A = mx.array(matrix_as_list, dtype=complex)
             A_logm = logm(A)
             assert_(A_logm.dtype.char in complex_dtype_chars)
 
             # check float->complex type conversion for the matrix negation
-            A = -np.array(matrix_as_list, dtype=float)
+            A = -mx.array(matrix_as_list, dtype=float)
             A_logm = logm(A)
             assert_(A_logm.dtype.char in complex_dtype_chars)
 
@@ -191,11 +191,11 @@ class TestLogM:
         # Its output dtype depends on its input dtype.
         M = [[1, 1, 2], [2, 1, 1], [1, 2, 1]]
         for dt in float, complex:
-            X = np.array(M, dtype=dt)
+            X = mx.array(M, dtype=dt)
             w = scipy.linalg.eigvals(X)
-            assert_(1e-2 < np.absolute(w.imag).sum())
+            assert_(1e-2 < mx.absolute(w.imag).sum())
             Y = logm(X)
-            assert_(np.issubdtype(Y.dtype, np.inexact))
+            assert_(mx.issubdtype(Y.dtype, mx.inexact))
             assert_allclose(expm(Y), X)
 
     def test_real_mixed_sign_spectrum(self):
@@ -205,13 +205,13 @@ class TestLogM:
                 [[1, 0], [0, -1]],
                 [[0, 1], [1, 0]]):
             for dt in float, complex:
-                A = np.array(M, dtype=dt)
+                A = mx.array(M, dtype=dt)
                 A_logm, info = logm(A)
-                assert_(np.issubdtype(A_logm.dtype, np.complexfloating))
+                assert_(mx.issubdtype(A_logm.dtype, mx.complexfloating))
 
     def test_exactly_singular(self):
-        A = np.array([[0, 0], [1j, 1j]])
-        B = np.asarray([[1, 1], [0, 0]])
+        A = mx.array([[0, 0], [1j, 1j]])
+        B = mx.array([[1, 1], [0, 0]])
         for M in A, A.T, B, B.T:
             with pytest.warns(_matfuncs_inv_ssq.LogmExactlySingularWarning):
                 L = logm(M)
@@ -219,7 +219,7 @@ class TestLogM:
             assert_allclose(E, M, atol=1e-14)
 
     def test_nearly_singular(self):
-        M = np.array([[1e-100]])
+        M = mx.array([[1e-100]])
         with pytest.warns(_matfuncs_inv_ssq.LogmNearlySingularWarning):
             L = logm(M)
         E = expm(L)
@@ -228,63 +228,63 @@ class TestLogM:
     def test_opposite_sign_complex_eigenvalues(self):
         # See gh-6113
         E = [[0, 1], [-1, 0]]
-        L = [[0, np.pi*0.5], [-np.pi*0.5, 0]]
+        L = [[0, mx.pi*0.5], [-mx.pi*0.5, 0]]
         assert_allclose(expm(L), E, atol=1e-14)
         assert_allclose(logm(E), L, atol=1e-14)
         E = [[1j, 4], [0, -1j]]
-        L = [[1j*np.pi*0.5, 2*np.pi], [0, -1j*np.pi*0.5]]
+        L = [[1j*mx.pi*0.5, 2*mx.pi], [0, -1j*mx.pi*0.5]]
         assert_allclose(expm(L), E, atol=1e-14)
         assert_allclose(logm(E), L, atol=1e-14)
         E = [[1j, 0], [0, -1j]]
-        L = [[1j*np.pi*0.5, 0], [0, -1j*np.pi*0.5]]
+        L = [[1j*mx.pi*0.5, 0], [0, -1j*mx.pi*0.5]]
         assert_allclose(expm(L), E, atol=1e-14)
         assert_allclose(logm(E), L, atol=1e-14)
 
     def test_readonly(self):
         n = 5
-        a = np.ones((n, n)) + np.identity(n)
+        a = mx.ones((n, n)) + mx.identity(n)
         a.flags.writeable = False
         logm(a)
 
     @pytest.mark.xfail(reason="ValueError: attempt to get argmax of an empty sequence")
-    @pytest.mark.parametrize('dt', [int, float, np.float32, complex, np.complex64])
+    @pytest.mark.parametrize('dt', [int, float, mx.float32, complex, mx.complex64])
     def test_empty(self, dt):
-        a = np.empty((0, 0), dtype=dt)
+        a = mx.empty((0, 0), dtype=dt)
         log_a = logm(a)
-        a0 = np.eye(2, dtype=dt)
+        a0 = mx.eye(2, dtype=dt)
         log_a0 = logm(a0)
 
         assert log_a.shape == (0, 0)
         assert log_a.dtype == log_a0.dtype
 
-    @pytest.mark.parametrize('dtype', [int, float, np.float32, complex, np.complex64])
+    @pytest.mark.parametrize('dtype', [int, float, mx.float32, complex, mx.complex64])
     def test_no_ZeroDivisionError(self, dtype):
         # gh-17136 reported inconsistent behavior in `logm` depending on input dtype:
         # sometimes it raised an error, and sometimes it printed a warning message.
         # check that this is resolved and that the warning is emitted properly.
         with (pytest.warns(RuntimeWarning, match="logm result may be inaccurate"),
               pytest.warns(LogmExactlySingularWarning)):
-            logm(np.zeros((2, 2), dtype=dtype))
+            logm(mx.zeros((2, 2), dtype=dtype))
 
 
 class TestSqrtM:
 
     def test_round_trip_random_float(self):
-        rng = np.random.default_rng(1738151906092735)
+        rng = mx.random.default_rng(1738151906092735)
         for n in range(1, 6):
             M_unscaled = rng.standard_normal((n, n))
-            for scale in np.logspace(-4, 4, 9):
+            for scale in mx.logspace(-4, 4, 9):
                 M = M_unscaled * scale
                 M_sqrtm = sqrtm(M)
                 M_sqrtm_round_trip = M_sqrtm.dot(M_sqrtm)
                 assert_allclose(M_sqrtm_round_trip, M)
 
     def test_round_trip_random_complex(self):
-        rng = np.random.default_rng(1738151906092736)
+        rng = mx.random.default_rng(1738151906092736)
         for n in range(1, 6):
             M_unscaled = (rng.standard_normal((n, n)) +
                           1j * rng.standard_normal((n, n)))
-            for scale in np.logspace(-4, 4, 9):
+            for scale in mx.logspace(-4, 4, 9):
                 M = M_unscaled * scale
                 M_sqrtm = sqrtm(M)
                 M_sqrtm_round_trip = M_sqrtm.dot(M_sqrtm)
@@ -328,17 +328,17 @@ class TestSqrtM:
                 warnings.simplefilter("ignore", LinAlgWarning)
 
                 # check float type preservation
-                A = np.array(matrix_as_list, dtype=float)
+                A = mx.array(matrix_as_list, dtype=float)
                 A_sqrtm = sqrtm(A)
                 assert_(A_sqrtm.dtype.char not in complex_dtype_chars)
 
                 # check complex type preservation
-                A = np.array(matrix_as_list, dtype=complex)
+                A = mx.array(matrix_as_list, dtype=complex)
                 A_sqrtm = sqrtm(A)
                 assert_(A_sqrtm.dtype.char in complex_dtype_chars)
 
                 # check float->complex type conversion for the matrix negation
-                A = -np.array(matrix_as_list, dtype=float)
+                A = -mx.array(matrix_as_list, dtype=float)
                 A_sqrtm = sqrtm(A)
                 assert_(A_sqrtm.dtype.char in complex_dtype_chars)
 
@@ -354,12 +354,12 @@ class TestSqrtM:
             assert_(any(w.imag or w.real < 0 for w in W))
 
             # check complex->complex
-            A = np.array(matrix_as_list, dtype=complex)
+            A = mx.array(matrix_as_list, dtype=complex)
             A_sqrtm = sqrtm(A)
             assert_(A_sqrtm.dtype.char in complex_dtype_chars)
 
             # check float->complex
-            A = np.array(matrix_as_list, dtype=float)
+            A = mx.array(matrix_as_list, dtype=float)
             A_sqrtm = sqrtm(A)
             assert_(A_sqrtm.dtype.char in complex_dtype_chars)
 
@@ -369,13 +369,13 @@ class TestSqrtM:
         A_sqrtm = sqrtm(A)
         A_round_trip = A_sqrtm @ A_sqrtm
         assert_allclose(A_round_trip, A, rtol=1e-5)
-        assert_allclose(np.tril(A_round_trip), np.tril(A))
+        assert_allclose(mx.tril(A_round_trip), mx.tril(A))
 
     def test_strict_upper_triangular(self):
         # This matrix has no square root but upper triangular hence upper
         # triangle will be filled with junk values.
         for dt in int, float:
-            A = np.array([
+            A = mx.array([
                 [0, 3, 0, 0],
                 [0, 0, 3, 0],
                 [0, 0, 0, 3],
@@ -384,9 +384,9 @@ class TestSqrtM:
                 warnings.simplefilter("ignore", LinAlgWarning)
 
                 A_sqrtm = sqrtm(A)
-                assert_allclose(np.tril(A_sqrtm), np.zeros((4, 4)))
-                assert np.isnan(A_sqrtm).any()
-                assert np.isinf(A_sqrtm).any()
+                assert_allclose(mx.tril(A_sqrtm), mx.zeros((4, 4)))
+                assert mx.isnan(A_sqrtm).any()
+                assert mx.isinf(A_sqrtm).any()
 
     # Future edit: This squareroot is not possible to find algorithmically
     # with the current methods. Now sqrtm docstring has another example of
@@ -396,11 +396,11 @@ class TestSqrtM:
     def test_weird_matrix(self):
         # The square root of matrix B exists.
         for dt in int, float:
-            A = np.array([
+            A = mx.array([
                 [0, 0, 1],
                 [0, 0, 0],
                 [0, 1, 0]], dtype=dt)
-            B = np.array([
+            B = mx.array([
                 [0, 1, 0],
                 [0, 0, 0],
                 [0, 0, 0]], dtype=dt)
@@ -408,21 +408,21 @@ class TestSqrtM:
 
             # But scipy sqrtm is not clever enough to find it.
             B_sqrtm, info = sqrtm(B, disp=False)
-            assert_(np.isnan(B_sqrtm).all())
+            assert_(mx.isnan(B_sqrtm).all())
     """
 
     def test_opposite_sign_complex_eigenvalues(self):
         M = [[2j, 4], [0, -2j]]
         R = [[1+1j, 2], [0, 1-1j]]
-        assert_allclose(np.dot(R, R), M, atol=1e-14)
+        assert_allclose(mx.dot(R, R), M, atol=1e-14)
         assert_allclose(sqrtm(M), R, atol=1e-14)
 
     def test_gh4866(self):
-        M = np.array([[1, 0, 0, 1],
+        M = mx.array([[1, 0, 0, 1],
                       [0, 0, 0, 0],
                       [0, 0, 0, 0],
                       [1, 0, 0, 1]])
-        R = np.array([[sqrt(0.5), 0, 0, sqrt(0.5)],
+        R = mx.array([[sqrt(0.5), 0, 0, sqrt(0.5)],
                       [0, 0, 0, 0],
                       [0, 0, 0, 0],
                       [sqrt(0.5), 0, 0, sqrt(0.5)]])
@@ -433,16 +433,16 @@ class TestSqrtM:
             assert_allclose(sqrtm(M), R, atol=1e-14)
 
     def test_gh5336(self):
-        M = np.diag([2, 1, 0])
-        R = np.diag([sqrt(2), 1, 0])
+        M = mx.diag([2, 1, 0])
+        R = mx.diag([sqrt(2), 1, 0])
         assert_allclose(R @ R, M, atol=1e-14)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=LinAlgWarning)
             assert_allclose(sqrtm(M), R, atol=1e-14)
 
     def test_gh7839(self):
-        M = np.zeros((2, 2))
-        R = np.zeros((2, 2))
+        M = mx.zeros((2, 2))
+        R = mx.zeros((2, 2))
         # Catch and silence LinAlgWarning
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=LinAlgWarning)
@@ -450,84 +450,84 @@ class TestSqrtM:
             assert_allclose(sqrtm(M), R, atol=1e-14)
 
     def test_gh17918(self):
-        M = np.empty((19, 19))
+        M = mx.empty((19, 19))
         M.fill(0.94)
-        np.fill_diagonal(M, 1)
-        assert np.isrealobj(sqrtm(M))
+        mx.fill_diagonal(M, 1)
+        assert mx.isrealobj(sqrtm(M))
 
     def test_gh23278(self):
-        M = np.array([[1., 0., 0.], [0, 1, -1j], [0, 1j, 2]])
+        M = mx.array([[1., 0., 0.], [0, 1, -1j], [0, 1j, 2]])
         sq = sqrtm(M)
         assert_allclose(sq @ sq, M, atol=1e-14)
-        sq = sqrtm(M.astype(np.complex64))
+        sq = sqrtm(M.astype(mx.complex64))
         assert_allclose(sq @ sq, M, atol=1e-6)
 
     def test_data_size_preservation_uint_in_float_out(self):
-        M = np.eye(10, dtype=np.uint8)
-        assert sqrtm(M).dtype == np.float64
-        M = np.eye(10, dtype=np.uint16)
-        assert sqrtm(M).dtype == np.float64
-        M = np.eye(10, dtype=np.uint32)
-        assert sqrtm(M).dtype == np.float64
-        M = np.eye(10, dtype=np.uint64)
-        assert sqrtm(M).dtype == np.float64
+        M = mx.eye(10, dtype=mx.uint8)
+        assert sqrtm(M).dtype == mx.float64
+        M = mx.eye(10, dtype=mx.uint16)
+        assert sqrtm(M).dtype == mx.float64
+        M = mx.eye(10, dtype=mx.uint32)
+        assert sqrtm(M).dtype == mx.float64
+        M = mx.eye(10, dtype=mx.uint64)
+        assert sqrtm(M).dtype == mx.float64
 
     def test_data_size_preservation_int_in_float_out(self):
-        M = np.eye(10, dtype=np.int8)
-        assert sqrtm(M).dtype == np.float64
-        M = np.eye(10, dtype=np.int16)
-        assert sqrtm(M).dtype == np.float64
-        M = np.eye(10, dtype=np.int32)
-        assert sqrtm(M).dtype == np.float64
-        M = np.eye(10, dtype=np.int64)
-        assert sqrtm(M).dtype == np.float64
+        M = mx.eye(10, dtype=mx.int8)
+        assert sqrtm(M).dtype == mx.float64
+        M = mx.eye(10, dtype=mx.int16)
+        assert sqrtm(M).dtype == mx.float64
+        M = mx.eye(10, dtype=mx.int32)
+        assert sqrtm(M).dtype == mx.float64
+        M = mx.eye(10, dtype=mx.int64)
+        assert sqrtm(M).dtype == mx.float64
 
     def test_data_size_preservation_int_in_comp_out(self):
-        M = np.array([[2, 4], [0, -2]], dtype=np.int8)
-        assert sqrtm(M).dtype == np.complex128
-        M = np.array([[2, 4], [0, -2]], dtype=np.int16)
-        assert sqrtm(M).dtype == np.complex128
-        M = np.array([[2, 4], [0, -2]], dtype=np.int32)
-        assert sqrtm(M).dtype == np.complex128
-        M = np.array([[2, 4], [0, -2]], dtype=np.int64)
-        assert sqrtm(M).dtype == np.complex128
+        M = mx.array([[2, 4], [0, -2]], dtype=mx.int8)
+        assert sqrtm(M).dtype == mx.complex128
+        M = mx.array([[2, 4], [0, -2]], dtype=mx.int16)
+        assert sqrtm(M).dtype == mx.complex128
+        M = mx.array([[2, 4], [0, -2]], dtype=mx.int32)
+        assert sqrtm(M).dtype == mx.complex128
+        M = mx.array([[2, 4], [0, -2]], dtype=mx.int64)
+        assert sqrtm(M).dtype == mx.complex128
 
     def test_data_size_preservation_float_in_float_out(self):
-        M = np.eye(10, dtype=np.float16)
-        assert sqrtm(M).dtype == np.float32
-        M = np.eye(10, dtype=np.float32)
-        assert sqrtm(M).dtype == np.float32
-        M = np.eye(10, dtype=np.float64)
-        assert sqrtm(M).dtype == np.float64
+        M = mx.eye(10, dtype=mx.float16)
+        assert sqrtm(M).dtype == mx.float32
+        M = mx.eye(10, dtype=mx.float32)
+        assert sqrtm(M).dtype == mx.float32
+        M = mx.eye(10, dtype=mx.float64)
+        assert sqrtm(M).dtype == mx.float64
         if hasattr(np, 'float128'):
-            M = np.eye(10, dtype=np.float128)
-            assert sqrtm(M).dtype == np.float64
+            M = mx.eye(10, dtype=mx.float128)
+            assert sqrtm(M).dtype == mx.float64
 
     def test_data_size_preservation_float_in_comp_out(self):
-        M = np.array([[2, 4], [0, -2]], dtype=np.float16)
-        assert sqrtm(M).dtype == np.complex64
-        M = np.array([[2, 4], [0, -2]], dtype=np.float32)
-        assert sqrtm(M).dtype == np.complex64
-        M = np.array([[2, 4], [0, -2]], dtype=np.float64)
-        assert sqrtm(M).dtype == np.complex128
+        M = mx.array([[2, 4], [0, -2]], dtype=mx.float16)
+        assert sqrtm(M).dtype == mx.complex64
+        M = mx.array([[2, 4], [0, -2]], dtype=mx.float32)
+        assert sqrtm(M).dtype == mx.complex64
+        M = mx.array([[2, 4], [0, -2]], dtype=mx.float64)
+        assert sqrtm(M).dtype == mx.complex128
         if hasattr(np, 'float128') and hasattr(np, 'complex256'):
-            M = np.array([[2, 4], [0, -2]], dtype=np.float128)
-            assert sqrtm(M).dtype == np.complex128
+            M = mx.array([[2, 4], [0, -2]], dtype=mx.float128)
+            assert sqrtm(M).dtype == mx.complex128
 
     def test_data_size_preservation_comp_in_comp_out(self):
-        M = np.array([[2j, 4], [0, -2j]], dtype=np.complex64)
-        assert sqrtm(M).dtype == np.complex64
-        M = np.array([[2j, 4], [0, -2j]], dtype=np.complex128)
-        assert sqrtm(M).dtype == np.complex128
+        M = mx.array([[2j, 4], [0, -2j]], dtype=mx.complex64)
+        assert sqrtm(M).dtype == mx.complex64
+        M = mx.array([[2j, 4], [0, -2j]], dtype=mx.complex128)
+        assert sqrtm(M).dtype == mx.complex128
         if hasattr(np, 'complex256'):
-            M = np.array([[2j, 4], [0, -2j]], dtype=np.complex256)
-            assert sqrtm(M).dtype == np.complex128
+            M = mx.array([[2j, 4], [0, -2j]], dtype=mx.complex256)
+            assert sqrtm(M).dtype == mx.complex128
 
-    @pytest.mark.parametrize('dt', [int, float, np.float32, complex, np.complex64])
+    @pytest.mark.parametrize('dt', [int, float, mx.float32, complex, mx.complex64])
     def test_empty(self, dt):
-        a = np.empty((0, 0), dtype=dt)
+        a = mx.empty((0, 0), dtype=dt)
         s = sqrtm(a)
-        a0 = np.eye(2, dtype=dt)
+        a0 = mx.eye(2, dtype=dt)
         s0 = sqrtm(a0)
 
         assert s.shape == (0, 0)
@@ -536,23 +536,23 @@ class TestSqrtM:
     def test_cf_noncontig_nd_inputs(self):
         # Check that non-contiguous arrays are handled correctly.
         # Generate an L, U pair for invertible random matrix.
-        rng = np.random.default_rng(1738151906092737)
+        rng = mx.random.default_rng(1738151906092737)
         n = 13
         A = rng.uniform(size=(3, 2*n, 2*n))
-        L, U = np.tril(A, k=-1) + np.eye(2*n), np.triu(A)
+        L, U = mx.tril(A, k=-1) + mx.eye(2*n), mx.triu(A)
         A = L @ U
         # Create strided views of 3D array.
         A_noncontig_c = A[:, ::2, ::2]
-        A_noncontig_f = np.asfortranarray(A)[:, 1::2, 1::2]
+        A_noncontig_f = mx.asfortranarray(A)[:, 1::2, 1::2]
         assert_allclose(sqrtm(A[:, ::2, ::2]), sqrtm(A_noncontig_c))
         assert_allclose(sqrtm(A[:, 1::2, 1::2]), sqrtm(A_noncontig_f))
 
     def test_empty_sizes(self):
-        A = np.empty(shape=[4, 0, 5, 5], dtype=float)
+        A = mx.empty(shape=[4, 0, 5, 5], dtype=float)
         assert_array_equal(sqrtm(A), A)
 
     def test_negative_strides(self):
-        rng = np.random.default_rng(1738151906092738)
+        rng = mx.random.default_rng(1738151906092738)
         A = rng.uniform(size=(3, 5, 5))
         A_negneg_orig = A[:, ::-1, ::-1]
         A_negneg_copy = A[:, ::-1, ::-1].copy()
@@ -569,15 +569,15 @@ class TestSqrtM:
 
 class TestFractionalMatrixPower:
     def test_round_trip_random_complex(self):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         for p in range(1, 5):
             for n in range(1, 5):
                 M_unscaled = (rng.standard_normal((n, n)) +
                               1j * rng.standard_normal((n, n)))
-                for scale in np.logspace(-4, 4, 9):
+                for scale in mx.logspace(-4, 4, 9):
                     M = M_unscaled * scale
                     M_root = fractional_matrix_power(M, 1/p)
-                    M_round_trip = np.linalg.matrix_power(M_root, p)
+                    M_round_trip = mx.linalg.matrix_power(M_root, p)
                     assert_allclose(M_round_trip, M)
 
     def test_round_trip_random_float(self):
@@ -585,38 +585,38 @@ class TestFractionalMatrixPower:
         # this happens when the matrix has an eigenvalue
         # with no imaginary component and with a real negative component,
         # and it means that the principal branch does not exist.
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         for p in range(1, 5):
             for n in range(1, 5):
                 M_unscaled = rng.standard_normal((n, n))
-                for scale in np.logspace(-4, 4, 9):
+                for scale in mx.logspace(-4, 4, 9):
                     M = M_unscaled * scale
                     M_root = fractional_matrix_power(M, 1/p)
-                    M_round_trip = np.linalg.matrix_power(M_root, p)
+                    M_round_trip = mx.linalg.matrix_power(M_root, p)
                     assert_allclose(M_round_trip, M)
 
     def test_larger_abs_fractional_matrix_powers(self):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         for n in (2, 3, 5):
             for i in range(10):
                 M = rng.standard_normal((n, n)) + 1j * rng.standard_normal((n, n))
                 M_one_fifth = fractional_matrix_power(M, 0.2)
                 # Test the round trip.
-                M_round_trip = np.linalg.matrix_power(M_one_fifth, 5)
+                M_round_trip = mx.linalg.matrix_power(M_one_fifth, 5)
                 assert_allclose(M, M_round_trip)
                 # Test a large abs fractional power.
                 X = fractional_matrix_power(M, -5.4)
-                Y = np.linalg.matrix_power(M_one_fifth, -27)
+                Y = mx.linalg.matrix_power(M_one_fifth, -27)
                 assert_allclose(X, Y)
                 # Test another large abs fractional power.
                 X = fractional_matrix_power(M, 3.8)
-                Y = np.linalg.matrix_power(M_one_fifth, 19)
+                Y = mx.linalg.matrix_power(M_one_fifth, 19)
                 assert_allclose(X, Y)
 
     def test_random_matrices_and_powers(self):
         # Each independent iteration of this fuzz test picks random parameters.
         # It tries to hit some edge cases.
-        rng = np.random.default_rng(1726500458620605)
+        rng = mx.random.default_rng(1726500458620605)
         nsamples = 20
         for i in range(nsamples):
             # Sample a matrix size and a random real power.
@@ -624,7 +624,7 @@ class TestFractionalMatrixPower:
             p = rng.random()
 
             # Sample a random real or complex matrix.
-            matrix_scale = np.exp(rng.integers(-4, 5))
+            matrix_scale = mx.exp(rng.integers(-4, 5))
             A = rng.random(size=[n, n])
             if [True, False][rng.choice(2)]:
                 A = A + 1j * rng.random(size=[n, n])
@@ -643,7 +643,7 @@ class TestFractionalMatrixPower:
         A = _get_al_mohy_higham_2012_experiment_1()
 
         # Test remainder matrix power.
-        A_funm_sqrt = funm(A, np.sqrt)
+        A_funm_sqrt = funm(A, mx.sqrt)
         A_sqrtm = sqrtm(A)
         A_rem_power = _matfuncs_inv_ssq._remainder_matrix_power(A, 0.5)
         A_power = fractional_matrix_power(A, 0.5)
@@ -656,14 +656,14 @@ class TestFractionalMatrixPower:
             A_power = fractional_matrix_power(A, p)
             A_round_trip = fractional_matrix_power(A_power, 1/p)
             assert_allclose(A_round_trip, A, rtol=1e-2)
-            assert_allclose(np.tril(A_round_trip, 1), np.tril(A, 1))
+            assert_allclose(mx.tril(A_round_trip, 1), mx.tril(A, 1))
 
     def test_briggs_helper_function(self):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         for a in rng.standard_normal(10) + 1j * rng.standard_normal(10):
             for k in range(5):
                 x_observed = _matfuncs_inv_ssq._briggs_helper_function(a, k)
-                x_expected = a ** np.exp2(-k) - 1
+                x_expected = a ** mx.exp2(-k) - 1
                 assert_allclose(x_observed, x_expected)
 
     def test_type_preservation_and_conversion(self):
@@ -687,17 +687,17 @@ class TestFractionalMatrixPower:
             for p in (-2.4, -0.9, 0.2, 3.3):
 
                 # check float type preservation
-                A = np.array(matrix_as_list, dtype=float)
+                A = mx.array(matrix_as_list, dtype=float)
                 A_power = fractional_matrix_power(A, p)
                 assert_(A_power.dtype.char not in complex_dtype_chars)
 
                 # check complex type preservation
-                A = np.array(matrix_as_list, dtype=complex)
+                A = mx.array(matrix_as_list, dtype=complex)
                 A_power = fractional_matrix_power(A, p)
                 assert_(A_power.dtype.char in complex_dtype_chars)
 
                 # check float->complex for the matrix negation
-                A = -np.array(matrix_as_list, dtype=float)
+                A = -mx.array(matrix_as_list, dtype=float)
                 A_power = fractional_matrix_power(A, p)
                 assert_(A_power.dtype.char in complex_dtype_chars)
 
@@ -717,12 +717,12 @@ class TestFractionalMatrixPower:
             for p in (-2.4, -0.9, 0.2, 3.3):
 
                 # check complex->complex
-                A = np.array(matrix_as_list, dtype=complex)
+                A = mx.array(matrix_as_list, dtype=complex)
                 A_power = fractional_matrix_power(A, p)
                 assert_(A_power.dtype.char in complex_dtype_chars)
 
                 # check float->complex
-                A = np.array(matrix_as_list, dtype=float)
+                A = mx.array(matrix_as_list, dtype=float)
                 A_power = fractional_matrix_power(A, p)
                 assert_(A_power.dtype.char in complex_dtype_chars)
 
@@ -737,10 +737,10 @@ class TestFractionalMatrixPower:
 
             # Check fractional powers both for float and for complex types.
             for newtype in (float, complex):
-                A = np.array(matrix_as_list, dtype=newtype)
+                A = mx.array(matrix_as_list, dtype=newtype)
                 for p in (-0.7, -0.9, -2.4, -1.3):
                     A_power = fractional_matrix_power(A, p)
-                    assert_(np.isnan(A_power).all())
+                    assert_(mx.isnan(A_power).all())
                 for p in (0.2, 1.43):
                     A_power = fractional_matrix_power(A, p)
                     A_round_trip = fractional_matrix_power(A_power, 1/p)
@@ -749,7 +749,7 @@ class TestFractionalMatrixPower:
     def test_opposite_sign_complex_eigenvalues(self):
         M = [[2j, 4], [0, -2j]]
         R = [[1+1j, 2], [0, 1-1j]]
-        assert_allclose(np.dot(R, R), M, atol=1e-14)
+        assert_allclose(mx.dot(R, R), M, atol=1e-14)
         assert_allclose(fractional_matrix_power(M, 0.5), R, atol=1e-14)
 
 
@@ -760,40 +760,40 @@ class TestExpM:
 
     def test_single_elt(self):
         elt = expm(1)
-        assert_allclose(elt, np.array([[np.e]]))
+        assert_allclose(elt, mx.array([[mx.e]]))
 
     @pytest.mark.parametrize('func', [expm, cosm, sinm, tanm, coshm, sinhm, tanhm])
-    @pytest.mark.parametrize('dt',[int, float, np.float32, complex, np.complex64])
+    @pytest.mark.parametrize('dt',[int, float, mx.float32, complex, mx.complex64])
     @pytest.mark.parametrize('shape', [(0, 0), (1, 1)])
     def test_small_empty_matrix_input(self, func, dt, shape):
         # regression test for gh-11082 / gh-20372 - test behavior of expm
         # and related functions for small and zero-sized arrays.
-        A = np.zeros(shape, dtype=dt)
-        A0 = np.zeros((10, 10), dtype=dt)
+        A = mx.zeros(shape, dtype=dt)
+        A0 = mx.zeros((10, 10), dtype=dt)
         result = func(A)
         result0 = func(A0)
         assert result.shape == shape
         assert result.dtype == result0.dtype
 
     def test_2x2_input(self):
-        E = np.e
+        E = mx.e
         a = array([[1, 4], [1, 1]])
         aa = (E**4 + 1)/(2*E)
         bb = (E**4 - 1)/E
         assert_allclose(expm(a), array([[aa, bb], [bb/4, aa]]))
-        assert expm(a.astype(np.complex64)).dtype.char == 'F'
-        assert expm(a.astype(np.float32)).dtype.char == 'f'
+        assert expm(a.astype(mx.complex64)).dtype.char == 'F'
+        assert expm(a.astype(mx.float32)).dtype.char == 'f'
 
     def test_nx2x2_input(self):
-        E = np.e
+        E = mx.e
         # These are integer matrices with integer eigenvalues
-        a = np.array([[[1, 4], [1, 1]],
+        a = mx.array([[[1, 4], [1, 1]],
                       [[1, 3], [1, -1]],
                       [[1, 3], [4, 5]],
                       [[1, 3], [5, 3]],
                       [[4, 5], [-3, -4]]], order='F')
         # Exact results are computed symbolically
-        a_res = np.array([
+        a_res = mx.array([
                           [[(E**4+1)/(2*E), (E**4-1)/E],
                            [(E**4-1)/4/E, (E**4+1)/(2*E)]],
                           [[1/(4*E**2)+(3*E**2)/4, (3*E**2)/4-3/(4*E**2)],
@@ -809,46 +809,46 @@ class TestExpM:
 
     def test_readonly(self):
         n = 7
-        a = np.ones((n, n))
+        a = mx.ones((n, n))
         a.flags.writeable = False
         expm(a)
 
     @pytest.mark.fail_slow(5)
     def test_gh18086(self):
-        A = np.zeros((400, 400), dtype=float)
-        rng = np.random.default_rng(100)
+        A = mx.zeros((400, 400), dtype=float)
+        rng = mx.random.default_rng(100)
         i = rng.integers(0, 399, 500)
         j = rng.integers(0, 399, 500)
         A[i, j] = rng.random(500)
         # Problem appears when m = 9
-        Am = np.empty((5, 400, 400), dtype=float)
+        Am = mx.empty((5, 400, 400), dtype=float)
         Am[0] = A.copy()
         m, s = pick_pade_structure(Am)
         assert m == 9
         # Check that result is accurate
         first_res = expm(A)
-        np.testing.assert_array_almost_equal(logm(first_res), A)
+        mx.testing.assert_array_almost_equal(logm(first_res), A)
         # Check that result is consistent
         for i in range(5):
             next_res = expm(A)
-            np.testing.assert_array_almost_equal(first_res, next_res)
+            mx.testing.assert_array_almost_equal(first_res, next_res)
 
 
 class TestExpmFrechet:
 
     def test_expm_frechet(self):
         # a test of the basic functionality
-        M = np.array([
+        M = mx.array([
             [1, 2, 3, 4],
             [5, 6, 7, 8],
             [0, 0, 1, 2],
             [0, 0, 5, 6],
             ], dtype=float)
-        A = np.array([
+        A = mx.array([
             [1, 2],
             [5, 6],
             ], dtype=float)
-        E = np.array([
+        E = mx.array([
             [3, 4],
             [7, 8],
             ], dtype=float)
@@ -861,17 +861,17 @@ class TestExpmFrechet:
 
     def test_small_norm_expm_frechet(self):
         # methodically test matrices with a range of norms, for better coverage
-        M_original = np.array([
+        M_original = mx.array([
             [1, 2, 3, 4],
             [5, 6, 7, 8],
             [0, 0, 1, 2],
             [0, 0, 5, 6],
             ], dtype=float)
-        A_original = np.array([
+        A_original = mx.array([
             [1, 2],
             [5, 6],
             ], dtype=float)
-        E_original = np.array([
+        E_original = mx.array([
             [3, 4],
             [7, 8],
             ], dtype=float)
@@ -893,7 +893,7 @@ class TestExpmFrechet:
             assert_allclose(expected_frechet, observed_frechet)
 
     def test_fuzz(self):
-        rng = np.random.default_rng(1726500908359153)
+        rng = mx.random.default_rng(1726500908359153)
         # try a bunch of crazy inputs
         rfuncs = (
                 rng.uniform,
@@ -911,9 +911,9 @@ class TestExpmFrechet:
             scale = target_norm_1 / A_original_norm_1
             A = scale * A_original
             E = scale * E_original
-            M = np.vstack([
-                np.hstack([A, E]),
-                np.hstack([np.zeros_like(A), A])])
+            M = mx.vstack([
+                mx.hstack([A, E]),
+                mx.hstack([mx.zeros_like(A), A])])
             expected_expm = scipy.linalg.expm(A)
             expected_frechet = scipy.linalg.expm(M)[:n, n:]
             observed_expm, observed_frechet = expm_frechet(A, E)
@@ -922,11 +922,11 @@ class TestExpmFrechet:
 
     def test_problematic_matrix(self):
         # this test case uncovered a bug which has since been fixed
-        A = np.array([
+        A = mx.array([
                 [1.50591997, 1.93537998],
                 [0.41203263, 0.23443516],
                 ], dtype=float)
-        E = np.array([
+        E = mx.array([
                 [1.87864034, 2.07055038],
                 [1.34102727, 0.67341123],
                 ], dtype=float)
@@ -943,7 +943,7 @@ class TestExpmFrechet:
     def test_medium_matrix(self):
         # profile this to see the speed difference
         n = 1000
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         A = rng.exponential(size=(n, n))
         E = rng.exponential(size=(n, n))
         sps_expm, sps_frechet = expm_frechet(
@@ -955,7 +955,7 @@ class TestExpmFrechet:
 
 
 def _help_expm_cond_search(A, A_norm, X, X_norm, eps, p):
-    p = np.reshape(p, A.shape)
+    p = mx.reshape(p, A.shape)
     p_norm = norm(p)
     perturbation = eps * p * (A_norm / p_norm)
     X_prime = expm(A + perturbation)
@@ -975,14 +975,14 @@ def _relative_error(f, A, perturbation):
 
 class TestExpmConditionNumber:
     def test_expm_cond_smoke(self):
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
         for n in range(1, 4):
             A = rng.standard_normal((n, n))
             kappa = expm_cond(A)
             assert_array_less(0, kappa)
 
     def test_expm_bad_condition_number(self):
-        A = np.array([
+        A = mx.array([
             [-1.128679820, 9.614183771e4, -4.524855739e9, 2.924969411e14],
             [0, -1.201010529, 9.634696872e4, -4.681048289e9],
             [0, 0, -1.132893222, 9.532491830e4],
@@ -992,20 +992,20 @@ class TestExpmConditionNumber:
         assert_array_less(1e36, kappa)
 
     def test_univariate(self):
-        rng = np.random.default_rng(1234)
-        for x in np.linspace(-5, 5, num=11):
-            A = np.array([[x]])
+        rng = mx.random.default_rng(1234)
+        for x in mx.linspace(-5, 5, num=11):
+            A = mx.array([[x]])
             assert_allclose(expm_cond(A), abs(x))
-        for x in np.logspace(-2, 2, num=11):
-            A = np.array([[x]])
+        for x in mx.logspace(-2, 2, num=11):
+            A = mx.array([[x]])
             assert_allclose(expm_cond(A), abs(x))
         for i in range(10):
             A = rng.standard_normal((1, 1))
-            assert_allclose(expm_cond(A), np.absolute(A)[0, 0])
+            assert_allclose(expm_cond(A), mx.absolute(A)[0, 0])
 
     @pytest.mark.slow
     def test_expm_cond_fuzz(self):
-        rng = np.random.RandomState(12345)
+        rng = mx.random.RandomState(12345)
         eps = 1e-5
         nsamples = 10
         for i in range(nsamples):
@@ -1020,11 +1020,11 @@ class TestExpmConditionNumber:
             # relative error.
             f = functools.partial(_help_expm_cond_search,
                     A, A_norm, X, X_norm, eps)
-            guess = np.ones(n*n)
+            guess = mx.ones(n*n)
             out = minimize(f, guess, method='L-BFGS-B')
             xopt = out.x
             yopt = f(xopt)
-            p_best = eps * _normalized_like(np.reshape(xopt, A.shape), A)
+            p_best = eps * _normalized_like(mx.reshape(xopt, A.shape), A)
             p_best_relerr = _relative_error(expm, A, p_best)
             assert_allclose(p_best_relerr, -yopt * eps)
 
@@ -1053,7 +1053,7 @@ class TestKhatriRao:
                                      [15, 24],
                                      [21, 32]]))
 
-        b = khatri_rao(np.empty([2, 2]), np.empty([2, 2]))
+        b = khatri_rao(mx.empty([2, 2]), mx.empty([2, 2]))
         assert_array_equal(b.shape, (4, 2))
 
     def test_number_of_columns_equality(self):
@@ -1094,28 +1094,28 @@ class TestKhatriRao:
         b = array([[5, 6], [7, 8]])
 
         res1 = khatri_rao(a, b)
-        res2 = np.vstack([np.kron(a[:, k], b[:, k])
+        res2 = mx.vstack([mx.kron(a[:, k], b[:, k])
                           for k in range(b.shape[1])]).T
 
         assert_array_equal(res1, res2)
 
     def test_empty(self):
-        a = np.empty((0, 2))
-        b = np.empty((3, 2))
+        a = mx.empty((0, 2))
+        b = mx.empty((3, 2))
         res = khatri_rao(a, b)
-        assert_allclose(res, np.empty((0, 2)))
+        assert_allclose(res, mx.empty((0, 2)))
 
-        a = np.empty((3, 0))
-        b = np.empty((5, 0))
+        a = mx.empty((3, 0))
+        b = mx.empty((5, 0))
         res = khatri_rao(a, b)
-        assert_allclose(res, np.empty((15, 0)))
+        assert_allclose(res, mx.empty((15, 0)))
 
 @pytest.mark.parametrize('func',
                          [logm, sqrtm, signm])
 def test_disp_dep(func):
     with pytest.deprecated_call():
-        func(np.eye(2), disp=False)
+        func(mx.eye(2), disp=False)
 
 def test_blocksize_dep():
     with pytest.deprecated_call():
-        sqrtm(np.eye(2), blocksize=10)
+        sqrtm(mx.eye(2), blocksize=10)

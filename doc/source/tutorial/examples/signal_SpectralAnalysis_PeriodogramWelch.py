@@ -1,14 +1,14 @@
 import matplotlib.pyplot as plt
-import numpy as np
+import mlx.core as mx
 import scipy.signal as signal
 
-rng = np.random.default_rng(73625)  # seeding for reproducibility
+rng = mx.random.default_rng(73625)  # seeding for reproducibility
 
 fs, n = 10e3, 10_000
 f_x, noise_power = 1270, 1e-3 * fs / 2
-t = np.arange(n) / fs
-x = (np.sqrt(2) * np.sin(2 * np.pi * f_x * t) +
-     rng.normal(scale=np.sqrt(noise_power), size=t.shape))
+t = mx.arange(n) / fs
+x = (mx.sqrt(2) * mx.sin(2 * mx.pi * f_x * t) +
+     rng.normal(scale=mx.sqrt(noise_power), size=t.shape))
 
 fg, axx = plt.subplots(1, 2, sharex='all', tight_layout=True, figsize=(7, 3.5))
 axx[0].set(title="Squared Magnitude Spectrum", ylabel="Square of Magnitude in V²")

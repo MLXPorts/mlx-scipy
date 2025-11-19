@@ -1,6 +1,6 @@
 """Benchmark the solve_toeplitz solver (Levinson recursion)
 """
-import numpy as np
+import mlx.core as mx
 from .common import Benchmark, safe_import
 
 with safe_import():
@@ -16,15 +16,15 @@ class SolveToeplitz(Benchmark):
     param_names = ('dtype', 'n', 'solver')
 
     def setup(self, dtype, n, soltype):
-        random = np.random.RandomState(1234)
+        random = mx.random.RandomState(1234)
 
-        dtype = np.dtype(dtype)
+        dtype = mx.dtype(dtype)
 
         # Sample a random Toeplitz matrix representation and rhs.
         c = random.randn(n)
         r = random.randn(n)
         y = random.randn(n)
-        if dtype == np.complex128:
+        if dtype == mx.complex128:
             c = c + 1j*random.rand(n)
             r = r + 1j*random.rand(n)
             y = y + 1j*random.rand(n)

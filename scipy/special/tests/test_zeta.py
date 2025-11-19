@@ -1,14 +1,14 @@
 import scipy
 import scipy.special as sc
 import sys
-import numpy as np
+import mlx.core as mx
 import pytest
 
 from numpy.testing import assert_equal, assert_allclose
 
 
 def test_zeta():
-    assert_allclose(sc.zeta(2,2), np.pi**2/6 - 1, rtol=1e-12)
+    assert_allclose(sc.zeta(2,2), mx.pi**2/6 - 1, rtol=1e-12)
 
 
 def test_zetac():
@@ -27,24 +27,24 @@ def test_zetac():
 
 
 def test_zetac_special_cases():
-    assert sc.zetac(np.inf) == 0
-    assert np.isnan(sc.zetac(-np.inf))
+    assert sc.zetac(mx.inf) == 0
+    assert mx.isnan(sc.zetac(-mx.inf))
     assert sc.zetac(0) == -1.5
-    assert sc.zetac(1.0) == np.inf
+    assert sc.zetac(1.0) == mx.inf
 
     assert_equal(sc.zetac([-2, -50, -100]), -1)
 
 
 def test_riemann_zeta_special_cases():
-    assert np.isnan(sc.zeta(np.nan))
-    assert sc.zeta(np.inf) == 1
+    assert mx.isnan(sc.zeta(mx.nan))
+    assert sc.zeta(mx.inf) == 1
     assert sc.zeta(0) == -0.5
 
     # Riemann zeta is zero add negative even integers.
     assert_equal(sc.zeta([-2, -4, -6, -8, -10]), 0)
 
-    assert_allclose(sc.zeta(2), np.pi**2/6, rtol=1e-12)
-    assert_allclose(sc.zeta(4), np.pi**4/90, rtol=1e-12)
+    assert_allclose(sc.zeta(2), mx.pi**2/6, rtol=1e-12)
+    assert_allclose(sc.zeta(4), mx.pi**4/90, rtol=1e-12)
 
 
 def test_riemann_zeta_avoid_overflow():
@@ -58,14 +58,14 @@ def test_riemann_zeta_avoid_overflow():
     [
         ## Test cases taken from mpmath with the script:
 
-        # import numpy as np
+        # import mlx.core as mx
         # import scipy.stats as stats
 
         # from mpmath import mp
 
-        # # seed = np.random.SeedSequence().entropy
+        # # seed = mx.random.SeedSequence().entropy
         # seed = 154689806791763421822480125722191067828
-        # rng = np.random.default_rng(seed)
+        # rng = mx.random.default_rng(seed)
         # default_rtol = 1e-13
 
         # # A small point in each quadrant outside of the critical strip
@@ -87,7 +87,7 @@ def test_riemann_zeta_avoid_overflow():
 
         # # points in critical strip
         # x = rng.uniform(0.0, 1.0, size=5)
-        # y = np.exp(rng.uniform(0, 5, size=5))
+        # y = mx.exp(rng.uniform(0, 5, size=5))
         # z = x + y*1j
         # for t in z:
         #     reference = complex(mp.zeta(t))
@@ -98,9 +98,9 @@ def test_riemann_zeta_avoid_overflow():
         #     cases.append((complex(t), reference, default_rtol))
 
         # # Near small trivial zeros
-        # x = np.array([-2, -4, -6, -8])
-        # y = np.array([1e-15, -1e-15])
-        # x, y = np.meshgrid(x, y)
+        # x = mx.array([-2, -4, -6, -8])
+        # y = mx.array([1e-15, -1e-15])
+        # x, y = mx.meshgrid(x, y)
         # x, y = x.ravel(), y.ravel()
         # z = x + y*1j
         # for t in z:
@@ -108,9 +108,9 @@ def test_riemann_zeta_avoid_overflow():
         #     cases.append((complex(t), reference, 1e-7))
 
         # # Some other points near real axis
-        # x = np.array([-0.5, 0, 0.2, 0.75])
-        # y = np.array([1e-15, -1e-15])
-        # x, y = np.meshgrid(x, y)
+        # x = mx.array([-0.5, 0, 0.2, 0.75])
+        # y = mx.array([1e-15, -1e-15])
+        # x, y = mx.meshgrid(x, y)
         # x, y = x.ravel(), y.ravel()
         # z = x + y*1j
         # for t in z:
@@ -118,9 +118,9 @@ def test_riemann_zeta_avoid_overflow():
         #     cases.append((complex(t), reference, 1e-7))
 
         # # Moderately large real part
-        # x = np.array([49.33915930750887, 50.55805244181687])
+        # x = mx.array([49.33915930750887, 50.55805244181687])
         # y = rng.uniform(20, 100, size=3)
-        # x, y = np.meshgrid(x, y)
+        # x, y = mx.meshgrid(x, y)
         # x, y = x.ravel(), y.ravel()
         # z = x + y*1j
         # for t in z:
@@ -128,9 +128,9 @@ def test_riemann_zeta_avoid_overflow():
         #     cases.append((complex(t), reference, default_rtol))
 
         # # Very large imaginary part
-        # x = np.array([0.5, 34.812847097948854, 50.55805244181687])
-        # y = np.array([1e6, -1e6])
-        # x, y = np.meshgrid(x, y)
+        # x = mx.array([0.5, 34.812847097948854, 50.55805244181687])
+        # y = mx.array([1e6, -1e6])
+        # x, y = mx.meshgrid(x, y)
         # x, y = x.ravel(), y.ravel()
         # z = x + y*1j
         # for t in z:
@@ -140,8 +140,8 @@ def test_riemann_zeta_avoid_overflow():
         #
         # # Naive implementation of reflection formula suffers internal overflow
         # x = -rng.uniform(200, 300, 3)
-        # y = np.array([rng.uniform(10, 30), -rng.uniform(10, 30)])
-        # x, y = np.meshgrid(x, y)
+        # y = mx.array([rng.uniform(10, 30), -rng.uniform(10, 30)])
+        # x, y = mx.meshgrid(x, y)
         # x, y = x.ravel(), y.ravel()
         # z = x + y*1j
         # for t in z:
@@ -257,8 +257,8 @@ def test_riemann_zeta_avoid_overflow():
         ((50.55805244181687-1e6j),
          (1.0000000000000002-5.736517078070873e-16j),
          1e-13),
-        ((-294.86605461349745+13.992648136816397j), (-np.inf+np.inf*1j), 1e-13),
-        ((-294.86605461349745-16.147667799398363j), (np.inf-np.inf*1j), 1e-13),
+        ((-294.86605461349745+13.992648136816397j), (-mx.inf+mx.inf*1j), 1e-13),
+        ((-294.86605461349745-16.147667799398363j), (mx.inf-mx.inf*1j), 1e-13),
     ]
 )
 def test_riemann_zeta_complex(z, desired, rtol):

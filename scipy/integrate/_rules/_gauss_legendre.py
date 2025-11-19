@@ -25,13 +25,13 @@ class GaussLegendreQuadrature(FixedRule):
     Evaluate a 1D integral. Note in this example that ``f`` returns an array, so the
     estimates will also be arrays.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.integrate import cubature
     >>> from scipy.integrate._rules import GaussLegendreQuadrature
     >>> def f(x):
-    ...     return np.cos(x)
+    ...     return mx.cos(x)
     >>> rule = GaussLegendreQuadrature(21) # Use 21-point GaussLegendre
-    >>> a, b = np.array([0]), np.array([1])
+    >>> a, b = mx.array([0]), mx.array([1])
     >>> rule.estimate(f, a, b) # True value sin(1), approximately 0.84147
      array([0.84147098])
     >>> rule.estimate_error(f, a, b)

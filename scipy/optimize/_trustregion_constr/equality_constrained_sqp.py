@@ -3,14 +3,14 @@
 from scipy.sparse import eye_array as speye
 from .projections import projections
 from .qp_subproblem import modified_dogleg, projected_cg, box_intersections
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import norm
 
 __all__ = ['equality_constrained_sqp']
 
 
 def default_scaling(x):
-    n, = np.shape(x)
+    n, = mx.shape(x)
     return speye(n)
 
 
@@ -58,16 +58,16 @@ def equality_constrained_sqp(fun_and_constr, grad_and_jac, lagr_hess,
     TR_FACTOR = 0.8  # Zeta from formula (3.21), reference [2]_, p.885.
     BOX_FACTOR = 0.5
 
-    n, = np.shape(x0)  # Number of parameters
+    n, = mx.shape(x0)  # Number of parameters
 
     # Set default lower and upper bounds.
     if trust_lb is None:
-        trust_lb = np.full(n, -np.inf)
+        trust_lb = mx.full(n, -mx.inf)
     if trust_ub is None:
-        trust_ub = np.full(n, np.inf)
+        trust_ub = mx.full(n, mx.inf)
 
     # Initial values
-    x = np.copy(x0)
+    x = mx.copy(x0)
     trust_radius = initial_trust_radius
     penalty = initial_penalty
     # Compute Values
@@ -98,8 +98,8 @@ def equality_constrained_sqp(fun_and_constr, grad_and_jac, lagr_hess,
     H = lagr_hess(x, v)
 
     # Update state parameters
-    optimality = norm(c + A.T.dot(v), np.inf)
-    constr_violation = norm(b, np.inf) if len(b) > 0 else 0
+    optimality = norm(c + A.T.dot(v), mx.inf)
+    constr_violation = norm(b, mx.inf) if len(b) > 0 else 0
     cg_info = {'niter': 0, 'stop_cond': 0,
                'hits_boundary': False}
 
@@ -125,8 +125,8 @@ def equality_constrained_sqp(fun_and_constr, grad_and_jac, lagr_hess,
         # ||dt|| <= sqrt(trust_radius**2 - ||dn||**2)
         # lb - dn <= dt <= ub - dn
         c_t = H.dot(dn) + c
-        b_t = np.zeros_like(b)
-        trust_radius_t = np.sqrt(trust_radius**2 - np.linalg.norm(dn)**2)
+        b_t = mx.zeros_like(b)
+        trust_radius_t = mx.sqrt(trust_radius**2 - mx.linalg.norm(dn)**2)
         lb_t = trust_lb - dn
         ub_t = trust_ub - dn
         dt, cg_info = projected_cg(H, c_t, Z, Y, b_t,
@@ -222,8 +222,8 @@ def equality_constrained_sqp(fun_and_constr, grad_and_jac, lagr_hess,
             # Set Flag
             last_iteration_failed = False
             # Optimality values
-            optimality = norm(c + A.T.dot(v), np.inf)
-            constr_violation = norm(b, np.inf) if len(b) > 0 else 0
+            optimality = norm(c + A.T.dot(v), mx.inf)
+            constr_violation = norm(b, mx.inf) if len(b) > 0 else 0
         else:
             penalty = previous_penalty
             last_iteration_failed = True

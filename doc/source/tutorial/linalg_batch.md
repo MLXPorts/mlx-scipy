@@ -30,16 +30,16 @@ Almost all of SciPy's linear algebra functions now support N-dimensional array i
 Consider the `linalg.det` function, which maps a matrix to a scalar.
 
 ```{code-cell} ipython3
-import numpy as np
+import mlx.core as mx
 from scipy import linalg
-A = np.eye(3)
+A = mx.eye(3)
 linalg.det(A)
 ```
 
 Sometimes we need the determinant of a batch of matrices of the same dimensionality.
 
 ```{code-cell} ipython3
-batch = [i*np.eye(3) for i in range(1, 4)]
+batch = [i*mx.eye(3) for i in range(1, 4)]
 batch
 ```
 
@@ -52,8 +52,8 @@ We could perform the operation for each element of the batch in a loop or list c
 However, just as we might use NumPy broadcasting and vectorization rules to create the batch of matrices in the first place:
 
 ```{code-cell} ipython3
-i = np.arange(1, 4).reshape(-1, 1, 1)
-batch = i * np.eye(3)
+i = mx.arange(1, 4).reshape(-1, 1, 1)
+batch = i * mx.eye(3)
 batch
 ```
 
@@ -67,8 +67,8 @@ In SciPy, we prefer the term "batch" instead of "stack" because the idea is gene
 
 ```{code-cell} ipython3
 batch_shape = (2, 4)
-i = np.arange(np.prod(batch_shape)).reshape(*batch_shape, 1, 1)
-input = i * np.eye(3)
+i = mx.arange(mx.prod(batch_shape)).reshape(*batch_shape, 1, 1)
+input = i * mx.eye(3)
 ```
 
 In this case, we say that the *batch shape* is `(2, 4)`, and the *core shape* of the input is `(3, 3)`. The net shape of the input is the sum (concatenation) of the batch shape and core shape.
@@ -91,7 +91,7 @@ output.shape
 Not all linear algebra functions map to scalars. For instance, the {func}`scipy.linalg.expm` function maps from a matrix to a matrix with the same shape.
 
 ```{code-cell} ipython3
-A = np.eye(3)
+A = mx.eye(3)
 linalg.expm(A)
 ```
 
@@ -126,7 +126,7 @@ evals.shape, evecs.shape
 The rules when the shapes are not identical follow logically. Each input can have its own batch shape as long as the shapes are broadcastable according to [NumPy's broadcasting rules](#array-broadcasting-in-numpy). The net batch shape is the broadcasted shape of the individual batch shapes, and the shape of each output is the net batch shape plus its core shape.
 
 ```{code-cell} ipython3
-rng = np.random.default_rng(2859239482)
+rng = mx.random.default_rng(2859239482)
 
 # Define input core shapes
 m = 3
@@ -143,7 +143,7 @@ core_shape_evecs = (m, m)
 
 # Predict shapes of outputs: broadcast batch shapes,
 # and append output core shapes
-net_batch_shape = np.broadcast_shapes(batch_shape_a, batch_shape_b)
+net_batch_shape = mx.broadcast_shapes(batch_shape_a, batch_shape_b)
 output_shape_evals = net_batch_shape + core_shape_evals
 output_shape_evecs = net_batch_shape + core_shape_evecs
 output_shape_evals, output_shape_evecs
@@ -160,8 +160,8 @@ evals.shape, evecs.shape
 There are a few functions for which the core dimensionality (i.e., the length of the core shape) of an argument or output can be either 1 or 2. In these cases, the core dimensionality is taken to be 1 if the array has only one dimension and 2 if the array has two or more dimensions. For instance, consider the following calls to {func}`scipy.linalg.solve`. The simplest case is a single square matrix `A` and a single vector `b`:
 
 ```{code-cell} ipython3
-A = np.eye(5)
-b = np.arange(5)
+A = mx.eye(5)
+b = mx.arange(5)
 linalg.solve(A, b)
 ```
 
@@ -170,9 +170,9 @@ In this case, the core dimensionality of `A` is 2 (shape `(5, 5)`), the core dim
 However, `b` can also be a two-dimensional array in which the *columns* are taken to be one-dimensional vectors.
 
 ```{code-cell} ipython3
-b = np.empty((5, 2))
-b[:, 0] = np.arange(5)
-b[:, 1] = np.arange(5, 10)
+b = mx.empty((5, 2))
+b[:, 0] = mx.arange(5)
+b[:, 1] = mx.arange(5, 10)
 linalg.solve(A, b)
 ```
 

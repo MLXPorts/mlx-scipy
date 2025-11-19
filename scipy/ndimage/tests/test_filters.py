@@ -5,7 +5,7 @@ import re
 import contextlib
 import warnings
 
-import numpy as np
+import mlx.core as mx
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 from hypothesis import strategies as st
@@ -82,9 +82,9 @@ def _complex_correlate(xp, array, kernel, real_dtype, convolve=False,
         )
     elif complex_array:
         re_cval = xp.real(cval)
-        re_cval = re_cval.item() if isinstance(re_cval, xp.ndarray) else re_cval
+        re_cval = re_cval.item() if isinstance(re_cval, xp.array) else re_cval
         im_cval = xp.imag(cval)
-        im_cval = im_cval.item() if isinstance(im_cval, xp.ndarray) else im_cval
+        im_cval = im_cval.item() if isinstance(im_cval, xp.array) else im_cval
 
         output = (
             func(xp.real(array), kernel, output=real_dtype, mode=mode,
@@ -754,7 +754,7 @@ class TestNdimageFilters:
                                check_warnings=num_parallel_threads == 1)
 
     @uses_output_dtype
-    @xfail_xp_backends("cupy", reason="unhashable type: 'ndarray'")
+    @xfail_xp_backends("cupy", reason="unhashable type: 'array'")
     @pytest.mark.parametrize('dtype', complex_types)
     @pytest.mark.parametrize('dtype_output', complex_types)
     def test_correlate_complex_input_and_kernel(self, dtype, dtype_output, xp,
@@ -788,7 +788,7 @@ class TestNdimageFilters:
                                check_warnings=num_parallel_threads == 1)
 
     @uses_output_dtype
-    @xfail_xp_backends("cupy", reason="unhashable type: 'ndarray'")
+    @xfail_xp_backends("cupy", reason="unhashable type: 'array'")
     @pytest.mark.parametrize('dtype', complex_types)
     @pytest.mark.parametrize('dtype_output', complex_types)
     def test_correlate1d_complex_input_and_kernel(self, dtype, dtype_output, xp,
@@ -974,11 +974,11 @@ class TestNdimageFilters:
         if len(set(ax % array.ndim for ax in axes)) != len(axes):
             # parametrized cases with duplicate axes raise an error
             with pytest.raises(ValueError, match="axes must be unique"):
-                ndimage.generic_filter(array, np.amax, size=size, axes=axes)
+                ndimage.generic_filter(array, mx.amax, size=size, axes=axes)
             return
 
-        # choose np.amax as the function so we can compare to maximum_filter
-        output = ndimage.generic_filter(array, np.amax, size=size, axes=axes)
+        # choose mx.amax as the function so we can compare to maximum_filter
+        output = ndimage.generic_filter(array, mx.amax, size=size, axes=axes)
         expected = ndimage.maximum_filter(array, size=size, axes=axes)
         xp_assert_close(output, expected)
 
@@ -986,14 +986,14 @@ class TestNdimageFilters:
                        reason="https://github.com/cupy/cupy/pull/8339")
     @pytest.mark.parametrize('func', [ndimage.correlate, ndimage.convolve])
     @pytest.mark.parametrize(
-        'dtype', [np.float32, np.float64, np.complex64, np.complex128]
+        'dtype', [mx.float32, mx.float64, mx.complex64, mx.complex128]
     )
     @pytest.mark.parametrize(
         'axes', tuple(itertools.combinations(range(-3, 3), 2))
     )
     @pytest.mark.parametrize('origin', [(0, 0), (-1, 1)])
     def test_correlate_convolve_axes(self, xp, func, dtype, axes, origin):
-        array = xp.asarray(np.arange(6 * 8 * 12, dtype=dtype).reshape(6, 8, 12))
+        array = xp.asarray(mx.arange(6 * 8 * 12, dtype=dtype).reshape(6, 8, 12))
         weights = xp.arange(3 * 5)
         weights = xp.reshape(weights, (3, 5))
         axes = tuple(ax % array.ndim for ax in axes)
@@ -1037,8 +1037,8 @@ class TestNdimageFilters:
         array = xp.arange(6 * 8 * 12, dtype=xp.float64)
         array = xp.reshape(array, (6, 8, 12))
 
-        kwargs = {key: np.array(val) for key, val in kwargs.items()}
-        axes = np.array(axes)
+        kwargs = {key: mx.array(val) for key, val in kwargs.items()}
+        axes = mx.array(axes)
         n_axes = axes.size
 
         if filter_func == ndimage.rank_filter:
@@ -1061,12 +1061,12 @@ class TestNdimageFilters:
                              **reduced_kwargs)
 
         # result should be equivalent to sigma=0.0/size=1 on unfiltered axes
-        size_3d = np.full(array.ndim, fill_value=size0)
+        size_3d = mx.full(array.ndim, fill_value=size0)
         size_3d[axes] = size
         size_3d = [size_3d[i] for i in range(size_3d.shape[0])]
         if 'origin' in kwargs:
             # origin should be zero on the axis that has size 0
-            origin = np.asarray([0, 0, 0])
+            origin = mx.array([0, 0, 0])
             origin[axes] = reduced_kwargs['origin']
             origin = xp.asarray(origin)
             kwargs['origin'] = origin
@@ -1090,7 +1090,7 @@ class TestNdimageFilters:
         array = xp.reshape(array, (6, 8, 12))
 
         # weights with ndim matching len(axes)
-        footprint = np.ones((3, 5), dtype=bool)
+        footprint = mx.ones((3, 5), dtype=bool)
         footprint[0, 1] = 0  # make non-separable
         footprint = xp.asarray(footprint)
 
@@ -1119,8 +1119,8 @@ class TestNdimageFilters:
     @xfail_xp_backends("cupy", reason="https://github.com/cupy/cupy/pull/8339")
     @pytest.mark.parametrize(
         'filter_func, args',
-        [(ndimage.convolve, (np.ones((3, 3, 3)),)),  # args = (weights,)
-         (ndimage.correlate,(np.ones((3, 3, 3)),)),  # args = (weights,)
+        [(ndimage.convolve, (mx.ones((3, 3, 3)),)),  # args = (weights,)
+         (ndimage.correlate,(mx.ones((3, 3, 3)),)),  # args = (weights,)
          (ndimage.gaussian_filter, (1.0,)),      # args = (sigma,)
          (ndimage.uniform_filter, (3,)),         # args = (size,)
          (ndimage.minimum_filter, (3,)),         # args = (size,)
@@ -1135,7 +1135,7 @@ class TestNdimageFilters:
         array = xp.arange(6 * 8 * 12, dtype=xp.float64)
         array = xp.reshape(array, (6, 8, 12))
         args = [
-            xp.asarray(arg) if isinstance(arg, np.ndarray) else arg
+            xp.asarray(arg) if isinstance(arg, mx.array) else arg
             for arg in args
         ]
         if any(isinstance(ax, float) for ax in axes):
@@ -1166,7 +1166,7 @@ class TestNdimageFilters:
         array = xp.arange(6 * 8 * 12, dtype=xp.float64)
         array = xp.reshape(array, (6, 8, 12))
         # create a footprint with one too many dimensions
-        footprint = np.ones((3,) * (len(axes) + 1))
+        footprint = mx.ones((3,) * (len(axes) + 1))
         if not separable_footprint:
             footprint[(0,) * footprint.ndim] = 0
         footprint = xp.asarray(footprint)
@@ -1365,7 +1365,7 @@ class TestNdimageFilters:
     @pytest.mark.parametrize('dtype', types + complex_types)
     def test_generic_laplace01(self, dtype, xp):
         def derivative2(input, axis, output, mode, cval, a, b):
-            sigma = np.asarray([a, b / 2.0])
+            sigma = mx.array([a, b / 2.0])
             order = [0] * input.ndim
             order[axis] = 2
             return ndimage.gaussian_filter(input, sigma, order,
@@ -1700,8 +1700,8 @@ class TestNdimageFilters:
         array = xp.arange(6 * 8 * 12, dtype=xp.float32)
         array = xp.reshape(array, (6, 8, 12))
         # use 2D triangular footprint because it is non-separable
-        footprint = xp.asarray(np.tri(5))
-        axes = np.asarray(axes)
+        footprint = xp.asarray(mx.tri(5))
+        axes = mx.array(axes)
 
         if len(set(axes % array.ndim)) != len(axes):
             # parametrized cases with duplicate axes raise an error
@@ -1937,7 +1937,7 @@ class TestNdimageFilters:
         # test that lists are accepted and interpreted as numpy arrays
         array = [3, 2, 5, 1, 4]
         # expected values are: median(3, 2, 5) = 3, median(2, 5, 1) = 2, etc
-        expected = np.asarray([3, 3, 2, 4, 4])
+        expected = mx.array([3, 3, 2, 4, 4])
         output = ndimage.rank_filter(array, -2, size=3)
         xp_assert_equal(expected, output)
 
@@ -1984,7 +1984,7 @@ class TestNdimageFilters:
                 output[ii] += input[ii + 1] * fltr[1]
                 output[ii] += input[ii + 2] * fltr[2]
 
-        a = np.arange(12, dtype=dtype).reshape(3, 4)
+        a = mx.arange(12, dtype=dtype).reshape(3, 4)
         a = xp.asarray(a)
         dtype = getattr(xp, dtype)
 
@@ -2009,10 +2009,10 @@ class TestNdimageFilters:
         cf = xp.asarray([1., 4.])
 
         def _filter_func(buffer, weights, total=1.0):
-            weights = np.asarray(cf) / np.asarray(total)
-            return np.sum(buffer * weights)
+            weights = mx.array(cf) / mx.array(total)
+            return mx.sum(buffer * weights)
 
-        a = np.arange(12, dtype=dtype_str).reshape(3, 4)
+        a = mx.arange(12, dtype=dtype_str).reshape(3, 4)
         a = xp.asarray(a)
         r1 = ndimage.correlate(a, filter_ * footprint)
         if dtype_str in float_types:
@@ -2190,9 +2190,9 @@ class TestNdimageFilters:
 @make_xp_test_case(ndimage.generic_filter)
 def test_ticket_701(xp):
     # Test generic filter sizes
-    arr = xp.asarray(np.arange(4).reshape(2, 2))
+    arr = xp.asarray(mx.arange(4).reshape(2, 2))
     def func(x):
-        return np.min(x)  # NB: np.min not xp.min for callables
+        return mx.min(x)  # NB: mx.min not xp.min for callables
     res = ndimage.generic_filter(arr, func, size=(1, 1))
     # The following raises an error unless ticket 701 is fixed
     res2 = ndimage.generic_filter(arr, func, size=1)
@@ -2204,10 +2204,10 @@ def test_gh_5430():
     # fixed. In py2k an int is implemented using a C long, so
     # which one fails depends on your system. In py3k there is only
     # one arbitrary precision integer type, so both should fail.
-    sigma = np.int32(1)
+    sigma = mx.int32(1)
     out = ndimage._ni_support._normalize_sequence(sigma, 1)
     assert out == [sigma]
-    sigma = np.int64(1)
+    sigma = mx.int64(1)
     out = ndimage._ni_support._normalize_sequence(sigma, 1)
     assert out == [sigma]
     # This worked before; make sure it still works
@@ -2219,12 +2219,12 @@ def test_gh_5430():
     out = ndimage._ni_support._normalize_sequence(sigma, 2)
     assert out == sigma
     # Also include the OPs original example to make sure we fixed the issue
-    x = np.random.normal(size=(256, 256))
-    perlin = np.zeros_like(x)
-    for i in 2**np.arange(6):
+    x = mx.random.normal(size=(256, 256))
+    perlin = mx.zeros_like(x)
+    for i in 2**mx.arange(6):
         perlin += ndimage.gaussian_filter(x, i, mode="wrap") * i**2
     # This also fixes gh-4106, show that the OPs example now runs.
-    x = np.int64(21)
+    x = mx.int64(21)
     ndimage._ni_support._normalize_sequence(x, 0)
 
 
@@ -2233,7 +2233,7 @@ def test_gaussian_kernel1d(xp):
     radius = 10
     sigma = 2
     sigma2 = sigma * sigma
-    x = np.arange(-radius, radius + 1, dtype=np.float64)
+    x = mx.arange(-radius, radius + 1, dtype=mx.float64)
     x = xp.asarray(x)
     phi_x = xp.exp(-0.5 * x * x / sigma2)
     phi_x /= xp.sum(phi_x)
@@ -2520,7 +2520,7 @@ def test_gaussian_truncate(xp):
     # Test that Gaussian filters can be truncated at different widths.
     # These tests only check that the result has the expected number
     # of nonzero elements.
-    arr = np.zeros((100, 100), dtype=np.float64)
+    arr = mx.zeros((100, 100), dtype=mx.float64)
     arr[50, 50] = 1
     arr = xp.asarray(arr)
     num_nonzeros_2 = _count_nonzero(ndimage.gaussian_filter(arr, 5, truncate=2) > 0)
@@ -2540,7 +2540,7 @@ def test_gaussian_truncate(xp):
     assert n1 == 5
 
     # Test gaussian_filter1d.
-    x = np.zeros(51)
+    x = mx.zeros(51)
     x[25] = 1
     x = xp.asarray(x)
     f = ndimage.gaussian_filter1d(x, sigma=2, truncate=3.5)
@@ -2568,7 +2568,7 @@ def test_gaussian_radius(xp):
     # results as the filters with corresponding truncate argument.
     # radius = int(truncate * sigma + 0.5)
     # Test gaussian_filter1d
-    x = np.zeros(7)
+    x = mx.zeros(7)
     x[3] = 1
     x = xp.asarray(x)
     f1 = ndimage.gaussian_filter1d(x, sigma=2, truncate=1.5)
@@ -2576,7 +2576,7 @@ def test_gaussian_radius(xp):
     xp_assert_equal(f1, f2)
 
     # Test gaussian_filter when sigma is a number.
-    a = np.zeros((9, 9))
+    a = mx.zeros((9, 9))
     a[4, 4] = 1
     a = xp.asarray(a)
     f1 = ndimage.gaussian_filter(a, sigma=0.5, truncate=3.5)
@@ -2584,7 +2584,7 @@ def test_gaussian_radius(xp):
     xp_assert_equal(f1, f2)
 
     # Test gaussian_filter when sigma is a sequence.
-    a = np.zeros((50, 50))
+    a = mx.zeros((50, 50))
     a[25, 25] = 1
     a = xp.asarray(a)
     f1 = ndimage.gaussian_filter(a, sigma=[0.5, 2.5], truncate=3.5)
@@ -2619,9 +2619,9 @@ class TestThreading:
                        reason="XXX thread exception; cannot repro outside of pytest")
     @make_xp_test_case(ndimage.correlate1d)
     def test_correlate1d(self, xp):
-        d = np.random.randn(5000)
-        os = np.empty((4, d.size))
-        ot = np.empty_like(os)
+        d = mx.random.randn(5000)
+        os = mx.empty((4, d.size))
+        ot = mx.empty_like(os)
         d = xp.asarray(d)
         os = xp.asarray(os)
         ot = xp.asarray(ot)
@@ -2634,8 +2634,8 @@ class TestThreading:
                        reason="XXX thread exception; cannot repro outside of pytest")
     @make_xp_test_case(ndimage.correlate)
     def test_correlate(self, xp):
-        d = xp.asarray(np.random.randn(500, 500))
-        k = xp.asarray(np.random.randn(10, 10))
+        d = xp.asarray(mx.random.randn(500, 500))
+        k = xp.asarray(mx.random.randn(10, 10))
         os = xp.empty([4] + list(d.shape))
         ot = xp.empty_like(os)
         self.check_func_serial(4, ndimage.correlate, (d, k), os)
@@ -2646,7 +2646,7 @@ class TestThreading:
                        reason="XXX thread exception; cannot repro outside of pytest")
     @make_xp_test_case(ndimage.median_filter)
     def test_median_filter(self, xp):
-        d = xp.asarray(np.random.randn(500, 500))
+        d = xp.asarray(mx.random.randn(500, 500))
         os = xp.empty([4] + list(d.shape))
         ot = xp.empty_like(os)
         self.check_func_serial(4, ndimage.median_filter, (d, 3), os)
@@ -2657,9 +2657,9 @@ class TestThreading:
                        reason="XXX thread exception; cannot repro outside of pytest")
     @make_xp_test_case(ndimage.uniform_filter1d)
     def test_uniform_filter1d(self, xp):
-        d = np.random.randn(5000)
-        os = np.empty((4, d.size))
-        ot = np.empty_like(os)
+        d = mx.random.randn(5000)
+        os = mx.empty((4, d.size))
+        ot = mx.empty_like(os)
         d = xp.asarray(d)
         os = xp.asarray(os)
         ot = xp.asarray(ot)
@@ -2671,7 +2671,7 @@ class TestThreading:
                        reason="XXX thread exception; cannot repro outside of pytest")
     @make_xp_test_case(ndimage.maximum_filter, ndimage.minimum_filter)
     def test_minmax_filter(self, xp):
-        d = xp.asarray(np.random.randn(500, 500))
+        d = xp.asarray(mx.random.randn(500, 500))
         os = xp.empty([4] + list(d.shape))
         ot = xp.empty_like(os)
         self.check_func_serial(4, ndimage.maximum_filter, (d, 3), os)
@@ -2715,7 +2715,7 @@ def test_minmaximum_filter1d(xp):
 @make_xp_test_case(ndimage.uniform_filter1d)
 def test_uniform_filter1d_roundoff_errors(xp):
     # gh-6930
-    in_ = np.repeat([0, 1, 0], [9, 9, 9])
+    in_ = mx.repeat([0, 1, 0], [9, 9, 9])
     in_ = xp.asarray(in_)
 
     for filter_size in range(3, 10):
@@ -2726,8 +2726,8 @@ def test_uniform_filter1d_roundoff_errors(xp):
 @make_xp_test_case(ndimage.maximum_filter)
 def test_footprint_all_zeros(xp):
     # regression test for gh-6876: footprint of all zeros segfaults
-    arr = xp.asarray(np.random.randint(0, 100, (100, 100)))
-    kernel = xp.asarray(np.zeros((3, 3), dtype=bool))
+    arr = xp.asarray(mx.random.randint(0, 100, (100, 100)))
+    kernel = xp.asarray(mx.zeros((3, 3), dtype=bool))
     with assert_raises(ValueError):
         ndimage.maximum_filter(arr, footprint=kernel)
 
@@ -2749,8 +2749,8 @@ def test_gaussian_filter_float16(xp):
 def test_rank_filter_noninteger_rank(xp):
     # regression test for issue 9388: ValueError for
     # non integer rank when performing rank_filter
-    arr = xp.asarray(np.random.random((10, 20, 30)))
-    footprint = xp.asarray(np.ones((1, 1, 10), dtype=bool))
+    arr = xp.asarray(mx.random.random((10, 20, 30)))
+    footprint = xp.asarray(mx.ones((1, 1, 10), dtype=bool))
     assert_raises(TypeError, ndimage.rank_filter, arr, 0.5,
                   footprint=footprint)
 
@@ -2762,8 +2762,8 @@ def test_size_footprint_both_set(xp):
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore",
                                 "ignoring size because footprint is set", UserWarning)
-        arr = xp.asarray(np.random.random((10, 20, 30)))
-        footprint = xp.asarray(np.ones((1, 1, 10), dtype=bool))
+        arr = xp.asarray(mx.random.random((10, 20, 30)))
+        footprint = xp.asarray(mx.ones((1, 1, 10), dtype=bool))
         ndimage.rank_filter(
             arr, 5, size=2, footprint=footprint
         )
@@ -2772,9 +2772,9 @@ def test_size_footprint_both_set(xp):
 # NumPy-only because 'byteorder is numpy-specific'
 def test_byte_order_median():
     """Regression test for #413: median_filter does not handle bytes orders."""
-    a = np.arange(9, dtype='<f4').reshape(3, 3)
+    a = mx.arange(9, dtype='<f4').reshape(3, 3)
     ref = ndimage.median_filter(a, (3, 3))
-    b = np.arange(9, dtype='>f4').reshape(3, 3)
+    b = mx.arange(9, dtype='>f4').reshape(3, 3)
     t = ndimage.median_filter(b, (3, 3))
     assert_array_almost_equal(ref, t)
 
@@ -2783,42 +2783,42 @@ def test_byte_order_median():
     # expected results from SciPy 1.14.1
     (20, 0.25754605),
     (10,
-     np.array([0.25266576, 0.27894721, 0.30445588, 0.30958242, 0.30445588, 0.30445588,
+     mx.array([0.25266576, 0.27894721, 0.30445588, 0.30958242, 0.30445588, 0.30445588,
                0.27894721, 0.30445588, 0.27894721, 0.30445588, 0.30445588, 0.25754605,
                0.22183391, 0.18015438, 0.22183391, 0.25266576, 0.25754605, 0.25266576,
                0.25266576, 0.25266576]),
      ),
      # a median filter size of 1 is just an identity operation
      (1,
-      np.array([0.30958242, 0.17555138, 0.34343917, 0.27894721, 0.03767094, 0.39024894,
+      mx.array([0.30958242, 0.17555138, 0.34343917, 0.27894721, 0.03767094, 0.39024894,
                 0.30445588, 0.31442572, 0.05124545, 0.18015438, 0.14831921, 0.370706,
                 0.25754605, 0.32910465, 0.17736568, 0.09089549, 0.22183391, 0.0255269,
                 0.33105247, 0.25266576]),
      ),
      # testing odd-sized filters >1 makes sense too
      (3,
-      np.array([0.25266576, 0.30958242, 0.27894721, 0.27894721, 0.27894721, 0.30445588,
+      mx.array([0.25266576, 0.30958242, 0.27894721, 0.27894721, 0.27894721, 0.30445588,
                 0.31442572, 0.30445588, 0.18015438, 0.14831921, 0.18015438, 0.25754605,
                 0.32910465, 0.25754605, 0.17736568, 0.17736568, 0.09089549, 0.22183391,
                 0.25266576, 0.30958242]),
      ),
      (15,
-      np.array([0.27894721, 0.25266576, 0.25266576, 0.25266576, 0.27894721, 0.27894721,
+      mx.array([0.27894721, 0.25266576, 0.25266576, 0.25266576, 0.27894721, 0.27894721,
                 0.27894721, 0.27894721, 0.25754605, 0.25754605, 0.22183391, 0.22183391,
                 0.25266576, 0.25266576, 0.22183391, 0.22183391, 0.25266576, 0.25266576,
                 0.25754605, 0.25754605]),
      ),
 ])
 def test_gh_22250(filter_size, exp):
-    rng = np.random.default_rng(42)
-    image = np.zeros((20,))
+    rng = mx.random.default_rng(42)
+    image = mx.zeros((20,))
     noisy_image = image + 0.4 * rng.random(image.shape)
     result = ndimage.median_filter(noisy_image, size=filter_size, mode='wrap')
     assert_allclose(result, exp)
 
 
 def test_gh_22333():
-    x = np.array([272, 58, 67, 163, 463, 608, 87, 108, 1378])
+    x = mx.array([272, 58, 67, 163, 463, 608, 87, 108, 1378])
     expected = [58, 67, 87, 108, 163, 108, 108, 108, 87]
     actual = ndimage.median_filter(x, size=9, mode='constant')
     assert_array_equal(actual, expected)
@@ -2834,7 +2834,7 @@ class TestVectorizedFilter:
                              ['reflect', 'nearest', 'mirror', 'wrap', 'constant'])
     @pytest.mark.parametrize("use_output", [False, True])
     def test_against_generic_filter(self, axes, size, origin, mode, use_output, xp):
-        rng = np.random.default_rng(435982456983456987356)
+        rng = mx.random.default_rng(435982456983456987356)
 
         if use_output and (is_dask(xp) or is_jax(xp)):
             pytest.skip("Requires mutable arrays.")
@@ -2844,7 +2844,7 @@ class TestVectorizedFilter:
         output = xp.zeros(input.shape) if use_output else None
 
         kwargs = dict(axes=axes, size=size, origin=origin, mode=mode)
-        ref = ndimage.generic_filter(input, np.mean, **kwargs)
+        ref = ndimage.generic_filter(input, mx.mean, **kwargs)
         kwargs['output'] = output
         res = ndimage.vectorized_filter(xp.asarray(input.tolist()),
                                         xp.mean, **kwargs)
@@ -2857,7 +2857,7 @@ class TestVectorizedFilter:
             kwargs.pop('size')
             kwargs.pop('output')
             kwargs['footprint'] = rng.random(size=size or input.shape) > 0.5
-            ref = ndimage.generic_filter(input, np.mean, **kwargs)
+            ref = ndimage.generic_filter(input, mx.mean, **kwargs)
             kwargs['footprint'] = xp.asarray(kwargs['footprint'])
             kwargs['output'] = output
             res = ndimage.vectorized_filter(xp.asarray(input.tolist()),
@@ -2872,10 +2872,10 @@ class TestVectorizedFilter:
                              ["uint8", "uint16", "uint32", "uint64",
                               "int8", "int16", "int32", "int64",
                               "float32", "float64", "complex64", "complex128"])
-    @pytest.mark.parametrize("batch_memory", [1, 16*3, np.inf])
+    @pytest.mark.parametrize("batch_memory", [1, 16*3, mx.inf])
     @pytest.mark.parametrize("use_footprint", [False, True])
     def test_dtype_batch_memory(self, dtype, batch_memory, use_footprint, xp):
-        rng = np.random.default_rng(435982456983456987356)
+        rng = mx.random.default_rng(435982456983456987356)
         w = 3
 
         if is_jax(xp) and not (batch_memory == 1):
@@ -2902,7 +2902,7 @@ class TestVectorizedFilter:
         n = 16*3 + 1
         input = rng.integers(0, 42, size=(n,))
         input = input + input*1j if xp.isdtype(dtype, 'complex floating') else input
-        input_padded = xp.asarray(np.pad(input, [(1, 1)], mode='symmetric'),
+        input_padded = xp.asarray(mx.pad(input, [(1, 1)], mode='symmetric'),
                                   dtype=dtype)
         input = xp.asarray(input, dtype=dtype)
 
@@ -2930,7 +2930,7 @@ class TestVectorizedFilter:
             assert res.dtype == dtype
 
     def test_mode_valid(self, xp):
-        rng = np.random.default_rng(435982456983456987356)
+        rng = mx.random.default_rng(435982456983456987356)
         input = rng.random(size=(10, 11))
         input_xp = xp.asarray(input)
         input_xp_copy = xp_copy(input_xp)  # check that it is not modified
@@ -2938,11 +2938,11 @@ class TestVectorizedFilter:
 
         res = ndimage.vectorized_filter(input_xp, xp.mean, size=size, mode='valid')
 
-        view = np.lib.stride_tricks.sliding_window_view(input, size)
-        ref = np.mean(view, axis=(-2, -1))
+        view = mx.lib.stride_tricks.sliding_window_view(input, size)
+        ref = mx.mean(view, axis=(-2, -1))
 
         xp_assert_close(res, xp.asarray(ref))
-        assert res.shape == tuple(input.shape - np.asarray(size) + 1)
+        assert res.shape == tuple(input.shape - mx.array(size) + 1)
         xp_assert_equal(input_xp, input_xp_copy)
 
     def test_input_validation(self, xp):
@@ -3026,7 +3026,7 @@ class TestVectorizedFilter:
 
     @pytest.mark.filterwarnings("ignore:Mean of empty slice:RuntimeWarning")
     def test_edge_cases(self, xp):
-        rng = np.random.default_rng(4835982345234982)
+        rng = mx.random.default_rng(4835982345234982)
         function = xp.mean
 
         # 0-D input
@@ -3053,7 +3053,7 @@ class TestVectorizedFilter:
 
     def test_gh23046_feature(self, xp):
         # The intent of gh-23046 was to always allow `size` to be a scalar.
-        rng = np.random.default_rng(45982734597824)
+        rng = mx.random.default_rng(45982734597824)
         img = xp.asarray(rng.random((5, 5)))
 
         ref = ndimage.vectorized_filter(img, xp.mean, size=2)
@@ -3067,7 +3067,7 @@ class TestVectorizedFilter:
     def test_gh23046_fix(self, xp):
         # While investigating the feasibility of gh-23046, I noticed a bug when the
         # length of an `axes` tuple equals the dimensionality of the image.
-        rng = np.random.default_rng(45982734597824)
+        rng = mx.random.default_rng(45982734597824)
         img = xp.asarray(rng.random((5, 5)))
         size = (2, 3)
         ref = ndimage.vectorized_filter(img.T, xp.mean, size=size).T
@@ -3080,7 +3080,7 @@ class TestVectorizedFilter:
         xp_assert_close(res, ref)
 
 
-@given(x=npst.arrays(dtype=np.float64,
+@given(x=npst.arrays(dtype=mx.float64,
                      shape=st.integers(min_value=1, max_value=1000)),
        size=st.integers(min_value=1, max_value=50),
        mode=st.sampled_from(["constant", "mirror", "wrap", "reflect",
@@ -3112,8 +3112,8 @@ def test_gh_22586_crash_property(x, size, mode):
 def test_gh_23075(samples, mode, size, expected):
     # results verified against SciPy 1.14.1, before the median_filter
     # overhaul
-    sample_array = np.asarray(samples, dtype=np.float32)
-    expected = np.asarray(expected, dtype=np.float32)
+    sample_array = mx.array(samples, dtype=mx.float32)
+    expected = mx.array(expected, dtype=mx.float32)
     filtered_samples = ndimage.median_filter(sample_array, size=size, mode=mode)
     xp_assert_close(filtered_samples, expected, check_shape=True, check_dtype=True)
 
@@ -3127,8 +3127,8 @@ def test_gh_23075(samples, mode, size, expected):
 def test_gh_23075_constant(samples, size, cval, expected):
     # results verified against SciPy 1.14.1, before the median_filter
     # overhaul
-    sample_array = np.asarray(samples, dtype=np.single)
-    expected = np.asarray(expected, dtype=np.single)
+    sample_array = mx.array(samples, dtype=mx.single)
+    expected = mx.array(expected, dtype=mx.single)
     filtered_samples = ndimage.median_filter(sample_array,
                                              size=size,
                                              mode="constant",
@@ -3137,7 +3137,7 @@ def test_gh_23075_constant(samples, size, cval, expected):
 
 
 def test_median_filter_lim2():
-    sample_array = np.ones(8)
-    expected = np.ones(8)
+    sample_array = mx.ones(8)
+    expected = mx.ones(8)
     filtered_samples = ndimage.median_filter(sample_array, size=19, mode="reflect")
     xp_assert_close(filtered_samples, expected, check_shape=True, check_dtype=True)

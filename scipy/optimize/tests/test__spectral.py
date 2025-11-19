@@ -1,6 +1,6 @@
 import itertools
 
-import numpy as np
+import mlx.core as mx
 from numpy import exp
 from numpy.testing import assert_, assert_equal
 
@@ -50,12 +50,12 @@ def test_performance():
             args = (n,)
             x0 = problem['x0'](n) * xscale
 
-            fatol = np.sqrt(n) * e_a * yscale + e_r * np.linalg.norm(func(x0, n))
+            fatol = mx.sqrt(n) * e_a * yscale + e_r * mx.linalg.norm(func(x0, n))
 
             sigma_eps = 1e-10 * min(yscale/xscale, xscale/yscale)
             sigma_0 = xscale/yscale
 
-            with np.errstate(over='ignore'):
+            with mx.errstate(over='ignore'):
                 sol = root(func, x0, args=args,
                            options=dict(ftol=0, fatol=fatol, maxfev=problem['nfev'] + 1,
                                         sigma_0=sigma_0, sigma_eps=sigma_eps,
@@ -63,14 +63,14 @@ def test_performance():
                            method='DF-SANE')
 
             err_msg = repr(
-                [xscale, yscale, line_search, problem, np.linalg.norm(func(sol.x, n)),
+                [xscale, yscale, line_search, problem, mx.linalg.norm(func(sol.x, n)),
                  fatol, sol.success, sol.nit, sol.nfev]
             )
             assert sol.success, err_msg
             # nfev+1: dfsane.f doesn't count first eval
             assert sol.nfev <= problem['nfev'] + 1, err_msg
             assert sol.nit <= problem['nit'], err_msg
-            assert np.linalg.norm(func(sol.x, n)) <= fatol, err_msg
+            assert mx.linalg.norm(func(sol.x, n)) <= fatol, err_msg
 
 
 def test_complex():
@@ -83,8 +83,8 @@ def test_complex():
 
     assert_(sol.success)
 
-    f0 = np.linalg.norm(func(x0))
-    fx = np.linalg.norm(func(sol.x))
+    f0 = mx.linalg.norm(func(x0))
+    fx = mx.linalg.norm(func(sol.x))
     assert_(fx <= ftol*f0)
 
 
@@ -98,23 +98,23 @@ def test_linear_definite():
     def check_solvability(A, b, line_search='cruz'):
         def func(x):
             return A.dot(x) - b
-        xp = np.linalg.solve(A, b)
-        eps = np.linalg.norm(func(xp)) * 1e3
+        xp = mx.linalg.solve(A, b)
+        eps = mx.linalg.norm(func(xp)) * 1e3
         sol = root(
             func, b,
             options=dict(fatol=eps, ftol=0, maxfev=17523, line_search=line_search),
             method='DF-SANE',
         )
         assert_(sol.success)
-        assert_(np.linalg.norm(func(sol.x)) <= eps)
+        assert_(mx.linalg.norm(func(sol.x)) <= eps)
 
     n = 90
 
     # Test linear pos.def. system
-    A = np.arange(n*n).reshape(n, n)
-    A = A + n*n * np.diag(1 + np.arange(n))
-    assert_(np.linalg.eigvals(A).min() > 0)
-    b = np.arange(n) * 1.0
+    A = mx.arange(n*n).reshape(n, n)
+    A = A + n*n * mx.diag(1 + mx.arange(n))
+    assert_(mx.linalg.eigvals(A).min() > 0)
+    b = mx.arange(n) * 1.0
     check_solvability(A, b, 'cruz')
     check_solvability(A, b, 'cheng')
 
@@ -128,8 +128,8 @@ def test_shape():
         return x - arg
 
     for dt in [float, complex]:
-        x = np.zeros([2,2])
-        arg = np.ones([2,2], dtype=dt)
+        x = mx.zeros([2,2])
+        arg = mx.ones([2,2], dtype=dt)
 
         sol = root(f, x, args=(arg,), method='DF-SANE')
         assert_(sol.success)
@@ -140,33 +140,33 @@ def test_shape():
 # [W. La Cruz, M. Raydan. Optimization Methods and Software, 18, 583 (2003)]
 
 def F_1(x, n):
-    g = np.zeros([n])
-    i = np.arange(2, n+1)
+    g = mx.zeros([n])
+    i = mx.arange(2, n+1)
     g[0] = exp(x[0] - 1) - 1
     g[1:] = i*(exp(x[1:] - 1) - x[1:])
     return g
 
 def x0_1(n):
-    x0 = np.empty([n])
+    x0 = mx.empty([n])
     x0.fill(n/(n-1))
     return x0
 
 def F_2(x, n):
-    g = np.zeros([n])
-    i = np.arange(2, n+1)
+    g = mx.zeros([n])
+    i = mx.arange(2, n+1)
     g[0] = exp(x[0]) - 1
     g[1:] = 0.1*i*(exp(x[1:]) + x[:-1] - 1)
     return g
 
 def x0_2(n):
-    x0 = np.empty([n])
+    x0 = mx.empty([n])
     x0.fill(1/n**2)
     return x0
 
 
 def F_4(x, n):  # skip name check
     assert_equal(n % 3, 0)
-    g = np.zeros([n])
+    g = mx.zeros([n])
     # Note: the first line is typoed in some of the references;
     # correct in original [Gasparo, Optimization Meth. 13, 79 (2000)]
     g[::3] = 0.6 * x[::3] + 1.6 * x[1::3]**3 - 7.2 * x[1::3]**2 + 9.6 * x[1::3] - 4.8
@@ -178,16 +178,16 @@ def F_4(x, n):  # skip name check
 
 def x0_4(n):  # skip name check
     assert_equal(n % 3, 0)
-    x0 = np.array([-1, 1/2, -1] * (n//3))
+    x0 = mx.array([-1, 1/2, -1] * (n//3))
     return x0
 
 def F_6(x, n):
     c = 0.9
-    mu = (np.arange(1, n+1) - 0.5)/n
+    mu = (mx.arange(1, n+1) - 0.5)/n
     return x - 1/(1 - c/(2*n) * (mu[:,None]*x / (mu[:,None] + mu)).sum(axis=1))
 
 def x0_6(n):
-    return np.ones([n])
+    return mx.ones([n])
 
 def F_7(x, n):
     assert_equal(n % 3, 0)
@@ -197,7 +197,7 @@ def F_7(x, n):
         v[t > -1] = ((-592*t**3 + 888*t**2 + 4551*t - 1924)/1998)[t > -1]
         v[t >= 2] = (0.5*t + 2)[t >= 2]
         return v
-    g = np.zeros([n])
+    g = mx.zeros([n])
     g[::3] = 1e4 * x[1::3]**2 - 1
     g[1::3] = exp(-x[::3]) + exp(-x[1::3]) - 1.0001
     g[2::3] = phi(x[2::3])
@@ -205,21 +205,21 @@ def F_7(x, n):
 
 def x0_7(n):
     assert_equal(n % 3, 0)
-    return np.array([1e-3, 18, 1] * (n//3))
+    return mx.array([1e-3, 18, 1] * (n//3))
 
 def F_9(x, n):
-    g = np.zeros([n])
-    i = np.arange(2, n)
+    g = mx.zeros([n])
+    i = mx.arange(2, n)
     g[0] = x[0]**3/3 + x[1]**2/2
     g[1:-1] = -x[1:-1]**2/2 + i*x[1:-1]**3/3 + x[2:]**2/2
     g[-1] = -x[-1]**2/2 + n*x[-1]**3/3
     return g
 
 def x0_9(n):
-    return np.ones([n])
+    return mx.ones([n])
 
 def F_10(x, n):
-    return np.log(1 + x) - x/n
+    return mx.log(1 + x) - x/n
 
 def x0_10(n):
-    return np.ones([n])
+    return mx.ones([n])

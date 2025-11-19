@@ -17,7 +17,7 @@
 #endif
 
 #include "SuperLU/SRC/slu_zdefs.h"
-#include "numpy/ndarrayobject.h"
+#include "numpy/arrayobject.h"
 #include "SuperLU/SRC/slu_util.h"
 #include "SuperLU/SRC/slu_dcomplex.h"
 #include "SuperLU/SRC/slu_scomplex.h"

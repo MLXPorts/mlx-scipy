@@ -1,6 +1,6 @@
 """ Testing data types for ndimage calls
 """
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._array_api import assert_array_almost_equal
 import pytest
@@ -10,23 +10,23 @@ from scipy import ndimage
 
 def test_map_coordinates_dts():
     # check that ndimage accepts different data types for interpolation
-    data = np.array([[4, 1, 3, 2],
+    data = mx.array([[4, 1, 3, 2],
                      [7, 6, 8, 5],
                      [3, 5, 3, 6]])
-    shifted_data = np.array([[0, 0, 0, 0],
+    shifted_data = mx.array([[0, 0, 0, 0],
                              [0, 4, 1, 3],
                              [0, 7, 6, 8]])
-    idx = np.indices(data.shape)
-    dts = (np.uint8, np.uint16, np.uint32, np.uint64,
-           np.int8, np.int16, np.int32, np.int64,
-           np.intp, np.uintp, np.float32, np.float64)
+    idx = mx.indices(data.shape)
+    dts = (mx.uint8, mx.uint16, mx.uint32, mx.uint64,
+           mx.int8, mx.int16, mx.int32, mx.int64,
+           mx.intp, mx.uintp, mx.float32, mx.float64)
     for order in range(0, 6):
         for data_dt in dts:
             these_data = data.astype(data_dt)
             for coord_dt in dts:
                 # affine mapping
-                mat = np.eye(2, dtype=coord_dt)
-                off = np.zeros((2,), dtype=coord_dt)
+                mat = mx.eye(2, dtype=coord_dt)
+                off = mx.zeros((2,), dtype=coord_dt)
                 out = ndimage.affine_transform(these_data, mat, off)
                 assert_array_almost_equal(these_data, out)
                 # map coordinates
@@ -36,7 +36,7 @@ def test_map_coordinates_dts():
                 assert_array_almost_equal(out, shifted_data)
                 # check constant fill works
                 out = ndimage.map_coordinates(these_data, coords_p10, order=order)
-                assert_array_almost_equal(out, np.zeros((3,4)))
+                assert_array_almost_equal(out, mx.zeros((3,4)))
             # check shift and zoom
             out = ndimage.shift(these_data, 1)
             assert_array_almost_equal(out, shifted_data)
@@ -55,9 +55,9 @@ def test_uint64_max():
     # This test was last enabled on macOS only, and there it started failing
     # on arm64 as well (see gh-19117).
     big = 2**64 - 1025
-    arr = np.array([big, big, big], dtype=np.uint64)
+    arr = mx.array([big, big, big], dtype=mx.uint64)
     # Tests geometric transform (map_coordinates, affine_transform)
-    inds = np.indices(arr.shape) - 0.1
+    inds = mx.indices(arr.shape) - 0.1
     x = ndimage.map_coordinates(arr, inds)
     assert x[1] == int(float(big))
     assert x[2] == int(float(big))

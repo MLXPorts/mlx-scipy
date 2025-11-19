@@ -8,7 +8,7 @@ float32 preserving signatures must now be tested since it is no
 longer guaranteed.
 """
 
-import numpy as np
+import mlx.core as mx
 import pytest
 import scipy.special._ufuncs
 import scipy.special._gufuncs
@@ -20,7 +20,7 @@ for funcname in dir(scipy.special._gufuncs):
     _ufuncs.append(getattr(scipy.special._gufuncs, funcname))
 
 # Not all module members are actually ufuncs
-_ufuncs = [func for func in _ufuncs if isinstance(func, np.ufunc)]
+_ufuncs = [func for func in _ufuncs if isinstance(func, mx.ufunc)]
 
 @pytest.mark.parametrize("ufunc", _ufuncs)
 def test_ufunc_signatures(ufunc):

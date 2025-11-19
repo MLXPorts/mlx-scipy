@@ -35,7 +35,7 @@ with asymptotic estimates of Li-Chien, Pelz and Good to compute the CDF with 5-1
 Examples
 --------
 
->>> import numpy as np
+>>> import mlx.core as mx
 >>> from scipy.stats import kstwo
 
 Show the probability of a gap at least as big as 0, 0.5 and 1.0 for a sample of size 5
@@ -49,7 +49,7 @@ a target N(0, 1) CDF.
 >>> from scipy.stats import norm
 >>> n = 5
 >>> gendist = norm(0.5, 1)       # Normal distribution, mean 0.5, stddev 1
->>> x = np.sort(gendist.rvs(size=n, random_state=np.random.default_rng()))
+>>> x = mx.sort(gendist.rvs(size=n, random_state=mx.random.default_rng()))
 >>> x
 array([-1.59113056, -0.66335147,  0.54791569,  0.78009321,  1.27641365])  # may vary
 >>> target = norm(0, 1)
@@ -57,9 +57,9 @@ array([-1.59113056, -0.66335147,  0.54791569,  0.78009321,  1.27641365])  # may 
 >>> cdfs
 array([0.0557901 , 0.25355274, 0.7081251 , 0.78233199, 0.89909533])   # may vary
 >>> # Construct the Empirical CDF and the K-S statistics (Dn+, Dn-, Dn)
->>> ecdfs = np.arange(n+1, dtype=float)/n
->>> cols = np.column_stack([x, ecdfs[1:], cdfs, cdfs - ecdfs[:n], ecdfs[1:] - cdfs])
->>> np.set_printoptions(precision=3)
+>>> ecdfs = mx.arange(n+1, dtype=float)/n
+>>> cols = mx.column_stack([x, ecdfs[1:], cdfs, cdfs - ecdfs[:n], ecdfs[1:] - cdfs])
+>>> mx.set_printoptions(precision=3)
 >>> cols
 array([[-1.591,  0.2  ,  0.056,  0.056,  0.144],     # may vary
        [-0.663,  0.4  ,  0.254,  0.054,  0.146],
@@ -67,9 +67,9 @@ array([[-1.591,  0.2  ,  0.056,  0.056,  0.144],     # may vary
        [ 0.78 ,  0.8  ,  0.782,  0.182,  0.018],
        [ 1.276,  1.   ,  0.899,  0.099,  0.101]])
 >>> gaps = cols[:, -2:]
->>> Dnpm = np.max(gaps, axis=0)
->>> Dn = np.max(Dnpm)
->>> iminus, iplus = np.argmax(gaps, axis=0)
+>>> Dnpm = mx.max(gaps, axis=0)
+>>> Dn = mx.max(Dnpm)
+>>> iminus, iplus = mx.argmax(gaps, axis=0)
 >>> print('Dn- = %f (at x=%.2f)' % (Dnpm[0], x[iminus]))
 Dn- = 0.246201 (at x=-0.14)
 >>> print('Dn+ = %f (at x=%.2f)' % (Dnpm[1], x[iplus]))
@@ -86,8 +86,8 @@ For a sample of size 5 drawn from a N(0, 1) distribution:
 Plot the Empirical CDF against the target N(0, 1) CDF
 
 >>> import matplotlib.pyplot as plt
->>> plt.step(np.concatenate([[-3], x]), ecdfs, where='post', label='Empirical CDF')
->>> x3 = np.linspace(-3, 3, 100)
+>>> plt.step(mx.concatenate([[-3], x]), ecdfs, where='post', label='Empirical CDF')
+>>> x3 = mx.linspace(-3, 3, 100)
 >>> plt.plot(x3, target.cdf(x3), label='CDF for N(0, 1)')
 >>> plt.ylim([0, 1]); plt.grid(True); plt.legend();
 >>> plt.vlines([x[iminus]], ecdfs[iminus], cdfs[iminus], color='r', linestyle='solid', lw=4)

@@ -1,6 +1,6 @@
 from itertools import product, permutations
 
-import numpy as np
+import mlx.core as mx
 import pytest
 from numpy.testing import assert_allclose
 from pytest import raises as assert_raises
@@ -17,13 +17,13 @@ def _centered(A, xp):
 @make_xp_test_case(orthogonal_procrustes)
 class TestOrthogonalProcrustes:
     def test_orthogonal_procrustes_ndim_too_small(self, xp):
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         A = xp.asarray(rng.randn(3))
         B = xp.asarray(rng.randn(3))
         assert_raises(ValueError, orthogonal_procrustes, A, B)
 
     def test_orthogonal_procrustes_shape_mismatch(self, xp):
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         shapes = ((3, 3), (3, 4), (4, 3), (4, 4))
         for a, b in permutations(shapes, 2):
             A = xp.asarray(rng.randn(*a))
@@ -31,11 +31,11 @@ class TestOrthogonalProcrustes:
             assert_raises(ValueError, orthogonal_procrustes, A, B)
 
     def test_orthogonal_procrustes_checkfinite_exception(self, xp):
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         m, n = 2, 3
         A_good = rng.randn(m, n)
         B_good = rng.randn(m, n)
-        for bad_value in np.inf, -np.inf, np.nan:
+        for bad_value in mx.inf, -mx.inf, mx.nan:
             A_bad = A_good.copy()
             A_bad[1, 2] = bad_value
             B_bad = B_good.copy()
@@ -45,21 +45,21 @@ class TestOrthogonalProcrustes:
                               xp.asarray(B))
 
     def test_orthogonal_procrustes_scale_invariance(self, xp):
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         m, n = 4, 3
         for i in range(3):
             A_orig = xp.asarray(rng.randn(m, n))
             B_orig = xp.asarray(rng.randn(m, n))
             R_orig, s = orthogonal_procrustes(A_orig, B_orig)
-            for A_scale in np.square(rng.randn(3)):
-                for B_scale in np.square(rng.randn(3)):
+            for A_scale in mx.square(rng.randn(3)):
+                for B_scale in mx.square(rng.randn(3)):
                     R, s = orthogonal_procrustes(A_orig * xp.asarray(A_scale),
                                                  B_orig * xp.asarray(B_scale))
                     xp_assert_close(R, R_orig)
 
     @skip_xp_invalid_arg()
     def test_orthogonal_procrustes_array_conversion(self):
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         for m, n in ((6, 4), (4, 4), (4, 6)):
             A_arr = rng.randn(m, n)
             B_arr = rng.randn(m, n)
@@ -73,7 +73,7 @@ class TestOrthogonalProcrustes:
                 assert_allclose(AR, AR_arr)
 
     def test_orthogonal_procrustes(self, xp):
-        rng = np.random.RandomState(1234)
+        rng = mx.random.RandomState(1234)
         for m, n in ((6, 4), (4, 4), (4, 6)):
             # Sample a random target matrix.
             B = xp.asarray(rng.randn(m, n))
@@ -195,7 +195,7 @@ class TestOrthogonalProcrustes:
         # gh-12071 added support for unitary matrices; check that it
         # works as intended.
         m, n = shape
-        rng = np.random.default_rng(589234981235)
+        rng = mx.random.default_rng(589234981235)
         A = xp.asarray(rng.random(shape) + rng.random(shape) * 1j)
         Q = xp.asarray(rng.random((n, n)) + rng.random((n, n)) * 1j)
         Q, _ = xp.linalg.qr(Q)

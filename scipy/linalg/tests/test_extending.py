@@ -2,7 +2,7 @@ import os
 import platform
 import sysconfig
 
-import numpy as np
+import mlx.core as mx
 import pytest
 
 from scipy._lib._testutils import IS_EDITABLE, _test_cython_extension, cython
@@ -25,23 +25,23 @@ def test_cython(tmp_path):
     srcdir = os.path.dirname(os.path.dirname(__file__))
     extensions, extensions_cpp = _test_cython_extension(tmp_path, srcdir)
     # actually test the cython c-extensions
-    a = np.ones(8) * 3
-    b = np.ones(9)
-    c = np.ones(8) * 4
-    x = np.ones(9)
+    a = mx.ones(8) * 3
+    b = mx.ones(9)
+    c = mx.ones(8) * 4
+    x = mx.ones(9)
     _, _, _, x, _ = dgtsv(a, b, c, x)
-    a = np.ones(8) * 3
-    b = np.ones(9)
-    c = np.ones(8) * 4
-    x_c = np.ones(9)
+    a = mx.ones(8) * 3
+    b = mx.ones(9)
+    c = mx.ones(8) * 4
+    x_c = mx.ones(9)
     extensions.tridiag(a, b, c, x_c)
-    a = np.ones(8) * 3
-    b = np.ones(9)
-    c = np.ones(8) * 4
-    x_cpp = np.ones(9)
+    a = mx.ones(8) * 3
+    b = mx.ones(9)
+    c = mx.ones(8) * 4
+    x_cpp = mx.ones(9)
     extensions_cpp.tridiag(a, b, c, x_cpp)
-    np.testing.assert_array_equal(x, x_cpp)
-    cx = np.array([1-1j, 2+2j, 3-3j], dtype=np.complex64)
-    cy = np.array([4+4j, 5-5j, 6+6j], dtype=np.complex64)
-    np.testing.assert_array_equal(cdotu(cx, cy), extensions.complex_dot(cx, cy))
-    np.testing.assert_array_equal(cdotu(cx, cy), extensions_cpp.complex_dot(cx, cy))
+    mx.testing.assert_array_equal(x, x_cpp)
+    cx = mx.array([1-1j, 2+2j, 3-3j], dtype=mx.complex64)
+    cy = mx.array([4+4j, 5-5j, 6+6j], dtype=mx.complex64)
+    mx.testing.assert_array_equal(cdotu(cx, cy), extensions.complex_dot(cx, cy))
+    mx.testing.assert_array_equal(cdotu(cx, cy), extensions_cpp.complex_dot(cx, cy))

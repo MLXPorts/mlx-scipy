@@ -132,9 +132,9 @@ struct DzrorState
 };
 
 static const double spmpar[3] = {
-    2.220446049250313e-16,                /* np.finfo(np.float64).eps    */
-    2.2250738585072014e-308,              /* np.finfo(np.float64).tiny   */
-    1.7976931348623157e+308,              /* np.finfo(np.float64).max    */
+    2.220446049250313e-16,                /* mx.finfo(mx.float64).eps    */
+    2.2250738585072014e-308,              /* mx.finfo(mx.float64).tiny   */
+    1.7976931348623157e+308,              /* mx.finfo(mx.float64).max    */
 };
 
 static double algdiv(double, double);
@@ -4495,7 +4495,7 @@ double erfc1(int ind, double x)
 
     if (x <= -5.6) { return (ind == 0 ? 2.0 : (2*exp(x*x))); }
 
-    // sqrt(log(np.finfo(np.float64).max)) ~= 26.64
+    // sqrt(log(mx.finfo(mx.float64).max)) ~= 26.64
     if ((ind == 0) && (x > 26.64))  { return 0.0; }
 
     ax = fabs(x);

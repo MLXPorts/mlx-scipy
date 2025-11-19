@@ -7,7 +7,7 @@ import builtins
 
 from math import pi
 
-import numpy as np
+import mlx.core as mx
 from numpy.polynomial.polynomial import polyval as npp_polyval
 
 from scipy import special, optimize, fft as sp_fft
@@ -21,7 +21,7 @@ import scipy._lib.array_api_extra as xpx
 from scipy._lib._array_api import (
     array_namespace, xp_promote, xp_size, xp_default_dtype, is_jax, xp_float_to_complex,
 )
-from scipy._lib.array_api_compat import numpy as np_compat
+from scipy._lib.array_api_compat import mlx.core as mx_compat
 
 
 __all__ = ['findfreqs', 'freqs', 'freqz', 'tf2zpk', 'zpk2tf', 'normalize',
@@ -41,7 +41,7 @@ class BadCoefficients(UserWarning):
     pass
 
 
-abs = np.absolute
+abs = mx.absolute
 
 
 def _is_int_type(x):
@@ -49,8 +49,8 @@ def _is_int_type(x):
     Check if input is of a scalar integer type (so ``5`` and ``array(5)`` will
     pass, while ``5.0`` and ``array([5])`` will fail.
     """
-    if np.ndim(x) != 0:
-        # Older versions of NumPy did not raise for np.array([1]).__index__()
+    if mx.ndim(x) != 0:
+        # Older versions of NumPy did not raise for mx.array([1]).__index__()
         # This is safe to remove when support for those versions is dropped
         return False
     try:
@@ -116,7 +116,7 @@ def findfreqs(num, den, N, kind='ba'):
 
     Returns
     -------
-    w : (N,) ndarray
+    w : (N,) array
         A 1-D array of frequencies, logarithmically spaced.
 
     Examples
@@ -200,9 +200,9 @@ def freqs(b, a, worN=200, plot=None):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The angular frequencies at which `h` was computed.
-    h : ndarray
+    h : array
         The frequency response.
 
     See Also
@@ -218,14 +218,14 @@ def freqs(b, a, worN=200, plot=None):
     Examples
     --------
     >>> from scipy.signal import freqs, iirfilter
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     >>> b, a = iirfilter(4, [1, 10], 1, 60, analog=True, ftype='cheby1')
 
-    >>> w, h = freqs(b, a, worN=np.logspace(-1, 2, 1000))
+    >>> w, h = freqs(b, a, worN=mx.logspace(-1, 2, 1000))
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.semilogx(w, 20 * np.log10(abs(h)))
+    >>> plt.semilogx(w, 20 * mx.log10(abs(h)))
     >>> plt.xlabel('Frequency [rad/s]')
     >>> plt.ylabel('Amplitude response [dB]')
     >>> plt.grid(True)
@@ -277,9 +277,9 @@ def freqs_zpk(z, p, k, worN=200):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The angular frequencies at which `h` was computed.
-    h : ndarray
+    h : array
         The frequency response.
 
     See Also
@@ -294,16 +294,16 @@ def freqs_zpk(z, p, k, worN=200):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import freqs_zpk, iirfilter
 
     >>> z, p, k = iirfilter(4, [1, 10], 1, 60, analog=True, ftype='cheby1',
     ...                     output='zpk')
 
-    >>> w, h = freqs_zpk(z, p, k, worN=np.logspace(-1, 2, 1000))
+    >>> w, h = freqs_zpk(z, p, k, worN=mx.logspace(-1, 2, 1000))
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.semilogx(w, 20 * np.log10(abs(h)))
+    >>> plt.semilogx(w, 20 * mx.log10(abs(h)))
     >>> plt.xlabel('Frequency [rad/s]')
     >>> plt.ylabel('Amplitude response [dB]')
     >>> plt.grid(True)
@@ -365,7 +365,7 @@ def freqz(b, a=1, worN=512, whole=False, plot=None, fs=2*pi,
         If a single integer, then compute at that many frequencies (default is
         N=512). This is a convenient alternative to::
 
-            np.linspace(0, fs if whole else fs/2, N, endpoint=include_nyquist)
+            mx.linspace(0, fs if whole else fs/2, N, endpoint=include_nyquist)
 
         Using a number that is fast for FFT computations can result in
         faster computations (see Notes).
@@ -394,10 +394,10 @@ def freqz(b, a=1, worN=512, whole=False, plot=None, fs=2*pi,
 
     Returns
     -------
-    w : ndarray
+    w : array
         The frequencies at which `h` was computed, in the same units as `fs`.
         By default, `w` is normalized to the range [0, pi) (radians/sample).
-    h : ndarray
+    h : array
         The frequency response, as complex numbers.
 
     See Also
@@ -410,7 +410,7 @@ def freqz(b, a=1, worN=512, whole=False, plot=None, fs=2*pi,
     Using Matplotlib's :func:`matplotlib.pyplot.plot` function as the callable
     for `plot` produces unexpected results, as this plots the real part of the
     complex transfer function, not the magnitude.
-    Try ``lambda w, h: plot(w, np.abs(h))``.
+    Try ``lambda w, h: plot(w, mx.abs(h))``.
 
     A direct computation via (R)FFT is used to compute the frequency response
     when the following conditions are met:
@@ -429,9 +429,9 @@ def freqz(b, a=1, worN=512, whole=False, plot=None, fs=2*pi,
     Examples
     --------
     >>> from scipy import signal
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> taps, f_c = 80, 1.0  # number of taps and cut-off frequency
-    >>> b = signal.firwin(taps, f_c, window=('kaiser', 8), fs=2*np.pi)
+    >>> b = signal.firwin(taps, f_c, window=('kaiser', 8), fs=2*mx.pi)
     >>> w, h = signal.freqz(b)
 
     >>> import matplotlib.pyplot as plt
@@ -439,12 +439,12 @@ def freqz(b, a=1, worN=512, whole=False, plot=None, fs=2*pi,
     >>> ax1.set_title(f"Frequency Response of {taps} tap FIR Filter" +
     ...               f"($f_c={f_c}$ rad/sample)")
     >>> ax1.axvline(f_c, color='black', linestyle=':', linewidth=0.8)
-    >>> ax1.plot(w, 20 * np.log10(abs(h)), 'C0')
+    >>> ax1.plot(w, 20 * mx.log10(abs(h)), 'C0')
     >>> ax1.set_ylabel("Amplitude in dB", color='C0')
-    >>> ax1.set(xlabel="Frequency in rad/sample", xlim=(0, np.pi))
+    >>> ax1.set(xlabel="Frequency in rad/sample", xlim=(0, mx.pi))
 
     >>> ax2 = ax1.twinx()
-    >>> phase = np.unwrap(np.angle(h))
+    >>> phase = mx.unwrap(mx.angle(h))
     >>> ax2.plot(w, phase, 'C1')
     >>> ax2.set_ylabel('Phase [rad]', color='C1')
     >>> ax2.grid(True)
@@ -457,17 +457,17 @@ def freqz(b, a=1, worN=512, whole=False, plot=None, fs=2*pi,
     rows of an array with shape (2, 25). For this demonstration, we'll
     use random data:
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> b = rng.random((2, 25))
 
     To compute the frequency response for these two filters with one call
     to `freqz`, we must pass in ``b.T``, because `freqz` expects the first
     axis to hold the coefficients. We must then extend the shape with a
     trivial dimension of length 1 to allow broadcasting with the array
-    of frequencies.  That is, we pass in ``b.T[..., np.newaxis]``, which has
+    of frequencies.  That is, we pass in ``b.T[..., mx.newaxis]``, which has
     shape (25, 2, 1):
 
-    >>> w, h = signal.freqz(b.T[..., np.newaxis], worN=1024)
+    >>> w, h = signal.freqz(b.T[..., mx.newaxis], worN=1024)
     >>> w.shape
     (1024,)
     >>> h.shape
@@ -480,14 +480,14 @@ def freqz(b, a=1, worN=512, whole=False, plot=None, fs=2*pi,
         a = [   1      1  ]
             [ -0.25, -0.5 ]
 
-    >>> b = np.array([0.5, 0.5])
-    >>> a = np.array([[1, 1], [-0.25, -0.5]])
+    >>> b = mx.array([0.5, 0.5])
+    >>> a = mx.array([[1, 1], [-0.25, -0.5]])
 
     Only `a` is more than 1-D. To make it compatible for
     broadcasting with the frequencies, we extend it with a trivial dimension
     in the call to `freqz`:
 
-    >>> w, h = signal.freqz(b, a[..., np.newaxis], worN=1024)
+    >>> w, h = signal.freqz(b, a[..., mx.newaxis], worN=1024)
     >>> w.shape
     (1024,)
     >>> h.shape
@@ -611,10 +611,10 @@ def freqz_zpk(z, p, k, worN=512, whole=False, fs=2*pi):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The frequencies at which `h` was computed, in the same units as `fs`.
         By default, `w` is normalized to the range [0, pi) (radians/sample).
-    h : ndarray
+    h : array
         The frequency response, as complex numbers.
 
     See Also
@@ -632,7 +632,7 @@ def freqz_zpk(z, p, k, worN=512, whole=False, fs=2*pi):
     Design a 4th-order digital Butterworth filter with cut-off of 100 Hz in a
     system with sample rate of 1000 Hz, and plot the frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> z, p, k = signal.butter(4, 100, output='zpk', fs=1000)
     >>> w, h = signal.freqz_zpk(z, p, k, fs=1000)
@@ -642,13 +642,13 @@ def freqz_zpk(z, p, k, worN=512, whole=False, fs=2*pi):
     >>> ax1 = fig.add_subplot(1, 1, 1)
     >>> ax1.set_title('Digital filter frequency response')
 
-    >>> ax1.plot(w, 20 * np.log10(abs(h)), 'b')
+    >>> ax1.plot(w, 20 * mx.log10(abs(h)), 'b')
     >>> ax1.set_ylabel('Amplitude [dB]', color='b')
     >>> ax1.set_xlabel('Frequency [Hz]')
     >>> ax1.grid(True)
 
     >>> ax2 = ax1.twinx()
-    >>> phase = np.unwrap(np.angle(h))
+    >>> phase = mx.unwrap(mx.angle(h))
     >>> ax2.plot(w, phase, 'g')
     >>> ax2.set_ylabel('Phase [rad]', color='g')
 
@@ -725,11 +725,11 @@ def group_delay(system, w=512, whole=False, fs=2*pi):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The frequencies at which group delay was computed, in the same units
         as `fs`.  By default, `w` is normalized to the range [0, pi)
         (radians/sample).
-    gd : ndarray
+    gd : array
         The group delay.
 
     See Also
@@ -773,7 +773,7 @@ def group_delay(system, w=512, whole=False, fs=2*pi):
 
     """
     xp = array_namespace(*system, w)
-    b, a = map(np.atleast_1d, system)
+    b, a = map(mx.atleast_1d, system)
 
     if w is None:
         # For backwards compatibility
@@ -783,23 +783,23 @@ def group_delay(system, w=512, whole=False, fs=2*pi):
 
     if _is_int_type(w):
         if whole:
-            w = np.linspace(0, 2 * pi, w, endpoint=False)
+            w = mx.linspace(0, 2 * pi, w, endpoint=False)
         else:
-            w = np.linspace(0, pi, w, endpoint=False)
+            w = mx.linspace(0, pi, w, endpoint=False)
     else:
-        w = np.atleast_1d(w)
+        w = mx.atleast_1d(w)
         w = 2*pi*w/fs
 
-    c = np.convolve(b, np.conjugate(a[::-1]))
-    cr = c * np.arange(c.size)
-    z = np.exp(-1j * w)
-    num = np.polyval(cr[::-1], z)
-    den = np.polyval(c[::-1], z)
-    gd = np.real(num / den) - a.size + 1
-    singular = ~np.isfinite(gd)
-    near_singular = np.absolute(den) < 10 * EPSILON
+    c = mx.convolve(b, mx.conjugate(a[::-1]))
+    cr = c * mx.arange(c.size)
+    z = mx.exp(-1j * w)
+    num = mx.polyval(cr[::-1], z)
+    den = mx.polyval(c[::-1], z)
+    gd = mx.real(num / den) - a.size + 1
+    singular = ~mx.isfinite(gd)
+    near_singular = mx.absolute(den) < 10 * EPSILON
 
-    if np.any(singular):
+    if mx.any(singular):
         gd[singular] = 0
         warnings.warn(
             "The group delay is singular at frequencies "
@@ -807,7 +807,7 @@ def group_delay(system, w=512, whole=False, fs=2*pi):
             stacklevel=2
         )
 
-    elif np.any(near_singular):
+    elif mx.any(near_singular):
         warnings.warn(
             "The filter's denominator is extremely small at frequencies "
             f"[{', '.join(f'{ws:.3f}' for ws in w[near_singular])}], "
@@ -878,10 +878,10 @@ def freqz_sos(sos, worN=512, whole=False, fs=2*pi):
 
     Returns
     -------
-    w : ndarray
+    w : array
         The frequencies at which `h` was computed, in the same units as `fs`.
         By default, `w` is normalized to the range [0, pi) (radians/sample).
-    h : ndarray
+    h : array
         The frequency response, as complex numbers.
 
     See Also
@@ -899,7 +899,7 @@ def freqz_sos(sos, worN=512, whole=False, fs=2*pi):
     Design a 15th-order bandpass filter in SOS format.
 
     >>> from scipy import signal
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> sos = signal.ellip(15, 0.5, 60, (0.2, 0.4), btype='bandpass',
     ...                    output='sos')
 
@@ -911,17 +911,17 @@ def freqz_sos(sos, worN=512, whole=False, fs=2*pi):
 
     >>> import matplotlib.pyplot as plt
     >>> plt.subplot(2, 1, 1)
-    >>> db = 20*np.log10(np.maximum(np.abs(h), 1e-5))
-    >>> plt.plot(w/np.pi, db)
+    >>> db = 20*mx.log10(mx.maximum(mx.abs(h), 1e-5))
+    >>> plt.plot(w/mx.pi, db)
     >>> plt.ylim(-75, 5)
     >>> plt.grid(True)
     >>> plt.yticks([0, -20, -40, -60])
     >>> plt.ylabel('Gain [dB]')
     >>> plt.title('Frequency Response')
     >>> plt.subplot(2, 1, 2)
-    >>> plt.plot(w/np.pi, np.angle(h))
+    >>> plt.plot(w/mx.pi, mx.angle(h))
     >>> plt.grid(True)
-    >>> plt.yticks([-np.pi, -0.5*np.pi, 0, 0.5*np.pi, np.pi],
+    >>> plt.yticks([-mx.pi, -0.5*mx.pi, 0, 0.5*mx.pi, mx.pi],
     ...            [r'$-\pi$', r'$-\pi/2$', '0', r'$\pi/2$', r'$\pi$'])
     >>> plt.ylabel('Phase [rad]')
     >>> plt.xlabel('Normalized frequency (1.0 = Nyquist)')
@@ -934,17 +934,17 @@ def freqz_sos(sos, worN=512, whole=False, fs=2*pi):
     ...                    output='ba')
     >>> w, h = signal.freqz(b, a, worN=1500)
     >>> plt.subplot(2, 1, 1)
-    >>> db = 20*np.log10(np.maximum(np.abs(h), 1e-5))
-    >>> plt.plot(w/np.pi, db)
+    >>> db = 20*mx.log10(mx.maximum(mx.abs(h), 1e-5))
+    >>> plt.plot(w/mx.pi, db)
     >>> plt.ylim(-75, 5)
     >>> plt.grid(True)
     >>> plt.yticks([0, -20, -40, -60])
     >>> plt.ylabel('Gain [dB]')
     >>> plt.title('Frequency Response')
     >>> plt.subplot(2, 1, 2)
-    >>> plt.plot(w/np.pi, np.angle(h))
+    >>> plt.plot(w/mx.pi, mx.angle(h))
     >>> plt.grid(True)
-    >>> plt.yticks([-np.pi, -0.5*np.pi, 0, 0.5*np.pi, np.pi],
+    >>> plt.yticks([-mx.pi, -0.5*mx.pi, 0, 0.5*mx.pi, mx.pi],
     ...            [r'$-\pi$', r'$-\pi/2$', '0', r'$\pi/2$', r'$\pi$'])
     >>> plt.ylabel('Phase [rad]')
     >>> plt.xlabel('Normalized frequency (1.0 = Nyquist)')
@@ -1001,12 +1001,12 @@ def _cplxreal(z, tol=None):
 
     Returns
     -------
-    zc : ndarray
+    zc : array
         Complex elements of `z`, with each pair represented by a single value
         having positive imaginary part, sorted first by real part, and then
         by magnitude of imaginary part. The pairs are averaged when combined
         to reduce error.
-    zr : ndarray
+    zr : array
         Real elements of `z` (those having imaginary part less than
         `tol` times their magnitude), sorted by value.
 
@@ -1031,7 +1031,7 @@ def _cplxreal(z, tol=None):
     [ 1.  3.  4.]
     """
 
-    z = np.atleast_1d(z)
+    z = mx.atleast_1d(z)
     if z.size == 0:
         return z, z
     elif z.ndim != 1:
@@ -1039,10 +1039,10 @@ def _cplxreal(z, tol=None):
 
     if tol is None:
         # Get tolerance from dtype of input
-        tol = 100 * np.finfo((1.0 * z).dtype).eps
+        tol = 100 * mx.finfo((1.0 * z).dtype).eps
 
     # Sort by real part, magnitude of imaginary part (speed up further sorting)
-    z = z[np.lexsort((abs(z.imag), z.real))]
+    z = z[mx.lexsort((abs(z.imag), z.real))]
 
     # Split reals from conjugate pairs
     real_indices = abs(z.imag) <= tol * abs(z)
@@ -1050,7 +1050,7 @@ def _cplxreal(z, tol=None):
 
     if len(zr) == len(z):
         # Input is entirely real
-        return np.array([]), zr
+        return mx.array([]), zr
 
     # Split positive and negative halves of conjugates
     z = z[~real_indices]
@@ -1062,17 +1062,17 @@ def _cplxreal(z, tol=None):
                          'conjugate.')
 
     # Find runs of (approximately) the same real part
-    same_real = np.diff(zp.real) <= tol * abs(zp[:-1])
-    diffs = np.diff(np.concatenate(([0], same_real, [0])))
-    run_starts = np.nonzero(diffs > 0)[0]
-    run_stops = np.nonzero(diffs < 0)[0]
+    same_real = mx.diff(zp.real) <= tol * abs(zp[:-1])
+    diffs = mx.diff(mx.concatenate(([0], same_real, [0])))
+    run_starts = mx.nonzero(diffs > 0)[0]
+    run_stops = mx.nonzero(diffs < 0)[0]
 
     # Sort each run by their imaginary parts
     for i in range(len(run_starts)):
         start = run_starts[i]
         stop = run_stops[i] + 1
         for chunk in (zp[start:stop], zn[start:stop]):
-            chunk[...] = chunk[np.lexsort([abs(chunk.imag)])]
+            chunk[...] = chunk[mx.lexsort([abs(chunk.imag)])]
 
     # Check that negatives match positives
     if any(abs(zp - zn.conj()) > tol * abs(zn)):
@@ -1115,7 +1115,7 @@ def _cplxpair(z, tol=None):
 
     Returns
     -------
-    y : ndarray
+    y : array
         Complex conjugate pairs followed by real numbers.
 
     Raises
@@ -1138,9 +1138,9 @@ def _cplxpair(z, tol=None):
       3.+0.j  4.+0.j]
     """
 
-    z = np.atleast_1d(z)
-    if z.size == 0 or np.isrealobj(z):
-        return np.sort(z)
+    z = mx.atleast_1d(z)
+    if z.size == 0 or mx.isrealobj(z):
+        return mx.sort(z)
 
     if z.ndim != 1:
         raise ValueError('z must be 1-D')
@@ -1149,8 +1149,8 @@ def _cplxpair(z, tol=None):
 
     # Interleave complex values and their conjugates, with negative imaginary
     # parts first in each pair
-    zc = np.dstack((zc.conj(), zc)).flatten()
-    z = np.append(zc, zr)
+    zc = mx.dstack((zc.conj(), zc)).flatten()
+    z = mx.append(zc, zr)
     return z
 
 
@@ -1167,9 +1167,9 @@ def tf2zpk(b, a):
 
     Returns
     -------
-    z : ndarray
+    z : array
         Zeros of the transfer function.
-    p : ndarray
+    p : array
         Poles of the transfer function.
     k : float
         System gain.
@@ -1256,9 +1256,9 @@ def zpk2tf(z, p, k):
 
     Returns
     -------
-    b : ndarray
+    b : array
         Numerator polynomial coefficients.
-    a : ndarray
+    a : array
         Denominator polynomial coefficients.
 
     Examples
@@ -1325,7 +1325,7 @@ def tf2sos(b, a, pairing=None, *, analog=False):
 
     Returns
     -------
-    sos : ndarray
+    sos : array
         Array of second-order filter coefficients, with shape
         ``(n_sections, 6)``. See `sosfilt` for the SOS filter format
         specification.
@@ -1374,9 +1374,9 @@ def sos2tf(sos):
 
     Returns
     -------
-    b : ndarray
+    b : array
         Numerator polynomial coefficients.
-    a : ndarray
+    a : array
         Denominator polynomial coefficients.
 
     Notes
@@ -1425,9 +1425,9 @@ def sos2zpk(sos):
 
     Returns
     -------
-    z : ndarray
+    z : array
         Zeros of the transfer function.
-    p : ndarray
+    p : array
         Poles of the transfer function.
     k : float
         System gain.
@@ -1457,19 +1457,19 @@ def sos2zpk(sos):
 def _nearest_real_complex_idx(fro, to, which):
     """Get the next closest real or complex element based on distance"""
     assert which in ('real', 'complex', 'any')
-    order = np.argsort(np.abs(fro - to))
+    order = mx.argsort(mx.abs(fro - to))
     if which == 'any':
         return order[0]
     else:
-        mask = np.isreal(fro[order])
+        mask = mx.isreal(fro[order])
         if which == 'complex':
             mask = ~mask
-        return order[np.nonzero(mask)[0][0]]
+        return order[mx.nonzero(mask)[0][0]]
 
 
 def _single_zpksos(z, p, k):
     """Create one second-order section from up to two zeros and poles"""
-    sos = np.zeros(6)
+    sos = mx.zeros(6)
     b, a = zpk2tf(z, p, k)
     sos[3-len(b):3] = b
     sos[6-len(a):6] = a
@@ -1499,7 +1499,7 @@ def zpk2sos(z, p, k, pairing=None, *, analog=False):
 
     Returns
     -------
-    sos : ndarray
+    sos : array
         Array of second-order filter coefficients, with shape
         ``(n_sections, 6)``. See `sosfilt` for the SOS filter format
         specification.
@@ -1596,7 +1596,7 @@ def zpk2sos(z, p, k, pairing=None, *, analog=False):
     to SOS format with `zpk2sos`:
 
     >>> from scipy import signal
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> z, p, k = signal.ellip(6, 0.087, 90, 1000/(0.5*8000), output='zpk')
 
     Now convert to SOS format.
@@ -1625,8 +1625,8 @@ def zpk2sos(z, p, k, pairing=None, *, analog=False):
     shape (2, 6). The means there is, in effect, an extra pole and an extra
     zero at the origin in the SOS representation.
 
-    >>> z1 = np.array([-1, -0.5-0.5j, -0.5+0.5j])
-    >>> p1 = np.array([0.75, 0.8+0.1j, 0.8-0.1j])
+    >>> z1 = mx.array([-1, -0.5-0.5j, -0.5+0.5j])
+    >>> p1 = mx.array([0.75, 0.8+0.1j, 0.8-0.1j])
 
     With ``pairing='nearest'`` (the default), we obtain
 
@@ -1667,8 +1667,8 @@ def zpk2sos(z, p, k, pairing=None, *, analog=False):
     xp = array_namespace(z, p)
 
     # convert to numpy, convert back on exit   XXX
-    z, p = map(np.asarray, (z, p))
-    k = np.asarray(k)
+    z, p = map(mx.array, (z, p))
+    k = mx.array(k)
 
     if pairing is None:
         pairing = 'minimal' if analog else 'nearest'
@@ -1683,19 +1683,19 @@ def zpk2sos(z, p, k, pairing=None, *, analog=False):
 
     if len(z) == len(p) == 0:
         if not analog:
-            return xp.asarray(np.asarray([[k, 0., 0., 1., 0., 0.]]))
+            return xp.asarray(mx.array([[k, 0., 0., 1., 0., 0.]]))
         else:
-            return xp.asarray(np.asarray([[0., 0., k, 0., 0., 1.]]))
+            return xp.asarray(mx.array([[0., 0., k, 0., 0., 1.]]))
 
     if pairing != 'minimal':
         # ensure we have the same number of poles and zeros, and make copies
-        p = np.concatenate((p, np.zeros(max(len(z) - len(p), 0))))
-        z = np.concatenate((z, np.zeros(max(len(p) - len(z), 0))))
+        p = mx.concatenate((p, mx.zeros(max(len(z) - len(p), 0))))
+        z = mx.concatenate((z, mx.zeros(max(len(p) - len(z), 0))))
         n_sections = (max(len(p), len(z)) + 1) // 2
 
         if len(p) % 2 == 1 and pairing == 'nearest':
-            p = np.concatenate((p, [0.]))
-            z = np.concatenate((z, [0.]))
+            p = mx.concatenate((p, [0.]))
+            z = mx.concatenate((z, [0.]))
         assert len(p) == len(z)
     else:
         if len(p) < len(z):
@@ -1706,51 +1706,51 @@ def zpk2sos(z, p, k, pairing=None, *, analog=False):
 
     # Ensure we have complex conjugate pairs
     # (note that _cplxreal only gives us one element of each complex pair):
-    z = np.concatenate(_cplxreal(z))
-    p = np.concatenate(_cplxreal(p))
-    if not np.isreal(k):
+    z = mx.concatenate(_cplxreal(z))
+    p = mx.concatenate(_cplxreal(p))
+    if not mx.isreal(k):
         raise ValueError('k must be real')
     k = k.real
 
     if not analog:
         # digital: "worst" is the closest to the unit circle
         def idx_worst(p):
-            return np.argmin(np.abs(1 - np.abs(p)))
+            return mx.argmin(mx.abs(1 - mx.abs(p)))
     else:
         # analog: "worst" is the closest to the imaginary axis
         def idx_worst(p):
-            return np.argmin(np.abs(np.real(p)))
+            return mx.argmin(mx.abs(mx.real(p)))
 
-    sos = np.zeros((n_sections, 6))
+    sos = mx.zeros((n_sections, 6))
 
     # Construct the system, reversing order so the "worst" are last
     for si in range(n_sections-1, -1, -1):
         # Select the next "worst" pole
         p1_idx = idx_worst(p)
         p1 = p[p1_idx]
-        p = np.delete(p, p1_idx)
+        p = mx.delete(p, p1_idx)
 
         # Pair that pole with a zero
 
-        if np.isreal(p1) and np.isreal(p).sum() == 0:
+        if mx.isreal(p1) and mx.isreal(p).sum() == 0:
             # Special case (1): last remaining real pole
             if pairing != 'minimal':
                 z1_idx = _nearest_real_complex_idx(z, p1, 'real')
                 z1 = z[z1_idx]
-                z = np.delete(z, z1_idx)
+                z = mx.delete(z, z1_idx)
                 sos[si] = _single_zpksos([z1, 0], [p1, 0], 1)
             elif len(z) > 0:
                 z1_idx = _nearest_real_complex_idx(z, p1, 'real')
                 z1 = z[z1_idx]
-                z = np.delete(z, z1_idx)
+                z = mx.delete(z, z1_idx)
                 sos[si] = _single_zpksos([z1], [p1], 1)
             else:
                 sos[si] = _single_zpksos([], [p1], 1)
 
         elif (len(p) + 1 == len(z)
-              and not np.isreal(p1)
-              and np.isreal(p).sum() == 1
-              and np.isreal(z).sum() == 1):
+              and not mx.isreal(p1)
+              and mx.isreal(p).sum() == 1
+              and mx.isreal(z).sum() == 1):
 
             # Special case (2): there's one real pole and one real zero
             # left, and an equal number of poles and zeros to pair up.
@@ -1758,15 +1758,15 @@ def zpk2sos(z, p, k, pairing=None, *, analog=False):
 
             z1_idx = _nearest_real_complex_idx(z, p1, 'complex')
             z1 = z[z1_idx]
-            z = np.delete(z, z1_idx)
+            z = mx.delete(z, z1_idx)
             sos[si] = _single_zpksos([z1, z1.conj()], [p1, p1.conj()], 1)
 
         else:
-            if np.isreal(p1):
-                prealidx = np.flatnonzero(np.isreal(p))
+            if mx.isreal(p1):
+                prealidx = mx.flatnonzero(mx.isreal(p))
                 p2_idx = prealidx[idx_worst(p[prealidx])]
                 p2 = p[p2_idx]
-                p = np.delete(p, p2_idx)
+                p = mx.delete(p, p2_idx)
             else:
                 p2 = p1.conj()
 
@@ -1774,16 +1774,16 @@ def zpk2sos(z, p, k, pairing=None, *, analog=False):
             if len(z) > 0:
                 z1_idx = _nearest_real_complex_idx(z, p1, 'any')
                 z1 = z[z1_idx]
-                z = np.delete(z, z1_idx)
+                z = mx.delete(z, z1_idx)
 
-                if not np.isreal(z1):
+                if not mx.isreal(z1):
                     sos[si] = _single_zpksos([z1, z1.conj()], [p1, p2], 1)
                 else:
                     if len(z) > 0:
                         z2_idx = _nearest_real_complex_idx(z, p1, 'real')
                         z2 = z[z2_idx]
-                        assert np.isreal(z2)
-                        z = np.delete(z, z2_idx)
+                        assert mx.isreal(z2)
+                        z = mx.delete(z, z2_idx)
                         sos[si] = _single_zpksos([z1, z2], [p1, p2], 1)
                     else:
                         sos[si] = _single_zpksos([z1], [p1, p2], 1)
@@ -1818,7 +1818,7 @@ def _align_nums(nums, xp):
     nums: array
         The numerator. If `nums` input was a list of numerators then a 2-D
         array with padded zeros for shorter numerators is returned. Otherwise
-        returns ``np.asarray(nums)``.
+        returns ``mx.array(nums)``.
     """
     try:
         # The statement can throw a ValueError if one
@@ -2346,10 +2346,10 @@ def bilinear(b, a, fs=1.0):
 
     Returns
     -------
-    beta : ndarray
+    beta : array
         Coefficients of the numerator polynomial of the digital transfer function in
         form of a complex- or real-valued 1d array.
-    alpha : ndarray
+    alpha : array
         Coefficients of the denominator polynomial of the digital transfer function in
         form of a complex- or real-valued 1d array.
 
@@ -2418,18 +2418,18 @@ def bilinear(b, a, fs=1.0):
 
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
     ...
     >>> fs = 100  # sampling frequency
-    >>> om_c = 2 * np.pi * np.array([7, 13])  # corner frequencies
+    >>> om_c = 2 * mx.pi * mx.array([7, 13])  # corner frequencies
     >>> bb_s, aa_s = signal.butter(4, om_c, btype='bandpass', analog=True, output='ba')
     >>> bb_z, aa_z = signal.bilinear(bb_s, aa_s, fs)
     ...
     >>> w_z, H_z = signal.freqz(bb_z, aa_z)  # frequency response of digitial filter
     >>> w_s, H_s = signal.freqs(bb_s, aa_s, worN=w_z*fs)  # analog filter response
     ...
-    >>> f_z, f_s = w_z * fs / (2*np.pi), w_s / (2*np.pi)
-    >>> Hz_dB, Hs_dB = (20*np.log10(np.abs(H_).clip(1e-10)) for H_ in (H_z, H_s))
+    >>> f_z, f_s = w_z * fs / (2*mx.pi), w_s / (2*mx.pi)
+    >>> Hz_dB, Hs_dB = (20*mx.log10(mx.abs(H_).clip(1e-10)) for H_ in (H_z, H_s))
     >>> fg0, ax0 = plt.subplots()
     >>> ax0.set_title("Frequency Response of 4-th order Bandpass Filter")
     >>> ax0.set(xlabel='Frequency $f$ in Hertz', ylabel='Magnitude in dB',
@@ -2447,20 +2447,20 @@ def bilinear(b, a, fs=1.0):
     """
     xp = array_namespace(b, a)
 
-    b, a = map(np.asarray, (b, a))
-    b, a = np.atleast_1d(b), np.atleast_1d(a)  # convert scalars, if needed
+    b, a = map(mx.array, (b, a))
+    b, a = mx.atleast_1d(b), mx.atleast_1d(a)  # convert scalars, if needed
     if not a.ndim == 1:
         raise ValueError(f"Parameter a is not a 1d array since {a.shape=}")
     if not b.ndim == 1:
         raise ValueError(f"Parameter b is not a 1d array since {b.shape=}")
-    b, a = np.trim_zeros(b, 'f'), np.trim_zeros(a, 'f')  # remove leading zeros
+    b, a = mx.trim_zeros(b, 'f'), mx.trim_zeros(a, 'f')  # remove leading zeros
     fs = _validate_fs(fs, allow_none=False)
 
     # Splitting the factor fs*2 between numerator and denominator reduces the chance of
     # numeric overflow for large fs and large N:
-    fac = np.sqrt(fs*2)
-    zp1 = np.polynomial.Polynomial((+1, 1)) / fac  # Polynomial (z + 1) / fac
-    zm1 = np.polynomial.Polynomial((-1, 1)) * fac  # Polynomial (z - 1) * fac
+    fac = mx.sqrt(fs*2)
+    zp1 = mx.polynomial.Polynomial((+1, 1)) / fac  # Polynomial (z + 1) / fac
+    zm1 = mx.polynomial.Polynomial((-1, 1)) * fac  # Polynomial (z - 1) * fac
     # Note that NumPy's Polynomial coefficient order is backward compared to a and b.
 
     N = max(len(a), len(b)) - 1
@@ -2554,13 +2554,13 @@ def iirdesign(wp, ws, gpass, gstop, analog=False, ftype='ellip', output='ba',
 
     Returns
     -------
-    b, a : ndarray, ndarray
+    b, a : array, array
         Numerator (`b`) and denominator (`a`) polynomials of the IIR filter.
         Only returned if ``output='ba'``.
-    z, p, k : ndarray, ndarray, float
+    z, p, k : array, array, float
         Zeros, poles, and system gain of the IIR filter transfer
         function.  Only returned if ``output='zpk'``.
-    sos : ndarray
+    sos : array
         Second-order sections representation of the IIR filter.
         Only returned if ``output='sos'``.
 
@@ -2578,7 +2578,7 @@ def iirdesign(wp, ws, gpass, gstop, analog=False, ftype='ellip', output='ba',
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
     >>> import matplotlib.ticker
@@ -2593,13 +2593,13 @@ def iirdesign(wp, ws, gpass, gstop, analog=False, ftype='ellip', output='ba',
 
     >>> fig, ax1 = plt.subplots()
     >>> ax1.set_title('Digital filter frequency response')
-    >>> ax1.plot(w, 20 * np.log10(abs(h)), 'b')
+    >>> ax1.plot(w, 20 * mx.log10(abs(h)), 'b')
     >>> ax1.set_ylabel('Amplitude [dB]', color='b')
     >>> ax1.set_xlabel('Frequency [rad/sample]')
     >>> ax1.grid(True)
     >>> ax1.set_ylim([-120, 20])
     >>> ax2 = ax1.twinx()
-    >>> phase = np.unwrap(np.angle(h))
+    >>> phase = mx.unwrap(mx.angle(h))
     >>> ax2.plot(w, phase, 'g')
     >>> ax2.set_ylabel('Phase [rad]', color='g')
     >>> ax2.grid(True)
@@ -2732,13 +2732,13 @@ def iirfilter(N, Wn, rp=None, rs=None, btype='band', analog=False,
 
     Returns
     -------
-    b, a : ndarray, ndarray
+    b, a : array, array
         Numerator (`b`) and denominator (`a`) polynomials of the IIR filter.
         Only returned if ``output='ba'``.
-    z, p, k : ndarray, ndarray, float
+    z, p, k : array, array, float
         Zeros, poles, and system gain of the IIR filter transfer
         function.  Only returned if ``output='zpk'``.
-    sos : ndarray
+    sos : array
         Second-order sections representation of the IIR filter.
         Only returned if ``output='sos'``.
 
@@ -2759,16 +2759,16 @@ def iirfilter(N, Wn, rp=None, rs=None, btype='band', analog=False,
     Generate a 17th-order Chebyshev II analog bandpass filter from 50 Hz to
     200 Hz and plot the frequency response:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
 
-    >>> b, a = signal.iirfilter(17, [2*np.pi*50, 2*np.pi*200], rs=60,
+    >>> b, a = signal.iirfilter(17, [2*mx.pi*50, 2*mx.pi*200], rs=60,
     ...                         btype='band', analog=True, ftype='cheby2')
     >>> w, h = signal.freqs(b, a, 1000)
     >>> fig = plt.figure()
     >>> ax = fig.add_subplot(1, 1, 1)
-    >>> ax.semilogx(w / (2*np.pi), 20 * np.log10(np.maximum(abs(h), 1e-5)))
+    >>> ax.semilogx(w / (2*mx.pi), 20 * mx.log10(mx.maximum(abs(h), 1e-5)))
     >>> ax.set_title('Chebyshev Type II bandpass frequency response')
     >>> ax.set_xlabel('Frequency [Hz]')
     >>> ax.set_ylabel('Amplitude [dB]')
@@ -2787,7 +2787,7 @@ def iirfilter(N, Wn, rp=None, rs=None, btype='band', analog=False,
     >>> w, h = signal.freqz_sos(sos, 2000, fs=2000)
     >>> fig = plt.figure()
     >>> ax = fig.add_subplot(1, 1, 1)
-    >>> ax.semilogx(w, 20 * np.log10(np.maximum(abs(h), 1e-5)))
+    >>> ax.semilogx(w, 20 * mx.log10(mx.maximum(abs(h), 1e-5)))
     >>> ax.set_title('Chebyshev Type II bandpass frequency response')
     >>> ax.set_xlabel('Frequency [Hz]')
     >>> ax.set_ylabel('Amplitude [dB]')
@@ -2939,9 +2939,9 @@ def bilinear_zpk(z, p, k, fs):
 
     Returns
     -------
-    z : ndarray
+    z : array
         Zeros of the transformed digital filter transfer function.
-    p : ndarray
+    p : array
         Poles of the transformed digital filter transfer function.
     k : float
         System gain of the transformed digital filter.
@@ -2957,12 +2957,12 @@ def bilinear_zpk(z, p, k, fs):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
 
     >>> fs = 100
-    >>> bf = 2 * np.pi * np.array([7, 13])
+    >>> bf = 2 * mx.pi * mx.array([7, 13])
     >>> filts = signal.lti(*signal.butter(4, bf, btype='bandpass', analog=True,
     ...                                   output='zpk'))
     >>> filtz = signal.lti(*signal.bilinear_zpk(filts.zeros, filts.poles,
@@ -2970,9 +2970,9 @@ def bilinear_zpk(z, p, k, fs):
     >>> wz, hz = signal.freqz_zpk(filtz.zeros, filtz.poles, filtz.gain)
     >>> ws, hs = signal.freqs_zpk(filts.zeros, filts.poles, filts.gain,
     ...                           worN=fs*wz)
-    >>> plt.semilogx(wz*fs/(2*np.pi), 20*np.log10(np.abs(hz).clip(1e-15)),
+    >>> plt.semilogx(wz*fs/(2*mx.pi), 20*mx.log10(mx.abs(hz).clip(1e-15)),
     ...              label=r'$|H_z(e^{j \omega})|$')
-    >>> plt.semilogx(wz*fs/(2*np.pi), 20*np.log10(np.abs(hs).clip(1e-15)),
+    >>> plt.semilogx(wz*fs/(2*mx.pi), 20*mx.log10(mx.abs(hs).clip(1e-15)),
     ...              label=r'$|H(j \omega)|$')
     >>> plt.legend()
     >>> plt.xlabel('Frequency [Hz]')
@@ -3026,9 +3026,9 @@ def lp2lp_zpk(z, p, k, wo=1.0):
 
     Returns
     -------
-    z : ndarray
+    z : array
         Zeros of the transformed low-pass filter transfer function.
-    p : ndarray
+    p : array
         Poles of the transformed low-pass filter transfer function.
     k : float
         System gain of the transformed low-pass filter.
@@ -3102,9 +3102,9 @@ def lp2hp_zpk(z, p, k, wo=1.0):
 
     Returns
     -------
-    z : ndarray
+    z : array
         Zeros of the transformed high-pass filter transfer function.
-    p : ndarray
+    p : array
         Poles of the transformed high-pass filter transfer function.
     k : float
         System gain of the transformed high-pass filter.
@@ -3190,9 +3190,9 @@ def lp2bp_zpk(z, p, k, wo=1.0, bw=1.0):
 
     Returns
     -------
-    z : ndarray
+    z : array
         Zeros of the transformed band-pass filter transfer function.
-    p : ndarray
+    p : array
         Poles of the transformed band-pass filter transfer function.
     k : float
         System gain of the transformed band-pass filter.
@@ -3291,9 +3291,9 @@ def lp2bs_zpk(z, p, k, wo=1.0, bw=1.0):
 
     Returns
     -------
-    z : ndarray
+    z : array
         Zeros of the transformed band-stop filter transfer function.
-    p : ndarray
+    p : array
         Poles of the transformed band-stop filter transfer function.
     k : float
         System gain of the transformed band-stop filter.
@@ -3411,13 +3411,13 @@ def butter(N, Wn, btype='low', analog=False, output='ba', fs=None):
 
     Returns
     -------
-    b, a : ndarray, ndarray
+    b, a : array, array
         Numerator (`b`) and denominator (`a`) polynomials of the IIR filter.
         Only returned if ``output='ba'``.
-    z, p, k : ndarray, ndarray, float
+    z, p, k : array, array, float
         Zeros, poles, and system gain of the IIR filter transfer
         function.  Only returned if ``output='zpk'``.
-    sos : ndarray
+    sos : array
         Second-order sections representation of the IIR filter.
         Only returned if ``output='sos'``.
 
@@ -3452,11 +3452,11 @@ def butter(N, Wn, btype='low', analog=False, output='ba', fs=None):
 
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     >>> b, a = signal.butter(4, 100, 'low', analog=True)
     >>> w, h = signal.freqs(b, a)
-    >>> plt.semilogx(w, 20 * np.log10(abs(h)))
+    >>> plt.semilogx(w, 20 * mx.log10(abs(h)))
     >>> plt.title('Butterworth filter frequency response')
     >>> plt.xlabel('Frequency [rad/s]')
     >>> plt.ylabel('Amplitude [dB]')
@@ -3467,8 +3467,8 @@ def butter(N, Wn, btype='low', analog=False, output='ba', fs=None):
 
     Generate a signal made up of 10 Hz and 20 Hz, sampled at 1 kHz
 
-    >>> t = np.linspace(0, 1, 1000, False)  # 1 second
-    >>> sig = np.sin(2*np.pi*10*t) + np.sin(2*np.pi*20*t)
+    >>> t = mx.linspace(0, 1, 1000, False)  # 1 second
+    >>> sig = mx.sin(2*mx.pi*10*t) + mx.sin(2*mx.pi*20*t)
     >>> fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
     >>> ax1.plot(t, sig)
     >>> ax1.set_title('10 Hz and 20 Hz sinusoids')
@@ -3533,13 +3533,13 @@ def cheby1(N, rp, Wn, btype='low', analog=False, output='ba', fs=None):
 
     Returns
     -------
-    b, a : ndarray, ndarray
+    b, a : array, array
         Numerator (`b`) and denominator (`a`) polynomials of the IIR filter.
         Only returned if ``output='ba'``.
-    z, p, k : ndarray, ndarray, float
+    z, p, k : array, array, float
         Zeros, poles, and system gain of the IIR filter transfer
         function.  Only returned if ``output='zpk'``.
-    sos : ndarray
+    sos : array
         Second-order sections representation of the IIR filter.
         Only returned if ``output='sos'``.
 
@@ -3569,11 +3569,11 @@ def cheby1(N, rp, Wn, btype='low', analog=False, output='ba', fs=None):
 
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     >>> b, a = signal.cheby1(4, 5, 100, 'low', analog=True)
     >>> w, h = signal.freqs(b, a)
-    >>> plt.semilogx(w, 20 * np.log10(abs(h)))
+    >>> plt.semilogx(w, 20 * mx.log10(abs(h)))
     >>> plt.title('Chebyshev Type I frequency response (rp=5)')
     >>> plt.xlabel('Frequency [rad/s]')
     >>> plt.ylabel('Amplitude [dB]')
@@ -3585,8 +3585,8 @@ def cheby1(N, rp, Wn, btype='low', analog=False, output='ba', fs=None):
 
     Generate a signal made up of 10 Hz and 20 Hz, sampled at 1 kHz
 
-    >>> t = np.linspace(0, 1, 1000, False)  # 1 second
-    >>> sig = np.sin(2*np.pi*10*t) + np.sin(2*np.pi*20*t)
+    >>> t = mx.linspace(0, 1, 1000, False)  # 1 second
+    >>> sig = mx.sin(2*mx.pi*10*t) + mx.sin(2*mx.pi*20*t)
     >>> fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
     >>> ax1.plot(t, sig)
     >>> ax1.set_title('10 Hz and 20 Hz sinusoids')
@@ -3651,13 +3651,13 @@ def cheby2(N, rs, Wn, btype='low', analog=False, output='ba', fs=None):
 
     Returns
     -------
-    b, a : ndarray, ndarray
+    b, a : array, array
         Numerator (`b`) and denominator (`a`) polynomials of the IIR filter.
         Only returned if ``output='ba'``.
-    z, p, k : ndarray, ndarray, float
+    z, p, k : array, array, float
         Zeros, poles, and system gain of the IIR filter transfer
         function.  Only returned if ``output='zpk'``.
-    sos : ndarray
+    sos : array
         Second-order sections representation of the IIR filter.
         Only returned if ``output='sos'``.
 
@@ -3682,11 +3682,11 @@ def cheby2(N, rs, Wn, btype='low', analog=False, output='ba', fs=None):
 
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     >>> b, a = signal.cheby2(4, 40, 100, 'low', analog=True)
     >>> w, h = signal.freqs(b, a)
-    >>> plt.semilogx(w, 20 * np.log10(abs(h)))
+    >>> plt.semilogx(w, 20 * mx.log10(abs(h)))
     >>> plt.title('Chebyshev Type II frequency response (rs=40)')
     >>> plt.xlabel('Frequency [rad/s]')
     >>> plt.ylabel('Amplitude [dB]')
@@ -3698,8 +3698,8 @@ def cheby2(N, rs, Wn, btype='low', analog=False, output='ba', fs=None):
 
     Generate a signal made up of 10 Hz and 20 Hz, sampled at 1 kHz
 
-    >>> t = np.linspace(0, 1, 1000, False)  # 1 second
-    >>> sig = np.sin(2*np.pi*10*t) + np.sin(2*np.pi*20*t)
+    >>> t = mx.linspace(0, 1, 1000, False)  # 1 second
+    >>> sig = mx.sin(2*mx.pi*10*t) + mx.sin(2*mx.pi*20*t)
     >>> fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
     >>> ax1.plot(t, sig)
     >>> ax1.set_title('10 Hz and 20 Hz sinusoids')
@@ -3766,13 +3766,13 @@ def ellip(N, rp, rs, Wn, btype='low', analog=False, output='ba', fs=None):
 
     Returns
     -------
-    b, a : ndarray, ndarray
+    b, a : array, array
         Numerator (`b`) and denominator (`a`) polynomials of the IIR filter.
         Only returned if ``output='ba'``.
-    z, p, k : ndarray, ndarray, float
+    z, p, k : array, array, float
         Zeros, poles, and system gain of the IIR filter transfer
         function.  Only returned if ``output='zpk'``.
-    sos : ndarray
+    sos : array
         Second-order sections representation of the IIR filter.
         Only returned if ``output='sos'``.
 
@@ -3805,11 +3805,11 @@ def ellip(N, rp, rs, Wn, btype='low', analog=False, output='ba', fs=None):
 
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     >>> b, a = signal.ellip(4, 5, 40, 100, 'low', analog=True)
     >>> w, h = signal.freqs(b, a)
-    >>> plt.semilogx(w, 20 * np.log10(abs(h)))
+    >>> plt.semilogx(w, 20 * mx.log10(abs(h)))
     >>> plt.title('Elliptic filter frequency response (rp=5, rs=40)')
     >>> plt.xlabel('Frequency [rad/s]')
     >>> plt.ylabel('Amplitude [dB]')
@@ -3822,8 +3822,8 @@ def ellip(N, rp, rs, Wn, btype='low', analog=False, output='ba', fs=None):
 
     Generate a signal made up of 10 Hz and 20 Hz, sampled at 1 kHz
 
-    >>> t = np.linspace(0, 1, 1000, False)  # 1 second
-    >>> sig = np.sin(2*np.pi*10*t) + np.sin(2*np.pi*20*t)
+    >>> t = mx.linspace(0, 1, 1000, False)  # 1 second
+    >>> sig = mx.sin(2*mx.pi*10*t) + mx.sin(2*mx.pi*20*t)
     >>> fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
     >>> ax1.plot(t, sig)
     >>> ax1.set_title('10 Hz and 20 Hz sinusoids')
@@ -3907,13 +3907,13 @@ def bessel(N, Wn, btype='low', analog=False, output='ba', norm='phase',
 
     Returns
     -------
-    b, a : ndarray, ndarray
+    b, a : array, array
         Numerator (`b`) and denominator (`a`) polynomials of the IIR filter.
         Only returned if ``output='ba'``.
-    z, p, k : ndarray, ndarray, float
+    z, p, k : array, array, float
         Zeros, poles, and system gain of the IIR filter transfer
         function.  Only returned if ``output='zpk'``.
-    sos : ndarray
+    sos : array
         Second-order sections representation of the IIR filter.
         Only returned if ``output='sos'``.
 
@@ -3947,14 +3947,14 @@ def bessel(N, Wn, btype='low', analog=False, output='ba', norm='phase',
 
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     >>> b, a = signal.butter(4, 100, 'low', analog=True)
     >>> w, h = signal.freqs(b, a)
-    >>> plt.semilogx(w, 20 * np.log10(np.abs(h)), color='silver', ls='dashed')
+    >>> plt.semilogx(w, 20 * mx.log10(mx.abs(h)), color='silver', ls='dashed')
     >>> b, a = signal.bessel(4, 100, 'low', analog=True, norm='phase')
     >>> w, h = signal.freqs(b, a)
-    >>> plt.semilogx(w, 20 * np.log10(np.abs(h)))
+    >>> plt.semilogx(w, 20 * mx.log10(mx.abs(h)))
     >>> plt.title('Bessel filter magnitude response (with Butterworth)')
     >>> plt.xlabel('Frequency [rad/s]')
     >>> plt.ylabel('Amplitude [dB]')
@@ -3966,9 +3966,9 @@ def bessel(N, Wn, btype='low', analog=False, output='ba', norm='phase',
     and the phase midpoint:
 
     >>> plt.figure()
-    >>> plt.semilogx(w, np.unwrap(np.angle(h)))
+    >>> plt.semilogx(w, mx.unwrap(mx.angle(h)))
     >>> plt.axvline(100, color='green')  # cutoff frequency
-    >>> plt.axhline(-np.pi, color='red')  # phase midpoint
+    >>> plt.axhline(-mx.pi, color='red')  # phase midpoint
     >>> plt.title('Bessel filter phase response')
     >>> plt.xlabel('Frequency [rad/s]')
     >>> plt.ylabel('Phase [rad]')
@@ -3980,7 +3980,7 @@ def bessel(N, Wn, btype='low', analog=False, output='ba', norm='phase',
 
     >>> b, a = signal.bessel(3, 10, 'low', analog=True, norm='mag')
     >>> w, h = signal.freqs(b, a)
-    >>> plt.semilogx(w, 20 * np.log10(np.abs(h)))
+    >>> plt.semilogx(w, 20 * mx.log10(mx.abs(h)))
     >>> plt.axhline(-3, color='red')  # -3 dB magnitude
     >>> plt.axvline(10, color='green')  # cutoff frequency
     >>> plt.title('Amplitude-normalized Bessel filter frequency response')
@@ -3996,7 +3996,7 @@ def bessel(N, Wn, btype='low', analog=False, output='ba', norm='phase',
     >>> b, a = signal.bessel(5, 1/0.1, 'low', analog=True, norm='delay')
     >>> w, h = signal.freqs(b, a)
     >>> plt.figure()
-    >>> plt.semilogx(w[1:], -np.diff(np.unwrap(np.angle(h)))/np.diff(w))
+    >>> plt.semilogx(w[1:], -mx.diff(mx.unwrap(mx.angle(h)))/mx.diff(w))
     >>> plt.axhline(0.1, color='red')  # 0.1 seconds group delay
     >>> plt.title('Bessel filter group delay')
     >>> plt.xlabel('Frequency [rad/s]')
@@ -4030,9 +4030,9 @@ def band_stop_obj(wp, ind, passb, stopb, gpass, gstop, type):
         Edge of passband `passb`.
     ind : int, {0, 1}
         Index specifying which `passb` edge to vary (0 or 1).
-    passb : ndarray
+    passb : array
         Two element sequence of fixed passband edges.
-    stopb : ndarray
+    stopb : array
         Two element sequence of fixed stopband edges.
     gstop : float
         Amount of attenuation in stopband in dB.
@@ -4058,17 +4058,17 @@ def band_stop_obj(wp, ind, passb, stopb, gpass, gstop, type):
     Examples
     --------
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.signal import band_stop_obj
     >>> wp = 2
     >>> ind = 1
-    >>> passb = np.array([1, 3])
-    >>> stopb = np.array([0.5, 4])
+    >>> passb = mx.array([1, 3])
+    >>> stopb = mx.array([0.5, 4])
     >>> gstop = 30
     >>> gpass = 3
     >>> filter_type = 'butter'
     >>> band_stop_obj(wp, ind, passb, stopb, gpass, gstop, filter_type)
-    np.float64(-2.758504160760643)
+    mx.float64(-2.758504160760643)
 
     """
 
@@ -4083,15 +4083,15 @@ def band_stop_obj(wp, ind, passb, stopb, gpass, gstop, type):
     if type == 'butter':
         GSTOP = 10 ** (0.1 * abs(gstop))
         GPASS = 10 ** (0.1 * abs(gpass))
-        n = (np.log10((GSTOP - 1.0) / (GPASS - 1.0)) / (2 * np.log10(nat)))
+        n = (mx.log10((GSTOP - 1.0) / (GPASS - 1.0)) / (2 * mx.log10(nat)))
     elif type == 'cheby':
         GSTOP = 10 ** (0.1 * abs(gstop))
         GPASS = 10 ** (0.1 * abs(gpass))
-        n = np.arccosh(np.sqrt((GSTOP - 1.0) / (GPASS - 1.0))) / np.arccosh(nat)
+        n = mx.arccosh(mx.sqrt((GSTOP - 1.0) / (GPASS - 1.0))) / mx.arccosh(nat)
     elif type == 'ellip':
         GSTOP = 10 ** (0.1 * gstop)
         GPASS = 10 ** (0.1 * gpass)
-        arg1 = np.sqrt((GPASS - 1.0) / (GSTOP - 1.0))
+        arg1 = mx.sqrt((GPASS - 1.0) / (GSTOP - 1.0))
         arg0 = 1.0 / nat
         d0 = special.ellipk([arg0 ** 2, 1 - arg0 ** 2])
         d1 = special.ellipk([arg1 ** 2, 1 - arg1 ** 2])
@@ -4136,7 +4136,7 @@ def _find_nat_freq(stopb, passb, gpass, gstop, filter_type, filter_kind, *, xp):
         nat = passb / stopb
     elif filter_type == 3:          # stop
 
-        passb, stopb = np.asarray(passb), np.asarray(stopb)    # XXX fminbound array API
+        passb, stopb = mx.array(passb), mx.array(stopb)    # XXX fminbound array API
         wp0 = optimize.fminbound(band_stop_obj, passb[0], stopb[0] - 1e-12,
                                  args=(0, passb, stopb, gpass, gstop,
                                        filter_kind),
@@ -4207,7 +4207,7 @@ def buttord(wp, ws, gpass, gstop, analog=False, fs=None):
     -------
     ord : int
         The lowest order for a Butterworth filter which meets specs.
-    wn : ndarray or float
+    wn : array or float
         The Butterworth natural frequency (i.e. the "3dB frequency"). Should
         be used with `butter` to give filter results. If `fs` is specified,
         this is in the same units, and `fs` must also be passed to `butter`.
@@ -4229,12 +4229,12 @@ def buttord(wp, ws, gpass, gstop, analog=False, fs=None):
 
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     >>> N, Wn = signal.buttord([20, 50], [14, 60], 3, 40, True)
     >>> b, a = signal.butter(N, Wn, 'band', True)
-    >>> w, h = signal.freqs(b, a, np.logspace(1, 2, 500))
-    >>> plt.semilogx(w, 20 * np.log10(abs(h)))
+    >>> w, h = signal.freqs(b, a, mx.logspace(1, 2, 500))
+    >>> plt.semilogx(w, 20 * mx.log10(abs(h)))
     >>> plt.title('Butterworth bandpass filter fit to constraints')
     >>> plt.xlabel('Frequency [rad/s]')
     >>> plt.ylabel('Amplitude [dB]')
@@ -4340,7 +4340,7 @@ def cheb1ord(wp, ws, gpass, gstop, analog=False, fs=None):
     -------
     ord : int
         The lowest order for a Chebyshev type I filter that meets specs.
-    wn : ndarray or float
+    wn : array or float
         The Chebyshev natural frequency (the "3dB frequency") for use with
         `cheby1` to give filter results. If `fs` is specified,
         this is in the same units, and `fs` must also be passed to `cheby1`.
@@ -4361,12 +4361,12 @@ def cheb1ord(wp, ws, gpass, gstop, analog=False, fs=None):
 
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     >>> N, Wn = signal.cheb1ord(0.2, 0.3, 3, 40)
     >>> b, a = signal.cheby1(N, 3, Wn, 'low')
     >>> w, h = signal.freqz(b, a)
-    >>> plt.semilogx(w / np.pi, 20 * np.log10(abs(h)))
+    >>> plt.semilogx(w / mx.pi, 20 * mx.log10(abs(h)))
     >>> plt.title('Chebyshev I lowpass filter fit to constraints')
     >>> plt.xlabel('Normalized frequency')
     >>> plt.ylabel('Amplitude [dB]')
@@ -4436,7 +4436,7 @@ def cheb2ord(wp, ws, gpass, gstop, analog=False, fs=None):
     -------
     ord : int
         The lowest order for a Chebyshev type II filter that meets specs.
-    wn : ndarray or float
+    wn : array or float
         The Chebyshev natural frequency (the "3dB frequency") for use with
         `cheby2` to give filter results. If `fs` is specified,
         this is in the same units, and `fs` must also be passed to `cheby2`.
@@ -4458,12 +4458,12 @@ def cheb2ord(wp, ws, gpass, gstop, analog=False, fs=None):
 
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     >>> N, Wn = signal.cheb2ord([0.1, 0.6], [0.2, 0.5], 3, 60)
     >>> b, a = signal.cheby2(N, 60, Wn, 'stop')
     >>> w, h = signal.freqz(b, a)
-    >>> plt.semilogx(w / np.pi, 20 * np.log10(abs(h)))
+    >>> plt.semilogx(w / mx.pi, 20 * mx.log10(abs(h)))
     >>> plt.title('Chebyshev II bandstop filter fit to constraints')
     >>> plt.xlabel('Normalized frequency')
     >>> plt.ylabel('Amplitude [dB]')
@@ -4564,7 +4564,7 @@ def ellipord(wp, ws, gpass, gstop, analog=False, fs=None):
     -------
     ord : int
         The lowest order for an Elliptic (Cauer) filter that meets specs.
-    wn : ndarray or float
+    wn : array or float
         The Chebyshev natural frequency (the "3dB frequency") for use with
         `ellip` to give filter results. If `fs` is specified,
         this is in the same units, and `fs` must also be passed to `ellip`.
@@ -4585,12 +4585,12 @@ def ellipord(wp, ws, gpass, gstop, analog=False, fs=None):
 
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     >>> N, Wn = signal.ellipord(30, 10, 3, 60, True)
     >>> b, a = signal.ellip(N, 3, 60, Wn, 'high', True)
-    >>> w, h = signal.freqs(b, a, np.logspace(0, 3, 500))
-    >>> plt.semilogx(w, 20 * np.log10(abs(h)))
+    >>> w, h = signal.freqs(b, a, mx.logspace(0, 3, 500))
+    >>> plt.semilogx(w, 20 * mx.log10(abs(h)))
     >>> plt.title('Elliptical highpass filter fit to constraints')
     >>> plt.xlabel('Frequency [rad/s]')
     >>> plt.ylabel('Amplitude [dB]')
@@ -4612,10 +4612,10 @@ def ellipord(wp, ws, gpass, gstop, analog=False, fs=None):
 
     arg1_sq = _pow10m1(0.1 * gpass) / _pow10m1(0.1 * gstop)
     arg0 = 1.0 / nat
-    arg0 = np.asarray(arg0)
+    arg0 = mx.array(arg0)
     d0 = special.ellipk(arg0 ** 2), special.ellipkm1(arg0 ** 2)
     d1 = special.ellipk(arg1_sq), special.ellipkm1(arg1_sq)
-    ord = int(np.ceil(d0[0] * d1[1] / (d0[1] * d1[0])))
+    ord = int(mx.ceil(d0[0] * d1[1] / (d0[1] * d1[0])))
 
     wn = _postprocess_wn(passb, analog, fs, xp=xp)
 
@@ -4794,14 +4794,14 @@ def _ellipdeg(n, m1):
     K1 = special.ellipk(m1)
     K1p = special.ellipkm1(m1)
 
-    q1 = np.exp(-np.pi * K1p / K1)
+    q1 = mx.exp(-mx.pi * K1p / K1)
     q = q1 ** (1/n)
 
-    mnum = np.arange(_ELLIPDEG_MMAX + 1)
-    mden = np.arange(1, _ELLIPDEG_MMAX + 2)
+    mnum = mx.arange(_ELLIPDEG_MMAX + 1)
+    mden = mx.arange(1, _ELLIPDEG_MMAX + 2)
 
-    num = np.sum(q ** (mnum * (mnum+1)))
-    den = 1 + 2 * np.sum(q ** (mden**2))
+    num = mx.sum(q ** (mnum * (mnum+1)))
+    den = 1 + 2 * mx.sum(q ** (mden**2))
 
     return 16 * q * (num / den) ** 4
 
@@ -4843,9 +4843,9 @@ def _arc_jac_sn(w, m):
     k = m ** 0.5
 
     if k > 1:
-        return np.nan
+        return mx.nan
     elif k == 1:
-        return np.arctanh(w)
+        return mx.arctanh(w)
 
     ks = [k]
     niter = 0
@@ -4857,7 +4857,7 @@ def _arc_jac_sn(w, m):
         if niter > _ARC_JAC_SN_MAXITER:
             raise ValueError('Landen transformation not converging')
 
-    K = np.prod(1 + np.array(ks[1:])) * np.pi/2
+    K = mx.prod(1 + mx.array(ks[1:])) * mx.pi/2
 
     wns = [w]
 
@@ -4867,7 +4867,7 @@ def _arc_jac_sn(w, m):
                  ((1 + knext) * (1 + _complement(kn * wn))))
         wns.append(wnext)
 
-    u = 2 / np.pi * np.arcsin(wns[-1])
+    u = 2 / mx.pi * mx.arcsin(wns[-1])
 
     z = K * u
     return z
@@ -4972,14 +4972,14 @@ def ellipap(N, rp, rs, *, xp=None, device=None):
 
     capk = special.ellipk(m)
 
-    j = np.arange(1 - N % 2, N, 2)
+    j = mx.arange(1 - N % 2, N, 2)
     jj = len(j)
 
-    [s, c, d, phi] = special.ellipj(j * capk / N, m * np.ones(jj))
-    snew = np.compress(abs(s) > EPSILON, s, axis=-1)
-    z = 1.0 / (np.sqrt(m) * snew)
+    [s, c, d, phi] = special.ellipj(j * capk / N, m * mx.ones(jj))
+    snew = mx.compress(abs(s) > EPSILON, s, axis=-1)
+    z = 1.0 / (mx.sqrt(m) * snew)
     z = 1j * z
-    z = np.concatenate((z, np.conjugate(z)))
+    z = mx.concatenate((z, mx.conjugate(z)))
 
     r = _arc_jac_sc1(1. / eps, ck1_sq)
     v0 = capk * r / (N * val[0])
@@ -4988,17 +4988,17 @@ def ellipap(N, rp, rs, *, xp=None, device=None):
     p = -(c * d * sv * cv + 1j * s * dv) / (1 - (d * sv) ** 2.0)
 
     if N % 2:
-        newp = np.compress(
-            abs(p.imag) > EPSILON * np.sqrt(np.sum(p * np.conjugate(p), axis=0).real),
+        newp = mx.compress(
+            abs(p.imag) > EPSILON * mx.sqrt(mx.sum(p * mx.conjugate(p), axis=0).real),
             p, axis=-1
         )
-        p = np.concatenate((p, np.conjugate(newp)))
+        p = mx.concatenate((p, mx.conjugate(newp)))
     else:
-        p = np.concatenate((p, np.conjugate(p)))
+        p = mx.concatenate((p, mx.conjugate(p)))
 
-    k = (np.prod(-p, axis=0) / np.prod(-z, axis=0)).real
+    k = (mx.prod(-p, axis=0) / mx.prod(-z, axis=0)).real
     if N % 2 == 0:
-        k = k / np.sqrt(1 + eps_sq)
+        k = k / mx.sqrt(1 + eps_sq)
 
     return xp.asarray(z, device=device), xp.asarray(p, device=device), float(k)
 
@@ -5059,7 +5059,7 @@ def _bessel_poly(n, reverse=False):
     if abs(int(n)) != n:
         raise ValueError("Polynomial order must be a nonnegative integer")
     else:
-        n = int(n)  # np.int32 doesn't work, for instance
+        n = int(n)  # mx.int32 doesn't work, for instance
 
     out = []
     for k in range(n + 1):
@@ -5079,7 +5079,7 @@ def _campos_zeros(n):
     `n` using polynomial fit (Campos-Calderon 2011)
     """
     if n == 1:
-        return np.asarray([-1+0j])
+        return mx.array([-1+0j])
 
     s = npp_polyval(n, [0, 0, 2, 0, -3, 1])
     b3 = npp_polyval(n, [16, -8]) / s
@@ -5091,7 +5091,7 @@ def _campos_zeros(n):
     a1 = npp_polyval(n, [-6, -6]) / r
     a2 = 6 / r
 
-    k = np.arange(1, n+1)
+    k = mx.arange(1, n+1)
     x = npp_polyval(k, [0, a1, a2])
     y = npp_polyval(k, [b0, b1, b2, b3])
 
@@ -5111,20 +5111,20 @@ def _aberth(f, fp, x0, tol=1e-15, maxiter=50):
 
     N = len(x0)
 
-    x = np.array(x0, complex)
-    beta = np.empty_like(x0)
+    x = mx.array(x0, complex)
+    beta = mx.empty_like(x0)
 
     for iteration in range(maxiter):
         alpha = -f(x) / fp(x)  # Newton's method
 
         # Model "repulsion" between zeros
         for k in range(N):
-            beta[k] = np.sum(1/(x[k] - x[k+1:]))
-            beta[k] += np.sum(1/(x[k] - x[:k]))
+            beta[k] = mx.sum(1/(x[k] - x[k+1:]))
+            beta[k] += mx.sum(1/(x[k] - x[:k]))
 
         x += alpha / (1 + alpha * beta)
 
-        if not all(np.isfinite(x)):
+        if not all(mx.isfinite(x)):
             raise RuntimeError('Root-finding calculation failed')
 
         # Mekwi: The iterative process can be stopped when |hn| has become
@@ -5143,7 +5143,7 @@ def _bessel_zeros(N):
     modified Bessel function of the second kind
     """
     if N == 0:
-        return np.asarray([])
+        return mx.array([])
 
     # Generate starting points
     x0 = _campos_zeros(N)
@@ -5167,10 +5167,10 @@ def _bessel_zeros(N):
         x[i] = optimize.newton(f, x[i], fp, tol=1e-15)
 
     # Average complex conjugates to make them exactly symmetrical
-    x = np.mean((x, x[::-1].conj()), 0)
+    x = mx.mean((x, x[::-1].conj()), 0)
 
     # Zeros should sum to -1
-    if abs(np.sum(x) + 1) > 1e-15:
+    if abs(mx.sum(x) + 1) > 1e-15:
         raise RuntimeError('Generated zeros are inaccurate')
 
     return x
@@ -5187,13 +5187,13 @@ def _norm_factor(p, k):
     First 10 values are listed in "Bessel Scale Factors" table,
     "Bessel Filters Polynomials, Poles and Circuit Elements 2003, C. Bond."
     """
-    p = np.asarray(p, dtype=np.complex128)
+    p = mx.array(p, dtype=mx.complex128)
 
     def G(w):
         """
         Gain of filter
         """
-        return np.abs(k / np.prod(1j*w - p))
+        return mx.abs(k / mx.prod(1j*w - p))
 
     def cutoff(w):
         """
@@ -5242,9 +5242,9 @@ def besselap(N, norm='phase', *, xp=None, device=None):
 
     Returns
     -------
-    z : ndarray
+    z : array
         Zeros of the transfer function. Is always an empty array.
-    p : ndarray
+    p : array
         Poles of the transfer function.
     k : scalar
         Gain of the transfer function. For phase-normalized, this is always 1.
@@ -5287,7 +5287,7 @@ def besselap(N, norm='phase', *, xp=None, device=None):
     if abs(int(N)) != N:
         raise ValueError("Filter order must be a nonnegative integer")
 
-    N = int(N)  # calculation below doesn't always fit in np.int64
+    N = int(N)  # calculation below doesn't always fit in mx.int64
     if N == 0:
         p = []
         k = 1
@@ -5348,7 +5348,7 @@ def iirnotch(w0, Q, fs=2.0, *, xp=None, device=None):
 
     Returns
     -------
-    b, a : ndarray, ndarray
+    b, a : array, array
         Numerator (``b``) and denominator (``a``) polynomials
         of the IIR filter.
 
@@ -5372,7 +5372,7 @@ def iirnotch(w0, Q, fs=2.0, *, xp=None, device=None):
 
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     >>> fs = 200.0  # Sample frequency (Hz)
     >>> f0 = 60.0  # Frequency to be removed from signal (Hz)
@@ -5384,13 +5384,13 @@ def iirnotch(w0, Q, fs=2.0, *, xp=None, device=None):
     >>> freq, h = signal.freqz(b, a, fs=fs)
     >>> # Plot
     >>> fig, ax = plt.subplots(2, 1, figsize=(8, 6))
-    >>> ax[0].plot(freq, 20*np.log10(abs(h)), color='blue')
+    >>> ax[0].plot(freq, 20*mx.log10(abs(h)), color='blue')
     >>> ax[0].set_title("Frequency Response")
     >>> ax[0].set_ylabel("Amplitude [dB]", color='blue')
     >>> ax[0].set_xlim([0, 100])
     >>> ax[0].set_ylim([-25, 10])
     >>> ax[0].grid(True)
-    >>> ax[1].plot(freq, np.unwrap(np.angle(h))*180/np.pi, color='green')
+    >>> ax[1].plot(freq, mx.unwrap(mx.angle(h))*180/mx.pi, color='green')
     >>> ax[1].set_ylabel("Phase [deg]", color='green')
     >>> ax[1].set_xlabel("Frequency [Hz]")
     >>> ax[1].set_xlim([0, 100])
@@ -5431,7 +5431,7 @@ def iirpeak(w0, Q, fs=2.0, *, xp=None, device=None):
 
     Returns
     -------
-    b, a : ndarray, ndarray
+    b, a : array, array
         Numerator (``b``) and denominator (``a``) polynomials
         of the IIR filter.
 
@@ -5453,7 +5453,7 @@ def iirpeak(w0, Q, fs=2.0, *, xp=None, device=None):
     Design and plot filter to remove the frequencies other than the 300 Hz
     component from a signal sampled at 1000 Hz, using a quality factor Q = 30
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
 
@@ -5467,13 +5467,13 @@ def iirpeak(w0, Q, fs=2.0, *, xp=None, device=None):
     >>> freq, h = signal.freqz(b, a, fs=fs)
     >>> # Plot
     >>> fig, ax = plt.subplots(2, 1, figsize=(8, 6))
-    >>> ax[0].plot(freq, 20*np.log10(np.maximum(abs(h), 1e-5)), color='blue')
+    >>> ax[0].plot(freq, 20*mx.log10(mx.maximum(abs(h), 1e-5)), color='blue')
     >>> ax[0].set_title("Frequency Response")
     >>> ax[0].set_ylabel("Amplitude [dB]", color='blue')
     >>> ax[0].set_xlim([0, 500])
     >>> ax[0].set_ylim([-50, 10])
     >>> ax[0].grid(True)
-    >>> ax[1].plot(freq, np.unwrap(np.angle(h))*180/np.pi, color='green')
+    >>> ax[1].plot(freq, mx.unwrap(mx.angle(h))*180/mx.pi, color='green')
     >>> ax[1].set_ylabel("Phase [deg]", color='green')
     >>> ax[1].set_xlabel("Frequency [Hz]")
     >>> ax[1].set_xlim([0, 500])
@@ -5513,7 +5513,7 @@ def _design_notch_peak_filter(w0, Q, ftype, fs=2.0, *, xp=None, device=None):
 
     Returns
     -------
-    b, a : ndarray, ndarray
+    b, a : array, array
         Numerator (``b``) and denominator (``a``) polynomials
         of the IIR filter.
     """
@@ -5543,9 +5543,9 @@ def _design_notch_peak_filter(w0, Q, ftype, fs=2.0, *, xp=None, device=None):
 
     # Compute beta according to Eqs. 11.3.4 (p.575) and 11.3.19 (p.579) from
     # reference [1]. Due to assuming a -3 dB attenuation value, i.e, assuming
-    # gb = 1 / np.sqrt(2), the following terms simplify to:
-    #   (np.sqrt(1.0 - gb**2.0) / gb) = 1
-    #   (gb / np.sqrt(1.0 - gb**2.0)) = 1
+    # gb = 1 / mx.sqrt(2), the following terms simplify to:
+    #   (mx.sqrt(1.0 - gb**2.0) / gb) = 1
+    #   (gb / mx.sqrt(1.0 - gb**2.0)) = 1
     beta = math.tan(bw / 2.0)
 
     # Compute gain: formula 11.3.6 (p.575) from reference [1]
@@ -5605,7 +5605,7 @@ def iircomb(w0, Q, ftype='notch', fs=2.0, *, pass_zero=False, xp=None, device=No
 
     Returns
     -------
-    b, a : ndarray, ndarray
+    b, a : array, array
         Numerator (``b``) and denominator (``a``) polynomials
         of the IIR filter.
 
@@ -5639,7 +5639,7 @@ def iircomb(w0, Q, ftype='notch', fs=2.0, *, pass_zero=False, xp=None, device=No
 
     >>> from scipy import signal
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     >>> fs = 200.0  # Sample frequency (Hz)
     >>> f0 = 20.0  # Frequency to be removed from signal (Hz)
@@ -5654,13 +5654,13 @@ def iircomb(w0, Q, ftype='notch', fs=2.0, *, pass_zero=False, xp=None, device=No
     >>> response[response == 0] = 1e-20
     >>> # Plot
     >>> fig, ax = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
-    >>> ax[0].plot(freq, 20*np.log10(abs(response)), color='blue')
+    >>> ax[0].plot(freq, 20*mx.log10(abs(response)), color='blue')
     >>> ax[0].set_title("Frequency Response")
     >>> ax[0].set_ylabel("Amplitude [dB]", color='blue')
     >>> ax[0].set_xlim([0, 100])
     >>> ax[0].set_ylim([-30, 10])
     >>> ax[0].grid(True)
-    >>> ax[1].plot(freq, np.mod(np.angle(h, deg=True) + 180, 360) - 180, color='green')
+    >>> ax[1].plot(freq, mx.mod(mx.angle(h, deg=True) + 180, 360) - 180, color='green')
     >>> ax[1].set_ylabel("Phase [deg]", color='green')
     >>> ax[1].set_xlabel("Frequency [Hz]")
     >>> ax[1].set_xlim([0, 100])
@@ -5685,13 +5685,13 @@ def iircomb(w0, Q, ftype='notch', fs=2.0, *, pass_zero=False, xp=None, device=No
     >>> response[response == 0] = 1e-20
     >>> # Plot
     >>> fig, ax = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
-    >>> ax[0].plot(freq, 20*np.log10(np.maximum(abs(h), 1e-5)), color='blue')
+    >>> ax[0].plot(freq, 20*mx.log10(mx.maximum(abs(h), 1e-5)), color='blue')
     >>> ax[0].set_title("Frequency Response")
     >>> ax[0].set_ylabel("Amplitude [dB]", color='blue')
     >>> ax[0].set_xlim([0, 500])
     >>> ax[0].set_ylim([-80, 10])
     >>> ax[0].grid(True)
-    >>> ax[1].plot(freq, np.mod(np.angle(h)*180/np.pi + 180, 360) - 180, color='green')
+    >>> ax[1].plot(freq, mx.mod(mx.angle(h)*180/mx.pi + 180, 360) - 180, color='green')
     >>> ax[1].set_ylabel("Phase [deg]", color='green')
     >>> ax[1].set_xlabel("Frequency [Hz]")
     >>> ax[1].set_xlim([0, 500])
@@ -5737,9 +5737,9 @@ def iircomb(w0, Q, ftype='notch', fs=2.0, *, pass_zero=False, xp=None, device=No
         G0, G = 0, 1
 
     # Compute beta according to Eq. 11.5.3 (p. 591) from reference [1]. Due to
-    # assuming a -3 dB attenuation value, i.e, assuming GB = 1 / np.sqrt(2),
+    # assuming a -3 dB attenuation value, i.e, assuming GB = 1 / mx.sqrt(2),
     # the following term simplifies to:
-    #   np.sqrt((GB**2 - G0**2) / (G**2 - GB**2)) = 1
+    #   mx.sqrt((GB**2 - G0**2) / (G**2 - GB**2)) = 1
     beta = math.tan(N * w_delta / 4)
 
     # Compute filter coefficients
@@ -5814,7 +5814,7 @@ def gammatone(freq, ftype, order=None, numtaps=None, fs=None, *, xp=None, device
 
     Returns
     -------
-    b, a : ndarray, ndarray
+    b, a : array, array
         Numerator (``b``) and denominator (``a``) polynomials of the filter.
 
     Raises
@@ -5850,12 +5850,12 @@ def gammatone(freq, ftype, order=None, numtaps=None, fs=None, *, xp=None, device
     IIR Gammatone filter centered at 440 Hz
 
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
     >>> fc, fs = 440, 16000
     >>> b, a = signal.gammatone(fc, 'iir', fs=fs)
     >>> w, h = signal.freqz(b, a)
-    >>> plt.plot(w * fs / (2 * np.pi), 20 * np.log10(abs(h)))
+    >>> plt.plot(w * fs / (2 * mx.pi), 20 * mx.log10(abs(h)))
     >>> plt.xscale('log')
     >>> plt.title('Gammatone filter frequency response')
     >>> plt.xlabel('Frequency [Hz]')
@@ -5944,8 +5944,8 @@ def gammatone(freq, ftype, order=None, numtaps=None, fs=None, *, xp=None, device
         g = math.hypot(g.real, g.imag)
 
         # Create empty filter coefficient lists
-        b = [None] * 5  #np.empty(5)
-        a = [None] * 9  # np.empty(9)
+        b = [None] * 5  #mx.empty(5)
+        a = [None] * 9  # mx.empty(9)
 
         # Calculate the numerator coefficients
         b[0] = (T ** 4) / g

@@ -9,7 +9,7 @@ Python translation by Nickolai Belakovski.
 '''
 
 from .consts import DEBUGGING, REALMAX
-import numpy as np
+import mlx.core as mx
 
 def redrat(ared, pred, rshrink):
     '''
@@ -24,10 +24,10 @@ def redrat(ared, pred, rshrink):
     # Calculation starts #
     #====================#
 
-    if np.isnan(ared):
+    if mx.isnan(ared):
         # This should not happen in unconstrained problems due to the moderated extreme barrier.
         ratio = -REALMAX
-    elif np.isnan(pred) or pred <= 0:
+    elif mx.isnan(pred) or pred <= 0:
         # The trust-region subproblem solver fails in this rare case. Instead of terminating as Powell's
         # original code does, we set ratio as follows so that the solver may continue to progress.
         if ared > 0:
@@ -37,9 +37,9 @@ def redrat(ared, pred, rshrink):
             # Set the ration to a large negative number to signify a bad trust-region step, so that the
             # solver will check whether to take a geometry step or reduce rho.
             ratio = -REALMAX
-    elif np.isposinf(pred) and np.isposinf(ared):
+    elif mx.isposinf(pred) and mx.isposinf(ared):
         ratio = 1  # ared/pred = NaN if calculated directly
-    elif np.isposinf(pred) and np.isneginf(ared):
+    elif mx.isposinf(pred) and mx.isneginf(ared):
         ratio = -REALMAX  # ared/pred = NaN if calculated directly
     else:
         ratio = ared/pred
@@ -50,5 +50,5 @@ def redrat(ared, pred, rshrink):
 
     # Postconditions
     if DEBUGGING:
-        assert not np.isnan(ratio)
+        assert not mx.isnan(ratio)
     return ratio

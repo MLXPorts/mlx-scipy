@@ -1,6 +1,6 @@
 from functools import wraps
 import scipy._lib.array_api_extra as xpx
-import numpy as np
+import mlx.core as mx
 from ._ufuncs import (_spherical_jn, _spherical_yn, _spherical_in,
                       _spherical_kn, _spherical_jn_d, _spherical_yn_d,
                       _spherical_in_d, _spherical_kn_d)
@@ -14,7 +14,7 @@ def use_reflection(sign_n_even=None, reflection_fun=None):
     def decorator(fun):
         def standard_reflection(n, z, derivative):
             # sign_n_even indicates the sign when the order `n` is even
-            sign = np.where(n % 2 == 0, sign_n_even, -sign_n_even)
+            sign = mx.where(n % 2 == 0, sign_n_even, -sign_n_even)
             # By the chain rule, differentiation at `-z` adds a minus sign
             sign = -sign if derivative else sign
             # Evaluate at positive z (minus negative z) and adjust the sign
@@ -22,9 +22,9 @@ def use_reflection(sign_n_even=None, reflection_fun=None):
 
         @wraps(fun)
         def wrapper(n, z, derivative=False):
-            z = np.asarray(z)
+            z = mx.array(z)
 
-            if np.issubdtype(z.dtype, np.complexfloating):
+            if mx.issubdtype(z.dtype, mx.complexfloating):
                 return fun(n, z, derivative)  # complex dtype just works
 
             f2 = standard_reflection if reflection_fun is None else reflection_fun
@@ -57,7 +57,7 @@ def spherical_jn(n, z, derivative=False):
 
     Returns
     -------
-    jn : ndarray
+    jn : array
 
     Notes
     -----
@@ -99,26 +99,26 @@ def spherical_jn(n, z, derivative=False):
     We can verify the relation for the derivative from the Notes
     for :math:`n=3` in the interval :math:`[1, 2]`:
 
-    >>> import numpy as np
-    >>> x = np.arange(1.0, 2.0, 0.01)
-    >>> np.allclose(spherical_jn(3, x, True),
+    >>> import mlx.core as mx
+    >>> x = mx.arange(1.0, 2.0, 0.01)
+    >>> mx.allclose(spherical_jn(3, x, True),
     ...             spherical_jn(2, x) - 4/x * spherical_jn(3, x))
     True
 
     The first few :math:`j_n` with real argument:
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.arange(0.0, 10.0, 0.01)
+    >>> x = mx.arange(0.0, 10.0, 0.01)
     >>> fig, ax = plt.subplots()
     >>> ax.set_ylim(-0.5, 1.5)
     >>> ax.set_title(r'Spherical Bessel functions $j_n$')
-    >>> for n in np.arange(0, 4):
+    >>> for n in mx.arange(0, 4):
     ...     ax.plot(x, spherical_jn(n, x), label=rf'$j_{n}$')
     >>> plt.legend(loc='best')
     >>> plt.show()
 
     """
-    n = np.asarray(n, dtype=np.dtype("long"))
+    n = mx.array(n, dtype=mx.dtype("long"))
     if derivative:
         return _spherical_jn_d(n, z)
     else:
@@ -147,7 +147,7 @@ def spherical_yn(n, z, derivative=False):
 
     Returns
     -------
-    yn : ndarray
+    yn : array
 
     Notes
     -----
@@ -188,26 +188,26 @@ def spherical_yn(n, z, derivative=False):
     We can verify the relation for the derivative from the Notes
     for :math:`n=3` in the interval :math:`[1, 2]`:
 
-    >>> import numpy as np
-    >>> x = np.arange(1.0, 2.0, 0.01)
-    >>> np.allclose(spherical_yn(3, x, True),
+    >>> import mlx.core as mx
+    >>> x = mx.arange(1.0, 2.0, 0.01)
+    >>> mx.allclose(spherical_yn(3, x, True),
     ...             spherical_yn(2, x) - 4/x * spherical_yn(3, x))
     True
 
     The first few :math:`y_n` with real argument:
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.arange(0.0, 10.0, 0.01)
+    >>> x = mx.arange(0.0, 10.0, 0.01)
     >>> fig, ax = plt.subplots()
     >>> ax.set_ylim(-2.0, 1.0)
     >>> ax.set_title(r'Spherical Bessel functions $y_n$')
-    >>> for n in np.arange(0, 4):
+    >>> for n in mx.arange(0, 4):
     ...     ax.plot(x, spherical_yn(n, x), label=rf'$y_{n}$')
     >>> plt.legend(loc='best')
     >>> plt.show()
 
     """
-    n = np.asarray(n, dtype=np.dtype("long"))
+    n = mx.array(n, dtype=mx.dtype("long"))
     if derivative:
         return _spherical_yn_d(n, z)
     else:
@@ -236,7 +236,7 @@ def spherical_in(n, z, derivative=False):
 
     Returns
     -------
-    in : ndarray
+    in : array
 
     Notes
     -----
@@ -276,26 +276,26 @@ def spherical_in(n, z, derivative=False):
     We can verify the relation for the derivative from the Notes
     for :math:`n=3` in the interval :math:`[1, 2]`:
 
-    >>> import numpy as np
-    >>> x = np.arange(1.0, 2.0, 0.01)
-    >>> np.allclose(spherical_in(3, x, True),
+    >>> import mlx.core as mx
+    >>> x = mx.arange(1.0, 2.0, 0.01)
+    >>> mx.allclose(spherical_in(3, x, True),
     ...             spherical_in(2, x) - 4/x * spherical_in(3, x))
     True
 
     The first few :math:`i_n` with real argument:
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.arange(0.0, 6.0, 0.01)
+    >>> x = mx.arange(0.0, 6.0, 0.01)
     >>> fig, ax = plt.subplots()
     >>> ax.set_ylim(-0.5, 5.0)
     >>> ax.set_title(r'Modified spherical Bessel functions $i_n$')
-    >>> for n in np.arange(0, 4):
+    >>> for n in mx.arange(0, 4):
     ...     ax.plot(x, spherical_in(n, x), label=rf'$i_{n}$')
     >>> plt.legend(loc='best')
     >>> plt.show()
 
     """
-    n = np.asarray(n, dtype=np.dtype("long"))
+    n = mx.array(n, dtype=mx.dtype("long"))
     if derivative:
         return _spherical_in_d(n, z)
     else:
@@ -331,7 +331,7 @@ def spherical_kn(n, z, derivative=False):
 
     Returns
     -------
-    kn : ndarray
+    kn : array
 
     Notes
     -----
@@ -371,26 +371,26 @@ def spherical_kn(n, z, derivative=False):
     We can verify the relation for the derivative from the Notes
     for :math:`n=3` in the interval :math:`[1, 2]`:
 
-    >>> import numpy as np
-    >>> x = np.arange(1.0, 2.0, 0.01)
-    >>> np.allclose(spherical_kn(3, x, True),
+    >>> import mlx.core as mx
+    >>> x = mx.arange(1.0, 2.0, 0.01)
+    >>> mx.allclose(spherical_kn(3, x, True),
     ...             - 4/x * spherical_kn(3, x) - spherical_kn(2, x))
     True
 
     The first few :math:`k_n` with real argument:
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.arange(0.0, 4.0, 0.01)
+    >>> x = mx.arange(0.0, 4.0, 0.01)
     >>> fig, ax = plt.subplots()
     >>> ax.set_ylim(0.0, 5.0)
     >>> ax.set_title(r'Modified spherical Bessel functions $k_n$')
-    >>> for n in np.arange(0, 4):
+    >>> for n in mx.arange(0, 4):
     ...     ax.plot(x, spherical_kn(n, x), label=rf'$k_{n}$')
     >>> plt.legend(loc='best')
     >>> plt.show()
 
     """
-    n = np.asarray(n, dtype=np.dtype("long"))
+    n = mx.array(n, dtype=mx.dtype("long"))
     if derivative:
         return _spherical_kn_d(n, z)
     else:

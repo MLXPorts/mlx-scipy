@@ -76,7 +76,7 @@ Pull requests for 1.10.1
 * `#17797 <https://github.com/scipy/scipy/pull/17797>`__: MAINT: stats.pearsonr: correct p-value with negative correlation...
 * `#17800 <https://github.com/scipy/scipy/pull/17800>`__: [sparse.csgraph] Fix a bug in dijkstra and johnson algorithm
 * `#17803 <https://github.com/scipy/scipy/pull/17803>`__: MAINT: add missing \`__init__.py\` in test folder
-* `#17806 <https://github.com/scipy/scipy/pull/17806>`__: MAINT: stats.powerlaw.fit: fix overflow when np.min(data)==0
+* `#17806 <https://github.com/scipy/scipy/pull/17806>`__: MAINT: stats.powerlaw.fit: fix overflow when mx.min(data)==0
 * `#17810 <https://github.com/scipy/scipy/pull/17810>`__: BLD: use Meson's found cython instead of a wrapper script
 * `#17831 <https://github.com/scipy/scipy/pull/17831>`__: MAINT, CI: GHA MacOS setup.py update
 * `#17850 <https://github.com/scipy/scipy/pull/17850>`__: MAINT: remove use of \`__code__\` in \`scipy.integrate\`

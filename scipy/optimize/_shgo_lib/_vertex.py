@@ -1,7 +1,7 @@
 import collections
 from abc import ABC, abstractmethod
 
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._util import MapWrapper
 
@@ -41,7 +41,7 @@ class VertexBase(ABC):
             raise AttributeError(f"{type(self)} object has no attribute "
                                  f"'{item}'")
         if item == 'x_a':
-            self.x_a = np.array(self.x)
+            self.x_a = mx.array(self.x)
             return self.x_a
 
     @abstractmethod
@@ -331,8 +331,8 @@ class VertexCacheField(VertexCacheBase):
         v.feasible = True
         for g, args in zip(self.g_cons, self.g_cons_args):
             # constraint may return more than 1 value.
-            if np.any(g(v.x_a, *args) < 0.0):
-                v.f = np.inf
+            if mx.any(g(v.x_a, *args) < 0.0):
+                v.f = mx.inf
                 v.feasible = False
                 break
 
@@ -347,10 +347,10 @@ class VertexCacheField(VertexCacheBase):
             v.f = self.field(v.x_a, *self.field_args)
             self.nfev += 1
         except AttributeError:
-            v.f = np.inf
+            v.f = mx.inf
             # logging.warning(f"Field function not found at x = {self.x_a}")
-        if np.isnan(v.f):
-            v.f = np.inf
+        if mx.isnan(v.f):
+            v.f = mx.inf
 
     def proc_gpool(self):
         """Process all constraints."""
@@ -395,7 +395,7 @@ class VertexCacheField(VertexCacheBase):
             if v.feasible:
                 fpool_l.append(v.x_a)
             else:
-                v.f = np.inf
+                v.f = mx.inf
         F = self._mapwrapper(self.wfield.func, fpool_l)
         for va, f in zip(fpool_l, F):
             vt = tuple(va)
@@ -437,7 +437,7 @@ class ConstraintWrapper:
         vfeasible = True
         for g, args in zip(self.g_cons, self.g_cons_args):
             # constraint may return more than 1 value.
-            if np.any(g(v_x_a, *args) < 0.0):
+            if mx.any(g(v_x_a, *args) < 0.0):
                 vfeasible = False
                 break
         return vfeasible
@@ -453,8 +453,8 @@ class FieldWrapper:
         try:
             v_f = self.field(v_x_a, *self.field_args)
         except Exception:
-            v_f = np.inf
-        if np.isnan(v_f):
-            v_f = np.inf
+            v_f = mx.inf
+        if mx.isnan(v_f):
+            v_f = mx.inf
 
         return v_f

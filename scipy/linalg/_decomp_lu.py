@@ -103,9 +103,9 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
     True
     """
     if check_finite:
-        a1 = mx.asarray_chkfinite(a)
+        a1 = mx.array_chkfinite(a)
     else:
-        a1 = mx.asarray(a)
+        a1 = mx.array(a)
 
     # accommodate empty arrays
     if a1.size == 0:
@@ -191,9 +191,9 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
 @_apply_over_batch(('lu', 2), ('piv', 1), ('b', '1|2'))
 def _lu_solve(lu, piv, b, trans, overwrite_b, check_finite):
     if check_finite:
-        b1 = mx.asarray_chkfinite(b)
+        b1 = mx.array_chkfinite(b)
     else:
-        b1 = mx.asarray(b)
+        b1 = mx.array(b)
 
     overwrite_b = overwrite_b or _datacopied(b1, b)
 
@@ -308,7 +308,7 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True,
     True
 
     """
-    a1 = mx.asarray_chkfinite(a) if check_finite else mx.asarray(a)
+    a1 = mx.array_chkfinite(a) if check_finite else mx.array(a)
     if a1.ndim < 2:
         raise ValueError('The input array must be at least two-dimensional.')
 

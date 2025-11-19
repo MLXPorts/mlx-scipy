@@ -1,7 +1,7 @@
 import warnings
 
 import pytest
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_equal
 import scipy as sp
 from scipy.sparse import dok_array, dok_matrix
@@ -16,7 +16,7 @@ def d():
 
 @pytest.fixture
 def A():
-    return np.array([[0, 1, 2], [0, 0, 0], [0, 0, 0]])
+    return mx.array([[0, 1, 2], [0, 0, 0], [0, 0, 0]])
 
 @pytest.fixture(params=[dok_array, dok_matrix])
 def Asp(request):
@@ -25,7 +25,7 @@ def Asp(request):
     A[(0, 2)] = 2
     yield A
 
-# Note: __iter__ and comparison dunders act like ndarrays for DOK, not dict.
+# Note: __iter__ and comparison dunders act like arrays for DOK, not dict.
 # Dunders reversed, or, ror, ior work as dict for dok_matrix, raise for dok_array
 # All other dict methods on DOK format act like dict methods (with extra checks).
 
@@ -113,7 +113,7 @@ def test_update(d, Asp):
         assert_equal(Bsp.toarray(), Asp.toarray())
 
     with pytest.raises(ValueError, match="Inexact indices .* not allowed"):
-        Asp.update(np.zeros((2,2)))
+        Asp.update(mx.zeros((2,2)))
     with pytest.raises(IndexError, match="length needs to match self.shape"):
         Asp.update({(3, 2, 1, 0): 1.2})
     with pytest.raises(IndexError, match="integer keys required"):
@@ -188,7 +188,7 @@ def test_dunder_ror(d, Asp):
         assert d.__ror__(d) == Asp.__ror__(d)
         assert d | Asp
 
-# Note: comparison dunders, e.g. ==, >=, etc follow np.array not dict
+# Note: comparison dunders, e.g. ==, >=, etc follow mx.array not dict
 def test_dunder_eq(A, Asp):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", sp.sparse.SparseEfficiencyWarning)
@@ -219,6 +219,6 @@ def test_dunder_ge(A, Asp):
         assert (Asp >= Asp).toarray().all()
         assert (A >= Asp).all()
 
-# Note: iter dunder follows np.array not dict
+# Note: iter dunder follows mx.array not dict
 def test_dunder_iter(A, Asp):
     assert all((a == asp).all() for a, asp in zip(A, Asp))

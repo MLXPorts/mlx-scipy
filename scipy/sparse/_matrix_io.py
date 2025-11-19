@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import scipy as sp
 
 __all__ = ['save_npz', 'load_npz']
@@ -34,7 +34,7 @@ def save_npz(file, matrix, compressed=True):
     --------
     Store sparse matrix to disk, and load it again:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy as sp
     >>> sparse_matrix = sp.sparse.csc_matrix([[0, 0, 3], [4, 0, 0]])
     >>> sparse_matrix
@@ -76,9 +76,9 @@ def save_npz(file, matrix, compressed=True):
     if isinstance(matrix, sp.sparse.sparray):
         arrays_dict.update(_is_array=True)
     if compressed:
-        np.savez_compressed(file, **arrays_dict)
+        mx.savez_compressed(file, **arrays_dict)
     else:
-        np.savez(file, **arrays_dict)
+        mx.savez(file, **arrays_dict)
 
 
 def load_npz(file):
@@ -109,7 +109,7 @@ def load_npz(file):
     --------
     Store sparse array/matrix to disk, and load it again:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import scipy as sp
     >>> sparse_array = sp.sparse.csc_array([[0, 0, 3], [4, 0, 0]])
     >>> sparse_array
@@ -135,7 +135,7 @@ def load_npz(file):
     >>> tmp = sp.sparse.load_npz('/tmp/sparse_matrix.npz')
     >>> sparse_array = sp.sparse.csr_array(tmp)
     """
-    with np.load(file, **PICKLE_KWARGS) as loaded:
+    with mx.load(file, **PICKLE_KWARGS) as loaded:
         sparse_format = loaded.get('format')
         if sparse_format is None:
             raise ValueError(f'The file {file} does not contain '

@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, wait
 
-import numpy as np
+import mlx.core as mx
 from .common import Benchmark, safe_import
 
 with safe_import():
@@ -9,24 +9,24 @@ with safe_import():
 
 
 def random_uniform(shape):
-    return np.random.uniform(-20, 20, shape)
+    return mx.random.uniform(-20, 20, shape)
 
 
 def random_logarithmic(shape):
-    return 10**np.random.uniform(-20, 20, shape)
+    return 10**mx.random.uniform(-20, 20, shape)
 
 
 def random_integer(shape):
-    return np.random.randint(-1000, 1000, shape)
+    return mx.random.randint(-1000, 1000, shape)
 
 
 def random_binary(shape):
-    return np.random.randint(0, 2, shape)
+    return mx.random.randint(0, 2, shape)
 
 
 def random_spatial(shape):
-    P = np.random.uniform(-1, 1, size=(shape[0], 2))
-    Q = np.random.uniform(-1, 1, size=(shape[1], 2))
+    P = mx.random.uniform(-1, 1, size=(shape[0], 2))
+    Q = mx.random.uniform(-1, 1, size=(shape[1], 2))
     return cdist(P, Q, 'sqeuclidean')
 
 

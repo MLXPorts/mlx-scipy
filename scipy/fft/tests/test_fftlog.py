@@ -1,7 +1,7 @@
 import warnings
 import math
 
-import numpy as np
+import mlx.core as mx
 import pytest
 
 from scipy.fft._fftlog import fht, ifht, fhtoffset
@@ -19,9 +19,9 @@ def test_fht_agrees_with_fftlog(xp):
 
     # test function, analytical Hankel transform is of the same form
     def f(r, mu):
-        return r**(mu+1)*np.exp(-r**2/2)
+        return r**(mu+1)*mx.exp(-r**2/2)
 
-    r = np.logspace(-4, 4, 16)
+    r = mx.logspace(-4, 4, 16)
 
     dln = math.log(r[1]/r[0])
     mu = 0.3
@@ -60,7 +60,7 @@ def test_fht_agrees_with_fftlog(xp):
     # test 3: positive bias
     bias = 0.8
     offset = fhtoffset(dln, mu, bias=bias)
-    # offset is a np.float64, which array-api-strict disallows
+    # offset is a mx.float64, which array-api-strict disallows
     # even if it's technically a subclass of float
     offset = float(offset)
 
@@ -99,7 +99,7 @@ def test_fht_agrees_with_fftlog(xp):
 @pytest.mark.parametrize('bias', [0, 0.1, -0.1])
 @pytest.mark.parametrize('n', [64, 63])
 def test_fht_identity(n, bias, offset, optimal, xp):
-    rng = np.random.RandomState(3491349965)
+    rng = mx.random.RandomState(3491349965)
 
     a = xp.asarray(rng.standard_normal(n))
     dln = rng.uniform(-1, 1)
@@ -107,7 +107,7 @@ def test_fht_identity(n, bias, offset, optimal, xp):
 
     if optimal:
         offset = fhtoffset(dln, mu, initial=offset, bias=bias)
-        # offset is a np.float64, which array-api-strict disallows
+        # offset is a mx.float64, which array-api-strict disallows
         # even if it's technically a subclass of float
         offset = float(offset)
 
@@ -120,7 +120,7 @@ def test_fht_identity(n, bias, offset, optimal, xp):
 
 
 def test_fht_special_cases(xp):
-    rng = np.random.RandomState(3491349965)
+    rng = mx.random.RandomState(3491349965)
 
     a = xp.asarray(rng.standard_normal(64))
     dln = rng.uniform(-1, 1)
@@ -156,7 +156,7 @@ def test_fht_special_cases(xp):
 
 @pytest.mark.parametrize('n', [64, 63])
 def test_fht_exact(n, xp):
-    rng = np.random.RandomState(3491349965)
+    rng = mx.random.RandomState(3491349965)
 
     # for a(r) a power law r^\gamma, the fast Hankel transform produces the
     # exact continuous Hankel transform if biased with q = \gamma
@@ -166,19 +166,19 @@ def test_fht_exact(n, xp):
     # convergence of HT: -1-mu < gamma < 1/2
     gamma = rng.uniform(-1-mu, 1/2)
 
-    r = np.logspace(-2, 2, n)
+    r = mx.logspace(-2, 2, n)
     a = xp.asarray(r**gamma)
 
     dln = math.log(r[1]/r[0])
 
     offset = fhtoffset(dln, mu, initial=0.0, bias=gamma)
-    # offset is a np.float64, which array-api-strict disallows
+    # offset is a mx.float64, which array-api-strict disallows
     # even if it's technically a subclass of float
     offset = float(offset)
 
     A = fht(a, dln, mu, offset=offset, bias=gamma)
 
-    k = np.exp(offset)/r[::-1]
+    k = mx.exp(offset)/r[::-1]
 
     # analytical result
     At = xp.asarray((2/k)**gamma * poch((mu+1-gamma)/2, gamma))
@@ -198,9 +198,9 @@ def test_array_like(xp, op):
 def test_gh_21661(xp, n):
     one = xp.asarray(1.0)
     mu = 0.0
-    r = np.logspace(-7, 1, n)
+    r = mx.logspace(-7, 1, n)
     dln = math.log(r[1] / r[0])
-    offset = fhtoffset(dln, initial=-6 * np.log(10), mu=mu)
+    offset = fhtoffset(dln, initial=-6 * mx.log(10), mu=mu)
     r = xp.asarray(r, dtype=one.dtype)
     k = math.exp(offset) / xp.flip(r, axis=-1)
 

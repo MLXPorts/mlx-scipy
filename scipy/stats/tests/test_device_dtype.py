@@ -1,5 +1,5 @@
 import pytest
-import numpy as np
+import mlx.core as mx
 from scipy import stats
 
 from scipy._lib._array_api import xp_device, is_array_api_strict, is_torch
@@ -10,13 +10,13 @@ skip_xp_backends = pytest.mark.skip_xp_backends
 dtypes = ['float32', 'float64']
 
 
-if np.__version__ < "2":  # need NEP 50 dtype behavior
+if mx.__version__ < "2":  # need NEP 50 dtype behavior
     pytest.skip(allow_module_level=True)
 
 
-def get_arrays(n_arrays, *, dtype=np.float64, xp=np, shape=(30,), device=None,
+def get_arrays(n_arrays, *, dtype=mx.float64, xp=np, shape=(30,), device=None,
                seed=84912165484321):
-    rng = np.random.default_rng(seed)
+    rng = mx.random.default_rng(seed)
 
     datas = []
     for i in range(n_arrays):

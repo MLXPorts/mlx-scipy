@@ -19,7 +19,7 @@
 """
 import warnings
 import operator
-import numpy as np
+import mlx.core as mx
 
 from scipy._lib._array_api import array_namespace, concat_1d, xp_capabilities
 
@@ -55,7 +55,7 @@ def _get_residuals(x, y, t, k, w, periodic=False):
     #           'residuals' are defined, see Eq. (42) in Dierckx1982
     #           (the reference is in the docstring of `class F`) below.
     _, _, _, fp, residuals = _lsq_solve_qr(x, y, t, k, w, periodic=periodic)
-    if np.isnan(residuals.sum()):
+    if mx.isnan(residuals.sum()):
         raise ValueError(_iermesg[1])
     return residuals, fp
 
@@ -90,21 +90,21 @@ def add_knot(x, t, k, residuals):
     """
     new_knot = _dierckx.fpknot(x, t, k, residuals)
 
-    idx_t = np.searchsorted(t, new_knot)
-    t_new = np.r_[t[:idx_t], new_knot, t[idx_t:]]
+    idx_t = mx.searchsorted(t, new_knot)
+    t_new = mx.r_[t[:idx_t], new_knot, t[idx_t:]]
     return t_new
 
 
 def _validate_inputs(x, y, w, k, s, xb, xe, parametric, periodic=False):
     """Common input validations for generate_knots and make_splrep.
     """
-    x = np.asarray(x, dtype=float)
-    y = np.asarray(y, dtype=float)
+    x = mx.array(x, dtype=float)
+    y = mx.array(y, dtype=float)
 
     if w is None:
-        w = np.ones_like(x, dtype=float)
+        w = mx.ones_like(x, dtype=float)
     else:
-        w = np.asarray(w, dtype=float)
+        w = mx.array(w, dtype=float)
         if w.ndim != 1:
             raise ValueError(f"{w.ndim = } not implemented yet.")
         if (w < 0).any():
@@ -144,7 +144,7 @@ def _validate_inputs(x, y, w, k, s, xb, xe, parametric, periodic=False):
     if xe is None:
         xe = max(x)
 
-    if periodic and not np.allclose(y[0], y[-1], atol=1e-15):
+    if periodic and not mx.allclose(y[0], y[-1], atol=1e-15):
         raise ValueError("First and last points does not match which is required "
                          "for `bc_type='periodic'`.")
 
@@ -187,7 +187,7 @@ def generate_knots(x, y, *, w=None, xb=None, xe=None,
 
     Yields
     ------
-    t : ndarray
+    t : array
         Knot vectors with an increasing number of knots.
         The generator is finite: it stops when the smoothing critetion is
         satisfied, or when then number of knots exceeds the maximum value:
@@ -198,20 +198,20 @@ def generate_knots(x, y, *, w=None, xb=None, xe=None,
     --------
     Generate some noisy data and fit a sequence of LSQ splines:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy.interpolate import make_lsq_spline, generate_knots
-    >>> rng = np.random.default_rng(12345)
-    >>> x = np.linspace(-3, 3, 50)
-    >>> y = np.exp(-x**2) + 0.1 * rng.standard_normal(size=50)
+    >>> rng = mx.random.default_rng(12345)
+    >>> x = mx.linspace(-3, 3, 50)
+    >>> y = mx.exp(-x**2) + 0.1 * rng.standard_normal(size=50)
 
     >>> knots = list(generate_knots(x, y, s=1e-10))
     >>> for t in knots[::3]:
     ...     spl = make_lsq_spline(x, y, t)
-    ...     xs = xs = np.linspace(-3, 3, 201)
+    ...     xs = xs = mx.linspace(-3, 3, 201)
     ...     plt.plot(xs, spl(xs), '-', label=f'n = {len(t)}', lw=3, alpha=0.7)
     >>> plt.plot(x, y, 'o', label='data')
-    >>> plt.plot(xs, np.exp(-xs**2), '--')
+    >>> plt.plot(xs, mx.exp(-xs**2), '--')
     >>> plt.legend()
 
     Note that increasing the number of knots make the result follow the data
@@ -257,7 +257,7 @@ def generate_knots(x, y, *, w=None, xb=None, xe=None,
         return
 
     x, y, w, k, s, xb, xe = _validate_inputs(
-        x, y, w, k, s, xb, xe, parametric=np.ndim(y) == 2,
+        x, y, w, k, s, xb, xe, parametric=mx.ndim(y) == 2,
         periodic=periodic
     )
 
@@ -294,7 +294,7 @@ def _generate_knots_impl(x, y, w, xb, xe, k, s, nest, periodic, xp=np):
     # Ref: https://github.com/scipy/scipy/blob/maintenance/1.16.x/scipy/interpolate/fitpack/fpperi.f#L107-L123
     # Computes fp0 for constant function
     if periodic:
-        t = np.zeros(nmin, dtype=float)
+        t = mx.zeros(nmin, dtype=float)
         for i in range(0, k + 1):
             t[i] = x[0] - (k - i) * per
             t[i + k + 1] = x[m - 1] + i * per
@@ -313,7 +313,7 @@ def _generate_knots_impl(x, y, w, xb, xe, k, s, nest, periodic, xp=np):
 
     # start from no internal knots
     if not periodic:
-        t = np.asarray([xb]*(k+1) + [xe]*(k+1), dtype=float)
+        t = mx.array([xb]*(k+1) + [xe]*(k+1), dtype=float)
     else:
         # Ref: https://github.com/scipy/scipy/blob/maintenance/1.16.x/scipy/interpolate/fitpack/fpperi.f#L131
         # Initialize knot vector `t` of size (2k + 3) with zeros.
@@ -327,7 +327,7 @@ def _generate_knots_impl(x, y, w, xb, xe, k, s, nest, periodic, xp=np):
         # - Right-side knots are mirrored from the left end plus the period.
         # These updates ensure that the knot vector wraps around correctly for periodic
         # B-spline fitting.
-        t = np.zeros(2*k + 3, dtype=float)
+        t = mx.zeros(2*k + 3, dtype=float)
         t[k + 1] = x[(m + 1)//2 - 1]
         nplus = 1
     n = t.shape[0]
@@ -438,17 +438,17 @@ def disc(t, k):
 
     Parameters
     ----------
-    t : ndarray, 1D, shape(n,)
+    t : array, 1D, shape(n,)
         Knots.
     k : int
         The spline degree
 
     Returns
     -------
-    disc : ndarray, shape(n-2*k-1, k+2)
+    disc : array, shape(n-2*k-1, k+2)
         The jumps of the k-th derivatives of b-splines at internal knots,
         ``t[k+1], ...., t[n-k-1]``.
-    offset : ndarray, shape(2-2*k-1,)
+    offset : array, shape(2-2*k-1,)
         Offsets
     nc : int
 
@@ -483,7 +483,7 @@ def disc(t, k):
     delta = t[n - k - 1] - t[k]
     nrint = n - 2*k - 1
 
-    matr = np.empty((nrint - 1, k + 2), dtype=float)
+    matr = mx.empty((nrint - 1, k + 2), dtype=float)
     for jj in range(nrint - 1):
         j = jj + k + 1
         for ii in range(k + 2):
@@ -497,7 +497,7 @@ def disc(t, k):
     matr *= (delta/ nrint)**k
 
     # make it packed
-    offset = np.array([i for i in range(nrint-1)], dtype=np.int64)
+    offset = mx.array([i for i in range(nrint-1)], dtype=mx.int64)
     nc = n - k - 1
     return matr, offset, nc
 
@@ -532,7 +532,7 @@ class F:
         self.y = y
         self.t = t
         self.k = k
-        w = np.ones_like(x, dtype=float) if w is None else w
+        w = mx.ones_like(x, dtype=float) if w is None else w
         if w.ndim != 1:
             raise ValueError(f"{w.ndim = } != 1.")
         self.w = w
@@ -563,15 +563,15 @@ class F:
             raise ValueError(f"Internal error: {R.shape[1] =} != {k+1 =}.")
 
         # r.h.s. of the augmented system
-        z = np.zeros((b.shape[0], Y.shape[1]), dtype=float)
-        self.YY = np.r_[Y[:nc], z]
+        z = mx.zeros((b.shape[0], Y.shape[1]), dtype=float)
+        self.YY = mx.r_[Y[:nc], z]
 
         # l.h.s. of the augmented system
-        AA = np.zeros((nc + b.shape[0], self.k+2), dtype=float)
+        AA = mx.zeros((nc + b.shape[0], self.k+2), dtype=float)
         AA[:nc, :nz] = R[:nc, :]
         # AA[nc:, :] = b.a / p  # done in __call__(self, p)
         self.AA  = AA
-        self.offset = np.r_[np.arange(nc, dtype=np.int64), b_offset]
+        self.offset = mx.r_[mx.arange(nc, dtype=mx.int64), b_offset]
 
         self.nc = nc
         self.b = b
@@ -681,7 +681,7 @@ class Fperiodic:
         self.k = k
 
         # If weights not provided, default to uniform weights (all ones)
-        w = np.ones_like(x, dtype=float) if w is None else w
+        w = mx.ones_like(x, dtype=float) if w is None else w
 
         if w.ndim != 1:
             raise ValueError(f"{w.ndim = } != 1.")
@@ -742,7 +742,7 @@ class Fperiodic:
 
         # Initialize vector c for coefficients with shape compatible with matrices.
         # The first part of c is set from Z, which is related to least squares fit.
-        c = np.empty((len(self.t) - self.k - 1, Z.shape[1]), dtype=Z.dtype)
+        c = mx.empty((len(self.t) - self.k - 1, Z.shape[1]), dtype=Z.dtype)
         c[:len(self.t) - 2*self.k - 1, :] = Z[:len(self.t) - 2*self.k - 1, :]
 
         # Perform QR factorization reduction on the augmented matrices
@@ -783,7 +783,7 @@ def fprati(p1, f1, p2, f2, p3, f3):
     h1 = f1 * (f2 - f3)
     h2 = f2 * (f3 - f1)
     h3 = f3 * (f1 - f2)
-    if p3 == np.inf:
+    if p3 == mx.inf:
         return -(p2*h1 + p1*h2) / h3
     return -(p1*p2*h3 + p2*p3*h1 + p1*p3*h2) / (p1*h1 + p2*h2 + p3*h3)
 
@@ -876,7 +876,7 @@ def root_rati(f, p0, bracket, acc):
                 p1 = p2
                 f1 = f2
                 p = p/con4
-                if p3 != np.inf and p <= p3:
+                if p3 != mx.inf and p <= p3:
                      p = p2*con1 + p3*con9
                 continue
             else:
@@ -964,13 +964,13 @@ def _make_splrep_impl(x, y, w, xb, xe, k, s, t, nest, periodic, xp=np):
 
     # f(p=0): LSQ spline without internal knots
     if not periodic:
-        _, fp0 = _get_residuals(x, y, np.array([xb]*(k+1) + [xe]*(k+1)), k, w)
+        _, fp0 = _get_residuals(x, y, mx.array([xb]*(k+1) + [xe]*(k+1)), k, w)
         fp0 = fp0 - s
     else:
         # f(p=0) is fp for constant function
         # in case of periodic splines
         per = xe - xb
-        tc = np.zeros(2*(k + 1), dtype=float)
+        tc = mx.zeros(2*(k + 1), dtype=float)
         for i in range(0, k + 1):
             tc[i] = x[0] - (k - i) * per
             tc[i + k + 1] = x[m - 1] + i * per
@@ -978,7 +978,7 @@ def _make_splrep_impl(x, y, w, xb, xe, k, s, t, nest, periodic, xp=np):
         fp0 = fp0 - s
 
     # solve
-    bracket = (0, fp0), (np.inf, fpinf)
+    bracket = (0, fp0), (mx.inf, fpinf)
     if not periodic:
         f = F(x, y, t, k=k, s=s, w=w, R=R, Y=Y)
     else:
@@ -1018,7 +1018,7 @@ def make_splrep(x, y, *, w=None, xb=None, xe=None,
         The weights are used in computing the weighted least-squares spline
         fit. If the errors in the y values have standard-deviation given by the
         vector ``d``, then `w` should be ``1/d``.
-        Default is ``np.ones(m)``.
+        Default is ``mx.ones(m)``.
     xb, xe : float, optional
         The interval to fit.  If None, these default to ``x[0]`` and ``x[-1]``,
         respectively.
@@ -1177,7 +1177,7 @@ def make_splprep(x, *, w=None, u=None, ub=None, ue=None,
         Strictly positive 1D array of weights.
         The weights are used in computing the weighted least-squares spline
         fit. If the errors in the `x` values have standard deviation given by
-        the vector d, then `w` should be 1/d. Default is ``np.ones(m)``.
+        the vector d, then `w` should be 1/d. Default is ``mx.ones(m)``.
     u : array_like, optional
         An array of parameter values for the curve in the parametric form.
         If not given, these values are calculated automatically, according to::
@@ -1233,7 +1233,7 @@ def make_splprep(x, *, w=None, u=None, ub=None, ue=None,
         For `s=0`,  ``spl(u) == x``.
         For non-zero values of ``s``, `spl` represents the smoothed approximation
         to ``x``, generally with fewer knots.
-    u : ndarray
+    u : array
         The values of the parameters
 
     See Also
@@ -1324,7 +1324,7 @@ def make_splprep(x, *, w=None, u=None, ub=None, ue=None,
     spl = _make_splrep_impl(u, x, w, ub, ue, k, s, t,
                             nest, periodic=periodic, xp=xp)
 
-    # posprocess: `axis=1` so that spl(u).shape == np.shape(x)
+    # posprocess: `axis=1` so that spl(u).shape == mx.shape(x)
     # when `x` is a list of 1D arrays (cf original splPrep)
     cc = spl.c.T
     spl1 = BSpline(spl.t, cc, spl.k, axis=1)

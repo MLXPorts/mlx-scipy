@@ -30,7 +30,7 @@ Usage of Datasets
 
 SciPy dataset methods can be simply called as follows: ``'<dataset-name>()'``
 This downloads the dataset files over the network once, and saves the cache,
-before returning a `numpy.ndarray` object representing the dataset.
+before returning a `mx.array` object representing the dataset.
 
 Note that the return data structure and data type might be different for
 different dataset methods. For a more detailed example on usage, please look

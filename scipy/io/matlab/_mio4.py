@@ -5,7 +5,7 @@ import warnings
 import math
 from operator import mul
 
-import numpy as np
+import mlx.core as mx
 
 import scipy.sparse
 
@@ -83,7 +83,7 @@ mclass_info = {
     }
 
 
-_MAX_INTP = np.iinfo(np.intp).max
+_MAX_INTP = mx.iinfo(mx.intp).max
 
 
 class VarHeader4:
@@ -171,12 +171,12 @@ class VarReader4:
 
         Returns
         -------
-        arr : ndarray
+        arr : array
             of dtype given by `hdr` ``dtype`` and shape given by `hdr` ``dims``
         '''
         dt = hdr.dtype
         # Fast product for large (>2GB) arrays.
-        num_bytes = reduce(mul, hdr.dims, np.int64(dt.itemsize))
+        num_bytes = reduce(mul, hdr.dims, mx.int64(dt.itemsize))
         if num_bytes > _MAX_INTP:
             raise ValueError(
                 f"Variable '{hdr.name.decode('latin1')}' has byte length "
@@ -188,7 +188,7 @@ class VarReader4:
                 f"'{hdr.name.decode('latin1')}'; is this a badly-formed file? "
                 f"Consider listing matrices with `whosmat` and loading named "
                 f"matrices with `variable_names` kwarg to `loadmat`")
-        arr = np.ndarray(shape=hdr.dims,
+        arr = mx.array(shape=hdr.dims,
                          dtype=dt,
                          buffer=buffer,
                          order='F')
@@ -207,7 +207,7 @@ class VarReader4:
 
         Returns
         -------
-        arr : ndarray
+        arr : array
             complex array if ``hdr.is_complex`` is True, otherwise a real
             numeric array
         '''
@@ -227,14 +227,14 @@ class VarReader4:
 
         Returns
         -------
-        arr : ndarray
+        arr : array
             with dtype 'U1', shape given by `hdr` ``dims``
         '''
-        arr = self.read_sub_array(hdr).astype(np.uint8)
+        arr = self.read_sub_array(hdr).astype(mx.uint8)
         S = arr.tobytes().decode('latin-1')
-        return np.ndarray(shape=hdr.dims,
-                          dtype=np.dtype('U1'),
-                          buffer=np.array(S)).copy()
+        return mx.array(shape=hdr.dims,
+                          dtype=mx.dtype('U1'),
+                          buffer=mx.array(S)).copy()
 
     def read_sparse_array(self, hdr):
         ''' Read and return sparse matrix type
@@ -267,14 +267,14 @@ class VarReader4:
         tmp = res[:-1,:]
         # All numbers are float64 in Matlab, but SciPy sparse expects int shape
         dims = (int(res[-1,0]), int(res[-1,1]))
-        I = np.ascontiguousarray(tmp[:,0],dtype='intc')  # fixes byte order also
-        J = np.ascontiguousarray(tmp[:,1],dtype='intc')
+        I = mx.ascontiguousarray(tmp[:,0],dtype='intc')  # fixes byte order also
+        J = mx.ascontiguousarray(tmp[:,1],dtype='intc')
         I -= 1  # for 1-based indexing
         J -= 1
         if res.shape[1] == 3:
-            V = np.ascontiguousarray(tmp[:,2],dtype='float')
+            V = mx.ascontiguousarray(tmp[:,2],dtype='float')
         else:
-            V = np.ascontiguousarray(tmp[:,2],dtype='complex')
+            V = mx.ascontiguousarray(tmp[:,2],dtype='complex')
             V.imag = tmp[:,3]
         return scipy.sparse.coo_array((V,(I,J)), dims)
 
@@ -298,10 +298,10 @@ class VarReader4:
 
             # Read only the row and column counts
             self.mat_stream.seek(dt.itemsize * (dims[0] - 1), 1)
-            rows = np.ndarray(shape=(), dtype=dt,
+            rows = mx.array(shape=(), dtype=dt,
                               buffer=self.mat_stream.read(dt.itemsize))
             self.mat_stream.seek(dt.itemsize * (dims[0] - 1), 1)
-            cols = np.ndarray(shape=(), dtype=dt,
+            cols = mx.array(shape=(), dtype=dt,
                               buffer=self.mat_stream.read(dt.itemsize))
 
             shape = (int(rows), int(cols))
@@ -327,7 +327,7 @@ class MatFile4Reader(MatFileReader):
 
     def guess_byte_order(self):
         self.mat_stream.seek(0)
-        mopt = read_dtype(self.mat_stream, np.dtype('i4'))
+        mopt = read_dtype(self.mat_stream, mx.dtype('i4'))
         self.mat_stream.seek(0)
         if mopt == 0:
             return '<'
@@ -362,7 +362,7 @@ class MatFile4Reader(MatFileReader):
         '''
         hdr = self._matrix_reader.read_header()
         # Fast product for large (>2GB) arrays.
-        remaining_bytes = reduce(mul, hdr.dims, np.int64(hdr.dtype.itemsize))
+        remaining_bytes = reduce(mul, hdr.dims, mx.int64(hdr.dtype.itemsize))
         if hdr.is_complex and not hdr.mclass == mxSPARSE_CLASS:
             remaining_bytes *= 2
         next_position = self.mat_stream.tell() + remaining_bytes
@@ -487,7 +487,7 @@ class VarWriter4:
         imagf : int, optional
             flag indicating complex
         '''
-        header = np.empty((), mdtypes_template['header'])
+        header = mx.empty((), mdtypes_template['header'])
         M = not SYS_LITTLE_ENDIAN
         O = 0
         header['mopt'] = (M * 1000 +
@@ -512,21 +512,21 @@ class VarWriter4:
         name : str
            name in matlab workspace
         '''
-        # we need to catch sparse first, because np.asarray returns an
+        # we need to catch sparse first, because mx.array returns an
         # an object array for scipy.sparse
         if scipy.sparse.issparse(arr):
             self.write_sparse(arr, name)
             return
-        arr = np.asarray(arr)
+        arr = mx.array(arr)
         dt = arr.dtype
         if not dt.isnative:
             arr = arr.astype(dt.newbyteorder('='))
         dtt = dt.type
-        if dtt is np.object_:
+        if dtt is mx.object_:
             raise TypeError('Cannot save object arrays in Mat4')
-        elif dtt is np.void:
+        elif dtt is mx.void:
             raise TypeError('Cannot save void type arrays')
-        elif dtt in (np.str_, np.bytes_):
+        elif dtt in (mx.str_, mx.bytes_):
             self.write_char(arr, name)
             return
         self.write_numeric(arr, name)
@@ -554,7 +554,7 @@ class VarWriter4:
             self.write_bytes(arr)
 
     def write_char(self, arr, name):
-        if arr.dtype.type == np.str_ and arr.dtype.itemsize != np.dtype('U1').itemsize:
+        if arr.dtype.type == mx.str_ and arr.dtype.itemsize != mx.dtype('U1').itemsize:
             arr = arr_to_chars(arr)
         arr = arr_to_2d(arr, self.oned_as)
         dims = arr.shape
@@ -566,11 +566,11 @@ class VarWriter4:
         if arr.dtype.kind == 'U':
             # Recode unicode to latin1
             n_chars = math.prod(dims)
-            st_arr = np.ndarray(shape=(),
+            st_arr = mx.array(shape=(),
                                 dtype=arr_dtype_number(arr, n_chars),
                                 buffer=arr)
             st = st_arr.item().encode('latin-1')
-            arr = np.ndarray(shape=dims, dtype='S1', buffer=st)
+            arr = mx.array(shape=dims, dtype='S1', buffer=st)
         self.write_bytes(arr)
 
     def write_sparse(self, arr, name):
@@ -580,7 +580,7 @@ class VarWriter4:
         '''
         A = arr.tocoo()  # convert to sparse COO format (ijv)
         imagf = A.dtype.kind == 'c'
-        ijv = np.zeros((A.nnz + 1, 3+imagf), dtype='f8')
+        ijv = mx.zeros((A.nnz + 1, 3+imagf), dtype='f8')
         ijv[:-1,0] = A.row
         ijv[:-1,1] = A.col
         ijv[:-1,0:2] += 1  # 1 based indexing

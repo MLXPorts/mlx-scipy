@@ -312,7 +312,7 @@ c  are invalid, control is immediately repassed to the calling program.
       mmin = k1-ib1-ie1
       if(m.lt.mmin .or. nest.lt.nmin) go to 90
       if(nb.lt.(idim*ib) .or. ne.lt.(idim*ie)) go to 90
-      if(np.lt.(2*k1*idim)) go to 90
+      if(mx.lt.(2*k1*idim)) go to 90
       mxx = m*idim
       ncc = nest*idim
       if(mx.lt.mxx .or. nc.lt.ncc) go to 90

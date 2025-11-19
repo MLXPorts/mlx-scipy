@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 
 
 #pythran export _Aij(float[:,:], int, int)
@@ -114,7 +114,7 @@ def _compute_outer_prob_inside_method(m, n, g, h):
     # Only need to preserve a single column of A, and only a
     # sliding window of it.
     # minj keeps track of the slide.
-    minj, maxj = 0, min(int(np.ceil(h / mg)), n + 1)
+    minj, maxj = 0, min(int(mx.ceil(h / mg)), n + 1)
     curlen = maxj - minj
     # Make a vector long enough to hold maximum window needed.
     lenA = min(2 * maxj + 2, n + 1)
@@ -127,17 +127,17 @@ def _compute_outer_prob_inside_method(m, n, g, h):
     # the column and keep track of an exponent separately and apply
     # it at the end of the calculation.  Similarly when multiplying by
     # the binomial coefficient
-    dtype = np.float64
-    A = np.ones(lenA, dtype=dtype)
+    dtype = mx.float64
+    A = mx.ones(lenA, dtype=dtype)
     # Initialize the first column
     A[minj:maxj] = 0.0
     for i in range(1, m + 1):
         # Generate the next column.
         # First calculate the sliding window
         lastminj, lastlen = minj, curlen
-        minj = max(int(np.floor((ng * i - h) / mg)) + 1, 0)
+        minj = max(int(mx.floor((ng * i - h) / mg)) + 1, 0)
         minj = min(minj, n)
-        maxj = min(int(np.ceil((ng * i + h) / mg)), n + 1)
+        maxj = min(int(mx.ceil((ng * i + h) / mg)), n + 1)
         if maxj <= minj:
             return 1.0
         # Now fill in the values. We cannot use cumsum, unfortunately.
@@ -157,25 +157,25 @@ def _compute_outer_prob_inside_method(m, n, g, h):
 # pythran export siegelslopes(float32[:], float32[:], str)
 # pythran export siegelslopes(float64[:], float64[:], str)
 def siegelslopes(y, x, method):
-    deltax = np.expand_dims(x, 1) - x
-    deltay = np.expand_dims(y, 1) - y
+    deltax = mx.expand_dims(x, 1) - x
+    deltay = mx.expand_dims(y, 1) - y
     slopes, intercepts = [], []
 
     for j in range(len(x)):
-        id_nonzero, = np.nonzero(deltax[j, :])
+        id_nonzero, = mx.nonzero(deltax[j, :])
         slopes_j = deltay[j, id_nonzero] / deltax[j, id_nonzero]
-        medslope_j = np.median(slopes_j)
+        medslope_j = mx.median(slopes_j)
         slopes.append(medslope_j)
         if method == 'separate':
             z = y*x[j] - y[j]*x
-            medintercept_j = np.median(z[id_nonzero] / deltax[j, id_nonzero])
+            medintercept_j = mx.median(z[id_nonzero] / deltax[j, id_nonzero])
             intercepts.append(medintercept_j)
 
-    medslope = np.median(np.asarray(slopes))
+    medslope = mx.median(mx.array(slopes))
     if method == "separate":
-        medinter = np.median(np.asarray(intercepts))
+        medinter = mx.median(mx.array(intercepts))
     else:
-        medinter = np.median(y - medslope*x)
+        medinter = mx.median(y - medslope*x)
 
     return medslope, medinter
 
@@ -184,7 +184,7 @@ def siegelslopes(y, x, method):
 def _poisson_binom_pmf(p):
     # implemented from poisson_binom [2] Equation 2
     n = p.shape[0]
-    pmf = np.zeros(n + 1, dtype=np.float64)
+    pmf = mx.zeros(n + 1, dtype=mx.float64)
     pmf[:2] = 1 - p[0], p[0]
     for i in range(1, n):
         tmp = pmf[:i+1] * p[i]
@@ -201,11 +201,11 @@ def _poisson_binom(k, args, tp):
     # kind - {'pdf', 'cdf'}
     n, m = args.shape  # number of shapes, batch size
     cache = {}
-    out = np.zeros(m, dtype=np.float64)
+    out = mx.zeros(m, dtype=mx.float64)
     for i in range(m):
         p = tuple(args[:, i])
         if p not in cache:
             pmf = _poisson_binom_pmf(args[:, i])
-            cache[p] = np.cumsum(pmf) if tp=='cdf' else pmf
+            cache[p] = mx.cumsum(pmf) if tp=='cdf' else pmf
         out[i] = cache[p][k[i]]
     return out

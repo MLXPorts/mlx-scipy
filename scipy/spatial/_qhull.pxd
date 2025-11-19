@@ -9,7 +9,7 @@ Qhull shared definitions, for use by other Cython modules
 # Distributed under the same BSD license as Scipy.
 #
 
-cdef extern from "numpy/ndarrayobject.h":
+cdef extern from "numpy/arrayobject.h":
     cdef enum:
         NPY_MAXDIMS
 

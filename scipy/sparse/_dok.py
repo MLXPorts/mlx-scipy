@@ -5,7 +5,7 @@ __docformat__ = "restructuredtext en"
 __all__ = ['dok_array', 'dok_matrix', 'isspmatrix_dok']
 
 import itertools
-import numpy as np
+import mlx.core as mx
 
 from ._matrix import spmatrix
 from ._base import _spbase, sparray, issparse
@@ -39,7 +39,7 @@ class _dok_base(_spbase, IndexMixin, dict):
             self.dtype = getdtype(arg1.dtype)
         else:  # Dense ctor
             try:
-                arg1 = np.asarray(arg1)
+                arg1 = mx.array(arg1)
             except Exception as e:
                 raise TypeError('Invalid input format.') from e
 
@@ -178,10 +178,10 @@ class _dok_base(_spbase, IndexMixin, dict):
         return self._get_array(list(i_range))
 
     def _get_array(self, idx):
-        idx = np.asarray(idx)
+        idx = mx.array(idx)
         if idx.ndim == 0:
             val = self._dict.get(int(idx), self.dtype.type(0))
-            return np.array(val, stype=self.dtype)
+            return mx.array(val, stype=self.dtype)
         new_dok = self._dok_container(idx.shape, dtype=self.dtype)
         dok_vals = [self._dict.get(i, 0) for i in idx.ravel()]
         if dok_vals:
@@ -190,7 +190,7 @@ class _dok_base(_spbase, IndexMixin, dict):
                     if v:
                         new_dok._dict[i] = v
             else:
-                new_idx = np.unravel_index(np.arange(len(dok_vals)), idx.shape)
+                new_idx = mx.unravel_index(mx.arange(len(dok_vals)), idx.shape)
                 new_idx = new_idx[0] if len(new_idx) == 1 else zip(*new_idx)
                 for i, v in zip(new_idx, dok_vals, strict=True):
                     if v:
@@ -260,7 +260,7 @@ class _dok_base(_spbase, IndexMixin, dict):
 
     def _get_arrayXarray(self, row, col):
         # inner indexing
-        i, j = map(np.atleast_2d, np.broadcast_arrays(row, col))
+        i, j = map(mx.atleast_2d, mx.broadcast_arrays(row, col))
         newdok = self._dok_container(i.shape, dtype=self.dtype)
 
         for key in itertools.product(range(i.shape[0]), range(i.shape[1])):
@@ -281,7 +281,7 @@ class _dok_base(_spbase, IndexMixin, dict):
         x_set = x.ravel()
         if len(idx_set) != len(x_set):
             if len(x_set) == 1:
-                x_set = np.full(len(idx_set), x_set[0], dtype=self.dtype)
+                x_set = mx.full(len(idx_set), x_set[0], dtype=self.dtype)
             else:
               raise ValueError("Need len(index)==len(data) or len(data)==1")
         for i, v in zip(idx_set, x_set):
@@ -304,7 +304,7 @@ class _dok_base(_spbase, IndexMixin, dict):
         x = x.ravel()
         self._dict.update(zip(zip(row, col), x))
 
-        for i in np.nonzero(x == 0)[0]:
+        for i in mx.nonzero(x == 0)[0]:
             key = (row[i], col[i])
             if self._dict[key] == 0:
                 # may have been superseded by later update
@@ -333,7 +333,7 @@ class _dok_base(_spbase, IndexMixin, dict):
                     o_items = zip(other.coords[0], other.data)
                 else:
                     o_items = zip(zip(*other.coords), other.data)
-            with np.errstate(over='ignore'):
+            with mx.errstate(over='ignore'):
                 new._dict.update((k, new[k] + v) for k, v in o_items)
         elif isdense(other):
             new = self.todense() + other
@@ -377,7 +377,7 @@ class _dok_base(_spbase, IndexMixin, dict):
                 return NotImplemented
 
         # matrix @ vector
-        result = np.zeros(self.shape[0], dtype=res_dtype)
+        result = mx.zeros(self.shape[0], dtype=res_dtype)
         for (i, j), v in self.items():
             result[i] += v * other[j]
         return result
@@ -392,7 +392,7 @@ class _dok_base(_spbase, IndexMixin, dict):
         # matrix @ multivector
         M = self.shape[0]
         new_shape = (M,) if other.ndim == 1 else (M, other.shape[1])
-        result = np.zeros(new_shape, dtype=result_dtype)
+        result = mx.zeros(new_shape, dtype=result_dtype)
         for (i, j), v in self.items():
             result[i] += v * other[j]
         return result
@@ -470,10 +470,10 @@ class _dok_base(_spbase, IndexMixin, dict):
             return self._coo_container(self.shape, dtype=self.dtype)
 
         idx_dtype = self._get_index_dtype(maxval=max(self.shape))
-        data = np.fromiter(self.values(), dtype=self.dtype, count=nnz)
+        data = mx.fromiter(self.values(), dtype=self.dtype, count=nnz)
         # handle 1d keys specially b/c not a tuple
         inds = zip(*self.keys()) if self.ndim > 1 else (self.keys(),)
-        coords = tuple(np.fromiter(ix, dtype=idx_dtype, count=nnz) for ix in inds)
+        coords = tuple(mx.fromiter(ix, dtype=idx_dtype, count=nnz) for ix in inds)
         A = self._coo_container((data, coords), shape=self.shape, dtype=self.dtype)
         A.has_canonical_format = True
         return A
@@ -521,10 +521,10 @@ class _dok_base(_spbase, IndexMixin, dict):
 
     # Added for 1d to avoid `tocsr` from _base.py
     def astype(self, dtype, casting='unsafe', copy=True):
-        dtype = np.dtype(dtype)
+        dtype = mx.dtype(dtype)
         if self.dtype != dtype:
             result = self._dok_container(self.shape, dtype=dtype)
-            data = np.array(list(self._dict.values()), dtype=dtype)
+            data = mx.array(list(self._dict.values()), dtype=dtype)
             result._dict = dict(zip(self._dict, data))
             return result
         elif copy:
@@ -568,7 +568,7 @@ class dok_array(_dok_base, sparray):
 
     This can be instantiated in several ways:
         dok_array(D)
-            where D is a 2-D ndarray
+            where D is a 2-D array
 
         dok_array(S)
             with another sparse array or matrix S (equivalent to S.todok())
@@ -602,9 +602,9 @@ class dok_array(_dok_base, sparray):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import dok_array
-    >>> S = dok_array((5, 5), dtype=np.float32)
+    >>> S = dok_array((5, 5), dtype=mx.float32)
     >>> for i in range(5):
     ...     for j in range(5):
     ...         S[i, j] = i + j    # Update element
@@ -621,7 +621,7 @@ class dok_matrix(spmatrix, _dok_base):
 
     This can be instantiated in several ways:
         dok_matrix(D)
-            where D is a 2-D ndarray
+            where D is a 2-D array
 
         dok_matrix(S)
             with another sparse array or matrix S (equivalent to S.todok())
@@ -655,9 +655,9 @@ class dok_matrix(spmatrix, _dok_base):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.sparse import dok_matrix
-    >>> S = dok_matrix((5, 5), dtype=np.float32)
+    >>> S = dok_matrix((5, 5), dtype=mx.float32)
     >>> for i in range(5):
     ...     for j in range(5):
     ...         S[i, j] = i + j    # Update element

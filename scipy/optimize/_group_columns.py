@@ -3,18 +3,18 @@ Pythran implementation of columns grouping for finite difference Jacobian
 estimation. Used by ._numdiff.group_columns and based on the Cython version.
 """
 
-import numpy as np
+import mlx.core as mx
 
 #pythran export group_dense(int, int, intc[:,:])
 #pythran export group_dense(int, int, int[:,:])
 def group_dense(m, n, A):
     B = A.T  # Transposed view for convenience.
 
-    # FIXME: use np.full once pythran supports it
-    groups = -np.ones(n, dtype=np.intp)
+    # FIXME: use mx.full once pythran supports it
+    groups = -mx.ones(n, dtype=mx.intp)
     current_group = 0
 
-    union = np.empty(m, dtype=np.intp)
+    union = mx.empty(m, dtype=mx.intp)
 
     # Loop through all the columns.
     for i in range(n):
@@ -57,10 +57,10 @@ def group_dense(m, n, A):
 #pythran export group_sparse(int, int, int32[::], int32[::])
 #pythran export group_sparse(int, int, int64[::], int64[::])
 def group_sparse(m, n, indices, indptr):
-    groups = -np.ones(n, dtype=np.intp)
+    groups = -mx.ones(n, dtype=mx.intp)
     current_group = 0
 
-    union = np.empty(m, dtype=np.intp)
+    union = mx.empty(m, dtype=mx.intp)
 
     for i in range(n):
         if groups[i] >= 0:

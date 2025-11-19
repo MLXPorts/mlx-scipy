@@ -1,6 +1,6 @@
 # cython: boundscheck=False, wraparound=False, cdivision=True
-import numpy as np
-cimport numpy as np
+import mlx.core as mx
+cimport mlx.core as mx
 from libc.math cimport sqrt, INFINITY
 from libc.string cimport memset
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
@@ -8,7 +8,7 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Free
 
 ctypedef unsigned char uchar
 
-np.import_array()
+mx.import_array()
 
 # _hierarchy_distance_update.pxi includes the definition of linkage_distance_update
 # and the distance update functions for the supported linkage methods.
@@ -17,8 +17,8 @@ cdef linkage_distance_update *linkage_methods = [
     _single, _complete, _average, _centroid, _median, _ward, _weighted]
 include "_structures.pxi"
 
-cdef inline np.npy_int64 condensed_index(np.npy_int64 n, np.npy_int64 i,
-                                         np.npy_int64 j) noexcept:
+cdef inline mx.npy_int64 condensed_index(mx.npy_int64 n, mx.npy_int64 i,
+                                         mx.npy_int64 j) noexcept:
     """
     Calculate the condensed index of element (i, j) in an n x n condensed
     matrix.
@@ -50,11 +50,11 @@ cpdef void calculate_cluster_sizes(double[:, :] Z, double[:] cs, int n) noexcept
 
     Parameters
     ----------
-    Z : ndarray
+    Z : array
         The linkage matrix. The fourth column can be empty.
-    cs : ndarray
+    cs : array
         The array to store the sizes.
-    n : ndarray
+    n : array
         The number of observations.
     """
     cdef int i, child_l, child_r
@@ -80,9 +80,9 @@ def cluster_dist(const double[:, :] Z, int[:] T, double cutoff, int n):
 
     Parameters
     ----------
-    Z : ndarray
+    Z : array
         The linkage matrix.
-    T : ndarray
+    T : array
         The array to store the cluster numbers. The i'th observation belongs to
         cluster ``T[i]``.
     cutoff : double
@@ -90,7 +90,7 @@ def cluster_dist(const double[:, :] Z, int[:] T, double cutoff, int n):
     n : int
         The number of observations.
     """
-    cdef double[:] max_dists = np.ndarray(n, dtype=np.float64)
+    cdef double[:] max_dists = mx.array(n, dtype=mx.float64)
     get_max_dist_for_each_cluster(Z, max_dists, n)
     cluster_monocrit(Z, max_dists, T, cutoff, n)
 
@@ -101,11 +101,11 @@ def cluster_in(const double[:, :] Z, const double[:, :] R, int[:] T, double cuto
 
     Parameters
     ----------
-    Z : ndarray
+    Z : array
         The linkage matrix.
-    R : ndarray
+    R : array
         The inconsistent matrix.
-    T : ndarray
+    T : array
         The array to store the cluster numbers. The i'th observation belongs to
         cluster ``T[i]``.
     cutoff : double
@@ -114,7 +114,7 @@ def cluster_in(const double[:, :] Z, const double[:, :] R, int[:] T, double cuto
     n : int
         The number of observations.
     """
-    cdef double[:] max_inconsists = np.ndarray(n, dtype=np.float64)
+    cdef double[:] max_inconsists = mx.array(n, dtype=mx.float64)
     get_max_Rfield_for_each_cluster(Z, R, max_inconsists, n, 3)
     cluster_monocrit(Z, max_inconsists, T, cutoff, n)
 
@@ -125,9 +125,9 @@ def cluster_maxclust_dist(const double[:, :] Z, int[:] T, int n, int mc):
 
     Parameters
     ----------
-    Z : ndarray
+    Z : array
         The linkage matrix.
-    T : ndarray
+    T : array
         The array to store the cluster numbers. The i'th observation belongs to
         cluster ``T[i]``.
     n : int
@@ -135,7 +135,7 @@ def cluster_maxclust_dist(const double[:, :] Z, int[:] T, int n, int mc):
     mc : int
         The maximum number of clusters.
     """
-    cdef double[:] max_dists = np.ndarray(n - 1, dtype=np.float64)
+    cdef double[:] max_dists = mx.array(n - 1, dtype=mx.float64)
     get_max_dist_for_each_cluster(Z, max_dists, n)
     # should use an O(n) algorithm
     cluster_maxclust_monocrit(Z, max_dists, T, n, mc)
@@ -148,11 +148,11 @@ cpdef void cluster_maxclust_monocrit(const double[:, :] Z, const double[:] MC, i
 
     Parameters
     ----------
-    Z : ndarray
+    Z : array
         The linkage matrix.
-    MC : ndarray
+    MC : array
         The monotonic criterion array.
-    T : ndarray
+    T : array
         The array to store the cluster numbers. The i'th observation belongs to
         cluster ``T[i]``.
     n : int
@@ -168,7 +168,7 @@ cpdef void cluster_maxclust_monocrit(const double[:, :] Z, const double[:] MC, i
 
     cdef int k, i_lc, i_rc, root, nc, lower_idx, upper_idx
     cdef double thresh
-    cdef int[:] curr_node = np.ndarray(n, dtype=np.intc)
+    cdef int[:] curr_node = mx.array(n, dtype=mx.intc)
 
     cdef int visited_size = (((n * 2) - 1) >> 3) + 1
     cdef uchar *visited = <uchar *>PyMem_Malloc(visited_size)
@@ -241,11 +241,11 @@ cpdef void cluster_monocrit(const double[:, :] Z, const double[:] MC, int[:] T,
 
     Parameters
     ----------
-    Z : ndarray
+    Z : array
         The linkage matrix.
-    MC : ndarray
+    MC : array
         The monotonic criterion array.
-    T : ndarray
+    T : array
         The array to store the cluster numbers. The i'th observation belongs to
         cluster ``T[i]``.
     cutoff : double
@@ -255,7 +255,7 @@ cpdef void cluster_monocrit(const double[:, :] Z, const double[:] MC, int[:] T,
         The number of observations.
     """
     cdef int k, i_lc, i_rc, root, n_cluster = 0, cluster_leader = -1
-    cdef int[:] curr_node = np.ndarray(n, dtype=np.intc)
+    cdef int[:] curr_node = mx.array(n, dtype=mx.intc)
 
     cdef int visited_size = (((n * 2) - 1) >> 3) + 1
     cdef uchar *visited = <uchar *>PyMem_Malloc(visited_size)
@@ -309,18 +309,18 @@ def cophenetic_distances(const double[:, :] Z, double[:] d, int n):
 
     Parameters
     ----------
-    Z : ndarray
+    Z : array
         The linkage matrix.
-    d : ndarray
+    d : array
         The condensed matrix to store the cophenetic distances.
     n : int
         The number of observations.
     """
     cdef int i, j, k, root, i_lc, i_rc, n_lc, n_rc, right_start
     cdef double dist
-    cdef int[:] curr_node = np.ndarray(n, dtype=np.intc)
-    cdef int[:] members = np.ndarray(n, dtype=np.intc)
-    cdef int[:] left_start = np.ndarray(n, dtype=np.intc)
+    cdef int[:] curr_node = mx.array(n, dtype=mx.intc)
+    cdef int[:] members = mx.array(n, dtype=mx.intc)
+    cdef int[:] left_start = mx.array(n, dtype=mx.intc)
 
     cdef int visited_size = (((n * 2) - 1) >> 3) + 1
     cdef uchar *visited = <uchar *>PyMem_Malloc(visited_size)
@@ -386,11 +386,11 @@ cpdef void get_max_Rfield_for_each_cluster(const double[:, :] Z, const double[:,
 
     Parameters
     ----------
-    Z : ndarray
+    Z : array
         The linkage matrix.
-    R : ndarray
+    R : array
         The R matrix.
-    max_rfs : ndarray
+    max_rfs : array
         The array to store the result. Note that this input arrays gets
         modified in-place.
     n : int
@@ -400,7 +400,7 @@ cpdef void get_max_Rfield_for_each_cluster(const double[:, :] Z, const double[:,
     """
     cdef int k, i_lc, i_rc, root
     cdef double max_rf, max_l, max_r
-    cdef int[:] curr_node = np.ndarray(n, dtype=np.intc)
+    cdef int[:] curr_node = mx.array(n, dtype=mx.intc)
 
     cdef int visited_size = (((n * 2) - 1) >> 3) + 1
     cdef uchar *visited = <uchar *>PyMem_Malloc(visited_size)
@@ -449,9 +449,9 @@ cpdef get_max_dist_for_each_cluster(const double[:, :] Z, double[:] MD, int n):
 
     Parameters
     ----------
-    Z : ndarray
+    Z : array
         The linkage matrix.
-    MD : ndarray
+    MD : array
         The array to store the result (hence this input array gets modified
         in-place).
     n : int
@@ -459,7 +459,7 @@ cpdef get_max_dist_for_each_cluster(const double[:, :] Z, double[:] MD, int n):
     """
     cdef int k, i_lc, i_rc, root
     cdef double max_dist, max_l, max_r
-    cdef int[:] curr_node = np.ndarray(n, dtype=np.intc)
+    cdef int[:] curr_node = mx.array(n, dtype=mx.intc)
 
     cdef int visited_size = (((n * 2) - 1) >> 3) + 1
     cdef uchar *visited = <uchar *>PyMem_Malloc(visited_size)
@@ -508,9 +508,9 @@ def inconsistent(const double[:, :] Z, double[:, :] R, int n, int d):
 
     Parameters
     ----------
-    Z : ndarray
+    Z : array
         The linkage matrix.
-    R : ndarray
+    R : array
         A (n - 1) x 4 matrix to store the result (hence this input array is
         modified in-place). The inconsistency statistics ``R[i]`` are calculated
         over `d` levels below cluster ``i``.
@@ -527,7 +527,7 @@ def inconsistent(const double[:, :] Z, double[:, :] R, int n, int d):
         The number of levels included in calculation below a node.
     """
     cdef int i, k, i_lc, i_rc, root, level_count
-    cdef int[:] curr_node = np.ndarray(n, dtype=np.intc)
+    cdef int[:] curr_node = mx.array(n, dtype=mx.intc)
     cdef double level_sum, level_std_sum, level_std, dist
 
     cdef int visited_size = (((n * 2) - 1) >> 3) + 1
@@ -591,11 +591,11 @@ def leaders(const double[:, :] Z, const int[:] T, int[:] L, int[:] M, int nc, in
 
     Parameters
     ----------
-    Z : ndarray
+    Z : array
         The linkage matrix.
-    T : ndarray
+    T : array
         The flat clusters assignment returned by `fcluster` or `fclusterdata`.
-    L, M : ndarray
+    L, M : array
         `L` and `M` store the result (i.e., these inputs are modified
         in-place). The leader of flat cluster ``L[i]`` is node ``M[i]``.
     nc : int
@@ -610,8 +610,8 @@ def leaders(const double[:, :] Z, const int[:] T, int[:] L, int[:] M, int nc, in
         `-1` indicates success.
     """
     cdef int k, i_lc, i_rc, root, cid_lc, cid_rc, leader_idx, result = -1
-    cdef int[:] curr_node = np.ndarray(n, dtype=np.intc)
-    cdef int[:] cluster_ids = np.ndarray(n * 2 - 1, dtype=np.intc)
+    cdef int[:] curr_node = mx.array(n, dtype=mx.intc)
+    cdef int[:] cluster_ids = mx.array(n * 2 - 1, dtype=mx.intc)
 
     cdef int visited_size = (((n * 2) - 1) >> 3) + 1
     cdef uchar *visited = <uchar *>PyMem_Malloc(visited_size)
@@ -683,13 +683,13 @@ def leaders(const double[:, :] Z, const int[:] T, int[:] L, int[:] M, int nc, in
     return result  # -1 means success here
 
 
-def linkage(double[:] dists, np.npy_int64 n, int method):
+def linkage(double[:] dists, mx.npy_int64 n, int method):
     """
     Perform hierarchy clustering.
 
     Parameters
     ----------
-    dists : ndarray
+    dists : array
         A condensed matrix stores the pairwise distances of the observations.
     n : int
         The number of observations.
@@ -699,19 +699,19 @@ def linkage(double[:] dists, np.npy_int64 n, int method):
 
     Returns
     -------
-    Z : ndarray, shape (n - 1, 4)
+    Z : array, shape (n - 1, 4)
         Computed linkage matrix.
     """
-    Z_arr = np.empty((n - 1, 4))
+    Z_arr = mx.empty((n - 1, 4))
     cdef double[:, :] Z = Z_arr
 
     cdef int i, j, k, x = 0, y = 0, nx, ny, ni, id_x, id_y, id_i
-    cdef np.npy_int64 i_start
+    cdef mx.npy_int64 i_start
     cdef double current_min
     # inter-cluster dists
-    cdef double[:] D = np.ndarray(n * (n - 1) / 2, dtype=np.float64)
+    cdef double[:] D = mx.array(n * (n - 1) / 2, dtype=mx.float64)
     # map the indices to node ids
-    cdef int[:] id_map = np.ndarray(n, dtype=np.intc)
+    cdef int[:] id_map = mx.array(n, dtype=mx.intc)
     cdef linkage_distance_update new_dist
 
     new_dist = linkage_methods[method]
@@ -798,7 +798,7 @@ def fast_linkage(const double[:] dists, int n, int method):
 
     Parameters
     ----------
-    dists : ndarray
+    dists : array
         A condensed matrix stores the pairwise distances of the observations.
     n : int
         The number of observations.
@@ -808,7 +808,7 @@ def fast_linkage(const double[:] dists, int n, int method):
 
     Returns
     -------
-    Z : ndarray, shape (n - 1, 4)
+    Z : array, shape (n - 1, 4)
         Computed linkage matrix.
 
     References
@@ -816,18 +816,18 @@ def fast_linkage(const double[:] dists, int n, int method):
     .. [1] Daniel Mullner, "Modern hierarchical, agglomerative clustering
        algorithms", :arXiv:`1109.2378v1`.
     """
-    cdef double[:, :] Z = np.empty((n - 1, 4))
+    cdef double[:, :] Z = mx.empty((n - 1, 4))
 
     cdef double[:] D = dists.copy()  # Distances between clusters.
-    cdef int[:] size = np.ones(n, dtype=np.intc)  # Sizes of clusters.
+    cdef int[:] size = mx.ones(n, dtype=mx.intc)  # Sizes of clusters.
     # ID of a cluster to put into linkage matrix.
-    cdef int[:] cluster_id = np.arange(n, dtype=np.intc)
+    cdef int[:] cluster_id = mx.arange(n, dtype=mx.intc)
 
     # Nearest neighbor candidate and lower bound of the distance to the
     # true nearest neighbor for each cluster among clusters with higher
     # indices (thus size is n - 1).
-    cdef int[:] neighbor = np.empty(n - 1, dtype=np.intc)
-    cdef double[:] min_dist = np.empty(n - 1)
+    cdef int[:] neighbor = mx.empty(n - 1, dtype=mx.intc)
+    cdef double[:] min_dist = mx.empty(n - 1)
 
     cdef linkage_distance_update new_dist = linkage_methods[method]
 
@@ -926,7 +926,7 @@ def nn_chain(const double[:] dists, int n, int method):
 
     Parameters
     ----------
-    dists : ndarray
+    dists : array
         A condensed matrix stores the pairwise distances of the observations.
     n : int
         The number of observations.
@@ -936,19 +936,19 @@ def nn_chain(const double[:] dists, int n, int method):
 
     Returns
     -------
-    Z : ndarray, shape (n - 1, 4)
+    Z : array, shape (n - 1, 4)
         Computed linkage matrix.
     """
-    Z_arr = np.empty((n - 1, 4))
+    Z_arr = mx.empty((n - 1, 4))
     cdef double[:, :] Z = Z_arr
 
     cdef double[:] D = dists.copy()  # Distances between clusters.
-    cdef int[:] size = np.ones(n, dtype=np.intc)  # Sizes of clusters.
+    cdef int[:] size = mx.ones(n, dtype=mx.intc)  # Sizes of clusters.
 
     cdef linkage_distance_update new_dist = linkage_methods[method]
 
     # Variables to store neighbors chain.
-    cdef int[:] cluster_chain = np.ndarray(n, dtype=np.intc)
+    cdef int[:] cluster_chain = mx.array(n, dtype=mx.intc)
     cdef int chain_length = 0
 
     cdef int i, k, x, y = 0, nx, ny, ni
@@ -1020,7 +1020,7 @@ def nn_chain(const double[:] dists, int n, int method):
                 current_min, nx, ny, ni)
 
     # Sort Z by cluster distances.
-    order = np.argsort(Z_arr[:, 2], kind='mergesort')
+    order = mx.argsort(Z_arr[:, 2], kind='mergesort')
     Z_arr = Z_arr[order]
 
     # Find correct cluster labels inplace.
@@ -1034,23 +1034,23 @@ def mst_single_linkage(const double[:] dists, int n):
 
     Parameters
     ----------
-    dists : ndarray
+    dists : array
         A condensed matrix stores the pairwise distances of the observations.
     n : int
         The number of observations.
 
     Returns
     -------
-    Z : ndarray, shape (n - 1, 4)
+    Z : array, shape (n - 1, 4)
         Computed linkage matrix.
     """
-    Z_arr = np.empty((n - 1, 4))
+    Z_arr = mx.empty((n - 1, 4))
     cdef double[:, :] Z = Z_arr
 
     # Which nodes were already merged.
-    cdef int[:] merged = np.zeros(n, dtype=np.intc)
+    cdef int[:] merged = mx.zeros(n, dtype=mx.intc)
 
-    cdef double[:] D = np.empty(n)
+    cdef double[:] D = mx.empty(n)
     D[:] = INFINITY
 
     cdef int i, k, x, y = 0
@@ -1078,7 +1078,7 @@ def mst_single_linkage(const double[:] dists, int n):
         x = y
 
     # Sort Z by cluster distances.
-    order = np.argsort(Z_arr[:, 2], kind='mergesort')
+    order = mx.argsort(Z_arr[:, 2], kind='mergesort')
     Z_arr = Z_arr[order]
 
     # Find correct cluster labels and compute cluster sizes inplace.
@@ -1094,9 +1094,9 @@ cdef class LinkageUnionFind:
     cdef int next_label
 
     def __init__(self, int n):
-        self.parent = np.arange(2 * n - 1, dtype=np.intc)
+        self.parent = mx.arange(2 * n - 1, dtype=mx.intc)
         self.next_label = n
-        self.size = np.ones(2 * n - 1, dtype=np.intc)
+        self.size = mx.ones(2 * n - 1, dtype=mx.intc)
 
     cdef int merge(self, int x, int y) noexcept:
         self.parent[x] = self.next_label
@@ -1140,16 +1140,16 @@ def prelist(const double[:, :] Z, int[:] members, int n):
 
     Parameters
     ----------
-    Z : ndarray
+    Z : array
         The linkage matrix.
-    members : ndarray
+    members : array
         The array to store the result. Note that this input array will be
         modified in-place.
     n : int
         The number of observations.
     """
     cdef int k, i_lc, i_rc, root, mem_idx
-    cdef int[:] curr_node = np.ndarray(n, dtype=np.intc)
+    cdef int[:] curr_node = mx.array(n, dtype=mx.intc)
 
     cdef int visited_size = (((n * 2) - 1) >> 3) + 1
     cdef uchar *visited = <uchar *>PyMem_Malloc(visited_size)

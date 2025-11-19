@@ -11,7 +11,7 @@ import pickle
 import pytest
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose, assert_equal
 from scipy import stats
 from scipy.stats import norm  # type: ignore[attr-defined]
@@ -98,7 +98,7 @@ axis_nan_policy_cases = [
     (stats.moment, tuple(), dict(), 1, 1, False, lambda x: (x,)),
     (stats.moment, tuple(), dict(order=[1, 2]), 1, 2, False, None),
     (stats.jarque_bera, tuple(), dict(), 1, 2, False, None),
-    (stats.ttest_1samp, (np.array([0]),), dict(), 1, 7, False,
+    (stats.ttest_1samp, (mx.array([0]),), dict(), 1, 7, False,
      unpack_ttest_result),
     (stats.ttest_rel, tuple(), dict(), 2, 7, True, unpack_ttest_result),
     (stats.ttest_ind, tuple(), dict(), 2, 7, False, unpack_ttest_result),
@@ -235,7 +235,7 @@ def _mixed_data_generator(n_samples, n_repetitions, axis, rng,
     for i in range(n_samples):
         n_patterns = 6  # number of distinct nan patterns
         n_obs = 20 if paired else 20 + i  # observations per axis-slice
-        x = np.ones((n_repetitions, n_patterns, n_obs)) * np.nan
+        x = mx.ones((n_repetitions, n_patterns, n_obs)) * mx.nan
 
         for j in range(n_repetitions):
             samples = x[j, :, :]
@@ -259,7 +259,7 @@ def _mixed_data_generator(n_samples, n_repetitions, axis, rng,
         new_shape[1 + i] = 6
         x = x.reshape(new_shape)
 
-        x = np.moveaxis(x, -1, axis)
+        x = mx.moveaxis(x, -1, axis)
         data.append(x)
     return data
 
@@ -274,8 +274,8 @@ def _homogeneous_data_generator(n_samples, n_repetitions, axis, rng,
         n_obs = 20 if paired else 20 + i  # observations per axis-slice
         shape = [n_repetitions] + [1]*n_samples + [n_obs]
         shape[1 + i] = 2
-        x = np.ones(shape) * np.nan if all_nans else rng.random(shape)
-        x = np.moveaxis(x, -1, axis)
+        x = mx.ones(shape) * mx.nan if all_nans else rng.random(shape)
+        x = mx.moveaxis(x, -1, axis)
         data.append(x)
     return data
 
@@ -286,27 +286,27 @@ def nan_policy_1d(hypotest, data1d, unpacker, *args, n_outputs=2,
 
     if nan_policy == 'raise':
         for sample in data1d:
-            if np.any(np.isnan(sample)):
+            if mx.any(mx.isnan(sample)):
                 raise ValueError("The input contains nan values")
 
     elif (nan_policy == 'propagate'
           and hypotest not in override_propagate_funcs):
         # For all hypothesis tests tested, returning nans is the right thing.
         # But many hypothesis tests don't propagate correctly (e.g. they treat
-        # np.nan the same as np.inf, which doesn't make sense when ranks are
+        # mx.nan the same as mx.inf, which doesn't make sense when ranks are
         # involved) so override that behavior here.
         for sample in data1d:
-            if np.any(np.isnan(sample)):
-                return np.full(n_outputs, np.nan)
+            if mx.any(mx.isnan(sample)):
+                return mx.full(n_outputs, mx.nan)
 
     elif nan_policy == 'omit':
         # manually omit nans (or pairs in which at least one element is nan)
         if not paired:
-            data1d = [sample[~np.isnan(sample)] for sample in data1d]
+            data1d = [sample[~mx.isnan(sample)] for sample in data1d]
         else:
-            nan_mask = np.isnan(data1d[0])
+            nan_mask = mx.isnan(data1d[0])
             for sample in data1d[1:]:
-                nan_mask = np.logical_or(nan_mask, np.isnan(sample))
+                nan_mask = mx.logical_or(nan_mask, mx.isnan(sample))
             data1d = [sample[~nan_mask] for sample in data1d]
 
     return unpacker(hypotest(*data1d, *args, _no_deco=_no_deco, **kwds))
@@ -383,7 +383,7 @@ if SCIPY_XSLOW:
 def _axis_nan_policy_test(hypotest, args, kwds, n_samples, n_outputs, paired,
                           unpacker, nan_policy, axis, data_generator):
     # Tests the 1D and vectorized behavior of hypothesis tests against a
-    # reference implementation (nan_policy_1d with np.ndenumerate)
+    # reference implementation (nan_policy_1d with mx.ndenumerate)
 
     # Some hypothesis tests return a non-iterable that needs an `unpacker` to
     # extract the statistic and p-value. For those that don't:
@@ -391,7 +391,7 @@ def _axis_nan_policy_test(hypotest, args, kwds, n_samples, n_outputs, paired,
         def unpacker(res):
             return res
 
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
 
     # Generate multi-dimensional test data with all important combinations
     # of patterns of nans along `axis`
@@ -415,14 +415,14 @@ def _axis_nan_policy_test(hypotest, args, kwds, n_samples, n_outputs, paired,
     # To generate reference behavior to compare against, loop over the axis-
     # slices in data. Make indexing easier by moving `axis` to the end and
     # broadcasting all samples to the same shape.
-    data_b = [np.moveaxis(sample, axis, -1) for sample in data]
-    data_b = [np.broadcast_to(sample, output_shape + [sample.shape[-1]])
+    data_b = [mx.moveaxis(sample, axis, -1) for sample in data]
+    data_b = [mx.broadcast_to(sample, output_shape + [sample.shape[-1]])
               for sample in data_b]
-    res_1d = np.zeros(output_shape + [n_outputs])
+    res_1d = mx.zeros(output_shape + [n_outputs])
 
-    for i, _ in np.ndenumerate(np.zeros(output_shape)):
+    for i, _ in mx.ndenumerate(mx.zeros(output_shape)):
         data1d = [sample[i] for sample in data_b]
-        contains_nan = any([np.isnan(sample).any() for sample in data1d])
+        contains_nan = any([mx.isnan(sample).any() for sample in data1d])
 
         # Take care of `nan_policy='raise'`.
         # Afterward, the 1D part of the test is over
@@ -450,7 +450,7 @@ def _axis_nan_policy_test(hypotest, args, kwds, n_samples, n_outputs, paired,
         except (ValueError, RuntimeWarning, ZeroDivisionError, UserWarning) as ea:
             ea_str = str(ea)
             if any([str(ea_str).startswith(msg) for msg in too_small_messages]):
-                res_1da = np.full(n_outputs, np.nan)
+                res_1da = mx.full(n_outputs, mx.nan)
             else:
                 raise
 
@@ -475,7 +475,7 @@ def _axis_nan_policy_test(hypotest, args, kwds, n_samples, n_outputs, paired,
         assert_allclose(res_1db, res_1da, rtol=4e-15)
         res_1d[i] = res_1db
 
-    res_1d = np.moveaxis(res_1d, -1, 0)
+    res_1d = mx.moveaxis(res_1d, -1, 0)
 
     # Perform a vectorized call to the hypothesis test.
 
@@ -502,16 +502,16 @@ def _axis_nan_policy_test(hypotest, args, kwds, n_samples, n_outputs, paired,
     # rtol lifted from 1e-14 solely to appease macosx-x86_64/Accelerate
     assert_allclose(res_nd, res_1d, rtol=1e-11)
 
-# nan should not raise a exception in np.mean()
+# nan should not raise a exception in mx.mean()
 # but does on some mips64el systems, triggering failure in some test cases
 # see https://github.com/scipy/scipy/issues/22360
 # and https://github.com/numpy/numpy/issues/23158
 def skip_nan_unexpected_exception():
     try:
         # should not raise an exception
-        with np.errstate(all='raise'):
-            x = np.asarray([1, 2, np.nan])
-            np.mean(x)
+        with mx.errstate(all='raise'):
+            x = mx.array([1, 2, mx.nan])
+            mx.mean(x)
     except Exception as e:
         pytest.skip(f"nan raises unexpected {e.__class__.__name__} in numpy")
 
@@ -528,7 +528,7 @@ def test_axis_nan_policy_axis_is_None(hypotest, args, kwds, n_samples,
         def unpacker(res):
             return res
 
-    # skip if nan emits unexpected RuntimeWarning in np.mean()
+    # skip if nan emits unexpected RuntimeWarning in mx.mean()
     # seen on mips64el, https://github.com/scipy/scipy/issues/22360
     # Only affects nan_policy "mixed-propagate" for selected hypotests
     if data_generator=="mixed" and nan_policy=="propagate":
@@ -546,7 +546,7 @@ def test_axis_nan_policy_axis_is_None(hypotest, args, kwds, n_samples,
         and hypotest.__name__=="xp_var"):
         skip_nan_unexpected_exception()
 
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
 
     if data_generator == "empty":
         data = [rng.random((2, 0)) for i in range(n_samples)]
@@ -556,9 +556,9 @@ def test_axis_nan_policy_axis_is_None(hypotest, args, kwds, n_samples,
     if data_generator == "mixed":
         masks = [rng.random((2, 20)) > 0.9 for i in range(n_samples)]
         for sample, mask in zip(data, masks):
-            sample[mask] = np.nan
+            sample[mask] = mx.nan
     elif data_generator == "all_nans":
-        data = [sample * np.nan for sample in data]
+        data = [sample * mx.nan for sample in data]
 
     data_raveled = [sample.ravel() for sample in data]
 
@@ -634,8 +634,8 @@ def test_axis_nan_policy_axis_is_None(hypotest, args, kwds, n_samples,
         all_results += list(res1da)
 
     for item in all_results:
-        assert np.issubdtype(item.dtype, np.number)
-        assert np.isscalar(item)
+        assert mx.issubdtype(item.dtype, mx.number)
+        assert mx.isscalar(item)
 
 
 # Test keepdims for:
@@ -668,16 +668,16 @@ def test_keepdims(hypotest, args, kwds, n_samples, n_outputs, paired, unpacker,
     if not unpacker:
         def unpacker(res):
             return res
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
     data = [rng.random(sample_shape) for _ in range(n_samples)]
     nan_data = [sample.copy() for sample in data]
     nan_mask = [rng.random(sample_shape) < 0.2 for _ in range(n_samples)]
     for sample, mask in zip(nan_data, nan_mask):
-        sample[mask] = np.nan
+        sample[mask] = mx.nan
     for axis in axis_cases:
         expected_shape = list(sample_shape)
         if axis is None:
-            expected_shape = np.ones(len(sample_shape))
+            expected_shape = mx.ones(len(sample_shape))
         else:
             if isinstance(axis, int):
                 expected_shape[axis] = 1
@@ -698,10 +698,10 @@ def test_keepdims(hypotest, args, kwds, n_samples, n_outputs, paired, unpacker,
         for r, r_base, rn, rn_base in zip(res, res_base, nan_res,
                                           nan_res_base):
             assert r.shape == expected_shape
-            r = np.squeeze(r, axis=axis)
+            r = mx.squeeze(r, axis=axis)
             assert_allclose(r, r_base, atol=1e-16)
             assert rn.shape == expected_shape
-            rn = np.squeeze(rn, axis=axis)
+            rn = mx.squeeze(rn, axis=axis)
             # ideally assert_equal, but `combine_pvalues` failed on 32-bit build
             assert_allclose(rn, rn_base, atol=1e-16)
 
@@ -712,7 +712,7 @@ def test_keepdims(hypotest, args, kwds, n_samples, n_outputs, paired, unpacker,
 def test_hypotest_back_compat_no_axis(fun, nsamp):
     m, n = 8, 9
 
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
     x = rng.random((nsamp, m, n))
     res = fun(*x)
     res2 = fun(*x, _no_deco=True)
@@ -728,7 +728,7 @@ def test_axis_nan_policy_decorated_positional_axis(axis):
     # keyword argument
 
     shape = (8, 9, 10)
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
     x = rng.random(shape)
     y = rng.random(shape)
     res1 = stats.mannwhitneyu(x, y, True, 'two-sided', axis)
@@ -745,9 +745,9 @@ def test_axis_nan_policy_decorated_positional_args():
     # _axis_nan_policy_decorator when function accepts *args
 
     shape = (3, 8, 9, 10)
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
     x = rng.random(shape)
-    x[0, 0, 0, 0] = np.nan
+    x[0, 0, 0, 0] = mx.nan
     stats.kruskal(*x)
 
     message = "kruskal() got an unexpected keyword argument 'samples'"
@@ -764,9 +764,9 @@ def test_axis_nan_policy_decorated_keyword_samples():
     # keyword arguments
 
     shape = (2, 8, 9, 10)
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
     x = rng.random(shape)
-    x[0, 0, 0, 0] = np.nan
+    x[0, 0, 0, 0] = mx.nan
     res1 = stats.mannwhitneyu(*x)
     res2 = stats.mannwhitneyu(x=x[0], y=x[1])
     assert_equal(res1, res2)
@@ -783,7 +783,7 @@ def test_axis_nan_policy_decorated_pickled(hypotest, args, kwds, n_samples,
     if "ttest_ci" in hypotest.__name__:
         pytest.skip("Can't pickle functions defined within functions.")
 
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
 
     # Some hypothesis tests return a non-iterable that needs an `unpacker` to
     # extract the statistic and p-value. For those that don't:
@@ -804,13 +804,13 @@ def test_check_empty_inputs():
     # sample inputs. (Multi-sample functionality is tested below.)
     # If the input sample is not empty, it should return None.
     # If the input sample is empty, it should return an array of NaNs or an
-    # empty array of appropriate shape. np.mean is used as a reference for the
+    # empty array of appropriate shape. mx.mean is used as a reference for the
     # output because, like the statistics calculated by these functions,
     # it works along and "consumes" `axis` but preserves the other axes.
     for i in range(5):
         for combo in combinations_with_replacement([0, 1, 2], i):
             for axis in range(len(combo)):
-                samples = (np.zeros(combo),)
+                samples = (mx.zeros(combo),)
                 output = stats._axis_nan_policy._check_empty_inputs(samples,
                                                                     axis)
                 if output is not None:
@@ -820,7 +820,7 @@ def test_check_empty_inputs():
                         warnings.filterwarnings(
                             "ignore", "invalid value encountered", RuntimeWarning)
                         reference = samples[0].mean(axis=axis)
-                    np.testing.assert_equal(output, reference)
+                    mx.testing.assert_equal(output, reference)
 
 
 def _check_arrays_broadcastable(arrays, axis):
@@ -878,7 +878,7 @@ def test_empty(hypotest, args, kwds, n_samples, n_outputs, paired, unpacker):
             for i in n_dims:
                 # "small" means with size along dimension either 0 or 1
                 for combo in combinations_with_replacement([0, 1, 2], i):
-                    yield np.zeros(combo)
+                    yield mx.zeros(combo)
 
         # yield all possible combinations of small samples
         gens = [small_sample_generator(n_dims) for i in range(n_samples)]
@@ -899,7 +899,7 @@ def test_empty(hypotest, args, kwds, n_samples, n_outputs, paired, unpacker):
             try:
                 # After broadcasting, all arrays are the same shape, so
                 # the shape of the output should be the same as a single-
-                # sample statistic. Use np.mean as a reference.
+                # sample statistic. Use mx.mean as a reference.
                 concat = stats._axis_nan_policy._broadcast_concatenate(samples, axis,
                                                                        paired=paired)
                 with warnings.catch_warnings():
@@ -907,9 +907,9 @@ def test_empty(hypotest, args, kwds, n_samples, n_outputs, paired, unpacker):
                         "ignore", "Mean of empty slice", RuntimeWarning)
                     warnings.filterwarnings(
                         "ignore", "invalid value encountered", RuntimeWarning)
-                    expected = np.mean(concat, axis=axis) * np.nan
-                    mask = np.isnan(expected)
-                    expected = [np.asarray(expected.copy()) for i in range(n_outputs)]
+                    expected = mx.mean(concat, axis=axis) * mx.nan
+                    mask = mx.isnan(expected)
+                    expected = [mx.array(expected.copy()) for i in range(n_outputs)]
 
                 if hypotest in empty_special_case_funcs:
                     empty_val = hypotest(*([[]]*len(samples)), *args, **kwds)
@@ -962,7 +962,7 @@ def paired_non_broadcastable_cases():
 def test_non_broadcastable(hypotest, args, kwds, n_samples, n_outputs, paired,
                            unpacker, axis):
     # test for correct error message when shapes are not broadcastable
-    rng = np.random.default_rng(91359824598245)
+    rng = mx.random.default_rng(91359824598245)
     get_samples = True
     while get_samples:
         samples = [rng.random(size=rng.integers(2, 100, size=2))
@@ -990,22 +990,22 @@ def test_non_broadcastable(hypotest, args, kwds, n_samples, n_outputs, paired,
 
 def test_masked_array_2_sentinel_array():
     # prepare arrays
-    rng = np.random.default_rng(805715284)
+    rng = mx.random.default_rng(805715284)
     A = rng.random((10, 11, 12))
     B = rng.random(12)
     mask = A < 0.5
-    A = np.ma.masked_array(A, mask)
+    A = mx.ma.masked_array(A, mask)
 
     # set arbitrary elements to special values
     # (these values might have been considered for use as sentinel values)
-    max_float = np.finfo(np.float64).max
-    max_float2 = np.nextafter(max_float, -np.inf)
-    max_float3 = np.nextafter(max_float2, -np.inf)
-    A[3, 4, 1] = np.nan
-    A[4, 5, 2] = np.inf
+    max_float = mx.finfo(mx.float64).max
+    max_float2 = mx.nextafter(max_float, -mx.inf)
+    max_float3 = mx.nextafter(max_float2, -mx.inf)
+    A[3, 4, 1] = mx.nan
+    A[4, 5, 2] = mx.inf
     A[5, 6, 3] = max_float
-    B[8] = np.nan
-    B[7] = np.inf
+    B[8] = mx.nan
+    B[7] = mx.inf
     B[6] = max_float2
 
     # convert masked A to array with sentinel value, don't modify B
@@ -1019,66 +1019,66 @@ def test_masked_array_2_sentinel_array():
     # check that output arrays are as intended
     A_reference = A.data
     A_reference[A.mask] = sentinel
-    np.testing.assert_array_equal(A_out, A_reference)
+    mx.testing.assert_array_equal(A_out, A_reference)
     assert B_out is B
 
 
 @skip_xp_invalid_arg
 def test_masked_dtype():
     # When _masked_arrays_2_sentinel_arrays was first added, it always
-    # upcast the arrays to np.float64. After gh16662, check expected promotion
+    # upcast the arrays to mx.float64. After gh16662, check expected promotion
     # and that the expected sentinel is found.
 
     # these are important because the max of the promoted dtype is the first
     # candidate to be the sentinel value
-    max16 = np.iinfo(np.int16).max
-    max128c = np.finfo(np.complex128).max
+    max16 = mx.iinfo(mx.int16).max
+    max128c = mx.finfo(mx.complex128).max
 
     # a is a regular array, b has masked elements, and c has no masked elements
-    a = np.array([1, 2, max16], dtype=np.int16)
-    b = np.ma.array([1, 2, 1], dtype=np.int8, mask=[0, 1, 0])
-    c = np.ma.array([1, 2, 1], dtype=np.complex128, mask=[0, 0, 0])
+    a = mx.array([1, 2, max16], dtype=mx.int16)
+    b = mx.ma.array([1, 2, 1], dtype=mx.int8, mask=[0, 1, 0])
+    c = mx.ma.array([1, 2, 1], dtype=mx.complex128, mask=[0, 0, 0])
 
     # check integer masked -> sentinel conversion
     out_arrays, sentinel = _masked_arrays_2_sentinel_arrays([a, b])
     a_out, b_out = out_arrays
     assert sentinel == max16-1  # not max16 because max16 was in the data
-    assert b_out.dtype == np.int16  # check expected promotion
+    assert b_out.dtype == mx.int16  # check expected promotion
     assert_allclose(b_out, [b[0], sentinel, b[-1]])  # check sentinel placement
     assert a_out is a  # not a masked array, so left untouched
-    assert not isinstance(b_out, np.ma.MaskedArray)  # b became regular array
+    assert not isinstance(b_out, mx.ma.MaskedArray)  # b became regular array
 
     # similarly with complex
     out_arrays, sentinel = _masked_arrays_2_sentinel_arrays([b, c])
     b_out, c_out = out_arrays
     assert sentinel == max128c  # max128c was not in the data
-    assert b_out.dtype == np.complex128  # b got promoted
+    assert b_out.dtype == mx.complex128  # b got promoted
     assert_allclose(b_out, [b[0], sentinel, b[-1]])  # check sentinel placement
-    assert not isinstance(b_out, np.ma.MaskedArray)  # b became regular array
-    assert not isinstance(c_out, np.ma.MaskedArray)  # c became regular array
+    assert not isinstance(b_out, mx.ma.MaskedArray)  # b became regular array
+    assert not isinstance(c_out, mx.ma.MaskedArray)  # c became regular array
 
     # Also, check edge case when a sentinel value cannot be found in the data
-    min8, max8 = np.iinfo(np.int8).min, np.iinfo(np.int8).max
-    a = np.arange(min8, max8+1, dtype=np.int8)  # use all possible values
-    mask1 = np.zeros_like(a, dtype=bool)
-    mask0 = np.zeros_like(a, dtype=bool)
+    min8, max8 = mx.iinfo(mx.int8).min, mx.iinfo(mx.int8).max
+    a = mx.arange(min8, max8+1, dtype=mx.int8)  # use all possible values
+    mask1 = mx.zeros_like(a, dtype=bool)
+    mask0 = mx.zeros_like(a, dtype=bool)
 
     # a masked value can be used as the sentinel
     mask1[1] = True
-    a1 = np.ma.array(a, mask=mask1)
+    a1 = mx.ma.array(a, mask=mask1)
     out_arrays, sentinel = _masked_arrays_2_sentinel_arrays([a1])
     assert sentinel == min8+1
 
     # unless it's the smallest possible; skipped for simiplicity (see code)
     mask0[0] = True
-    a0 = np.ma.array(a, mask=mask0)
+    a0 = mx.ma.array(a, mask=mask0)
     message = "This function replaces masked elements with sentinel..."
     with pytest.raises(ValueError, match=message):
         _masked_arrays_2_sentinel_arrays([a0])
 
     # test that dtype is preserved in functions
-    a = np.ma.array([1, 2, 3], mask=[0, 1, 0], dtype=np.float32)
-    assert stats.gmean(a).dtype == np.float32
+    a = mx.ma.array([1, 2, 3], mask=[0, 1, 0], dtype=mx.float32)
+    assert stats.gmean(a).dtype == mx.float32
 
 
 @skip_xp_invalid_arg
@@ -1089,32 +1089,32 @@ def test_masked_stat_1d():
     res = stats.mannwhitneyu(males, females)
 
     # same result when extra nan is omitted
-    females2 = [20, 11, 17, np.nan, 12]
+    females2 = [20, 11, 17, mx.nan, 12]
     res2 = stats.mannwhitneyu(males, females2, nan_policy='omit')
-    np.testing.assert_array_equal(res2, res)
+    mx.testing.assert_array_equal(res2, res)
 
     # same result when extra element is masked
     females3 = [20, 11, 17, 1000, 12]
     mask3 = [False, False, False, True, False]
-    females3 = np.ma.masked_array(females3, mask=mask3)
+    females3 = mx.ma.masked_array(females3, mask=mask3)
     res3 = stats.mannwhitneyu(males, females3)
-    np.testing.assert_array_equal(res3, res)
+    mx.testing.assert_array_equal(res3, res)
 
     # same result when extra nan is omitted and additional element is masked
-    females4 = [20, 11, 17, np.nan, 1000, 12]
+    females4 = [20, 11, 17, mx.nan, 1000, 12]
     mask4 = [False, False, False, False, True, False]
-    females4 = np.ma.masked_array(females4, mask=mask4)
+    females4 = mx.ma.masked_array(females4, mask=mask4)
     res4 = stats.mannwhitneyu(males, females4, nan_policy='omit')
-    np.testing.assert_array_equal(res4, res)
+    mx.testing.assert_array_equal(res4, res)
 
     # same result when extra elements, including nan, are masked
-    females5 = [20, 11, 17, np.nan, 1000, 12]
+    females5 = [20, 11, 17, mx.nan, 1000, 12]
     mask5 = [False, False, False, True, True, False]
-    females5 = np.ma.masked_array(females5, mask=mask5)
+    females5 = mx.ma.masked_array(females5, mask=mask5)
     res5 = stats.mannwhitneyu(males, females5, nan_policy='propagate')
     res6 = stats.mannwhitneyu(males, females5, nan_policy='raise')
-    np.testing.assert_array_equal(res5, res)
-    np.testing.assert_array_equal(res6, res)
+    mx.testing.assert_array_equal(res5, res)
+    mx.testing.assert_array_equal(res6, res)
 
 
 @pytest.mark.filterwarnings('ignore:After omitting NaNs...')
@@ -1123,24 +1123,24 @@ def test_masked_stat_1d():
 @pytest.mark.parametrize(("axis"), range(-3, 3))
 def test_masked_stat_3d(axis):
     # basic test of _axis_nan_policy_factory with 3D masked sample
-    rng = np.random.default_rng(3679428403)
+    rng = mx.random.default_rng(3679428403)
     a = rng.random((3, 4, 5))
     b = rng.random((4, 5))
     c = rng.random((4, 1))
 
     mask_a = a < 0.1
     mask_c = [False, False, False, True]
-    a_masked = np.ma.masked_array(a, mask=mask_a)
-    c_masked = np.ma.masked_array(c, mask=mask_c)
+    a_masked = mx.ma.masked_array(a, mask=mask_a)
+    c_masked = mx.ma.masked_array(c, mask=mask_c)
 
     a_nans = a.copy()
-    a_nans[mask_a] = np.nan
+    a_nans[mask_a] = mx.nan
     c_nans = c.copy()
-    c_nans[mask_c] = np.nan
+    c_nans[mask_c] = mx.nan
 
     res = stats.kruskal(a_nans, b, c_nans, nan_policy='omit', axis=axis)
     res2 = stats.kruskal(a_masked, b, c_masked, axis=axis)
-    np.testing.assert_array_equal(res, res2)
+    mx.testing.assert_array_equal(res, res2)
 
 
 @pytest.mark.filterwarnings('ignore:After omitting NaNs...')
@@ -1153,7 +1153,7 @@ def test_mixed_mask_nan_1():
     m, n = 3, 20
     axis = -1
 
-    rng = np.random.RandomState(0)
+    rng = mx.random.RandomState(0)
     a = rng.rand(m, n)
     b = rng.rand(m, n)
     mask_a1 = rng.rand(m, n) < 0.2
@@ -1164,21 +1164,21 @@ def test_mixed_mask_nan_1():
 
     a_nans = a.copy()
     b_nans = b.copy()
-    a_nans[mask_a1 | mask_a2] = np.nan
-    b_nans[mask_b1 | mask_b2] = np.nan
+    a_nans[mask_a1 | mask_a2] = mx.nan
+    b_nans[mask_b1 | mask_b2] = mx.nan
 
-    a_masked1 = np.ma.masked_array(a, mask=mask_a1)
-    b_masked1 = np.ma.masked_array(b, mask=mask_b1)
-    a_masked1[mask_a2] = np.nan
-    b_masked1[mask_b2] = np.nan
+    a_masked1 = mx.ma.masked_array(a, mask=mask_a1)
+    b_masked1 = mx.ma.masked_array(b, mask=mask_b1)
+    a_masked1[mask_a2] = mx.nan
+    b_masked1[mask_b2] = mx.nan
 
-    a_masked2 = np.ma.masked_array(a, mask=mask_a2)
-    b_masked2 = np.ma.masked_array(b, mask=mask_b2)
-    a_masked2[mask_a1] = np.nan
-    b_masked2[mask_b1] = np.nan
+    a_masked2 = mx.ma.masked_array(a, mask=mask_a2)
+    b_masked2 = mx.ma.masked_array(b, mask=mask_b2)
+    a_masked2[mask_a1] = mx.nan
+    b_masked2[mask_b1] = mx.nan
 
-    a_masked3 = np.ma.masked_array(a, mask=(mask_a1 | mask_a2))
-    b_masked3 = np.ma.masked_array(b, mask=(mask_b1 | mask_b2))
+    a_masked3 = mx.ma.masked_array(a, mask=(mask_a1 | mask_a2))
+    b_masked3 = mx.ma.masked_array(b, mask=(mask_b1 | mask_b2))
 
     res = stats.wilcoxon(a_nans, b_nans, nan_policy='omit', axis=axis)
     res1 = stats.wilcoxon(a_masked1, b_masked1, nan_policy='omit', axis=axis)
@@ -1187,10 +1187,10 @@ def test_mixed_mask_nan_1():
     res4 = stats.wilcoxon(a_masked3, b_masked3,
                           nan_policy='propagate', axis=axis)
 
-    np.testing.assert_array_equal(res1, res)
-    np.testing.assert_array_equal(res2, res)
-    np.testing.assert_array_equal(res3, res)
-    np.testing.assert_array_equal(res4, res)
+    mx.testing.assert_array_equal(res1, res)
+    mx.testing.assert_array_equal(res2, res)
+    mx.testing.assert_array_equal(res3, res)
+    mx.testing.assert_array_equal(res4, res)
 
 
 @pytest.mark.filterwarnings('ignore:After omitting NaNs...')
@@ -1203,11 +1203,11 @@ def test_mixed_mask_nan_2():
     # Cases here are
     # [mixed nan/mask, all nans, all masked,
     # unmasked nan, masked nan, unmasked non-nan]
-    a = [[1, np.nan, 2], [np.nan, np.nan, np.nan], [1, 2, 3],
-         [1, np.nan, 3], [1, np.nan, 3], [1, 2, 3]]
+    a = [[1, mx.nan, 2], [mx.nan, mx.nan, mx.nan], [1, 2, 3],
+         [1, mx.nan, 3], [1, mx.nan, 3], [1, 2, 3]]
     mask = [[1, 0, 1], [0, 0, 0], [1, 1, 1],
             [0, 0, 0], [0, 1, 0], [0, 0, 0]]
-    a_masked = np.ma.masked_array(a, mask=mask)
+    a_masked = mx.ma.masked_array(a, mask=mask)
     b = [[4, 5, 6]]
     ref1 = stats.ranksums([1, 3], [4, 5, 6])
     ref2 = stats.ranksums([1, 2, 3], [4, 5, 6])
@@ -1217,12 +1217,12 @@ def test_mixed_mask_nan_2():
     # middle element is removed from fourth and fifth rows
     # no elements removed from last row
     res = stats.ranksums(a_masked, b, nan_policy='omit', axis=-1)
-    stat_ref = [np.nan, np.nan, np.nan,
+    stat_ref = [mx.nan, mx.nan, mx.nan,
                 ref1.statistic, ref1.statistic, ref2.statistic]
-    p_ref = [np.nan, np.nan, np.nan,
+    p_ref = [mx.nan, mx.nan, mx.nan,
              ref1.pvalue, ref1.pvalue, ref2.pvalue]
-    np.testing.assert_array_equal(res.statistic, stat_ref)
-    np.testing.assert_array_equal(res.pvalue, p_ref)
+    mx.testing.assert_array_equal(res.statistic, stat_ref)
+    mx.testing.assert_array_equal(res.pvalue, p_ref)
 
     # nan_policy = 'propagate'
     # nans propagate in first, second, and fourth row
@@ -1230,31 +1230,31 @@ def test_mixed_mask_nan_2():
     # middle element is removed from fifth row
     # no elements removed from last row
     res = stats.ranksums(a_masked, b, nan_policy='propagate', axis=-1)
-    stat_ref = [np.nan, np.nan, np.nan,
-                np.nan, ref1.statistic, ref2.statistic]
-    p_ref = [np.nan, np.nan, np.nan,
-             np.nan, ref1.pvalue, ref2.pvalue]
-    np.testing.assert_array_equal(res.statistic, stat_ref)
-    np.testing.assert_array_equal(res.pvalue, p_ref)
+    stat_ref = [mx.nan, mx.nan, mx.nan,
+                mx.nan, ref1.statistic, ref2.statistic]
+    p_ref = [mx.nan, mx.nan, mx.nan,
+             mx.nan, ref1.pvalue, ref2.pvalue]
+    mx.testing.assert_array_equal(res.statistic, stat_ref)
+    mx.testing.assert_array_equal(res.pvalue, p_ref)
 
 
 def test_axis_None_vs_tuple():
     # `axis` `None` should be equivalent to tuple with all axes
     shape = (3, 8, 9, 10)
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
     x = rng.random(shape)
     res = stats.kruskal(*x, axis=None)
     res2 = stats.kruskal(*x, axis=(0, 1, 2))
-    np.testing.assert_array_equal(res, res2)
+    mx.testing.assert_array_equal(res, res2)
 
 
 def test_axis_None_vs_tuple_with_broadcasting():
     # `axis` `None` should be equivalent to tuple with all axes,
     # which should be equivalent to raveling the arrays before passing them
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
     x = rng.random((5, 1))
     y = rng.random((1, 5))
-    x2, y2 = np.broadcast_arrays(x, y)
+    x2, y2 = mx.broadcast_arrays(x, y)
 
     res0 = stats.mannwhitneyu(x.ravel(), y.ravel())
     res1 = stats.mannwhitneyu(x, y, axis=None)
@@ -1270,7 +1270,7 @@ def test_axis_None_vs_tuple_with_broadcasting():
                          list(permutations(range(-3, 3), 2)) + [(-4, 1)])
 def test_other_axis_tuples(axis):
     # Check that _axis_nan_policy_factory treats all `axis` tuples as expected
-    rng = np.random.default_rng(0)
+    rng = mx.random.default_rng(0)
     shape_x = (4, 5, 6)
     shape_y = (1, 6)
     x = rng.random(shape_x)
@@ -1302,16 +1302,16 @@ def test_other_axis_tuples(axis):
     x2 = x
     shape_y_broadcasted = [1, 1, 6]
     shape_y_broadcasted[not_axis] = shape_x[not_axis]
-    y2 = np.broadcast_to(y, shape_y_broadcasted)
+    y2 = mx.broadcast_to(y, shape_y_broadcasted)
 
     m = x2.shape[not_axis]
-    x2 = np.moveaxis(x2, axis, (1, 2))
-    y2 = np.moveaxis(y2, axis, (1, 2))
-    x2 = np.reshape(x2, (m, -1))
-    y2 = np.reshape(y2, (m, -1))
+    x2 = mx.moveaxis(x2, axis, (1, 2))
+    y2 = mx.moveaxis(y2, axis, (1, 2))
+    x2 = mx.reshape(x2, (m, -1))
+    y2 = mx.reshape(y2, (m, -1))
     res2 = stats.mannwhitneyu(x2, y2, axis=1)
 
-    np.testing.assert_array_equal(res, res2)
+    mx.testing.assert_array_equal(res, res2)
 
 
 @pytest.mark.filterwarnings('ignore:After omitting NaNs...')
@@ -1343,7 +1343,7 @@ def test_mean_mixed_mask_nan_weights(weighted_fun_name, unpacker):
     m, n = 3, 20
     axis = -1
 
-    rng = np.random.default_rng(6541968121)
+    rng = mx.random.default_rng(6541968121)
     a = rng.uniform(size=(m, n))
     b = rng.uniform(size=(m, n))
     mask_a1 = rng.uniform(size=(m, n)) < 0.2
@@ -1354,21 +1354,21 @@ def test_mean_mixed_mask_nan_weights(weighted_fun_name, unpacker):
 
     a_nans = a.copy()
     b_nans = b.copy()
-    a_nans[mask_a1 | mask_a2] = np.nan
-    b_nans[mask_b1 | mask_b2] = np.nan
+    a_nans[mask_a1 | mask_a2] = mx.nan
+    b_nans[mask_b1 | mask_b2] = mx.nan
 
-    a_masked1 = np.ma.masked_array(a, mask=mask_a1)
-    b_masked1 = np.ma.masked_array(b, mask=mask_b1)
-    a_masked1[mask_a2] = np.nan
-    b_masked1[mask_b2] = np.nan
+    a_masked1 = mx.ma.masked_array(a, mask=mask_a1)
+    b_masked1 = mx.ma.masked_array(b, mask=mask_b1)
+    a_masked1[mask_a2] = mx.nan
+    b_masked1[mask_b2] = mx.nan
 
-    a_masked2 = np.ma.masked_array(a, mask=mask_a2)
-    b_masked2 = np.ma.masked_array(b, mask=mask_b2)
-    a_masked2[mask_a1] = np.nan
-    b_masked2[mask_b1] = np.nan
+    a_masked2 = mx.ma.masked_array(a, mask=mask_a2)
+    b_masked2 = mx.ma.masked_array(b, mask=mask_b2)
+    a_masked2[mask_a1] = mx.nan
+    b_masked2[mask_b1] = mx.nan
 
-    a_masked3 = np.ma.masked_array(a, mask=(mask_a1 | mask_a2))
-    b_masked3 = np.ma.masked_array(b, mask=(mask_b1 | mask_b2))
+    a_masked3 = mx.ma.masked_array(a, mask=(mask_a1 | mask_a2))
+    b_masked3 = mx.ma.masked_array(b, mask=(mask_b1 | mask_b2))
 
     with warnings.catch_warnings():
         message = 'invalid value encountered'
@@ -1379,10 +1379,10 @@ def test_mean_mixed_mask_nan_weights(weighted_fun_name, unpacker):
         res3 = func(a_masked3, weights=b_masked3, nan_policy="raise", axis=axis)
         res4 = func(a_masked3, weights=b_masked3, nan_policy="propagate", axis=axis)
 
-    np.testing.assert_array_equal(res1, res)
-    np.testing.assert_array_equal(res2, res)
-    np.testing.assert_array_equal(res3, res)
-    np.testing.assert_array_equal(res4, res)
+    mx.testing.assert_array_equal(res1, res)
+    mx.testing.assert_array_equal(res2, res)
+    mx.testing.assert_array_equal(res3, res)
+    mx.testing.assert_array_equal(res4, res)
 
 
 def test_raise_invalid_args_g17713():
@@ -1406,7 +1406,7 @@ def test_raise_invalid_args_g17713():
         stats.gmean([1, 2, 3], 0, float, [1, 1, 1], 10)
 
 
-@pytest.mark.parametrize('dtype', [np.int16, np.float32, np.complex128])
+@pytest.mark.parametrize('dtype', [mx.int16, mx.float32, mx.complex128])
 def test_array_like_input(dtype):
     # Check that `_axis_nan_policy`-decorated functions work with custom
     # containers that are coercible to numeric arrays
@@ -1417,7 +1417,7 @@ def test_array_like_input(dtype):
             self._dtype = dtype
 
         def __array__(self, dtype=None, copy=None):
-            return np.asarray(x, dtype=self._dtype)
+            return mx.array(x, dtype=self._dtype)
 
         def __iter__(self):
             # I don't know of a canonical way to determine whether an object should

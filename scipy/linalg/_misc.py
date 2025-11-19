@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import LinAlgError
 from .blas import get_blas_funcs
 from .lapack import get_lapack_funcs
@@ -49,7 +49,7 @@ def norm(a, ord=None, axis=None, keepdims=False, check_finite=True):
 
     Returns
     -------
-    n : float or ndarray
+    n : float or array
         Norm of the matrix or vector(s).
 
     Notes
@@ -92,9 +92,9 @@ def norm(a, ord=None, axis=None, keepdims=False, check_finite=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.linalg import norm
-    >>> a = np.arange(9) - 4.0
+    >>> a = mx.arange(9) - 4.0
     >>> a
     array([-4., -3., -2., -1.,  0.,  1.,  2.,  3.,  4.])
     >>> b = a.reshape((3, 3))
@@ -109,13 +109,13 @@ def norm(a, ord=None, axis=None, keepdims=False, check_finite=True):
     7.745966692414834
     >>> norm(b, 'fro')
     7.745966692414834
-    >>> norm(a, np.inf)
+    >>> norm(a, mx.inf)
     4.0
-    >>> norm(b, np.inf)
+    >>> norm(b, mx.inf)
     9.0
-    >>> norm(a, -np.inf)
+    >>> norm(a, -mx.inf)
     0.0
-    >>> norm(b, -np.inf)
+    >>> norm(b, -mx.inf)
     2.0
 
     >>> norm(a, 1)
@@ -143,9 +143,9 @@ def norm(a, ord=None, axis=None, keepdims=False, check_finite=True):
     """
     # Differs from numpy only in non-finite handling and the use of blas.
     if check_finite:
-        a = np.asarray_chkfinite(a)
+        a = mx.array_chkfinite(a)
     else:
-        a = np.asarray(a)
+        a = mx.array(a)
 
     if a.size and a.dtype.char in 'fdFD' and axis is None and not keepdims:
 
@@ -161,21 +161,21 @@ def norm(a, ord=None, axis=None, keepdims=False, check_finite=True):
             # Make sure this works if the user uses the axis keywords
             # to apply the norm to the transpose.
             if ord == 1:
-                if np.isfortran(a):
+                if mx.isfortran(a):
                     lange_args = '1', a
-                elif np.isfortran(a.T):
+                elif mx.isfortran(a.T):
                     lange_args = 'i', a.T
-            elif ord == np.inf:
-                if np.isfortran(a):
+            elif ord == mx.inf:
+                if mx.isfortran(a):
                     lange_args = 'i', a
-                elif np.isfortran(a.T):
+                elif mx.isfortran(a.T):
                     lange_args = '1', a.T
             if lange_args:
                 lange = get_lapack_funcs('lange', dtype=a.dtype, ilp64='preferred')
                 return lange(*lange_args)
 
     # fall back to numpy in every other case
-    return np.linalg.norm(a, ord=ord, axis=axis, keepdims=keepdims)
+    return mx.linalg.norm(a, ord=ord, axis=axis, keepdims=keepdims)
 
 
 def _datacopied(arr, original):
@@ -186,6 +186,6 @@ def _datacopied(arr, original):
     """
     if arr is original:
         return False
-    if not isinstance(original, np.ndarray) and hasattr(original, '__array__'):
+    if not isinstance(original, mx.array) and hasattr(original, '__array__'):
         return False
     return arr.base is None

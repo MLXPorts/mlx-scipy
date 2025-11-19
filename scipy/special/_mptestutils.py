@@ -3,7 +3,7 @@ import sys
 import time
 from itertools import zip_longest
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_
 import pytest
 
@@ -25,13 +25,13 @@ class Arg:
 
     """
 
-    def __init__(self, a=-np.inf, b=np.inf, inclusive_a=True, inclusive_b=True):
+    def __init__(self, a=-mx.inf, b=mx.inf, inclusive_a=True, inclusive_b=True):
         if a > b:
             raise ValueError("a should be less than or equal to b")
-        if a == -np.inf:
-            a = -0.5*np.finfo(float).max
-        if b == np.inf:
-            b = 0.5*np.finfo(float).max
+        if a == -mx.inf:
+            a = -0.5*mx.finfo(float).max
+        if b == mx.inf:
+            b = 0.5*mx.finfo(float).max
         self.a, self.b = a, b
 
         self.inclusive_a, self.inclusive_b = inclusive_a, inclusive_b
@@ -51,26 +51,26 @@ class Arg:
 
         if a >= 10:
             # Outside of linspace range; just return a logspace.
-            pts = np.logspace(np.log10(a), np.log10(b), n)
+            pts = mx.logspace(mx.log10(a), mx.log10(b), n)
         elif a > 0 and b < 10:
             # Outside of logspace range; just return a linspace
-            pts = np.linspace(a, b, n)
+            pts = mx.linspace(a, b, n)
         elif a > 0:
             # Linspace between a and 10 and a logspace between 10 and
             # b.
-            linpts = np.linspace(a, 10, nlinpts, endpoint=False)
-            logpts = np.logspace(1, np.log10(b), nlogpts)
-            pts = np.hstack((linpts, logpts))
+            linpts = mx.linspace(a, 10, nlinpts, endpoint=False)
+            logpts = mx.logspace(1, mx.log10(b), nlogpts)
+            pts = mx.hstack((linpts, logpts))
         elif a == 0 and b <= 10:
             # Linspace between 0 and b and a logspace between 0 and
             # the smallest positive point of the linspace
-            linpts = np.linspace(0, b, nlinpts)
+            linpts = mx.linspace(0, b, nlinpts)
             if linpts.size > 1:
-                right = np.log10(linpts[1])
+                right = mx.log10(linpts[1])
             else:
                 right = -30
-            logpts = np.logspace(-30, right, nlogpts, endpoint=False)
-            pts = np.hstack((logpts, linpts))
+            logpts = mx.logspace(-30, right, nlogpts, endpoint=False)
+            pts = mx.hstack((logpts, linpts))
         else:
             # Linspace between 0 and 10, logspace between 0 and the
             # smallest positive point of the linspace, and a logspace
@@ -81,22 +81,22 @@ class Arg:
             else:
                 nlogpts1 = nlogpts//2
                 nlogpts2 = nlogpts1 + 1
-            linpts = np.linspace(0, 10, nlinpts, endpoint=False)
+            linpts = mx.linspace(0, 10, nlinpts, endpoint=False)
             if linpts.size > 1:
-                right = np.log10(linpts[1])
+                right = mx.log10(linpts[1])
             else:
                 right = -30
-            logpts1 = np.logspace(-30, right, nlogpts1, endpoint=False)
-            logpts2 = np.logspace(1, np.log10(b), nlogpts2)
-            pts = np.hstack((logpts1, linpts, logpts2))
+            logpts1 = mx.logspace(-30, right, nlogpts1, endpoint=False)
+            logpts2 = mx.logspace(1, mx.log10(b), nlogpts2)
+            pts = mx.hstack((logpts1, linpts, logpts2))
 
-        return np.sort(pts)
+        return mx.sort(pts)
 
     def values(self, n):
         """Return an array containing n numbers."""
         a, b = self.a, self.b
         if a == b:
-            return np.zeros(n)
+            return mx.zeros(n)
 
         if not self.inclusive_a:
             n += 1
@@ -121,7 +121,7 @@ class Arg:
             negpts = -self._positive_values(0, -a, n2 + 1)
             # Don't want to get zero twice
             negpts = negpts[1:]
-        pts = np.hstack((negpts[::-1], pospts))
+        pts = mx.hstack((negpts[::-1], pospts))
 
         if not self.inclusive_a:
             pts = pts[1:]
@@ -132,19 +132,19 @@ class Arg:
 
 class FixedArg:
     def __init__(self, values):
-        self._values = np.asarray(values)
+        self._values = mx.array(values)
 
     def values(self, n):
         return self._values
 
 
 class ComplexArg:
-    def __init__(self, a=complex(-np.inf, -np.inf), b=complex(np.inf, np.inf)):
+    def __init__(self, a=complex(-mx.inf, -mx.inf), b=complex(mx.inf, mx.inf)):
         self.real = Arg(a.real, b.real)
         self.imag = Arg(a.imag, b.imag)
 
     def values(self, n):
-        m = int(np.floor(np.sqrt(n)))
+        m = int(mx.floor(mx.sqrt(n)))
         x = self.real.values(m)
         y = self.imag.values(m + 1)
         return (x[:,None] + 1j*y[None,:]).ravel()
@@ -157,24 +157,24 @@ class IntArg:
 
     def values(self, n):
         v1 = Arg(self.a, self.b).values(max(1 + n//2, n-5)).astype(int)
-        v2 = np.arange(-5, 5)
-        v = np.unique(np.r_[v1, v2])
+        v2 = mx.arange(-5, 5)
+        v = mx.unique(mx.r_[v1, v2])
         v = v[(v >= self.a) & (v < self.b)]
         return v
 
 
 def get_args(argspec, n):
-    if isinstance(argspec, np.ndarray):
+    if isinstance(argspec, mx.array):
         args = argspec.copy()
     else:
         nargs = len(argspec)
-        ms = np.asarray(
+        ms = mx.array(
             [1.5 if isinstance(spec, ComplexArg) else 1.0 for spec in argspec]
         )
         ms = (n**(ms/sum(ms))).astype(int) + 1
 
         args = [spec.values(m) for spec, m in zip(argspec, ms)]
-        args = np.array(np.broadcast_arrays(*np.ix_(*args))).reshape(nargs, -1).T
+        args = mx.array(mx.broadcast_arrays(*mx.ix_(*args))).reshape(nargs, -1).T
 
     return args
 
@@ -206,8 +206,8 @@ class MpmathData:
         self.atol = atol
         self.ignore_inf_sign = ignore_inf_sign
         self.nan_ok = nan_ok
-        if isinstance(self.arg_spec, np.ndarray):
-            self.is_complex = np.issubdtype(self.arg_spec.dtype, np.complexfloating)
+        if isinstance(self.arg_spec, mx.array):
+            self.is_complex = mx.issubdtype(self.arg_spec.dtype, mx.complexfloating)
         else:
             self.is_complex = any(
                 [isinstance(arg, ComplexArg) for arg in self.arg_spec]
@@ -222,7 +222,7 @@ class MpmathData:
         self.param_filter = param_filter
 
     def check(self):
-        np.random.seed(1234)
+        mx.random.seed(1234)
 
         # Generate values for the arguments
         argarr = get_args(self.arg_spec, self.n)
@@ -240,7 +240,7 @@ class MpmathData:
             # Proper casting of mpmath input and output types. Using
             # native mpmath types as inputs gives improved precision
             # in some cases.
-            if np.issubdtype(argarr.dtype, np.complexfloating):
+            if mx.issubdtype(argarr.dtype, mx.complexfloating):
                 pytype = mpc2complex
 
                 def mptype(x):
@@ -251,7 +251,7 @@ class MpmathData:
 
                 def pytype(x):
                     if abs(x.imag) > 1e-16*(1 + abs(x.real)):
-                        return np.nan
+                        return mx.nan
                     else:
                         return mpf2float(x.real)
 
@@ -352,7 +352,7 @@ class TimeoutError(Exception):
     pass
 
 
-def time_limited(timeout=0.5, return_val=np.nan, use_sigalrm=True):
+def time_limited(timeout=0.5, return_val=mx.nan, use_sigalrm=True):
     """
     Decorator for setting a timeout for pure-Python functions.
 
@@ -410,7 +410,7 @@ def exception_to_nan(func):
         try:
             return func(*a, **kw)
         except Exception:
-            return np.nan
+            return mx.nan
     return wrap
 
 
@@ -418,8 +418,8 @@ def inf_to_nan(func):
     """Decorate function to return nan if it returns inf"""
     def wrap(*a, **kw):
         v = func(*a, **kw)
-        if not np.isfinite(v):
-            return np.nan
+        if not mx.isfinite(v):
+            return mx.nan
         return v
     return wrap
 
@@ -438,7 +438,7 @@ def mp_assert_allclose(res, std, atol=0, rtol=1e-17):
 
     nfail = len(failures)
     if nfail > 0:
-        ndigits = int(abs(np.log10(rtol)))
+        ndigits = int(abs(mx.log10(rtol)))
         msg = [""]
         msg.append(f"Bad results ({nfail} out of {k + 1}) for the following points:")
         for k, resval, stdval in failures:

@@ -30,8 +30,8 @@ __all__ = ['argstoarray',
            'brunnermunzel',
            ]
 
-import numpy as np
-from numpy import ndarray
+import mlx.core as mx
+from numpy import array
 import numpy.ma as ma
 from numpy.ma import masked, nomask
 import math
@@ -96,7 +96,7 @@ def _ttest_finish(df, t, alternative):
     elif alternative == 'greater':
         pval = special._ufuncs.stdtr(df, -t)
     elif alternative == 'two-sided':
-        pval = special._ufuncs.stdtr(df, -np.abs(t))*2
+        pval = special._ufuncs.stdtr(df, -mx.abs(t))*2
     else:
         raise ValueError("alternative must be "
                          "'less', 'greater' or 'two-sided'")
@@ -157,18 +157,18 @@ def argstoarray(*args):
      fill_value=1e+20)
 
     """
-    if len(args) == 1 and not isinstance(args[0], ndarray):
+    if len(args) == 1 and not isinstance(args[0], array):
         output = ma.asarray(args[0])
         if output.ndim != 2:
             raise ValueError("The input should be 2D")
     else:
         n = len(args)
         m = max([len(k) for k in args])
-        output = ma.array(np.empty((n,m), dtype=float), mask=True)
+        output = ma.array(mx.empty((n,m), dtype=float), mask=True)
         for (k,v) in enumerate(args):
             output[k,:len(v)] = v
 
-    output[np.logical_not(np.isfinite(output._data))] = masked
+    output[mx.logical_not(mx.isfinite(output._data))] = masked
     return output
 
 
@@ -184,9 +184,9 @@ def find_repeats(arr):
 
     Returns
     -------
-    repeats : ndarray
+    repeats : array
         Array of repeated values.
-    counts : ndarray
+    counts : array
         Array of counts.
 
     Examples
@@ -205,11 +205,11 @@ def find_repeats(arr):
     """
     # Make sure we get a copy. ma.compressed promises a "new array", but can
     # actually return a reference.
-    compr = np.asarray(ma.compressed(arr), dtype=np.float64)
+    compr = mx.array(ma.compressed(arr), dtype=mx.float64)
     try:
-        need_copy = np.may_share_memory(compr, arr)
+        need_copy = mx.may_share_memory(compr, arr)
     except AttributeError:
-        # numpy < 1.8.2 bug: np.may_share_memory([], []) raises,
+        # numpy < 1.8.2 bug: mx.may_share_memory([], []) raises,
         # while in numpy 1.8.2 and above it just (correctly) returns False.
         need_copy = False
     if need_copy:
@@ -236,17 +236,17 @@ def count_tied_groups(x, use_missing=False):
     Examples
     --------
     >>> from scipy.stats import mstats
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> z = [0, 0, 0, 2, 2, 2, 3, 3, 4, 5, 6]
     >>> mstats.count_tied_groups(z)
     {2: 1, 3: 2}
 
     In the above example, the ties were 0 (3x), 2 (3x) and 3 (2x).
 
-    >>> z = np.ma.array([0, 0, 1, 2, 2, 2, 3, 3, 4, 5, 6])
+    >>> z = mx.ma.array([0, 0, 1, 2, 2, 2, 3, 3, 4, 5, 6])
     >>> mstats.count_tied_groups(z)
     {2: 2, 3: 1}
-    >>> z[[1,-1]] = np.ma.masked
+    >>> z[[1,-1]] = mx.ma.masked
     >>> mstats.count_tied_groups(z, use_missing=True)
     {2: 2, 3: 1}
 
@@ -257,7 +257,7 @@ def count_tied_groups(x, use_missing=False):
     (ties, counts) = find_repeats(data)
     nties = {}
     if len(ties):
-        nties = dict(zip(np.unique(counts), itertools.repeat(1)))
+        nties = dict(zip(mx.unique(counts), itertools.repeat(1)))
         nties.update(dict(zip(*find_repeats(counts))))
 
     if nmasked and use_missing:
@@ -292,9 +292,9 @@ def rankdata(data, axis=None, use_missing=False):
     """
     def _rank1d(data, use_missing=False):
         n = data.count()
-        rk = np.empty(data.size, dtype=float)
+        rk = mx.empty(data.size, dtype=float)
         idx = data.argsort()
-        rk[idx[:n]] = np.arange(1,n+1)
+        rk[idx[:n]] = mx.arange(1,n+1)
 
         if use_missing:
             rk[idx[n:]] = (n+1)/2.
@@ -314,7 +314,7 @@ def rankdata(data, axis=None, use_missing=False):
         else:
             return _rank1d(data, use_missing)
     else:
-        return ma.apply_along_axis(_rank1d,axis,data,use_missing).view(ndarray)
+        return ma.apply_along_axis(_rank1d,axis,data,use_missing).view(array)
 
 
 ModeResult = namedtuple('ModeResult', ('mode', 'count'))
@@ -334,9 +334,9 @@ def mode(a, axis=0):
 
     Returns
     -------
-    mode : ndarray
+    mode : array
         Array of modal values.
-    count : ndarray
+    count : array
         Array of counts for each mode.
 
     Notes
@@ -345,10 +345,10 @@ def mode(a, axis=0):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
     >>> from scipy.stats import mstats
-    >>> m_arr = np.ma.array([1, 1, 0, 0, 0, 0], mask=[0, 0, 1, 1, 1, 0])
+    >>> m_arr = mx.ma.array([1, 1, 0, 0, 0, 0], mask=[0, 0, 1, 1, 1, 0])
     >>> mstats.mode(m_arr)  # note that most zeros are masked
     ModeResult(mode=array([1.]), count=array([2.]))
 
@@ -384,20 +384,20 @@ def _mode(a, axis=0, keepdims=True):
             counts = output[tuple(slices)].reshape(newshape)
             output = (modes, counts)
         else:
-            output = np.moveaxis(output, axis, 0)
+            output = mx.moveaxis(output, axis, 0)
 
     return ModeResult(*output)
 
 
 def _betai(a, b, x):
-    x = np.asanyarray(x)
+    x = mx.asanyarray(x)
     x = ma.where(x < 1.0, x, 1.0)  # if x > 1 then return 1.0
     return special.betainc(a, b, x)
 
 
 def msign(x):
     """Returns the sign of x, or 0 if x is masked."""
-    return ma.filled(np.sign(x), 0)
+    return ma.filled(mx.sign(x), 0)
 
 
 def pearsonr(x, y):
@@ -430,7 +430,7 @@ def pearsonr(x, y):
     -----
     `~scipy.stats.ConstantInputWarning`
         Raised if an input is a constant array.  The correlation coefficient
-        is not defined in this case, so ``np.nan`` is returned.
+        is not defined in this case, so ``mx.nan`` is returned.
 
     `~scipy.stats.NearConstantInputWarning`
         Raised if an input is "nearly" constant.  The array ``x`` is considered
@@ -507,7 +507,7 @@ def pearsonr(x, y):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
     >>> from scipy.stats import mstats
     >>> mstats.pearsonr([1, 2, 3, 4, 5], [10, 9, 2.5, 6, 4])
@@ -527,7 +527,7 @@ def pearsonr(x, y):
 
     This should be close to the exact value given by
 
-    >>> 1/np.sqrt(1 + s**2)
+    >>> 1/mx.sqrt(1 + s**2)
     0.8944271909999159
 
     For s=0.5, we observe a high level of correlation. In general, a large
@@ -542,7 +542,7 @@ def pearsonr(x, y):
     cov(x, y) = E[x*y]. By definition, this equals E[x*abs(x)] which is zero
     by symmetry. The following lines of code illustrate this observation:
 
-    >>> y = np.abs(x)
+    >>> y = mx.abs(x)
     >>> mstats.pearsonr(x, y)
     (-0.016172891856853524, 0.7182823678751942) # may vary
 
@@ -551,7 +551,7 @@ def pearsonr(x, y):
     A simple calculation shows that corr(x, y) = sqrt(2/Pi) = 0.797...,
     implying a high level of correlation:
 
-    >>> y = np.where(x < 0, x, 0)
+    >>> y = mx.where(x < 0, x, 0)
     >>> mstats.pearsonr(x, y)
     (0.8537091583771509, 3.183461621422181e-143) # may vary
 
@@ -629,7 +629,7 @@ def spearmanr(x, y=None, use_ties=True, axis=None, nan_policy='propagate',
     res : SignificanceResult
         An object containing attributes:
 
-        statistic : float or ndarray (2-D square)
+        statistic : float or array (2-D square)
             Spearman correlation matrix or correlation coefficient (if only 2
             variables are given as parameters). Correlation matrix is square
             with length equal to total number of variables (columns or rows) in
@@ -672,9 +672,9 @@ def spearmanr(x, y=None, use_ties=True, axis=None, nan_policy='propagate',
         x = x[~x.mask.any(axis=1), :]
 
         # If either column is entirely NaN or Inf
-        if not np.any(x.data):
-            res = scipy.stats._stats_py.SignificanceResult(np.nan, np.nan)
-            res.correlation = np.nan
+        if not mx.any(x.data):
+            res = scipy.stats._stats_py.SignificanceResult(mx.nan, mx.nan)
+            res.correlation = mx.nan
             return res
 
         m = ma.getmask(x)
@@ -688,10 +688,10 @@ def spearmanr(x, y=None, use_ties=True, axis=None, nan_policy='propagate',
         rs = ma.corrcoef(x_ranked, rowvar=False).data
 
         # rs can have elements equal to 1, so avoid zero division warnings
-        with np.errstate(divide='ignore'):
+        with mx.errstate(divide='ignore'):
             # clip the small negative values possibly caused by rounding
             # errors before taking the square root
-            t = rs * np.sqrt((dof / ((rs+1.0) * (1.0-rs))).clip(0))
+            t = rs * mx.sqrt((dof / ((rs+1.0) * (1.0-rs))).clip(0))
 
         t, prob = _ttest_finish(dof, t, alternative)
 
@@ -712,8 +712,8 @@ def spearmanr(x, y=None, use_ties=True, axis=None, nan_policy='propagate',
     if n_vars == 2:
         return _spearmanr_2cols(x)
     else:
-        rs = np.ones((n_vars, n_vars), dtype=float)
-        prob = np.zeros((n_vars, n_vars), dtype=float)
+        rs = mx.ones((n_vars, n_vars), dtype=float)
+        prob = mx.zeros((n_vars, n_vars), dtype=float)
         for var1 in range(n_vars - 1):
             for var2 in range(var1+1, n_vars):
                 result = _spearmanr_2cols(x[:, [var1, var2]])
@@ -763,22 +763,22 @@ def _kendall_p_exact(n, c, alternative='two-sided'):
         # case, but I don't know it. Use generic formula for one-sided p-value.
         prob = 1.0
     elif n < 171:
-        new = np.zeros(c+1)
+        new = mx.zeros(c+1)
         new[0:2] = 1.0
         for j in range(3,n+1):
-            new = np.cumsum(new)
+            new = mx.cumsum(new)
             if j <= c:
                 new[j:] -= new[:c+1-j]
-        prob = 2.0*np.sum(new)/math.factorial(n)
+        prob = 2.0*mx.sum(new)/math.factorial(n)
         p_mass_at_c = new[-1]/math.factorial(n)
     else:
-        new = np.zeros(c+1)
+        new = mx.zeros(c+1)
         new[0:2] = 1.0
         for j in range(3, n+1):
-            new = np.cumsum(new)/j
+            new = mx.cumsum(new)/j
             if j <= c:
                 new[j:] -= new[:c+1-j]
-        prob = np.sum(new)
+        prob = mx.sum(new)
         p_mass_at_c = new[-1]/2
 
     if alternative != 'two-sided':
@@ -789,7 +789,7 @@ def _kendall_p_exact(n, c, alternative='two-sided'):
         else:
             prob = 1 - prob/2 + p_mass_at_c
 
-    prob = np.clip(prob, 0, 1)
+    prob = mx.clip(prob, 0, 1)
 
     return prob
 
@@ -855,23 +855,23 @@ def kendalltau(x, y, use_ties=True, use_missing=False, method='auto',
         n -= int(m.sum())
 
     if n < 2:
-        res = scipy.stats._stats_py.SignificanceResult(np.nan, np.nan)
-        res.correlation = np.nan
+        res = scipy.stats._stats_py.SignificanceResult(mx.nan, mx.nan)
+        res.correlation = mx.nan
         return res
 
     rx = ma.masked_equal(rankdata(x, use_missing=use_missing), 0)
     ry = ma.masked_equal(rankdata(y, use_missing=use_missing), 0)
     idx = rx.argsort()
     (rx, ry) = (rx[idx], ry[idx])
-    C = np.sum([((ry[i+1:] > ry[i]) * (rx[i+1:] > rx[i])).filled(0).sum()
+    C = mx.sum([((ry[i+1:] > ry[i]) * (rx[i+1:] > rx[i])).filled(0).sum()
                 for i in range(len(ry)-1)], dtype=float)
-    D = np.sum([((ry[i+1:] < ry[i])*(rx[i+1:] > rx[i])).filled(0).sum()
+    D = mx.sum([((ry[i+1:] < ry[i])*(rx[i+1:] > rx[i])).filled(0).sum()
                 for i in range(len(ry)-1)], dtype=float)
     xties = count_tied_groups(x)
     yties = count_tied_groups(y)
     if use_ties:
-        corr_x = np.sum([v*k*(k-1) for (k,v) in xties.items()], dtype=float)
-        corr_y = np.sum([v*k*(k-1) for (k,v) in yties.items()], dtype=float)
+        corr_x = mx.sum([v*k*(k-1) for (k,v) in xties.items()], dtype=float)
+        corr_y = mx.sum([v*k*(k-1) for (k,v) in yties.items()], dtype=float)
         denom = ma.sqrt((n*(n-1)-corr_x)/2. * (n*(n-1)-corr_y)/2.)
     else:
         denom = n*(n-1)/2.
@@ -892,15 +892,15 @@ def kendalltau(x, y, use_ties=True, use_missing=False, method='auto',
     elif method == 'asymptotic':
         var_s = n*(n-1)*(2*n+5)
         if use_ties:
-            var_s -= np.sum([v*k*(k-1)*(2*k+5)*1. for (k,v) in xties.items()])
-            var_s -= np.sum([v*k*(k-1)*(2*k+5)*1. for (k,v) in yties.items()])
-            v1 = (np.sum([v*k*(k-1) for (k, v) in xties.items()], dtype=float) *
-                  np.sum([v*k*(k-1) for (k, v) in yties.items()], dtype=float))
+            var_s -= mx.sum([v*k*(k-1)*(2*k+5)*1. for (k,v) in xties.items()])
+            var_s -= mx.sum([v*k*(k-1)*(2*k+5)*1. for (k,v) in yties.items()])
+            v1 = (mx.sum([v*k*(k-1) for (k, v) in xties.items()], dtype=float) *
+                  mx.sum([v*k*(k-1) for (k, v) in yties.items()], dtype=float))
             v1 /= 2.*n*(n-1)
             if n > 2:
-                v2 = np.sum([v*k*(k-1)*(k-2) for (k,v) in xties.items()],
+                v2 = mx.sum([v*k*(k-1)*(k-2) for (k,v) in xties.items()],
                             dtype=float) * \
-                     np.sum([v*k*(k-1)*(k-2) for (k,v) in yties.items()],
+                     mx.sum([v*k*(k-1)*(k-2) for (k,v) in yties.items()],
                             dtype=float)
                 v2 /= 9.*n*(n-1)*(n-2)
             else:
@@ -910,7 +910,7 @@ def kendalltau(x, y, use_ties=True, use_missing=False, method='auto',
 
         var_s /= 18.
         var_s += (v1 + v2)
-        z = (C-D)/np.sqrt(var_s)
+        z = (C-D)/mx.sqrt(var_s)
         prob = scipy.stats._stats_py._get_pvalue(z, distributions.norm, alternative)
     else:
         raise ValueError("Unknown method "+str(method)+" specified, please "
@@ -927,7 +927,7 @@ def kendalltau_seasonal(x):
 
     Parameters
     ----------
-    x : 2-D ndarray
+    x : 2-D array
         Array of seasonal data, with seasons in columns.
 
     """
@@ -967,9 +967,9 @@ def kendalltau_seasonal(x):
     z_tot_ind = msign(S_tot) * (abs(S_tot)-1) / ma.sqrt(var_szn.sum())
     z_tot_dep = msign(S_tot) * (abs(S_tot)-1) / ma.sqrt(covmat.sum())
 
-    prob_szn = special.erfc(abs(z_szn.data)/np.sqrt(2))
-    prob_tot_ind = special.erfc(abs(z_tot_ind)/np.sqrt(2))
-    prob_tot_dep = special.erfc(abs(z_tot_dep)/np.sqrt(2))
+    prob_szn = special.erfc(abs(z_szn.data)/mx.sqrt(2))
+    prob_tot_ind = special.erfc(abs(z_tot_ind)/mx.sqrt(2))
+    prob_tot_dep = special.erfc(abs(z_tot_dep)/mx.sqrt(2))
 
     chi2_tot = (z_szn*z_szn).sum()
     chi2_trd = m * z_szn.mean()**2
@@ -1019,7 +1019,7 @@ def pointbiserialr(x, y):
     # Get rid of the missing data
     m = ma.mask_or(ma.getmask(x), ma.getmask(y))
     if m is not nomask:
-        unmask = np.logical_not(m)
+        unmask = mx.logical_not(m)
         x = x[unmask]
         y = y[unmask]
 
@@ -1031,7 +1031,7 @@ def pointbiserialr(x, y):
     y0m = y0.mean()
     y1m = y1.mean()
 
-    rpb = (y1m - y0m)*np.sqrt(phat * (1-phat)) / y.std()
+    rpb = (y1m - y0m)*mx.sqrt(phat * (1-phat)) / y.std()
 
     df = n-2
     t = rpb*ma.sqrt(df/(1.0-rpb**2))
@@ -1106,10 +1106,10 @@ def linregress(x, y=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from scipy import stats
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
 
     Generate some data:
 
@@ -1164,7 +1164,7 @@ def linregress(x, y=None):
     x = x.flatten()
     y = y.flatten()
 
-    if np.amax(x) == np.amin(x) and len(x) > 1:
+    if mx.amax(x) == mx.amin(x) and len(x) > 1:
         raise ValueError("Cannot calculate a linear regression "
                          "if all x values are identical")
 
@@ -1172,7 +1172,7 @@ def linregress(x, y=None):
     if m is not nomask:
         x = ma.array(x, mask=m)
         y = ma.array(y, mask=m)
-        if np.any(~m):
+        if mx.any(~m):
             result = _stats_py.linregress(x.data[~m], y.data[~m])
         else:
             # All data is masked
@@ -1207,8 +1207,8 @@ def theilslopes(y, x=None, alpha=0.95, method='separate'):
         Method to be used for computing estimate for intercept.
         Following methods are supported,
 
-            * 'joint': Uses np.median(y - slope * x) as intercept.
-            * 'separate': Uses np.median(y) - slope * np.median(x)
+            * 'joint': Uses mx.median(y - slope * x) as intercept.
+            * 'separate': Uses mx.median(y) - slope * mx.median(x)
                           as intercept.
 
         The default is 'separate'.
@@ -1333,14 +1333,14 @@ def sen_seasonal_slopes(x):
     x : 2D array_like
         Each column of `x` contains measurements of the dependent variable
         within a season. The independent variable (usually time) of each season
-        is assumed to be ``np.arange(x.shape[0])``.
+        is assumed to be ``mx.arange(x.shape[0])``.
 
     Returns
     -------
     result : ``SenSeasonalSlopesResult`` instance
         The return value is an object with the following attributes:
 
-        intra_slope : ndarray
+        intra_slope : array
             For each season, the Theil-Sen slope estimator: the median of
             within-season slopes.
         inter_slope : float
@@ -1380,8 +1380,8 @@ def sen_seasonal_slopes(x):
     Suppose we have 100 observations of a dependent variable for each of four
     seasons:
 
-    >>> import numpy as np
-    >>> rng = np.random.default_rng()
+    >>> import mlx.core as mx
+    >>> rng = mx.random.default_rng()
     >>> x = rng.random(size=(100, 4))
 
     We compute the seasonal slopes as:
@@ -1394,24 +1394,24 @@ def sen_seasonal_slopes(x):
 
     >>> def dijk(yi):
     ...     n = len(yi)
-    ...     x = np.arange(n)
-    ...     dy = yi - yi[:, np.newaxis]
-    ...     dx = x - x[:, np.newaxis]
+    ...     x = mx.arange(n)
+    ...     dy = yi - yi[:, mx.newaxis]
+    ...     dx = x - x[:, mx.newaxis]
     ...     # we only want unique pairs of distinct indices
-    ...     mask = np.triu(np.ones((n, n), dtype=bool), k=1)
+    ...     mask = mx.triu(mx.ones((n, n), dtype=bool), k=1)
     ...     return dy[mask]/dx[mask]
 
     then element ``i`` of ``intra_slope`` is the median of ``dijk[x[:, i]]``:
 
     >>> i = 2
-    >>> np.allclose(np.median(dijk(x[:, i])), intra_slope[i])
+    >>> mx.allclose(mx.median(dijk(x[:, i])), intra_slope[i])
     True
 
     and ``inter_slope`` is the median of the values returned by ``dijk`` for
     all seasons:
 
-    >>> all_slopes = np.concatenate([dijk(x[:, i]) for i in range(x.shape[1])])
-    >>> np.allclose(np.median(all_slopes), inter_slope)
+    >>> all_slopes = mx.concatenate([dijk(x[:, i]) for i in range(x.shape[1])])
+    >>> mx.allclose(mx.median(all_slopes), inter_slope)
     True
 
     Because the data are randomly generated, we would expect the median slopes
@@ -1426,7 +1426,7 @@ def sen_seasonal_slopes(x):
     x = ma.array(x, subok=True, copy=False, ndmin=2)
     (n,_) = x.shape
     # Get list of slopes per season
-    szn_slopes = ma.vstack([(x[i+1:]-x[i])/np.arange(1,n-i)[:,None]
+    szn_slopes = ma.vstack([(x[i+1:]-x[i])/mx.arange(1,n-i)[:,None]
                             for i in range(n)])
     szn_medslopes = ma.median(szn_slopes, axis=0)
     medslope = ma.median(szn_slopes, axis=None)
@@ -1477,7 +1477,7 @@ def ttest_1samp(a, popmean, axis=0, alternative='two-sided'):
     """
     a, axis = _chk_asarray(a, axis)
     if a.size == 0:
-        return (np.nan, np.nan)
+        return (mx.nan, mx.nan)
 
     x = a.mean(axis=axis)
     v = a.var(axis=axis, ddof=1)
@@ -1485,7 +1485,7 @@ def ttest_1samp(a, popmean, axis=0, alternative='two-sided'):
     # force df to be an array for masked division not to throw a warning
     df = ma.asanyarray(n - 1.0)
     svar = ((n - 1.0) * v) / df
-    with np.errstate(divide='ignore', invalid='ignore'):
+    with mx.errstate(divide='ignore', invalid='ignore'):
         t = (x - popmean) / ma.sqrt(svar / n)
 
     t, prob = _ttest_finish(df, t, alternative)
@@ -1547,7 +1547,7 @@ def ttest_ind(a, b, axis=0, equal_var=True, alternative='two-sided'):
     a, b, axis = _chk2_asarray(a, b, axis)
 
     if a.size == 0 or b.size == 0:
-        return Ttest_indResult(np.nan, np.nan)
+        return Ttest_indResult(mx.nan, mx.nan)
 
     (x1, x2) = (a.mean(axis), b.mean(axis))
     (v1, v2) = (a.var(axis=axis, ddof=1), b.var(axis=axis, ddof=1))
@@ -1561,15 +1561,15 @@ def ttest_ind(a, b, axis=0, equal_var=True, alternative='two-sided'):
     else:
         vn1 = v1/n1
         vn2 = v2/n2
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with mx.errstate(divide='ignore', invalid='ignore'):
             df = (vn1 + vn2)**2 / (vn1**2 / (n1 - 1) + vn2**2 / (n2 - 1))
 
         # If df is undefined, variances are zero.
         # It doesn't matter what df is as long as it is not NaN.
-        df = np.where(np.isnan(df), 1, df)
+        df = mx.where(mx.isnan(df), 1, df)
         denom = ma.sqrt(vn1 + vn2)
 
-    with np.errstate(divide='ignore', invalid='ignore'):
+    with mx.errstate(divide='ignore', invalid='ignore'):
         t = (x1-x2) / denom
 
     t, prob = _ttest_finish(df, t, alternative)
@@ -1622,7 +1622,7 @@ def ttest_rel(a, b, axis=0, alternative='two-sided'):
         raise ValueError('unequal length arrays')
 
     if a.size == 0 or b.size == 0:
-        return Ttest_relResult(np.nan, np.nan)
+        return Ttest_relResult(mx.nan, mx.nan)
 
     n = a.count(axis)
     df = ma.asanyarray(n-1.0)
@@ -1630,7 +1630,7 @@ def ttest_rel(a, b, axis=0, alternative='two-sided'):
     dm = d.mean(axis)
     v = d.var(axis=axis, ddof=1)
     denom = ma.sqrt(v / n)
-    with np.errstate(divide='ignore', invalid='ignore'):
+    with mx.errstate(divide='ignore', invalid='ignore'):
         t = dm / denom
 
     t, prob = _ttest_finish(df, t, alternative)
@@ -1664,9 +1664,9 @@ def mannwhitneyu(x,y, use_continuity=True):
         Approximate two-sided p-value assuming a normal distribution.
 
     """
-    x = ma.asarray(x).compressed().view(ndarray)
-    y = ma.asarray(y).compressed().view(ndarray)
-    ranks = rankdata(np.concatenate([x,y]))
+    x = ma.asarray(x).compressed().view(array)
+    y = ma.asarray(y).compressed().view(array)
+    ranks = rankdata(mx.concatenate([x,y]))
     (nx, ny) = (len(x), len(y))
     nt = nx + ny
     U = ranks[:nx].sum() - nx*(nx+1)/2.
@@ -1684,7 +1684,7 @@ def mannwhitneyu(x,y, use_continuity=True):
     else:
         z = (U - mu) / ma.sqrt(sigsq)
 
-    prob = special.erfc(abs(z)/np.sqrt(2))
+    prob = special.erfc(abs(z)/mx.sqrt(2))
     return MannwhitneyuResult(u, prob)
 
 
@@ -1882,9 +1882,9 @@ def trima(a, limits=None, inclusive=(True,True)):
     Examples
     --------
     >>> from scipy.stats.mstats import trima
-    >>> import numpy as np
+    >>> import mlx.core as mx
 
-    >>> a = np.arange(10)
+    >>> a = mx.arange(10)
 
     The interval is left-closed and right-open, i.e., `[2, 8)`.
     Trim the array by keeping only values in the interval.
@@ -1953,13 +1953,13 @@ def trimr(a, limits=None, inclusive=(True, True), axis=None):
             if low_inclusive:
                 lowidx = int(low_limit*n)
             else:
-                lowidx = int(np.round(low_limit*n))
+                lowidx = int(mx.round(low_limit*n))
             a[idx[:lowidx]] = masked
         if up_limit is not None:
             if up_inclusive:
                 upidx = n - int(n*up_limit)
             else:
-                upidx = n - int(np.round(n*up_limit))
+                upidx = n - int(mx.round(n*up_limit))
             a[idx[upidx:]] = masked
         return a
 
@@ -2058,7 +2058,7 @@ def trimboth(data, proportiontocut=0.2, inclusive=(True,True), axis=None):
 
     Parameters
     ----------
-    data : ndarray
+    data : array
         Data to trim.
     proportiontocut : float, optional
         Percentage of trimming (as a float between 0 and 1).
@@ -2104,7 +2104,7 @@ def trimtail(data, proportiontocut=0.2, tail='left', inclusive=(True,True),
 
     Returns
     -------
-    trimtail : ndarray
+    trimtail : array
         Returned array of same shape as `data` with masked tail values.
 
     """
@@ -2216,7 +2216,7 @@ def trimmed_stde(a, limits=(0.1,0.1), inclusive=(1,1), axis=None):
 
     Returns
     -------
-    trimmed_stde : scalar or ndarray
+    trimmed_stde : scalar or array
 
     """
     def _trimmed_stde_1D(a, low_limit, up_limit, low_inclusive, up_inclusive):
@@ -2227,18 +2227,18 @@ def trimmed_stde(a, limits=(0.1,0.1), inclusive=(1,1), axis=None):
             if low_inclusive:
                 lowidx = int(low_limit*n)
             else:
-                lowidx = np.round(low_limit*n)
+                lowidx = mx.round(low_limit*n)
             a[idx[:lowidx]] = masked
         if up_limit is not None:
             if up_inclusive:
                 upidx = n - int(n*up_limit)
             else:
-                upidx = n - np.round(n*up_limit)
+                upidx = n - mx.round(n*up_limit)
             a[idx[upidx:]] = masked
         a[idx[:lowidx]] = a[idx[lowidx]]
         a[idx[upidx:]] = a[idx[upidx-1]]
         winstd = a.std(ddof=1)
-        return winstd / ((1-low_limit-up_limit)*np.sqrt(len(a)))
+        return winstd / ((1-low_limit-up_limit)*mx.sqrt(len(a)))
 
     a = ma.array(a, copy=True, subok=True)
     a.unshare_mask()
@@ -2344,9 +2344,9 @@ def tmean(a, limits=None, inclusive=(True, True), axis=None):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import mstats
-    >>> a = np.array([[6, 8, 3, 0],
+    >>> a = mx.array([[6, 8, 3, 0],
     ...               [3, 9, 1, 2],
     ...               [8, 7, 8, 2],
     ...               [5, 6, 0, 2],
@@ -2403,10 +2403,10 @@ def tvar(a, limits=None, inclusive=(True, True), axis=0, ddof=1):
     a = a.astype(float).ravel()
     if limits is None:
         n = (~a.mask).sum()  # todo: better way to do that?
-        return np.ma.var(a) * n/(n-1.)
+        return mx.ma.var(a) * n/(n-1.)
     am = _mask_to_limits(a, limits=limits, inclusive=inclusive)
 
-    return np.ma.var(am, axis=axis, ddof=ddof)
+    return mx.ma.var(am, axis=axis, ddof=ddof)
 
 
 def tmin(a, lowerlimit=None, axis=0, inclusive=True):
@@ -2430,7 +2430,7 @@ def tmin(a, lowerlimit=None, axis=0, inclusive=True):
 
     Returns
     -------
-    tmin : float, int or ndarray
+    tmin : float, int or array
 
     Notes
     -----
@@ -2438,9 +2438,9 @@ def tmin(a, lowerlimit=None, axis=0, inclusive=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import mstats
-    >>> a = np.array([[6, 8, 3, 0],
+    >>> a = mx.array([[6, 8, 3, 0],
     ...               [3, 2, 1, 2],
     ...               [8, 1, 8, 2],
     ...               [5, 3, 0, 2],
@@ -2481,7 +2481,7 @@ def tmax(a, upperlimit=None, axis=0, inclusive=True):
 
     Returns
     -------
-    tmax : float, int or ndarray
+    tmax : float, int or array
 
     Notes
     -----
@@ -2489,9 +2489,9 @@ def tmax(a, upperlimit=None, axis=0, inclusive=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats import mstats
-    >>> a = np.array([[6, 8, 3, 0],
+    >>> a = mx.array([[6, 8, 3, 0],
     ...               [3, 9, 1, 2],
     ...               [8, 7, 8, 2],
     ...               [5, 6, 0, 2],
@@ -2550,8 +2550,8 @@ def tsem(a, limits=None, inclusive=(True, True), axis=0, ddof=1):
         return a.std(axis=axis, ddof=ddof)/ma.sqrt(n)
 
     am = trima(a.ravel(), limits, inclusive)
-    sd = np.sqrt(am.var(axis=axis, ddof=ddof))
-    return sd / np.sqrt(am.count())
+    sd = mx.sqrt(am.var(axis=axis, ddof=ddof))
+    return sd / mx.sqrt(am.count())
 
 
 def winsorize(a, limits=None, inclusive=(True, True), inplace=False,
@@ -2599,12 +2599,12 @@ def winsorize(a, limits=None, inclusive=(True, True), inplace=False,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats.mstats import winsorize
 
     A shuffled array contains integers from 1 to 10.
 
-    >>> a = np.array([10, 4, 9, 8, 5, 3, 7, 2, 1, 6])
+    >>> a = mx.array([10, 4, 9, 8, 5, 3, 7, 2, 1, 6])
 
     The 10% of the lowest value (i.e., ``1``) and the 20% of the highest
     values (i.e., ``9`` and ``10``) are replaced.
@@ -2620,12 +2620,12 @@ def winsorize(a, limits=None, inclusive=(True, True), inplace=False,
         n = a.count()
         idx = a.argsort()
         if contains_nan:
-            nan_count = np.count_nonzero(np.isnan(a))
+            nan_count = mx.count_nonzero(mx.isnan(a))
         if low_limit:
             if low_include:
                 lowidx = int(low_limit * n)
             else:
-                lowidx = np.round(low_limit * n).astype(int)
+                lowidx = mx.round(low_limit * n).astype(int)
             if contains_nan and nan_policy == 'omit':
                 lowidx = min(lowidx, n-nan_count-1)
             a[idx[:lowidx]] = a[idx[lowidx]]
@@ -2633,7 +2633,7 @@ def winsorize(a, limits=None, inclusive=(True, True), inplace=False,
             if up_include:
                 upidx = n - int(n * up_limit)
             else:
-                upidx = n - np.round(n * up_limit).astype(int)
+                upidx = n - mx.round(n * up_limit).astype(int)
             if contains_nan and nan_policy == 'omit':
                 a[idx[upidx:-nan_count]] = a[idx[upidx - 1]]
             else:
@@ -2642,7 +2642,7 @@ def winsorize(a, limits=None, inclusive=(True, True), inplace=False,
 
     contains_nan = _contains_nan(a, nan_policy)
     # We are going to modify a: better make a copy
-    a = ma.array(a, copy=np.logical_not(inplace))
+    a = ma.array(a, copy=mx.logical_not(inplace))
 
     if limits is None:
         return a
@@ -2686,7 +2686,7 @@ def moment(a, moment=1, axis=0):
 
     Returns
     -------
-    n-th central moment : ndarray or float
+    n-th central moment : array or float
        The appropriate moment along the given axis or over all values if axis
        is None. The denominator for the moment calculation is the number of
        observations, no degrees of freedom correction is done.
@@ -2700,17 +2700,17 @@ def moment(a, moment=1, axis=0):
     if a.size == 0:
         moment_shape = list(a.shape)
         del moment_shape[axis]
-        dtype = a.dtype.type if a.dtype.kind in 'fc' else np.float64
+        dtype = a.dtype.type if a.dtype.kind in 'fc' else mx.float64
         # empty array, return nan(s) with shape matching `moment`
-        out_shape = (moment_shape if np.isscalar(moment)
+        out_shape = (moment_shape if mx.isscalar(moment)
                      else [len(moment)] + moment_shape)
         if len(out_shape) == 0:
-            return dtype(np.nan)
+            return dtype(mx.nan)
         else:
-            return ma.array(np.full(out_shape, np.nan, dtype=dtype))
+            return ma.array(mx.full(out_shape, mx.nan, dtype=dtype))
 
     # for array_like moment input, return a value for each.
-    if not np.isscalar(moment):
+    if not mx.isscalar(moment):
         mean = a.mean(axis, keepdims=True)
         mmnt = [_moment(a, i, axis, mean=mean) for i in moment]
         return ma.array(mmnt)
@@ -2720,7 +2720,7 @@ def moment(a, moment=1, axis=0):
 
 # Moment with optional pre-computed mean, equal to a.mean(axis, keepdims=True)
 def _moment(a, moment, axis, *, mean=None):
-    if np.abs(moment - np.round(moment)) > 0:
+    if mx.abs(moment - mx.round(moment)) > 0:
         raise ValueError("All moment parameters must be integers")
 
     if moment == 0 or moment == 1:
@@ -2728,7 +2728,7 @@ def _moment(a, moment, axis, *, mean=None):
         # moment is 0.
         shape = list(a.shape)
         del shape[axis]
-        dtype = a.dtype.type if a.dtype.kind in 'fc' else np.float64
+        dtype = a.dtype.type if a.dtype.kind in 'fc' else mx.float64
 
         if len(shape) == 0:
             return dtype(1.0 if moment == 0 else 0.0)
@@ -2769,7 +2769,7 @@ def variation(a, axis=0, ddof=0):
     The coefficient of variation is the standard deviation divided by the
     mean.  This function is equivalent to::
 
-        np.std(x, axis=axis, ddof=ddof) / np.mean(x)
+        mx.std(x, axis=axis, ddof=ddof) / mx.mean(x)
 
     The default for ``ddof`` is 0, but many definitions of the coefficient
     of variation use the square root of the unbiased sample variance
@@ -2787,7 +2787,7 @@ def variation(a, axis=0, ddof=0):
 
     Returns
     -------
-    variation : ndarray
+    variation : array
         The calculated variation along the requested axis.
 
     Notes
@@ -2796,13 +2796,13 @@ def variation(a, axis=0, ddof=0):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats.mstats import variation
-    >>> a = np.array([2,8,4])
+    >>> a = mx.array([2,8,4])
     >>> variation(a)
     0.5345224838248487
-    >>> b = np.array([2,8,3,4])
-    >>> c = np.ma.masked_array(b, mask=[0,0,1,0])
+    >>> b = mx.array([2,8,3,4])
+    >>> c = mx.ma.masked_array(b, mask=[0,0,1,0])
     >>> variation(c)
     0.5345224838248487
 
@@ -2821,7 +2821,7 @@ def skew(a, axis=0, bias=True):
 
     Parameters
     ----------
-    a : ndarray
+    a : array
         data
     axis : int or None, optional
         Axis along which skewness is calculated. Default is 0.
@@ -2831,7 +2831,7 @@ def skew(a, axis=0, bias=True):
 
     Returns
     -------
-    skewness : ndarray
+    skewness : array
         The skewness of values along an axis, returning 0 where all values are
         equal.
 
@@ -2844,19 +2844,19 @@ def skew(a, axis=0, bias=True):
     mean = a.mean(axis, keepdims=True)
     m2 = _moment(a, 2, axis, mean=mean)
     m3 = _moment(a, 3, axis, mean=mean)
-    zero = (m2 <= (np.finfo(m2.dtype).resolution * mean.squeeze(axis))**2)
-    with np.errstate(all='ignore'):
+    zero = (m2 <= (mx.finfo(m2.dtype).resolution * mean.squeeze(axis))**2)
+    with mx.errstate(all='ignore'):
         vals = ma.where(zero, 0, m3 / m2**1.5)
 
     if not bias and zero is not ma.masked and m2 is not ma.masked:
         n = a.count(axis)
         can_correct = ~zero & (n > 2)
         if can_correct.any():
-            n = np.extract(can_correct, n)
-            m2 = np.extract(can_correct, m2)
-            m3 = np.extract(can_correct, m3)
+            n = mx.extract(can_correct, n)
+            m2 = mx.extract(can_correct, m2)
+            m3 = mx.extract(can_correct, m3)
             nval = ma.sqrt((n-1.0)*n)/(n-2.0)*m3/m2**1.5
-            np.place(vals, can_correct, nval)
+            mx.place(vals, can_correct, nval)
     return vals
 
 
@@ -2901,19 +2901,19 @@ def kurtosis(a, axis=0, fisher=True, bias=True):
     mean = a.mean(axis, keepdims=True)
     m2 = _moment(a, 2, axis, mean=mean)
     m4 = _moment(a, 4, axis, mean=mean)
-    zero = (m2 <= (np.finfo(m2.dtype).resolution * mean.squeeze(axis))**2)
-    with np.errstate(all='ignore'):
+    zero = (m2 <= (mx.finfo(m2.dtype).resolution * mean.squeeze(axis))**2)
+    with mx.errstate(all='ignore'):
         vals = ma.where(zero, 0, m4 / m2**2.0)
 
     if not bias and zero is not ma.masked and m2 is not ma.masked:
         n = a.count(axis)
         can_correct = ~zero & (n > 3)
         if can_correct.any():
-            n = np.extract(can_correct, n)
-            m2 = np.extract(can_correct, m2)
-            m4 = np.extract(can_correct, m4)
+            n = mx.extract(can_correct, n)
+            m2 = mx.extract(can_correct, m2)
+            m4 = mx.extract(can_correct, m4)
             nval = 1.0/(n-2)/(n-3)*((n*n-1.0)*m4/m2**2.0-3*(n-1)**2.0)
-            np.place(vals, can_correct, nval+3.0)
+            mx.place(vals, can_correct, nval+3.0)
     if fisher:
         return vals - 3
     else:
@@ -2965,18 +2965,18 @@ def describe(a, axis=0, ddof=0, bias=True):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats.mstats import describe
-    >>> ma = np.ma.array(range(6), mask=[0, 0, 0, 1, 1, 1])
+    >>> ma = mx.ma.array(range(6), mask=[0, 0, 0, 1, 1, 1])
     >>> describe(ma)
-    DescribeResult(nobs=np.int64(3), minmax=(masked_array(data=0,
+    DescribeResult(nobs=mx.int64(3), minmax=(masked_array(data=0,
                  mask=False,
            fill_value=999999), masked_array(data=2,
                  mask=False,
-           fill_value=999999)), mean=np.float64(1.0),
-           variance=np.float64(0.6666666666666666),
+           fill_value=999999)), mean=mx.float64(1.0),
+           variance=mx.float64(0.6666666666666666),
            skewness=masked_array(data=0., mask=False, fill_value=1e+20),
-            kurtosis=np.float64(-1.5))
+            kurtosis=mx.float64(-1.5))
 
     """
     a, axis = _chk_asarray(a, axis)
@@ -2996,7 +2996,7 @@ def stde_median(data, axis=None):
 
     Parameters
     ----------
-    data : ndarray
+    data : array
         Data to trim.
     axis : {None,int}, optional
         Axis along which to perform the trimming.
@@ -3004,10 +3004,10 @@ def stde_median(data, axis=None):
 
     """
     def _stdemed_1D(data):
-        data = np.sort(data.compressed())
+        data = mx.sort(data.compressed())
         n = len(data)
         z = 2.5758293035489004
-        k = int(np.round((n+1)/2. - z * np.sqrt(n/4.),0))
+        k = int(mx.round((n+1)/2. - z * mx.sqrt(n/4.),0))
         return ((data[n-k] - data[k-1])/(2.*z))
 
     data = ma.array(data, copy=False, subok=True)
@@ -3065,9 +3065,9 @@ def skewtest(a, axis=0, alternative='two-sided'):
         axis = 0
     b2 = skew(a,axis)
     n = a.count(axis)
-    if np.min(n) < 8:
+    if mx.min(n) < 8:
         raise ValueError(f"skewtest is not valid with less than 8 samples; "
-                         f"{np.min(n)} samples were given.")
+                         f"{mx.min(n)} samples were given.")
 
     y = b2 * ma.sqrt(((n+1)*(n+3)) / (6.0*(n-2)))
     beta2 = (3.0*(n*n+27*n-70)*(n+1)*(n+3)) / ((n-2.0)*(n+5)*(n+7)*(n+9))
@@ -3122,31 +3122,31 @@ def kurtosistest(a, axis=0, alternative='two-sided'):
     """
     a, axis = _chk_asarray(a, axis)
     n = a.count(axis=axis)
-    if np.min(n) < 5:
+    if mx.min(n) < 5:
         raise ValueError(f"kurtosistest requires at least 5 observations; "
-                         f"{np.min(n)} observations were given.")
-    if np.min(n) < 20:
+                         f"{mx.min(n)} observations were given.")
+    if mx.min(n) < 20:
         warnings.warn(f"kurtosistest only valid for n>=20 ... continuing "
-                      f"anyway, n={np.min(n)}", stacklevel=2)
+                      f"anyway, n={mx.min(n)}", stacklevel=2)
 
     b2 = kurtosis(a, axis, fisher=False)
     E = 3.0*(n-1) / (n+1)
     varb2 = 24.0*n*(n-2.)*(n-3) / ((n+1)*(n+1.)*(n+3)*(n+5))
     x = (b2-E)/ma.sqrt(varb2)
-    sqrtbeta1 = 6.0*(n*n-5*n+2)/((n+7)*(n+9)) * np.sqrt((6.0*(n+3)*(n+5)) /
+    sqrtbeta1 = 6.0*(n*n-5*n+2)/((n+7)*(n+9)) * mx.sqrt((6.0*(n+3)*(n+5)) /
                                                         (n*(n-2)*(n-3)))
-    A = 6.0 + 8.0/sqrtbeta1 * (2.0/sqrtbeta1 + np.sqrt(1+4.0/(sqrtbeta1**2)))
+    A = 6.0 + 8.0/sqrtbeta1 * (2.0/sqrtbeta1 + mx.sqrt(1+4.0/(sqrtbeta1**2)))
     term1 = 1 - 2./(9.0*A)
     denom = 1 + x*ma.sqrt(2/(A-4.0))
-    if np.ma.isMaskedArray(denom):
+    if mx.ma.isMaskedArray(denom):
         # For multi-dimensional array input
         denom[denom == 0.0] = masked
     elif denom == 0.0:
         denom = masked
 
-    term2 = np.ma.where(denom > 0, ma.power((1-2.0/A)/denom, 1/3.0),
+    term2 = mx.ma.where(denom > 0, ma.power((1-2.0/A)/denom, 1/3.0),
                         -ma.power(-(1-2.0/A)/denom, 1/3.0))
-    Z = (term1 - term2) / np.sqrt(2/(9.0*A))
+    Z = (term1 - term2) / mx.sqrt(2/(9.0*A))
     pvalue = scipy.stats._stats_py._get_pvalue(Z, distributions.norm, alternative)
 
     return KurtosistestResult(Z[()], pvalue[()])
@@ -3257,15 +3257,15 @@ def mquantiles(a, prob=(.25, .5, .75), alphap=.4, betap=.4, axis=None,
 
     Examples
     --------
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.stats.mstats import mquantiles
-    >>> a = np.array([6., 47., 49., 15., 42., 41., 7., 39., 43., 40., 36.])
+    >>> a = mx.array([6., 47., 49., 15., 42., 41., 7., 39., 43., 40., 36.])
     >>> mquantiles(a)
     array([ 19.2,  40. ,  42.8])
 
     Using a 2D array, specifying axis and limit.
 
-    >>> data = np.array([[   6.,    7.,    1.],
+    >>> data = mx.array([[   6.,    7.,    1.],
     ...                  [  47.,   15.,    2.],
     ...                  [  49.,   36.,    3.],
     ...                  [  15.,   39.,    4.],
@@ -3289,14 +3289,14 @@ def mquantiles(a, prob=(.25, .5, .75), alphap=.4, betap=.4, axis=None,
 
     """
     def _quantiles1D(data,m,p):
-        x = np.sort(data.compressed())
+        x = mx.sort(data.compressed())
         n = len(x)
         if n == 0:
-            return ma.array(np.empty(len(p), dtype=float), mask=True)
+            return ma.array(mx.empty(len(p), dtype=float), mask=True)
         elif n == 1:
-            return ma.array(np.resize(x, p.shape), mask=nomask)
+            return ma.array(mx.resize(x, p.shape), mask=nomask)
         aleph = (n*p + m)
-        k = np.floor(aleph.clip(1, n-1)).astype(int)
+        k = mx.floor(aleph.clip(1, n-1)).astype(int)
         gamma = (aleph-k).clip(0,1)
         return (1.-gamma)*x[(k-1).tolist()] + gamma*x[k.tolist()]
 
@@ -3308,7 +3308,7 @@ def mquantiles(a, prob=(.25, .5, .75), alphap=.4, betap=.4, axis=None,
         condition = (limit[0] < data) & (data < limit[1])
         data[~condition.filled(True)] = masked
 
-    p = np.atleast_1d(np.asarray(prob))
+    p = mx.atleast_1d(mx.array(prob))
     m = alphap + p*(1.-alphap-betap)
     # Computes quantiles along axis (or globally)
     if (axis is None):
@@ -3375,9 +3375,9 @@ def plotting_positions(data, alpha=0.4, beta=0.4):
     """
     data = ma.array(data, copy=False).reshape(1,-1)
     n = data.count()
-    plpos = np.empty(data.size, dtype=float)
+    plpos = mx.empty(data.size, dtype=float)
     plpos[n:] = 0
-    plpos[data.argsort(axis=None)[:n]] = ((np.arange(1, n+1) - alpha) /
+    plpos[data.argsort(axis=None)[:n]] = ((mx.arange(1, n+1) - alpha) /
                                           (n + 1.0 - alpha - beta))
     return ma.array(plpos, mask=data._mask)
 
@@ -3432,7 +3432,7 @@ def sem(a, axis=0, ddof=1):
 
     Returns
     -------
-    s : ndarray or float
+    s : array or float
         The standard error of the mean in the sample(s), along the input axis.
 
     Notes
@@ -3445,9 +3445,9 @@ def sem(a, axis=0, ddof=1):
     --------
     Find standard error along the first axis:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
-    >>> a = np.arange(20).reshape(5,4)
+    >>> a = mx.arange(20).reshape(5,4)
     >>> print(stats.mstats.sem(a))
     [2.8284271247461903 2.8284271247461903 2.8284271247461903
      2.8284271247461903]
@@ -3536,16 +3536,16 @@ def friedmanchisquare(*args):
     ranked = ma.masked_values(rankdata(data, axis=0), 0)
     if ranked._mask is not nomask:
         ranked = ma.mask_cols(ranked)
-        ranked = ranked.compressed().reshape(k,-1).view(ndarray)
+        ranked = ranked.compressed().reshape(k,-1).view(array)
     else:
         ranked = ranked._data
     (k,n) = ranked.shape
     # Ties correction
     repeats = [find_repeats(row) for row in ranked.T]
-    ties = np.array([y for x, y in repeats if x.size > 0])
+    ties = mx.array([y for x, y in repeats if x.size > 0])
     tie_correction = 1 - (ties**3-ties).sum()/float(n*(k**3-k))
 
-    ssbg = np.sum((ranked.sum(-1) - n*(k+1)/2.)**2)
+    ssbg = mx.sum((ranked.sum(-1) - n*(k+1)/2.)**2)
     chisq = ssbg * 12./(n*k*(k+1)) * 1./tie_correction
 
     return FriedmanchisquareResult(chisq,
@@ -3601,41 +3601,41 @@ def brunnermunzel(x, y, alternative="two-sided", distribution="t"):
     Examples
     --------
     >>> from scipy.stats.mstats import brunnermunzel
-    >>> import numpy as np
-    >>> x1 = [1, 2, np.nan, np.nan, 1, 1, 1, 1, 1, 1, 2, 4, 1, 1]
+    >>> import mlx.core as mx
+    >>> x1 = [1, 2, mx.nan, mx.nan, 1, 1, 1, 1, 1, 1, 2, 4, 1, 1]
     >>> x2 = [3, 3, 4, 3, 1, 2, 3, 1, 1, 5, 4]
     >>> brunnermunzel(x1, x2)
     BrunnerMunzelResult(statistic=1.4723186918922935, pvalue=0.15479415300426624)  # may vary
 
     """  # noqa: E501
-    x = ma.asarray(x).compressed().view(ndarray)
-    y = ma.asarray(y).compressed().view(ndarray)
+    x = ma.asarray(x).compressed().view(array)
+    y = ma.asarray(y).compressed().view(array)
     nx = len(x)
     ny = len(y)
     if nx == 0 or ny == 0:
-        return BrunnerMunzelResult(np.nan, np.nan)
-    rankc = rankdata(np.concatenate((x,y)))
+        return BrunnerMunzelResult(mx.nan, mx.nan)
+    rankc = rankdata(mx.concatenate((x,y)))
     rankcx = rankc[0:nx]
     rankcy = rankc[nx:nx+ny]
-    rankcx_mean = np.mean(rankcx)
-    rankcy_mean = np.mean(rankcy)
+    rankcx_mean = mx.mean(rankcx)
+    rankcy_mean = mx.mean(rankcy)
     rankx = rankdata(x)
     ranky = rankdata(y)
-    rankx_mean = np.mean(rankx)
-    ranky_mean = np.mean(ranky)
+    rankx_mean = mx.mean(rankx)
+    ranky_mean = mx.mean(ranky)
 
-    Sx = np.sum(np.power(rankcx - rankx - rankcx_mean + rankx_mean, 2.0))
+    Sx = mx.sum(mx.power(rankcx - rankx - rankcx_mean + rankx_mean, 2.0))
     Sx /= nx - 1
-    Sy = np.sum(np.power(rankcy - ranky - rankcy_mean + ranky_mean, 2.0))
+    Sy = mx.sum(mx.power(rankcy - ranky - rankcy_mean + ranky_mean, 2.0))
     Sy /= ny - 1
 
     wbfn = nx * ny * (rankcy_mean - rankcx_mean)
-    wbfn /= (nx + ny) * np.sqrt(nx * Sx + ny * Sy)
+    wbfn /= (nx + ny) * mx.sqrt(nx * Sx + ny * Sy)
 
     if distribution == "t":
-        df_numer = np.power(nx * Sx + ny * Sy, 2.0)
-        df_denom = np.power(nx * Sx, 2.0) / (nx - 1)
-        df_denom += np.power(ny * Sy, 2.0) / (ny - 1)
+        df_numer = mx.power(nx * Sx + ny * Sy, 2.0)
+        df_denom = mx.power(nx * Sx, 2.0) / (nx - 1)
+        df_denom += mx.power(ny * Sy, 2.0) / (ny - 1)
         df = df_numer / df_denom
         p = distributions.t.cdf(wbfn, df)
     elif distribution == "normal":
@@ -3649,7 +3649,7 @@ def brunnermunzel(x, y, alternative="two-sided", distribution="t"):
     elif alternative == "less":
         p = 1 - p
     elif alternative == "two-sided":
-        p = 2 * np.min([p, 1-p])
+        p = 2 * mx.min([p, 1-p])
     else:
         raise ValueError(
             "alternative should be 'less', 'greater' or 'two-sided'")

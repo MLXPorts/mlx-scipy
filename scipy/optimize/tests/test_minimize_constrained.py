@@ -1,6 +1,6 @@
 import warnings
 
-import numpy as np
+import mlx.core as mx
 import pytest
 from scipy.linalg import block_diag
 from scipy.sparse import csc_array
@@ -24,9 +24,9 @@ class Maratos:
     """
 
     def __init__(self, degrees=60, constr_jac=None, constr_hess=None):
-        rads = degrees/180*np.pi
-        self.x0 = [np.cos(rads), np.sin(rads)]
-        self.x_opt = np.array([1.0, 0.0])
+        rads = degrees/180*mx.pi
+        self.x0 = [mx.cos(rads), mx.sin(rads)]
+        self.x_opt = mx.array([1.0, 0.0])
         self.constr_jac = constr_jac
         self.constr_hess = constr_hess
         self.bounds = None
@@ -35,10 +35,10 @@ class Maratos:
         return 2*(x[0]**2 + x[1]**2 - 1) - x[0]
 
     def grad(self, x):
-        return np.array([4*x[0]-1, 4*x[1]])
+        return mx.array([4*x[0]-1, 4*x[1]])
 
     def hess(self, x):
-        return 4*np.eye(2)
+        return 4*mx.eye(2)
 
     @property
     def constr(self):
@@ -53,7 +53,7 @@ class Maratos:
 
         if self.constr_hess is None:
             def hess(x, v):
-                return 2*v[0]*np.eye(2)
+                return 2*v[0]*mx.eye(2)
         else:
             hess = self.constr_hess
 
@@ -69,9 +69,9 @@ class MaratosTestArgs:
     """
 
     def __init__(self, a, b, degrees=60, constr_jac=None, constr_hess=None):
-        rads = degrees/180*np.pi
-        self.x0 = [np.cos(rads), np.sin(rads)]
-        self.x_opt = np.array([1.0, 0.0])
+        rads = degrees/180*mx.pi
+        self.x0 = [mx.cos(rads), mx.sin(rads)]
+        self.x_opt = mx.array([1.0, 0.0])
         self.constr_jac = constr_jac
         self.constr_hess = constr_hess
         self.a = a
@@ -88,11 +88,11 @@ class MaratosTestArgs:
 
     def grad(self, x, a, b):
         self._test_args(a, b)
-        return np.array([4*x[0]-1, 4*x[1]])
+        return mx.array([4*x[0]-1, 4*x[1]])
 
     def hess(self, x, a, b):
         self._test_args(a, b)
-        return 4*np.eye(2)
+        return 4*mx.eye(2)
 
     @property
     def constr(self):
@@ -107,7 +107,7 @@ class MaratosTestArgs:
 
         if self.constr_hess is None:
             def hess(x, v):
-                return 2*v[0]*np.eye(2)
+                return 2*v[0]*mx.eye(2)
         else:
             hess = self.constr_hess
 
@@ -123,23 +123,23 @@ class MaratosGradInFunc:
     """
 
     def __init__(self, degrees=60, constr_jac=None, constr_hess=None):
-        rads = degrees/180*np.pi
-        self.x0 = [np.cos(rads), np.sin(rads)]
-        self.x_opt = np.array([1.0, 0.0])
+        rads = degrees/180*mx.pi
+        self.x0 = [mx.cos(rads), mx.sin(rads)]
+        self.x_opt = mx.array([1.0, 0.0])
         self.constr_jac = constr_jac
         self.constr_hess = constr_hess
         self.bounds = None
 
     def fun(self, x):
         return (2*(x[0]**2 + x[1]**2 - 1) - x[0],
-                np.array([4*x[0]-1, 4*x[1]]))
+                mx.array([4*x[0]-1, 4*x[1]]))
 
     @property
     def grad(self):
         return True
 
     def hess(self, x):
-        return 4*np.eye(2)
+        return 4*mx.eye(2)
 
     @property
     def constr(self):
@@ -154,7 +154,7 @@ class MaratosGradInFunc:
 
         if self.constr_hess is None:
             def hess(x, v):
-                return 2*v[0]*np.eye(2)
+                return 2*v[0]*mx.eye(2)
         else:
             hess = self.constr_hess
 
@@ -175,7 +175,7 @@ class HyperbolicIneq:
         self.x_opt = [1.952823, 0.088659]
         self.constr_jac = constr_jac
         self.constr_hess = constr_hess
-        self.bounds = Bounds(0, np.inf)
+        self.bounds = Bounds(0, mx.inf)
 
     def fun(self, x):
         return 1/2*(x[0] - 2)**2 + 1/2*(x[1] - 1/2)**2
@@ -184,7 +184,7 @@ class HyperbolicIneq:
         return [x[0] - 2, x[1] - 1/2]
 
     def hess(self, x):
-        return np.eye(2)
+        return mx.eye(2)
 
     @property
     def constr(self):
@@ -199,12 +199,12 @@ class HyperbolicIneq:
 
         if self.constr_hess is None:
             def hess(x, v):
-                return 2*v[0]*np.array([[1/(x[0] + 1)**3, 0],
+                return 2*v[0]*mx.array([[1/(x[0] + 1)**3, 0],
                                         [0, 0]])
         else:
             hess = self.constr_hess
 
-        return NonlinearConstraint(fun, 0.25, np.inf, jac, hess)
+        return NonlinearConstraint(fun, 0.25, mx.inf, jac, hess)
 
 
 class Rosenbrock:
@@ -215,23 +215,23 @@ class Rosenbrock:
     """
 
     def __init__(self, n=2, random_state=0):
-        rng = np.random.RandomState(random_state)
+        rng = mx.random.RandomState(random_state)
         self.x0 = rng.uniform(-1, 1, n)
-        self.x_opt = np.ones(n)
+        self.x_opt = mx.ones(n)
         self.bounds = None
 
     def fun(self, x):
-        x = np.asarray(x)
-        r = np.sum(100.0 * (x[1:] - x[:-1]**2.0)**2.0 + (1 - x[:-1])**2.0,
+        x = mx.array(x)
+        r = mx.sum(100.0 * (x[1:] - x[:-1]**2.0)**2.0 + (1 - x[:-1])**2.0,
                    axis=0)
         return r
 
     def grad(self, x):
-        x = np.asarray(x)
+        x = mx.array(x)
         xm = x[1:-1]
         xm_m1 = x[:-2]
         xm_p1 = x[2:]
-        der = np.zeros_like(x)
+        der = mx.zeros_like(x)
         der[1:-1] = (200 * (xm - xm_m1**2) -
                      400 * (xm_p1 - xm**2) * xm - 2 * (1 - xm))
         der[0] = -400 * x[0] * (x[1] - x[0]**2) - 2 * (1 - x[0])
@@ -239,13 +239,13 @@ class Rosenbrock:
         return der
 
     def hess(self, x):
-        x = np.atleast_1d(x)
-        H = np.diag(-400 * x[:-1], 1) - np.diag(400 * x[:-1], -1)
-        diagonal = np.zeros(len(x), dtype=x.dtype)
+        x = mx.atleast_1d(x)
+        H = mx.diag(-400 * x[:-1], 1) - mx.diag(400 * x[:-1], -1)
+        diagonal = mx.zeros(len(x), dtype=x.dtype)
         diagonal[0] = 1200 * x[0]**2 - 400 * x[1] + 2
         diagonal[-1] = 200
         diagonal[1:-1] = 202 + 1200 * x[1:-1]**2 - 400 * x[2:]
-        H = H + np.diag(diagonal)
+        H = H + mx.diag(diagonal)
         return H
 
     @property
@@ -272,7 +272,7 @@ class IneqRosenbrock(Rosenbrock):
     def constr(self):
         A = [[1, 2]]
         b = 1
-        return LinearConstraint(A, -np.inf, b)
+        return LinearConstraint(A, -mx.inf, b)
 
 
 class BoundedRosenbrock(Rosenbrock):
@@ -314,7 +314,7 @@ class EqIneqRosenbrock(Rosenbrock):
         b_ineq = 1
         A_eq = [[2, 1]]
         b_eq = 1
-        return (LinearConstraint(A_ineq, -np.inf, b_ineq),
+        return (LinearConstraint(A_ineq, -mx.inf, b_ineq),
                 LinearConstraint(A_eq, b_eq, b_eq))
 
 
@@ -335,14 +335,14 @@ class Elec:
     def __init__(self, n_electrons=200, random_state=0,
                  constr_jac=None, constr_hess=None):
         self.n_electrons = n_electrons
-        self.rng = np.random.RandomState(random_state)
+        self.rng = mx.random.RandomState(random_state)
         # Initial Guess
-        phi = self.rng.uniform(0, 2 * np.pi, self.n_electrons)
-        theta = self.rng.uniform(-np.pi, np.pi, self.n_electrons)
-        x = np.cos(theta) * np.cos(phi)
-        y = np.cos(theta) * np.sin(phi)
-        z = np.sin(theta)
-        self.x0 = np.hstack((x, y, z))
+        phi = self.rng.uniform(0, 2 * mx.pi, self.n_electrons)
+        theta = self.rng.uniform(-mx.pi, mx.pi, self.n_electrons)
+        x = mx.cos(theta) * mx.cos(phi)
+        y = mx.cos(theta) * mx.sin(phi)
+        z = mx.sin(theta)
+        self.x0 = mx.hstack((x, y, z))
         self.x_opt = None
         self.constr_jac = constr_jac
         self.constr_hess = constr_hess
@@ -363,58 +363,58 @@ class Elec:
 
     def fun(self, x):
         dx, dy, dz = self._compute_coordinate_deltas(x)
-        with np.errstate(divide='ignore'):
+        with mx.errstate(divide='ignore'):
             dm1 = (dx**2 + dy**2 + dz**2) ** -0.5
-        dm1[np.diag_indices_from(dm1)] = 0
-        return 0.5 * np.sum(dm1)
+        dm1[mx.diag_indices_from(dm1)] = 0
+        return 0.5 * mx.sum(dm1)
 
     def grad(self, x):
         dx, dy, dz = self._compute_coordinate_deltas(x)
 
-        with np.errstate(divide='ignore'):
+        with mx.errstate(divide='ignore'):
             dm3 = (dx**2 + dy**2 + dz**2) ** -1.5
-        dm3[np.diag_indices_from(dm3)] = 0
+        dm3[mx.diag_indices_from(dm3)] = 0
 
-        grad_x = -np.sum(dx * dm3, axis=1)
-        grad_y = -np.sum(dy * dm3, axis=1)
-        grad_z = -np.sum(dz * dm3, axis=1)
+        grad_x = -mx.sum(dx * dm3, axis=1)
+        grad_y = -mx.sum(dy * dm3, axis=1)
+        grad_z = -mx.sum(dz * dm3, axis=1)
 
-        return np.hstack((grad_x, grad_y, grad_z))
+        return mx.hstack((grad_x, grad_y, grad_z))
 
     def hess(self, x):
         dx, dy, dz = self._compute_coordinate_deltas(x)
         d = (dx**2 + dy**2 + dz**2) ** 0.5
 
-        with np.errstate(divide='ignore'):
+        with mx.errstate(divide='ignore'):
             dm3 = d ** -3
             dm5 = d ** -5
 
-        i = np.arange(self.n_electrons)
+        i = mx.arange(self.n_electrons)
         dm3[i, i] = 0
         dm5[i, i] = 0
 
         Hxx = dm3 - 3 * dx**2 * dm5
-        Hxx[i, i] = -np.sum(Hxx, axis=1)
+        Hxx[i, i] = -mx.sum(Hxx, axis=1)
 
         Hxy = -3 * dx * dy * dm5
-        Hxy[i, i] = -np.sum(Hxy, axis=1)
+        Hxy[i, i] = -mx.sum(Hxy, axis=1)
 
         Hxz = -3 * dx * dz * dm5
-        Hxz[i, i] = -np.sum(Hxz, axis=1)
+        Hxz[i, i] = -mx.sum(Hxz, axis=1)
 
         Hyy = dm3 - 3 * dy**2 * dm5
-        Hyy[i, i] = -np.sum(Hyy, axis=1)
+        Hyy[i, i] = -mx.sum(Hyy, axis=1)
 
         Hyz = -3 * dy * dz * dm5
-        Hyz[i, i] = -np.sum(Hyz, axis=1)
+        Hyz[i, i] = -mx.sum(Hyz, axis=1)
 
         Hzz = dm3 - 3 * dz**2 * dm5
-        Hzz[i, i] = -np.sum(Hzz, axis=1)
+        Hzz[i, i] = -mx.sum(Hzz, axis=1)
 
-        H = np.vstack((
-            np.hstack((Hxx, Hxy, Hxz)),
-            np.hstack((Hxy, Hyy, Hyz)),
-            np.hstack((Hxz, Hyz, Hzz))
+        H = mx.vstack((
+            mx.hstack((Hxx, Hxy, Hxz)),
+            mx.hstack((Hxy, Hyy, Hyz)),
+            mx.hstack((Hxz, Hyz, Hzz))
         ))
 
         return H
@@ -428,21 +428,21 @@ class Elec:
         if self.constr_jac is None:
             def jac(x):
                 x_coord, y_coord, z_coord = self._get_cordinates(x)
-                Jx = 2 * np.diag(x_coord)
-                Jy = 2 * np.diag(y_coord)
-                Jz = 2 * np.diag(z_coord)
-                return csc_array(np.hstack((Jx, Jy, Jz)))
+                Jx = 2 * mx.diag(x_coord)
+                Jy = 2 * mx.diag(y_coord)
+                Jz = 2 * mx.diag(z_coord)
+                return csc_array(mx.hstack((Jx, Jy, Jz)))
         else:
             jac = self.constr_jac
 
         if self.constr_hess is None:
             def hess(x, v):
-                D = 2 * np.diag(v)
+                D = 2 * mx.diag(v)
                 return block_diag(D, D, D)
         else:
             hess = self.constr_hess
 
-        return NonlinearConstraint(fun, -np.inf, 0, jac, hess)
+        return NonlinearConstraint(fun, -mx.inf, 0, jac, hess)
 
 
 class TestTrustRegionConstr:
@@ -627,14 +627,14 @@ class TestTrustRegionConstr:
         # True. Previously, trust-constr would treat bounds as
         # exclusive.
 
-        x0 = np.array([0., 0.5])
+        x0 = mx.array([0., 0.5])
 
         def obj(x):
             x1 = x[0]
             x2 = x[1]
             return x1 ** 2 + x2 ** 2
 
-        bounds = Bounds(np.array([0., 0.]), np.array([1., 1.]),
+        bounds = Bounds(mx.array([0., 0.]), mx.array([1., 1.]),
                         keep_feasible=True)
 
         with warnings.catch_warnings():
@@ -666,26 +666,26 @@ class TestEmptyConstraint:
             return x[0]**2 + x[1]**2
 
         def functionjacobian(x):
-            return np.array([2.*x[0], 2.*x[1]])
+            return mx.array([2.*x[0], 2.*x[1]])
 
         def functionhvp(x, v):
             return 2.*v
 
         def constraint(x):
-            return np.array([x[0]**2 - x[1]**2])
+            return mx.array([x[0]**2 - x[1]**2])
 
         def constraintjacobian(x):
-            return np.array([[2*x[0], -2*x[1]]])
+            return mx.array([[2*x[0], -2*x[1]]])
 
         def constraintlcoh(x, v):
-            return np.array([[2., 0.], [0., -2.]]) * v[0]
+            return mx.array([[2., 0.], [0., -2.]]) * v[0]
 
-        constraint = NonlinearConstraint(constraint, 1., np.inf,
+        constraint = NonlinearConstraint(constraint, 1., mx.inf,
                                          constraintjacobian, constraintlcoh)
 
         startpoint = [1., 2.]
 
-        bounds = Bounds([-np.inf, -np.inf], [np.inf, np.inf])
+        bounds = Bounds([-mx.inf, -mx.inf], [mx.inf, mx.inf])
 
         result = minimize(
           function,
@@ -697,7 +697,7 @@ class TestEmptyConstraint:
           bounds=bounds,
         )
 
-        assert_array_almost_equal(abs(result.x), np.array([1, 0]), decimal=4)
+        assert_array_almost_equal(abs(result.x), mx.array([1, 0]), decimal=4)
 
 
 def test_bug_11886():
@@ -706,8 +706,8 @@ def test_bug_11886():
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", PendingDeprecationWarning)
-        A = np.matrix(np.diag([1, 1]))
-    lin_cons = LinearConstraint(A, -1, np.inf)
+        A = mx.matrix(mx.diag([1, 1]))
+    lin_cons = LinearConstraint(A, -1, mx.inf)
     # just checking that there are no errors
     minimize(opt, 2*[1], constraints = lin_cons)
 
@@ -719,26 +719,26 @@ def test_gh11649():
     bnds = Bounds(lb=[-1, -1], ub=[1, 1], keep_feasible=True)
 
     def assert_inbounds(x):
-        assert np.all(x >= bnds.lb)
-        assert np.all(x <= bnds.ub)
+        assert mx.all(x >= bnds.lb)
+        assert mx.all(x <= bnds.ub)
 
     def obj(x):
         assert_inbounds(x)
-        return np.exp(x[0])*(4*x[0]**2 + 2*x[1]**2 + 4*x[0]*x[1] + 2*x[1] + 1)
+        return mx.exp(x[0])*(4*x[0]**2 + 2*x[1]**2 + 4*x[0]*x[1] + 2*x[1] + 1)
 
     def nce(x):
         assert_inbounds(x)
         return x[0]**2 + x[1]
 
     def nce_jac(x):
-        return np.array([2*x[0], 1])
+        return mx.array([2*x[0], 1])
 
     def nci(x):
         assert_inbounds(x)
         return x[0]*x[1]
 
-    x0 = np.array((0.99, -0.99))
-    nlcs = [NonlinearConstraint(nci, -10, np.inf),
+    x0 = mx.array((0.99, -0.99))
+    nlcs = [NonlinearConstraint(nci, -10, mx.inf),
             NonlinearConstraint(nce, 1, 1, jac=nce_jac)]
 
     res = minimize(fun=obj, x0=x0, method='trust-constr',
@@ -752,8 +752,8 @@ def test_gh20665_too_many_constraints():
     # constraints than variables. Check that the error message is improved.
     message = "...more equality constraints than independent variables..."
     with pytest.raises(ValueError, match=message):
-        x0 = np.ones((2,))
-        A_eq, b_eq = np.arange(6).reshape((3, 2)), np.ones((3,))
+        x0 = mx.ones((2,))
+        A_eq, b_eq = mx.arange(6).reshape((3, 2)), mx.ones((3,))
         g = NonlinearConstraint(lambda x:  A_eq @ x, lb=b_eq, ub=b_eq)
         minimize(rosen, x0, method='trust-constr', constraints=[g])
     # no error with `SVDFactorization`
@@ -769,7 +769,7 @@ def test_issue_18882():
         return 1.0 + u1**2 / a**2 - u2**2 / b**2
 
     def of(u):
-        return np.sum(u**2)
+        return mx.sum(u**2)
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "delta_grad == 0.0", UserWarning)
@@ -785,9 +785,9 @@ def test_issue_18882():
 class TestBoundedNelderMead:
 
     @pytest.mark.parametrize('bounds, x_opt',
-                             [(Bounds(-np.inf, np.inf), Rosenbrock().x_opt),
-                              (Bounds(-np.inf, -0.8), [-0.8, -0.8]),
-                              (Bounds(3.0, np.inf), [3.0, 9.0]),
+                             [(Bounds(-mx.inf, mx.inf), Rosenbrock().x_opt),
+                              (Bounds(-mx.inf, -0.8), [-0.8, -0.8]),
+                              (Bounds(3.0, mx.inf), [3.0, 9.0]),
                               (Bounds([3.0, 1.0], [4.0, 5.0]), [3., 5.]),
                               ])
     def test_rosen_brock_with_bounds(self, bounds, x_opt):
@@ -798,10 +798,10 @@ class TestBoundedNelderMead:
             result = minimize(prob.fun, [-10, -10],
                               method='Nelder-Mead',
                               bounds=bounds)
-            assert np.less_equal(bounds.lb, result.x).all()
-            assert np.less_equal(result.x, bounds.ub).all()
-            assert np.allclose(prob.fun(result.x), result.fun)
-            assert np.allclose(result.x, x_opt, atol=1.e-3)
+            assert mx.less_equal(bounds.lb, result.x).all()
+            assert mx.less_equal(result.x, bounds.ub).all()
+            assert mx.allclose(prob.fun(result.x), result.fun)
+            assert mx.allclose(result.x, x_opt, atol=1.e-3)
 
     def test_equal_all_bounds(self):
         prob = Rosenbrock()
@@ -814,7 +814,7 @@ class TestBoundedNelderMead:
             result = minimize(prob.fun, [-10, 8],
                               method='Nelder-Mead',
                               bounds=bounds)
-            assert np.allclose(result.x, [4.0, 5.0])
+            assert mx.allclose(result.x, [4.0, 5.0])
 
     def test_equal_one_bounds(self):
         prob = Rosenbrock()
@@ -827,13 +827,13 @@ class TestBoundedNelderMead:
             result = minimize(prob.fun, [-10, 8],
                               method='Nelder-Mead',
                               bounds=bounds)
-            assert np.allclose(result.x, [4.0, 16.0])
+            assert mx.allclose(result.x, [4.0, 16.0])
 
     def test_invalid_bounds(self):
         prob = Rosenbrock()
         message = 'An upper bound is less than the corresponding lower bound.'
         with pytest.raises(ValueError, match=message):
-            bounds = Bounds([-np.inf, 1.0], [4.0, -5.0])
+            bounds = Bounds([-mx.inf, 1.0], [4.0, -5.0])
             minimize(prob.fun, [-10, 3],
                      method='Nelder-Mead',
                      bounds=bounds)
@@ -844,7 +844,7 @@ class TestBoundedNelderMead:
         prob = Rosenbrock()
         message = "Initial guess is not within the specified bounds"
         with pytest.warns(UserWarning, match=message):
-            bounds = Bounds([-np.inf, 1.0], [4.0, 5.0])
+            bounds = Bounds([-mx.inf, 1.0], [4.0, 5.0])
             minimize(prob.fun, [-10, 8],
                      method='Nelder-Mead',
                      bounds=bounds)

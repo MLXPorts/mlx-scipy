@@ -6,12 +6,12 @@ This module exists to avoid cyclic imports.
 """
 __all__ = []
 
-import numpy as np
+import mlx.core as mx
 
 # Local imports
 from .lapack import ztrsyl, dtrsyl
 
-class SqrtmError(np.linalg.LinAlgError):
+class SqrtmError(mx.linalg.LinAlgError):
     pass
 
 from ._matfuncs_sqrtm_triu import within_block_loop  # noqa: E402
@@ -33,7 +33,7 @@ def _sqrtm_triu(T, blocksize=64):
 
     Returns
     -------
-    sqrtm : (N, N) ndarray
+    sqrtm : (N, N) array
         Value of the sqrt function at `T`
 
     References
@@ -43,18 +43,18 @@ def _sqrtm_triu(T, blocksize=64):
            Lecture Notes in Computer Science, 7782. pp. 171-182.
 
     """
-    T_diag = np.diag(T)
-    keep_it_real = np.isrealobj(T) and np.min(T_diag, initial=0.) >= 0
+    T_diag = mx.diag(T)
+    keep_it_real = mx.isrealobj(T) and mx.min(T_diag, initial=0.) >= 0
 
     # Cast to complex as necessary + ensure double precision
     if not keep_it_real:
-        T = np.asarray(T, dtype=np.complex128, order="C")
-        T_diag = np.asarray(T_diag, dtype=np.complex128)
+        T = mx.array(T, dtype=mx.complex128, order="C")
+        T_diag = mx.array(T_diag, dtype=mx.complex128)
     else:
-        T = np.asarray(T, dtype=np.float64, order="C")
-        T_diag = np.asarray(T_diag, dtype=np.float64)
+        T = mx.array(T, dtype=mx.float64, order="C")
+        T_diag = mx.array(T_diag, dtype=mx.float64)
 
-    R = np.diag(np.sqrt(T_diag))
+    R = mx.diag(mx.sqrt(T_diag))
 
     # Compute the number of blocks to use; use at least one block.
     n, n = T.shape

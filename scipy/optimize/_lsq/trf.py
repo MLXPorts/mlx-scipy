@@ -4,8 +4,8 @@ The algorithm is based on ideas from paper [STIR]_. The main idea is to
 account for the presence of the bounds by appropriate scaling of the variables (or,
 equivalently, changing a trust-region shape). Let's introduce a vector v:
 
-           | ub[i] - x[i], if g[i] < 0 and ub[i] < np.inf
-    v[i] = | x[i] - lb[i], if g[i] > 0 and lb[i] > -np.inf
+           | ub[i] - x[i], if g[i] < 0 and ub[i] < mx.inf
+    v[i] = | x[i] - lb[i], if g[i] > 0 and lb[i] > -mx.inf
            | 1,           otherwise
 
 where g is the gradient of a cost function and lb, ub are the bounds. Its
@@ -93,7 +93,7 @@ References
 .. [JJMore] More, J. J., "The Levenberg-Marquardt Algorithm: Implementation
     and Theory," Numerical Analysis, ed. G. A. Watson, Lecture
 """
-import numpy as np
+import mlx.core as mx
 from numpy.linalg import norm
 from scipy.linalg import svd, qr
 from scipy.sparse.linalg import lsmr
@@ -116,7 +116,7 @@ def trf(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev, x_scale,
     # algorithm when no bounds are imposed. We decided to write the two
     # separate functions. It violates the DRY principle, but the individual
     # functions are kept the most readable.
-    if np.all(lb == -np.inf) and np.all(ub == np.inf):
+    if mx.all(lb == -mx.inf) and mx.all(ub == mx.inf):
         return trf_no_bounds(
             fun, jac, x0, f0, J0, ftol, xtol, gtol, max_nfev, x_scale,
             loss_function, tr_solver, tr_options, verbose, callback=callback)
@@ -135,7 +135,7 @@ def select_step(x, J_h, diag_h, g_h, p, p_h, d, Delta, lb, ub, theta):
     p_stride, hits = step_size_to_bound(x, p, lb, ub)
 
     # Compute the reflected direction.
-    r_h = np.copy(p_h)
+    r_h = mx.copy(p_h)
     r_h[hits.astype(bool)] *= -1
     r = d * r_h
 
@@ -173,7 +173,7 @@ def select_step(x, J_h, diag_h, g_h, p, p_h, d, Delta, lb, ub, theta):
         r_h += p_h
         r = r_h * d
     else:
-        r_value = np.inf
+        r_value = mx.inf
 
     # Now correct p_h to make it strictly interior.
     p *= theta
@@ -218,10 +218,10 @@ def trf_bounds(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev,
 
     if loss_function is not None:
         rho = loss_function(f)
-        cost = 0.5 * np.sum(rho[0])
+        cost = 0.5 * mx.sum(rho[0])
         J, f = scale_for_robust_loss_function(J, f, rho)
     else:
-        cost = 0.5 * np.dot(f, f)
+        cost = 0.5 * mx.dot(f, f)
 
     g = compute_grad(J, f)
 
@@ -237,11 +237,11 @@ def trf_bounds(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev,
     if Delta == 0:
         Delta = 1.0
 
-    g_norm = norm(g * v, ord=np.inf)
+    g_norm = norm(g * v, ord=mx.inf)
 
-    f_augmented = np.zeros(m + n)
+    f_augmented = mx.zeros(m + n)
     if tr_solver == 'exact':
-        J_augmented = np.empty((m + n, n))
+        J_augmented = mx.empty((m + n, n))
     elif tr_solver == 'lsmr':
         reg_term = 0.0
         regularize = tr_options.pop('regularize', True)
@@ -262,7 +262,7 @@ def trf_bounds(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev,
     while True:
         v, dv = CL_scaling_vector(x, g, lb, ub)
 
-        g_norm = norm(g * v, ord=np.inf)
+        g_norm = norm(g * v, ord=mx.inf)
         if g_norm < gtol:
             termination_status = 1
 
@@ -299,7 +299,7 @@ def trf_bounds(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev,
         if tr_solver == 'exact':
             J_augmented[:m] = J * d
             J_h = J_augmented[:m]  # Memory view.
-            J_augmented[m:] = np.diag(diag_h**0.5)
+            J_augmented[m:] = mx.diag(diag_h**0.5)
             U, s, V = svd(J_augmented, full_matrices=False)
             V = V.T
             uf = U.T.dot(f_augmented)
@@ -314,10 +314,10 @@ def trf_bounds(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev,
 
             lsmr_op = regularized_lsq_operator(J_h, (diag_h + reg_term)**0.5)
             gn_h = lsmr(lsmr_op, f_augmented, **tr_options)[0]
-            S = np.vstack((g_h, gn_h)).T
+            S = mx.vstack((g_h, gn_h)).T
             S, _ = qr(S, mode='economic')
             JS = J_h.dot(S)  # LinearOperator does dot too.
-            B_S = np.dot(JS.T, JS) + np.dot(S.T * diag_h, S)
+            B_S = mx.dot(JS.T, JS) + mx.dot(S.T * diag_h, S)
             g_S = S.T.dot(g_h)
 
         # theta controls step back step ratio from the bounds.
@@ -342,7 +342,7 @@ def trf_bounds(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev,
 
             step_h_norm = norm(step_h)
 
-            if not np.all(np.isfinite(f_new)):
+            if not mx.all(mx.isfinite(f_new)):
                 Delta = 0.25 * step_h_norm
                 continue
 
@@ -350,7 +350,7 @@ def trf_bounds(fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev,
             if loss_function is not None:
                 cost_new = loss_function(f_new, cost_only=True)
             else:
-                cost_new = 0.5 * np.dot(f_new, f_new)
+                cost_new = 0.5 * mx.dot(f_new, f_new)
             actual_reduction = cost - cost_new
             Delta_new, ratio = update_tr_radius(
                 Delta, actual_reduction, predicted_reduction,
@@ -427,10 +427,10 @@ def trf_no_bounds(fun, jac, x0, f0, J0, ftol, xtol, gtol, max_nfev,
 
     if loss_function is not None:
         rho = loss_function(f)
-        cost = 0.5 * np.sum(rho[0])
+        cost = 0.5 * mx.sum(rho[0])
         J, f = scale_for_robust_loss_function(J, f, rho)
     else:
-        cost = 0.5 * np.dot(f, f)
+        cost = 0.5 * mx.dot(f, f)
 
     g = compute_grad(J, f)
 
@@ -463,7 +463,7 @@ def trf_no_bounds(fun, jac, x0, f0, J0, ftol, xtol, gtol, max_nfev,
         print_header_nonlinear()
 
     while True:
-        g_norm = norm(g, ord=np.inf)
+        g_norm = norm(g, ord=mx.inf)
         if g_norm < gtol:
             termination_status = 1
 
@@ -493,10 +493,10 @@ def trf_no_bounds(fun, jac, x0, f0, J0, ftol, xtol, gtol, max_nfev,
 
             damp_full = (damp**2 + reg_term)**0.5
             gn_h = lsmr(J_h, f, damp=damp_full, **tr_options)[0]
-            S = np.vstack((g_h, gn_h)).T
+            S = mx.vstack((g_h, gn_h)).T
             S, _ = qr(S, mode='economic')
             JS = J_h.dot(S)
-            B_S = np.dot(JS.T, JS)
+            B_S = mx.dot(JS.T, JS)
             g_S = S.T.dot(g_h)
 
         actual_reduction = -1
@@ -516,7 +516,7 @@ def trf_no_bounds(fun, jac, x0, f0, J0, ftol, xtol, gtol, max_nfev,
 
             step_h_norm = norm(step_h)
 
-            if not np.all(np.isfinite(f_new)):
+            if not mx.all(mx.isfinite(f_new)):
                 Delta = 0.25 * step_h_norm
                 continue
 
@@ -524,7 +524,7 @@ def trf_no_bounds(fun, jac, x0, f0, J0, ftol, xtol, gtol, max_nfev,
             if loss_function is not None:
                 cost_new = loss_function(f_new, cost_only=True)
             else:
-                cost_new = 0.5 * np.dot(f_new, f_new)
+                cost_new = 0.5 * mx.dot(f_new, f_new)
             actual_reduction = cost - cost_new
 
             Delta_new, ratio = update_tr_radius(
@@ -580,7 +580,7 @@ def trf_no_bounds(fun, jac, x0, f0, J0, ftol, xtol, gtol, max_nfev,
     if termination_status is None:
         termination_status = 0
 
-    active_mask = np.zeros_like(x)
+    active_mask = mx.zeros_like(x)
     return OptimizeResult(
         x=x, cost=cost, fun=f_true, jac=J, grad=g, optimality=g_norm,
         active_mask=active_mask, nfev=nfev, njev=njev,

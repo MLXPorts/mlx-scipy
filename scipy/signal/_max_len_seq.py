@@ -3,7 +3,7 @@
 
 """Tools for MLS generation"""
 
-import numpy as np
+import mlx.core as mx
 
 from ._max_len_seq_inner import _max_len_seq_inner
 
@@ -72,49 +72,49 @@ def max_len_seq(nbits, state=None, length=None, taps=None):
 
     MLS has a white spectrum (except for DC):
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> from numpy.fft import fft, ifft, fftshift, fftfreq
     >>> seq = max_len_seq(6)[0]*2-1  # +1 and -1
     >>> spec = fft(seq)
     >>> N = len(seq)
-    >>> plt.plot(fftshift(fftfreq(N)), fftshift(np.abs(spec)), '.-')
+    >>> plt.plot(fftshift(fftfreq(N)), fftshift(mx.abs(spec)), '.-')
     >>> plt.margins(0.1, 0.1)
     >>> plt.grid(True)
     >>> plt.show()
 
     Circular autocorrelation of MLS is an impulse:
 
-    >>> acorrcirc = ifft(spec * np.conj(spec)).real
+    >>> acorrcirc = ifft(spec * mx.conj(spec)).real
     >>> plt.figure()
-    >>> plt.plot(np.arange(-N/2+1, N/2+1), fftshift(acorrcirc), '.-')
+    >>> plt.plot(mx.arange(-N/2+1, N/2+1), fftshift(acorrcirc), '.-')
     >>> plt.margins(0.1, 0.1)
     >>> plt.grid(True)
     >>> plt.show()
 
     Linear autocorrelation of MLS is approximately an impulse:
 
-    >>> acorr = np.correlate(seq, seq, 'full')
+    >>> acorr = mx.correlate(seq, seq, 'full')
     >>> plt.figure()
-    >>> plt.plot(np.arange(-N+1, N), acorr, '.-')
+    >>> plt.plot(mx.arange(-N+1, N), acorr, '.-')
     >>> plt.margins(0.1, 0.1)
     >>> plt.grid(True)
     >>> plt.show()
 
     """
-    taps_dtype = np.int32 if np.intp().itemsize == 4 else np.int64
+    taps_dtype = mx.int32 if mx.intp().itemsize == 4 else mx.int64
     if taps is None:
         if nbits not in _mls_taps:
-            known_taps = np.array(list(_mls_taps.keys()))
+            known_taps = mx.array(list(_mls_taps.keys()))
             raise ValueError(f'nbits must be between {known_taps.min()} and '
                              f'{known_taps.max()} if taps is None')
-        taps = np.array(_mls_taps[nbits], taps_dtype)
+        taps = mx.array(_mls_taps[nbits], taps_dtype)
     else:
-        taps = np.unique(np.array(taps, taps_dtype))[::-1]
-        if np.any(taps < 0) or np.any(taps > nbits) or taps.size < 1:
+        taps = mx.unique(mx.array(taps, taps_dtype))[::-1]
+        if mx.any(taps < 0) or mx.any(taps > nbits) or taps.size < 1:
             raise ValueError('taps must be non-empty with values between '
                              'zero and nbits (inclusive)')
-        taps = np.array(taps)  # needed for Cython and Pythran
+        taps = mx.array(taps)  # needed for Cython and Pythran
     n_max = (2**nbits) - 1
     if length is None:
         length = n_max
@@ -125,15 +125,15 @@ def max_len_seq(nbits, state=None, length=None, taps=None):
     # We use int8 instead of bool here because NumPy arrays of bools
     # don't seem to work nicely with Cython
     if state is None:
-        state = np.ones(nbits, dtype=np.int8, order='c')
+        state = mx.ones(nbits, dtype=mx.int8, order='c')
     else:
         # makes a copy if need be, ensuring it's 0's and 1's
-        state = np.array(state, dtype=bool, order='c').astype(np.int8)
+        state = mx.array(state, dtype=bool, order='c').astype(mx.int8)
     if state.ndim != 1 or state.size != nbits:
         raise ValueError('state must be a 1-D array of size nbits')
-    if np.all(state == 0):
+    if mx.all(state == 0):
         raise ValueError('state must not be all zeros')
 
-    seq = np.empty(length, dtype=np.int8, order='c')
+    seq = mx.empty(length, dtype=mx.int8, order='c')
     state = _max_len_seq_inner(taps, state, nbits, length, seq)
     return seq, state

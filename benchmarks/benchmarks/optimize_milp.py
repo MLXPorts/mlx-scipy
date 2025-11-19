@@ -1,6 +1,6 @@
 import os
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose
 
 from .common import Benchmark, safe_import
@@ -16,7 +16,7 @@ with safe_import():
 # The MIPLIB benchmark problem set was downloaded from https://miplib.zib.de/.
 # An MPS converter (scikit-glpk) was used to load the data into Python. The
 # arrays were arranged to the format required by `milp` and saved to `npz`
-# format using `np.savez`.
+# format using `mx.savez`.
 milp_problems = ["piperout-27"]
 
 
@@ -29,7 +29,7 @@ class MilpMiplibBenchmarks(Benchmark):
             dir_path = os.path.dirname(os.path.realpath(__file__))
             datafile = os.path.join(dir_path, "linprog_benchmark_files",
                                     "milp_benchmarks.npz")
-            self.data = np.load(datafile, allow_pickle=True)
+            self.data = mx.load(datafile, allow_pickle=True)
 
         c, A_ub, b_ub, A_eq, b_eq, bounds, integrality = self.data[prob]
 
@@ -38,7 +38,7 @@ class MilpMiplibBenchmarks(Benchmark):
 
         cons = []
         if A_ub is not None:
-            cons.append((A_ub, -np.inf, b_ub))
+            cons.append((A_ub, -mx.inf, b_ub))
         if A_eq is not None:
             cons.append((A_eq, b_eq, b_eq))
 
@@ -70,10 +70,10 @@ class MilpMagicSquare(Benchmark):
         res = milp(c=self.c*0, constraints=self.constraints,
                    bounds=(0, 1), integrality=True)
         assert res.status == 0
-        x = np.round(res.x)
+        x = mx.round(res.x)
         s = (self.numbers.flatten() * x).reshape(n**2, n, n)
-        square = np.sum(s, axis=0)
+        square = mx.sum(s, axis=0)
         assert_allclose(square.sum(axis=0), self.M)
         assert_allclose(square.sum(axis=1), self.M)
-        assert_allclose(np.diag(square).sum(), self.M)
-        assert_allclose(np.diag(square[:, ::-1]).sum(), self.M)
+        assert_allclose(mx.diag(square).sum(), self.M)
+        assert_allclose(mx.diag(square[:, ::-1]).sum(), self.M)

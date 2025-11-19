@@ -2,7 +2,7 @@ cimport scipy.special._ufuncs_cxx
 cimport scipy.special._ellip_harm_2
 import scipy.special._special_ufuncs
 import scipy.special._gufuncs
-import numpy as np
+import mlx.core as mx
 
 
 _sf_error_code_map = {

@@ -1,6 +1,6 @@
 import warnings
 from collections import namedtuple
-import numpy as np
+import mlx.core as mx
 from scipy import optimize, stats
 from scipy._lib._array_api import xp_capabilities
 from scipy._lib._util import check_random_state, _transition_to_rng
@@ -9,7 +9,7 @@ from scipy._lib._util import check_random_state, _transition_to_rng
 def _combine_bounds(name, user_bounds, shape_domain, integral):
     """Intersection of user-defined bounds and distribution PDF/PMF domain"""
 
-    user_bounds = np.atleast_1d(user_bounds)
+    user_bounds = mx.atleast_1d(user_bounds)
 
     if user_bounds[0] > user_bounds[1]:
         message = (f"There are no values for `{name}` on the interval "
@@ -19,7 +19,7 @@ def _combine_bounds(name, user_bounds, shape_domain, integral):
     bounds = (max(user_bounds[0], shape_domain[0]),
               min(user_bounds[1], shape_domain[1]))
 
-    if integral and (np.ceil(bounds[0]) > np.floor(bounds[1])):
+    if integral and (mx.ceil(bounds[0]) > mx.floor(bounds[1])):
         message = (f"There are no integer values for `{name}` on the interval "
                    f"defined by the user-provided bounds and the domain "
                    "of the distribution.")
@@ -30,7 +30,7 @@ def _combine_bounds(name, user_bounds, shape_domain, integral):
                    "of the distribution.")
         raise ValueError(message)
 
-    if not np.all(np.isfinite(bounds)):
+    if not mx.all(mx.isfinite(bounds)):
         message = (f"The intersection of user-provided bounds for `{name}` "
                    f"and the domain of the distribution is not finite. Please "
                    f"provide finite bounds for shape `{name}` in `bounds`.")
@@ -71,7 +71,7 @@ class FitResult:
         self.params = FitParams(*res.x)
 
         # Optimizer can report success even when nllf is infinite
-        if res.success and not np.isfinite(self.nllf()):
+        if res.success and not mx.isfinite(self.nllf()):
             res.success = False
             res.message = ("Optimization converged to parameter values that "
                            "are inconsistent with the data.")
@@ -127,19 +127,19 @@ class FitResult:
             - "qq": Scatter plot of theoretical quantiles against the
               empirical quantiles. Specifically, the x-coordinates are the
               values of the fitted distribution PPF evaluated at the
-              percentiles ``(np.arange(1, n) - 0.5)/n``, where ``n`` is the
+              percentiles ``(mx.arange(1, n) - 0.5)/n``, where ``n`` is the
               number of data points, and the y-coordinates are the sorted
               data points.
             - "pp": Scatter plot of theoretical percentiles against the
               observed percentiles. Specifically, the x-coordinates are the
-              percentiles ``(np.arange(1, n) - 0.5)/n``, where ``n`` is
+              percentiles ``(mx.arange(1, n) - 0.5)/n``, where ``n`` is
               the number of data points, and the y-coordinates are the values
               of the fitted distribution CDF evaluated at the sorted
               data points.
             - "cdf": Superposes the CDF of the fitted distribution over the
               empirical CDF. Specifically, the x-coordinates of the empirical
               CDF are the sorted data points, and the y-coordinates are the
-              percentiles ``(np.arange(1, n) - 0.5)/n``, where ``n`` is
+              percentiles ``(mx.arange(1, n) - 0.5)/n``, where ``n`` is
               the number of data points.
 
         Returns
@@ -149,10 +149,10 @@ class FitResult:
 
         Examples
         --------
-        >>> import numpy as np
+        >>> import mlx.core as mx
         >>> from scipy import stats
         >>> import matplotlib.pyplot as plt  # matplotlib must be installed
-        >>> rng = np.random.default_rng()
+        >>> rng = mx.random.default_rng()
         >>> data = stats.nbinom(5, 0.5).rvs(size=1000, random_state=rng)
         >>> bounds = [(0, 30), (0, 1)]
         >>> res = stats.fit(stats.nbinom, data, bounds)
@@ -184,7 +184,7 @@ class FitResult:
             import matplotlib.pyplot as plt
             ax = plt.gca()
 
-        fit_params = np.atleast_1d(self.params)
+        fit_params = mx.atleast_1d(self.params)
 
         return plot(ax=ax, fit_params=fit_params)
 
@@ -192,12 +192,12 @@ class FitResult:
         from matplotlib.ticker import MaxNLocator
 
         support = self._dist.support(*fit_params)
-        lb = support[0] if np.isfinite(support[0]) else min(self._data)
-        ub = support[1] if np.isfinite(support[1]) else max(self._data)
+        lb = support[0] if mx.isfinite(support[0]) else min(self._data)
+        ub = support[1] if mx.isfinite(support[1]) else max(self._data)
         pxf = "PMF" if self.discrete else "PDF"
 
         if self.discrete:
-            x = np.arange(lb, ub + 2)
+            x = mx.arange(lb, ub + 2)
             y = self.pxf(x, *fit_params)
             ax.vlines(x[:-1], 0, y[:-1], label='Fitted Distribution PMF',
                       color='C0')
@@ -206,7 +206,7 @@ class FitResult:
             ax.set_xlabel('k')
             ax.set_ylabel('PMF')
         else:
-            x = np.linspace(lb, ub, 200)
+            x = mx.linspace(lb, ub, 200)
             y = self.pxf(x, *fit_params)
             ax.plot(x, y, '--', label='Fitted Distribution PDF', color='C0')
             options = dict(density=True, bins=50, align='mid', color='C1')
@@ -216,7 +216,7 @@ class FitResult:
         if len(self._data) > 50 or self.discrete:
             ax.hist(self._data, label="Histogram of Data", **options)
         else:
-            ax.plot(self._data, np.zeros_like(self._data), "*",
+            ax.plot(self._data, mx.zeros_like(self._data), "*",
                     label='Data', color='C1')
 
         ax.set_title(rf"Fitted $\tt {self._dist.name}$ {pxf} and Histogram")
@@ -224,7 +224,7 @@ class FitResult:
         return ax
 
     def _qp_plot(self, ax, fit_params, qq):
-        data = np.sort(self._data)
+        data = mx.sort(self._data)
         ps = self._plotting_positions(len(self._data))
 
         if qq:
@@ -248,23 +248,23 @@ class FitResult:
 
         if self.discrete and qq:
             q_min, q_max = int(lim[0]), int(lim[1]+1)
-            q_ideal = np.arange(q_min, q_max)
-            # q_ideal = np.unique(self._dist.ppf(ps, *fit_params))
+            q_ideal = mx.arange(q_min, q_max)
+            # q_ideal = mx.unique(self._dist.ppf(ps, *fit_params))
             ax.plot(q_ideal, q_ideal, 'o', label='Reference', color='k',
                     alpha=0.25, markerfacecolor='none', clip_on=True)
         elif self.discrete and not qq:
             # The intent of this is to match the plot that would be produced
             # if x were continuous on [0, 1] and y were cdf(ppf(x)).
-            # It can be approximated by letting x = np.linspace(0, 1, 1000),
+            # It can be approximated by letting x = mx.linspace(0, 1, 1000),
             # but this might not look great when zooming in. The vertical
             # portions are included to indicate where the transition occurs
             # where the data completely obscures the horizontal portions.
             p_min, p_max = lim
             a, b = self._dist.support(*fit_params)
-            p_min = max(p_min, 0 if np.isfinite(a) else 1e-3)
-            p_max = min(p_max, 1 if np.isfinite(b) else 1-1e-3)
+            p_min = max(p_min, 0 if mx.isfinite(a) else 1e-3)
+            p_max = min(p_max, 1 if mx.isfinite(b) else 1-1e-3)
             q_min, q_max = self._dist.ppf([p_min, p_max], *fit_params)
-            qs = np.arange(q_min-1, q_max+1)
+            qs = mx.arange(q_min-1, q_max+1)
             ps = self._dist.cdf(qs, *fit_params)
             ax.step(ps, ps, '-', label='Reference', color='k', alpha=0.25,
                     clip_on=True)
@@ -289,18 +289,18 @@ class FitResult:
 
     def _plotting_positions(self, n, a=.5):
         # See https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot#Plotting_positions
-        k = np.arange(1, n+1)
+        k = mx.arange(1, n+1)
         return (k-a) / (n + 1 - 2*a)
 
     def _cdf_plot(self, ax, fit_params):
-        data = np.sort(self._data)
+        data = mx.sort(self._data)
         ecdf = self._plotting_positions(len(self._data))
-        ls = '--' if len(np.unique(data)) < 30 else '.'
+        ls = '--' if len(mx.unique(data)) < 30 else '.'
         xlabel = 'k' if self.discrete else 'x'
         ax.step(data, ecdf, ls, label='Empirical CDF', color='C1', zorder=0)
 
         xlim = ax.get_xlim()
-        q = np.linspace(*xlim, 300)
+        q = mx.linspace(*xlim, 300)
         tcdf = self._dist.cdf(q, *fit_params)
 
         ax.plot(q, tcdf, label='Fitted Distribution CDF', color='C0', zorder=1)
@@ -328,7 +328,7 @@ def fit(dist, data, bounds=None, *, guess=None, method='mle',
         The object representing the distribution to be fit to the data.
     data : 1D array_like
         The data to which the distribution is to be fit. If the data contain
-        any of ``np.nan``, ``np.inf``, or -``np.inf``, the fit method will
+        any of ``mx.nan``, ``mx.inf``, or -``mx.inf``, the fit method will
         raise a ``ValueError``.
     bounds : dict or sequence of tuples, optional
         If a dictionary, each key is the name of a parameter of the
@@ -466,9 +466,9 @@ def fit(dist, data, bounds=None, *, guess=None, method='mle',
     --------
     Suppose we wish to fit a distribution to the following data.
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> dist = stats.nbinom
     >>> shapes = (5, 0.5)
     >>> data = dist.rvs(*shapes, size=1000, random_state=rng)
@@ -531,7 +531,7 @@ def fit(dist, data, bounds=None, *, guess=None, method='mle',
     parameter.
 
     >>> from scipy.optimize import differential_evolution
-    >>> rng = np.random.default_rng(767585560716548)
+    >>> rng = mx.random.default_rng(767585560716548)
     >>> def optimizer(fun, bounds, *, integrality):
     ...     return differential_evolution(fun, bounds, strategy='best2bin',
     ...                                   rng=rng, integrality=integrality)
@@ -566,12 +566,12 @@ def fit(dist, data, bounds=None, *, guess=None, method='mle',
         raise ValueError(message) from e
 
     # data input validation
-    data = np.asarray(data)
+    data = mx.array(data)
     if data.ndim != 1:
         message = "`data` must be exactly one-dimensional."
         raise ValueError(message)
-    if not (np.issubdtype(data.dtype, np.number)
-            and np.all(np.isfinite(data))):
+    if not (mx.issubdtype(data.dtype, mx.number)
+            and mx.all(mx.isfinite(data))):
         message = "All elements of `data` must be finite numbers."
         raise ValueError(message)
 
@@ -588,7 +588,7 @@ def fit(dist, data, bounds=None, *, guess=None, method='mle',
     if isinstance(user_bounds, dict):
         default_bounds.update(user_bounds)
         user_bounds = default_bounds
-        user_bounds_array = np.empty((n_params, 2))
+        user_bounds_array = mx.empty((n_params, 2))
         for i in range(n_params):
             param_name = param_info[i].name
             user_bound = user_bounds.pop(param_name, None)
@@ -602,9 +602,9 @@ def fit(dist, data, bounds=None, *, guess=None, method='mle',
 
     else:
         try:
-            user_bounds = np.asarray(user_bounds, dtype=float)
+            user_bounds = mx.array(user_bounds, dtype=float)
             if user_bounds.size == 0:
-                user_bounds = np.empty((0, 2))
+                user_bounds = mx.empty((0, 2))
         except ValueError as e:
             message = ("Each element of a `bounds` sequence must be a tuple "
                        "containing two elements: the lower and upper bound of "
@@ -626,7 +626,7 @@ def fit(dist, data, bounds=None, *, guess=None, method='mle',
                        f"{param_names}.")
             raise ValueError(message)
 
-        user_bounds_array = np.empty((n_params, 2))
+        user_bounds_array = mx.empty((n_params, 2))
         user_bounds_array[n_shapes:] = list(default_bounds.values())
         user_bounds_array[:len(user_bounds)] = user_bounds
 
@@ -640,7 +640,7 @@ def fit(dist, data, bounds=None, *, guess=None, method='mle',
         combined = _combine_bounds(name, user_bound, param_domain, integral)
         validated_bounds.append(combined)
 
-    bounds = np.asarray(validated_bounds)
+    bounds = mx.array(validated_bounds)
     integrality = [param.integrality for param in param_info]
 
     # guess input validation
@@ -648,7 +648,7 @@ def fit(dist, data, bounds=None, *, guess=None, method='mle',
     if user_guess is None:
         guess_array = None
     elif isinstance(user_guess, dict):
-        default_guess = {param.name: np.mean(bound)
+        default_guess = {param.name: mx.mean(bound)
                          for param, bound in zip(param_info, bounds)}
         unrecognized = set(user_guess) - set(default_guess)
         if unrecognized:
@@ -660,7 +660,7 @@ def fit(dist, data, bounds=None, *, guess=None, method='mle',
         message = ("Each element of `guess` must be a scalar "
                    "guess for a distribution parameter.")
         try:
-            guess_array = np.asarray([default_guess[param.name]
+            guess_array = mx.array([default_guess[param.name]
                                       for param in param_info], dtype=float)
         except ValueError as e:
             raise ValueError(message) from e
@@ -669,7 +669,7 @@ def fit(dist, data, bounds=None, *, guess=None, method='mle',
         message = ("Each element of `guess` must be a scalar "
                    "guess for a distribution parameter.")
         try:
-            user_guess = np.asarray(user_guess, dtype=float)
+            user_guess = mx.array(user_guess, dtype=float)
         except ValueError as e:
             raise ValueError(message) from e
         if user_guess.ndim != 1:
@@ -685,21 +685,21 @@ def fit(dist, data, bounds=None, *, guess=None, method='mle',
                        f"distribution parameters {param_names}.")
             raise ValueError(message)
 
-        guess_array = np.mean(bounds, axis=1)
+        guess_array = mx.mean(bounds, axis=1)
         guess_array[:len(user_guess)] = user_guess
 
     if guess_array is not None:
         guess_rounded = guess_array.copy()
 
-        guess_rounded[integrality] = np.round(guess_rounded[integrality])
-        rounded = np.where(guess_rounded != guess_array)[0]
+        guess_rounded[integrality] = mx.round(guess_rounded[integrality])
+        rounded = mx.where(guess_rounded != guess_array)[0]
         for i in rounded:
             message = (f"Guess for parameter `{param_info[i].name}` "
                        f"rounded from {guess_array[i]} to {guess_rounded[i]}.")
             warnings.warn(message, RuntimeWarning, stacklevel=2)
 
-        guess_clipped = np.clip(guess_rounded, bounds[:, 0], bounds[:, 1])
-        clipped = np.where(guess_clipped != guess_rounded)[0]
+        guess_clipped = mx.clip(guess_rounded, bounds[:, 0], bounds[:, 1])
+        clipped = mx.where(guess_clipped != guess_rounded)[0]
         for i in clipped:
             message = (f"Guess for parameter `{param_info[i].name}` "
                        f"clipped from {guess_rounded[i]} to "
@@ -712,21 +712,21 @@ def fit(dist, data, bounds=None, *, guess=None, method='mle',
 
     # --- Fitting --- #
     def nllf(free_params, data=data):  # bind data NOW
-        with np.errstate(invalid='ignore', divide='ignore'):
+        with mx.errstate(invalid='ignore', divide='ignore'):
             return dist._penalized_nnlf(free_params, data)
 
     def nlpsf(free_params, data=data):  # bind data NOW
-        with np.errstate(invalid='ignore', divide='ignore'):
+        with mx.errstate(invalid='ignore', divide='ignore'):
             return dist._penalized_nlpsf(free_params, data)
 
     methods = {'mle': nllf, 'mse': nlpsf}
     objective = methods[method.lower()]
 
-    with np.errstate(invalid='ignore', divide='ignore'):
+    with mx.errstate(invalid='ignore', divide='ignore'):
         kwds = {}
         if bounds is not None:
             kwds['bounds'] = bounds
-        if np.any(integrality):
+        if mx.any(integrality):
             kwds['integrality'] = integrality
         if guess is not None:
             kwds['x0'] = guess
@@ -826,7 +826,7 @@ def goodness_of_fit(dist, data, *, known_params=None, fit_params=None,
             The proportion of elements in the null distribution with
             statistic values at least as extreme as the statistic value of the
             provided `data`.
-        null_distribution : ndarray
+        null_distribution : array
             The value of the statistic for each Monte Carlo sample
             drawn from the null-hypothesized distribution.
 
@@ -877,7 +877,7 @@ def goodness_of_fit(dist, data, *, known_params=None, fit_params=None,
     First, any unknown parameters of the distribution family specified by
     `dist` are fit to the provided `data` using maximum likelihood estimation.
     (One exception is the normal distribution with unknown location and scale:
-    we use the bias-corrected standard deviation ``np.std(data, ddof=1)`` for
+    we use the bias-corrected standard deviation ``mx.std(data, ddof=1)`` for
     the scale as recommended in [1]_.)
     These values of the parameters specify a particular member of the
     distribution family referred to as the "null-hypothesized distribution",
@@ -966,9 +966,9 @@ def goodness_of_fit(dist, data, *, known_params=None, fit_params=None,
     as `scipy.stats.ks_1samp`. Suppose we wish to test whether the following
     data:
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy import stats
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> x = stats.uniform.rvs(size=75, random_state=rng)
 
     were sampled from a normal distribution. To perform a KS test, the
@@ -979,7 +979,7 @@ def goodness_of_fit(dist, data, *, known_params=None, fit_params=None,
     the ``loc`` and ``scale`` parameters of the distribution to the observed
     data, then performing the test.
 
-    >>> loc, scale = np.mean(x), np.std(x, ddof=1)
+    >>> loc, scale = mx.mean(x), mx.std(x, ddof=1)
     >>> cdf = stats.norm(loc, scale).cdf
     >>> stats.ks_1samp(x, cdf)
     KstestResult(statistic=0.1119257570456813,
@@ -1074,7 +1074,7 @@ def goodness_of_fit(dist, data, *, known_params=None, fit_params=None,
     statistic against the Rayleigh distribution with known location and unknown
     scale.
 
-    >>> rng = np.random.default_rng()
+    >>> rng = mx.random.default_rng()
     >>> x = stats.chi(df=2.2, loc=0, scale=2).rvs(size=1000, random_state=rng)
     >>> res = stats.goodness_of_fit(stats.rayleigh, x, statistic='cvm',
     ...                             known_params={'loc': 0}, rng=rng)
@@ -1099,7 +1099,7 @@ def goodness_of_fit(dist, data, *, known_params=None, fit_params=None,
     the result, but they tend to reduce the test's power.
 
     >>> _, ax = plt.subplots()
-    >>> ax.hist(np.log10(res.null_distribution))
+    >>> ax.hist(mx.log10(res.null_distribution))
     >>> ax.set_xlabel("log10 of CVM statistic under the null hypothesis")
     >>> ax.set_ylabel("Frequency")
     >>> ax.set_title("Histogram of the Monte Carlo null distribution")
@@ -1140,7 +1140,7 @@ def goodness_of_fit(dist, data, *, known_params=None, fit_params=None,
 
     def statistic_fun(data, axis):
         # Make things simple by always working along the last axis.
-        data = np.moveaxis(data, axis, -1)
+        data = mx.moveaxis(data, axis, -1)
         rfd_vals = fit_fun(data)
         rfd_dist = dist(*rfd_vals)
         return compare_fun(rfd_dist, data, axis=-1)
@@ -1178,9 +1178,9 @@ def _get_fit_fun(dist, data, guessed_params, fixed_params):
     elif dist in _fit_funs:
         def fit_fun(data):
             params = _fit_funs[dist](data, **fixed_params)
-            params = np.asarray(np.broadcast_arrays(*params))
+            params = mx.array(mx.broadcast_arrays(*params))
             if params.ndim > 1:
-                params = params[..., np.newaxis]
+                params = params[..., mx.newaxis]
             return params
     else:
         def fit_fun_1d(data):
@@ -1188,9 +1188,9 @@ def _get_fit_fun(dist, data, guessed_params, fixed_params):
                             **fixed_params)
 
         def fit_fun(data):
-            params = np.apply_along_axis(fit_fun_1d, axis=-1, arr=data)
+            params = mx.apply_along_axis(fit_fun_1d, axis=-1, arr=data)
             if params.ndim > 1:
-                params = params.T[..., np.newaxis]
+                params = params.T[..., mx.newaxis]
             return params
 
     return fit_fun
@@ -1203,12 +1203,12 @@ def _fit_norm(data, floc=None, fscale=None):
     loc = floc
     scale = fscale
     if loc is None and scale is None:
-        loc = np.mean(data, axis=-1)
-        scale = np.std(data, ddof=1, axis=-1)
+        loc = mx.mean(data, axis=-1)
+        scale = mx.std(data, ddof=1, axis=-1)
     elif loc is None:
-        loc = np.mean(data, axis=-1)
+        loc = mx.mean(data, axis=-1)
     elif scale is None:
-        scale = np.sqrt(((data - loc)**2).mean(axis=-1))
+        scale = mx.sqrt(((data - loc)**2).mean(axis=-1))
     return loc, scale
 
 
@@ -1221,31 +1221,31 @@ _fit_funs = {stats.norm: _fit_norm}  # type: ignore[attr-defined]
 
 
 def _anderson_darling(dist, data, axis):
-    x = np.sort(data, axis=-1)
+    x = mx.sort(data, axis=-1)
     n = data.shape[-1]
-    i = np.arange(1, n+1)
+    i = mx.arange(1, n+1)
     Si = (2*i - 1)/n * (dist.logcdf(x) + dist.logsf(x[..., ::-1]))
-    S = np.sum(Si, axis=-1)
+    S = mx.sum(Si, axis=-1)
     return -n - S
 
 
 def _compute_dplus(cdfvals):  # adapted from _stats_py before gh-17062
     n = cdfvals.shape[-1]
-    return (np.arange(1.0, n + 1) / n - cdfvals).max(axis=-1)
+    return (mx.arange(1.0, n + 1) / n - cdfvals).max(axis=-1)
 
 
 def _compute_dminus(cdfvals):
     n = cdfvals.shape[-1]
-    return (cdfvals - np.arange(0.0, n)/n).max(axis=-1)
+    return (cdfvals - mx.arange(0.0, n)/n).max(axis=-1)
 
 
 def _kolmogorov_smirnov(dist, data, axis=-1):
-    x = np.sort(data, axis=axis)
+    x = mx.sort(data, axis=axis)
     cdfvals = dist.cdf(x)
-    cdfvals = np.moveaxis(cdfvals, axis, -1)
+    cdfvals = mx.moveaxis(cdfvals, axis, -1)
     Dplus = _compute_dplus(cdfvals)  # always works along last axis
     Dminus = _compute_dminus(cdfvals)
-    return np.maximum(Dplus, Dminus)
+    return mx.maximum(Dplus, Dminus)
 
 
 def _corr(X, M):
@@ -1254,18 +1254,18 @@ def _corr(X, M):
     # about 0.
     Xm = X.mean(axis=-1, keepdims=True)
     Mm = M.mean(axis=-1, keepdims=True)
-    num = np.sum((X - Xm) * (M - Mm), axis=-1)
-    den = np.sqrt(np.sum((X - Xm)**2, axis=-1) * np.sum((M - Mm)**2, axis=-1))
+    num = mx.sum((X - Xm) * (M - Mm), axis=-1)
+    den = mx.sqrt(mx.sum((X - Xm)**2, axis=-1) * mx.sum((M - Mm)**2, axis=-1))
     return num/den
 
 
 def _filliben(dist, data, axis):
     # [7] Section 8 # 1
-    X = np.sort(data, axis=-1)
+    X = mx.sort(data, axis=-1)
 
     # [7] Section 8 # 2
     n = data.shape[-1]
-    k = np.arange(1, n+1)
+    k = mx.arange(1, n+1)
     # Filliben used an approximation for the uniform distribution order
     # statistic medians.
     # m = (k - .3175)/(n + 0.365)
@@ -1285,11 +1285,11 @@ _filliben.alternative = 'less'  # type: ignore[attr-defined]
 
 
 def _cramer_von_mises(dist, data, axis):
-    x = np.sort(data, axis=-1)
+    x = mx.sort(data, axis=-1)
     n = data.shape[-1]
     cdfvals = dist.cdf(x)
-    u = (2*np.arange(1, n+1) - 1)/(2*n)
-    w = 1 / (12*n) + np.sum((u - cdfvals)**2, axis=-1)
+    u = (2*mx.arange(1, n+1) - 1)/(2*n)
+    w = 1 / (12*n) + mx.sum((u - cdfvals)**2, axis=-1)
     return w
 
 
@@ -1305,7 +1305,7 @@ def _gof_iv(dist, data, known_params, fit_params, guessed_params, statistic,
                    "`stats.rv_continuous`.")
         raise TypeError(message)
 
-    data = np.asarray(data, dtype=float)
+    data = mx.array(data, dtype=float)
     if not data.ndim == 1:
         message = "`data` must be a one-dimensional array of numbers."
         raise ValueError(message)

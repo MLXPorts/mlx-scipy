@@ -23,7 +23,7 @@ for func in funcs:
   array-like and array arguments
 
 """
-import numpy as np
+import mlx.core as mx
 from scipy._lib._array_api import array_namespace
 from scipy.ndimage._ni_support import _skip_if_dtype
 
@@ -270,12 +270,12 @@ def shift_signature(input, shift, output=None, *args, **kwds):
     return array_namespace(input, _skip_if_dtype(output))
 
 
-def spline_filter_signature(input, order=3, output=np.float64, *args, **kwds):
+def spline_filter_signature(input, order=3, output=mx.float64, *args, **kwds):
     return array_namespace(input, _skip_if_dtype(output))
 
 
 def spline_filter1d_signature(
-    input, order=3, axis=-1, output=np.float64, *args, **kwds
+    input, order=3, axis=-1, output=mx.float64, *args, **kwds
 ):
     return array_namespace(input, _skip_if_dtype(output))
 

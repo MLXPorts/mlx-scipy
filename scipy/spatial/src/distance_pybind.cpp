@@ -377,7 +377,7 @@ py::array prepare_out_argument(const py::object& obj, const py::dtype& dtype,
     }
 
     if (!py::isinstance<py::array>(obj)) {
-        throw py::type_error("out argument must be an ndarray");
+        throw py::type_error("out argument must be an array");
     }
 
     py::array out = py::cast<py::array>(obj);

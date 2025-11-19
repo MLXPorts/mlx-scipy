@@ -1,6 +1,6 @@
 from itertools import product
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_array_equal, assert_equal
 import pytest
 
@@ -12,7 +12,7 @@ from scipy.sparse.csgraph import (
 
 def test_maximum_bipartite_matching_raises_on_dense_input():
     with pytest.raises(TypeError):
-        graph = np.array([[0, 1], [0, 0]])
+        graph = mx.array([[0, 1], [0, 0]])
         maximum_bipartite_matching(graph)
 
 
@@ -20,7 +20,7 @@ def test_maximum_bipartite_matching_empty_graph():
     graph = csr_array((0, 0))
     x = maximum_bipartite_matching(graph, perm_type='row')
     y = maximum_bipartite_matching(graph, perm_type='column')
-    expected_matching = np.array([])
+    expected_matching = mx.array([])
     assert_array_equal(expected_matching, x)
     assert_array_equal(expected_matching, y)
 
@@ -29,24 +29,24 @@ def test_maximum_bipartite_matching_empty_left_partition():
     graph = csr_array((2, 0))
     x = maximum_bipartite_matching(graph, perm_type='row')
     y = maximum_bipartite_matching(graph, perm_type='column')
-    assert_array_equal(np.array([]), x)
-    assert_array_equal(np.array([-1, -1]), y)
+    assert_array_equal(mx.array([]), x)
+    assert_array_equal(mx.array([-1, -1]), y)
 
 
 def test_maximum_bipartite_matching_empty_right_partition():
     graph = csr_array((0, 3))
     x = maximum_bipartite_matching(graph, perm_type='row')
     y = maximum_bipartite_matching(graph, perm_type='column')
-    assert_array_equal(np.array([-1, -1, -1]), x)
-    assert_array_equal(np.array([]), y)
+    assert_array_equal(mx.array([-1, -1, -1]), x)
+    assert_array_equal(mx.array([]), y)
 
 
 def test_maximum_bipartite_matching_graph_with_no_edges():
     graph = csr_array((2, 2))
     x = maximum_bipartite_matching(graph, perm_type='row')
     y = maximum_bipartite_matching(graph, perm_type='column')
-    assert_array_equal(np.array([-1, -1]), x)
-    assert_array_equal(np.array([-1, -1]), y)
+    assert_array_equal(mx.array([-1, -1]), x)
+    assert_array_equal(mx.array([-1, -1]), y)
 
 
 def test_maximum_bipartite_matching_graph_that_causes_augmentation():
@@ -55,7 +55,7 @@ def test_maximum_bipartite_matching_graph_that_causes_augmentation():
     graph = csr_array([[1, 1], [1, 0]])
     x = maximum_bipartite_matching(graph, perm_type='column')
     y = maximum_bipartite_matching(graph, perm_type='row')
-    expected_matching = np.array([1, 0])
+    expected_matching = mx.array([1, 0])
     assert_array_equal(expected_matching, x)
     assert_array_equal(expected_matching, y)
 
@@ -64,16 +64,16 @@ def test_maximum_bipartite_matching_graph_with_more_rows_than_columns():
     graph = csr_array([[1, 1], [1, 0], [0, 1]])
     x = maximum_bipartite_matching(graph, perm_type='column')
     y = maximum_bipartite_matching(graph, perm_type='row')
-    assert_array_equal(np.array([0, -1, 1]), x)
-    assert_array_equal(np.array([0, 2]), y)
+    assert_array_equal(mx.array([0, -1, 1]), x)
+    assert_array_equal(mx.array([0, 2]), y)
 
 
 def test_maximum_bipartite_matching_graph_with_more_columns_than_rows():
     graph = csr_array([[1, 1, 0], [0, 0, 1]])
     x = maximum_bipartite_matching(graph, perm_type='column')
     y = maximum_bipartite_matching(graph, perm_type='row')
-    assert_array_equal(np.array([0, 2]), x)
-    assert_array_equal(np.array([0, -1, 1]), y)
+    assert_array_equal(mx.array([0, 2]), x)
+    assert_array_equal(mx.array([0, -1, 1]), y)
 
 
 def test_maximum_bipartite_matching_explicit_zeros_count_as_edges():
@@ -83,14 +83,14 @@ def test_maximum_bipartite_matching_explicit_zeros_count_as_edges():
     graph = csr_array((data, indices, indptr), shape=(2, 2))
     x = maximum_bipartite_matching(graph, perm_type='row')
     y = maximum_bipartite_matching(graph, perm_type='column')
-    expected_matching = np.array([1, 0])
+    expected_matching = mx.array([1, 0])
     assert_array_equal(expected_matching, x)
     assert_array_equal(expected_matching, y)
 
 
 def test_maximum_bipartite_matching_feasibility_of_result():
     # This is a regression test for GitHub issue #11458
-    data = np.ones(50, dtype=int)
+    data = mx.ones(50, dtype=int)
     indices = [11, 12, 19, 22, 23, 5, 22, 3, 8, 10, 5, 6, 11, 12, 13, 5, 13,
                14, 20, 22, 3, 15, 3, 13, 14, 11, 12, 19, 22, 23, 5, 22, 3, 8,
                10, 5, 6, 11, 12, 13, 5, 13, 14, 20, 22, 3, 15, 3, 13, 14]
@@ -111,36 +111,36 @@ def test_maximum_bipartite_matching_feasibility_of_result():
 
 
 def test_matching_large_random_graph_with_one_edge_incident_to_each_vertex():
-    np.random.seed(42)
-    A = diags_array(np.ones(25), offsets=0, format='csr')
-    rand_perm = np.random.permutation(25)
-    rand_perm2 = np.random.permutation(25)
+    mx.random.seed(42)
+    A = diags_array(mx.ones(25), offsets=0, format='csr')
+    rand_perm = mx.random.permutation(25)
+    rand_perm2 = mx.random.permutation(25)
 
-    Rrow = np.arange(25)
+    Rrow = mx.arange(25)
     Rcol = rand_perm
-    Rdata = np.ones(25, dtype=int)
+    Rdata = mx.ones(25, dtype=int)
     Rmat = csr_array((Rdata, (Rrow, Rcol)))
 
     Crow = rand_perm2
-    Ccol = np.arange(25)
-    Cdata = np.ones(25, dtype=int)
+    Ccol = mx.arange(25)
+    Cdata = mx.ones(25, dtype=int)
     Cmat = csr_array((Cdata, (Crow, Ccol)))
     # Randomly permute identity matrix
     B = Rmat @ A @ Cmat
 
     # Row permute
     perm = maximum_bipartite_matching(B, perm_type='row')
-    Rrow = np.arange(25)
+    Rrow = mx.arange(25)
     Rcol = perm
-    Rdata = np.ones(25, dtype=int)
+    Rdata = mx.ones(25, dtype=int)
     Rmat = csr_array((Rdata, (Rrow, Rcol)))
     C1 = Rmat @ B
 
     # Column permute
     perm2 = maximum_bipartite_matching(B, perm_type='column')
     Crow = perm2
-    Ccol = np.arange(25)
-    Cdata = np.ones(25, dtype=int)
+    Ccol = mx.arange(25)
+    Cdata = mx.ones(25, dtype=int)
     Cmat = csr_array((Cdata, (Crow, Ccol)))
     C2 = B @ Cmat
 
@@ -181,7 +181,7 @@ def test_min_weight_full_matching_infeasible_problems(biadjacency):
 
 def test_min_weight_full_matching_large_infeasible():
     # Regression test for GitHub issue #17269
-    a = np.asarray([
+    a = mx.array([
         [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
          0.0, 0.0, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -251,18 +251,18 @@ def linear_sum_assignment_assertions(
     cost_matrix, expected_cost = test_case
     maximize = sign == -1
     cost_matrix = sign * array_type(cost_matrix)
-    expected_cost = sign * np.array(expected_cost)
+    expected_cost = sign * mx.array(expected_cost)
 
     row_ind, col_ind = solver(cost_matrix, maximize=maximize)
-    assert_array_equal(row_ind, np.sort(row_ind))
+    assert_array_equal(row_ind, mx.sort(row_ind))
     assert_array_equal(expected_cost,
-                       np.array(cost_matrix[row_ind, col_ind]).flatten())
+                       mx.array(cost_matrix[row_ind, col_ind]).flatten())
 
     cost_matrix = cost_matrix.T
     row_ind, col_ind = solver(cost_matrix, maximize=maximize)
-    assert_array_equal(row_ind, np.sort(row_ind))
-    assert_array_equal(np.sort(expected_cost),
-                       np.sort(np.array(
+    assert_array_equal(row_ind, mx.sort(row_ind))
+    assert_array_equal(mx.sort(expected_cost),
+                       mx.sort(mx.array(
                            cost_matrix[row_ind, col_ind])).flatten())
 
 

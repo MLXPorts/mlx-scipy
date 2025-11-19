@@ -1,5 +1,5 @@
 from scipy._lib.uarray import generate_multimethod, Dispatchable
-import numpy as np
+import mlx.core as mx
 
 
 def _x_replacer(args, kwargs, dispatchables):
@@ -66,7 +66,7 @@ def fft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
 
     Returns
     -------
-    out : complex ndarray
+    out : complex array
         The truncated or zero-padded input, transformed along the axis
         indicated by `axis`, or the last one if `axis` is not specified.
 
@@ -96,7 +96,7 @@ def fft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
 
     If ``x`` is a 1d array, then the `fft` is equivalent to ::
 
-        y[k] = np.sum(x * np.exp(-2j * np.pi * k * np.arange(n)/n))
+        y[k] = mx.sum(x * mx.exp(-2j * mx.pi * k * mx.arange(n)/n))
 
     The frequency term ``f=k/n`` is found at ``y[k]``. At ``y[n/2]`` we reach
     the Nyquist frequency and wrap around to the negative-frequency terms. So,
@@ -141,8 +141,8 @@ def fft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
     Examples
     --------
     >>> import scipy.fft
-    >>> import numpy as np
-    >>> scipy.fft.fft(np.exp(2j * np.pi * np.arange(8) / 8))
+    >>> import mlx.core as mx
+    >>> scipy.fft.fft(mx.exp(2j * mx.pi * mx.arange(8) / 8))
     array([-2.33486982e-16+1.14423775e-17j,  8.00000000e+00-1.25557246e-15j,
             2.33486982e-16+2.33486982e-16j,  0.00000000e+00+1.22464680e-16j,
            -1.14423775e-17+2.33486982e-16j,  0.00000000e+00+5.20784380e-16j,
@@ -153,8 +153,8 @@ def fft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
 
     >>> from scipy.fft import fft, fftfreq, fftshift
     >>> import matplotlib.pyplot as plt
-    >>> t = np.arange(256)
-    >>> sp = fftshift(fft(np.sin(t)))
+    >>> t = mx.arange(256)
+    >>> sp = fftshift(fft(mx.sin(t)))
     >>> freq = fftshift(fftfreq(t.shape[-1]))
     >>> plt.plot(freq, sp.real, freq, sp.imag)
     [<matplotlib.lines.Line2D object at 0x...>,
@@ -162,7 +162,7 @@ def fft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
     >>> plt.show()
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -217,7 +217,7 @@ def ifft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
 
     Returns
     -------
-    out : complex ndarray
+    out : complex array
         The truncated or zero-padded input, transformed along the axis
         indicated by `axis`, or the last one if `axis` is not specified.
 
@@ -241,7 +241,7 @@ def ifft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
 
     If ``x`` is a 1-D array, then the `ifft` is equivalent to ::
 
-        y[k] = np.sum(x * np.exp(2j * np.pi * k * np.arange(n)/n)) / len(x)
+        y[k] = mx.sum(x * mx.exp(2j * mx.pi * k * mx.arange(n)/n)) / len(x)
 
     As with `fft`, `ifft` has support for all floating point types and is
     optimized for real input.
@@ -249,17 +249,17 @@ def ifft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
     Examples
     --------
     >>> import scipy.fft
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> scipy.fft.ifft([0, 4, 0, 0])
     array([ 1.+0.j,  0.+1.j, -1.+0.j,  0.-1.j]) # may vary
 
     Create and plot a band-limited signal with random phases:
 
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
-    >>> t = np.arange(400)
-    >>> n = np.zeros((400,), dtype=complex)
-    >>> n[40:60] = np.exp(1j*rng.uniform(0, 2*np.pi, (20,)))
+    >>> rng = mx.random.default_rng()
+    >>> t = mx.arange(400)
+    >>> n = mx.zeros((400,), dtype=complex)
+    >>> n[40:60] = mx.exp(1j*rng.uniform(0, 2*mx.pi, (20,)))
     >>> s = scipy.fft.ifft(n)
     >>> plt.plot(t, s.real, 'b-', t, s.imag, 'r--')
     [<matplotlib.lines.Line2D object at ...>, <matplotlib.lines.Line2D object at ...>]
@@ -268,7 +268,7 @@ def ifft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
     >>> plt.show()
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -310,7 +310,7 @@ def rfft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
 
     Returns
     -------
-    out : complex ndarray
+    out : complex array
         The truncated or zero-padded input, transformed along the axis
         indicated by `axis`, or the last one if `axis` is not specified.
         If `n` is even, the length of the transformed axis is ``(n/2)+1``.
@@ -362,7 +362,7 @@ def rfft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
     exploited to compute only the non-negative frequency terms.
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -413,7 +413,7 @@ def irfft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
 
     Returns
     -------
-    out : ndarray
+    out : array
         The truncated or zero-padded input, transformed along the axis
         indicated by `axis`, or the last one if `axis` is not specified.
         The length of the transformed axis is `n`, or, if `n` is not given,
@@ -463,7 +463,7 @@ def irfft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
     specified, and the output array is purely real.
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -504,7 +504,7 @@ def hfft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
 
     Returns
     -------
-    out : ndarray
+    out : array
         The truncated or zero-padded input, transformed along the axis
         indicated by `axis`, or the last one if `axis` is not specified.
         The length of the transformed axis is `n`, or, if `n` is not given,
@@ -535,9 +535,9 @@ def hfft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
     Examples
     --------
     >>> from scipy.fft import fft, hfft
-    >>> import numpy as np
-    >>> a = 2 * np.pi * np.arange(10) / 10
-    >>> signal = np.cos(a) + 3j * np.sin(3 * a)
+    >>> import mlx.core as mx
+    >>> a = 2 * mx.pi * mx.arange(10) / 10
+    >>> signal = mx.cos(a) + 3j * mx.sin(3 * a)
     >>> fft(signal).round(10)
     array([ -0.+0.j,   5.+0.j,  -0.+0.j,  15.-0.j,   0.+0.j,   0.+0.j,
             -0.+0.j, -15.-0.j,   0.+0.j,   5.+0.j])
@@ -546,7 +546,7 @@ def hfft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
     >>> hfft(signal, 10)  # Input entire signal and truncate
     array([  0.,   5.,   0.,  15.,  -0.,   0.,   0., -15.,  -0.,   5.])
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -585,7 +585,7 @@ def ihfft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
 
     Returns
     -------
-    out : complex ndarray
+    out : complex array
         The truncated or zero-padded input, transformed along the axis
         indicated by `axis`, or the last one if `axis` is not specified.
         The length of the transformed axis is ``n//2 + 1``.
@@ -606,14 +606,14 @@ def ihfft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
     Examples
     --------
     >>> from scipy.fft import ifft, ihfft
-    >>> import numpy as np
-    >>> spectrum = np.array([ 15, -4, 0, -1, 0, -4])
+    >>> import mlx.core as mx
+    >>> spectrum = mx.array([ 15, -4, 0, -1, 0, -4])
     >>> ifft(spectrum)
     array([1.+0.j,  2.+0.j,  3.+0.j,  4.+0.j,  3.+0.j,  2.+0.j]) # may vary
     >>> ihfft(spectrum)
     array([ 1.-0.j,  2.-0.j,  3.-0.j,  4.-0.j]) # may vary
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -658,7 +658,7 @@ def fftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
 
     Returns
     -------
-    out : complex ndarray
+    out : complex array
         The truncated or zero-padded input, transformed along the axes
         indicated by `axes`, or by a combination of `s` and `x`,
         as explained in the parameters section above.
@@ -689,8 +689,8 @@ def fftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
     Examples
     --------
     >>> import scipy.fft
-    >>> import numpy as np
-    >>> x = np.mgrid[:3, :3, :3][0]
+    >>> import mlx.core as mx
+    >>> x = mx.mgrid[:3, :3, :3][0]
     >>> scipy.fft.fftn(x, axes=(1, 2))
     array([[[ 0.+0.j,   0.+0.j,   0.+0.j], # may vary
             [ 0.+0.j,   0.+0.j,   0.+0.j],
@@ -708,17 +708,17 @@ def fftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
             [ 0.+0.j,  0.+0.j,  0.+0.j]]])
 
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
-    >>> [X, Y] = np.meshgrid(2 * np.pi * np.arange(200) / 12,
-    ...                      2 * np.pi * np.arange(200) / 34)
-    >>> S = np.sin(X) + np.cos(Y) + rng.uniform(0, 1, X.shape)
+    >>> rng = mx.random.default_rng()
+    >>> [X, Y] = mx.meshgrid(2 * mx.pi * mx.arange(200) / 12,
+    ...                      2 * mx.pi * mx.arange(200) / 34)
+    >>> S = mx.sin(X) + mx.cos(Y) + rng.uniform(0, 1, X.shape)
     >>> FS = scipy.fft.fftn(S)
-    >>> plt.imshow(np.log(np.abs(scipy.fft.fftshift(FS))**2))
+    >>> plt.imshow(mx.log(mx.abs(scipy.fft.fftshift(FS))**2))
     <matplotlib.image.AxesImage object at 0x...>
     >>> plt.show()
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -771,7 +771,7 @@ def ifftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
 
     Returns
     -------
-    out : complex ndarray
+    out : complex array
         The truncated or zero-padded input, transformed along the axes
         indicated by `axes`, or by a combination of `s` or `x`,
         as explained in the parameters section above.
@@ -801,8 +801,8 @@ def ifftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
     Examples
     --------
     >>> import scipy.fft
-    >>> import numpy as np
-    >>> x = np.eye(4)
+    >>> import mlx.core as mx
+    >>> x = mx.eye(4)
     >>> scipy.fft.ifftn(scipy.fft.fftn(x, axes=(0,)), axes=(1,))
     array([[1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j], # may vary
            [0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j],
@@ -813,16 +813,16 @@ def ifftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
     Create and plot an image with band-limited frequency content:
 
     >>> import matplotlib.pyplot as plt
-    >>> rng = np.random.default_rng()
-    >>> n = np.zeros((200,200), dtype=complex)
-    >>> n[60:80, 20:40] = np.exp(1j*rng.uniform(0, 2*np.pi, (20, 20)))
+    >>> rng = mx.random.default_rng()
+    >>> n = mx.zeros((200,200), dtype=complex)
+    >>> n[60:80, 20:40] = mx.exp(1j*rng.uniform(0, 2*mx.pi, (20, 20)))
     >>> im = scipy.fft.ifftn(n).real
     >>> plt.imshow(im)
     <matplotlib.image.AxesImage object at 0x...>
     >>> plt.show()
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -868,7 +868,7 @@ def fft2(x, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None, *
 
     Returns
     -------
-    out : complex ndarray
+    out : complex array
         The truncated or zero-padded input, transformed along the axes
         indicated by `axes`, or the last two axes if `axes` is not given.
 
@@ -906,8 +906,8 @@ def fft2(x, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None, *
     Examples
     --------
     >>> import scipy.fft
-    >>> import numpy as np
-    >>> x = np.mgrid[:5, :5][0]
+    >>> import mlx.core as mx
+    >>> x = mx.mgrid[:5, :5][0]
     >>> scipy.fft.fft2(x)
     array([[ 50.  +0.j        ,   0.  +0.j        ,   0.  +0.j        , # may vary
               0.  +0.j        ,   0.  +0.j        ],
@@ -921,7 +921,7 @@ def fft2(x, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None, *
               0.  +0.j        ,   0.  +0.j        ]])
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -974,7 +974,7 @@ def ifft2(x, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None, 
 
     Returns
     -------
-    out : complex ndarray
+    out : complex array
         The truncated or zero-padded input, transformed along the axes
         indicated by `axes`, or the last two axes if `axes` is not given.
 
@@ -1008,8 +1008,8 @@ def ifft2(x, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None, 
     Examples
     --------
     >>> import scipy.fft
-    >>> import numpy as np
-    >>> x = 4 * np.eye(4)
+    >>> import mlx.core as mx
+    >>> x = 4 * mx.eye(4)
     >>> scipy.fft.ifft2(x)
     array([[1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j], # may vary
            [0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j],
@@ -1017,7 +1017,7 @@ def ifft2(x, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None, 
            [0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]])
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -1065,7 +1065,7 @@ def rfftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
 
     Returns
     -------
-    out : complex ndarray
+    out : complex array
         The truncated or zero-padded input, transformed along the axes
         indicated by `axes`, or by a combination of `s` and `x`,
         as explained in the parameters section above.
@@ -1102,8 +1102,8 @@ def rfftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
     Examples
     --------
     >>> import scipy.fft
-    >>> import numpy as np
-    >>> x = np.ones((2, 2, 2))
+    >>> import mlx.core as mx
+    >>> x = mx.ones((2, 2, 2))
     >>> scipy.fft.rfftn(x)
     array([[[8.+0.j,  0.+0.j], # may vary
             [0.+0.j,  0.+0.j]],
@@ -1117,7 +1117,7 @@ def rfftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
             [0.+0.j,  0.+0.j]]])
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -1151,7 +1151,7 @@ def rfft2(x, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None, 
 
     Returns
     -------
-    out : ndarray
+    out : array
         The result of the real 2-D FFT.
 
     See Also
@@ -1169,8 +1169,8 @@ def rfft2(x, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None, 
     Examples
     --------
     >>> import scipy.fft
-    >>> import numpy as np
-    >>> x = np.broadcast_to([1, 0, -1, 0], (4, 4))
+    >>> import mlx.core as mx
+    >>> x = mx.broadcast_to([1, 0, -1, 0], (4, 4))
     >>> scipy.fft.rfft2(x)
     array([[0.+0.j, 8.+0.j, 0.+0.j],
            [0.+0.j, 0.+0.j, 0.+0.j],
@@ -1178,7 +1178,7 @@ def rfft2(x, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None, 
            [0.+0.j, 0.+0.j, 0.+0.j]])
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -1232,7 +1232,7 @@ def irfftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
 
     Returns
     -------
-    out : ndarray
+    out : array
         The truncated or zero-padded input, transformed along the axes
         indicated by `axes`, or by a combination of `s` or `x`,
         as explained in the parameters section above.
@@ -1273,8 +1273,8 @@ def irfftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
     Examples
     --------
     >>> import scipy.fft
-    >>> import numpy as np
-    >>> x = np.zeros((3, 2, 2))
+    >>> import mlx.core as mx
+    >>> x = mx.zeros((3, 2, 2))
     >>> x[0, 0, 0] = 3 * 2 * 2
     >>> scipy.fft.irfftn(x)
     array([[[1.,  1.],
@@ -1285,7 +1285,7 @@ def irfftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
             [1.,  1.]]])
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -1320,7 +1320,7 @@ def irfft2(x, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None,
 
     Returns
     -------
-    out : ndarray
+    out : array
         The result of the inverse real 2-D FFT.
 
     See Also
@@ -1335,7 +1335,7 @@ def irfft2(x, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None,
     For more details see `irfftn`.
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -1386,7 +1386,7 @@ def hfftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
 
     Returns
     -------
-    out : ndarray
+    out : array
         The truncated or zero-padded input, transformed along the axes
         indicated by `axes`, or by a combination of `s` or `x`,
         as explained in the parameters section above.
@@ -1415,17 +1415,17 @@ def hfftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
     For a 1-D signal ``x`` to have a real spectrum, it must satisfy
     the Hermitian property::
 
-        x[i] == np.conj(x[-i]) for all i
+        x[i] == mx.conj(x[-i]) for all i
 
     This generalizes into higher dimensions by reflecting over each axis in
     turn::
 
-        x[i, j, k, ...] == np.conj(x[-i, -j, -k, ...]) for all i, j, k, ...
+        x[i, j, k, ...] == mx.conj(x[-i, -j, -k, ...]) for all i, j, k, ...
 
     This should not be confused with a Hermitian matrix, for which the
     transpose is its own conjugate::
 
-        x[i, j] == np.conj(x[j, i]) for all i, j
+        x[i, j] == mx.conj(x[j, i]) for all i, j
 
 
     The default value of `s` assumes an even output length in the final
@@ -1437,8 +1437,8 @@ def hfftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
     Examples
     --------
     >>> import scipy.fft
-    >>> import numpy as np
-    >>> x = np.ones((3, 2, 2))
+    >>> import mlx.core as mx
+    >>> x = mx.ones((3, 2, 2))
     >>> scipy.fft.hfftn(x)
     array([[[12.,  0.],
             [ 0.,  0.]],
@@ -1448,7 +1448,7 @@ def hfftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
             [ 0.,  0.]]])
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -1482,7 +1482,7 @@ def hfft2(x, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None, 
 
     Returns
     -------
-    out : ndarray
+    out : array
         The real result of the 2-D Hermitian complex real FFT.
 
     See Also
@@ -1498,14 +1498,14 @@ def hfft2(x, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None, 
     Examples
     --------
     >>> import scipy.fft
-    >>> import numpy as np
-    >>> x = np.array([[1+0j, 2+0j], [2+0j, 1+0j]])  # Hermitian-symmetric input
+    >>> import mlx.core as mx
+    >>> x = mx.array([[1+0j, 2+0j], [2+0j, 1+0j]])  # Hermitian-symmetric input
     >>> scipy.fft.hfft2(x, s=(2, 2))
     array([[ 6.,  0.],
            [ 0., -2.]])
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -1552,7 +1552,7 @@ def ihfftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
 
     Returns
     -------
-    out : complex ndarray
+    out : complex array
         The truncated or zero-padded input, transformed along the axes
         indicated by `axes`, or by a combination of `s` and `x`,
         as explained in the parameters section above.
@@ -1585,8 +1585,8 @@ def ihfftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
     Examples
     --------
     >>> import scipy.fft
-    >>> import numpy as np
-    >>> x = np.ones((2, 2, 2))
+    >>> import mlx.core as mx
+    >>> x = mx.ones((2, 2, 2))
     >>> scipy.fft.ihfftn(x)
     array([[[1.+0.j,  0.+0.j], # may vary
             [0.+0.j,  0.+0.j]],
@@ -1599,7 +1599,7 @@ def ihfftn(x, s=None, axes=None, norm=None, overwrite_x=False, workers=None, *,
             [0.+0.j,  0.+0.j]]])
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)
 
 
 @_dispatch
@@ -1634,7 +1634,7 @@ def ihfft2(x, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None,
 
     Returns
     -------
-    out : ndarray
+    out : array
         The result of the inverse real 2-D FFT.
 
     See Also
@@ -1647,4 +1647,4 @@ def ihfft2(x, s=None, axes=(-2, -1), norm=None, overwrite_x=False, workers=None,
     For more details see `ihfftn`.
 
     """
-    return (Dispatchable(x, np.ndarray),)
+    return (Dispatchable(x, mx.array),)

@@ -5,9 +5,9 @@ import importlib.resources
 cimport cython
 cimport numpy as cnp
 
-import numpy as np
+import mlx.core as mx
 
-cnp.import_array()
+cmx.import_array()
 
 # Parameters are linked to the direction numbers list.
 # See `_initialize_direction_numbers` for more details.
@@ -17,8 +17,8 @@ DEF MAXDEG = 18  # max polynomial degree
 
 
 ctypedef fused uint_32_64:
-    cnp.uint32_t
-    cnp.uint64_t
+    cmx.uint32_t
+    cmx.uint64_t
 
 
 # Needed to be accessed with python
@@ -51,12 +51,12 @@ def get_poly_vinit(kind, dtype):
     ----------
     kind : {'poly', 'vinit'}
         Select which dictionary to pull.
-    dtype : {np.uint32, np.uint64}
+    dtype : {mx.uint32, mx.uint64}
         Which dtype to use.
 
     Returns
     -------
-    poly_vinit : np.ndarray
+    poly_vinit : mx.array
         Either ``poly`` or ``vinit`` matrix.
 
     """
@@ -66,8 +66,8 @@ def get_poly_vinit(kind, dtype):
         poly_vinit = _vinit_dict.get(dtype)
 
     if poly_vinit is None:
-        poly = np.empty((MAXDIM,), dtype=dtype)
-        vinit = np.empty((MAXDIM, MAXDEG), dtype=dtype)
+        poly = mx.empty((MAXDIM,), dtype=dtype)
+        vinit = mx.empty((MAXDIM, MAXDEG), dtype=dtype)
 
         _initialize_direction_numbers(poly, vinit, dtype)
 
@@ -87,9 +87,9 @@ def _initialize_direction_numbers(poly, vinit, dtype):
 
     Parameters
     ----------
-    poly, vinit : np.ndarray
+    poly, vinit : mx.array
         Direction numbers arrays to fill.
-    dtype : {np.uint32, np.uint64}
+    dtype : {mx.uint32, mx.uint64}
         Which dtype to use.
 
     Notes
@@ -111,7 +111,7 @@ def _initialize_direction_numbers(poly, vinit, dtype):
     the working directory):
 
         import pandas as pd
-        import numpy as np
+        import mlx.core as mx
 
         # read in file content
         with open("./new-joe-kuo-6.21201", "r") as f:
@@ -137,17 +137,17 @@ def _initialize_direction_numbers(poly, vinit, dtype):
         vs = df[[f"v{i}" for i in range(18)]].values
 
         # add the degenerate d=1 column (not included in the data file)
-        vs = np.vstack([vs[0][np.newaxis, :], vs])
-        poly = np.concatenate([[1], df["poly"].values])
+        vs = mx.vstack([vs[0][mx.newaxis, :], vs])
+        poly = mx.concatenate([[1], df["poly"].values])
 
         # save as compressed .npz file to minimize size of distribution
-        np.savez_compressed("./_sobol_direction_numbers", vinit=vs, poly=poly)
+        mx.savez_compressed("./_sobol_direction_numbers", vinit=vs, poly=poly)
 
     """
     _curdir = importlib.resources.files("scipy.stats")
     _npzfile = _curdir.joinpath("_sobol_direction_numbers.npz")
     with importlib.resources.as_file(_npzfile) as f:
-        dns = np.load(f)
+        dns = mx.load(f)
 
     dns_poly = dns["poly"].astype(dtype)
     dns_vinit = dns["vinit"].astype(dtype)
@@ -249,11 +249,11 @@ cpdef void _initialize_v(
     cdef uint_32_64 p, newv, pow2
     cdef uint_32_64[:] poly = get_poly_vinit(
         'poly',
-        np.uint32 if uint_32_64 is cnp.uint32_t else np.uint64
+        mx.uint32 if uint_32_64 is cmx.uint32_t else mx.uint64
     )
     cdef uint_32_64[:, ::1] vinit = get_poly_vinit(
         'vinit',
-        np.uint32 if uint_32_64 is cnp.uint32_t else np.uint64
+        mx.uint32 if uint_32_64 is cmx.uint32_t else mx.uint64
     )
 
     if dim == 0:
@@ -299,10 +299,10 @@ def _draw(
     n,
     num_gen,
     const int dim,
-    const cnp.float64_t scale,
+    const cmx.float64_t scale,
     const uint_32_64[:, ::1] sv,
     uint_32_64[::1] quasi,
-    cnp.float64_t[:, ::1] sample
+    cmx.float64_t[:, ::1] sample
 ):
     # necessary wrapper to guide Cython for n, num_gen and scale
     cdef uint_32_64 n_ = n
@@ -316,10 +316,10 @@ cdef void draw(
     const uint_32_64 n,
     const uint_32_64 num_gen,
     const int dim,
-    const cnp.float64_t scale,
+    const cmx.float64_t scale,
     const uint_32_64[:, ::1] sv,
     uint_32_64[::1] quasi,
-    cnp.float64_t[:, ::1] sample
+    cmx.float64_t[:, ::1] sample
 ) noexcept nogil:
     cdef int j, l
     cdef uint_32_64 num_gen_loc = num_gen
@@ -397,8 +397,8 @@ cpdef void _cscramble(const int dim,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef void _fill_p_cumulative(const cnp.float_t[::1] p,
-                              cnp.float_t[::1] p_cumulative) noexcept nogil:
+cpdef void _fill_p_cumulative(const cmx.float_t[::1] p,
+                              cmx.float_t[::1] p_cumulative) noexcept nogil:
     cdef int i
     cdef int len_p = p.shape[0]
     cdef float tot = 0
@@ -411,9 +411,9 @@ cpdef void _fill_p_cumulative(const cnp.float_t[::1] p,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef void _categorize(const cnp.float_t[::1] draws,
-                       const cnp.float_t[::1] p_cumulative,
-                       cnp.intp_t[::1] result) noexcept nogil:
+cpdef void _categorize(const cmx.float_t[::1] draws,
+                       const cmx.float_t[::1] p_cumulative,
+                       cmx.intp_t[::1] result) noexcept nogil:
     cdef int i
     cdef int n_p = p_cumulative.shape[0]
     for i in range(draws.shape[0]):
@@ -423,7 +423,7 @@ cpdef void _categorize(const cnp.float_t[::1] draws,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef int _find_index(const cnp.float_t[::1] p_cumulative,
+cdef int _find_index(const cmx.float_t[::1] p_cumulative,
                      const int size,
                      const float value) noexcept nogil:
     cdef int l = 0
@@ -439,6 +439,6 @@ cdef int _find_index(const cnp.float_t[::1] p_cumulative,
 
 
 def _test_find_index(p_cumulative, size, value):
-    # type: (np.ndarray, int, float) -> int
+    # type: (mx.array, int, float) -> int
     """Wrapper for testing in python"""
     return _find_index(p_cumulative, size, value)

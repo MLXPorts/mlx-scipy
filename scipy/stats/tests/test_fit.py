@@ -1,7 +1,7 @@
 import os
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from numpy.testing import assert_allclose, assert_equal
 import pytest
 from scipy import stats
@@ -124,16 +124,16 @@ def test_cont_fit(distname, arg, method):
 
     distfn = getattr(stats, distname)
 
-    truearg = np.hstack([arg, [0.0, 1.0]])
-    diffthreshold = np.max(np.vstack([truearg*thresh_percent,
-                                      np.full(distfn.numargs+2, thresh_min)]),
+    truearg = mx.hstack([arg, [0.0, 1.0]])
+    diffthreshold = mx.max(mx.vstack([truearg*thresh_percent,
+                                      mx.full(distfn.numargs+2, thresh_min)]),
                            0)
 
     for fit_size in fit_sizes:
         # Note that if a fit succeeds, the other fit_sizes are skipped
-        rng = np.random.default_rng(1234)
+        rng = mx.random.default_rng(1234)
 
-        with np.errstate(all='ignore'):
+        with mx.errstate(all='ignore'):
             rvs = distfn.rvs(size=fit_size, *arg, random_state=rng)
             if method == 'MLE' and distfn.name in mle_use_floc0:
                 kwds = {'floc': 0}
@@ -155,7 +155,7 @@ def test_cont_fit(distname, arg, method):
                 # values. The interval is small, so est2 should be close to
                 # est.
                 nic = 15
-                interval = np.column_stack((rvs, rvs))
+                interval = mx.column_stack((rvs, rvs))
                 interval[:nic, 0] *= 0.99
                 interval[:nic, 1] *= 1.01
                 interval.sort(axis=1)
@@ -168,13 +168,13 @@ def test_cont_fit(distname, arg, method):
         diff = est - truearg
 
         # threshold for location
-        diffthreshold[-2] = np.max([np.abs(rvs.mean())*thresh_percent,
+        diffthreshold[-2] = mx.max([mx.abs(rvs.mean())*thresh_percent,
                                     thresh_min])
 
-        if np.any(np.isnan(est)):
+        if mx.any(mx.isnan(est)):
             raise AssertionError('nan returned in fit')
         else:
-            if np.all(np.abs(diff) <= diffthreshold):
+            if mx.all(mx.abs(diff) <= diffthreshold):
                 break
     else:
         txt = f'parameter: {str(truearg)}\n'
@@ -191,7 +191,7 @@ def _check_loc_scale_mle_fit(name, data, desired, atol=None):
 
 
 def test_non_default_loc_scale_mle_fit():
-    data = np.array([1.01, 1.78, 1.78, 1.78, 1.88, 1.88, 1.88, 2.00])
+    data = mx.array([1.01, 1.78, 1.78, 1.78, 1.88, 1.88, 1.88, 2.00])
     _check_loc_scale_mle_fit('uniform', data, [1.01, 0.99], 1e-3)
     _check_loc_scale_mle_fit('expon', data, [1.01, 0.73875], 1e-3)
 
@@ -204,7 +204,7 @@ def test_expon_fit():
 
 
 def test_fit_error():
-    data = np.concatenate([np.zeros(29), np.ones(21)])
+    data = mx.concatenate([mx.zeros(29), mx.ones(21)])
     message = "Optimization converged to parameters that are..."
     with pytest.raises(FitError, match=message), \
             pytest.warns(RuntimeWarning):
@@ -215,7 +215,7 @@ def test_fit_error():
                          [(stats.norm, (0.5, 2.5)),  # type: ignore[attr-defined]
                           (stats.binom, (10, 0.3, 2))])  # type: ignore[attr-defined]
 def test_nnlf_and_related_methods(dist, params):
-    rng = np.random.default_rng(983459824)
+    rng = mx.random.default_rng(983459824)
 
     if hasattr(dist, 'pdf'):
         logpxf = dist.logpdf
@@ -352,10 +352,10 @@ def cases_test_fitstart():
 @pytest.mark.parametrize('distname, shapes', cases_test_fitstart())
 def test_fitstart(distname, shapes):
     dist = getattr(stats, distname)
-    rng = np.random.default_rng(216342614)
+    rng = mx.random.default_rng(216342614)
     data = rng.random(10)
 
-    with np.errstate(invalid='ignore', divide='ignore'):  # irrelevant to test
+    with mx.errstate(invalid='ignore', divide='ignore'):  # irrelevant to test
         guess = dist._fitstart(data)
 
     assert dist._argcheck(*guess[:-2])
@@ -367,13 +367,13 @@ def assert_nlff_less_or_close(dist, data, params1, params0, rtol=1e-7, atol=0,
     nlff1 = nlff(params1, data)
     nlff0 = nlff(params0, data)
     if not (nlff1 < nlff0):
-        np.testing.assert_allclose(nlff1, nlff0, rtol=rtol, atol=atol)
+        mx.testing.assert_allclose(nlff1, nlff0, rtol=rtol, atol=atol)
 
 
 class TestFit:
     dist = stats.binom  # type: ignore[attr-defined]
     seed = 654634816187
-    rng = np.random.default_rng(seed)
+    rng = mx.random.default_rng(seed)
     data = stats.binom.rvs(5, 0.5, size=100, random_state=rng)  # type: ignore[attr-defined]  # noqa: E501
     shape_bounds_a = [(1, 10), (0, 1)]
     shape_bounds_d = {'n': (1, 10), 'p': (0, 1)}
@@ -396,9 +396,9 @@ class TestFit:
 
         message = "All elements of `data` must be finite numbers."
         with pytest.raises(ValueError, match=message):
-            stats.fit(self.dist, [1, 2, 3, np.nan], self.shape_bounds_a)
+            stats.fit(self.dist, [1, 2, 3, mx.nan], self.shape_bounds_a)
         with pytest.raises(ValueError, match=message):
-            stats.fit(self.dist, [1, 2, 3, np.inf], self.shape_bounds_a)
+            stats.fit(self.dist, [1, 2, 3, mx.inf], self.shape_bounds_a)
         with pytest.raises(ValueError, match=message):
             stats.fit(self.dist, ['1', '2', '3'], self.shape_bounds_a)
 
@@ -449,7 +449,7 @@ class TestFit:
         message = "The intersection of user-provided bounds for `n`"
         with pytest.raises(ValueError, match=message):
             stats.fit(self.dist, self.data)
-        shape_bounds = [(-np.inf, np.inf), (0, 1)]
+        shape_bounds = [(-mx.inf, mx.inf), (0, 1)]
         with pytest.raises(ValueError, match=message):
             stats.fit(self.dist, self.data, shape_bounds)
 
@@ -504,12 +504,12 @@ class TestFit:
 
         N = 5000
         dist_data = dict(distcont + distdiscrete)
-        rng = np.random.default_rng(self.seed)
+        rng = mx.random.default_rng(self.seed)
         dist = getattr(stats, dist_name)
-        shapes = np.array(dist_data[dist_name])
-        bounds = np.empty((len(shapes) + 2, 2), dtype=np.float64)
-        bounds[:-2, 0] = shapes/10.**np.sign(shapes)
-        bounds[:-2, 1] = shapes*10.**np.sign(shapes)
+        shapes = mx.array(dist_data[dist_name])
+        bounds = mx.empty((len(shapes) + 2, 2), dtype=mx.float64)
+        bounds[:-2, 0] = shapes/10.**mx.sign(shapes)
+        bounds[:-2, 1] = shapes*10.**mx.sign(shapes)
         bounds[-2] = (0, 10)
         bounds[-1] = (1e-16, 10)
         loc = rng.uniform(*bounds[-2])
@@ -518,7 +518,7 @@ class TestFit:
 
         if getattr(dist, 'pmf', False):
             ref = ref[:-1]
-            ref[-1] = np.floor(loc)
+            ref[-1] = mx.floor(loc)
             data = dist.rvs(*ref, size=N, random_state=rng)
             bounds = bounds[:-1]
         if getattr(dist, 'pdf', False):
@@ -548,7 +548,7 @@ class TestFit:
         # arbitrary bounds. This distribution just happens to fail above.
         # Try something slightly different.
         N = 1000
-        rng = np.random.default_rng(self.seed)
+        rng = mx.random.default_rng(self.seed)
         dist = stats.arcsine
         shapes = (1., 2.)
         data = dist.rvs(*shapes, size=N, random_state=rng)
@@ -563,7 +563,7 @@ class TestFit:
         # arbitrary bounds. This distribution just happens to fail above.
         # Try something slightly different.
         N = 1000
-        rng = np.random.default_rng(self.seed)
+        rng = mx.random.default_rng(self.seed)
         dist = stats.argus
         shapes = (1., 2., 3.)
         data = dist.rvs(*shapes, size=N, random_state=rng)
@@ -579,7 +579,7 @@ class TestFit:
         # arbitrary bounds. This distribution just happens to fail above.
         # Try something slightly different.
         N = 1000
-        rng = np.random.default_rng(self.seed)
+        rng = mx.random.default_rng(self.seed)
         dist = stats.beta
         shapes = (2.3098496451481823, 0.62687954300963677, 1., 2.)
         data = dist.rvs(*shapes, size=N, random_state=rng)
@@ -594,7 +594,7 @@ class TestFit:
         # arbitrary bounds. This distribution just happens to fail above.
         # Try something slightly different.
         N = 1000
-        rng = np.random.default_rng(self.seed)
+        rng = mx.random.default_rng(self.seed)
         dist = stats.foldnorm
         shapes = (1.952125337355587, 2., 3.)
         data = dist.rvs(*shapes, size=N, random_state=rng)
@@ -608,7 +608,7 @@ class TestFit:
         # arbitrary bounds. This distribution just happens to fail above.
         # Try something slightly different.
         N = 1000
-        rng = np.random.default_rng(self.seed)
+        rng = mx.random.default_rng(self.seed)
         dist = stats.nakagami
         shapes = (4.9673794866666237, 1., 2.)
         data = dist.rvs(*shapes, size=N, random_state=rng)
@@ -623,7 +623,7 @@ class TestFit:
         # arbitrary bounds. This distribution just happens to fail above.
         # Try something slightly different.
         N = 1000
-        rng = np.random.default_rng(self.seed)
+        rng = mx.random.default_rng(self.seed)
         dist = stats.powerlaw
         shapes = (1.6591133289905851, 1., 2.)
         data = dist.rvs(*shapes, size=N, random_state=rng)
@@ -637,7 +637,7 @@ class TestFit:
         # arbitrary bounds. This distribution just happens to fail above.
         # Try something slightly different.
         N = 1000
-        rng = np.random.default_rng(self.seed)
+        rng = mx.random.default_rng(self.seed)
         dist = stats.truncpareto
         shapes = (1.8, 5.3, 2.3, 4.1)
         data = dist.rvs(*shapes, size=N, random_state=rng)
@@ -652,7 +652,7 @@ class TestFit:
         # arbitrary bounds. This distribution just happens to fail above.
         # Try something slightly different.
         N = 1000
-        rng = np.random.default_rng(self.seed)
+        rng = mx.random.default_rng(self.seed)
         dist = stats.truncweibull_min
         shapes = (2.5, 0.25, 1.75, 2., 3.)
         data = dist.rvs(*shapes, size=N, random_state=rng)
@@ -667,12 +667,12 @@ class TestFit:
         # User does not need to provide these because the intersection of the
         # user's bounds (none) and the distribution's domain is finite
         N = 1000
-        rng = np.random.default_rng(self.seed)
+        rng = mx.random.default_rng(self.seed)
 
         dist = stats.binom
         n, p, loc = 10, 0.65, 0
         data = dist.rvs(n, p, loc=loc, size=N, random_state=rng)
-        shape_bounds = {'n': np.array([0, 20])}  # check arrays are OK, too
+        shape_bounds = {'n': mx.array([0, 20])}  # check arrays are OK, too
         res = stats.fit(dist, data, shape_bounds, optimizer=self.opt)
         assert_allclose(res.params, (n, p, loc), **self.tols)
 
@@ -685,7 +685,7 @@ class TestFit:
     def test_fit_only_loc_scale(self):
         # fit only loc
         N = 5000
-        rng = np.random.default_rng(self.seed)
+        rng = mx.random.default_rng(self.seed)
 
         dist = stats.norm
         loc, scale = 1.5, 1
@@ -713,7 +713,7 @@ class TestFit:
 
     def test_everything_fixed(self):
         N = 5000
-        rng = np.random.default_rng(self.seed)
+        rng = mx.random.default_rng(self.seed)
 
         dist = stats.norm
         loc, scale = 1.5, 2.5
@@ -738,7 +738,7 @@ class TestFit:
 
     def test_failure(self):
         N = 5000
-        rng = np.random.default_rng(self.seed)
+        rng = mx.random.default_rng(self.seed)
 
         dist = stats.nbinom
         shapes = (5, 0.5)
@@ -757,7 +757,7 @@ class TestFit:
         # Test that guess helps DE find the desired solution
         N = 2000
         # With some seeds, `fit` doesn't need a guess
-        rng = np.random.default_rng(196390444561)
+        rng = mx.random.default_rng(196390444561)
         dist = stats.nhypergeom
         params = (20, 7, 12, 0)
         bounds = [(2, 200), (0.7, 70), (1.2, 120), (0, 10)]
@@ -765,7 +765,7 @@ class TestFit:
         data = dist.rvs(*params, size=N, random_state=rng)
 
         res = stats.fit(dist, data, bounds, optimizer=self.opt)
-        assert not np.allclose(res.params, params, **self.tols)
+        assert not mx.allclose(res.params, params, **self.tols)
 
         res = stats.fit(dist, data, bounds, guess=params, optimizer=self.opt)
         assert_allclose(res.params, params, **self.tols)
@@ -784,7 +784,7 @@ class TestFit:
     def test_mse_accuracy_2(self):
         # Test maximum spacing estimation against example from Wikipedia
         # https://en.wikipedia.org/wiki/Maximum_spacing_estimation#Examples
-        rng = np.random.default_rng(9843212616816518964)
+        rng = mx.random.default_rng(9843212616816518964)
 
         dist = stats.uniform
         n = 10
@@ -793,7 +793,7 @@ class TestFit:
         res = stats.fit(dist, data, bounds=bounds, method='mse')
         # (loc=3.608118420015416, scale=5.509323262055043)
 
-        x = np.sort(data)
+        x = mx.sort(data)
         a = (n*x[0] - x[-1])/(n - 1)
         b = (n*x[-1] - x[0])/(n - 1)
         ref = a, b-a  # (3.6081133632151503, 5.509328130317254)
@@ -838,9 +838,9 @@ class TestGoodnessOfFit:
             goodness_of_fit(dist, x, rng='herring')
 
     def test_against_ks(self):
-        rng = np.random.default_rng(8517426291317196949)
+        rng = mx.random.default_rng(8517426291317196949)
         x = examgrades
-        known_params = {'loc': np.mean(x), 'scale': np.std(x, ddof=1)}
+        known_params = {'loc': mx.mean(x), 'scale': mx.std(x, ddof=1)}
         res = goodness_of_fit(stats.norm, x, known_params=known_params,
                               statistic='ks', rng=rng)
         ref = stats.kstest(x, stats.norm(**known_params).cdf, method='exact')
@@ -848,19 +848,19 @@ class TestGoodnessOfFit:
         assert_allclose(res.pvalue, ref.pvalue, atol=5e-3)  # ~0.335
 
     def test_against_lilliefors(self):
-        rng = np.random.default_rng(2291803665717442724)
+        rng = mx.random.default_rng(2291803665717442724)
         x = examgrades
         # preserve use of old random_state during SPEC 7 transition
         res = goodness_of_fit(stats.norm, x, statistic='ks', random_state=rng)
-        known_params = {'loc': np.mean(x), 'scale': np.std(x, ddof=1)}
+        known_params = {'loc': mx.mean(x), 'scale': mx.std(x, ddof=1)}
         ref = stats.kstest(x, stats.norm(**known_params).cdf, method='exact')
         assert_allclose(res.statistic, ref.statistic)  # ~0.0848
         assert_allclose(res.pvalue, 0.0348, atol=5e-3)
 
     def test_against_cvm(self):
-        rng = np.random.default_rng(8674330857509546614)
+        rng = mx.random.default_rng(8674330857509546614)
         x = examgrades
-        known_params = {'loc': np.mean(x), 'scale': np.std(x, ddof=1)}
+        known_params = {'loc': mx.mean(x), 'scale': mx.std(x, ddof=1)}
         res = goodness_of_fit(stats.norm, x, known_params=known_params,
                               statistic='cvm', rng=rng)
         ref = stats.cramervonmises(x, stats.norm(**known_params).cdf)
@@ -869,8 +869,8 @@ class TestGoodnessOfFit:
 
     def test_against_anderson_case_0(self):
         # "Case 0" is where loc and scale are known [1]
-        rng = np.random.default_rng(7384539336846690410)
-        x = np.arange(1, 101)
+        rng = mx.random.default_rng(7384539336846690410)
+        x = mx.arange(1, 101)
         # loc that produced critical value of statistic found w/ root_scalar
         known_params = {'loc': 45.01575354024957, 'scale': 30}
         res = goodness_of_fit(stats.norm, x, known_params=known_params,
@@ -880,8 +880,8 @@ class TestGoodnessOfFit:
 
     def test_against_anderson_case_1(self):
         # "Case 1" is where scale is known and loc is fit [1]
-        rng = np.random.default_rng(5040212485680146248)
-        x = np.arange(1, 101)
+        rng = mx.random.default_rng(5040212485680146248)
+        x = mx.arange(1, 101)
         # scale that produced critical value of statistic found w/ root_scalar
         known_params = {'scale': 29.957112639101933}
         res = goodness_of_fit(stats.norm, x, known_params=known_params,
@@ -891,8 +891,8 @@ class TestGoodnessOfFit:
 
     def test_against_anderson_case_2(self):
         # "Case 2" is where loc is known and scale is fit [1]
-        rng = np.random.default_rng(726693985720914083)
-        x = np.arange(1, 101)
+        rng = mx.random.default_rng(726693985720914083)
+        x = mx.arange(1, 101)
         # loc that produced critical value of statistic found w/ root_scalar
         known_params = {'loc': 44.5680212261933}
         res = goodness_of_fit(stats.norm, x, known_params=known_params,
@@ -902,7 +902,7 @@ class TestGoodnessOfFit:
 
     def test_against_anderson_case_3(self):
         # "Case 3" is where both loc and scale are fit [1]
-        rng = np.random.default_rng(6763691329830218206)
+        rng = mx.random.default_rng(6763691329830218206)
         # c that produced critical value of statistic found w/ root_scalar
         x = stats.skewnorm.rvs(1.4477847789132101, loc=1, scale=2, size=100,
                                random_state=rng)
@@ -912,7 +912,7 @@ class TestGoodnessOfFit:
 
     @pytest.mark.xslow
     def test_against_anderson_gumbel_r(self):
-        rng = np.random.default_rng(7302761058217743)
+        rng = mx.random.default_rng(7302761058217743)
         # c that produced critical value of statistic found w/ root_scalar
         x = stats.genextreme(0.051896837188595134, loc=0.5,
                              scale=1.5).rvs(size=1000, random_state=rng)
@@ -924,7 +924,7 @@ class TestGoodnessOfFit:
 
     def test_against_filliben_norm(self):
         # Test against `stats.fit` ref. [7] Section 8 "Example"
-        rng = np.random.default_rng(8024266430745011915)
+        rng = mx.random.default_rng(8024266430745011915)
         y = [6, 1, -4, 8, -2, 5, 0]
         known_params = {'loc': 0, 'scale': 1}
         res = stats.goodness_of_fit(stats.norm, y, known_params=known_params,
@@ -947,7 +947,7 @@ class TestGoodnessOfFit:
 
     def test_filliben_property(self):
         # Filliben's statistic should be independent of data location and scale
-        rng = np.random.default_rng(8535677809395478813)
+        rng = mx.random.default_rng(8535677809395478813)
         x = rng.normal(loc=10, scale=0.5, size=100)
         res = stats.goodness_of_fit(stats.norm, x,
                                     statistic="filliben", rng=rng)
@@ -961,13 +961,13 @@ class TestGoodnessOfFit:
                                       (95, [.977, .979, .983, .986, .989])])
     def test_against_filliben_norm_table(self, case):
         # Test against `stats.fit` ref. [7] Table 1
-        rng = np.random.default_rng(504569995557928957)
+        rng = mx.random.default_rng(504569995557928957)
         n, ref = case
         x = rng.random(n)
         known_params = {'loc': 0, 'scale': 1}
         res = stats.goodness_of_fit(stats.norm, x, known_params=known_params,
                                     statistic="filliben", rng=rng)
-        percentiles = np.array([0.005, 0.01, 0.025, 0.05, 0.1])
+        percentiles = mx.array([0.005, 0.01, 0.025, 0.05, 0.1])
         res = stats.scoreatpercentile(res.null_distribution, percentiles*100)
         assert_allclose(res, ref, atol=2e-3)
 
@@ -983,7 +983,7 @@ class TestGoodnessOfFit:
         # set.seed(100)
         # ppccTest(x, "qrayleigh", ppos="Filliben")
         n, ref_statistic, ref_pvalue = case
-        rng = np.random.default_rng(7777775561439803116)
+        rng = mx.random.default_rng(7777775561439803116)
         x = rng.normal(size=n)
         res = stats.goodness_of_fit(stats.rayleigh, x, statistic="filliben",
                                     rng=rng)
@@ -993,7 +993,7 @@ class TestGoodnessOfFit:
     def test_params_effects(self):
         # Ensure that `guessed_params`, `fit_params`, and `known_params` have
         # the intended effects.
-        rng = np.random.default_rng(9121950977643805391)
+        rng = mx.random.default_rng(9121950977643805391)
         x = stats.skewnorm.rvs(-5.044559778383153, loc=1, scale=2, size=50,
                                random_state=rng)
 
@@ -1002,26 +1002,26 @@ class TestGoodnessOfFit:
         guessed_params = {'c': 13.4}
         fit_params = {'scale': 13.73}
         known_params = {'loc': -13.85}
-        rng = np.random.default_rng(9121950977643805391)
+        rng = mx.random.default_rng(9121950977643805391)
         res1 = goodness_of_fit(stats.weibull_min, x, n_mc_samples=2,
                                guessed_params=guessed_params,
                                fit_params=fit_params,
                                known_params=known_params, rng=rng)
-        assert not np.allclose(res1.fit_result.params.c, 13.4)
+        assert not mx.allclose(res1.fit_result.params.c, 13.4)
         assert_equal(res1.fit_result.params.scale, 13.73)
         assert_equal(res1.fit_result.params.loc, -13.85)
 
         # Show that changing the guess changes the parameter that gets fit,
         # and it changes the null distribution
         guessed_params = {'c': 2}
-        rng = np.random.default_rng(9121950977643805391)
+        rng = mx.random.default_rng(9121950977643805391)
         res2 = goodness_of_fit(stats.weibull_min, x, n_mc_samples=2,
                                guessed_params=guessed_params,
                                fit_params=fit_params,
                                known_params=known_params, rng=rng)
-        assert not np.allclose(res2.fit_result.params.c,
+        assert not mx.allclose(res2.fit_result.params.c,
                                res1.fit_result.params.c, rtol=1e-8)
-        assert not np.allclose(res2.null_distribution,
+        assert not mx.allclose(res2.null_distribution,
                                res1.null_distribution, rtol=1e-8)
         assert_equal(res2.fit_result.params.scale, 13.73)
         assert_equal(res2.fit_result.params.loc, -13.85)
@@ -1030,7 +1030,7 @@ class TestGoodnessOfFit:
         # they're all fixed to those values, but the null distribution
         # varies.
         fit_params = {'c': 13.4, 'scale': 13.73}
-        rng = np.random.default_rng(9121950977643805391)
+        rng = mx.random.default_rng(9121950977643805391)
         res3 = goodness_of_fit(stats.weibull_min, x, n_mc_samples=2,
                                guessed_params=guessed_params,
                                fit_params=fit_params,
@@ -1038,7 +1038,7 @@ class TestGoodnessOfFit:
         assert_equal(res3.fit_result.params.c, 13.4)
         assert_equal(res3.fit_result.params.scale, 13.73)
         assert_equal(res3.fit_result.params.loc, -13.85)
-        assert not np.allclose(res3.null_distribution, res1.null_distribution)
+        assert not mx.allclose(res3.null_distribution, res1.null_distribution)
 
     def test_custom_statistic(self):
         # Test support for custom statistic function.
@@ -1052,15 +1052,15 @@ class TestGoodnessOfFit:
 
         # Use the Greenwood statistic for illustration; see [1, p.402].
         def greenwood(dist, data, *, axis):
-            x = np.sort(data, axis=axis)
+            x = mx.sort(data, axis=axis)
             y = dist.cdf(x)
-            d = np.diff(y, axis=axis, prepend=0, append=1)
-            return np.sum(d ** 2, axis=axis)
+            d = mx.diff(y, axis=axis, prepend=0, append=1)
+            return mx.sum(d ** 2, axis=axis)
 
         # Run the Monte Carlo test with sample size = 5 on a fully specified
         # null distribution, and compare the simulated quantiles to the exact
         # ones given in [2, Table 1, column (n = 5)].
-        rng = np.random.default_rng(9121950977643805391)
+        rng = mx.random.default_rng(9121950977643805391)
         data = stats.expon.rvs(size=5, random_state=rng)
         result = goodness_of_fit(stats.expon, data,
                                  known_params={'loc': 0, 'scale': 1},
@@ -1069,12 +1069,12 @@ class TestGoodnessOfFit:
         exact_quantiles = [
             .183863, .199403, .210088, .226040, .239947, .253677, .268422,
             .285293, .306002, .334447, .382972, .432049, .547468]
-        simulated_quantiles = np.quantile(result.null_distribution, p)
+        simulated_quantiles = mx.quantile(result.null_distribution, p)
         assert_allclose(simulated_quantiles, exact_quantiles, atol=0.005)
 
 class TestFitResult:
     def test_plot_iv(self):
-        rng = np.random.default_rng(1769658657308472721)
+        rng = mx.random.default_rng(1769658657308472721)
         data = stats.norm.rvs(0, 1, size=100, random_state=rng)
 
         def optimizer(*args, **kwargs):

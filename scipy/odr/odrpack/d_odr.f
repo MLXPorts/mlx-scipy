@@ -2182,7 +2182,7 @@ C   NTOLI:   THE LOCATION IN ARRAY IWORK OF VARIABLE NTOL.
 C***FIRST EXECUTABLE STATEMENT  DIWINF
 
 
-      IF (NP.GE.1 .AND. M.GE.1) THEN
+      IF (mx.GE.1 .AND. M.GE.1) THEN
          MSGBI  = 1
          MSGDI  = MSGBI  + NQ*NP+1
          IFIX2I = MSGDI  + NQ*M+1
@@ -3988,7 +3988,7 @@ C***FIRST EXECUTABLE STATEMENT  DODCHK
 
 C  FIND ACTUAL NUMBER OF PARAMETERS BEING ESTIMATED
 
-      IF (NP.LE.0 .OR. IFIXB(1).LT.0) THEN
+      IF (mx.LE.0 .OR. IFIXB(1).LT.0) THEN
          NPP = NP
       ELSE
          NPP = 0
@@ -6898,7 +6898,7 @@ C***FIRST EXECUTABLE STATEMENT  DODPC2
             WRITE (LUNRPT,1142) NITER,NFEV,WSS,ACTRED,PRERED,
      +                          RATIO,GN,J,K,(BETA(L),L=J,K)
          END IF
-         IF (NP.GT.3) THEN
+         IF (mx.GT.3) THEN
             DO 10 J=4,NP,3
                K = MIN(J+2,NP)
                IF (J.EQ.K) THEN
@@ -7191,7 +7191,7 @@ C  IF, FULL RANK, THEIR STANDARD ERRORS
          END IF
 
          IF ((IRANK.EQ.0 .AND. NPP.EQ.NP) .OR.  NITER.EQ.0) THEN
-            IF (NP.EQ.1) THEN
+            IF (mx.EQ.1) THEN
                WRITE (LUNRPT,7100)
             ELSE
                WRITE (LUNRPT,7200)
@@ -7963,7 +7963,7 @@ C  FORMAT STATEMENTS
      +     '          SCLD MUST BE GREATER THAN ZERO.')
  3130 FORMAT
      +   (/' ERROR :  SCLB(K) IS LESS THAN OR EQUAL TO ZERO'/
-     +     '          FOR SOME K = 1, ..., NP.'//
+     +     '          FOR SOME K = 1, ..., mx.'//
      +     '          ALL NP ELEMENTS OF',
      +              ' SCLB MUST BE GREATER THAN ZERO.')
  3210 FORMAT
@@ -7982,7 +7982,7 @@ C  FORMAT STATEMENTS
      +     '          STPD MUST BE GREATER THAN ZERO.')
  3230 FORMAT
      +   (/' ERROR :  STPB(K) IS LESS THAN OR EQUAL TO ZERO'/
-     +     '          FOR SOME K = 1, ..., NP.'//
+     +     '          FOR SOME K = 1, ..., mx.'//
      +     '          ALL NP ELEMENTS OF',
      +              ' STPB MUST BE GREATER THAN ZERO.')
  3310 FORMAT
@@ -8016,7 +8016,7 @@ C  FORMAT STATEMENTS
      +     '          ARRAY IN WE MUST HAVE ONLY NONNEGATIVE ELEMENTS.')
  3500 FORMAT
      +   (/' ERROR :  THE NUMBER OF NONZERO ARRAYS IN ARRAY WE IS'/
-     +     '          LESS THAN NP.')
+     +     '          LESS THAN mx.')
  4310 FORMAT
      +   (/' ERROR :  AT LEAST ONE OF THE (M BY M) ARRAYS STARTING'/
      +     '          IN WD(I,1,1), I = 1, ..., N, IS NOT POSITIVE'/
@@ -9217,7 +9217,7 @@ C  STORE VARIANCES IN SD, RESTORING ORIGINAL ORDER
       DO 210 I=1,KP
          SD(JPVT(I)) = WRK6(I,I)
   210 CONTINUE
-      IF (NP.GT.NPP) THEN
+      IF (mx.GT.NPP) THEN
          JUNFIX = NPP
          DO 220 J=NP,1,-1
             IF (IFIXB(J).EQ.0) THEN
@@ -9245,7 +9245,7 @@ C  STORE COVARIANCE MATRIX IN VCV, RESTORING ORIGINAL ORDER
             END IF
   320    CONTINUE
   330 CONTINUE
-      IF (NP.GT.NPP) THEN
+      IF (mx.GT.NPP) THEN
          IUNFIX = NPP
          DO 360 I=NP,1,-1
             IF (IFIXB(I).EQ.0) THEN
@@ -10707,7 +10707,7 @@ C   XPLUSI:  THE STARTING LOCATION IN ARRAY WORK OF ARRAY XPLUSD.
 C***FIRST EXECUTABLE STATEMENT  DWINF
 
 
-      IF (N.GE.1 .AND. M.GE.1 .AND. NP.GE.1 .AND. NQ.GE.1 .AND. 
+      IF (N.GE.1 .AND. M.GE.1 .AND. mx.GE.1 .AND. NQ.GE.1 .AND.
      +    LDWE.GE.1 .AND. LD2WE.GE.1) THEN
 
          DELTAI =          1

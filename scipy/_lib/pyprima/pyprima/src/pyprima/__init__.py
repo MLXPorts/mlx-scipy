@@ -10,7 +10,7 @@ from enum import Enum
 from .common._project import _project
 from .common.linalg import get_arrays_tol
 from .cobyla.cobyla import cobyla
-import numpy as np
+import mlx.core as mx
 from collections.abc import Iterable
 
 
@@ -114,7 +114,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
     try:
         lenx0 = len(x0)
     except TypeError:
-        x0 = np.array([x0])
+        x0 = mx.array([x0])
         original_scalar_fun = fun
         def scalar_fun(x):
             return original_scalar_fun(x[0], *args)
@@ -130,13 +130,13 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
     tol = get_arrays_tol(lb, ub)
     _fixed_idx = (
         (lb <= ub)
-        & (np.abs(lb - ub) < tol)
+        & (mx.abs(lb - ub) < tol)
     )
     if any(_fixed_idx):
         _fixed_values = 0.5 * (
             lb[_fixed_idx] + ub[_fixed_idx]
         )
-        _fixed_values = np.clip(
+        _fixed_values = mx.clip(
             _fixed_values,
             lb[_fixed_idx],
             ub[_fixed_idx],
@@ -146,7 +146,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         ub = ub[~_fixed_idx]
         original_fun = fun
         def fixed_fun(x):
-            newx = np.zeros(lenx0)
+            newx = mx.zeros(lenx0)
             newx[_fixed_idx] = _fixed_values
             newx[~_fixed_idx] = x
             return original_fun(newx, *args)
@@ -176,7 +176,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
     else:
         def calcfc(x):
             f = fun(x, *args)
-            constr = np.zeros(0)
+            constr = mx.zeros(0)
             return f, constr
 
     f0, nlconstr0 = calcfc(x0)
@@ -205,7 +205,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
     )
 
     if any(_fixed_idx):
-        newx = np.zeros(lenx0)
+        newx = mx.zeros(lenx0)
         newx[_fixed_idx] = _fixed_values
         newx[~_fixed_idx] = result.x
         result.x = newx

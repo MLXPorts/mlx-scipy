@@ -1,7 +1,7 @@
 import re
 from copy import deepcopy
 
-import numpy as np
+import mlx.core as mx
 import pytest
 from numpy.linalg import norm
 from numpy.testing import (TestCase, assert_array_almost_equal,
@@ -17,22 +17,22 @@ class Rosenbrock:
     """
 
     def __init__(self, n=2, random_state=0):
-        rng = np.random.RandomState(random_state)
+        rng = mx.random.RandomState(random_state)
         self.x0 = rng.uniform(-1, 1, n)
-        self.x_opt = np.ones(n)
+        self.x_opt = mx.ones(n)
 
     def fun(self, x):
-        x = np.asarray(x)
-        r = np.sum(100.0 * (x[1:] - x[:-1]**2.0)**2.0 + (1 - x[:-1])**2.0,
+        x = mx.array(x)
+        r = mx.sum(100.0 * (x[1:] - x[:-1]**2.0)**2.0 + (1 - x[:-1])**2.0,
                    axis=0)
         return r
 
     def grad(self, x):
-        x = np.asarray(x)
+        x = mx.array(x)
         xm = x[1:-1]
         xm_m1 = x[:-2]
         xm_p1 = x[2:]
-        der = np.zeros_like(x)
+        der = mx.zeros_like(x)
         der[1:-1] = (200 * (xm - xm_m1**2) -
                      400 * (xm_p1 - xm**2) * xm - 2 * (1 - xm))
         der[0] = -400 * x[0] * (x[1] - x[0]**2) - 2 * (1 - x[0])
@@ -40,13 +40,13 @@ class Rosenbrock:
         return der
 
     def hess(self, x):
-        x = np.atleast_1d(x)
-        H = np.diag(-400 * x[:-1], 1) - np.diag(400 * x[:-1], -1)
-        diagonal = np.zeros(len(x), dtype=x.dtype)
+        x = mx.atleast_1d(x)
+        H = mx.diag(-400 * x[:-1], 1) - mx.diag(400 * x[:-1], -1)
+        diagonal = mx.zeros(len(x), dtype=x.dtype)
         diagonal[0] = 1200 * x[0]**2 - 400 * x[1] + 2
         diagonal[-1] = 200
         diagonal[1:-1] = 202 + 1200 * x[1:-1]**2 - 400 * x[2:]
-        H = H + np.diag(diagonal)
+        H = H + mx.diag(diagonal)
         return H
 
 
@@ -56,16 +56,16 @@ class TestHessianUpdateStrategy(TestCase):
     def test_hessian_initialization(self):
 
         ndims = 5
-        symmetric_matrix = np.array([[43, 24, 33, 34, 49],
+        symmetric_matrix = mx.array([[43, 24, 33, 34, 49],
                                      [24, 36, 44, 15, 44],
                                      [33, 44, 37, 1, 30],
                                      [34, 15, 1, 5, 46],
                                      [49, 44, 30, 46, 22]])
         init_scales = (
-            ('auto', np.eye(ndims)),
-            (2, np.eye(ndims) * 2),
-            (np.arange(1, ndims + 1) * np.eye(ndims),
-             np.arange(1, ndims + 1) * np.eye(ndims)),
+            ('auto', mx.eye(ndims)),
+            (2, mx.eye(ndims) * 2),
+            (mx.arange(1, ndims + 1) * mx.eye(ndims),
+             mx.arange(1, ndims + 1) * mx.eye(ndims)),
             (symmetric_matrix, symmetric_matrix),)
         for approx_type in ['hess', 'inv_hess']:
             for init_scale, true_matrix in init_scales:
@@ -81,12 +81,12 @@ class TestHessianUpdateStrategy(TestCase):
                     qn.initialize(ndims, approx_type)
                     B = qn.get_matrix()
 
-                    assert_array_equal(B, np.eye(ndims))
+                    assert_array_equal(B, mx.eye(ndims))
                     # don't test the auto init scale
                     if isinstance(init_scale, str) and init_scale == 'auto':
                         continue
 
-                    qn.update(np.ones(ndims) * 1e-5, np.arange(ndims) + 0.2)
+                    qn.update(mx.ones(ndims) * 1e-5, mx.arange(ndims) + 0.2)
                     B = qn.get_matrix()
                     assert_array_equal(B, true_matrix)
 
@@ -104,20 +104,20 @@ class TestHessianUpdateStrategy(TestCase):
                               r"(real )?number, not 'complex'",
                               TypeError),
 
-                             (np.array([3.2, 2.3, 1.2]).astype(np.complex128),
+                             (mx.array([3.2, 2.3, 1.2]).astype(mx.complex128),
                               "init_scale contains complex elements, "
                               "must be real.",
                               TypeError),
 
-                             (np.array([[43, 24, 33],
+                             (mx.array([[43, 24, 33],
                                         [24, 36, 44, ],
-                                        [33, 44, 37, ]]).astype(np.complex128),
+                                        [33, 44, 37, ]]).astype(mx.complex128),
                               "init_scale contains complex elements, "
                               "must be real.",
                               TypeError),
 
                              # not square
-                             (np.array([[43, 55, 66]]),
+                             (mx.array([[43, 55, 66]]),
                               re.escape(
                                   "If init_scale is an array, it must have the "
                                   "dimensions of the hess/inv_hess: (3, 3)."
@@ -125,7 +125,7 @@ class TestHessianUpdateStrategy(TestCase):
                               ValueError),
 
                              # not symmetric
-                             (np.array([[43, 24, 33],
+                             (mx.array([[43, 24, 33],
                                         [24.1, 36, 44, ],
                                         [33, 44, 37, ]]),
                               re.escape("If init_scale is an array, it must be"
@@ -143,7 +143,7 @@ class TestHessianUpdateStrategy(TestCase):
                 for qn in quasi_newton:
                     qn.initialize(ndims, approx_type)
                     with pytest.raises(errortype, match=message):
-                        qn.update(np.ones(ndims), np.arange(ndims))
+                        qn.update(mx.ones(ndims), mx.arange(ndims))
 
     def test_rosenbrock_with_no_exception(self):
         # Define auxiliary problem
@@ -189,13 +189,13 @@ class TestHessianUpdateStrategy(TestCase):
                   [0.9999999, 0.9999999, 0.9999999, 0.9999999, 0.99999991]]
         # Get iteration points
         grad_list = [prob.grad(x) for x in x_list]
-        delta_x = [np.array(x_list[i+1])-np.array(x_list[i])
+        delta_x = [mx.array(x_list[i+1])-mx.array(x_list[i])
                    for i in range(len(x_list)-1)]
         delta_grad = [grad_list[i+1]-grad_list[i]
                       for i in range(len(grad_list)-1)]
         # Check curvature condition
         for s, y in zip(delta_x, delta_grad):
-            if np.dot(s, y) <= 0:
+            if mx.dot(s, y) <= 0:
                 raise ArithmeticError()
         # Define QuasiNewton update
         for quasi_newton in (BFGS(init_scale=1, min_curvature=1e-4),
@@ -210,7 +210,7 @@ class TestHessianUpdateStrategy(TestCase):
                 inv_hess.update(s, y)
                 B = hess.get_matrix()
                 H = inv_hess.get_matrix()
-                assert_array_almost_equal(np.linalg.inv(B), H, decimal=10)
+                assert_array_almost_equal(mx.linalg.inv(B), H, decimal=10)
             B_true = prob.hess(x_list[len(delta_x)])
             assert_array_less(norm(B - B_true)/norm(B_true), 0.1)
 
@@ -239,7 +239,7 @@ class TestHessianUpdateStrategy(TestCase):
                   [0.9071558, 0.8299587, 0.6771400, 0.4402896, 0.17469338]]
         # Get iteration points
         grad_list = [prob.grad(x) for x in x_list]
-        delta_x = [np.array(x_list[i+1])-np.array(x_list[i])
+        delta_x = [mx.array(x_list[i+1])-mx.array(x_list[i])
                    for i in range(len(x_list)-1)]
         delta_grad = [grad_list[i+1]-grad_list[i]
                       for i in range(len(grad_list)-1)]
@@ -251,11 +251,11 @@ class TestHessianUpdateStrategy(TestCase):
             y = delta_grad[i]
             hess.update(s, y)
         # Test skip update
-        B = np.copy(hess.get_matrix())
+        B = mx.copy(hess.get_matrix())
         s = delta_x[17]
         y = delta_grad[17]
         hess.update(s, y)
-        B_updated = np.copy(hess.get_matrix())
+        B_updated = mx.copy(hess.get_matrix())
         assert_array_equal(B, B_updated)
 
     def test_BFGS_skip_update(self):
@@ -271,7 +271,7 @@ class TestHessianUpdateStrategy(TestCase):
                   [0.1651957, -0.0049124, 0.0269665, -0.0040025, 0.02138184]]
         # Get iteration points
         grad_list = [prob.grad(x) for x in x_list]
-        delta_x = [np.array(x_list[i+1])-np.array(x_list[i])
+        delta_x = [mx.array(x_list[i+1])-mx.array(x_list[i])
                    for i in range(len(x_list)-1)]
         delta_grad = [grad_list[i+1]-grad_list[i]
                       for i in range(len(grad_list)-1)]
@@ -283,11 +283,11 @@ class TestHessianUpdateStrategy(TestCase):
             y = delta_grad[i]
             hess.update(s, y)
         # Test skip update
-        B = np.copy(hess.get_matrix())
+        B = mx.copy(hess.get_matrix())
         s = delta_x[5]
         y = delta_grad[5]
         hess.update(s, y)
-        B_updated = np.copy(hess.get_matrix())
+        B_updated = mx.copy(hess.get_matrix())
         assert_array_equal(B, B_updated)
 
 
@@ -296,5 +296,5 @@ class TestHessianUpdateStrategy(TestCase):
 def test_matmul_equals_dot(strategy, approx_type):
     H = strategy(init_scale=1)
     H.initialize(2, approx_type)
-    v = np.array([1, 2])
+    v = mx.array([1, 2])
     assert_array_equal(H @ v, H.dot(v))

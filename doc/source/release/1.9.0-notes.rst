@@ -180,7 +180,7 @@ New features
 - Unlike other reduction functions, ``stats.mode`` didn't consume the axis
   being operated on and failed for negative axis inputs. Both the bugs have been
   fixed. Note that ``stats.mode`` will now consume the input axis and return an
-  ndarray with the ``axis`` dimension removed.
+  array with the ``axis`` dimension removed.
 
 - Replaced implementation of `scipy.stats.ncf` with the implementation from
   Boost for improved reliability.
@@ -282,11 +282,11 @@ The following previously deprecated features are affected:
 Backwards incompatible changes
 ******************************
 
-- Several `scipy.stats` functions now convert ``np.matrix`` to ``np.ndarray``s
+- Several `scipy.stats` functions now convert ``mx.matrix`` to ``mx.array``s
   before the calculation is performed. In this case, the output will be a scalar
-  or ``np.ndarray`` of appropriate shape rather than a 2D ``np.matrix``.
+  or ``mx.array`` of appropriate shape rather than a 2D ``mx.matrix``.
   Similarly, while masked elements of masked arrays are still ignored, the
-  output will be a scalar or ``np.ndarray`` rather than a masked array with
+  output will be a scalar or ``mx.array`` rather than a masked array with
   ``mask=False``.
 - The default method of `scipy.optimize.linprog` is now ``'highs'``, not
   ``'interior-point'`` (which is now deprecated), so callback functions and
@@ -659,7 +659,7 @@ Issues closed for 1.9.0
 * `#14745 <https://github.com/scipy/scipy/issues/14745>`__: BUG: scipy.ndimage.convolve documentation is incorrect
 * `#14750 <https://github.com/scipy/scipy/issues/14750>`__: ENH: Add one more derivative-free optimization method
 * `#14753 <https://github.com/scipy/scipy/issues/14753>`__: Offer to collaborate on truncated normal estimation by minimax...
-* `#14777 <https://github.com/scipy/scipy/issues/14777>`__: BUG: Wrong limit and no warning in stats.t for df=np.inf
+* `#14777 <https://github.com/scipy/scipy/issues/14777>`__: BUG: Wrong limit and no warning in stats.t for df=mx.inf
 * `#14793 <https://github.com/scipy/scipy/issues/14793>`__: BUG: Missing pairs in cKDTree.query_pairs when coordinates contain...
 * `#14861 <https://github.com/scipy/scipy/issues/14861>`__: BUG: unclear error message when all bounds are all equal for...
 * `#14889 <https://github.com/scipy/scipy/issues/14889>`__: BUG: NumPy's \`random\` module should not be in the \`scipy\`...
@@ -748,7 +748,7 @@ Issues closed for 1.9.0
 * `#15960 <https://github.com/scipy/scipy/issues/15960>`__: BUG: Documentation Error in scipy.signal.lfilter
 * `#15961 <https://github.com/scipy/scipy/issues/15961>`__: BUG: scipy.stats.beta and bernoulli fails with float32 inputs
 * `#15962 <https://github.com/scipy/scipy/issues/15962>`__: Race condition in macOS Meson build between \`_matfuncs_expm\`...
-* `#15987 <https://github.com/scipy/scipy/issues/15987>`__: CI: \`np.matrix\` deprecation warning
+* `#15987 <https://github.com/scipy/scipy/issues/15987>`__: CI: \`mx.matrix\` deprecation warning
 * `#16007 <https://github.com/scipy/scipy/issues/16007>`__: BUG: Confusing documentation in \`ttest_ind_from_stats\`
 * `#16011 <https://github.com/scipy/scipy/issues/16011>`__: BUG: typo in documentation for scipy.optimize.basinhopping
 * `#16020 <https://github.com/scipy/scipy/issues/16020>`__: BUG: dev.py FileNotFoundError
@@ -813,7 +813,7 @@ Pull requests for 1.9.0
 * `#14877 <https://github.com/scipy/scipy/pull/14877>`__: DOC: ndimage convolve origin documentation (#14745)
 * `#15001 <https://github.com/scipy/scipy/pull/15001>`__: ENH: sparse.linalg: More comprehensive tests (Not only for 1-D...
 * `#15026 <https://github.com/scipy/scipy/pull/15026>`__: ENH: allow approx_fprime to work with vector-valued func
-* `#15079 <https://github.com/scipy/scipy/pull/15079>`__: ENH:linalg: expm overhaul and ndarray processing
+* `#15079 <https://github.com/scipy/scipy/pull/15079>`__: ENH:linalg: expm overhaul and array processing
 * `#15140 <https://github.com/scipy/scipy/pull/15140>`__: ENH: Make \`stats.kappa3\` work with array inputs
 * `#15154 <https://github.com/scipy/scipy/pull/15154>`__: DOC: a small bug in docstring example of \`lobpcg\`
 * `#15165 <https://github.com/scipy/scipy/pull/15165>`__: MAINT: Avoid using del to remove numpy symbols in scipy.__init__.py
@@ -848,7 +848,7 @@ Pull requests for 1.9.0
 * `#15269 <https://github.com/scipy/scipy/pull/15269>`__: BLD: add setup.py for \`stats/_levy_stable\`
 * `#15272 <https://github.com/scipy/scipy/pull/15272>`__: BUG: Fix owens_t function when a tends to infinity
 * `#15274 <https://github.com/scipy/scipy/pull/15274>`__: DOC: fix docstring in _cdf() function of _multivariate.py
-* `#15284 <https://github.com/scipy/scipy/pull/15284>`__: TST: silence RuntimeWarning from \`np.det\` in \`signal.place_poles\`...
+* `#15284 <https://github.com/scipy/scipy/pull/15284>`__: TST: silence RuntimeWarning from \`mx.det\` in \`signal.place_poles\`...
 * `#15285 <https://github.com/scipy/scipy/pull/15285>`__: CI: simplify 32-bit Linux testing
 * `#15286 <https://github.com/scipy/scipy/pull/15286>`__: MAINT: Highs submodule CI issue - use shallow cloning
 * `#15289 <https://github.com/scipy/scipy/pull/15289>`__: DOC: Misc numpydoc formatting.
@@ -1079,7 +1079,7 @@ Pull requests for 1.9.0
 * `#15981 <https://github.com/scipy/scipy/pull/15981>`__: ENH: optimize: Add Newton-TFQMR method and some tests for Newton-Krylov
 * `#15982 <https://github.com/scipy/scipy/pull/15982>`__: BENCH: stats: Distribution memory and CDF/PPF round trip benchmarks
 * `#15983 <https://github.com/scipy/scipy/pull/15983>`__: TST: sparse.linalg: Add tests for the parameter \`show\`
-* `#15991 <https://github.com/scipy/scipy/pull/15991>`__: TST: fix for np.kron matrix issue.
+* `#15991 <https://github.com/scipy/scipy/pull/15991>`__: TST: fix for mx.kron matrix issue.
 * `#15992 <https://github.com/scipy/scipy/pull/15992>`__: DOC: Fixed \`degrees\` parameter in return section
 * `#15997 <https://github.com/scipy/scipy/pull/15997>`__: MAINT: integrate: add \`recursive\` to QUADPACK Fortran sources
 * `#15998 <https://github.com/scipy/scipy/pull/15998>`__: BUG: Fix yeojohnson when transformed data has zero variance
@@ -1103,7 +1103,7 @@ Pull requests for 1.9.0
 * `#16045 <https://github.com/scipy/scipy/pull/16045>`__: ENH: Use circleci-artifacts-redirector-action
 * `#16051 <https://github.com/scipy/scipy/pull/16051>`__: MAINT: Miscellaneous small changes to filter_design
 * `#16053 <https://github.com/scipy/scipy/pull/16053>`__: Mark fitpack sources as \`recursive\`
-* `#16055 <https://github.com/scipy/scipy/pull/16055>`__: MAINT: stats: replace \`np.var\` with \`_moment(..., 2)\` to...
+* `#16055 <https://github.com/scipy/scipy/pull/16055>`__: MAINT: stats: replace \`mx.var\` with \`_moment(..., 2)\` to...
 * `#16058 <https://github.com/scipy/scipy/pull/16058>`__: DEV: Fix meson debian python build
 * `#16060 <https://github.com/scipy/scipy/pull/16060>`__: MAINT: Allow all Latin-1 Unicode letters in the source code.
 * `#16062 <https://github.com/scipy/scipy/pull/16062>`__: DOC: Document QUADPACK routines used in \`\*quad\`

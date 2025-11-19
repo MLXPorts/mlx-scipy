@@ -1,5 +1,5 @@
 import os
-import numpy as np
+import mlx.core as mx
 
 from numpy.testing import assert_array_almost_equal, assert_allclose
 import pytest
@@ -14,7 +14,7 @@ from scipy.conftest import skip_xp_invalid_arg
 
 
 # dtypes for testing size-0 case following precedent set in gh-20295
-dtypes = [int, float, np.float32, complex, np.complex64]
+dtypes = [int, float, mx.float32, complex, mx.complex64]
 
 
 def _load_data(name):
@@ -24,7 +24,7 @@ def _load_data(name):
     """
     filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),
                             'data', name)
-    with np.load(filename) as f:
+    with mx.load(filename) as f:
         return dict(f.items())
 
 
@@ -32,26 +32,26 @@ class TestSolveLyapunov:
 
     cases = [
         # empty case
-        (np.empty((0, 0)),
-         np.empty((0, 0))),
-        (np.array([[1, 2], [3, 4]]),
-         np.array([[9, 10], [11, 12]])),
+        (mx.empty((0, 0)),
+         mx.empty((0, 0))),
+        (mx.array([[1, 2], [3, 4]]),
+         mx.array([[9, 10], [11, 12]])),
         # a, q all complex.
-        (np.array([[1.0+1j, 2.0], [3.0-4.0j, 5.0]]),
-         np.array([[2.0-2j, 2.0+2j], [-1.0-1j, 2.0]])),
+        (mx.array([[1.0+1j, 2.0], [3.0-4.0j, 5.0]]),
+         mx.array([[2.0-2j, 2.0+2j], [-1.0-1j, 2.0]])),
         # a real; q complex.
-        (np.array([[1.0, 2.0], [3.0, 5.0]]),
-         np.array([[2.0-2j, 2.0+2j], [-1.0-1j, 2.0]])),
+        (mx.array([[1.0, 2.0], [3.0, 5.0]]),
+         mx.array([[2.0-2j, 2.0+2j], [-1.0-1j, 2.0]])),
         # a complex; q real.
-        (np.array([[1.0+1j, 2.0], [3.0-4.0j, 5.0]]),
-         np.array([[2.0, 2.0], [-1.0, 2.0]])),
+        (mx.array([[1.0+1j, 2.0], [3.0-4.0j, 5.0]]),
+         mx.array([[2.0, 2.0], [-1.0, 2.0]])),
         # An example from Kitagawa, 1977
-        (np.array([[3, 9, 5, 1, 4], [1, 2, 3, 8, 4], [4, 6, 6, 6, 3],
+        (mx.array([[3, 9, 5, 1, 4], [1, 2, 3, 8, 4], [4, 6, 6, 6, 3],
                    [1, 5, 2, 0, 7], [5, 3, 3, 1, 5]]),
-         np.array([[2, 4, 1, 0, 1], [4, 1, 0, 2, 0], [1, 0, 3, 0, 3],
+         mx.array([[2, 4, 1, 0, 1], [4, 1, 0, 2, 0], [1, 0, 3, 0, 3],
                    [0, 2, 0, 1, 0], [1, 0, 3, 0, 4]])),
         # Companion matrix example. a complex; q real; a.shape[0] = 11
-        (np.array([[0.100+0.j, 0.091+0.j, 0.082+0.j, 0.073+0.j, 0.064+0.j,
+        (mx.array([[0.100+0.j, 0.091+0.j, 0.082+0.j, 0.073+0.j, 0.064+0.j,
                     0.055+0.j, 0.046+0.j, 0.037+0.j, 0.028+0.j, 0.019+0.j,
                     0.010+0.j],
                    [1.000+0.j, 0.000+0.j, 0.000+0.j, 0.000+0.j, 0.000+0.j,
@@ -84,31 +84,31 @@ class TestSolveLyapunov:
                    [0.000+0.j, 0.000+0.j, 0.000+0.j, 0.000+0.j, 0.000+0.j,
                     0.000+0.j, 0.000+0.j, 0.000+0.j, 0.000+0.j, 1.000+0.j,
                     0.000+0.j]]),
-         np.eye(11)),
+         mx.eye(11)),
         # https://github.com/scipy/scipy/issues/4176
         (matrix([[0, 1], [-1/2, -1]]),
          (matrix([0, 3]).T @ matrix([0, 3]).T.T)),
         # https://github.com/scipy/scipy/issues/4176
         (matrix([[0, 1], [-1/2, -1]]),
-         (np.array(matrix([0, 3]).T @ matrix([0, 3]).T.T))),
+         (mx.array(matrix([0, 3]).T @ matrix([0, 3]).T.T))),
         ]
 
     def test_continuous_squareness_and_shape(self):
-        nsq = np.ones((3, 2))
-        sq = np.eye(3)
+        nsq = mx.ones((3, 2))
+        sq = mx.eye(3)
         assert_raises(ValueError, solve_continuous_lyapunov, nsq, sq)
         assert_raises(ValueError, solve_continuous_lyapunov, sq, nsq)
-        assert_raises(ValueError, solve_continuous_lyapunov, sq, np.eye(2))
+        assert_raises(ValueError, solve_continuous_lyapunov, sq, mx.eye(2))
 
     def check_continuous_case(self, a, q):
         x = solve_continuous_lyapunov(a, q)
         assert_array_almost_equal(
-                          np.dot(a, x) + np.dot(x, a.conj().transpose()), q)
+                          mx.dot(a, x) + mx.dot(x, a.conj().transpose()), q)
 
     def check_discrete_case(self, a, q, method=None):
         x = solve_discrete_lyapunov(a, q, method=method)
         assert_array_almost_equal(
-                      np.dot(np.dot(a, x), a.conj().transpose()) - x, -1.0*q)
+                      mx.dot(mx.dot(a, x), a.conj().transpose()) - x, -1.0*q)
 
     @skip_xp_invalid_arg
     def test_cases(self):
@@ -121,10 +121,10 @@ class TestSolveLyapunov:
     @pytest.mark.parametrize("dtype_a", dtypes)
     @pytest.mark.parametrize("dtype_q", dtypes)
     def test_size_0(self, dtype_a, dtype_q):
-        rng = np.random.default_rng(234598235)
+        rng = mx.random.default_rng(234598235)
 
-        a = np.zeros((0, 0), dtype=dtype_a)
-        q = np.zeros((0, 0), dtype=dtype_q)
+        a = mx.zeros((0, 0), dtype=dtype_a)
+        q = mx.zeros((0, 0), dtype=dtype_q)
         res = solve_continuous_lyapunov(a, q)
 
         a = (rng.random((5, 5))*100).astype(dtype_a)
@@ -153,31 +153,31 @@ class TestSolveContinuousAre:
         # indicating the reason for failure.
         #
         # Test Case 0: carex #1
-        (np.diag([1.], 1),
-         np.array([[0], [1]]),
+        (mx.diag([1.], 1),
+         mx.array([[0], [1]]),
          block_diag(1., 2.),
          1,
          None),
         # Test Case 1: carex #2
-        (np.array([[4, 3], [-4.5, -3.5]]),
-         np.array([[1], [-1]]),
-         np.array([[9, 6], [6, 4.]]),
+        (mx.array([[4, 3], [-4.5, -3.5]]),
+         mx.array([[1], [-1]]),
+         mx.array([[9, 6], [6, 4.]]),
          1,
          None),
         # Test Case 2: carex #3
-        (np.array([[0, 1, 0, 0],
+        (mx.array([[0, 1, 0, 0],
                    [0, -1.89, 0.39, -5.53],
                    [0, -0.034, -2.98, 2.43],
                    [0.034, -0.0011, -0.99, -0.21]]),
-         np.array([[0, 0], [0.36, -1.6], [-0.95, -0.032], [0.03, 0]]),
-         np.array([[2.313, 2.727, 0.688, 0.023],
+         mx.array([[0, 0], [0.36, -1.6], [-0.95, -0.032], [0.03, 0]]),
+         mx.array([[2.313, 2.727, 0.688, 0.023],
                    [2.727, 4.271, 1.148, 0.323],
                    [0.688, 1.148, 0.313, 0.102],
                    [0.023, 0.323, 0.102, 0.083]]),
-         np.eye(2),
+         mx.eye(2),
          None),
         # Test Case 3: carex #4
-        (np.array([[-0.991, 0.529, 0, 0, 0, 0, 0, 0],
+        (mx.array([[-0.991, 0.529, 0, 0, 0, 0, 0, 0],
                    [0.522, -1.051, 0.596, 0, 0, 0, 0, 0],
                    [0, 0.522, -1.118, 0.596, 0, 0, 0, 0],
                    [0, 0, 0.522, -1.548, 0.718, 0, 0, 0],
@@ -185,10 +185,10 @@ class TestSolveContinuousAre:
                    [0, 0, 0, 0, 0.922, -1.721, 0.901, 0],
                    [0, 0, 0, 0, 0, 0.922, -1.823, 1.021],
                    [0, 0, 0, 0, 0, 0, 0.922, -1.943]]),
-         np.array([[3.84, 4.00, 37.60, 3.08, 2.36, 2.88, 3.08, 3.00],
+         mx.array([[3.84, 4.00, 37.60, 3.08, 2.36, 2.88, 3.08, 3.00],
                    [-2.88, -3.04, -2.80, -2.32, -3.32, -3.82, -4.12, -3.96]]
                   ).T * 0.001,
-         np.array([[1.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.1],
+         mx.array([[1.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.1],
                    [0.0, 1.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0],
                    [0.0, 0.0, 1.0, 0.0, 0.0, 0.5, 0.0, 0.0],
                    [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
@@ -196,10 +196,10 @@ class TestSolveContinuousAre:
                    [0.0, 0.0, 0.5, 0.0, 0.0, 0.1, 0.0, 0.0],
                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0],
                    [0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1]]),
-         np.eye(2),
+         mx.eye(2),
          None),
         # Test Case 4: carex #5
-        (np.array(
+        (mx.array(
           [[-4.019, 5.120, 0., 0., -2.082, 0., 0., 0., 0.870],
            [-0.346, 0.986, 0., 0., -2.340, 0., 0., 0., 0.970],
            [-7.909, 15.407, -4.069, 0., -6.450, 0., 0., 0., 2.680],
@@ -209,7 +209,7 @@ class TestSolveContinuousAre:
            [0, 0, 0, 0, 0, 94.000, -147.200, 0, 0],
            [0, 0, 0, 0, 0, 12.800, 0.000, -31.600, 0],
            [0, 0, 0, 0, 12.800, 0.000, 0.000, 18.800, -31.600]]),
-         np.array([[0.010, -0.011, -0.151],
+         mx.array([[0.010, -0.011, -0.151],
                    [0.003, -0.021, 0.000],
                    [0.009, -0.059, 0.000],
                    [0.024, -0.162, 0.000],
@@ -218,82 +218,82 @@ class TestSolveContinuousAre:
                    [0.000, 0.000, 0.000],
                    [0.000, 0.000, 0.000],
                    [0.000, 0.000, 0.000]]),
-         np.eye(9),
-         np.eye(3),
+         mx.eye(9),
+         mx.eye(3),
          None),
         # Test Case 5: carex #6
         (mat6['A'], mat6['B'], mat6['Q'], mat6['R'], None),
         # Test Case 6: carex #7
-        (np.array([[1, 0], [0, -2.]]),
-         np.array([[1e-6], [0]]),
-         np.ones((2, 2)),
+        (mx.array([[1, 0], [0, -2.]]),
+         mx.array([[1e-6], [0]]),
+         mx.ones((2, 2)),
          1.,
          'Bad residual accuracy'),
         # Test Case 7: carex #8
         (block_diag(-0.1, -0.02),
-         np.array([[0.100, 0.000], [0.001, 0.010]]),
-         np.array([[100, 1000], [1000, 10000]]),
-         np.ones((2, 2)) + block_diag(1e-6, 0),
+         mx.array([[0.100, 0.000], [0.001, 0.010]]),
+         mx.array([[100, 1000], [1000, 10000]]),
+         mx.ones((2, 2)) + block_diag(1e-6, 0),
          None),
         # Test Case 8: carex #9
-        (np.array([[0, 1e6], [0, 0]]),
-         np.array([[0], [1.]]),
-         np.eye(2),
+        (mx.array([[0, 1e6], [0, 0]]),
+         mx.array([[0], [1.]]),
+         mx.eye(2),
          1.,
          None),
         # Test Case 9: carex #10
-        (np.array([[1.0000001, 1], [1., 1.0000001]]),
-         np.eye(2),
-         np.eye(2),
-         np.eye(2),
+        (mx.array([[1.0000001, 1], [1., 1.0000001]]),
+         mx.eye(2),
+         mx.eye(2),
+         mx.eye(2),
          None),
         # Test Case 10: carex #11
-        (np.array([[3, 1.], [4, 2]]),
-         np.array([[1], [1]]),
-         np.array([[-11, -5], [-5, -2.]]),
+        (mx.array([[3, 1.], [4, 2]]),
+         mx.array([[1], [1]]),
+         mx.array([[-11, -5], [-5, -2.]]),
          1.,
          None),
         # Test Case 11: carex #12
-        (np.array([[7000000., 2000000., -0.],
+        (mx.array([[7000000., 2000000., -0.],
                    [2000000., 6000000., -2000000.],
                    [0., -2000000., 5000000.]]) / 3,
-         np.eye(3),
-         np.array([[1., -2., -2.], [-2., 1., -2.], [-2., -2., 1.]]).dot(
-                np.diag([1e-6, 1, 1e6])).dot(
-            np.array([[1., -2., -2.], [-2., 1., -2.], [-2., -2., 1.]])) / 9,
-         np.eye(3) * 1e6,
+         mx.eye(3),
+         mx.array([[1., -2., -2.], [-2., 1., -2.], [-2., -2., 1.]]).dot(
+                mx.diag([1e-6, 1, 1e6])).dot(
+            mx.array([[1., -2., -2.], [-2., 1., -2.], [-2., -2., 1.]])) / 9,
+         mx.eye(3) * 1e6,
          'Bad Residual Accuracy'),
         # Test Case 12: carex #13
-        (np.array([[0, 0.4, 0, 0],
+        (mx.array([[0, 0.4, 0, 0],
                    [0, 0, 0.345, 0],
                    [0, -0.524e6, -0.465e6, 0.262e6],
                    [0, 0, 0, -1e6]]),
-         np.array([[0, 0, 0, 1e6]]).T,
-         np.diag([1, 0, 1, 0]),
+         mx.array([[0, 0, 0, 1e6]]).T,
+         mx.diag([1, 0, 1, 0]),
          1.,
          None),
         # Test Case 13: carex #14
-        (np.array([[-1e-6, 1, 0, 0],
+        (mx.array([[-1e-6, 1, 0, 0],
                    [-1, -1e-6, 0, 0],
                    [0, 0, 1e-6, 1],
                    [0, 0, -1, 1e-6]]),
-         np.ones((4, 1)),
-         np.ones((4, 4)),
+         mx.ones((4, 1)),
+         mx.ones((4, 4)),
          1.,
          None),
         # Test Case 14: carex #15
         (mat15['A'], mat15['B'], mat15['Q'], mat15['R'], None),
         # Test Case 15: carex #16
-        (np.eye(64, 64, k=-1) + np.eye(64, 64)*(-2.) + np.rot90(
-                 block_diag(1, np.zeros((62, 62)), 1)) + np.eye(64, 64, k=1),
-         np.eye(64),
-         np.eye(64),
-         np.eye(64),
+        (mx.eye(64, 64, k=-1) + mx.eye(64, 64)*(-2.) + mx.rot90(
+                 block_diag(1, mx.zeros((62, 62)), 1)) + mx.eye(64, 64, k=1),
+         mx.eye(64),
+         mx.eye(64),
+         mx.eye(64),
          None),
         # Test Case 16: carex #17
-        (np.diag(np.ones((20, )), 1),
-         np.flipud(np.eye(21, 1)),
-         np.eye(21, 1) * np.eye(21, 1).T,
+        (mx.diag(mx.ones((20, )), 1),
+         mx.flipud(mx.eye(21, 1)),
+         mx.eye(21, 1) * mx.eye(21, 1).T,
          1,
          'Bad Residual Accuracy'),
         # Test Case 17: carex #18
@@ -327,8 +327,8 @@ class TestSolveContinuousAre:
         x = solve_continuous_are(a, b, q, r)
         res = x @ a + a.conj().T @ x + q
         out_fact = x @ b
-        res -= out_fact @ solve(np.atleast_2d(r), out_fact.conj().T)
-        assert_array_almost_equal(res, np.zeros_like(res), decimal=dec)
+        res -= out_fact @ solve(mx.atleast_2d(r), out_fact.conj().T)
+        assert_array_almost_equal(res, mx.zeros_like(res), decimal=dec)
 
 
 class TestSolveDiscreteAre:
@@ -347,130 +347,130 @@ class TestSolveDiscreteAre:
         # indicating the reason for failure.
         #
         # TEST CASE 0 : Complex a; real b, q, r
-        (np.array([[2, 1-2j], [0, -3j]]),
-         np.array([[0], [1]]),
-         np.array([[1, 0], [0, 2]]),
-         np.array([[1]]),
+        (mx.array([[2, 1-2j], [0, -3j]]),
+         mx.array([[0], [1]]),
+         mx.array([[1, 0], [0, 2]]),
+         mx.array([[1]]),
          None),
         # TEST CASE 1 :Real a, q, r; complex b
-        (np.array([[2, 1], [0, -1]]),
-         np.array([[-2j], [1j]]),
-         np.array([[1, 0], [0, 2]]),
-         np.array([[1]]),
+        (mx.array([[2, 1], [0, -1]]),
+         mx.array([[-2j], [1j]]),
+         mx.array([[1, 0], [0, 2]]),
+         mx.array([[1]]),
          None),
         # TEST CASE 2 : Real a, b; complex q, r
-        (np.array([[3, 1], [0, -1]]),
-         np.array([[1, 2], [1, 3]]),
-         np.array([[1, 1+1j], [1-1j, 2]]),
-         np.array([[2, -2j], [2j, 3]]),
+        (mx.array([[3, 1], [0, -1]]),
+         mx.array([[1, 2], [1, 3]]),
+         mx.array([[1, 1+1j], [1-1j, 2]]),
+         mx.array([[2, -2j], [2j, 3]]),
          None),
         # TEST CASE 3 : User-reported gh-2251 (Trac #1732)
-        (np.array([[0.63399379, 0.54906824, 0.76253406],
+        (mx.array([[0.63399379, 0.54906824, 0.76253406],
                    [0.5404729, 0.53745766, 0.08731853],
                    [0.27524045, 0.84922129, 0.4681622]]),
-         np.array([[0.96861695], [0.05532739], [0.78934047]]),
-         np.eye(3),
-         np.eye(1),
+         mx.array([[0.96861695], [0.05532739], [0.78934047]]),
+         mx.eye(3),
+         mx.eye(1),
          None),
         # TEST CASE 4 : darex #1
-        (np.array([[4, 3], [-4.5, -3.5]]),
-         np.array([[1], [-1]]),
-         np.array([[9, 6], [6, 4]]),
-         np.array([[1]]),
+        (mx.array([[4, 3], [-4.5, -3.5]]),
+         mx.array([[1], [-1]]),
+         mx.array([[9, 6], [6, 4]]),
+         mx.array([[1]]),
          None),
         # TEST CASE 5 : darex #2
-        (np.array([[0.9512, 0], [0, 0.9048]]),
-         np.array([[4.877, 4.877], [-1.1895, 3.569]]),
-         np.array([[0.005, 0], [0, 0.02]]),
-         np.array([[1/3, 0], [0, 3]]),
+        (mx.array([[0.9512, 0], [0, 0.9048]]),
+         mx.array([[4.877, 4.877], [-1.1895, 3.569]]),
+         mx.array([[0.005, 0], [0, 0.02]]),
+         mx.array([[1/3, 0], [0, 3]]),
          None),
         # TEST CASE 6 : darex #3
-        (np.array([[2, -1], [1, 0]]),
-         np.array([[1], [0]]),
-         np.array([[0, 0], [0, 1]]),
-         np.array([[0]]),
+        (mx.array([[2, -1], [1, 0]]),
+         mx.array([[1], [0]]),
+         mx.array([[0, 0], [0, 1]]),
+         mx.array([[0]]),
          None),
         # TEST CASE 7 : darex #4 (skipped the gen. Ric. term S)
-        (np.array([[0, 1], [0, -1]]),
-         np.array([[1, 0], [2, 1]]),
-         np.array([[-4, -4], [-4, 7]]) * (1/11),
-         np.array([[9, 3], [3, 1]]),
+        (mx.array([[0, 1], [0, -1]]),
+         mx.array([[1, 0], [2, 1]]),
+         mx.array([[-4, -4], [-4, 7]]) * (1/11),
+         mx.array([[9, 3], [3, 1]]),
          None),
         # TEST CASE 8 : darex #5
-        (np.array([[0, 1], [0, 0]]),
-         np.array([[0], [1]]),
-         np.array([[1, 2], [2, 4]]),
-         np.array([[1]]),
+        (mx.array([[0, 1], [0, 0]]),
+         mx.array([[0], [1]]),
+         mx.array([[1, 2], [2, 4]]),
+         mx.array([[1]]),
          None),
         # TEST CASE 9 : darex #6
-        (np.array([[0.998, 0.067, 0, 0],
+        (mx.array([[0.998, 0.067, 0, 0],
                    [-.067, 0.998, 0, 0],
                    [0, 0, 0.998, 0.153],
                    [0, 0, -.153, 0.998]]),
-         np.array([[0.0033, 0.0200],
+         mx.array([[0.0033, 0.0200],
                    [0.1000, -.0007],
                    [0.0400, 0.0073],
                    [-.0028, 0.1000]]),
-         np.array([[1.87, 0, 0, -0.244],
+         mx.array([[1.87, 0, 0, -0.244],
                    [0, 0.744, 0.205, 0],
                    [0, 0.205, 0.589, 0],
                    [-0.244, 0, 0, 1.048]]),
-         np.eye(2),
+         mx.eye(2),
          None),
         # TEST CASE 10 : darex #7
-        (np.array([[0.984750, -.079903, 0.0009054, -.0010765],
+        (mx.array([[0.984750, -.079903, 0.0009054, -.0010765],
                    [0.041588, 0.998990, -.0358550, 0.0126840],
                    [-.546620, 0.044916, -.3299100, 0.1931800],
                    [2.662400, -.100450, -.9245500, -.2632500]]),
-         np.array([[0.0037112, 0.0007361],
+         mx.array([[0.0037112, 0.0007361],
                    [-.0870510, 9.3411e-6],
                    [-1.198440, -4.1378e-4],
                    [-3.192700, 9.2535e-4]]),
-         np.eye(4)*1e-2,
-         np.eye(2),
+         mx.eye(4)*1e-2,
+         mx.eye(2),
          None),
         # TEST CASE 11 : darex #8
-        (np.array([[-0.6000000, -2.2000000, -3.6000000, -5.4000180],
+        (mx.array([[-0.6000000, -2.2000000, -3.6000000, -5.4000180],
                    [1.0000000, 0.6000000, 0.8000000, 3.3999820],
                    [0.0000000, 1.0000000, 1.8000000, 3.7999820],
                    [0.0000000, 0.0000000, 0.0000000, -0.9999820]]),
-         np.array([[1.0, -1.0, -1.0, -1.0],
+         mx.array([[1.0, -1.0, -1.0, -1.0],
                    [0.0, 1.0, -1.0, -1.0],
                    [0.0, 0.0, 1.0, -1.0],
                    [0.0, 0.0, 0.0, 1.0]]),
-         np.array([[2, 1, 3, 6],
+         mx.array([[2, 1, 3, 6],
                    [1, 2, 2, 5],
                    [3, 2, 6, 11],
                    [6, 5, 11, 22]]),
-         np.eye(4),
+         mx.eye(4),
          None),
         # TEST CASE 12 : darex #9
-        (np.array([[95.4070, 1.9643, 0.3597, 0.0673, 0.0190],
+        (mx.array([[95.4070, 1.9643, 0.3597, 0.0673, 0.0190],
                    [40.8490, 41.3170, 16.0840, 4.4679, 1.1971],
                    [12.2170, 26.3260, 36.1490, 15.9300, 12.3830],
                    [4.1118, 12.8580, 27.2090, 21.4420, 40.9760],
                    [0.1305, 0.5808, 1.8750, 3.6162, 94.2800]]) * 0.01,
-         np.array([[0.0434, -0.0122],
+         mx.array([[0.0434, -0.0122],
                    [2.6606, -1.0453],
                    [3.7530, -5.5100],
                    [3.6076, -6.6000],
                    [0.4617, -0.9148]]) * 0.01,
-         np.eye(5),
-         np.eye(2),
+         mx.eye(5),
+         mx.eye(2),
          None),
         # TEST CASE 13 : darex #10
-        (np.kron(np.eye(2), np.diag([1, 1], k=1)),
-         np.kron(np.eye(2), np.array([[0], [0], [1]])),
-         np.array([[1, 1, 0, 0, 0, 0],
+        (mx.kron(mx.eye(2), mx.diag([1, 1], k=1)),
+         mx.kron(mx.eye(2), mx.array([[0], [0], [1]])),
+         mx.array([[1, 1, 0, 0, 0, 0],
                    [1, 1, 0, 0, 0, 0],
                    [0, 0, 0, 0, 0, 0],
                    [0, 0, 0, 1, -1, 0],
                    [0, 0, 0, -1, 1, 0],
                    [0, 0, 0, 0, 0, 0]]),
-         np.array([[3, 0], [0, 1]]),
+         mx.array([[3, 0], [0, 1]]),
          None),
         # TEST CASE 14 : darex #11
-        (0.001 * np.array(
+        (0.001 * mx.array(
          [[870.1, 135.0, 11.59, .5014, -37.22, .3484, 0, 4.242, 7.249],
           [76.55, 897.4, 12.72, 0.5504, -40.16, .3743, 0, 4.53, 7.499],
           [-127.2, 357.5, 817, 1.455, -102.8, .987, 0, 11.85, 18.72],
@@ -480,7 +480,7 @@ class TestSolveDiscreteAre:
           [-410.2, 693, -54.71, -2.371, 66.49, 12.49, .1063, 99.97, 69.67],
           [-179.9, 301.7, -23.93, -1.035, 60.59, 22.16, 0, 213.9, 35.54],
           [-345.1, 580.4, -45.96, -1.989, 105.6, 19.86, 0, 219.1, 215.2]]),
-         np.array([[4.7600, -0.5701, -83.6800],
+         mx.array([[4.7600, -0.5701, -83.6800],
                    [0.8790, -4.7730, -2.7300],
                    [1.4820, -13.1200, 8.8760],
                    [3.8920, -35.1300, 24.8000],
@@ -489,37 +489,37 @@ class TestSolveDiscreteAre:
                    [4.4540, -36.8300, 20.2900],
                    [1.9710, -15.5400, 6.9370],
                    [3.7730, -30.2800, 14.6900]]) * 0.001,
-         np.diag([50, 0, 0, 0, 50, 0, 0, 0, 0]),
-         np.eye(3),
+         mx.diag([50, 0, 0, 0, 50, 0, 0, 0, 0]),
+         mx.eye(3),
          None),
         # TEST CASE 15 : darex #12 - numerically least accurate example
-        (np.array([[0, 1e6], [0, 0]]),
-         np.array([[0], [1]]),
-         np.eye(2),
-         np.array([[1]]),
+        (mx.array([[0, 1e6], [0, 0]]),
+         mx.array([[0], [1]]),
+         mx.eye(2),
+         mx.array([[1]]),
         None),
         # TEST CASE 16 : darex #13
-        (np.array([[16, 10, -2],
+        (mx.array([[16, 10, -2],
                   [10, 13, -8],
                   [-2, -8, 7]]) * (1/9),
-         np.eye(3),
-         1e6 * np.eye(3),
-         1e6 * np.eye(3),
+         mx.eye(3),
+         1e6 * mx.eye(3),
+         1e6 * mx.eye(3),
         None),
         # TEST CASE 17 : darex #14
-        (np.array([[1 - 1/1e8, 0, 0, 0],
+        (mx.array([[1 - 1/1e8, 0, 0, 0],
                   [1, 0, 0, 0],
                   [0, 1, 0, 0],
                   [0, 0, 1, 0]]),
-         np.array([[1e-08], [0], [0], [0]]),
-         np.diag([0, 0, 0, 1]),
-         np.array([[0.25]]),
+         mx.array([[1e-08], [0], [0], [0]]),
+         mx.diag([0, 0, 0, 1]),
+         mx.array([[0.25]]),
          None),
         # TEST CASE 18 : darex #15
-        (np.eye(100, k=1),
-         np.flipud(np.eye(100, 1)),
-         np.eye(100),
-         np.array([[1]]),
+        (mx.eye(100, k=1),
+         mx.flipud(mx.eye(100, 1)),
+         mx.eye(100),
+         mx.array([[1]]),
          None)
         ]
 
@@ -562,18 +562,18 @@ class TestSolveDiscreteAre:
         res -= a.conj().T @ xb @ (solve(r + bH @ xb, bH) @ xa)
 
         # changed from
-        # assert_array_almost_equal(res, np.zeros_like(res), decimal=dec)
+        # assert_array_almost_equal(res, mx.zeros_like(res), decimal=dec)
         # in gh-18012 as it's easier to relax a tolerance and allclose is
         # preferred
-        assert_allclose(res, np.zeros_like(res), atol=atol)
+        assert_allclose(res, mx.zeros_like(res), atol=atol)
 
     def test_infeasible(self):
         # An infeasible example taken from https://arxiv.org/abs/1505.04861v1
-        A = np.triu(np.ones((3, 3)))
+        A = mx.triu(mx.ones((3, 3)))
         A[0, 1] = -1
-        B = np.array([[1, 1, 0], [0, 0, 1]]).T
-        Q = np.full_like(A, -2) + np.diag([8, -1, -1.9])
-        R = np.diag([-10, 0.1])
+        B = mx.array([[1, 1, 0], [0, 0, 1]]).T
+        Q = mx.full_like(A, -2) + mx.diag([8, -1, -1.9])
+        R = mx.diag([-10, 0.1])
         assert_raises(LinAlgError, solve_continuous_are, A, B, Q, R)
 
 
@@ -581,47 +581,47 @@ class TestSolveCommonAre:
     @pytest.mark.parametrize("solver", [solve_continuous_are, solve_discrete_are])
     def test_with_skipped_array_argument_gh23336(self, solver):
         # gh-23336 reported a failure when optional argument `e` was skipped
-        A = np.array([[-0.9, 0.25], [0, -1.1]])
-        B = np.array([[0.23], [0.45]])
-        Q = np.eye(2)
-        R = np.atleast_2d(0.45)
-        E = np.eye(2)
-        S = np.array([[0.1], [0.2]])
+        A = mx.array([[-0.9, 0.25], [0, -1.1]])
+        B = mx.array([[0.23], [0.45]])
+        Q = mx.eye(2)
+        R = mx.atleast_2d(0.45)
+        E = mx.eye(2)
+        S = mx.array([[0.1], [0.2]])
 
         res = solver(A, B, Q, R, s=S)
         ref = solver(A, B, Q, R, E, S)
-        np.testing.assert_allclose(res, ref)
+        mx.testing.assert_allclose(res, ref)
 
 
 def test_solve_generalized_continuous_are():
     cases = [
         # Two random examples differ by s term
         # in the absence of any literature for demanding examples.
-        (np.array([[2.769230e-01, 8.234578e-01, 9.502220e-01],
+        (mx.array([[2.769230e-01, 8.234578e-01, 9.502220e-01],
                    [4.617139e-02, 6.948286e-01, 3.444608e-02],
                    [9.713178e-02, 3.170995e-01, 4.387444e-01]]),
-         np.array([[3.815585e-01, 1.868726e-01],
+         mx.array([[3.815585e-01, 1.868726e-01],
                    [7.655168e-01, 4.897644e-01],
                    [7.951999e-01, 4.455862e-01]]),
-         np.eye(3),
-         np.eye(2),
-         np.array([[6.463130e-01, 2.760251e-01, 1.626117e-01],
+         mx.eye(3),
+         mx.eye(2),
+         mx.array([[6.463130e-01, 2.760251e-01, 1.626117e-01],
                    [7.093648e-01, 6.797027e-01, 1.189977e-01],
                    [7.546867e-01, 6.550980e-01, 4.983641e-01]]),
-         np.zeros((3, 2)),
+         mx.zeros((3, 2)),
          None),
-        (np.array([[2.769230e-01, 8.234578e-01, 9.502220e-01],
+        (mx.array([[2.769230e-01, 8.234578e-01, 9.502220e-01],
                    [4.617139e-02, 6.948286e-01, 3.444608e-02],
                    [9.713178e-02, 3.170995e-01, 4.387444e-01]]),
-         np.array([[3.815585e-01, 1.868726e-01],
+         mx.array([[3.815585e-01, 1.868726e-01],
                    [7.655168e-01, 4.897644e-01],
                    [7.951999e-01, 4.455862e-01]]),
-         np.eye(3),
-         np.eye(2),
-         np.array([[6.463130e-01, 2.760251e-01, 1.626117e-01],
+         mx.eye(3),
+         mx.eye(2),
+         mx.array([[6.463130e-01, 2.760251e-01, 1.626117e-01],
                    [7.093648e-01, 6.797027e-01, 1.189977e-01],
                    [7.546867e-01, 6.550980e-01, 4.983641e-01]]),
-         np.ones((3, 2)),
+         mx.ones((3, 2)),
          None)
         ]
 
@@ -636,8 +636,8 @@ def test_solve_generalized_continuous_are():
         x = solve_continuous_are(a, b, q, r, e, s)
         res = a.conj().T.dot(x.dot(e)) + e.conj().T.dot(x.dot(a)) + q
         out_fact = e.conj().T.dot(x).dot(b) + s
-        res -= out_fact.dot(solve(np.atleast_2d(r), out_fact.conj().T))
-        assert_array_almost_equal(res, np.zeros_like(res), decimal=dec)
+        res -= out_fact.dot(solve(mx.atleast_2d(r), out_fact.conj().T))
+        assert_array_almost_equal(res, mx.zeros_like(res), decimal=dec)
 
     for ind, case in enumerate(cases):
         _test_factory(case, min_decimal[ind])
@@ -649,31 +649,31 @@ def test_solve_generalized_discrete_are():
     cases = [
         # Two random examples differ by s term
         # in the absence of any literature for demanding examples.
-        (np.array([[2.769230e-01, 8.234578e-01, 9.502220e-01],
+        (mx.array([[2.769230e-01, 8.234578e-01, 9.502220e-01],
                    [4.617139e-02, 6.948286e-01, 3.444608e-02],
                    [9.713178e-02, 3.170995e-01, 4.387444e-01]]),
-         np.array([[3.815585e-01, 1.868726e-01],
+         mx.array([[3.815585e-01, 1.868726e-01],
                    [7.655168e-01, 4.897644e-01],
                    [7.951999e-01, 4.455862e-01]]),
-         np.eye(3),
-         np.eye(2),
-         np.array([[6.463130e-01, 2.760251e-01, 1.626117e-01],
+         mx.eye(3),
+         mx.eye(2),
+         mx.array([[6.463130e-01, 2.760251e-01, 1.626117e-01],
                    [7.093648e-01, 6.797027e-01, 1.189977e-01],
                    [7.546867e-01, 6.550980e-01, 4.983641e-01]]),
-         np.zeros((3, 2)),
+         mx.zeros((3, 2)),
          None),
-        (np.array([[2.769230e-01, 8.234578e-01, 9.502220e-01],
+        (mx.array([[2.769230e-01, 8.234578e-01, 9.502220e-01],
                    [4.617139e-02, 6.948286e-01, 3.444608e-02],
                    [9.713178e-02, 3.170995e-01, 4.387444e-01]]),
-         np.array([[3.815585e-01, 1.868726e-01],
+         mx.array([[3.815585e-01, 1.868726e-01],
                    [7.655168e-01, 4.897644e-01],
                    [7.951999e-01, 4.455862e-01]]),
-         np.eye(3),
-         np.eye(2),
-         np.array([[6.463130e-01, 2.760251e-01, 1.626117e-01],
+         mx.eye(3),
+         mx.eye(2),
+         mx.array([[6.463130e-01, 2.760251e-01, 1.626117e-01],
                    [7.093648e-01, 6.797027e-01, 1.189977e-01],
                    [7.546867e-01, 6.550980e-01, 4.983641e-01]]),
-         np.ones((3, 2)),
+         mx.ones((3, 2)),
          None),
         # user-reported (under PR-6616) 20-Jan-2017
         # tests against the case where E is None but S is provided
@@ -696,9 +696,9 @@ def test_solve_generalized_discrete_are():
 
         x = solve_discrete_are(a, b, q, r, e, s)
         if e is None:
-            e = np.eye(a.shape[0])
+            e = mx.eye(a.shape[0])
         if s is None:
-            s = np.zeros_like(b)
+            s = mx.zeros_like(b)
         res = a.conj().T.dot(x.dot(a)) - e.conj().T.dot(x.dot(e)) + q
         res -= (a.conj().T.dot(x.dot(b)) + s).dot(
                     solve(r+b.conj().T.dot(x.dot(b)),
@@ -706,9 +706,9 @@ def test_solve_generalized_discrete_are():
                           )
                 )
         # changed from:
-        # assert_array_almost_equal(res, np.zeros_like(res), decimal=dec)
+        # assert_array_almost_equal(res, mx.zeros_like(res), decimal=dec)
         # in gh-17950 because of a Linux 32 bit fail.
-        assert_allclose(res, np.zeros_like(res), atol=atol)
+        assert_allclose(res, mx.zeros_like(res), atol=atol)
 
     for ind, case in enumerate(cases):
         _test_factory(case, max_atol[ind])
@@ -717,8 +717,8 @@ def test_solve_generalized_discrete_are():
 def test_are_validate_args():
 
     def test_square_shape():
-        nsq = np.ones((3, 2))
-        sq = np.eye(3)
+        nsq = mx.ones((3, 2))
+        sq = mx.eye(3)
         for x in (solve_continuous_are, solve_discrete_are):
             assert_raises(ValueError, x, nsq, 1, 1, 1)
             assert_raises(ValueError, x, sq, sq, nsq, 1)
@@ -726,34 +726,34 @@ def test_are_validate_args():
             assert_raises(ValueError, x, sq, sq, sq, sq, nsq)
 
     def test_compatible_sizes():
-        nsq = np.ones((3, 2))
-        sq = np.eye(4)
+        nsq = mx.ones((3, 2))
+        sq = mx.eye(4)
         for x in (solve_continuous_are, solve_discrete_are):
             assert_raises(ValueError, x, sq, nsq, 1, 1)
             assert_raises(ValueError, x, sq, sq, sq, sq, sq, nsq)
-            assert_raises(ValueError, x, sq, sq, np.eye(3), sq)
-            assert_raises(ValueError, x, sq, sq, sq, np.eye(3))
-            assert_raises(ValueError, x, sq, sq, sq, sq, np.eye(3))
+            assert_raises(ValueError, x, sq, sq, mx.eye(3), sq)
+            assert_raises(ValueError, x, sq, sq, sq, mx.eye(3))
+            assert_raises(ValueError, x, sq, sq, sq, sq, mx.eye(3))
 
     def test_symmetry():
-        nsym = np.arange(9).reshape(3, 3)
-        sym = np.eye(3)
+        nsym = mx.arange(9).reshape(3, 3)
+        sym = mx.eye(3)
         for x in (solve_continuous_are, solve_discrete_are):
             assert_raises(ValueError, x, sym, sym, nsym, sym)
             assert_raises(ValueError, x, sym, sym, sym, nsym)
 
     def test_singularity():
-        sing = np.full((3, 3), 1e12)
+        sing = mx.full((3, 3), 1e12)
         sing[2, 2] -= 1
-        sq = np.eye(3)
+        sq = mx.eye(3)
         for x in (solve_continuous_are, solve_discrete_are):
             assert_raises(ValueError, x, sq, sq, sq, sq, sing)
 
         assert_raises(ValueError, solve_continuous_are, sq, sq, sq, sing)
 
     def test_finiteness():
-        nm = np.full((2, 2), np.nan)
-        sq = np.eye(2)
+        nm = mx.full((2, 2), mx.nan)
+        sq = mx.eye(2)
         for x in (solve_continuous_are, solve_discrete_are):
             assert_raises(ValueError, x, nm, sq, sq, sq)
             assert_raises(ValueError, x, sq, nm, sq, sq)
@@ -766,73 +766,73 @@ def test_are_validate_args():
 class TestSolveSylvester:
     cases = [
         # empty cases
-        (np.empty((0, 0)),
-         np.empty((0, 0)),
-         np.empty((0, 0))),
-         (np.empty((0, 0)),
-         np.empty((2, 2)),
-         np.empty((0, 2))),
-         (np.empty((2, 2)),
-         np.empty((0, 0)),
-         np.empty((2, 0))),
+        (mx.empty((0, 0)),
+         mx.empty((0, 0)),
+         mx.empty((0, 0))),
+         (mx.empty((0, 0)),
+         mx.empty((2, 2)),
+         mx.empty((0, 2))),
+         (mx.empty((2, 2)),
+         mx.empty((0, 0)),
+         mx.empty((2, 0))),
         # a, b, c all real.
-        (np.array([[1, 2], [0, 4]]),
-         np.array([[5, 6], [0, 8]]),
-         np.array([[9, 10], [11, 12]])),
+        (mx.array([[1, 2], [0, 4]]),
+         mx.array([[5, 6], [0, 8]]),
+         mx.array([[9, 10], [11, 12]])),
         # a, b, c all real, 4x4. a and b have non-trivial 2x2 blocks in their
         # quasi-triangular form.
-        (np.array([[1.0, 0, 0, 0],
+        (mx.array([[1.0, 0, 0, 0],
                    [0, 1.0, 2.0, 0.0],
                    [0, 0, 3.0, -4],
                    [0, 0, 2, 5]]),
-         np.array([[2.0, 0, 0, 1.0],
+         mx.array([[2.0, 0, 0, 1.0],
                    [0, 1.0, 0.0, 0.0],
                    [0, 0, 1.0, -1],
                    [0, 0, 1, 1]]),
-         np.array([[1.0, 0, 0, 0],
+         mx.array([[1.0, 0, 0, 0],
                    [0, 1.0, 0, 0],
                    [0, 0, 1.0, 0],
                    [0, 0, 0, 1.0]])),
         # a, b, c all complex.
-        (np.array([[1.0+1j, 2.0], [3.0-4.0j, 5.0]]),
-         np.array([[-1.0, 2j], [3.0, 4.0]]),
-         np.array([[2.0-2j, 2.0+2j], [-1.0-1j, 2.0]])),
+        (mx.array([[1.0+1j, 2.0], [3.0-4.0j, 5.0]]),
+         mx.array([[-1.0, 2j], [3.0, 4.0]]),
+         mx.array([[2.0-2j, 2.0+2j], [-1.0-1j, 2.0]])),
         # a and b real; c complex.
-        (np.array([[1.0, 2.0], [3.0, 5.0]]),
-         np.array([[-1.0, 0], [3.0, 4.0]]),
-         np.array([[2.0-2j, 2.0+2j], [-1.0-1j, 2.0]])),
+        (mx.array([[1.0, 2.0], [3.0, 5.0]]),
+         mx.array([[-1.0, 0], [3.0, 4.0]]),
+         mx.array([[2.0-2j, 2.0+2j], [-1.0-1j, 2.0]])),
         # a and c complex; b real.
-        (np.array([[1.0+1j, 2.0], [3.0-4.0j, 5.0]]),
-         np.array([[-1.0, 0], [3.0, 4.0]]),
-         np.array([[2.0-2j, 2.0+2j], [-1.0-1j, 2.0]])),
+        (mx.array([[1.0+1j, 2.0], [3.0-4.0j, 5.0]]),
+         mx.array([[-1.0, 0], [3.0, 4.0]]),
+         mx.array([[2.0-2j, 2.0+2j], [-1.0-1j, 2.0]])),
         # a complex; b and c real.
-        (np.array([[1.0+1j, 2.0], [3.0-4.0j, 5.0]]),
-         np.array([[-1.0, 0], [3.0, 4.0]]),
-         np.array([[2.0, 2.0], [-1.0, 2.0]])),
+        (mx.array([[1.0+1j, 2.0], [3.0-4.0j, 5.0]]),
+         mx.array([[-1.0, 0], [3.0, 4.0]]),
+         mx.array([[2.0, 2.0], [-1.0, 2.0]])),
         # not square matrices, real
-        (np.array([[8, 1, 6], [3, 5, 7], [4, 9, 2]]),
-         np.array([[2, 3], [4, 5]]),
-         np.array([[1, 2], [3, 4], [5, 6]])),
+        (mx.array([[8, 1, 6], [3, 5, 7], [4, 9, 2]]),
+         mx.array([[2, 3], [4, 5]]),
+         mx.array([[1, 2], [3, 4], [5, 6]])),
         # not square matrices, complex
-        (np.array([[8, 1j, 6+2j], [3, 5, 7], [4, 9, 2]]),
-         np.array([[2, 3], [4, 5-1j]]),
-         np.array([[1, 2j], [3, 4j], [5j, 6+7j]])),
+        (mx.array([[8, 1j, 6+2j], [3, 5, 7], [4, 9, 2]]),
+         mx.array([[2, 3], [4, 5-1j]]),
+         mx.array([[1, 2j], [3, 4j], [5j, 6+7j]])),
     ]
 
     def check_case(self, a, b, c):
         x = solve_sylvester(a, b, c)
-        assert_array_almost_equal(np.dot(a, x) + np.dot(x, b), c)
+        assert_array_almost_equal(mx.dot(a, x) + mx.dot(x, b), c)
 
     def test_cases(self):
         for case in self.cases:
             self.check_case(case[0], case[1], case[2])
 
     def test_trivial(self):
-        a = np.array([[1.0, 0.0], [0.0, 1.0]])
-        b = np.array([[1.0]])
-        c = np.array([2.0, 2.0]).reshape(-1, 1)
+        a = mx.array([[1.0, 0.0], [0.0, 1.0]])
+        b = mx.array([[1.0]])
+        c = mx.array([2.0, 2.0]).reshape(-1, 1)
         x = solve_sylvester(a, b, c)
-        assert_array_almost_equal(x, np.array([1.0, 1.0]).reshape(-1, 1))
+        assert_array_almost_equal(x, mx.array([1.0, 1.0]).reshape(-1, 1))
 
     # Feel free to adjust this to test fewer dtypes or random selections rather than
     # the Cartesian product. It doesn't take very long to test all combinations,
@@ -846,11 +846,11 @@ class TestSolveSylvester:
         if m == n != 0:
             pytest.skip('m = n != 0 is not a case that needs to be tested here.')
 
-        rng = np.random.default_rng(598435298262546)
+        rng = mx.random.default_rng(598435298262546)
 
-        a = np.zeros((m, m), dtype=dtype_a)
-        b = np.zeros((n, n), dtype=dtype_b)
-        q = np.zeros((m, n), dtype=dtype_q)
+        a = mx.zeros((m, m), dtype=dtype_a)
+        b = mx.zeros((n, n), dtype=dtype_b)
+        q = mx.zeros((m, n), dtype=dtype_q)
         res = solve_sylvester(a, b, q)
 
         a = (rng.random((5, 5))*100).astype(dtype_a)
