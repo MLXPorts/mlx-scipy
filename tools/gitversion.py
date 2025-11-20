@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     template = textwrap.dedent(f'''
         """
-        Module to expose more detailed version info for the installed `scipy`
+        Module to expose more detailed version info for the installed `scipy_mlx`
         """
         version = "{version}"
         full_version = version

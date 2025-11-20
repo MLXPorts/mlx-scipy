@@ -1,5 +1,5 @@
 project(
-  'scipy',
+  'scipy_mlx',
   'c', 'cpp', 'cython',
   version: run_command(['tools/gitversion.py'], check: true).stdout().strip(),
   license: 'BSD-3',
@@ -225,4 +225,4 @@ else
   qhull_r_dep = qhull_r.get_variable('qhull_r_dep')
 endif
 
-subdir('scipy')
+subdir('scipy_mlx')
