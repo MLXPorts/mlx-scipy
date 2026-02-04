@@ -29,7 +29,7 @@ import math
 import warnings
 import sys
 import inspect
-from numpy import eye, argmin, zeros, shape, asarray, sqrt
+from mlx.core import eye, argmin, zeros, sqrt
 import mlx.core as mx
 from scipy_mlx.linalg import cholesky, issymmetric, LinAlgError
 from scipy_mlx.sparse.linalg import LinearOperator
@@ -3878,7 +3878,7 @@ def brute(func, ranges, args=(), Ns=20, full_output=0, finish=fmin,
             Jout = mx.reshape(Jout, inpt_shape[1:])
             grid = mx.reshape(grid.T, inpt_shape)
 
-    Nshape = shape(Jout)
+    Nshape = Jout.shape
 
     indx = argmin(Jout.ravel(), axis=-1)
     Nindx = mx.empty(N, int)
