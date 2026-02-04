@@ -10,8 +10,16 @@ __all__ = ['diff',
 
 import threading
 
-from numpy import pi, asarray, sin, cos, sinh, cosh, tanh, iscomplexobj
+import mlx.core as mx
+from mlx.core import pi, array, sin, cos, sinh, cosh, tanh
 from . import convolve
+
+
+def iscomplexobj(x):
+    """MLX equivalent of numpy.iscomplexobj."""
+    if isinstance(x, mx.array):
+        return x.dtype in [mx.complex64]
+    return False
 
 from scipy_mlx.fft._pocketfft.helper import _datacopied
 
