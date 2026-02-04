@@ -27,7 +27,7 @@
 # Brainlessly translated to Python
 
 import mlx.core as mx
-from numpy import pi, zeros, sqrt
+from mlx.core import pi, zeros, sqrt
 
 from scipy_mlx._lib._array_api import xp_capabilities
 
