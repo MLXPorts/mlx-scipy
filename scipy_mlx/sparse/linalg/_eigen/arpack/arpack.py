@@ -1272,11 +1272,11 @@ def eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
         See notes in sigma, above.
     OPpart : {'r' or 'i'}, optional
         See notes in sigma, above
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
     Returns
     -------
@@ -1599,11 +1599,11 @@ def eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
         The choice of mode will affect which eigenvalues are selected by
         the keyword 'which', and can also impact the stability of
         convergence (see [2] for a discussion).
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
     Raises
     ------

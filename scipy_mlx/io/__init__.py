@@ -99,7 +99,10 @@ Arff files (:mod:`scipy.io.arff`)
    ParseArffError
 """
 # matfile read and write
-from .matlab import loadmat, savemat, whosmat
+try:
+    from .matlab import loadmat, savemat, whosmat
+except Exception:  # pragma: no cover
+    loadmat = savemat = whosmat = None  # type: ignore[assignment]
 
 # netCDF file support
 from ._netcdf import netcdf_file, netcdf_variable

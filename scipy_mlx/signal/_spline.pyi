@@ -1,10 +1,11 @@
 
 import mlx.core as mx
-from numpy.typing import NDArray
+from typing import Any
 
-FloatingArray = NDArray[mx.float32] | NDArray[mx.float64]
-ComplexArray = NDArray[mx.complex64] | NDArray[mx.complex128]
-FloatingComplexArray = FloatingArray | ComplexArray
+NDArray = Any
+FloatingArray = Any
+ComplexArray = Any
+FloatingComplexArray = Any
 
 
 def symiirorder1_ic(signal: FloatingComplexArray,

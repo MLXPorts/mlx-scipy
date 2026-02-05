@@ -5,7 +5,7 @@ from scipy_mlx._lib._array_api import (
 )
 import scipy_mlx._lib._elementwise_iterative_method as eim
 from scipy_mlx._lib._util import _RichResult
-from scipy import special
+from scipy_mlx import special
 
 # Todo:
 # Avoid special-casing key 'n' in _lib._elementwise_iterative_method::_check_termination

@@ -1,9 +1,13 @@
 import mlx.core as mx
-from numpy.linalg import LinAlgError
 from .blas import get_blas_funcs
 from .lapack import get_lapack_funcs
 
 __all__ = ['LinAlgError', 'LinAlgWarning', 'norm']
+
+
+class LinAlgError(ValueError):
+    """Linear algebra related error."""
+    pass
 
 
 class LinAlgWarning(RuntimeWarning):

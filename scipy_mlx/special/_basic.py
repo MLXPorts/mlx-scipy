@@ -83,6 +83,13 @@ __all__ = [
 ]
 
 
+def sinc(x):
+    """Return the normalized sinc function, sin(pi*x)/(pi*x)."""
+    x = mx.array(x)
+    pix = mx.multiply(mx.array(math.pi), x)
+    return mx.where(x == 0, mx.ones_like(x), mx.sin(pix) / pix)
+
+
 # mapping k to last n such that factorialk(n, k) < mx.iinfo(mx.int64).max
 _FACTORIALK_LIMITS_64BITS = {1: 20, 2: 33, 3: 44, 4: 54, 5: 65,
                              6: 74, 7: 84, 8: 93, 9: 101}
@@ -149,7 +156,7 @@ def diric(x, n):
 
     Now find the same values (up to sign) using `diric`. We multiply
     by `k` to account for the different scaling conventions of
-    `numpy.fft.fft` and `diric`:
+    `mx.fft.fft` and `diric`:
 
     >>> theta = mx.linspace(0, 2*mx.pi, m, endpoint=False)
     >>> k * special.diric(theta, k)
@@ -1657,7 +1664,7 @@ def mathieu_even_coef(m, q):
                    mx.multiply(mx.multiply(mx.array(0.0037, dtype=mx.float32), sqrt_q), q_arr))
         )
     m_arr = mx.array(m, dtype=mx.float32)
-    km = int(mx.add(qm, mx.multiply(mx.array(0.5, dtype=mx.float32), m_arr)).item())
+    km = int(mx.add(qm, mx.multiply(mx.array(0.5, dtype=mx.float32), m_arr))[()])
     if km > 251:
         warnings.warn("Too many predicted coefficients.", RuntimeWarning, stacklevel=2)
     kd = 1
@@ -1729,7 +1736,7 @@ def mathieu_odd_coef(m, q):
                    mx.multiply(mx.multiply(mx.array(0.0037, dtype=mx.float32), sqrt_q), q_arr))
         )
     m_arr = mx.array(m, dtype=mx.float32)
-    km = int(mx.add(qm, mx.multiply(mx.array(0.5, dtype=mx.float32), m_arr)).item())
+    km = int(mx.add(qm, mx.multiply(mx.array(0.5, dtype=mx.float32), m_arr))[()])
     if km > 251:
         warnings.warn("Too many predicted coefficients.", RuntimeWarning, stacklevel=2)
     kd = 4

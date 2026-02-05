@@ -34,7 +34,7 @@ Functions
 ## Modifications by Travis Oliphant and Enthought, Inc. for inclusion in SciPy
 
 import mlx.core as mx
-from numpy import array, asarray, float64, zeros
+from scipy_mlx._lib._mlx_compat import array, asarray, float64, zeros
 from . import _lbfgsb
 from ._optimize import (MemoizeJac, OptimizeResult, _call_callback_maybe_halt,
                         _wrap_callback, _check_unknown_options,

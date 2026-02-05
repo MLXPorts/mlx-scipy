@@ -20,7 +20,7 @@ Sources:
 import os
 from time import time
 import mlx.core as mx
-from numpy import pi
+from scipy_mlx._lib._mlx_compat import pi
 
 from scipy_mlx.special._mptestutils import mpf2float
 

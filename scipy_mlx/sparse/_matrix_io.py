@@ -1,5 +1,5 @@
 import mlx.core as mx
-import scipy as sp
+from ._base import sparray
 
 __all__ = ['save_npz', 'load_npz']
 
@@ -73,7 +73,7 @@ def save_npz(file, matrix, compressed=True):
         shape=matrix.shape,
         data=matrix.data
     )
-    if isinstance(matrix, sp.sparse.sparray):
+    if isinstance(matrix, sparray):
         arrays_dict.update(_is_array=True)
     if compressed:
         mx.savez_compressed(file, **arrays_dict)
@@ -140,7 +140,7 @@ def load_npz(file):
         if sparse_format is None:
             raise ValueError(f'The file {file} does not contain '
                              f'a sparse array or matrix.')
-        sparse_format = sparse_format.item()
+        sparse_format = sparse_format[()]
 
         if not isinstance(sparse_format, str):
             # Play safe with Python 2 vs 3 backward compatibility;

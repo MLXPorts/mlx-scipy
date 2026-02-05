@@ -5,13 +5,17 @@ Created on Fri Apr  2 09:06:05 2021
 """
 
 import math
+from typing import Any
+
 import mlx.core as mx
-from scipy import special
+import scipy_mlx.special as special
 from ._axis_nan_policy import _axis_nan_policy_factory
 from scipy_mlx._lib._array_api import (array_namespace, xp_promote, xp_device,
                                    is_marray, _share_masks, xp_capabilities)
 
 __all__ = ['entropy', 'differential_entropy']
+
+ArrayLike = Any
 
 
 @xp_capabilities()
@@ -24,11 +28,11 @@ __all__ = ['entropy', 'differential_entropy']
     n_outputs=1, result_to_tuple=lambda x, _: (x,), paired=True,
     too_small=-1  # entropy doesn't have too small inputs
 )
-def entropy(pk: mx.typing.ArrayLike,
-            qk: mx.typing.ArrayLike | None = None,
+def entropy(pk: ArrayLike,
+            qk: ArrayLike | None = None,
             base: float | None = None,
             axis: int = 0
-            ) -> mx.number | mx.array:
+            ) -> Any:
     """
     Calculate the Shannon entropy/relative entropy of given distribution(s).
 
@@ -182,13 +186,13 @@ def _differential_entropy_is_too_small(samples, kwargs, axis=-1):
     too_small=_differential_entropy_is_too_small
 )
 def differential_entropy(
-    values: mx.typing.ArrayLike,
+    values: ArrayLike,
     *,
     window_length: int | None = None,
     base: float | None = None,
     axis: int = 0,
     method: str = "auto",
-) -> mx.number | mx.array:
+) -> Any:
     r"""Given a sample of a distribution, estimate the differential entropy.
 
     Several estimation methods are available using the `method` parameter. By

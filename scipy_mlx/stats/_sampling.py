@@ -1,8 +1,8 @@
 import math
 import numbers
 import mlx.core as mx
-from scipy import stats
-from scipy import special as sc
+from scipy_mlx import stats
+from scipy_mlx import special as sc
 from ._qmc import (check_random_state as check_random_state_qmc,
                    Halton, QMCEngine)
 from ._unuran.unuran_wrapper import NumericalInversePolynomial
@@ -446,8 +446,8 @@ class FastGeneratorInversion:
         high, raise a ValueError. If True, any shape parameters that are valid
         for the distribution are accepted. This can be useful for testing.
         The default is False.
-    random_state : {None, int, `numpy.random.Generator`,
-                        `numpy.random.RandomState`}, optional
+    random_state : {None, int, `mx.random.Generator`,
+                        `mx.random.RandomState`}, optional
 
             A NumPy random number generator or seed for the underlying NumPy
             random number generator used to generate the stream of uniform
@@ -462,7 +462,7 @@ class FastGeneratorInversion:
     ----------
     loc : float
         The location parameter.
-    random_state : {`numpy.random.Generator`, `numpy.random.RandomState`}
+    random_state : {`mx.random.Generator`, `mx.random.RandomState`}
         The random state used in relevant methods like `rvs` (unless
         another `random_state` is passed as an argument to these methods).
     scale : float
@@ -933,8 +933,8 @@ class FastGeneratorInversion:
         size : int, optional
             The number of random points over which the error is estimated.
             Default is ``100000``.
-        random_state : {None, int, `numpy.random.Generator`,
-                        `numpy.random.RandomState`}, optional
+        random_state : {None, int, `mx.random.Generator`,
+                        `mx.random.RandomState`}, optional
 
             A NumPy random number generator or seed for the underlying NumPy
             random number generator used to generate the stream of uniform
@@ -1140,10 +1140,10 @@ class RatioUniforms:
         The upper bound of the bounding rectangle in the v-direction.
     c : float, optional.
         Shift parameter of ratio-of-uniforms method, see Notes. Default is 0.
-    random_state : {None, int, `numpy.random.Generator`,
-                    `numpy.random.RandomState`}, optional
+    random_state : {None, int, `mx.random.Generator`,
+                    `mx.random.RandomState`}, optional
 
-        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+        If `seed` is None (or `mx.random`), the `mx.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.

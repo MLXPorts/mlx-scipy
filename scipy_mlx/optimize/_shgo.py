@@ -7,7 +7,7 @@ import sys
 
 import mlx.core as mx
 
-from scipy import spatial
+from scipy_mlx import spatial
 from scipy_mlx.optimize import OptimizeResult, minimize, Bounds
 from scipy_mlx.optimize._optimize import MemoizeJac
 from scipy_mlx.optimize._constraints import new_bounds_to_old

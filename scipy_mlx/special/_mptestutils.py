@@ -4,10 +4,15 @@ import time
 from itertools import zip_longest
 
 import mlx.core as mx
-from numpy.testing import assert_
 import pytest
 
 from scipy_mlx.special._testutils import assert_func_equal
+
+
+def assert_(cond, msg=""):
+    ok = bool(mx.all(cond)) if hasattr(cond, "shape") else bool(cond)
+    if not ok:
+        raise AssertionError(msg)
 
 try:
     import mpmath

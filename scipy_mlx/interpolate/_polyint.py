@@ -565,16 +565,16 @@ class BarycentricInterpolator(_Interpolator1DWithDerivatives):
         are being calculated using the same nodes `xi`, without re-computation. This
         also allows for computing the weights explicitly for some choices of
         `xi` (see notes).
-    rng : {None, int, `numpy.random.Generator`}, optional
-        If `rng` is passed by keyword, types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+    rng : {None, int, `mx.random.Generator`}, optional
+        If `rng` is passed by keyword, types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
         If `rng` is already a ``Generator`` instance, then the provided instance is
         used. Specify `rng` for repeatable interpolation.
 
         If this argument `random_state` is passed by keyword,
         legacy behavior for the argument `random_state` applies:
 
-        - If `random_state` is None (or `numpy.random`), the `numpy.random.RandomState`
+        - If `random_state` is None (or `mx.random`), the `mx.random.RandomState`
           singleton is used.
         - If `random_state` is an int, a new ``RandomState`` instance is used,
           seeded with `random_state`.
@@ -583,8 +583,8 @@ class BarycentricInterpolator(_Interpolator1DWithDerivatives):
 
         .. versionchanged:: 1.15.0
             As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-            transition from use of `numpy.random.RandomState` to
-            `numpy.random.Generator` this keyword was changed from `random_state` to `rng`.
+            transition from use of `mx.random.RandomState` to
+            `mx.random.Generator` this keyword was changed from `random_state` to `rng`.
             For an interim period, both keywords will continue to work (only specify
             one of them). After the interim period using the `random_state` keyword will emit
             warnings. The behavior of the `random_state` and `rng` keywords is outlined above.
@@ -980,11 +980,11 @@ def barycentric_interpolate(xi, yi, x, axis=0, *, der=0, rng=None):
         nonzero derivatives (that is, a number equal to the number
         of points), or a list of derivatives to evaluate. This number
         includes the function value as the '0th' derivative.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
     Returns
     -------

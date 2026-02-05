@@ -1,7 +1,7 @@
 import warnings
 from collections import namedtuple
 import mlx.core as mx
-from scipy import optimize, stats
+from scipy_mlx import optimize, stats
 from scipy_mlx._lib._array_api import xp_capabilities
 from scipy_mlx._lib._util import check_random_state, _transition_to_rng
 
@@ -803,11 +803,11 @@ def goodness_of_fit(dist, data, *, known_params=None, fit_params=None,
         The number of Monte Carlo samples drawn from the null hypothesized
         distribution to form the null distribution of the statistic. The
         sample size of each is the same as the given `data`.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
     Returns
     -------

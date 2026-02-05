@@ -4,14 +4,25 @@
 #
 from functools import partial
 
-from scipy import special
+import scipy_mlx.special as special
 from scipy_mlx.special import entr, logsumexp, betaln, gammaln as gamln
 import scipy_mlx.special._ufuncs as scu
 from scipy_mlx._lib._util import rng_integers
 import scipy_mlx._lib.array_api_extra as xpx
 from scipy_mlx.interpolate import interp1d
 
-from numpy import floor, ceil, log, exp, sqrt, log1p, expm1, tanh, cosh, sinh
+from scipy_mlx._lib._mlx_compat import (
+    floor,
+    ceil,
+    log,
+    exp,
+    sqrt,
+    log1p,
+    expm1,
+    tanh,
+    cosh,
+    sinh,
+)
 
 import mlx.core as mx
 
@@ -860,7 +871,7 @@ class nhypergeom_gen(rv_discrete):
             ppf = interp1d(cdf, ks, kind='next', fill_value='extrapolate')
             rvs = ppf(random_state.uniform(size=size)).astype(int)
             if size is None:
-                return rvs.item()
+                return rvs[()]
             return rvs
 
         return _rvs1(M, n, r, size=size, random_state=random_state)

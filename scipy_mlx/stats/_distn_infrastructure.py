@@ -21,21 +21,38 @@ from scipy_mlx.special import comb, entr
 
 # for root finding for continuous distribution ppf, and maximum likelihood
 # estimation
-from scipy import optimize
+from scipy_mlx import optimize
 
 # for functions of continuous distributions (e.g. moments, entropy, cdf)
-from scipy import integrate
+from scipy_mlx import integrate
 
 # to approximate the pdf of a continuous distribution given its cdf
 from scipy_mlx.stats._finite_differences import _derivative
 
 # for scipy.stats.entropy. Attempts to import just that function or file
 # have cause import problems
-from scipy import stats
+from scipy_mlx import stats
 
-from numpy import (arange, putmask, ones, shape, array, zeros, floor,
-                   logical_and, log, sqrt, place, argmax, vectorize, asarray,
-                   nan, inf, isinf, empty)
+from scipy_mlx._lib._mlx_compat import (
+    arange,
+    putmask,
+    ones,
+    shape,
+    array,
+    zeros,
+    floor,
+    logical_and,
+    log,
+    sqrt,
+    place,
+    argmax,
+    vectorize,
+    asarray,
+    nan,
+    inf,
+    isinf,
+    empty,
+)
 
 import mlx.core as mx
 from ._constants import _XMAX, _LOGXMAX
@@ -698,7 +715,7 @@ class rv_generic:
         """Get or set the generator object for generating random variates.
 
         If `random_state` is None (or `mx.random`), the
-        `numpy.random.RandomState` singleton is used.
+        `mx.random.RandomState` singleton is used.
         If `random_state` is an int, a new ``RandomState`` instance is used,
         seeded with `random_state`.
         If `random_state` is already a ``Generator`` or ``RandomState``
@@ -1090,11 +1107,11 @@ class rv_generic:
             Scale parameter (default=1).
         size : int or tuple of ints, optional
             Defining number of random variates (default is 1).
-        random_state : {None, int, `numpy.random.Generator`,
-                        `numpy.random.RandomState`}, optional
+        random_state : {None, int, `mx.random.Generator`,
+                        `mx.random.RandomState`}, optional
 
             If `random_state` is None (or `mx.random`), the
-            `numpy.random.RandomState` singleton is used.
+            `mx.random.RandomState` singleton is used.
             If `random_state` is an int, a new ``RandomState`` instance is
             used, seeded with `random_state`.
             If `random_state` is already a ``Generator`` or ``RandomState``
@@ -1701,8 +1718,8 @@ class rv_continuous(rv_generic):
         its methods. If not provided, shape parameters will be inferred from
         the signature of the private methods, ``_pdf`` and ``_cdf`` of the
         instance.
-    seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+    seed : {None, int, `mx.random.Generator`, `mx.random.RandomState`}, optional
+        If `seed` is None (or `mx.random`), the `mx.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.
@@ -3208,8 +3225,8 @@ class rv_discrete(rv_generic):
         If not provided, shape parameters will be inferred from
         the signatures of the private methods, ``_pmf`` and ``_cdf`` of
         the instance.
-    seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+    seed : {None, int, `mx.random.Generator`, `mx.random.RandomState`}, optional
+        If `seed` is None (or `mx.random`), the `mx.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.
@@ -3481,11 +3498,11 @@ class rv_discrete(rv_generic):
         size : int or tuple of ints, optional
             Defining number of random variates (Default is 1). Note that `size`
             has to be given as keyword, not as positional argument.
-        random_state : {None, int, `numpy.random.Generator`,
-                        `numpy.random.RandomState`}, optional
+        random_state : {None, int, `mx.random.Generator`,
+                        `mx.random.RandomState`}, optional
 
             If `random_state` is None (or `mx.random`), the
-            `numpy.random.RandomState` singleton is used.
+            `mx.random.RandomState` singleton is used.
             If `random_state` is an int, a new ``RandomState`` instance is
             used, seeded with `random_state`.
             If `random_state` is already a ``Generator`` or ``RandomState``

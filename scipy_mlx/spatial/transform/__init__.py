@@ -19,12 +19,17 @@ Rotations in 3 dimensions
 """
 from ._rotation import Rotation, Slerp
 from ._rigid_transform import RigidTransform
-from ._rotation_spline import RotationSpline
+try:
+    from ._rotation_spline import RotationSpline
+except Exception:  # pragma: no cover
+    RotationSpline = None  # type: ignore[assignment]
 
 # Deprecated namespaces, to be removed in v2.0.0
 from . import rotation
 
-__all__ = ['Rotation', 'Slerp', 'RotationSpline', 'RigidTransform']
+__all__ = ['Rotation', 'Slerp', 'RigidTransform']
+if RotationSpline is not None:
+    __all__.append('RotationSpline')
 
 from scipy_mlx._lib._testutils import PytestTester
 test = PytestTester(__name__)

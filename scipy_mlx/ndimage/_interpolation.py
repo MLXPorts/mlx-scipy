@@ -35,7 +35,7 @@ import mlx.core as mx
 from scipy_mlx._lib._util import normalize_axis_index
 from scipy_mlx._lib import array_api_extra as xpx
 
-from scipy import special
+import scipy_mlx.special as special
 from . import _ni_support
 from . import _nd_image
 from ._ni_docstrings import docfiller

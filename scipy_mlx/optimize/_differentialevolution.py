@@ -127,11 +127,11 @@ def differential_evolution(func, bounds, args=(), strategy='best1bin',
         denoted by CR. Increasing this value allows a larger number of mutants
         to progress into the next generation, but at the risk of population
         stability.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
     disp : bool, optional
         Prints the evaluated `func` at every iteration.
     callback : callable, optional
@@ -625,25 +625,25 @@ class DifferentialEvolutionSolver:
         to progress into the next generation, but at the risk of population
         stability.
 
-    rng : {None, int, `numpy.random.Generator`}, optional
+    rng : {None, int, `mx.random.Generator`}, optional
 
         ..versionchanged:: 1.15.0
             As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-            transition from use of `numpy.random.RandomState` to
-            `numpy.random.Generator` this keyword was changed from `seed` to `rng`.
+            transition from use of `mx.random.RandomState` to
+            `mx.random.Generator` this keyword was changed from `seed` to `rng`.
             For an interim period both keywords will continue to work (only specify
             one of them). After the interim period using the `seed` keyword will emit
             warnings. The behavior of the `seed` and `rng` keywords is outlined below.
 
-        If `rng` is passed by keyword, types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a `Generator`.
+        If `rng` is passed by keyword, types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a `Generator`.
         If `rng` is already a `Generator` instance, then the provided instance is
         used.
 
         If this argument is passed by position or `seed` is passed by keyword, the
         behavior is:
 
-        - If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+        - If `seed` is None (or `mx.random`), the `mx.random.RandomState`
           singleton is used.
         - If `seed` is an int, a new `RandomState` instance is used,
           seeded with `seed`.

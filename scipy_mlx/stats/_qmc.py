@@ -10,16 +10,13 @@ from typing import (
     ClassVar,
     Literal,
     overload,
-    TYPE_CHECKING,
+    Any as ArrayLike,
 )
 from collections.abc import Callable
 
 import mlx.core as mx
 
 from scipy_mlx._lib._util import DecimalNumber, GeneratorType, IntNumber, SeedType
-
-if TYPE_CHECKING:
-    import numpy.typing as npt
 
 import scipy_mlx.stats as stats
 from scipy_mlx._lib._util import rng_integers, _rng_spawn, _transition_to_rng
@@ -60,19 +57,19 @@ def check_random_state(seed: GeneratorType) -> GeneratorType:
 # This is going to be removed at the end of the SPEC 7 transition,
 # so I'll just leave the argument name `seed` alone
 def check_random_state(seed=None):
-    """Turn `seed` into a `numpy.random.Generator` instance.
+    """Turn `seed` into a `mx.random.Generator` instance.
 
     Parameters
     ----------
-    seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-        If `seed` is an int or None, a new `numpy.random.Generator` is
+    seed : {None, int, `mx.random.Generator`, `mx.random.RandomState`}, optional
+        If `seed` is an int or None, a new `mx.random.Generator` is
         created using ``mx.random.default_rng(seed)``.
         If `seed` is already a ``Generator`` or ``RandomState`` instance, then
         the provided instance is used.
 
     Returns
     -------
-    seed : {`numpy.random.Generator`, `numpy.random.RandomState`}
+    seed : {`mx.random.Generator`, `mx.random.RandomState`}
         Random number generator.
 
     """
@@ -82,13 +79,13 @@ def check_random_state(seed=None):
         return seed
     else:
         raise ValueError(f'{seed!r} cannot be used to seed a'
-                         ' numpy.random.Generator instance')
+                         ' mx.random.Generator instance')
 
 
 def scale(
-    sample: "npt.ArrayLike",
-    l_bounds: "npt.ArrayLike",
-    u_bounds: "npt.ArrayLike",
+    sample: "ArrayLike",
+    l_bounds: "ArrayLike",
+    u_bounds: "ArrayLike",
     *,
     reverse: bool = False
 ) -> mx.array:
@@ -168,7 +165,7 @@ def scale(
         return (sample - lower) / (upper - lower)
 
 
-def _ensure_in_unit_hypercube(sample: "npt.ArrayLike") -> mx.array:
+def _ensure_in_unit_hypercube(sample: "ArrayLike") -> mx.array:
     """Ensure that sample is a 2D array and is within a unit hypercube
 
     Parameters
@@ -199,7 +196,7 @@ def _ensure_in_unit_hypercube(sample: "npt.ArrayLike") -> mx.array:
 
 
 def discrepancy(
-        sample: "npt.ArrayLike",
+        sample: "ArrayLike",
         *,
         iterative: bool = False,
         method: Literal["CD", "WD", "MD", "L2-star"] = "CD",
@@ -337,7 +334,7 @@ def discrepancy(
 
 
 def geometric_discrepancy(
-        sample: "npt.ArrayLike",
+        sample: "ArrayLike",
         method: Literal["mindist", "mst"] = "mindist",
         metric: str = "euclidean") -> float:
     """Discrepancy of a given sample based on its geometric properties.
@@ -462,8 +459,8 @@ def geometric_discrepancy(
 
 
 def update_discrepancy(
-        x_new: "npt.ArrayLike",
-        sample: "npt.ArrayLike",
+        x_new: "ArrayLike",
+        sample: "ArrayLike",
         initial_disc: DecimalNumber) -> float:
     """Update the centered discrepancy with a new sample.
 
@@ -692,17 +689,17 @@ def _van_der_corput_permutations(
     ----------
     base : int
         Base of the sequence.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
         .. versionchanged:: 1.15.0
 
             As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-            transition from use of `numpy.random.RandomState` to
-            `numpy.random.Generator`, this keyword was changed from `seed` to
+            transition from use of `mx.random.RandomState` to
+            `mx.random.Generator`, this keyword was changed from `seed` to
             `rng`. During the transition, the behavior documented above is not
             accurate; see `check_random_state` for actual behavior. After the
             transition, this admonition can be removed.
@@ -736,7 +733,7 @@ def van_der_corput(
         *,
         start_index: IntNumber = 0,
         scramble: bool = False,
-        permutations: "npt.ArrayLike | None" = None,
+        permutations: "ArrayLike | None" = None,
         rng: SeedType = None,
         workers: IntNumber = 1) -> mx.array:
     """Van der Corput sequence.
@@ -760,11 +757,11 @@ def van_der_corput(
         Default is True.
     permutations : array_like, optional
         Permutations used for scrambling.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
     workers : int, optional
         Number of workers to use for parallel processing. If -1 is
         given all CPU threads are used. Default is 1.
@@ -825,17 +822,17 @@ class QMCEngine(ABC):
 
         .. versionadded:: 1.10.0
 
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
         .. versionchanged:: 1.15.0
 
             As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-            transition from use of `numpy.random.RandomState` to
-            `numpy.random.Generator`, this keyword was changed from `seed` to
+            transition from use of `mx.random.RandomState` to
+            `mx.random.Generator`, this keyword was changed from `seed` to
             `rng`. For an interim period, both keywords will continue to work, although
             only one may be specified at a time. After the interim period, function
             calls using the `seed` keyword will emit warnings. Following a
@@ -1002,9 +999,9 @@ class QMCEngine(ABC):
 
     def integers(
         self,
-        l_bounds: "npt.ArrayLike",
+        l_bounds: "ArrayLike",
         *,
-        u_bounds: "npt.ArrayLike | None" = None,
+        u_bounds: "ArrayLike | None" = None,
         n: IntNumber = 1,
         endpoint: bool = False,
         workers: IntNumber = 1
@@ -1147,17 +1144,17 @@ class Halton(QMCEngine):
 
         .. versionadded:: 1.10.0
 
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
         .. versionchanged:: 1.15.0
 
             As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-            transition from use of `numpy.random.RandomState` to
-            `numpy.random.Generator`, this keyword was changed from `seed` to
+            transition from use of `mx.random.RandomState` to
+            `mx.random.Generator`, this keyword was changed from `seed` to
             `rng`. For an interim period, both keywords will continue to work, although
             only one may be specified at a time. After the interim period, function
             calls using the `seed` keyword will emit warnings. Following a
@@ -1334,17 +1331,17 @@ class LatinHypercube(QMCEngine):
 
         .. versionadded:: 1.8.0
 
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
         .. versionchanged:: 1.15.0
 
             As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-            transition from use of `numpy.random.RandomState` to
-            `numpy.random.Generator`, this keyword was changed from `seed` to
+            transition from use of `mx.random.RandomState` to
+            `mx.random.Generator`, this keyword was changed from `seed` to
             `rng`. For an interim period, both keywords will continue to work, although
             only one may be specified at a time. After the interim period, function
             calls using the `seed` keyword will emit warnings. Following a
@@ -1648,17 +1645,17 @@ class Sobol(QMCEngine):
 
         .. versionadded:: 1.10.0
 
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
         .. versionchanged:: 1.15.0
 
             As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-            transition from use of `numpy.random.RandomState` to
-            `numpy.random.Generator`, this keyword was changed from `seed` to
+            transition from use of `mx.random.RandomState` to
+            `mx.random.Generator`, this keyword was changed from `seed` to
             `rng`. For an interim period, both keywords will continue to work, although
             only one may be specified at a time. After the interim period, function
             calls using the `seed` keyword will emit warnings. Following a
@@ -1992,17 +1989,17 @@ class PoissonDisk(QMCEngine):
 
         .. versionadded:: 1.10.0
 
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
         .. versionchanged:: 1.15.0
 
             As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-            transition from use of `numpy.random.RandomState` to
-            `numpy.random.Generator`, this keyword was changed from `seed` to
+            transition from use of `mx.random.RandomState` to
+            `mx.random.Generator`, this keyword was changed from `seed` to
             `rng`. For an interim period, both keywords will continue to work, although
             only one may be specified at a time. After the interim period, function
             calls using the `seed` keyword will emit warnings. Following a
@@ -2093,8 +2090,8 @@ class PoissonDisk(QMCEngine):
         ncandidates: IntNumber = 30,
         optimization: Literal["random-cd", "lloyd"] | None = None,
         rng: SeedType = None,
-        l_bounds: "npt.ArrayLike | None" = None,
-        u_bounds: "npt.ArrayLike | None" = None,
+        l_bounds: "ArrayLike | None" = None,
+        u_bounds: "ArrayLike | None" = None,
     ) -> None:
         # Used in `scipy.integrate.qmc_quad`
         self._init_quad = {'d': d, 'radius': radius,
@@ -2326,17 +2323,17 @@ class MultivariateNormalQMC:
         If True, use inverse transform instead of Box-Muller. Default is True.
     engine : QMCEngine, optional
         Quasi-Monte Carlo engine sampler. If None, `Sobol` is used.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
         .. versionchanged:: 1.15.0
 
             As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-            transition from use of `numpy.random.RandomState` to
-            `numpy.random.Generator`, this keyword was changed from `seed` to
+            transition from use of `mx.random.RandomState` to
+            `mx.random.Generator`, this keyword was changed from `seed` to
             `rng`. For an interim period, both keywords will continue to work, although
             only one may be specified at a time. After the interim period, function
             calls using the `seed` keyword will emit warnings. Following a
@@ -2356,10 +2353,10 @@ class MultivariateNormalQMC:
     @_transition_to_rng('seed', replace_doc=False)
     def __init__(
             self,
-            mean: "npt.ArrayLike",
-            cov: "npt.ArrayLike | None" = None,
+            mean: "ArrayLike",
+            cov: "ArrayLike | None" = None,
             *,
-            cov_root: "npt.ArrayLike | None" = None,
+            cov_root: "ArrayLike | None" = None,
             inv_transform: bool = True,
             engine: QMCEngine | None = None,
             rng: SeedType = None,
@@ -2495,17 +2492,17 @@ class MultinomialQMC:
         Number of trials.
     engine : QMCEngine, optional
         Quasi-Monte Carlo engine sampler. If None, `Sobol` is used.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
         .. versionchanged:: 1.15.0
 
             As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-            transition from use of `numpy.random.RandomState` to
-            `numpy.random.Generator`, this keyword was changed from `seed` to
+            transition from use of `mx.random.RandomState` to
+            `mx.random.Generator`, this keyword was changed from `seed` to
             `rng`. For an interim period, both keywords will continue to work, although
             only one may be specified at a time. After the interim period, function
             calls using the `seed` keyword will emit warnings. Following a
@@ -2540,7 +2537,7 @@ class MultinomialQMC:
     @_transition_to_rng('seed', replace_doc=False)
     def __init__(
         self,
-        pvals: "npt.ArrayLike",
+        pvals: "ArrayLike",
         n_trials: IntNumber,
         *,
         engine: QMCEngine | None = None,
@@ -2745,7 +2742,7 @@ def _lloyd_iteration(
 
 
 def _lloyd_centroidal_voronoi_tessellation(
-    sample: "npt.ArrayLike",
+    sample: "ArrayLike",
     *,
     tol: DecimalNumber = 1e-5,
     maxiter: IntNumber = 10,
@@ -2925,7 +2922,7 @@ def _validate_workers(workers: IntNumber = 1) -> IntNumber:
 
 
 def _validate_bounds(
-    l_bounds: "npt.ArrayLike", u_bounds: "npt.ArrayLike", d: int
+    l_bounds: "ArrayLike", u_bounds: "ArrayLike", d: int
 ) -> "tuple[npt.NDArray[mx.generic], npt.NDArray[mx.generic]]":
     """Bounds input validation.
 

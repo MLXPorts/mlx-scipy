@@ -202,33 +202,40 @@ Low-level routines
 # Import MLX compatibility layer first to expose missing functions
 from . import _mlx_compat  # noqa: F401
 
-from ._misc import *
-from ._cythonized_array_utils import *
-from ._basic import *
-from ._decomp import *
-from ._decomp_lu import *
-from ._decomp_ldl import *
-from ._decomp_cholesky import *
-from ._decomp_qr import *
-from ._decomp_qz import *
-from ._decomp_svd import *
-from ._decomp_schur import *
-from ._decomp_polar import *
-from ._matfuncs import *
-from .blas import *
-from .lapack import *
-from ._special_matrices import *
-from ._solvers import *
-from ._procrustes import *
-from ._decomp_update import *
-from ._sketches import *
-from ._decomp_cossin import *
+try:
+    from ._misc import *
+    from ._cythonized_array_utils import *
+    from ._basic import *
+    from ._decomp import *
+    from ._decomp_lu import *
+    from ._decomp_ldl import *
+    from ._decomp_cholesky import *
+    from ._decomp_qr import *
+    from ._decomp_qz import *
+    from ._decomp_svd import *
+    from ._decomp_schur import *
+    from ._decomp_polar import *
+    from ._matfuncs import *
+    from .blas import *
+    from .lapack import *
+    from ._special_matrices import *
+    from ._solvers import *
+    from ._procrustes import *
+    from ._decomp_update import *
+    from ._sketches import *
+    from ._decomp_cossin import *
 
-# Deprecated namespaces, to be removed in v2.0.0
-from . import (
-    decomp, decomp_cholesky, decomp_lu, decomp_qr, decomp_svd, decomp_schur,
-    basic, misc, special_matrices, matfuncs,
-)
+    # Deprecated namespaces, to be removed in v2.0.0
+    from . import (
+        decomp, decomp_cholesky, decomp_lu, decomp_qr, decomp_svd, decomp_schur,
+        basic, misc, special_matrices, matfuncs,
+    )
+except Exception:  # pragma: no cover
+    # Fall back to a minimal MLX-only linalg layer when compiled extensions
+    # (BLAS/LAPACK) are unavailable.
+    from ._mx_backend import *  # type: ignore
+    decomp = decomp_cholesky = decomp_lu = decomp_qr = decomp_svd = decomp_schur = None  # type: ignore
+    basic = misc = special_matrices = matfuncs = None  # type: ignore
 
 __all__ = [s for s in dir() if not s.startswith('_')]
 

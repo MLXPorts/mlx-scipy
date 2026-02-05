@@ -52,7 +52,7 @@ from libc.string cimport memset
 
 cimport numpy as cnp
 
-from numpy.linalg import LinAlgError
+from scipy_mlx.linalg import LinAlgError
 
 # This is used in place of, e.g., cmx.NPY_ARRAY_C_CONTIGUOUS, to indicate that
 # a C F or non contiguous array is acceptable.

@@ -1,13 +1,10 @@
 __all__ = ['geometric_slerp']
 
 import warnings
-from typing import TYPE_CHECKING
+from typing import Any as ArrayLike
 
 import mlx.core as mx
 from scipy_mlx.spatial.distance import euclidean
-
-if TYPE_CHECKING:
-    import numpy.typing as npt
 
 
 def _geometric_slerp(start, end, t):
@@ -31,9 +28,9 @@ def _geometric_slerp(start, end, t):
 
 
 def geometric_slerp(
-    start: "npt.ArrayLike",
-    end: "npt.ArrayLike",
-    t: "npt.ArrayLike",
+    start: "ArrayLike",
+    end: "ArrayLike",
+    t: "ArrayLike",
     tol: float = 1e-7,
 ) -> mx.array:
     """

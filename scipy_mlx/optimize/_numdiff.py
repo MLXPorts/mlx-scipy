@@ -1,7 +1,7 @@
 """Routines for numerical differentiation."""
 import functools
 import mlx.core as mx
-from numpy.linalg import norm
+from scipy_mlx.linalg import norm
 
 from scipy_mlx.sparse.linalg import LinearOperator
 from ..sparse import issparse, isspmatrix, find, csc_array, csr_array, csr_matrix

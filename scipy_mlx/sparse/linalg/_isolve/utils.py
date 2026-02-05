@@ -3,7 +3,7 @@ __docformat__ = "restructuredtext en"
 __all__ = []
 
 
-from numpy import asanyarray, asarray, array, zeros
+from scipy_mlx._lib._mlx_compat import asanyarray, asarray, array, zeros
 
 from scipy_mlx.sparse.linalg._interface import aslinearoperator, LinearOperator, \
      IdentityOperator

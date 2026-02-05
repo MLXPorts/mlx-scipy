@@ -1,15 +1,12 @@
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Literal
+from typing import Literal, Any as ArrayLike
 import warnings
 
 import mlx.core as mx
-from scipy import special, interpolate, stats
+from scipy_mlx import special, interpolate, stats
 from scipy_mlx._lib._array_api import xp_capabilities
 from scipy_mlx.stats._censored_data import CensoredData
 from scipy_mlx.stats._common import ConfidenceInterval
-
-if TYPE_CHECKING:
-    import numpy.typing as npt
 
 
 __all__ = ['ecdf', 'logrank']
@@ -238,7 +235,7 @@ class ECDFResult:
 
 
 def _iv_CensoredData(
-    sample: "npt.ArrayLike | CensoredData", param_name: str = "sample"
+    sample: "ArrayLike | CensoredData", param_name: str = "sample"
 ) -> CensoredData:
     """Attempt to convert `sample` to `CensoredData`."""
     if not isinstance(sample, CensoredData):
@@ -251,7 +248,7 @@ def _iv_CensoredData(
 
 
 @xp_capabilities(np_only=True)
-def ecdf(sample: "npt.ArrayLike | CensoredData") -> ECDFResult:
+def ecdf(sample: "ArrayLike | CensoredData") -> ECDFResult:
     """Empirical cumulative distribution function of a sample.
 
     The empirical cumulative distribution function (ECDF) is a step function
@@ -487,8 +484,8 @@ class LogRankResult:
 
 @xp_capabilities(np_only=True)
 def logrank(
-    x: "npt.ArrayLike | CensoredData",
-    y: "npt.ArrayLike | CensoredData",
+    x: "ArrayLike | CensoredData",
+    y: "ArrayLike | CensoredData",
     alternative: Literal['two-sided', 'less', 'greater'] = "two-sided"
 ) -> LogRankResult:
     r"""Compare the survival distributions of two samples via the logrank test.

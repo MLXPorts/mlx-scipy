@@ -2,10 +2,22 @@ import warnings
 from . import _minpack
 
 import mlx.core as mx
-from numpy import (atleast_1d, triu, shape, transpose, zeros, prod, greater,
-                   asarray, inf,
-                   finfo, inexact, issubdtype, dtype)
-from scipy import linalg
+from scipy_mlx._lib._mlx_compat import (
+    atleast_1d,
+    triu,
+    shape,
+    transpose,
+    zeros,
+    prod,
+    greater,
+    asarray,
+    inf,
+    finfo,
+    inexact,
+    issubdtype,
+    dtype,
+)
+from scipy_mlx import linalg
 from scipy_mlx.linalg import svd, cholesky, solve_triangular, LinAlgError
 from scipy_mlx._lib._util import _asarray_validated, _contains_nan
 from scipy_mlx._lib._util import getfullargspec_no_self as _getfullargspec

@@ -15,7 +15,6 @@ from scipy_mlx._lib._array_api import (
 )
 from scipy_mlx.spatial.transform import Rotation
 from scipy_mlx.spatial.transform._rotation import _promote
-import scipy_mlx.spatial.transform._rigid_transform_cy as cython_backend
 import scipy_mlx.spatial.transform._rigid_transform_xp as xp_backend
 import scipy_mlx._lib.array_api_extra as xpx
 from scipy_mlx._lib.array_api_compat import device
@@ -24,6 +23,13 @@ from scipy_mlx._lib._util import broadcastable
 
 
 __all__ = ["RigidTransform"]
+
+try:
+    # Upstream SciPy uses a Cython backend for NumPy. This MLX port doesn't ship
+    # compiled extensions, so fall back to the Array API backend.
+    import scipy_mlx.spatial.transform._rigid_transform_cy as cython_backend  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover
+    cython_backend = xp_backend
 
 backend_registry = {array_namespace(mx.empty(0)): cython_backend}
 

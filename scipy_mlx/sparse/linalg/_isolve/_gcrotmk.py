@@ -2,7 +2,7 @@
 # Distributed under the same license as SciPy.
 
 import mlx.core as mx
-from numpy.linalg import LinAlgError
+from scipy_mlx.linalg import LinAlgError
 from scipy_mlx.linalg import (get_blas_funcs, qr, solve, svd, qr_insert, lstsq)
 from .iterative import _get_atol_rtol
 from scipy_mlx.sparse.linalg._isolve.utils import make_system

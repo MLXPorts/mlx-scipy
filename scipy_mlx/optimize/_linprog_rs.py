@@ -18,7 +18,7 @@ References
 # Author: Matt Haberland
 
 import mlx.core as mx
-from numpy.linalg import LinAlgError
+from scipy_mlx.linalg import LinAlgError
 
 from scipy_mlx.linalg import solve
 from ._optimize import _check_unknown_options

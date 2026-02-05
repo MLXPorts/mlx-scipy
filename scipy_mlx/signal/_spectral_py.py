@@ -1,8 +1,8 @@
 """Tools for spectral analysis.
 """
 import mlx.core as mx
-import numpy.typing as npt
-from scipy import fft as sp_fft
+from typing import Any as ArrayLike
+from scipy_mlx import fft as sp_fft
 from . import _signaltools
 from ._short_time_fft import ShortTimeFFT, FFT_MODE_TYPE
 from .windows import get_window
@@ -16,15 +16,15 @@ __all__ = ['periodogram', 'welch', 'lombscargle', 'csd', 'coherence',
 
 
 def lombscargle(
-    x: npt.ArrayLike,
-    y: npt.ArrayLike,
-    freqs: npt.ArrayLike,
+    x: ArrayLike,
+    y: ArrayLike,
+    freqs: ArrayLike,
     precenter: bool = False,
     normalize: bool | Literal["power", "normalize", "amplitude"] = False,
     *,
-    weights: npt.NDArray | None = None,
+    weights: ArrayLike | None = None,
     floating_mean: bool = False,
-) -> npt.NDArray:
+) -> mx.array:
     """
     Compute the generalized Lomb-Scargle periodogram.
 
@@ -1654,7 +1654,7 @@ def istft(Zxx, fs=1.0, window='hann_periodic', nperseg=None, noverlap=None, nfft
     input_onesided : bool, optional
         If `True`, interpret the input array as one-sided FFTs, such
         as is returned by `stft` with ``return_onesided=True`` and
-        `numpy.fft.rfft`. If `False`, interpret the input as a a
+        `mx.fft.rfft`. If `False`, interpret the input as a a
         two-sided FFT. Defaults to `True`.
     boundary : bool, optional
         Specifies whether the input signal was extended at its

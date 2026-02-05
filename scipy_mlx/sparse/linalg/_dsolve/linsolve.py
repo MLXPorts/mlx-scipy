@@ -1,7 +1,7 @@
 from warnings import warn, catch_warnings, simplefilter
 
 import mlx.core as mx
-from numpy import asarray
+from scipy_mlx._lib._mlx_compat import asarray
 from scipy_mlx.sparse import (issparse, SparseEfficiencyWarning,
                           csr_array, csc_array, eye_array, diags_array)
 from scipy_mlx.sparse._sputils import (is_pydata_spmatrix, convert_pydata_sparse_to_scipy,
@@ -867,7 +867,7 @@ def spbandwidth(A):
 
     # bsr and lil are better off converting to csr
     if A.format == "dia":
-        return max(0, -A.offsets.min().item()), max(0, A.offsets.max().item())
+        return max(0, -A.offsets.min()[()]), max(0, A.offsets.max()[()])
     if A.format in ("csc", "csr"):
         indptr, indices = A.indptr, A.indices
         N = len(indptr) - 1
@@ -879,4 +879,4 @@ def spbandwidth(A):
     elif A.format == "dok":
         gap = [(c - r) for r, c in A.keys()] + [0]
         return -min(gap), max(gap)
-    return max(-mx.min(gap).item(), 0), max(mx.max(gap).item(), 0)
+    return max(-mx.min(gap)[()], 0), max(mx.max(gap)[()], 0)

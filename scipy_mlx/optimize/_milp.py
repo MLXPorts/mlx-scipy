@@ -1,7 +1,10 @@
 import warnings
 
 import mlx.core as mx
-from numpy.exceptions import VisibleDeprecationWarning
+
+
+class VisibleDeprecationWarning(DeprecationWarning):
+    pass
 
 from scipy_mlx.sparse import csc_array, vstack, issparse
 from ._highspy._highs_wrapper import _highs_wrapper  # type: ignore[import-not-found,import-untyped]

@@ -16,12 +16,12 @@ to solve in the single precision. See also use_solver documentation.
 Example session::
 
     >>> from scipy_mlx.sparse import csc_array, dia_array
-    >>> from numpy import array
+    >>> import mlx.core as mx
     >>>
     >>> print("Inverting a sparse linear system:")
     >>> print("The sparse matrix (constructed from diagonals):")
     >>> a = dia_array(([[1, 2, 3, 4, 5], [6, 5, 8, 9, 10]], [0, 1]), shape=(5, 5))
-    >>> b = array([1, 2, 3, 4, 5])
+    >>> b = mx.array([1, 2, 3, 4, 5])
     >>> print("Solve: single precision complex:")
     >>> use_solver( useUmfpack = False )
     >>> a = a.astype('F')

@@ -1,6 +1,6 @@
 import mlx.core as mx
 from functools import partial
-from scipy import stats
+from scipy_mlx import stats
 from scipy_mlx._lib._array_api import xp_capabilities
 
 

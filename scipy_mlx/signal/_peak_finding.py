@@ -5,7 +5,32 @@ import math
 import mlx.core as mx
 
 from scipy_mlx.signal._wavelets import _cwt, _ricker
-from scipy_mlx.stats import scoreatpercentile
+
+
+def scoreatpercentile(a, per=50):
+    """Lightweight MLX percentile helper used by `find_peaks_cwt`.
+
+    This is a minimal replacement for `scipy.stats.scoreatpercentile` that
+    supports 1D inputs and linear interpolation.
+    """
+    a = mx.reshape(mx.array(a), (-1,))
+    n = int(a.shape[0])
+    if n == 0:
+        return mx.array(float("nan"))
+    if n == 1:
+        return a[0]
+
+    per = float(per)
+    per = 0.0 if per < 0.0 else (100.0 if per > 100.0 else per)
+
+    s = mx.sort(a)
+    rank = (per / 100.0) * (n - 1)
+    lo = int(math.floor(rank))
+    hi = int(math.ceil(rank))
+    if lo == hi:
+        return s[lo]
+    w = mx.array(rank - lo)
+    return mx.add(mx.multiply(s[lo], mx.subtract(mx.array(1.0), w)), mx.multiply(s[hi], w))
 
 from ._peak_finding_utils import (
     _local_maxima_1d,

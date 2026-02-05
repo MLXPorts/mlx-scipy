@@ -4,7 +4,7 @@ from scipy_mlx.sparse import eye_array as speye
 from .projections import projections
 from .qp_subproblem import modified_dogleg, projected_cg, box_intersections
 import mlx.core as mx
-from numpy.linalg import norm
+from scipy_mlx.linalg import norm
 
 __all__ = ['equality_constrained_sqp']
 

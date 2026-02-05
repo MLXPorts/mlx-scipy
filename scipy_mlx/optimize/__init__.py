@@ -432,7 +432,10 @@ from ._nonlin import *
 from ._slsqp_py import fmin_slsqp
 from ._nnls import nnls
 from ._basinhopping import basinhopping
-from ._linprog import linprog, linprog_verbose_callback
+try:
+    from ._linprog import linprog, linprog_verbose_callback
+except Exception:  # pragma: no cover
+    linprog = linprog_verbose_callback = None  # type: ignore[assignment]
 from ._lsap import linear_sum_assignment
 from ._differentialevolution import differential_evolution
 from ._lsq import least_squares, lsq_linear

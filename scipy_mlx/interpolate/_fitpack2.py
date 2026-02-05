@@ -22,7 +22,7 @@ __all__ = [
 import warnings
 from threading import Lock
 
-from numpy import zeros, concatenate, ravel, diff, array
+from scipy_mlx._lib._mlx_compat import zeros, concatenate, ravel, diff, array
 import mlx.core as mx
 
 from . import _fitpack_impl

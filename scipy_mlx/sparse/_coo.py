@@ -320,11 +320,11 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
         Examples
         --------
-        >>> from numpy import array
+        >>> import mlx.core as mx
         >>> from scipy_mlx.sparse import coo_array
-        >>> row  = array([0, 0, 1, 3, 1, 0, 0])
-        >>> col  = array([0, 2, 1, 3, 1, 0, 0])
-        >>> data = array([1, 1, 1, 1, 1, 1, 1])
+        >>> row  = mx.array([0, 0, 1, 3, 1, 0, 0])
+        >>> col  = mx.array([0, 2, 1, 3, 1, 0, 0])
+        >>> data = mx.array([1, 1, 1, 1, 1, 1, 1])
         >>> A = coo_array((data, (row, col)), shape=(4, 4)).tocsc()
         >>> A.toarray()
         array([[3, 0, 1, 0],
@@ -353,11 +353,11 @@ class _coo_base(_data_matrix, _minmax_mixin):
 
         Examples
         --------
-        >>> from numpy import array
+        >>> import mlx.core as mx
         >>> from scipy_mlx.sparse import coo_array
-        >>> row  = array([0, 0, 1, 3, 1, 0, 0])
-        >>> col  = array([0, 2, 1, 3, 1, 0, 0])
-        >>> data = array([1, 1, 1, 1, 1, 1, 1])
+        >>> row  = mx.array([0, 0, 1, 3, 1, 0, 0])
+        >>> col  = mx.array([0, 2, 1, 3, 1, 0, 0])
+        >>> data = mx.array([1, 1, 1, 1, 1, 1, 1])
         >>> A = coo_array((data, (row, col)), shape=(4, 4)).tocsr()
         >>> A.toarray()
         array([[3, 0, 1, 0],

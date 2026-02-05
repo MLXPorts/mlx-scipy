@@ -10,7 +10,7 @@ import scipy_mlx.linalg
 from scipy_mlx._lib import doccer
 from scipy_mlx.special import (gammaln, psi, multigammaln, xlogy, entr, betaln,
                            ive, loggamma)
-from scipy import special
+from scipy_mlx import special
 import scipy_mlx._lib.array_api_extra as xpx
 from scipy_mlx._lib._util import check_random_state
 from scipy_mlx.linalg.blas import drot, get_blas_funcs
@@ -224,7 +224,7 @@ class multi_rv_generic:
     def random_state(self):
         """ Get or set the Generator object for generating random variates.
 
-        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+        If `seed` is None (or `mx.random`), the `mx.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.
@@ -897,8 +897,8 @@ class multivariate_normal_frozen(multi_rv_frozen):
             distribution.
         allow_singular : bool, default: ``False``
             Whether to allow a singular covariance matrix.
-        seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-            If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+        seed : {None, int, `mx.random.Generator`, `mx.random.RandomState`}, optional
+            If `seed` is None (or `mx.random`), the `mx.random.RandomState`
             singleton is used.
             If `seed` is an int, a new ``RandomState`` instance is used,
             seeded with `seed`.
@@ -1398,7 +1398,7 @@ class matrix_normal_frozen(multi_rv_frozen):
     Parameters
     ----------
     %(_matnorm_doc_default_callparams)s
-    seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
+    seed : {None, int, `mx.random.Generator`, `mx.random.RandomState`}, optional
         If `seed` is `None` the `~mx.random.RandomState` singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used, seeded
         with seed.
@@ -2954,10 +2954,10 @@ class wishart_gen(multi_rv_generic):
             Dimension of the scale matrix
         df : int
             Degrees of freedom
-        random_state : {None, int, `numpy.random.Generator`,
-                        `numpy.random.RandomState`}, optional
+        random_state : {None, int, `mx.random.Generator`,
+                        `mx.random.RandomState`}, optional
 
-            If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+            If `seed` is None (or `mx.random`), the `mx.random.RandomState`
             singleton is used.
             If `seed` is an int, a new ``RandomState`` instance is used,
             seeded with `seed`.
@@ -3157,8 +3157,8 @@ class wishart_frozen(multi_rv_frozen):
         Degrees of freedom of the distribution
     scale : array_like
         Scale matrix of the distribution
-    seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+    seed : {None, int, `mx.random.Generator`, `mx.random.RandomState`}, optional
+        If `seed` is None (or `mx.random`), the `mx.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.
@@ -3565,10 +3565,10 @@ class invwishart_gen(wishart_gen):
             Dimension of the scale matrix
         df : int
             Degrees of freedom
-        random_state : {None, int, `numpy.random.Generator`,
-                        `numpy.random.RandomState`}, optional
+        random_state : {None, int, `mx.random.Generator`,
+                        `mx.random.RandomState`}, optional
 
-            If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+            If `seed` is None (or `mx.random`), the `mx.random.RandomState`
             singleton is used.
             If `seed` is an int, a new ``RandomState`` instance is used,
             seeded with `seed`.
@@ -3711,8 +3711,8 @@ class invwishart_frozen(multi_rv_frozen):
             Degrees of freedom of the distribution
         scale : array_like
             Scale matrix of the distribution
-        seed : {None, int, `numpy.random.Generator`}, optional
-            If `seed` is None the `numpy.random.Generator` singleton is used.
+        seed : {None, int, `mx.random.Generator`}, optional
+            If `seed` is None the `mx.random.Generator` singleton is used.
             If `seed` is an int, a new ``Generator`` instance is used,
             seeded with `seed`.
             If `seed` is already a ``Generator`` instance then that instance is
@@ -3902,7 +3902,7 @@ class multinomial_gen(multi_rv_generic):
     See also
     --------
     scipy.stats.binom : The binomial distribution.
-    numpy.random.Generator.multinomial : Sampling from the multinomial distribution.
+    mx.random.Generator.multinomial : Sampling from the multinomial distribution.
     scipy.stats.multivariate_hypergeom :
         The multivariate hypergeometric distribution.
     """
@@ -4155,8 +4155,8 @@ class multinomial_frozen(multi_rv_frozen):
         number of trials
     p: array_like
         probability of a trial falling into each category; should sum to 1
-    seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+    seed : {None, int, `mx.random.Generator`, `mx.random.RandomState`}, optional
+        If `seed` is None (or `mx.random`), the `mx.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.
@@ -4326,8 +4326,8 @@ class special_ortho_group_frozen(multi_rv_frozen):
         ----------
         dim : scalar
             Dimension of matrices
-        seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-            If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+        seed : {None, int, `mx.random.Generator`, `mx.random.RandomState`}, optional
+            If `seed` is None (or `mx.random`), the `mx.random.RandomState`
             singleton is used.
             If `seed` is an int, a new ``RandomState`` instance is used,
             seeded with `seed`.
@@ -4481,8 +4481,8 @@ class ortho_group_frozen(multi_rv_frozen):
         ----------
         dim : scalar
             Dimension of matrices
-        seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-            If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+        seed : {None, int, `mx.random.Generator`, `mx.random.RandomState`}, optional
+            If `seed` is None (or `mx.random`), the `mx.random.RandomState`
             singleton is used.
             If `seed` is an int, a new ``RandomState`` instance is used,
             seeded with `seed`.
@@ -4522,8 +4522,8 @@ class random_correlation_gen(multi_rv_generic):
     eigs : 1d array
         Eigenvalues of correlation matrix. All eigenvalues need to be non-negative and
         need to sum to the number of eigenvalues.
-    seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+    seed : {None, int, `mx.random.Generator`, `mx.random.RandomState`}, optional
+        If `seed` is None (or `mx.random`), the `mx.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.
@@ -4738,8 +4738,8 @@ class random_correlation_frozen(multi_rv_frozen):
         ----------
         eigs : 1d array
             Eigenvalues of correlation matrix
-        seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-            If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+        seed : {None, int, `mx.random.Generator`, `mx.random.RandomState`}, optional
+            If `seed` is None (or `mx.random`), the `mx.random.RandomState`
             singleton is used.
             If `seed` is an int, a new ``RandomState`` instance is used,
             seeded with `seed`.
@@ -4900,8 +4900,8 @@ class unitary_group_frozen(multi_rv_frozen):
         ----------
         dim : scalar
             Dimension of matrices
-        seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-            If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+        seed : {None, int, `mx.random.Generator`, `mx.random.RandomState`}, optional
+            If `seed` is None (or `mx.random`), the `mx.random.RandomState`
             singleton is used.
             If `seed` is an int, a new ``RandomState`` instance is used,
             seeded with `seed`.
@@ -6438,8 +6438,8 @@ class uniform_direction_gen(multi_rv_generic):
     ----------
     dim : scalar
         Dimension of directions.
-    seed : {None, int, `numpy.random.Generator`,
-            `numpy.random.RandomState`}, optional
+    seed : {None, int, `mx.random.Generator`,
+            `mx.random.RandomState`}, optional
 
         Used for drawing random variates.
         If `seed` is `None`, the `~mx.random.RandomState` singleton is used.
@@ -6521,13 +6521,13 @@ class uniform_direction_gen(multi_rv_generic):
             Because each sample is N-dimensional, the output shape
             is (m,n,k,N). If no shape is specified, a single (N-D)
             sample is returned.
-        random_state : {None, int, `numpy.random.Generator`,
-                        `numpy.random.RandomState`}, optional
+        random_state : {None, int, `mx.random.Generator`,
+                        `mx.random.RandomState`}, optional
 
             Pseudorandom number generator state used to generate resamples.
 
             If `random_state` is ``None`` (or `mx.random`), the
-            `numpy.random.RandomState` singleton is used.
+            `mx.random.RandomState` singleton is used.
             If `random_state` is an int, a new ``RandomState`` instance is
             used, seeded with `random_state`.
             If `random_state` is already a ``Generator`` or ``RandomState``
@@ -6561,10 +6561,10 @@ class uniform_direction_frozen(multi_rv_frozen):
         ----------
         dim : int
             Dimension of matrices
-        seed : {None, int, `numpy.random.Generator`,
-                `numpy.random.RandomState`}, optional
+        seed : {None, int, `mx.random.Generator`,
+                `mx.random.RandomState`}, optional
 
-            If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+            If `seed` is None (or `mx.random`), the `mx.random.RandomState`
             singleton is used.
             If `seed` is an int, a new ``RandomState`` instance is used,
             seeded with `seed`.
@@ -7524,9 +7524,9 @@ class vonmises_fisher_frozen(multi_rv_frozen):
             Mean direction of the distribution.
         kappa : float, default: 1
             Concentration parameter. Must be positive.
-        seed : {None, int, `numpy.random.Generator`,
-                `numpy.random.RandomState`}, optional
-            If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+        seed : {None, int, `mx.random.Generator`,
+                `mx.random.RandomState`}, optional
+            If `seed` is None (or `mx.random`), the `mx.random.RandomState`
             singleton is used.
             If `seed` is an int, a new ``RandomState`` instance is used,
             seeded with `seed`.
@@ -7584,9 +7584,9 @@ class vonmises_fisher_frozen(multi_rv_frozen):
             Because each sample is N-dimensional, the output shape
             is (m,n,k,N). If no shape is specified, a single (N-D)
             sample is returned.
-        random_state : {None, int, `numpy.random.Generator`,
-                        `numpy.random.RandomState`}, optional
-            If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+        random_state : {None, int, `mx.random.Generator`,
+                        `mx.random.RandomState`}, optional
+            If `seed` is None (or `mx.random`), the `mx.random.RandomState`
             singleton is used.
             If `seed` is an int, a new ``RandomState`` instance is used,
             seeded with `seed`.

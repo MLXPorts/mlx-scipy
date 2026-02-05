@@ -1,6 +1,6 @@
 """Bounded-variable least-squares algorithm."""
 import mlx.core as mx
-from numpy.linalg import norm, lstsq
+from scipy_mlx.linalg import norm, lstsq
 from scipy_mlx.optimize import OptimizeResult
 
 from .common import print_header_linear, print_iteration_linear

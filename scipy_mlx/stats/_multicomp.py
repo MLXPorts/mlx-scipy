@@ -1,21 +1,17 @@
 import warnings
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Literal
+from typing import Literal, Any as ArrayLike
 
 import mlx.core as mx
 
-from scipy import stats
+from scipy_mlx import stats
 from scipy_mlx.optimize import minimize_scalar
 from scipy_mlx.stats._common import ConfidenceInterval
 from scipy_mlx.stats._qmc import check_random_state
 from scipy_mlx.stats._stats_py import _var
 from scipy_mlx._lib._array_api import xp_capabilities
 from scipy_mlx._lib._util import _transition_to_rng, DecimalNumber, SeedType
-
-
-if TYPE_CHECKING:
-    import numpy.typing as npt
 
 
 __all__ = [
@@ -183,8 +179,8 @@ class DunnettResult:
 @xp_capabilities(np_only=True)
 @_transition_to_rng('random_state', replace_doc=False)
 def dunnett(
-    *samples: "npt.ArrayLike",  # noqa: D417
-    control: "npt.ArrayLike",
+    *samples: "ArrayLike",  # noqa: D417
+    control: "ArrayLike",
     alternative: Literal['two-sided', 'less', 'greater'] = "two-sided",
     rng: SeedType = None
 ) -> DunnettResult:
@@ -213,17 +209,17 @@ def dunnett(
         * 'greater': the means of the distributions underlying the
           samples are greater than the mean of the distribution underlying
           the control.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
         .. versionchanged:: 1.15.0
 
             As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-            transition from use of `numpy.random.RandomState` to
-            `numpy.random.Generator`, this keyword was changed from `random_state` to
+            transition from use of `mx.random.RandomState` to
+            `mx.random.Generator`, this keyword was changed from `random_state` to
             `rng`. For an interim period, both keywords will continue to work, although
             only one may be specified at a time. After the interim period, function
             calls using the `random_state` keyword will emit warnings. Following a
@@ -348,8 +344,8 @@ def dunnett(
 
 
 def _iv_dunnett(
-    samples: Sequence["npt.ArrayLike"],
-    control: "npt.ArrayLike",
+    samples: Sequence["ArrayLike"],
+    control: "ArrayLike",
     alternative: Literal['two-sided', 'less', 'greater'],
     rng: SeedType
 ) -> tuple[list[mx.array], mx.array, SeedType]:

@@ -5,8 +5,22 @@
 #   Rewrote much of chirp()
 #   Added sweep_poly()
 import mlx.core as mx
-from numpy import asarray, zeros, place, nan, mod, pi, extract, log, sqrt, \
-    exp, cos, sin, polyval, polyint
+from scipy_mlx._lib._mlx_compat import (
+    asarray,
+    zeros,
+    place,
+    nan,
+    mod,
+    pi,
+    extract,
+    log,
+    sqrt,
+    exp,
+    cos,
+    sin,
+    polyval,
+    polyint,
+)
 
 
 __all__ = ['sawtooth', 'square', 'gausspulse', 'chirp', 'sweep_poly',

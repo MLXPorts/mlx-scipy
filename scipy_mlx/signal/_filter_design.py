@@ -8,9 +8,9 @@ import builtins
 from math import pi
 
 import mlx.core as mx
-from numpy.polynomial.polynomial import polyval as npp_polyval
+from scipy_mlx.signal._polyutils import npp_polyval
 
-from scipy import special, optimize, fft as sp_fft
+from scipy_mlx import special, optimize, fft as sp_fft
 from scipy_mlx.special import comb
 from scipy_mlx._lib import doccer
 from scipy_mlx._lib._util import float_factorial
@@ -21,7 +21,6 @@ import scipy_mlx._lib.array_api_extra as xpx
 from scipy_mlx._lib._array_api import (
     array_namespace, xp_promote, xp_size, xp_default_dtype, is_jax, xp_float_to_complex,
 )
-from scipy_mlx._lib.array_api_compat import mlx.core as mx_compat
 
 
 __all__ = ['findfreqs', 'freqs', 'freqz', 'tf2zpk', 'zpk2tf', 'normalize',

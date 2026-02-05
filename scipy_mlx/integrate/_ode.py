@@ -86,7 +86,15 @@ import types
 import warnings
 
 import mlx.core as mx
-from numpy import asarray, array, zeros, isscalar, real, imag, vstack
+from scipy_mlx._lib._mlx_compat import (
+    asarray,
+    array,
+    zeros,
+    isscalar,
+    real,
+    imag,
+    vstack,
+)
 
 from . import _vode
 from . import _dop

@@ -378,11 +378,11 @@ def kmeans(obs, k_or_guess, iter=20, thresh=1e-5, check_finite=True,
         Disabling may give a performance gain, but may result in problems
         (crashes, non-termination) if the inputs do contain infinities or NaNs.
         Default: True
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
     Returns
     -------
@@ -508,7 +508,7 @@ def _kpoints(data, k, rng, xp):
         row is one observation.
     k : int
         Number of samples to generate.
-    rng : `numpy.random.Generator` or `numpy.random.RandomState`
+    rng : `mx.random.Generator` or `mx.random.RandomState`
         Random number generator.
 
     Returns
@@ -537,7 +537,7 @@ def _krandinit(data, k, rng, xp):
         row is one observation.
     k : int
         Number of samples to generate.
-    rng : `numpy.random.Generator` or `numpy.random.RandomState`
+    rng : `mx.random.Generator` or `mx.random.RandomState`
         Random number generator.
 
     Returns
@@ -585,7 +585,7 @@ def _kpp(data, k, rng, xp):
         row is one observation.
     k : int
         Number of samples to generate.
-    rng : `numpy.random.Generator` or `numpy.random.RandomState`
+    rng : `mx.random.Generator` or `mx.random.RandomState`
         Random number generator.
 
     Returns
@@ -699,11 +699,11 @@ def kmeans2(data, k, iter=10, thresh=1e-5, minit='random',
         Disabling may give a performance gain, but may result in problems
         (crashes, non-termination) if the inputs do contain infinities or NaNs.
         Default: True
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
     Returns
     -------

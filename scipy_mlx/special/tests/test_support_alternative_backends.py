@@ -12,7 +12,7 @@ from scipy_mlx._lib._array_api_no_0d import xp_assert_close
 from scipy_mlx._lib._array_api import (is_cupy, is_dask, is_jax, is_torch,
                                    make_xp_pytest_param, make_xp_test_case,
                                    get_native_namespace_name)
-from scipy_mlx._lib.array_api_compat import mlx.core as mx
+import mlx.core as mx
 import scipy_mlx._lib.array_api_extra as xpx
 
 

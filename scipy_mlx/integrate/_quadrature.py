@@ -1096,7 +1096,7 @@ def newton_cotes(rn, equal=0):
 def _qmc_quad_iv(func, a, b, n_points, n_estimates, qrng, log, xp):
     # lazy import to avoid issues with partially-initialized submodule
     if not hasattr(qmc_quad, 'qmc'):
-        from scipy import stats
+        from scipy_mlx import stats
         qmc_quad.stats = stats
     else:
         stats = qmc_quad.stats

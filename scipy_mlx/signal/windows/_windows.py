@@ -6,9 +6,8 @@ import operator
 import warnings
 from scipy_mlx._lib import doccer
 
-from scipy import linalg, special, fft as sp_fft
-from scipy_mlx._lib.array_api_compat import mlx.core as mx_compat
-from scipy_mlx._lib._array_api import array_namespace, xp_device
+from scipy_mlx import linalg, special, fft as sp_fft
+from scipy_mlx._lib._array_api import array_namespace, xp_device, np_compat
 from scipy_mlx._lib import array_api_extra as xpx
 
 __all__ = ['boxcar', 'triang', 'parzen', 'bohman', 'blackman', 'nuttall',

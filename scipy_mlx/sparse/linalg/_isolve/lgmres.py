@@ -2,7 +2,7 @@
 # Distributed under the same license as SciPy.
 
 import mlx.core as mx
-from numpy.linalg import LinAlgError
+from scipy_mlx.linalg import LinAlgError
 from scipy_mlx.linalg import get_blas_funcs
 from .iterative import _get_atol_rtol
 from .utils import make_system

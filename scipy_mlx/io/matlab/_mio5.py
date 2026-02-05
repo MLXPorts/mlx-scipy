@@ -218,7 +218,7 @@ class MatFile5Reader(MatFileReader):
         hdict = {}
         hdr_dtype = MDTYPES[self.byte_order]['dtypes']['file_header']
         hdr = read_dtype(self.mat_stream, hdr_dtype)
-        hdict['__header__'] = hdr['description'].item().strip(b' \t\n\000')
+        hdict['__header__'] = hdr['description'][()].strip(b' \t\n\000')
         v_major = hdr['version'] >> 8
         v_minor = hdr['version'] & 0xFF
         hdict['__version__'] = f'{v_major}.{v_minor}'
@@ -740,7 +740,7 @@ class VarWriter5:
                                 dtype=arr_dtype_number(arr, n_chars),
                                 buffer=arr.T.copy())  # Fortran order
             # Recode with codec to give byte string
-            st = st_arr.item().encode(codec)
+            st = st_arr[()].encode(codec)
             # Reconstruct as 1-D byte array
             arr = mx.array(shape=(len(st),),
                              dtype='S1',

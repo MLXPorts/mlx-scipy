@@ -55,7 +55,7 @@ def traceest(A, m3, seed=None):
         Number of matrix-vector products divided by 3 used to estimate the
         trace.
     seed : optional
-        Seed for `numpy.random.default_rng`.
+        Seed for `mx.random.default_rng`.
         Can be provided to obtain deterministic results.
 
     Returns

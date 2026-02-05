@@ -131,11 +131,11 @@ class _ProbabilityDistribution(ABC):
             Not all `method` options are available for all distributions.
             If the selected `method` is not available, a `NotImplementedError``
             will be raised.
-        rng : `numpy.random.Generator` or `scipy.stats.QMCEngine`, optional
+        rng : `mx.random.Generator` or `scipy.stats.QMCEngine`, optional
             Pseudo- or quasi-random number generator state. When `rng` is None,
-            a new `numpy.random.Generator` is created using entropy from the
-            operating system. Types other than `numpy.random.Generator` and
-            `scipy.stats.QMCEngine` are passed to `numpy.random.default_rng`
+            a new `mx.random.Generator` is created using entropy from the
+            operating system. Types other than `mx.random.Generator` and
+            `scipy.stats.QMCEngine` are passed to `mx.random.default_rng`
             to instantiate a ``Generator``.
 
             If `rng` is an instance of `scipy.stats.QMCEngine` configured to use

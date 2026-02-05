@@ -37,7 +37,7 @@ class IndexMixin:
             idx = index[0]
             if isinstance(idx, mx.array):
                 if idx.shape == ():
-                    idx = idx.item()
+                    idx = idx[()]
             if isinstance(idx, INT_TYPES):
                 res = self._get_int(idx)
             elif isinstance(idx, slice):

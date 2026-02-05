@@ -6,7 +6,7 @@ import sys
 import warnings
 
 import mlx.core as mx
-from numpy import asarray, dot, vdot
+from scipy_mlx._lib._mlx_compat import asarray, dot, vdot
 
 from scipy_mlx.linalg import norm, solve, inv, qr, svd, LinAlgError
 import scipy_mlx.sparse.linalg

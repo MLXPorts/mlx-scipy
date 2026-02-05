@@ -1,6 +1,6 @@
 """Linear least squares with bound constraints on independent variables."""
 import mlx.core as mx
-from numpy.linalg import norm
+from scipy_mlx.linalg import norm
 from scipy_mlx.sparse import issparse, csr_array
 from scipy_mlx.sparse.linalg import LinearOperator, lsmr
 from scipy_mlx.optimize import OptimizeResult

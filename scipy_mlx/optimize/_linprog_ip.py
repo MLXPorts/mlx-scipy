@@ -19,10 +19,10 @@ References
 # Author: Matt Haberland
 
 import mlx.core as mx
-import scipy as sp
 import scipy_mlx.sparse as sps
 from warnings import warn
 from scipy_mlx.linalg import LinAlgError
+from scipy_mlx import linalg as sp_linalg
 from ._optimize import OptimizeWarning, OptimizeResult, _check_unknown_options
 from ._linprog_util import _postsolve
 has_umfpack = True
@@ -119,20 +119,20 @@ def _get_solver(M, sparse=False, lstsq=False, sym_pos=True,
         else:
             if lstsq:  # sometimes necessary as solution is approached
                 def solve(r):
-                    return sp.linalg.lstsq(M, r)[0]
+                    return sp_linalg.lstsq(M, r)[0]
             elif cholesky:
-                L = sp.linalg.cho_factor(M)
+                L = sp_linalg.cho_factor(M)
 
                 def solve(r):
-                    return sp.linalg.cho_solve(L, r)
+                    return sp_linalg.cho_solve(L, r)
             else:
                 # this seems to cache the matrix factorization, so solving
                 # with multiple right hand sides is much faster
                 def solve(r, sym_pos=sym_pos):
                     if sym_pos:
-                        return sp.linalg.solve(M, r, assume_a="pos")
+                        return sp_linalg.solve(M, r, assume_a="pos")
                     else:
-                        return sp.linalg.solve(M, r)
+                        return sp_linalg.solve(M, r)
     # There are many things that can go wrong here, and it's hard to say
     # what all of them are. It doesn't really matter: if the matrix can't be
     # factorized, return None. get_solver will be called again with different

@@ -66,7 +66,7 @@ def delegate_xp(delegator, module_name):
                     # value_indices:
                     # result is {mx.int64(1): (array(0), array(1))} etc
                     return {
-                        k.item(): tuple(xp.asarray(vv) for vv in v)
+                        k[()]: tuple(xp.asarray(vv) for vv in v)
                         for k,v in result.items()
                     }
                 elif result is None:

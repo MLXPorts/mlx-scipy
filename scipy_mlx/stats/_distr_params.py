@@ -136,8 +136,8 @@ distdiscrete = [
     ['dlaplace', (0.8,)],  # 0.5
     ['geom', (0.5,)],
     ['hypergeom',(30, 12, 6)],
-    ['hypergeom',(21,3,12)],  # numpy.random (3,18,12) numpy ticket:921
-    ['hypergeom',(21,18,11)],  # numpy.random (18,3,11) numpy ticket:921
+    ['hypergeom',(21,3,12)],  # mx.random (3,18,12) numpy ticket:921
+    ['hypergeom',(21,18,11)],  # mx.random (18,3,11) numpy ticket:921
     ['nchypergeom_fisher', (140, 80, 60, 0.5)],
     ['nchypergeom_wallenius', (140, 80, 60, 0.5)],
     ['logser', (0.6,)],  # re-enabled, numpy ticket:921

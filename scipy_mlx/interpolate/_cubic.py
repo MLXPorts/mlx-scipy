@@ -6,7 +6,6 @@ import mlx.core as mx
 
 from scipy_mlx.linalg import solve, solve_banded
 from scipy_mlx._lib._array_api import array_namespace, xp_size, xp_capabilities
-from scipy_mlx._lib.array_api_compat import mlx.core as mx_compat
 
 from . import PPoly
 from ._polyint import _isscalar

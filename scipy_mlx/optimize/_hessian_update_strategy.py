@@ -1,6 +1,6 @@
 """Hessian update strategies for quasi-Newton optimization methods."""
 import mlx.core as mx
-from numpy.linalg import norm
+from scipy_mlx.linalg import norm
 from scipy_mlx.linalg import get_blas_funcs, issymmetric
 from warnings import warn
 

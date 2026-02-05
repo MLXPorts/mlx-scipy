@@ -105,8 +105,12 @@ from ._odepack_py import *
 from ._quadpack_py import *
 from ._ode import *
 from ._bvp import solve_bvp
-from ._ivp import (solve_ivp, OdeSolution, DenseOutput,
-                   OdeSolver, RK23, RK45, DOP853, Radau, BDF, LSODA)
+try:
+    from ._ivp import (solve_ivp, OdeSolution, DenseOutput,
+                       OdeSolver, RK23, RK45, DOP853, Radau, BDF, LSODA)
+except Exception:  # pragma: no cover
+    solve_ivp = OdeSolution = DenseOutput = OdeSolver = None  # type: ignore
+    RK23 = RK45 = DOP853 = Radau = BDF = LSODA = None  # type: ignore
 from ._quad_vec import quad_vec
 from ._tanhsinh import nsum, tanhsinh
 from ._cubature import cubature

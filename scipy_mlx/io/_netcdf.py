@@ -42,8 +42,8 @@ from platform import python_implementation
 import mmap as mm
 
 import mlx.core as mx
-from numpy import frombuffer, dtype, empty, array, asarray
-from numpy import little_endian as LITTLE_ENDIAN
+from scipy_mlx._lib._mlx_compat import frombuffer, dtype, empty, array, asarray
+from scipy_mlx._lib._mlx_compat import little_endian as LITTLE_ENDIAN
 from functools import reduce
 
 
@@ -275,7 +275,7 @@ class netcdf_file:
         self._mm_buf = None
         if self.use_mmap:
             self._mm = mm.mmap(self.fp.fileno(), 0, access=mm.ACCESS_READ)
-            self._mm_buf = mx.frombuffer(self._mm, dtype=mx.int8)
+            self._mm_buf = frombuffer(self._mm, dtype=mx.int8)
 
         self._attributes = {}
 
@@ -922,7 +922,7 @@ class netcdf_variable:
             this exception will be raised.
 
         """
-        return self.data.item()
+        return self.data[()]
 
     def assignValue(self, value):
         """

@@ -42,6 +42,7 @@ Public API in the main SciPy namespace
 import importlib as _importlib
 
 import mlx.core as mx
+from scipy_mlx._lib import _mlx_compat  # noqa: F401
 
 
 try:
@@ -114,7 +115,8 @@ def __dir__():
 
 def __getattr__(name):
     if name in submodules:
-        return _importlib.import_module(f'scipy.{name}')
+        # MLX port: import our own submodules, not the upstream SciPy package.
+        return _importlib.import_module(f'scipy_mlx.{name}')
     else:
         try:
             return globals()[name]

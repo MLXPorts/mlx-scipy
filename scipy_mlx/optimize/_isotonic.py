@@ -1,21 +1,18 @@
-from typing import TYPE_CHECKING
+from typing import Any as ArrayLike
 
 import mlx.core as mx
 
 from ._optimize import OptimizeResult
 from ._pava_pybind import pava
 
-if TYPE_CHECKING:
-    import numpy.typing as npt
-
 
 __all__ = ["isotonic_regression"]
 
 
 def isotonic_regression(
-    y: "npt.ArrayLike",
+    y: "ArrayLike",
     *,
-    weights: "npt.ArrayLike | None" = None,
+    weights: "ArrayLike | None" = None,
     increasing: bool = True,
 ) -> OptimizeResult:
     r"""Nonparametric isotonic regression.

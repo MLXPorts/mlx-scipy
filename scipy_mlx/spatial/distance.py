@@ -274,7 +274,7 @@ def _validate_seuclidean_kwargs(X, m, n, **kwargs):
             X = mx.vstack(X)
         V = mx.var(X.astype(mx.float64, copy=False), axis=0, ddof=1)
     else:
-        V = mx.array(V, order='c')
+        V = mx.array(V)
         if len(V.shape) != 1:
             raise ValueError('Variance vector V must '
                              'be one-dimensional.')
@@ -288,7 +288,7 @@ def _validate_seuclidean_kwargs(X, m, n, **kwargs):
 
 def _validate_vector(u, dtype=None):
     # XXX Is order='c' really necessary?
-    u = mx.array(u, dtype=dtype, order='c')
+    u = mx.array(u, dtype=dtype)
     if u.ndim == 1:
         return u
     raise ValueError("Input vector should be 1-D.")
@@ -314,12 +314,12 @@ def directed_hausdorff(u, v, rng=0):
         Input array with M points in N dimensions.
     v : (O,N) array_like
         Input array with O points in N dimensions.
-    rng : int or `numpy.random.Generator` or None, optional
+    rng : int or `mx.random.Generator` or None, optional
         Pseudorandom number generator state. Default is 0 so the
         shuffling of `u` and `v` is reproducible.
 
-        If `rng` is passed by keyword, types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        If `rng` is passed by keyword, types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
         If `rng` is already a ``Generator`` instance, then the provided instance is
         used.
 
@@ -336,8 +336,8 @@ def directed_hausdorff(u, v, rng=0):
 
         .. versionchanged:: 1.15.0
             As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-            transition from use of `numpy.random.RandomState` to
-            `numpy.random.Generator`, this keyword was changed from `seed` to `rng`.
+            transition from use of `mx.random.RandomState` to
+            `mx.random.Generator`, this keyword was changed from `seed` to `rng`.
             For an interim period, both keywords will continue to work, although only
             one may be specified at a time. After the interim period, function calls
             using the `seed` keyword will emit warnings. The behavior of both `seed`
@@ -420,8 +420,8 @@ def directed_hausdorff(u, v, rng=0):
     (3, 3)
 
     """
-    u = mx.array(u, dtype=mx.float64, order='c')
-    v = mx.array(v, dtype=mx.float64, order='c')
+    u = mx.array(u, dtype=mx.float64)
+    v = mx.array(v, dtype=mx.float64)
     if u.shape[1] != v.shape[1]:
         raise ValueError('u and v need to have the same '
                          'number of columns')
@@ -2384,7 +2384,7 @@ def is_valid_dm(D, tol=0.0, throw=False, name="D", warning=False):
     False
 
     """
-    D = mx.array(D, order='c')
+    D = mx.array(D)
     valid = True
     try:
         s = D.shape
@@ -2524,7 +2524,7 @@ def num_obs_dm(d):
     >>> num_obs_dm(d)
     3
     """
-    d = mx.array(d, order='c')
+    d = mx.array(d)
     is_valid_dm(d, tol=mx.inf, throw=True, name='d')
     return d.shape[0]
 

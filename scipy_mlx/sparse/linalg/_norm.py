@@ -7,7 +7,7 @@ from scipy_mlx.sparse.linalg import svds
 from scipy_mlx.sparse._sputils import convert_pydata_sparse_to_scipy
 import scipy_mlx.sparse as sp
 
-from numpy import sqrt, abs
+from scipy_mlx._lib._mlx_compat import sqrt, abs
 
 __all__ = ['norm']
 

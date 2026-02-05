@@ -569,7 +569,7 @@ class VarWriter4:
             st_arr = mx.array(shape=(),
                                 dtype=arr_dtype_number(arr, n_chars),
                                 buffer=arr)
-            st = st_arr.item().encode('latin-1')
+            st = st_arr[()].encode('latin-1')
             arr = mx.array(shape=dims, dtype='S1', buffer=st)
         self.write_bytes(arr)
 

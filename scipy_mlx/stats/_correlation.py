@@ -1,5 +1,5 @@
 import mlx.core as mx
-from scipy import stats
+from scipy_mlx import stats
 from scipy_mlx._lib._array_api import xp_capabilities
 from scipy_mlx.stats._stats_py import _SimpleNormal, SignificanceResult, _get_pvalue
 from scipy_mlx.stats._axis_nan_policy import _axis_nan_policy_factory

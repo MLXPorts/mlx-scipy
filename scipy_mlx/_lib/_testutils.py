@@ -45,7 +45,7 @@ if 'musl' in _v:
     IS_MUSL = True
 
 
-IS_EDITABLE = 'editable' in scipy.__path__[0]
+IS_EDITABLE = 'editable' in scipy_mlx.__path__[0]
 
 
 class FPUModeChangeWarning(RuntimeWarning):
@@ -148,9 +148,10 @@ class _TestPythranFunc:
     `self.partialfunc`: A function used to freeze some non-array argument
                         that of no interests in the original function
     '''
-    ALL_INTEGER = [mx.int8, mx.int16, mx.int32, mx.int64, mx.intc, mx.intp]
-    ALL_FLOAT = [mx.float32, mx.float64]
-    ALL_COMPLEX = [mx.complex64, mx.complex128]
+    # MLX does not define NumPy-style aliases like intc/intp.
+    ALL_INTEGER = [mx.int8, mx.int16, mx.int32, mx.int64]
+    ALL_FLOAT = [mx.float32] + ([mx.float64] if hasattr(mx, "float64") else [])
+    ALL_COMPLEX = [mx.complex64] + ([mx.complex128] if hasattr(mx, "complex128") else [])
 
     def setup_method(self):
         self.arguments = {}

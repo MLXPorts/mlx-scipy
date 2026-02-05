@@ -9,7 +9,7 @@ Python translation by Nickolai Belakovski.
 '''
 
 import mlx.core as mx
-import numpy.typing as npt
+from typing import Any as ArrayLike
 from ..common.consts import DEBUGGING, REALMIN, REALMAX, EPS
 from ..common.powalg import qradd_Rdiag, qrexc_Rdiag
 from ..common.linalg import isminor, matprod, inprod, lsqr, primasum
@@ -113,7 +113,7 @@ def trstlp(A, b, delta, g):
 
     return d
 
-def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
+def trstlp_sub(iact: ArrayLike, nact: int, stage, A, b, delta, d, vmultc, z):
     '''
     This subroutine does the real calculations for trstlp, both stage 1 and stage 2.
     Major differences between stage 1 and stage 2:

@@ -34,10 +34,7 @@ SUCCESS_MESSAGES = (
 
 
 def direct(
-    func: Callable[
-        [mx.array[tuple[int], mx.dtype[mx.float64]]],
-        float | mx.floating[Any] | mx.integer[Any] | mx.bool_,
-    ],
+    func: Callable[[Any], Any],
     bounds: Iterable | Bounds,
     *,
     args: tuple = (),
@@ -49,10 +46,7 @@ def direct(
     f_min_rtol: float = 1e-4,
     vol_tol: float = 1e-16,
     len_tol: float = 1e-6,
-    callback: Callable[
-        [mx.array[tuple[int], mx.dtype[mx.float64]]],
-        object,
-    ] | None = None,
+    callback: Callable[[Any], object] | None = None,
 ) -> OptimizeResult:
     """
     Finds the global minimum of a function using the
@@ -251,7 +245,7 @@ def direct(
         else:
             f = func(x, *args)
         # always return a float
-        return mx.array(f).item()
+        return mx.array(f)[()]
 
     # TODO: fix disp argument
     x, fun, ret_code, nfev, nit = _direct(

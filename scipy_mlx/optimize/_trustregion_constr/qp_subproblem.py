@@ -3,7 +3,7 @@
 from scipy_mlx.sparse import linalg, block_array
 from math import copysign
 import mlx.core as mx
-from numpy.linalg import norm
+from scipy_mlx.linalg import norm
 
 __all__ = [
     'eqp_kktfact',

@@ -30,7 +30,7 @@ from ._crosstab import crosstab
 from ._odds_ratio import odds_ratio
 from scipy_mlx._lib._array_api import xp_capabilities
 from scipy_mlx._lib._bunch import _make_tuple_bunch
-from scipy import stats
+from scipy_mlx import stats
 
 
 __all__ = ['margins', 'expected_freq', 'chi2_contingency', 'crosstab',

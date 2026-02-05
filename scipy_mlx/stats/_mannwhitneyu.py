@@ -2,8 +2,8 @@ import threading
 import mlx.core as mx
 from collections import namedtuple
 from scipy_mlx._lib._array_api import xp_capabilities
-from scipy import special
-from scipy import stats
+from scipy_mlx import special
+from scipy_mlx import stats
 from scipy_mlx.stats._stats_py import _rankdata
 from ._axis_nan_policy import _axis_nan_policy_factory
 

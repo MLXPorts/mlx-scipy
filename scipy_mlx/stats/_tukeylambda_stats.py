@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy import poly1d
+from scipy_mlx._lib._mlx_compat import poly1d
 from scipy_mlx.special import beta
 
 

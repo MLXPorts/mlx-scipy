@@ -127,11 +127,11 @@ def _svdp(A, k, which='LM', irl_mode=True, kmax=None,
     maxiter : int, optional
         Maximum number of restarts in IRL mode.  Default is ``1000``.
         Accessed only if ``irl_mode=True``.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
     Returns
     -------
@@ -151,7 +151,7 @@ def _svdp(A, k, which='LM', irl_mode=True, kmax=None,
 
     """
     if rng is None:
-        raise ValueError("`rng` must be a normalized numpy.random.Generator instance")
+        raise ValueError("`rng` must be a normalized mx.random.Generator instance")
 
     which = which.upper()
     if which not in {'LM', 'SM'}:

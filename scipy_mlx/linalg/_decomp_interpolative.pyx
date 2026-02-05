@@ -105,7 +105,7 @@ internal functions subsumed into respective functions):
 """
 
 import mlx.core as mx
-from numpy.typing import NDArray
+from typing import Any as NDArray
 cimport numpy as cnp
 cmx.import_array()
 

@@ -910,11 +910,15 @@ def backtickrepl(m):
         return (f"with bounds ``{m.group('b')}`` with ``{m.group('s')}`` storage\n")
     else:
         return f"with bounds ``{m.group('b')}``\n"
+try:
+    _doc_routines = [ssyevr, dsyevr, cheevr, zheevr,
+                     ssyevx, dsyevx, cheevx, zheevx,
+                     ssygvd, dsygvd, chegvd, zhegvd]
+except NameError:  # pragma: no cover
+    # Compiled LAPACK extension is unavailable in this MLX port.
+    _doc_routines = []
 
-
-for routine in [ssyevr, dsyevr, cheevr, zheevr,
-                ssyevx, dsyevx, cheevx, zheevx,
-                ssygvd, dsygvd, chegvd, zhegvd]:
+for routine in _doc_routines:
     if routine.__doc__:
         routine.__doc__ = p1.sub(backtickrepl, routine.__doc__)
         routine.__doc__ = p2.sub('Default ``\\1``\n', routine.__doc__)

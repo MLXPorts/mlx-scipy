@@ -9,14 +9,14 @@ import ctypes
 import operator
 
 import mlx.core as mx
-from numpy.polynomial import Polynomial
+from scipy_mlx._lib._mlx_compat import Polynomial
 from scipy_mlx.interpolate import BSpline
 from scipy_mlx._lib.doccer import (extend_notes_in_docstring,
                                replace_notes_in_docstring,
                                inherit_docstring_from)
 from scipy_mlx._lib._ccallback import LowLevelCallable
-from scipy import optimize
-from scipy import integrate
+from scipy_mlx import optimize
+from scipy_mlx import integrate
 import scipy_mlx.special as sc
 
 import scipy_mlx.special._ufuncs as scu
@@ -1252,7 +1252,7 @@ class burr_gen(rv_continuous):
                 ((e4 - 4*e3*e1 + 6*e2*e1**2 - 3*e1**4) / mu2_if_c**2) - 3),
             fill_value=mx.nan)
         if mx.ndim(c) == 0:
-            return mu.item(), mu2.item(), g1.item(), g2.item()
+            return mu[()], mu2[()], g1[()], g2[()]
         return mu, mu2, g1, g2
 
     def _munp(self, n, c, d):
@@ -2266,7 +2266,7 @@ class exponweib_gen(rv_continuous):
 
     See Also
     --------
-    weibull_min, numpy.random.Generator.weibull
+    weibull_min, mx.random.Generator.weibull
 
     Notes
     -----
@@ -2719,7 +2719,7 @@ class weibull_min_gen(rv_continuous):
 
     See Also
     --------
-    weibull_max, numpy.random.Generator.weibull, exponweib
+    weibull_max, mx.random.Generator.weibull, exponweib
 
     Notes
     -----
@@ -2733,7 +2733,7 @@ class weibull_min_gen(rv_continuous):
 
     `weibull_min` takes ``c`` as a shape parameter for :math:`c`.
     (named :math:`k` in Wikipedia article and :math:`a` in
-    ``numpy.random.weibull``).  Special shape values are :math:`c=1` and
+    ``mx.random.weibull``).  Special shape values are :math:`c=1` and
     :math:`c=2` where Weibull distribution reduces to the `expon` and
     `rayleigh` distributions respectively.
 
@@ -5236,7 +5236,7 @@ class geninvgauss_gen(rv_continuous):
         if mx.isscalar(p) and mx.isscalar(b):
             out = self._rvs_scalar(p, b, size, random_state)
         elif p.size == 1 and b.size == 1:
-            out = self._rvs_scalar(p.item(), b.item(), size, random_state)
+            out = self._rvs_scalar(p[()], b[()], size, random_state)
         else:
             # When this method is called, size will be a (possibly empty)
             # tuple of integers.  It will not be None; if `size=None` is passed
@@ -5282,7 +5282,7 @@ class geninvgauss_gen(rv_continuous):
                 it.iternext()
 
         if size == ():
-            out = out.item()
+            out = out[()]
         return out
 
     def _rvs_scalar(self, p, b, numsamples, random_state):

@@ -26,7 +26,7 @@ from ._constraints import old_bound_to_new, _arr_to_scalar
 from scipy_mlx._lib._array_api import array_namespace
 from scipy_mlx._lib import array_api_extra as xpx
 from scipy_mlx._lib._util import _call_callback_maybe_halt
-from numpy.typing import NDArray
+from typing import Any as NDArray
 
 __docformat__ = "restructuredtext en"
 

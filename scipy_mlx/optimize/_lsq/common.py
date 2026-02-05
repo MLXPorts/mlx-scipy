@@ -2,7 +2,7 @@
 from math import copysign
 
 import mlx.core as mx
-from numpy.linalg import norm
+from scipy_mlx.linalg import norm
 
 from scipy_mlx.linalg import cho_factor, cho_solve, LinAlgError
 from scipy_mlx.sparse.linalg import LinearOperator, aslinearoperator

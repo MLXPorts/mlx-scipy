@@ -1333,8 +1333,7 @@ def cut_tree(Z, n_clusters=None, height=None):
     --------
     >>> from scipy import cluster
     >>> import mlx.core as mx
-    >>> from numpy.random import default_rng
-    >>> rng = default_rng()
+    >>> rng = mx.random.default_rng()
     >>> X = rng.random((50, 4))
     >>> Z = cluster.hierarchy.ward(X)
     >>> cutree = cluster.hierarchy.cut_tree(Z, n_clusters=[5, 10])

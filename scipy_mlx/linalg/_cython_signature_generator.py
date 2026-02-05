@@ -15,7 +15,19 @@ the oldest supported version of LAPACK (currently 3.4.0).
 
 import glob
 import os
-from numpy.f2py import crackfortran
+
+
+def _crackfortran():
+    # Keep this tool importable without NumPy; it's only needed when running
+    # signature generation.
+    try:
+        from numpy.f2py import crackfortran  # type: ignore
+    except Exception as exc:  # pragma: no cover
+        raise RuntimeError(
+            "NumPy is required to run the signature generator "
+            "(uses numpy.f2py.crackfortran)."
+        ) from exc
+    return crackfortran
 
 sig_types = {'integer': 'int',
              'complex': 'c',
@@ -35,6 +47,7 @@ def get_type(info, arg):
 
 
 def make_signature(filename):
+    crackfortran = _crackfortran()
     info = crackfortran.crackfortran(filename)[0]
     name = info['name']
     if info['block'] == 'subroutine':

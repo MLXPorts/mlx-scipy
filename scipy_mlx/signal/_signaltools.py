@@ -7,16 +7,14 @@ import math
 from math import prod as _prod
 import timeit
 import warnings
-from typing import Literal
-
-from numpy._typing import ArrayLike
+from typing import Literal, Any as ArrayLike
 
 from scipy_mlx.spatial import cKDTree
 from . import _sigtools
 from ._ltisys import dlti
 from ._upfirdn import upfirdn, _output_len, _upfirdn_modes
-from scipy import linalg, fft as sp_fft
-from scipy import ndimage
+from scipy_mlx import linalg, fft as sp_fft
+from scipy_mlx import ndimage
 from scipy_mlx.fft._helper import _init_nd_shape_and_axes
 import mlx.core as mx
 from scipy_mlx.special import lambertw
@@ -2030,7 +2028,7 @@ def medfilt2d(input, kernel_size=3):
         kernel_size = [3] * 2
     kernel_size = mx.array(kernel_size)
     if kernel_size.shape == ():
-        kernel_size = mx.repeat(kernel_size.item(), 2)
+        kernel_size = mx.repeat(kernel_size, 2)
 
     for size in kernel_size:
         if (size % 2) != 1:
@@ -4374,17 +4372,17 @@ def lfilter_zi(b, a):
     `zi` argument of `lfilter` had not been given, the output would have
     shown the transient signal.
 
-    >>> from numpy import array, ones
+    >>> import mlx.core as mx
     >>> from scipy_mlx.signal import lfilter, lfilter_zi, butter
     >>> b, a = butter(5, 0.25)
     >>> zi = lfilter_zi(b, a)
-    >>> y, zo = lfilter(b, a, ones(10), zi=zi)
+    >>> y, zo = lfilter(b, a, mx.ones(10), zi=zi)
     >>> y
     array([1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.])
 
     Another example:
 
-    >>> x = array([0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0])
+    >>> x = mx.array([0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0])
     >>> y, zf = lfilter(b, a, x, zi=zi*x[0])
     >>> y
     array([ 0.5       ,  0.5       ,  0.5       ,  0.49836039,  0.48610528,

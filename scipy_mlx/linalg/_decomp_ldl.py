@@ -1,7 +1,10 @@
 from warnings import warn
 
 import mlx.core as mx
-from numpy.exceptions import ComplexWarning
+
+
+class ComplexWarning(RuntimeWarning):
+    pass
 
 from scipy_mlx._lib._util import _apply_over_batch
 from ._decomp import _asarray_validated

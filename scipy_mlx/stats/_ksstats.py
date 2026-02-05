@@ -71,8 +71,8 @@ import scipy_mlx.special._ufuncs as scu
 from scipy_mlx.stats._finite_differences import _derivative
 
 _E128 = 128
-_EP128 = mx.ldexp(mx.longdouble(1), _E128)
-_EM128 = mx.ldexp(mx.longdouble(1), -_E128)
+_EP128 = mx.power(mx.array(2.0), mx.array(_E128))
+_EM128 = mx.power(mx.array(2.0), mx.array(-_E128))
 
 _SQRT2PI = mx.sqrt(2 * mx.pi)
 _LOG_2PI = mx.log(2 * mx.pi)

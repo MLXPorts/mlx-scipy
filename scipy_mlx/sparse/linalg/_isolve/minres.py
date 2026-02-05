@@ -1,5 +1,5 @@
-from numpy import inner, zeros, inf, finfo
-from numpy.linalg import norm
+from scipy_mlx._lib._mlx_compat import inner, zeros, inf, finfo
+from scipy_mlx.linalg import norm
 from math import sqrt
 
 from .utils import make_system

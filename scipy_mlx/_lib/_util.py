@@ -19,48 +19,28 @@ from scipy_mlx._lib._array_api import (Array, array_namespace, is_lazy_array, is
 from scipy_mlx._lib._docscrape import FunctionDoc, Parameter
 from scipy_mlx._lib._sparse import issparse
 
-from numpy.exceptions import AxisError
+class AxisError(IndexError):
+    """Axis error for invalid axis arguments."""
+    pass
 
 
 np_long: type
 np_ulong: type
 
-if mx.lib.NumpyVersion(mx.__version__) >= "2.0.0.dev0":
-    try:
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                r".*In the future `np\.long` will be defined as.*",
-                FutureWarning,
-            )
-            np_long = mx.long  # type: ignore[attr-defined]
-            np_ulong = mx.ulong  # type: ignore[attr-defined]
-    except AttributeError:
-            np_long = mx.int_
-            np_ulong = mx.uint
-else:
-    np_long = mx.int_
-    np_ulong = mx.uint
+# MLX does not provide NumPy's scalar-type hierarchy or `mx.lib.NumpyVersion`.
+# Keep simple aliases for typing and internal checks.
+np_long = int
+np_ulong = int
 
-IntNumber = int | mx.integer
-DecimalNumber = float | mx.floating | mx.integer
+IntNumber = int
+DecimalNumber = float | int
 
 copy_if_needed: bool | None
 
-if mx.lib.NumpyVersion(mx.__version__) >= "2.0.0":
-    copy_if_needed = None
-elif mx.lib.NumpyVersion(mx.__version__) < "1.28.0":
-    copy_if_needed = False
-else:
-    # 2.0.0 dev versions, handle cases where copy may or may not exist
-    try:
-        mx.array([1]).__array__(copy=None)  # type: ignore[call-overload]
-        copy_if_needed = None
-    except TypeError:
-        copy_if_needed = False
+copy_if_needed = None
 
 
-_RNG: TypeAlias = mx.random.Generator | mx.random.RandomState
+_RNG: TypeAlias = object
 SeedType: TypeAlias = IntNumber | _RNG | None
 
 GeneratorType = TypeVar("GeneratorType", bound=_RNG)
@@ -151,15 +131,15 @@ def float_factorial(n: int) -> float:
 
 
 _rng_desc = (
-    r"""If `rng` is passed by keyword, types other than `numpy.random.Generator` are
-    passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+    r"""If `rng` is passed by keyword, types other than `mx.random.Generator` are
+    passed to `mx.random.default_rng` to instantiate a ``Generator``.
     If `rng` is already a ``Generator`` instance, then the provided instance is
     used. Specify `rng` for repeatable function behavior.
 
     If this argument is passed by position or `{old_name}` is passed by keyword,
     legacy behavior for the argument `{old_name}` applies:
 
-    - If `{old_name}` is None (or `numpy.random`), the `numpy.random.RandomState`
+    - If `{old_name}` is None (or `mx.random`), the `mx.random.RandomState`
       singleton is used.
     - If `{old_name}` is an int, a new ``RandomState`` instance is used,
       seeded with `{old_name}`.
@@ -168,8 +148,8 @@ _rng_desc = (
 
     .. versionchanged:: 1.15.0
         As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-        transition from use of `numpy.random.RandomState` to
-        `numpy.random.Generator`, this keyword was changed from `{old_name}` to `rng`.
+        transition from use of `mx.random.RandomState` to
+        `mx.random.Generator`, this keyword was changed from `{old_name}` to `rng`.
         For an interim period, both keywords will continue to work, although only one
         may be specified at a time. After the interim period, function calls using the
         `{old_name}` keyword will emit warnings. The behavior of both `{old_name}` and
@@ -200,11 +180,11 @@ def _transition_to_rng(old_name, *, position_num=None, end_version=None,
       is specified, the decorator will emit a `FutureWarning` about the changing
       interpretation of the argument.
     - If `rng` is provided as a keyword argument, the decorator validates `rng` using
-      `numpy.random.default_rng` before passing it to the function.
+      `mx.random.default_rng` before passing it to the function.
     - If `end_version` is specified and neither `random_state` nor `rng` is provided
       by the user, the decorator checks whether `mx.random.seed` has been used to set
       the global seed. If so, it emits a `FutureWarning`, noting that usage of
-      `numpy.random.seed` will eventually have no effect. Either way, the decorator
+      `mx.random.seed` will eventually have no effect. Either way, the decorator
       calls the function without explicitly passing the `rng` argument.
 
     If `end_version` is specified, a user must pass `rng` as a keyword to avoid
@@ -286,8 +266,9 @@ def _transition_to_rng(old_name, *, position_num=None, end_version=None,
                 )
                 raise TypeError(message)
 
-            # Check whether global random state has been set
-            global_seed_set = mx.random.mtrand._rand._bit_generator._seed_seq is None
+            # MLX exposes a functional RNG API; we don't track a NumPy-style
+            # global RandomState here.
+            global_seed_set = False
 
             if as_old_kwarg:  # warn about deprecated use of old kwarg
                 kwargs[NEW_NAME] = kwargs.pop(old_name)
@@ -311,11 +292,7 @@ def _transition_to_rng(old_name, *, position_num=None, end_version=None,
                 # If the argument is None and the global seed wasn't set, or if the
                 # argument is one of a few new classes, the user will not notice change
                 # in behavior.
-                ok_classes = (
-                    mx.random.Generator,
-                    mx.random.SeedSequence,
-                    mx.random.BitGenerator,
-                )
+                ok_classes = ()
                 if (arg is None and not global_seed_set) or isinstance(arg, ok_classes):
                     pass
                 elif emit_warning:
@@ -330,18 +307,9 @@ def _transition_to_rng(old_name, *, position_num=None, end_version=None,
                     warnings.warn(message, FutureWarning, stacklevel=2)
 
             elif as_new_kwarg:  # no warnings; this is the preferred use
-                # After the removal of the decorator, normalization with
-                # mx.random.default_rng will be done inside the decorated function
-                kwargs[NEW_NAME] = mx.random.default_rng(kwargs[NEW_NAME])
+                kwargs[NEW_NAME] = check_random_state(kwargs[NEW_NAME])
 
-            elif global_seed_set and emit_warning:
-                # Emit FutureWarning if `mx.random.seed` was used and no PRNG was passed
-                message = (
-                    "The NumPy global RNG was seeded by calling "
-                    f"`mx.random.seed`. Beginning in {end_version}, this "
-                    "function will no longer use the global RNG."
-                ) + cmn_msg
-                warnings.warn(message, FutureWarning, stacklevel=2)
+            # No global-seed warning in the MLX-only build.
 
             return fun(*args, **kwargs)
 
@@ -356,7 +324,7 @@ def _transition_to_rng(old_name, *, position_num=None, end_version=None,
             doc = FunctionDoc(wrapper)
             parameter_names = [param.name for param in doc['Parameters']]
             if 'rng' in parameter_names:
-                _type = "{None, int, `numpy.random.Generator`}, optional"
+                _type = "{None, int, `mx.random.Generator`}, optional"
                 _desc = _rng_desc.replace("{old_name}", old_name)
                 old_doc = doc['Parameters'][parameter_names.index('rng')].desc
                 old_doc_keep = old_doc[old_doc.index("") + 1:] if "" in old_doc else []
@@ -372,33 +340,64 @@ def _transition_to_rng(old_name, *, position_num=None, end_version=None,
 
 # copy-pasted from scikit-learn utils/validation.py
 def check_random_state(seed):
-    """Turn `seed` into a `mx.random.RandomState` instance.
+    """Turn `seed` into a simple MLX-backed RNG object.
 
     Parameters
     ----------
-    seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
-        singleton is used.
-        If `seed` is an int, a new ``RandomState`` instance is used,
-        seeded with `seed`.
-        If `seed` is already a ``Generator`` or ``RandomState`` instance then
-        that instance is used.
+    seed : {None, int, object}, optional
+        If `seed` is None (or `mx.random`), a shared MLX RNG is used.
+        If `seed` is an int, the global MLX RNG is seeded.
+        If `seed` is already an `MxRandomState` instance, it is returned.
 
     Returns
     -------
-    seed : {`numpy.random.Generator`, `numpy.random.RandomState`}
-        Random number generator.
+    seed : MxRandomState
+        Random number generator-like object.
 
     """
-    if seed is None or seed is mx.random:
-        return mx.random.mtrand._rand
-    if isinstance(seed, numbers.Integral | mx.integer):
-        return mx.random.RandomState(seed)
-    if isinstance(seed, mx.random.RandomState | mx.random.Generator):
+    if isinstance(seed, MxRandomState):
         return seed
+    if seed is None or seed is mx.random:
+        return MxRandomState(None)
+    if isinstance(seed, numbers.Integral) or (hasattr(mx, "integer") and isinstance(seed, mx.integer)):
+        return MxRandomState(int(seed))
+    raise ValueError(f"'{seed}' cannot be used to seed an MLX random state instance")
 
-    raise ValueError(f"'{seed}' cannot be used to seed a numpy.random.RandomState"
-                     " instance")
+
+class MxRandomState:
+    """Small subset of NumPy RandomState API backed by `mx.random`."""
+
+    def __init__(self, seed):
+        if seed is not None:
+            mx.random.seed(int(seed))
+
+    def random_sample(self, size=None):
+        shape = None if size is None else (size if isinstance(size, tuple) else (int(size),))
+        return mx.random.uniform(shape=shape) if shape is not None else mx.random.uniform(shape=())
+
+    random = random_sample
+
+    def rand(self, *size):
+        return mx.random.uniform(shape=tuple(int(s) for s in size))
+
+    def randn(self, *size):
+        return mx.random.normal(shape=tuple(int(s) for s in size))
+
+    def randint(self, low, high=None, size=None, dtype=None):
+        shape = None if size is None else (size if isinstance(size, tuple) else (int(size),))
+        return mx.random.randint(low, high, shape=shape)
+
+    def normal(self, loc=0.0, scale=1.0, size=None):
+        shape = None if size is None else (size if isinstance(size, tuple) else (int(size),))
+        return mx.add(mx.multiply(mx.random.normal(shape=shape), mx.array(scale)), mx.array(loc))
+
+    def uniform(self, low=0.0, high=1.0, size=None):
+        shape = None if size is None else (size if isinstance(size, tuple) else (int(size),))
+        u = mx.random.uniform(shape=shape)
+        return mx.add(mx.multiply(u, mx.array(high - low)), mx.array(low))
+
+    def permutation(self, x):
+        return mx.random.permutation(x)
 
 
 def _asarray_validated(a, check_finite=True,
@@ -587,7 +586,7 @@ class _ScalarFunctionWrapper:
         # Make sure the function returns a true scalar
         if not mx.isscalar(fx):
             try:
-                fx = mx.array(fx).item()
+                fx = mx.array(fx)[()]
             except (TypeError, ValueError) as e:
                 raise ValueError(
                     "The user-provided objective function "

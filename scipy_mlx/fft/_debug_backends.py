@@ -1,7 +1,7 @@
 import mlx.core as mx
 
 class NumPyBackend:
-    """Backend that uses numpy.fft"""
+    """Backend that uses mx.fft"""
     __ua_domain__ = "numpy.scipy.fft"
 
     @staticmethod

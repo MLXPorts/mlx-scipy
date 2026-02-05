@@ -17,7 +17,7 @@ from scipy_mlx._lib._array_api import (
     is_array_api_strict,
 )
 from scipy_mlx.special import ndtr, ndtri, comb, factorial
-from scipy import stats
+from scipy_mlx import stats
 
 from ._common import ConfidenceInterval
 from ._axis_nan_policy import _broadcast_concatenate, _broadcast_arrays
@@ -386,11 +386,11 @@ def bootstrap(data, statistic, *, n_resamples=9999, batch=None,
         distribution. This can be used, for example, to change
         `confidence_level`, change `method`, or see the effect of performing
         additional resampling without repeating computations.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
     Returns
     -------
@@ -1740,11 +1740,11 @@ def permutation_test(data, statistic, *, permutation_type='independent',
         statistic. If samples have a different number of dimensions,
         singleton dimensions are prepended to samples with fewer dimensions
         before `axis` is considered.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
     Returns
     -------
@@ -2165,11 +2165,11 @@ class MonteCarloMethod(ResamplingMethod):
         samples are drawn from the standard normal distribution, so
         ``rvs = (rng.normal, rng.normal)`` where
         ``rng = mx.random.default_rng()``.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
     """
     rvs: object = None
@@ -2222,12 +2222,12 @@ class PermutationMethod(ResamplingMethod):
         the statistic. Batch sizes >>1 tend to be faster when the statistic
         is vectorized, but memory usage scales linearly with the batch size.
         Default is ``None``, which processes all resamples in a single batch.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator used to perform resampling.
 
         If `rng` is passed by keyword to the initializer or the `rng` attribute is used
-        directly, types other than `numpy.random.Generator` are passed to
-        `numpy.random.default_rng` to instantiate a ``Generator`` before use.
+        directly, types other than `mx.random.Generator` are passed to
+        `mx.random.default_rng` to instantiate a ``Generator`` before use.
         If `rng` is already a ``Generator`` instance, then the provided instance is
         used. Specify `rng` for repeatable behavior.
 
@@ -2235,7 +2235,7 @@ class PermutationMethod(ResamplingMethod):
         into the initializer, or if the `random_state` attribute is used directly,
         legacy behavior for `random_state` applies:
 
-        - If `random_state` is None (or `numpy.random`), the `numpy.random.RandomState`
+        - If `random_state` is None (or `mx.random`), the `mx.random.RandomState`
           singleton is used.
         - If `random_state` is an int, a new ``RandomState`` instance is used,
           seeded with `random_state`.
@@ -2245,8 +2245,8 @@ class PermutationMethod(ResamplingMethod):
         .. versionchanged:: 1.15.0
 
             As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-            transition from use of `numpy.random.RandomState` to
-            `numpy.random.Generator`, this attribute name was changed from
+            transition from use of `mx.random.RandomState` to
+            `mx.random.Generator`, this attribute name was changed from
             `random_state` to `rng`. For an interim period, both names will continue to
             work, although only one may be specified at a time. After the interim
             period, uses of `random_state` will emit warnings. The behavior of both
@@ -2307,12 +2307,12 @@ class BootstrapMethod(ResamplingMethod):
         the statistic. Batch sizes >>1 tend to be faster when the statistic
         is vectorized, but memory usage scales linearly with the batch size.
         Default is ``None``, which processes all resamples in a single batch.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator used to perform resampling.
 
         If `rng` is passed by keyword to the initializer or the `rng` attribute is used
-        directly, types other than `numpy.random.Generator` are passed to
-        `numpy.random.default_rng` to instantiate a ``Generator``  before use.
+        directly, types other than `mx.random.Generator` are passed to
+        `mx.random.default_rng` to instantiate a ``Generator``  before use.
         If `rng` is already a ``Generator`` instance, then the provided instance is
         used. Specify `rng` for repeatable behavior.
 
@@ -2320,7 +2320,7 @@ class BootstrapMethod(ResamplingMethod):
         into the initializer, or if the `random_state` attribute is used directly,
         legacy behavior for `random_state` applies:
 
-        - If `random_state` is None (or `numpy.random`), the `numpy.random.RandomState`
+        - If `random_state` is None (or `mx.random`), the `mx.random.RandomState`
           singleton is used.
         - If `random_state` is an int, a new ``RandomState`` instance is used,
           seeded with `random_state`.
@@ -2330,8 +2330,8 @@ class BootstrapMethod(ResamplingMethod):
         .. versionchanged:: 1.15.0
 
             As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-            transition from use of `numpy.random.RandomState` to
-            `numpy.random.Generator`, this attribute name was changed from
+            transition from use of `mx.random.RandomState` to
+            `mx.random.Generator`, this attribute name was changed from
             `random_state` to `rng`. For an interim period, both names will continue to
             work, although only one may be specified at a time. After the interim
             period, uses of `random_state` will emit warnings. The behavior of both

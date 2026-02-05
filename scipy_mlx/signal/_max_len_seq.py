@@ -74,20 +74,19 @@ def max_len_seq(nbits, state=None, length=None, taps=None):
 
     >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
-    >>> from numpy.fft import fft, ifft, fftshift, fftfreq
     >>> seq = max_len_seq(6)[0]*2-1  # +1 and -1
-    >>> spec = fft(seq)
+    >>> spec = mx.fft.fft(seq)
     >>> N = len(seq)
-    >>> plt.plot(fftshift(fftfreq(N)), fftshift(mx.abs(spec)), '.-')
+    >>> plt.plot(mx.fft.fftshift(mx.fft.fftfreq(N)), mx.fft.fftshift(mx.abs(spec)), '.-')
     >>> plt.margins(0.1, 0.1)
     >>> plt.grid(True)
     >>> plt.show()
 
     Circular autocorrelation of MLS is an impulse:
 
-    >>> acorrcirc = ifft(spec * mx.conj(spec)).real
+    >>> acorrcirc = mx.fft.ifft(spec * mx.conj(spec)).real
     >>> plt.figure()
-    >>> plt.plot(mx.arange(-N/2+1, N/2+1), fftshift(acorrcirc), '.-')
+    >>> plt.plot(mx.arange(-N/2+1, N/2+1), mx.fft.fftshift(acorrcirc), '.-')
     >>> plt.margins(0.1, 0.1)
     >>> plt.grid(True)
     >>> plt.show()

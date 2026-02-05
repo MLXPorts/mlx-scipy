@@ -1,11 +1,58 @@
 import operator
 
 import mlx.core as mx
-from numpy.fft import fftshift, ifftshift, fftfreq
 
 import scipy_mlx.fft._pocketfft.helper as _helper
 
 __all__ = ['fftshift', 'ifftshift', 'fftfreq', 'rfftfreq', 'next_fast_len']
+
+
+def _roll(x, shift, axis):
+    if hasattr(mx, "roll"):
+        return mx.roll(x, shift, axis=axis)
+    if isinstance(axis, int):
+        axis = (axis,)
+        shift = (shift,)
+    out = x
+    for ax, sh in zip(axis, shift):
+        sh = sh % out.shape[ax]
+        if sh == 0:
+            continue
+        idx1 = [slice(None)] * out.ndim
+        idx2 = [slice(None)] * out.ndim
+        idx1[ax] = slice(-sh, None)
+        idx2[ax] = slice(None, -sh)
+        out = mx.concatenate([out[tuple(idx1)], out[tuple(idx2)]], axis=ax)
+    return out
+
+
+def fftshift(x, axes=None):
+    x = mx.array(x)
+    if axes is None:
+        axes = tuple(range(x.ndim))
+    if isinstance(axes, int):
+        axes = (axes,)
+    shift = tuple(x.shape[ax] // 2 for ax in axes)
+    return _roll(x, shift, axis=axes)
+
+
+def ifftshift(x, axes=None):
+    x = mx.array(x)
+    if axes is None:
+        axes = tuple(range(x.ndim))
+    if isinstance(axes, int):
+        axes = (axes,)
+    shift = tuple((x.shape[ax] + 1) // 2 for ax in axes)
+    return _roll(x, shift, axis=axes)
+
+
+def fftfreq(n, d=1.0):
+    n = int(n)
+    val = 1.0 / (n * d)
+    results = mx.arange(0, n, dtype=mx.float64)
+    N = (n - 1) // 2 + 1
+    results = mx.where(results < N, results, results - n)
+    return results * val
 
 
 def rfftfreq(n, d=1.0):

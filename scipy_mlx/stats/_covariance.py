@@ -2,7 +2,7 @@ from functools import cached_property
 from types import GenericAlias
 
 import mlx.core as mx
-from scipy import linalg
+from scipy_mlx import linalg
 from scipy_mlx.stats import _multivariate
 
 

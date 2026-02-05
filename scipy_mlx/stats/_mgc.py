@@ -53,10 +53,10 @@ def _perm_test(x, y, stat, reps=1000, workers=-1, random_state=None):
         such as `multiprocessing.Pool.map` for evaluating the population in
         parallel. This evaluation is carried out as `workers(func, iterable)`.
         Requires that `func` be pickleable.
-    random_state : {None, int, `numpy.random.Generator`,
-                    `numpy.random.RandomState`}, optional
+    random_state : {None, int, `mx.random.Generator`,
+                    `mx.random.RandomState`}, optional
 
-        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+        If `seed` is None (or `mx.random`), the `mx.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.
@@ -153,10 +153,10 @@ def multiscale_graphcorr(x, y, compute_distance=_euclidean_dist, reps=1000,
         set to ``True``. Set to ``True`` if ``x`` and ``y`` both have shapes
         ``(n, p)`` and a two sample test is desired. The default is ``False``.
         Note that this will not run if inputs are distance matrices.
-    random_state : {None, int, `numpy.random.Generator`,
-                    `numpy.random.RandomState`}, optional
+    random_state : {None, int, `mx.random.Generator`,
+                    `mx.random.RandomState`}, optional
 
-        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+        If `seed` is None (or `mx.random`), the `mx.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.

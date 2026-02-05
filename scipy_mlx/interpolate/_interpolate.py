@@ -4,7 +4,7 @@ from math import prod
 from types import GenericAlias
 
 import mlx.core as mx
-from numpy import array, asarray, intp, poly1d, searchsorted
+from scipy_mlx._lib._mlx_compat import array, asarray, intp, poly1d, searchsorted
 
 import scipy_mlx.special as spec
 from scipy_mlx._lib._util import copy_if_needed
@@ -78,7 +78,7 @@ def lagrange(x, w):
                  &= x (-2 + 3x)
         \end{aligned}
 
-    >>> from numpy.polynomial.polynomial import Polynomial
+    >>> from mlx.core import Polynomial
     >>> Polynomial(poly.coef[::-1]).coef
     array([ 0., -2.,  3.])
 

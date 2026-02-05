@@ -11,7 +11,12 @@ from . import _continuous_distns
 from . import _discrete_distns
 
 from ._continuous_distns import *  # noqa: F403
-from ._levy_stable import levy_stable
+try:
+    # Optional in this MLX port: upstream depends on a compiled `levyst` backend
+    # and heavy numerical integration routines not yet implemented here.
+    from ._levy_stable import levy_stable  # type: ignore
+except Exception:  # pragma: no cover
+    levy_stable = None  # type: ignore
 from ._discrete_distns import *  # noqa: F403
 from ._entropy import entropy
 
@@ -20,5 +25,6 @@ __all__ = ['rv_discrete', 'rv_continuous', 'rv_histogram', 'entropy']  # noqa: F
 
 # Add only the distribution names, not the *_gen names.
 __all__ += _continuous_distns._distn_names
-__all__ += ['levy_stable']
+if levy_stable is not None:
+    __all__ += ['levy_stable']
 __all__ += _discrete_distns._distn_names

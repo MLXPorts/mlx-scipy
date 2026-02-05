@@ -102,14 +102,14 @@ def fourier_gaussian(input, sigma, n=-1, axis=-1, output=None):
     Examples
     --------
     >>> from scipy import ndimage, datasets
-    >>> import numpy.fft
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> fig, (ax1, ax2) = plt.subplots(1, 2)
     >>> plt.gray()  # show the filtered result in grayscale
     >>> ascent = datasets.ascent()
-    >>> input_ = numpy.fft.fft2(ascent)
+    >>> input_ = mx.fft.fft2(mx.array(ascent))
     >>> result = ndimage.fourier_gaussian(input_, sigma=4)
-    >>> result = numpy.fft.ifft2(result)
+    >>> result = mx.fft.ifft2(result)
     >>> ax1.imshow(ascent)
     >>> ax2.imshow(result.real)  # the imaginary part is an artifact
     >>> plt.show()
@@ -160,14 +160,14 @@ def fourier_uniform(input, size, n=-1, axis=-1, output=None):
     Examples
     --------
     >>> from scipy import ndimage, datasets
-    >>> import numpy.fft
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> fig, (ax1, ax2) = plt.subplots(1, 2)
     >>> plt.gray()  # show the filtered result in grayscale
     >>> ascent = datasets.ascent()
-    >>> input_ = numpy.fft.fft2(ascent)
+    >>> input_ = mx.fft.fft2(mx.array(ascent))
     >>> result = ndimage.fourier_uniform(input_, size=20)
-    >>> result = numpy.fft.ifft2(result)
+    >>> result = mx.fft.ifft2(result)
     >>> ax1.imshow(ascent)
     >>> ax2.imshow(result.real)  # the imaginary part is an artifact
     >>> plt.show()
@@ -221,14 +221,14 @@ def fourier_ellipsoid(input, size, n=-1, axis=-1, output=None):
     Examples
     --------
     >>> from scipy import ndimage, datasets
-    >>> import numpy.fft
+    >>> import mlx.core as mx
     >>> import matplotlib.pyplot as plt
     >>> fig, (ax1, ax2) = plt.subplots(1, 2)
     >>> plt.gray()  # show the filtered result in grayscale
     >>> ascent = datasets.ascent()
-    >>> input_ = numpy.fft.fft2(ascent)
+    >>> input_ = mx.fft.fft2(mx.array(ascent))
     >>> result = ndimage.fourier_ellipsoid(input_, size=20)
-    >>> result = numpy.fft.ifft2(result)
+    >>> result = mx.fft.ifft2(result)
     >>> ax1.imshow(ascent)
     >>> ax2.imshow(result.real)  # the imaginary part is an artifact
     >>> plt.show()
@@ -284,13 +284,13 @@ def fourier_shift(input, shift, n=-1, axis=-1, output=None):
     --------
     >>> from scipy import ndimage, datasets
     >>> import matplotlib.pyplot as plt
-    >>> import numpy.fft
+    >>> import mlx.core as mx
     >>> fig, (ax1, ax2) = plt.subplots(1, 2)
     >>> plt.gray()  # show the filtered result in grayscale
     >>> ascent = datasets.ascent()
-    >>> input_ = numpy.fft.fft2(ascent)
+    >>> input_ = mx.fft.fft2(mx.array(ascent))
     >>> result = ndimage.fourier_shift(input_, shift=200)
-    >>> result = numpy.fft.ifft2(result)
+    >>> result = mx.fft.ifft2(result)
     >>> ax1.imshow(ascent)
     >>> ax2.imshow(result.real)  # the imaginary part is an artifact
     >>> plt.show()

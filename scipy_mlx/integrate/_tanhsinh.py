@@ -1,7 +1,7 @@
 # mypy: disable-error-code="attr-defined"
 import math
 import mlx.core as mx
-from scipy import special
+import scipy_mlx.special as special
 import scipy_mlx._lib._elementwise_iterative_method as eim
 from scipy_mlx._lib._util import _RichResult
 from scipy_mlx._lib._array_api import (array_namespace, xp_copy, xp_ravel,

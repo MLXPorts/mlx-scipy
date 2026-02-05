@@ -38,9 +38,9 @@ class VisitingDistribution:
         makes the algorithm jump to a more distant region.
         The value range is (1, 3]. Its value is fixed for the life of the
         object.
-    rng_gen : {`~numpy.random.Generator`}
-        A `~numpy.random.Generator` object for generating new locations.
-        (can be a `~numpy.random.RandomState` object until SPEC007 transition
+    rng_gen : {`~mx.random.Generator`}
+        A `~mx.random.Generator` object for generating new locations.
+        (can be a `~mx.random.RandomState` object until SPEC007 transition
          is fully complete).
 
     """
@@ -227,10 +227,10 @@ class StrategyChain:
         Instance of `ObjectiveFunWrapper` class.
     minimizer_wrapper: LocalSearchWrapper
         Instance of `LocalSearchWrapper` class.
-    rand_gen : {None, int, `numpy.random.Generator`,
-                `numpy.random.RandomState`}, optional
+    rand_gen : {None, int, `mx.random.Generator`,
+                `mx.random.RandomState`}, optional
 
-        If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+        If `seed` is None (or `mx.random`), the `mx.random.RandomState`
         singleton is used.
         If `seed` is an int, a new ``RandomState`` instance is used,
         seeded with `seed`.
@@ -509,11 +509,11 @@ def dual_annealing(func, bounds, args=(), maxiter=1000,
         algorithm is in the middle of a local search, this number will be
         exceeded, the algorithm will stop just after the local search is
         done. Default value is 1e7.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a `Generator`.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a `Generator`.
 
         Specify `rng` for repeatable minimizations. The random numbers
         generated only affect the visiting distribution function

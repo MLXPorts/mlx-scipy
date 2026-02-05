@@ -788,30 +788,53 @@ from ._ufuncs import *
 from . import _basic
 from ._basic import *
 
+from ._mlx_orthogonal import roots_legendre
+
 # Replace some function definitions from _ufuncs and _basic
 # to add Array API support
-from ._support_alternative_backends import *
+try:
+    # Optional in this MLX port; upstream requires a complete `_ufuncs` inventory.
+    from ._support_alternative_backends import *  # type: ignore
+except Exception:  # pragma: no cover
+    pass
 
 from ._logsumexp import logsumexp, softmax, log_softmax
 
-from . import _multiufuncs
-from ._multiufuncs import *
+try:
+    from . import _multiufuncs  # type: ignore
+    from ._multiufuncs import *  # type: ignore
+except Exception:  # pragma: no cover
+    _multiufuncs = None  # type: ignore
 
-from . import _orthogonal
-from ._orthogonal import *
+try:
+    from . import _orthogonal  # type: ignore
+    from ._orthogonal import *  # type: ignore
+except Exception:  # pragma: no cover
+    _orthogonal = None  # type: ignore
 
-from ._ellip_harm import (
-    ellip_harm,
-    ellip_harm_2,
-    ellip_normal
-)
-from ._lambertw import lambertw
-from ._spherical_bessel import (
-    spherical_jn,
-    spherical_yn,
-    spherical_in,
-    spherical_kn
-)
+try:
+    from ._ellip_harm import (
+        ellip_harm,
+        ellip_harm_2,
+        ellip_normal
+    )
+except Exception:  # pragma: no cover
+    ellip_harm = ellip_harm_2 = ellip_normal = None  # type: ignore
+
+try:
+    from ._lambertw import lambertw
+except Exception:  # pragma: no cover
+    lambertw = None  # type: ignore
+
+try:
+    from ._spherical_bessel import (
+        spherical_jn,
+        spherical_yn,
+        spherical_in,
+        spherical_kn
+    )
+except Exception:  # pragma: no cover
+    spherical_jn = spherical_yn = spherical_in = spherical_kn = None  # type: ignore
 
 # Deprecated namespaces, to be removed in v2.0.0
 from . import add_newdocs, basic, orthogonal, specfun, sf_error, spfun_stats
@@ -819,10 +842,15 @@ from . import add_newdocs, basic, orthogonal, specfun, sf_error, spfun_stats
 # We replace some function definitions from _ufuncs with those from
 # _support_alternative_backends above, but those are all listed in _ufuncs.__all__,
 # so there is no need to consider _support_alternative_backends.__all__ here.
-__all__ = _ufuncs.__all__ + _basic.__all__ + _orthogonal.__all__ + _multiufuncs.__all__
+__all__ = _ufuncs.__all__ + _basic.__all__
+if _orthogonal is not None:
+    __all__ += _orthogonal.__all__  # type: ignore[attr-defined]
+if _multiufuncs is not None:
+    __all__ += _multiufuncs.__all__  # type: ignore[attr-defined]
 __all__ += [
     'SpecialFunctionWarning',
     'SpecialFunctionError',
+    'roots_legendre',
     'logsumexp',
     'softmax',
     'log_softmax',

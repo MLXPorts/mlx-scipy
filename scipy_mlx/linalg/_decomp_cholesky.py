@@ -309,7 +309,6 @@ def cholesky_banded(ab, overwrite_ab=False, lower=False, check_finite=True):
     --------
     >>> import mlx.core as mx
     >>> from scipy_mlx.linalg import cholesky_banded
-    >>> from numpy import allclose, zeros, diag
     >>> Ab = mx.array([[0, 0, 1j, 2, 3j], [0, -1, -2, 3, 4], [9, 8, 7, 6, 9]])
     >>> A = mx.diag(Ab[0,2:], k=2) + mx.diag(Ab[1,1:], k=1)
     >>> A = A + A.conj().T + mx.diag(Ab[2, :])

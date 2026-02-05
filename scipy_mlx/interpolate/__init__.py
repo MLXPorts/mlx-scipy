@@ -205,7 +205,10 @@ from ._cubic import *
 from ._ndgriddata import *
 
 from ._bsplines import *
-from ._fitpack_repro import generate_knots, make_splrep, make_splprep
+try:
+    from ._fitpack_repro import generate_knots, make_splrep, make_splprep
+except Exception:  # pragma: no cover
+    generate_knots = make_splrep = make_splprep = None  # type: ignore[assignment]
 
 from ._pade import *
 

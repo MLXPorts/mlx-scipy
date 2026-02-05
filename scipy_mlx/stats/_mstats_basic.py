@@ -31,9 +31,7 @@ __all__ = ['argstoarray',
            ]
 
 import mlx.core as mx
-from numpy import array
-import numpy.ma as ma
-from numpy.ma import masked, nomask
+from scipy_mlx._lib._mlx_compat import array, ma, masked, nomask
 import math
 
 import itertools

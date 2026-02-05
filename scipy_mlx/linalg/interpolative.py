@@ -346,7 +346,7 @@ of the numerical rank.
 
 Finally, the random number generation required for all randomized routines can
 be controlled via providing NumPy pseudo-random generators with a fixed seed. See
-:class:`numpy.random.Generator` and :func:`numpy.random.default_rng` for more details.
+:class:`mx.random.Generator` and :func:`mx.random.default_rng` for more details.
 
 Remarks
 -------
@@ -464,11 +464,11 @@ def interp_decomp(A, eps_or_k, rand=True, rng=None):
         Whether to use random sampling if `A` is of type :class:`mx.array`
         (randomized algorithms are always used if `A` is of type
         :class:`scipy.sparse.linalg.LinearOperator`).
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
         If `rand` is ``False``, the argument is ignored.
 
     Returns
@@ -708,11 +708,11 @@ def estimate_spectral_norm(A, its=20, rng=None):
         `matvec` and `rmatvec` methods (to apply the matrix and its adjoint).
     its : int, optional
         Number of power method iterations.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
         If `rand` is ``False``, the argument is ignored.
 
     Returns
@@ -749,11 +749,11 @@ def estimate_spectral_norm_diff(A, B, its=20, rng=None):
         the `matvec` and `rmatvec` methods (to apply the matrix and its adjoint).
     its : int, optional
         Number of power method iterations.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
         If `rand` is ``False``, the argument is ignored.
 
     Returns
@@ -809,11 +809,11 @@ def svd(A, eps_or_k, rand=True, rng=None):
         Whether to use random sampling if `A` is of type :class:`mx.array`
         (randomized algorithms are always used if `A` is of type
         :class:`scipy.sparse.linalg.LinearOperator`).
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
         If `rand` is ``False``, the argument is ignored.
 
     Returns
@@ -904,11 +904,11 @@ def estimate_rank(A, eps, rng=None):
         with the `rmatvec` method (to apply the matrix adjoint).
     eps : float
         Relative error for numerical rank definition.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
         If `rand` is ``False``, the argument is ignored.
 
     Returns

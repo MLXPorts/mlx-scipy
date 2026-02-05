@@ -1,6 +1,43 @@
 import sys
 
-from numpy import array, frombuffer, load
+import mlx.core as mx
+from mlx.core import array
+
+
+def _frombuffer(buffer, dtype='float32', count=-1, offset=0):
+    """MLX-compatible frombuffer function for byte data."""
+    # MLX doesn't have frombuffer, so we need to convert bytes to array
+    import struct
+    
+    dtype_map = {
+        'uint8': 'B',
+        'int8': 'b',
+        'uint16': 'H',
+        'int16': 'h',
+        'uint32': 'I',
+        'int32': 'i',
+        'float32': 'f',
+        'float64': 'd'
+    }
+    
+    if dtype not in dtype_map:
+        raise ValueError(f"Unsupported dtype: {dtype}")
+    
+    fmt = dtype_map[dtype]
+    itemsize = struct.calcsize(fmt)
+    
+    # Handle offset
+    buffer = buffer[offset:]
+    
+    # Handle count
+    if count >= 0:
+        buffer = buffer[:count * itemsize]
+    
+    # Unpack bytes to values
+    num_values = len(buffer) // itemsize
+    values = struct.unpack(f'{num_values}{fmt}', buffer[:num_values * itemsize])
+    
+    return array(values, dtype=getattr(mx, dtype))
 from ._registry import registry, registry_urls
 
 from scipy_mlx._lib._array_api import xp_capabilities

@@ -4,10 +4,10 @@ from itertools import combinations_with_replacement
 from types import GenericAlias
 
 import mlx.core as mx
-from numpy.linalg import LinAlgError
+from scipy_mlx.linalg import LinAlgError
+from scipy_mlx.linalg import solve
 from scipy_mlx.spatial import KDTree
 from scipy_mlx.special import comb
-from scipy_mlx.linalg.lapack import dgesv  # type: ignore[attr-defined]
 
 from ._rbfinterp_pythran import (_build_system,
                                  _build_evaluation_coefficients,
@@ -111,23 +111,21 @@ def _build_and_solve_system(y, d, smoothing, kernel, epsilon, powers):
     lhs, rhs, shift, scale = _build_system(
         y, d, smoothing, kernel, epsilon, powers
         )
-    _, _, coeffs, info = dgesv(lhs, rhs, overwrite_a=True, overwrite_b=True)
-    if info < 0:
-        raise ValueError(f"The {-info}-th argument had an illegal value.")
-    elif info > 0:
+    try:
+        coeffs = solve(lhs, rhs)
+    except Exception as exc:
         msg = "Singular matrix."
         nmonos = powers.shape[0]
         if nmonos > 0:
             pmat = _polynomial_matrix((y - shift)/scale, powers)
-            rank = mx.linalg.matrix_rank(pmat)
-            if rank < nmonos:
+            rank = mx.linalg.matrix_rank(pmat, stream=mx.cpu) if hasattr(mx.linalg, "matrix_rank") else None
+            if rank is not None and int(rank) < int(nmonos):
                 msg = (
                     "Singular matrix. The matrix of monomials evaluated at "
                     "the data point coordinates does not have full column "
-                    f"rank ({rank}/{nmonos})."
-                    )
-
-        raise LinAlgError(msg)
+                    f"rank ({int(rank)}/{int(nmonos)})."
+                )
+        raise LinAlgError(msg) from exc
 
     return shift, scale, coeffs
 

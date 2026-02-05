@@ -33,9 +33,9 @@ from collections import namedtuple
 from collections.abc import Sequence
 
 import mlx.core as mx
-from numpy import array, asarray, ma
+from scipy_mlx._lib._mlx_compat import array, asarray, ma
 
-from scipy import sparse
+from scipy_mlx import sparse
 from scipy_mlx.spatial import distance_matrix
 
 from scipy_mlx.optimize import milp, LinearConstraint
@@ -45,7 +45,7 @@ from scipy_mlx._lib._util import (_get_nan, _rename_parameter, _contains_nan,
 import scipy_mlx.special as special
 # Import unused here but needs to stay until end of deprecation periode
 # See https://github.com/scipy/scipy/issues/15765#issuecomment-1875564522
-from scipy import linalg  # noqa: F401
+from scipy_mlx import linalg  # noqa: F401
 from . import distributions
 from . import _mstats_basic as mstats_basic
 
@@ -62,7 +62,7 @@ from ._axis_nan_policy import (_axis_nan_policy_factory, _broadcast_shapes,
                                too_small_nd_not_omit, too_small_nd_omit)
 from ._binomtest import _binary_search_for_binom_tst as _binary_search
 from scipy_mlx._lib._bunch import _make_tuple_bunch
-from scipy import stats
+from scipy_mlx import stats
 from scipy_mlx.optimize import root_scalar
 from scipy_mlx._lib._array_api import (
     _asarray,

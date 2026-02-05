@@ -5,7 +5,6 @@ from types import EllipsisType, ModuleType, NotImplementedType
 
 import mlx.core as mx
 
-import scipy_mlx.spatial.transform._rotation_cy as cython_backend
 import scipy_mlx.spatial.transform._rotation_xp as xp_backend
 from scipy_mlx.spatial.transform._rotation_groups import create_group
 from scipy_mlx._lib._array_api import (
@@ -20,6 +19,13 @@ from scipy_mlx._lib._array_api import (
 from scipy_mlx._lib.array_api_compat import device as xp_device
 import scipy_mlx._lib.array_api_extra as xpx
 from scipy_mlx._lib._util import _transition_to_rng, broadcastable
+
+try:
+    # Upstream SciPy uses a Cython backend for NumPy. In this MLX port we
+    # don't ship compiled extensions, so fall back to the Array API backend.
+    import scipy_mlx.spatial.transform._rotation_cy as cython_backend  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover
+    cython_backend = xp_backend
 
 backend_registry = {array_namespace(mx.empty(0)): cython_backend}
 
@@ -2284,11 +2290,11 @@ class Rotation:
         num : int or None, optional
             Number of random rotations to generate. If None (default), then a
             single rotation is generated.
-        rng : `numpy.random.Generator`, optional
+        rng : `mx.random.Generator`, optional
             Pseudorandom number generator state. When `rng` is None, a new
-            `numpy.random.Generator` is created using entropy from the
-            operating system. Types other than `numpy.random.Generator` are
-            passed to `numpy.random.default_rng` to instantiate a `Generator`.
+            `mx.random.Generator` is created using entropy from the
+            operating system. Types other than `mx.random.Generator` are
+            passed to `mx.random.default_rng` to instantiate a `Generator`.
 
         Returns
         -------

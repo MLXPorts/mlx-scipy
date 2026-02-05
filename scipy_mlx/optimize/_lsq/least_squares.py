@@ -2,7 +2,7 @@
 from warnings import warn
 
 import mlx.core as mx
-from numpy.linalg import norm
+from scipy_mlx.linalg import norm
 
 from scipy_mlx.sparse.linalg import LinearOperator
 from scipy_mlx.optimize import _minpack, OptimizeResult
@@ -756,10 +756,9 @@ def least_squares(
     First, define the function which generates the data with noise and
     outliers, define the model parameters, and generate data:
 
-    >>> from numpy.random import default_rng
-    >>> rng = default_rng()
+    >>> rng = mx.random.default_rng()
     >>> def gen_data(t, a, b, c, noise=0., n_outliers=0, seed=None):
-    ...     rng = default_rng(seed)
+    ...     rng = mx.random.default_rng(seed)
     ...
     ...     y = a + b * mx.exp(t * c)
     ...

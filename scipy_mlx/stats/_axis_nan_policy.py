@@ -274,7 +274,7 @@ def _check_empty_inputs(samples, axis, xp=None):
     return output
 
 
-def _add_reduced_axes(res, reduced_axes, keepdims, xp=np):
+def _add_reduced_axes(res, reduced_axes, keepdims, xp=mx):
     """
     Add reduced axes back to all the arrays in the result object
     if keepdims = True.

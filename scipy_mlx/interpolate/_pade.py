@@ -1,5 +1,5 @@
-from numpy import zeros, asarray, eye, poly1d, hstack, r_
-from scipy import linalg
+from scipy_mlx._lib._mlx_compat import zeros, asarray, eye, poly1d, hstack, r_
+from scipy_mlx import linalg
 
 __all__ = ["pade"]
 
@@ -64,4 +64,3 @@ def pade(an, m, n=None):
     p = pq[:n+1]
     q = r_[1.0, pq[n+1:]]
     return poly1d(p[::-1]), poly1d(q[::-1])
-

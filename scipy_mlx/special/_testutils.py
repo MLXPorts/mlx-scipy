@@ -4,12 +4,17 @@ import operator
 from scipy_mlx._lib import _pep440
 
 import mlx.core as mx
-from numpy.testing import assert_
 import pytest
 
 import scipy_mlx.special as sc
 
 __all__ = ['with_special_errors', 'assert_func_equal', 'FuncData']
+
+
+def assert_(cond, msg=""):
+    ok = bool(mx.all(cond)) if hasattr(cond, "shape") else bool(cond)
+    if not ok:
+        raise AssertionError(msg)
 
 
 #------------------------------------------------------------------------------

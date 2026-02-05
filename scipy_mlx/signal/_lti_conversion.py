@@ -4,9 +4,18 @@ from one representation to another.
 """
 
 import mlx.core as mx
-from numpy import (r_, eye, atleast_2d, poly, dot,
-                   asarray, zeros, array, outer)
-from scipy import linalg
+from scipy_mlx._lib._mlx_compat import (
+    r_,
+    eye,
+    atleast_2d,
+    poly,
+    dot,
+    asarray,
+    zeros,
+    array,
+    outer,
+)
+from scipy_mlx import linalg
 
 from scipy_mlx._lib._array_api import array_namespace, xp_size
 import scipy_mlx._lib.array_api_extra as xpx

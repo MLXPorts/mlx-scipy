@@ -94,7 +94,7 @@ References
     and Theory," Numerical Analysis, ed. G. A. Watson, Lecture
 """
 import mlx.core as mx
-from numpy.linalg import norm
+from scipy_mlx.linalg import norm
 from scipy_mlx.linalg import svd, qr
 from scipy_mlx.sparse.linalg import lsmr
 from scipy_mlx.optimize import OptimizeResult

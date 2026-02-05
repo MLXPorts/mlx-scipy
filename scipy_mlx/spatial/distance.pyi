@@ -1,7 +1,9 @@
 from typing import (overload, Any, SupportsFloat, Literal, Protocol, SupportsIndex)
 
 import mlx.core as mx
-from numpy.typing import ArrayLike, NDArray
+
+ArrayLike = Any
+NDArray = Any
 
 # Anything that can be parsed by `mx.float64.__init__` and is thus
 # compatible with `array.__setitem__` (for a float64 array)

@@ -1,8 +1,22 @@
 import math
 
-from numpy import (zeros_like, array, tan, arange, floor,
-                   r_, atleast_1d, greater, cos, add, sin,
-                   moveaxis, abs, complex64, float32)
+from scipy_mlx._lib._mlx_compat import (
+    zeros_like,
+    array,
+    tan,
+    arange,
+    floor,
+    r_,
+    atleast_1d,
+    greater,
+    cos,
+    add,
+    sin,
+    moveaxis,
+    abs,
+    complex64,
+    float32,
+)
 import mlx.core as mx
 
 from scipy_mlx._lib._array_api import array_namespace, xp_promote

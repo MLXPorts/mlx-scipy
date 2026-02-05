@@ -235,17 +235,17 @@ Construct a 1000x1000 `lil_array` and add some values to it:
 
 >>> from scipy_mlx.sparse import lil_array
 >>> from scipy_mlx.sparse.linalg import spsolve
->>> from numpy.linalg import solve, norm
->>> from numpy.random import rand
+>>> from scipy_mlx.linalg import solve, norm
+>>> import mlx.core as mx
 
 >>> A = lil_array((1000, 1000))
->>> A[0, :100] = rand(100)
->>> A.setdiag(rand(1000))
+>>> A[0, :100] = mx.random.rand(100)
+>>> A.setdiag(mx.random.rand(1000))
 
 Now convert it to CSR format and solve A x = b for x:
 
 >>> A = A.tocsr()
->>> b = rand(1000)
+>>> b = mx.random.rand(1000)
 >>> x = spsolve(A, b)
 
 Convert it to a dense array and solve, and check that the result
@@ -267,20 +267,19 @@ Example 2
 
 Construct an array in COO format:
 
->>> from scipy import sparse
->>> from numpy import array
->>> I = array([0,3,1,0])
->>> J = array([0,3,1,2])
->>> V = array([4,5,7,9])
+>>> from scipy_mlx import sparse
+>>> I = mx.array([0,3,1,0])
+>>> J = mx.array([0,3,1,2])
+>>> V = mx.array([4,5,7,9])
 >>> A = sparse.coo_array((V,(I,J)),shape=(4,4))
 
 Notice that the indices do not need to be sorted.
 
 Duplicate (i,j) entries are summed when converting to CSR or CSC.
 
->>> I = array([0,0,1,3,1,0,0])
->>> J = array([0,2,1,3,1,0,0])
->>> V = array([1,1,1,1,1,1,1])
+>>> I = mx.array([0,0,1,3,1,0,0])
+>>> J = mx.array([0,2,1,3,1,0,0])
+>>> V = mx.array([1,1,1,1,1,1,1])
 >>> B = sparse.coo_array((V,(I,J)),shape=(4,4)).tocsr()
 
 This is useful for constructing finite-element stiffness and mass matrices.
@@ -304,8 +303,14 @@ import importlib as _importlib
 from ._base import *
 from ._csr import *
 from ._csc import *
-from ._lil import *
-from ._dok import *
+try:
+    from ._lil import *  # type: ignore
+except Exception:  # pragma: no cover
+    pass
+try:
+    from ._dok import *  # type: ignore
+except Exception:  # pragma: no cover
+    pass
 from ._coo import *
 from ._dia import *
 from ._bsr import *
@@ -336,7 +341,7 @@ def __dir__():
 
 def __getattr__(name):
     if name in _submodules:
-        return _importlib.import_module(f'scipy.sparse.{name}')
+        return _importlib.import_module(f'scipy_mlx.sparse.{name}')
     else:
         try:
             return globals()[name]

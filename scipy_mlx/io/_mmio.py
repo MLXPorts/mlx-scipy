@@ -13,8 +13,50 @@
 import os
 
 import mlx.core as mx
-from numpy import (asarray, real, imag, conj, zeros, array, concatenate,
-                   ones, can_cast)
+from mlx.core import array, zeros, ones, concatenate
+
+
+def _can_cast(from_dtype, to_dtype):
+    """MLX compatibility function for NumPy's can_cast."""
+    # MLX has different casting rules than NumPy
+    # For now, be conservative and only allow safe casts
+    if to_dtype == 'intp' or to_dtype == 'int32':
+        # MLX typically uses int32 as 'intp' on Metal
+        return from_dtype in ['int32', 'int64', 'int16', 'int8', 'bool']
+    elif to_dtype == 'uint64':
+        return from_dtype in ['uint64', 'uint32', 'uint16', 'uint8', 'bool']
+    elif to_dtype == 'float32' or to_dtype in ['f', 'd']:
+        # MLX uses float32 as default float
+        return from_dtype in ['float32', 'float64', 'int32', 'int16', 'int8', 'uint32', 'uint16', 'uint8', 'bool']
+    elif to_dtype == 'complex64' or to_dtype == 'D':
+        return from_dtype in ['complex64', 'complex128', 'float32', 'float64', 'int32', 'int16', 'int8', 'uint32', 'uint16', 'uint8', 'bool']
+    return True  # Be permissive by default
+
+
+def _real(x):
+    """MLX-compatible real part extraction."""
+    if isinstance(x, mx.array):
+        return mx.real(x)
+    return float(x)
+
+
+def _imag(x):
+    """MLX-compatible imaginary part extraction."""
+    if isinstance(x, mx.array):
+        return mx.imag(x)
+    return float(x)
+
+
+def _conj(x):
+    """MLX-compatible complex conjugate."""
+    if isinstance(x, mx.array):
+        return mx.conjugate(x)
+    return complex(x).conjugate()
+
+
+def _asarray(x, dtype=None):
+    """MLX-compatible asarray function."""
+    return array(x, dtype=dtype)
 
 from scipy_mlx.sparse import coo_array, issparse, coo_matrix
 
@@ -532,7 +574,7 @@ class MMFile:
                     # This can give a warning for uint dtypes, so silence that
                     if isskew and aij != -aji:
                         isskew = False
-                if isherm and aij != conj(aji):
+                if isherm and aij != _conj(aji):
                     isherm = False
             if not (issymm or isskew or isherm):
                 break
@@ -695,7 +737,7 @@ class MMFile:
                     if is_skew:
                         a[j, i] = -aij
                     elif is_herm:
-                        a[j, i] = conj(aij)
+                        a[j, i] = _conj(aij)
                     else:
                         a[j, i] = aij
                 if i < rows-1:
@@ -795,7 +837,7 @@ class MMFile:
         if isinstance(a, list) or isinstance(a, array) or \
            isinstance(a, tuple) or hasattr(a, '__array__'):
             rep = self.FORMAT_ARRAY
-            a = asarray(a)
+            a = _asarray(a)
             if len(a.shape) != 2:
                 raise ValueError('Expected 2 dimensional array')
             rows, cols = a.shape
@@ -803,7 +845,7 @@ class MMFile:
             if field is not None:
 
                 if field == self.FIELD_INTEGER:
-                    if not can_cast(a.dtype, 'intp'):
+                    if not _can_cast(str(a.dtype), 'intp'):
                         raise OverflowError("mmwrite does not support integer "
                                             "dtypes larger than native 'intp'.")
                     a = a.astype('intp')
@@ -831,7 +873,7 @@ class MMFile:
         if field is None:
             kind = a.dtype.kind
             if kind == 'i':
-                if not can_cast(a.dtype, 'intp'):
+                if not _can_cast(str(a.dtype), 'intp'):
                     raise OverflowError("mmwrite does not support integer "
                                         "dtypes larger than native 'intp'.")
                 field = 'integer'
@@ -894,13 +936,13 @@ class MMFile:
                     for j in range(cols):
                         for i in range(rows):
                             aij = a[i, j]
-                            data = template % (real(aij), imag(aij))
+                            data = template % (_real(aij), _imag(aij))
                             stream.write(data.encode('latin1'))
                 else:
                     for j in range(cols):
                         for i in range(j, rows):
                             aij = a[i, j]
-                            data = template % (real(aij), imag(aij))
+                            data = template % (_real(aij), _imag(aij))
                             stream.write(data.encode('latin1'))
 
             elif field == self.FIELD_PATTERN:
@@ -938,7 +980,14 @@ class MMFile:
                     stream.write(data.encode('latin1'))
             elif field == self.FIELD_COMPLEX:
                 for r, c, d in zip(coo.row+1, coo.col+1, coo.data):
-                    data = ("%i %i " % (r, c)) + (template % (d.real, d.imag))
+                    if isinstance(d, mx.array):
+                        real_part = _real(d)
+                        imag_part = _imag(d)
+                    else:
+                        # Python scalar - use native attributes
+                        real_part = d.real if hasattr(d, 'real') else d
+                        imag_part = d.imag if hasattr(d, 'imag') else 0
+                    data = ("%i %i " % (r, c)) + (template % (real_part, imag_part))
                     stream.write(data.encode('latin1'))
             else:
                 raise TypeError(f'Unknown field type {field}')

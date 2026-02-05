@@ -532,7 +532,7 @@ def _wrap_scalar_function(function, args):
         # backwards-compatibility, also allow mx.array([1.3]), mx.array([[1.3]]) etc.
         if not mx.isscalar(fx):
             try:
-                fx = mx.array(fx).item()
+                fx = mx.array(fx)[()]
             except (TypeError, ValueError) as e:
                 raise ValueError("The user-provided objective function "
                                  "must return a scalar value.") from e
@@ -563,7 +563,7 @@ def _wrap_scalar_function_maxfun_validation(function, args, maxfun):
         # mx.array([[1.3]]) etc.
         if not mx.isscalar(fx):
             try:
-                fx = mx.array(fx).item()
+                fx = mx.array(fx)[()]
             except (TypeError, ValueError) as e:
                 raise ValueError("The user-provided objective function "
                                  "must return a scalar value.") from e
@@ -1074,11 +1074,11 @@ def check_grad(func, grad, x0, *args, epsilon=_epsilon,
         using `func`. By default it is ``'all'``, in which case, all
         the one hot direction vectors are considered to check `grad`.
         If `func` is a vector valued function then only ``'all'`` can be used.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
         The random numbers generated affect the random vector along which gradients
         are computed to check ``grad``. Note that `rng` is only used when `direction`

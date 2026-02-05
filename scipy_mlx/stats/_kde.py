@@ -18,12 +18,27 @@
 #-------------------------------------------------------------------------------
 
 # SciPy imports.
-from scipy import linalg, special
+from scipy_mlx import linalg, special
 from scipy_mlx._lib._util import check_random_state, np_vecdot
 
-from numpy import (asarray, atleast_2d, reshape, zeros, newaxis, exp, pi,
-                   sqrt, ravel, power, atleast_1d, squeeze, sum, transpose,
-                   ones, cov)
+from scipy_mlx._lib._mlx_compat import (
+    asarray,
+    atleast_2d,
+    reshape,
+    zeros,
+    newaxis,
+    exp,
+    pi,
+    sqrt,
+    ravel,
+    power,
+    atleast_1d,
+    squeeze,
+    sum,
+    transpose,
+    ones,
+    cov,
+)
 import mlx.core as mx
 
 # Local imports.
@@ -383,11 +398,11 @@ class gaussian_kde:
             A 1-D array containing the upper bounds of integration.
         maxpts : int, optional
             The maximum number of points to use for integration.
-        rng : `numpy.random.Generator`, optional
+        rng : `mx.random.Generator`, optional
             Pseudorandom number generator state. When `rng` is None, a new
             generator is created using entropy from the operating system. Types
-            other than `numpy.random.Generator` are passed to
-            `numpy.random.default_rng` to instantiate a ``Generator``.
+            other than `mx.random.Generator` are passed to
+            `mx.random.default_rng` to instantiate a ``Generator``.
 
         Returns
         -------
@@ -461,8 +476,8 @@ class gaussian_kde:
             The number of samples to draw.  If not provided, then the size is
             the same as the effective number of samples in the underlying
             dataset.
-        seed : {None, int, `numpy.random.Generator`, `numpy.random.RandomState`}, optional
-            If `seed` is None (or `mx.random`), the `numpy.random.RandomState`
+        seed : {None, int, `mx.random.Generator`, `mx.random.RandomState`}, optional
+            If `seed` is None (or `mx.random`), the `mx.random.RandomState`
             singleton is used.
             If `seed` is an int, a new ``RandomState`` instance is used,
             seeded with `seed`.

@@ -1,7 +1,6 @@
 import mlx.core as mx
-from typing import (overload, NamedTuple, Protocol)
+from typing import (overload, NamedTuple, Protocol, Any as ArrayLike)
 from collections.abc import Callable
-import numpy.typing as npt
 from scipy_mlx._lib._util import SeedType
 import scipy.stats as stats
 
@@ -41,7 +40,7 @@ class TransformedDensityRejection(Method):
                  center: None | float = ...,
                  domain: None | tuple[float, float] = ...,
                  c: float = ...,
-                 construction_points: int | npt.ArrayLike = ...,
+                 construction_points: int | ArrayLike = ...,
                  use_dars: bool = ...,
                  max_squeeze_hat_ratio: float = ...,
                  random_state: SeedType = ...) -> None: ...
@@ -52,7 +51,7 @@ class TransformedDensityRejection(Method):
     @overload
     def ppf_hat(self, u: ArrayLike0D) -> float: ...  # type: ignore[overload-overlap]
     @overload
-    def ppf_hat(self, u: npt.ArrayLike) -> mx.array: ...
+    def ppf_hat(self, u: ArrayLike) -> mx.array: ...
 
 
 class SROUDist(Protocol):

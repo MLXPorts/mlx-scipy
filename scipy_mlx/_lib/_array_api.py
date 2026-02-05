@@ -62,7 +62,7 @@ __all__ = [
 
 
 Array: TypeAlias = Any  # To be changed to a Protocol later (see array-api#589)
-ArrayLike: TypeAlias = Array | npt.ArrayLike
+ArrayLike: TypeAlias = Any
 
 
 def _check_finite(array: Array, xp: ModuleType) -> None:

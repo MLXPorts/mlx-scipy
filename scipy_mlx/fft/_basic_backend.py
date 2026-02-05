@@ -1,7 +1,6 @@
 from scipy_mlx._lib._array_api import (
     array_namespace, is_numpy, xp_unsupported_param_msg, is_complex, xp_float_to_complex
 )
-from . import _pocketfft
 import mlx.core as mx
 
 
@@ -24,102 +23,160 @@ complex_funcs = {'fft', 'ifft', 'fftn', 'ifftn', 'hfft', 'irfft', 'irfftn'}
 # PyTorch arrays and other array API standard supporting objects.
 # If xp.fft does not exist, we attempt to convert to np and back to use pocketfft.
 
-def _execute_1D(func_str, pocketfft_func, x, n, axis, norm, overwrite_x, workers, plan):
+def _norm_scale(norm: str, forward: bool, n: int):
+    # MLX follows NumPy's default FFT normalization ("backward"):
+    # forward: unscaled, inverse: scaled by 1/n.
+    if norm is None:
+        norm = "backward"
+    if norm not in ("backward", "ortho", "forward"):
+        raise ValueError(f'Invalid norm value {norm!r}, should be "backward", "ortho" or "forward"')
+
+    n_f = mx.array(float(n))
+    if norm == "backward":
+        return mx.array(1.0)
+    if norm == "ortho":
+        return mx.divide(mx.array(1.0), mx.sqrt(n_f)) if forward else mx.sqrt(n_f)
+    # norm == "forward"
+    return mx.divide(mx.array(1.0), n_f) if forward else n_f
+
+
+def _pad_or_crop_1d(x: mx.array, n: int | None, axis: int):
+    if n is None:
+        return x
+    axis = int(axis)
+    cur = int(x.shape[axis])
+    if cur == n:
+        return x
+    if cur > n:
+        slc = [slice(None)] * x.ndim
+        slc[axis] = slice(0, n)
+        return x[tuple(slc)]
+    pad = n - cur
+    pad_width = [(0, 0)] * x.ndim
+    pad_width[axis] = (0, pad)
+    return mx.pad(x, pad_width, mode="constant", constant_values=0.0)
+
+
+def _execute_1D(func_str, x, n, axis, norm, overwrite_x, workers, plan):
     xp = array_namespace(x)
-
-    if is_numpy(xp):
-        x = mx.array(x)
-        return pocketfft_func(x, n=n, axis=axis, norm=norm,
-                              overwrite_x=overwrite_x, workers=workers, plan=plan)
-
     norm = _validate_fft_args(workers, plan, norm)
-    if hasattr(xp, 'fft'):
-        xp_func = getattr(xp.fft, func_str)
-        if func_str in complex_funcs:
-            try:
-                res = xp_func(x, n=n, axis=axis, norm=norm)
-            except: # backends may require complex input  # noqa: E722
-                x = xp_float_to_complex(x, xp)
-                res = xp_func(x, n=n, axis=axis, norm=norm)
-            return res
-        return xp_func(x, n=n, axis=axis, norm=norm)
+
+    if not (xp is mx or getattr(xp, "__name__", "").endswith("array_api_compat.numpy") or is_numpy(xp)):
+        raise ValueError(xp_unsupported_param_msg("backend"))
 
     x = mx.array(x)
-    y = pocketfft_func(x, n=n, axis=axis, norm=norm)
-    return xp.asarray(y)
+    x = _pad_or_crop_1d(x, n, axis)
+    n_eff = int(x.shape[int(axis)])
+
+    if func_str == "fft":
+        y = mx.fft.fft(x, n=n_eff, axis=axis)
+        return mx.multiply(y, _norm_scale(norm, True, n_eff))
+    if func_str == "ifft":
+        y = mx.fft.ifft(x, n=n_eff, axis=axis)
+        return mx.multiply(y, _norm_scale(norm, False, n_eff))
+    if func_str == "rfft":
+        y = mx.fft.rfft(x, n=n_eff, axis=axis)
+        return mx.multiply(y, _norm_scale(norm, True, n_eff))
+    if func_str == "irfft":
+        y = mx.fft.irfft(x, n=n_eff, axis=axis)
+        return mx.multiply(y, _norm_scale(norm, False, n_eff))
+    if func_str == "hfft":
+        y = mx.fft.irfft(mx.conjugate(x), n=n_eff, axis=axis)
+        return mx.multiply(y, _norm_scale(norm, True, n_eff))
+    if func_str == "ihfft":
+        y = mx.conjugate(mx.fft.rfft(x, n=n_eff, axis=axis))
+        return mx.multiply(y, _norm_scale(norm, False, n_eff))
+    raise ValueError(f"unsupported FFT function {func_str!r}")
 
 
-def _execute_nD(func_str, pocketfft_func, x, s, axes, norm, overwrite_x, workers, plan):
+def _pad_or_crop_nd(x: mx.array, s, axes):
+    if s is None:
+        return x, axes
+    if axes is None:
+        axes = tuple(range(x.ndim - len(s), x.ndim))
+    axes = tuple(int(a) for a in axes)
+    if len(s) != len(axes):
+        raise ValueError("when given, axes and shape arguments have to be of the same length")
+    out = x
+    for n, ax in zip(s, axes):
+        out = _pad_or_crop_1d(out, int(n), ax)
+    return out, axes
+
+
+def _execute_nD(func_str, x, s, axes, norm, overwrite_x, workers, plan):
     xp = array_namespace(x)
     
-    if is_numpy(xp):
-        x = mx.array(x)
-        return pocketfft_func(x, s=s, axes=axes, norm=norm,
-                              overwrite_x=overwrite_x, workers=workers, plan=plan)
-
     norm = _validate_fft_args(workers, plan, norm)
-    if hasattr(xp, 'fft'):
-        xp_func = getattr(xp.fft, func_str)
-        if func_str in complex_funcs:
-            try:
-                res = xp_func(x, s=s, axes=axes, norm=norm)
-            except: # backends may require complex input  # noqa: E722
-                x = xp_float_to_complex(x, xp)
-                res = xp_func(x, s=s, axes=axes, norm=norm)
-            return res
-        return xp_func(x, s=s, axes=axes, norm=norm)
+    if not (xp is mx or getattr(xp, "__name__", "").endswith("array_api_compat.numpy") or is_numpy(xp)):
+        raise ValueError(xp_unsupported_param_msg("backend"))
 
     x = mx.array(x)
-    y = pocketfft_func(x, s=s, axes=axes, norm=norm)
-    return xp.asarray(y)
+    x, axes = _pad_or_crop_nd(x, s, axes)
+    n_eff = 1
+    for ax in axes:
+        n_eff *= int(x.shape[ax])
+
+    if func_str == "fftn":
+        y = mx.fft.fftn(x, axes=axes)
+        return mx.multiply(y, _norm_scale(norm, True, n_eff))
+    if func_str == "ifftn":
+        y = mx.fft.ifftn(x, axes=axes)
+        return mx.multiply(y, _norm_scale(norm, False, n_eff))
+    if func_str == "rfftn":
+        y = mx.fft.rfftn(x, axes=axes)
+        return mx.multiply(y, _norm_scale(norm, True, n_eff))
+    if func_str == "irfftn":
+        y = mx.fft.irfftn(x, s=s, axes=axes)
+        return mx.multiply(y, _norm_scale(norm, False, n_eff))
+    raise ValueError(f"unsupported FFT function {func_str!r}")
 
 
 def fft(x, n=None, axis=-1, norm=None,
         overwrite_x=False, workers=None, *, plan=None):
-    return _execute_1D('fft', _pocketfft.fft, x, n=n, axis=axis, norm=norm,
+    return _execute_1D('fft', x, n=n, axis=axis, norm=norm,
                        overwrite_x=overwrite_x, workers=workers, plan=plan)
 
 
 def ifft(x, n=None, axis=-1, norm=None, overwrite_x=False, workers=None, *,
          plan=None):
-    return _execute_1D('ifft', _pocketfft.ifft, x, n=n, axis=axis, norm=norm,
+    return _execute_1D('ifft', x, n=n, axis=axis, norm=norm,
                        overwrite_x=overwrite_x, workers=workers, plan=plan)
 
 
 def rfft(x, n=None, axis=-1, norm=None,
          overwrite_x=False, workers=None, *, plan=None):
-    return _execute_1D('rfft', _pocketfft.rfft, x, n=n, axis=axis, norm=norm,
+    return _execute_1D('rfft', x, n=n, axis=axis, norm=norm,
                        overwrite_x=overwrite_x, workers=workers, plan=plan)
 
 
 def irfft(x, n=None, axis=-1, norm=None,
           overwrite_x=False, workers=None, *, plan=None):
-    return _execute_1D('irfft', _pocketfft.irfft, x, n=n, axis=axis, norm=norm,
+    return _execute_1D('irfft', x, n=n, axis=axis, norm=norm,
                        overwrite_x=overwrite_x, workers=workers, plan=plan)
 
 
 def hfft(x, n=None, axis=-1, norm=None,
          overwrite_x=False, workers=None, *, plan=None):
-    return _execute_1D('hfft', _pocketfft.hfft, x, n=n, axis=axis, norm=norm,
+    return _execute_1D('hfft', x, n=n, axis=axis, norm=norm,
                        overwrite_x=overwrite_x, workers=workers, plan=plan)
 
 
 def ihfft(x, n=None, axis=-1, norm=None,
           overwrite_x=False, workers=None, *, plan=None):
-    return _execute_1D('ihfft', _pocketfft.ihfft, x, n=n, axis=axis, norm=norm,
+    return _execute_1D('ihfft', x, n=n, axis=axis, norm=norm,
                        overwrite_x=overwrite_x, workers=workers, plan=plan)
 
 
 def fftn(x, s=None, axes=None, norm=None,
          overwrite_x=False, workers=None, *, plan=None):
-    return _execute_nD('fftn', _pocketfft.fftn, x, s=s, axes=axes, norm=norm,
+    return _execute_nD('fftn', x, s=s, axes=axes, norm=norm,
                        overwrite_x=overwrite_x, workers=workers, plan=plan)
 
 
 
 def ifftn(x, s=None, axes=None, norm=None,
           overwrite_x=False, workers=None, *, plan=None):
-    return _execute_nD('ifftn', _pocketfft.ifftn, x, s=s, axes=axes, norm=norm,
+    return _execute_nD('ifftn', x, s=s, axes=axes, norm=norm,
                        overwrite_x=overwrite_x, workers=workers, plan=plan)
 
 
@@ -135,7 +192,7 @@ def ifft2(x, s=None, axes=(-2, -1), norm=None,
 
 def rfftn(x, s=None, axes=None, norm=None,
           overwrite_x=False, workers=None, *, plan=None):
-    return _execute_nD('rfftn', _pocketfft.rfftn, x, s=s, axes=axes, norm=norm,
+    return _execute_nD('rfftn', x, s=s, axes=axes, norm=norm,
                        overwrite_x=overwrite_x, workers=workers, plan=plan)
 
 

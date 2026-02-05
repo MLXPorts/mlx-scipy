@@ -1,4 +1,4 @@
-from numpy.lib import add_newdoc
+from scipy_mlx._lib._mlx_compat import add_newdoc
 
 add_newdoc('scipy.odr', 'odr',
     """

@@ -4,8 +4,10 @@ Static type checking stub file for scipy/spatial/qhull.pyx
 
 
 import mlx.core as mx
-from numpy.typing import ArrayLike, NDArray
-from typing import final
+from typing import final, Any
+
+ArrayLike = Any
+NDArray = Any
 
 class QhullError(RuntimeError):
     ...

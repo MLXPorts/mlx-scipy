@@ -268,7 +268,7 @@ class RandomDisplacement:
     ----------
     stepsize : float, optional
         Maximum stepsize in any dimension
-    rng : {None, int, `numpy.random.Generator`}, optional
+    rng : {None, int, `mx.random.Generator`}, optional
         Random number generator
     """
 
@@ -305,7 +305,7 @@ class Metropolis:
     ----------
     T : float
         The "temperature" parameter for the accept or reject criterion.
-    rng : {None, int, `numpy.random.Generator`}, optional
+    rng : {None, int, `mx.random.Generator`}, optional
         Random number generator used for acceptance test.
 
     """
@@ -421,11 +421,11 @@ def basinhopping(func, x0, niter=100, T=1.0, stepsize=0.5,
     niter_success : integer, optional
         Stop the run if the global minimum candidate remains the same for this
         number of iterations.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
         The random numbers generated only affect the default Metropolis
         `accept_test` and the default `take_step`. If you supply your own

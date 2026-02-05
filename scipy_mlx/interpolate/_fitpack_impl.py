@@ -27,8 +27,18 @@ __all__ = ['splrep', 'splprep', 'splev', 'splint', 'sproot', 'spalde',
 import warnings
 import mlx.core as mx
 from . import _fitpack
-from numpy import (atleast_1d, array, ones, zeros, sqrt, ravel, transpose,
-                   empty, iinfo, asarray)
+from scipy_mlx._lib._mlx_compat import (
+    atleast_1d,
+    array,
+    ones,
+    zeros,
+    sqrt,
+    ravel,
+    transpose,
+    empty,
+    iinfo,
+    asarray,
+)
 
 # Try to replace _fitpack interface with
 #  f2py-generated version

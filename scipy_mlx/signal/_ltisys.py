@@ -25,7 +25,7 @@ import warnings
 # use scipy's qr until this is solved
 
 from scipy_mlx.linalg import qr as s_qr
-from scipy import linalg
+from scipy_mlx import linalg
 from scipy_mlx.interpolate import make_interp_spline
 from ._filter_design import (tf2zpk, zpk2tf, normalize, freqs, freqz, freqs_zpk,
                             freqz_zpk)
@@ -33,8 +33,17 @@ from ._lti_conversion import (tf2ss, abcd_normalize, ss2tf, zpk2ss, ss2zpk,
                               cont2discrete)
 
 import mlx.core as mx
-from numpy import (real, atleast_1d, squeeze, asarray, zeros,
-                   dot, transpose, ones, linspace)
+from scipy_mlx._lib._mlx_compat import (
+    real,
+    atleast_1d,
+    squeeze,
+    asarray,
+    zeros,
+    dot,
+    transpose,
+    ones,
+    linspace,
+)
 import copy
 
 __all__ = ['lti', 'dlti', 'TransferFunction', 'ZerosPolesGain', 'StateSpace',

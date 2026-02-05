@@ -409,8 +409,7 @@ def null_space(A, rcond=None, *, overwrite_a=False, check_finite=True,
 
     2-D null space:
 
-    >>> from numpy.random import default_rng
-    >>> rng = default_rng()
+    >>> rng = mx.random.default_rng()
     >>> B = rng.random((3, 5))
     >>> Z = null_space(B)
     >>> Z.shape

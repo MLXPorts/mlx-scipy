@@ -11,7 +11,7 @@ Python translation by Nickolai Belakovski.
 '''
 
 import mlx.core as mx
-import numpy.typing as npt
+from typing import Any as ArrayLike
 from .consts import DEBUGGING, EPS, CONSTRMAX, REALMAX, FUNCMAX
 from .present import present
 
@@ -205,7 +205,7 @@ def savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr=None
     return nfilt, cfilt, ffilt, xfilt, confilt
 
 
-def selectx(fhist: npt.NDArray, chist: npt.NDArray, cweight: float, ctol: float):
+def selectx(fhist: ArrayLike, chist: ArrayLike, cweight: float, ctol: float):
     '''
     This subroutine selects X according to FHIST and CHIST, which represents (a part of) history
     of F and CSTRV. Normally, FHIST and CHIST are not the full history but only a filter, e.g. ffilt

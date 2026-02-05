@@ -1,6 +1,6 @@
 import mlx.core as mx
 
-from scipy import stats
+from scipy_mlx import stats
 from ._stats_py import _get_pvalue, _rankdata, _SimpleNormal
 from . import _morestats
 from ._axis_nan_policy import _broadcast_arrays

@@ -262,7 +262,7 @@ class _lil_base(_spbase, IndexMixin):
                 if issparse(x):
                     x = x.toarray()
                 if isinstance(x, mx.array):
-                    x = x.item()
+                    x = x[()]
                 x = self.dtype.type(x)
                 if x.size > 1:
                     raise ValueError("Trying to assign a sequence to an item")

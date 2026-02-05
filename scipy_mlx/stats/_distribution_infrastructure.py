@@ -6,12 +6,12 @@ import inspect
 import math
 
 import mlx.core as mx
-from numpy import inf
+from scipy_mlx._lib._mlx_compat import inf
 
 from scipy_mlx._lib._array_api import xp_capabilities, xp_promote
 from scipy_mlx._lib._util import _rng_spawn, _RichResult
 from scipy_mlx._lib._docscrape import ClassDoc, NumpyDocString
-from scipy import special, stats
+from scipy_mlx import special, stats
 from scipy_mlx.special._ufuncs import _log1mexp
 from scipy_mlx.integrate import tanhsinh as _tanhsinh, nsum
 from scipy_mlx.optimize._bracket import _bracket_root, _bracket_minimum
@@ -2020,17 +2020,18 @@ class UnivariateDistribution(_ProbabilityDistribution):
         if self.validation_policy == _SKIP_ALL:
             return order
 
-        order = mx.array(order, dtype=self._dtype)[()]
+        order_arr = mx.array(order, dtype=self._dtype)
+        order_val = order_arr[()]
         message = (f"Argument `order` of `{self.__class__.__name__}.moment` "
                    "must be a finite, positive integer.")
         try:
-            order_int = round(order.item())
+            order_int = round(order_val)
             # If this fails for any reason (e.g. it's an array, it's infinite)
             # it's not a valid `order`.
         except Exception as e:
             raise ValueError(message) from e
 
-        if order_int <0 or order_int != order:
+        if order_int < 0 or order_int != order_val:
             raise ValueError(message)
 
         message = (f"Argument `kind` of `{self.__class__.__name__}.moment` "
@@ -2038,7 +2039,7 @@ class UnivariateDistribution(_ProbabilityDistribution):
         if kind.lower() not in kinds:
             raise ValueError(message)
 
-        return order
+        return order_val
 
     def _preserve_type(self, x):
         x = mx.array(x)

@@ -170,7 +170,7 @@ def _gen_roots_and_weights(n, mu0, an_func, bn_func, f, df, symmetrize, mu):
                         interval
     """
     # lazy import to prevent to prevent linalg dependency for whole module (gh-23420)
-    from scipy import linalg
+    from scipy_mlx import linalg
     k = mx.arange(n, dtype='d')
     c = mx.zeros((2, n))
     c[0,1:] = bn_func(k[1:])

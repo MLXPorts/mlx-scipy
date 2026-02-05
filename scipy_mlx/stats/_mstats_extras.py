@@ -15,10 +15,7 @@ __all__ = ['compare_medians_ms',
 
 
 import mlx.core as mx
-from numpy import float64, array
-
-import numpy.ma as ma
-from numpy.ma import MaskedArray
+from scipy_mlx._lib._mlx_compat import float64, array, ma, MaskedArray
 
 from . import _mstats_basic as mstats
 

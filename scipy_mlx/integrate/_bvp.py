@@ -2,7 +2,7 @@
 from warnings import warn
 
 import mlx.core as mx
-from numpy.linalg import pinv
+from scipy_mlx.linalg import pinv
 
 from scipy_mlx.sparse import coo_matrix, csc_matrix
 from scipy_mlx.sparse.linalg import splu

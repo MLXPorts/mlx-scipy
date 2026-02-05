@@ -4,11 +4,27 @@ import threading
 from collections import namedtuple
 
 import mlx.core as mx
-from numpy import (isscalar, r_, log, around, unique, asarray, zeros,
-                   arange, sort, amin, amax, sqrt, array,
-                   pi, exp, ravel, count_nonzero)
+from scipy_mlx._lib._mlx_compat import (
+    isscalar,
+    r_,
+    log,
+    around,
+    unique,
+    asarray,
+    zeros,
+    arange,
+    sort,
+    amin,
+    amax,
+    sqrt,
+    array,
+    pi,
+    exp,
+    ravel,
+    count_nonzero,
+)
 
-from scipy import optimize, special, interpolate, stats
+from scipy_mlx import optimize, special, interpolate, stats
 from scipy_mlx._lib._bunch import _make_tuple_bunch
 from scipy_mlx._lib._util import _rename_parameter, _contains_nan, _get_nan
 import scipy_mlx._lib.array_api_extra as xpx
@@ -294,8 +310,8 @@ def kstat(data, n=2, *, axis=None):
     Examples
     --------
     >>> from scipy import stats
-    >>> from numpy.random import default_rng
-    >>> rng = default_rng()
+    >>> import mlx.core as mx
+    >>> rng = mx.random.default_rng()
 
     As sample size increases, `n`-th moment and `n`-th k-statistic converge to the
     same number (although they aren't identical). In the case of the normal

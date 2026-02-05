@@ -2,7 +2,6 @@ import math
 import warnings
 
 import mlx.core as mx
-from numpy.lib.stride_tricks import as_strided
 from scipy_mlx._lib._util import _apply_over_batch
 from scipy_mlx._lib._array_api import array_namespace, xp_capabilities, xp_size
 import scipy_mlx._lib.array_api_extra as xpx
@@ -85,9 +84,10 @@ def _toeplitz(c, r):
     # Form a 1-D array containing a reversed c followed by r[1:] that could be
     # strided to give us toeplitz matrix.
     vals = mx.concatenate((c[::-1], r[1:]))
-    out_shp = len(c), len(r)
-    n = vals.strides[0]
-    return as_strided(vals[len(c)-1:], shape=out_shp, strides=(-n, n)).copy()
+    i = mx.arange(len(c))[:, None]
+    j = mx.arange(len(r))[None, :]
+    idx = i - j + (len(c) - 1)
+    return vals[idx]
 
 
 def circulant(c):
@@ -143,16 +143,10 @@ def circulant(c):
     batch_shape, N = c.shape[:-1], c.shape[-1]
     # Need to use `prod(batch_shape)` instead of `-1` in case array has zero size
     c = c.reshape(math.prod(batch_shape), N) if batch_shape else c
-    # Form an extended array that could be strided to give circulant version
-    c_ext = mx.concatenate((c[..., ::-1], c[..., :0:-1]), axis=-1).ravel()
     L = c.shape[-1]
-    n = c_ext.strides[-1]
-    if c.ndim == 1:
-        A = as_strided(c_ext[L-1:], shape=(L, L), strides=(-n, n))
-    else:
-        m = c.shape[0]
-        A = as_strided(c_ext[L-1:], shape=(m, L, L), strides=(n*(2*L-1), -n, n))
-    return A.reshape(batch_shape + (N, N)).copy()
+    idx = (mx.arange(L)[:, None] - mx.arange(L)[None, :]) % L
+    A = mx.take(c, idx, axis=-1)
+    return A.reshape(batch_shape + (N, N))
 
 
 def hankel(c, r=None):
@@ -221,10 +215,10 @@ def hankel(c, r=None):
     # Form a 1-D array of values to be used in the matrix, containing `c`
     # followed by r[1:].
     vals = mx.concatenate((c, r[1:]))
-    # Stride on concatenated array to get hankel matrix
-    out_shp = len(c), len(r)
-    n = vals.strides[0]
-    return as_strided(vals, shape=out_shp, strides=(n, n)).copy()
+    i = mx.arange(len(c))[:, None]
+    j = mx.arange(len(r))[None, :]
+    idx = i + j
+    return vals[idx]
 
 
 def hadamard(n, dtype=int):

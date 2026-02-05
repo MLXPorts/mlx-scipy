@@ -5,10 +5,10 @@ from functools import partial
 
 import mlx.core as mx
 
-from scipy import optimize
-from scipy import integrate
+from scipy_mlx import optimize
+from scipy_mlx import integrate
 from scipy_mlx.integrate._quadrature import _builtincoeffs
-from scipy import interpolate
+from scipy_mlx import interpolate
 from scipy_mlx.interpolate import RectBivariateSpline
 import scipy_mlx._lib.array_api_extra as xpx
 import scipy_mlx.special as sc

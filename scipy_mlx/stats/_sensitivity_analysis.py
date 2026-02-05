@@ -1,6 +1,6 @@
 import inspect
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any as ArrayLike
 from collections.abc import Callable
 
 import mlx.core as mx
@@ -14,7 +14,6 @@ from scipy_mlx._lib._util import _transition_to_rng
 
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
     from scipy_mlx._lib._util import DecimalNumber, IntNumber
 
 
@@ -23,7 +22,7 @@ __all__ = [
 ]
 
 
-def f_ishigami(x: "npt.ArrayLike") -> "npt.NDArray[mx.inexact[Any]]":
+def f_ishigami(x: "ArrayLike") -> mx.array:
     r"""Ishigami function.
 
     .. math::
@@ -302,17 +301,17 @@ def sobol_indices(
         The output is a tuple of the first and total indices with
         shape ``(s, d)``.
         This is an advanced feature and misuse can lead to wrong analysis.
-    rng : `numpy.random.Generator`, optional
+    rng : `mx.random.Generator`, optional
         Pseudorandom number generator state. When `rng` is None, a new
-        `numpy.random.Generator` is created using entropy from the
-        operating system. Types other than `numpy.random.Generator` are
-        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+        `mx.random.Generator` is created using entropy from the
+        operating system. Types other than `mx.random.Generator` are
+        passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
         .. versionchanged:: 1.15.0
 
             As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-            transition from use of `numpy.random.RandomState` to
-            `numpy.random.Generator`, this keyword was changed from `random_state` to
+            transition from use of `mx.random.RandomState` to
+            `mx.random.Generator`, this keyword was changed from `random_state` to
             `rng`. For an interim period, both keywords will continue to work, although
             only one may be specified at a time. After the interim period, function
             calls using the `random_state` keyword will emit warnings. Following a

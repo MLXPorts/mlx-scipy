@@ -18,8 +18,8 @@ Dept of MS&E, Stanford University.
 
 __all__ = ['lsmr']
 
-from numpy import zeros, inf, atleast_1d, result_type
-from numpy.linalg import norm
+from scipy_mlx._lib._mlx_compat import zeros, inf, atleast_1d, result_type
+from scipy_mlx.linalg import norm
 from math import sqrt
 from scipy_mlx.sparse.linalg._interface import aslinearoperator
 

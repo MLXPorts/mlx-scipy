@@ -16,7 +16,7 @@ from scipy_mlx._lib._sparse import issparse
 def _arr_to_scalar(x):
     # If x is a numpy array, return x.item().  This will
     # fail if the array has more than one element.
-    return x.item() if isinstance(x, mx.array) else x
+    return x[()] if isinstance(x, mx.array) else x
 
 
 class NonlinearConstraint:

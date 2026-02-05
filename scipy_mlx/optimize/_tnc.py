@@ -39,7 +39,7 @@ from ._constraints import old_bound_to_new
 from scipy_mlx._lib._array_api import array_namespace
 from scipy_mlx._lib import array_api_extra as xpx
 
-from numpy import inf, array, zeros
+from scipy_mlx._lib._mlx_compat import inf, array, zeros
 
 __all__ = ['fmin_tnc']
 

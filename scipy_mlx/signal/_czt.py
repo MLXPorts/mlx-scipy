@@ -28,7 +28,7 @@ zoom_fft : array
 import cmath
 import numbers
 import mlx.core as mx
-from numpy import pi, arange
+from scipy_mlx._lib._mlx_compat import pi, arange
 from scipy_mlx.fft import fft, ifft, next_fast_len
 
 __all__ = ['czt', 'zoom_fft', 'CZT', 'ZoomFFT', 'czt_points']

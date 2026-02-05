@@ -1,5 +1,5 @@
-from numpy import arange, newaxis, hstack, prod, array
-from scipy import linalg
+from scipy_mlx._lib._mlx_compat import arange, newaxis, hstack, prod, array
+from scipy_mlx import linalg
 
 
 def _central_diff_weights(Np, ndiv=1):

@@ -45,7 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 import mlx.core as mx
 
-from scipy import linalg
+from scipy_mlx import linalg
 from scipy_mlx.special import xlogy
 from scipy_mlx.spatial.distance import cdist, pdist, squareform
 

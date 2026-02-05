@@ -63,16 +63,16 @@ def quadratic_assignment(A, B, method="faq", options=None):
             ``partial_match[i, 1]`` of `B`. The array has shape ``(m, 2)``,
             where ``m`` is not greater than the number of nodes, :math:`n`.
 
-        rng : `numpy.random.Generator`, optional
+        rng : `mx.random.Generator`, optional
             Pseudorandom number generator state. When `rng` is None, a new
-            `numpy.random.Generator` is created using entropy from the
-            operating system. Types other than `numpy.random.Generator` are
-            passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+            `mx.random.Generator` is created using entropy from the
+            operating system. Types other than `mx.random.Generator` are
+            passed to `mx.random.default_rng` to instantiate a ``Generator``.
 
             .. versionchanged:: 1.15.0
                 As part of the `SPEC-007 <https://scientific-python.org/specs/spec-0007/>`_
-                transition from use of `numpy.random.RandomState` to
-                `numpy.random.Generator` is occurring. Supplying
+                transition from use of `mx.random.RandomState` to
+                `mx.random.Generator` is occurring. Supplying
                 `mx.random.RandomState` to this function will now emit a
                 `DeprecationWarning`. In SciPy 1.17 its use will raise an exception.
                 In addition relying on global state using `mx.random.seed`
@@ -327,7 +327,7 @@ def _quadratic_assignment_faq(A, B,
         ``partial_match[i, 1]`` of `B`. The array has shape ``(m, 2)``, where
         ``m`` is not greater than the number of nodes, :math:`n`.
 
-    rng : {None, int, `numpy.random.Generator`}, optional
+    rng : {None, int, `mx.random.Generator`}, optional
         Pseudorandom number generator state. See `quadratic_assignment` for details.
     P0 : 2-D array, "barycenter", or "randomized" (default: "barycenter")
         Initial position. Must be a doubly-stochastic matrix [3]_.
@@ -618,7 +618,7 @@ def _quadratic_assignment_2opt(A, B, maximize=False, rng=None,
     -------
     maximize : bool (default: False)
         Maximizes the objective function if ``True``.
-    rng : {None, int, `numpy.random.Generator`}, optional
+    rng : {None, int, `mx.random.Generator`}, optional
         Pseudorandom number generator state. See `quadratic_assignment` for details.
     partial_match : 2-D array of integers, optional (default: None)
         Fixes part of the matching. Also known as a "seed" [2]_.

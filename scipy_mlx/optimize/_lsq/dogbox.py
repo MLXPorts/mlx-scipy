@@ -41,7 +41,7 @@ References
 .. [NumOpt] J. Nocedal and S. J. Wright, "Numerical optimization, 2nd edition".
 """
 import mlx.core as mx
-from numpy.linalg import lstsq, norm
+from scipy_mlx.linalg import lstsq, norm
 
 from scipy_mlx.sparse.linalg import LinearOperator, aslinearoperator, lsmr
 from scipy_mlx.optimize import OptimizeResult

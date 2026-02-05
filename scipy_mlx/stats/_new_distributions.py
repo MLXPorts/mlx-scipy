@@ -1,10 +1,10 @@
 import sys
 
 import mlx.core as mx
-from numpy import inf
+from scipy_mlx._lib._mlx_compat import inf
 
 from scipy_mlx._lib import array_api_extra as xpx
-from scipy import special
+from scipy_mlx import special
 from scipy_mlx.special import _ufuncs as scu
 from scipy_mlx.stats._distribution_infrastructure import (
     ContinuousDistribution, DiscreteDistribution, _RealInterval, _IntegerInterval,

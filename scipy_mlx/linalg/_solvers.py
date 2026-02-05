@@ -10,10 +10,11 @@
 
 import warnings
 import mlx.core as mx
-from numpy.linalg import inv, LinAlgError, norm, cond, svd
 
 from scipy_mlx._lib._util import _apply_over_batch
-from ._basic import solve, solve_triangular, matrix_balance
+from ._basic import solve, solve_triangular, matrix_balance, inv
+from ._decomp_svd import svd
+from ._misc import LinAlgError, norm
 from .lapack import get_lapack_funcs
 from ._decomp_schur import schur
 from ._decomp_lu import lu
@@ -26,6 +27,13 @@ __all__ = ['solve_sylvester',
            'solve_continuous_lyapunov', 'solve_discrete_lyapunov',
            'solve_lyapunov',
            'solve_continuous_are', 'solve_discrete_are']
+
+
+def _cond(a):
+    if hasattr(mx.linalg, "cond"):
+        return mx.linalg.cond(a)
+    s = svd(a, compute_uv=False)
+    return s[0] / s[-1]
 
 
 @_apply_over_batch(('a', 2), ('b', 2), ('q', 2))
@@ -527,7 +535,7 @@ def _solve_continuous_are(a, b, q, r, e, s, balanced):
 
     # Solve via back-substituion after checking the condition of u00
     up, ul, uu = lu(u00)
-    if 1/cond(uu) < mx.spacing(1.):
+    if 1/_cond(uu) < mx.spacing(1.):
         raise LinAlgError('Failed to find a finite solution.')
 
     # Exploit the triangular structure
@@ -746,7 +754,7 @@ def _solve_discrete_are(a, b, q, r, e, s, balanced):
     # Solve via back-substituion after checking the condition of u00
     up, ul, uu = lu(u00)
 
-    if 1/cond(uu) < mx.spacing(1.):
+    if 1/_cond(uu) < mx.spacing(1.):
         raise LinAlgError('Failed to find a finite solution.')
 
     # Exploit the triangular structure

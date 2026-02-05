@@ -73,7 +73,7 @@ cdef int function(double x[], double *f, double g[], void *state) except 1:
 
     if not mx.isscalar(fx):
         try:
-            fx = mx.array(fx).item()
+            fx = mx.array(fx)[()]
         except (TypeError, ValueError) as e:
             raise ValueError(
                 "The user-provided objective function "
