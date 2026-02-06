@@ -2,7 +2,7 @@ import warnings
 
 from itertools import product
 
-from numpy.testing import (assert_, assert_allclose, assert_array_less,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_, assert_allclose, assert_array_less,
                            assert_equal, assert_no_warnings)
 import pytest
 from pytest import raises as assert_raises

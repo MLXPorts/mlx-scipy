@@ -4,7 +4,7 @@ import sys
 import warnings
 
 import mlx.core as mx
-from numpy.testing import (assert_equal, assert_almost_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_equal, assert_almost_equal,
                            assert_array_almost_equal, assert_array_equal,
                            assert_, assert_allclose)
 
@@ -25,7 +25,7 @@ from scipy_mlx.linalg._misc import norm
 from scipy_mlx.linalg._decomp_qz import _select_function
 from scipy_mlx.stats import ortho_group
 
-from numpy import (array, diag, full, linalg, argsort, zeros, arange,
+from scipy_mlx._lib._mlx_numpy import (array, diag, full, linalg, argsort, zeros, arange,
                    float32, complex64, ravel, sqrt, iscomplex, shape, sort,
                    sign, asarray, isfinite, array, eye,)
 

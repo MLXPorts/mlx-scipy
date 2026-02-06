@@ -370,7 +370,7 @@ class TestSplint:
 
 class TestBisplrep:
     def test_overflow(self):
-        from numpy.lib.stride_tricks import as_strided
+        from scipy_mlx._lib._mlx_numpy.lib.stride_tricks import as_strided
         if dfitpack_int.itemsize == 8:
             size = 1500000**2
         else:

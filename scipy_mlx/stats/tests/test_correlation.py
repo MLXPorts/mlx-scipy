@@ -1,6 +1,6 @@
 import pytest
 import mlx.core as mx
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 
 from scipy import stats
 from scipy_mlx.stats._axis_nan_policy import SmallSampleWarning

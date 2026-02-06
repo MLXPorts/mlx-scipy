@@ -1,6 +1,6 @@
 import pytest
 import mlx.core as mx
-from numpy.testing import assert_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_allclose
 from .._discrete_distns import nchypergeom_fisher, hypergeom
 from scipy_mlx.stats._odds_ratio import odds_ratio
 from .data.fisher_exact_results_from_r import data

@@ -9,15 +9,15 @@ Run tests if fftpack is not installed:
   python tests/test_pseudo_diffs.py [<level>]
 """
 
-from numpy.testing import (assert_equal, assert_almost_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_equal, assert_almost_equal,
                            assert_array_almost_equal)
 from scipy_mlx.fftpack import (diff, fft, ifft, tilbert, itilbert, hilbert,
                            ihilbert, shift, fftfreq, cs_diff, sc_diff,
                            ss_diff, cc_diff)
 
 import mlx.core as mx
-from numpy import arange, sin, cos, pi, exp, tanh, sum, sign
-from numpy.random import random
+from scipy_mlx._lib._mlx_numpy import arange, sin, cos, pi, exp, tanh, sum, sign
+from scipy_mlx._lib._mlx_numpy.random import random
 
 
 def direct_diff(x,k=1,period=None):

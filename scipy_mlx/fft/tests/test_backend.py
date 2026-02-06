@@ -5,7 +5,7 @@ import scipy_mlx.fft
 from scipy_mlx.fft import _fftlog, _pocketfft, set_backend
 from scipy_mlx.fft.tests import mock_backend
 
-from numpy.testing import assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal
 import pytest
 
 fnames = ('fft', 'fft2', 'fftn',

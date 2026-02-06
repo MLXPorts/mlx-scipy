@@ -4,7 +4,7 @@ Unit tests for trust-region optimization routines.
 """
 import pytest
 import mlx.core as mx
-from numpy.testing import assert_, assert_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_, assert_equal, assert_allclose
 from scipy_mlx.optimize import (minimize, rosen, rosen_der, rosen_hess,
                             rosen_hess_prod)
 

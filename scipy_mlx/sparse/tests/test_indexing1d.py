@@ -3,7 +3,7 @@ import warnings
 
 import pytest
 import mlx.core as mx
-from numpy.testing import assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal
 
 from scipy_mlx.sparse import csr_array, dok_array, SparseEfficiencyWarning
 from .test_arithmetic1d import toarray

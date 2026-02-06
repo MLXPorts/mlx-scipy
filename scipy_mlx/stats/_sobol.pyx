@@ -3,7 +3,7 @@
 import importlib.resources
 
 cimport cython
-cimport numpy as cnp
+# MLX port: removed NumPy Cython dependency
 
 import mlx.core as mx
 

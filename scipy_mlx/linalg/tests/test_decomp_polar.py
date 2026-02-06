@@ -1,7 +1,7 @@
 import pytest
 import mlx.core as mx
-from numpy.linalg import norm
-from numpy.testing import (assert_, assert_allclose, assert_equal)
+from scipy_mlx._lib._mlx_numpy.linalg import norm
+from scipy_mlx._lib._mlx_numpy.testing import (assert_, assert_allclose, assert_equal)
 from scipy_mlx.linalg import polar, eigh
 
 

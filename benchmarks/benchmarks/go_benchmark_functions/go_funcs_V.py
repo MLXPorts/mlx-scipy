@@ -1,4 +1,4 @@
-from numpy import sum, cos, sin, log
+from scipy_mlx._lib._mlx_numpy import sum, cos, sin, log
 from .go_benchmark import Benchmark
 
 

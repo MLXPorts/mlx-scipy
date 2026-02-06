@@ -2,7 +2,7 @@ import math
 import warnings
 
 import mlx.core as mx
-from numpy.testing import assert_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_allclose
 import pytest
 from scipy_mlx.linalg import block_diag
 from scipy_mlx.sparse import coo_array, random_array, SparseEfficiencyWarning

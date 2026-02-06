@@ -1,7 +1,7 @@
 from scipy.optimize import root
 from scipy.sparse import dia_array, kron
 from scipy.sparse.linalg import spilu, LinearOperator
-from numpy import cosh, zeros_like, mgrid, zeros, eye
+from scipy_mlx._lib._mlx_numpy import cosh, zeros_like, mgrid, zeros, eye
 
 # parameters
 nx, ny = 75, 75

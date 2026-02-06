@@ -9,7 +9,7 @@ from scipy_mlx.optimize._trustregion_exact import (
     singular_leading_submatrix,
     IterativeSubproblem)
 from scipy_mlx.linalg import (svd, get_lapack_funcs, det, qr, norm)
-from numpy.testing import (assert_array_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_array_equal,
                            assert_equal, assert_array_almost_equal)
 
 

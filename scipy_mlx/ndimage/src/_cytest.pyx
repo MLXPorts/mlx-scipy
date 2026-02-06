@@ -4,7 +4,7 @@ from cpython.pycapsule cimport (
 )
 
 cimport mlx.core as mx
-from numpy cimport npy_intp as intp
+# MLX port: removed NumPy Cython dependency
 
 mx.import_array()
 

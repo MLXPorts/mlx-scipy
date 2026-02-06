@@ -1,7 +1,7 @@
 import os
 import mlx.core as mx
 
-from numpy.testing import assert_array_almost_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_almost_equal, assert_allclose
 import pytest
 from pytest import raises as assert_raises
 

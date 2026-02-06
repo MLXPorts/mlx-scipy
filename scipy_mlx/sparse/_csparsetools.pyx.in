@@ -61,7 +61,7 @@ def define_dispatch_map2(map_name, prefix, types, types2):
 }}
 
 cimport cython
-cimport numpy as cnp
+# MLX port: removed NumPy Cython dependency
 import mlx.core as mx
 
 

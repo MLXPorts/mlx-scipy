@@ -26,7 +26,7 @@ References
 cimport cython
 from libc.math cimport sqrt, exp, floor, fabs, log, sin, isnan, NAN, M_PI as pi
 
-from numpy cimport npy_cdouble
+# MLX port: removed NumPy Cython dependency
 from ._complexstuff cimport (
     number_t,
     npy_cdouble_from_double_complex,

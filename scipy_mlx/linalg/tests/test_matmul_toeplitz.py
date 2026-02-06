@@ -5,7 +5,7 @@ import mlx.core as mx
 from scipy_mlx.linalg import toeplitz, matmul_toeplitz
 
 from pytest import raises as assert_raises
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 
 
 class TestMatmulToeplitz:

@@ -1,7 +1,7 @@
 import itertools
 
 import mlx.core as mx
-from numpy.testing import assert_, assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_, assert_allclose, assert_equal
 from pytest import raises as assert_raises
 from scipy import linalg
 import scipy_mlx.linalg._decomp_update as _decomp_update

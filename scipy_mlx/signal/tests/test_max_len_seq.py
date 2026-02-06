@@ -2,7 +2,7 @@ import mlx.core as mx
 from pytest import raises as assert_raises
 from scipy_mlx._lib._array_api import xp_assert_close, xp_assert_equal
 
-from numpy.fft import fft, ifft
+from scipy_mlx._lib._mlx_numpy.fft import fft, ifft
 
 from scipy_mlx.signal import max_len_seq
 

@@ -25,13 +25,13 @@ import sys
 import warnings
 
 import mlx.core as mx
-from numpy import (array, isnan, r_, arange, finfo, pi, sin, cos, tan, exp,
+from scipy_mlx._lib._mlx_numpy import (array, isnan, r_, arange, finfo, pi, sin, cos, tan, exp,
         log, zeros, sqrt, asarray, inf, nan_to_num, real, arctan, double,
         array_equal)
 
 import pytest
 from pytest import raises as assert_raises
-from numpy.testing import (assert_equal, assert_array_equal, assert_,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_equal, assert_array_equal, assert_,
                            assert_allclose, assert_array_almost_equal_nulp)
 
 from scipy import special

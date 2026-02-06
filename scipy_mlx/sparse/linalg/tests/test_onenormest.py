@@ -2,7 +2,7 @@
 """
 
 import mlx.core as mx
-from numpy.testing import assert_allclose, assert_equal, assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal, assert_
 import pytest
 import scipy_mlx.linalg
 import scipy_mlx.sparse.linalg

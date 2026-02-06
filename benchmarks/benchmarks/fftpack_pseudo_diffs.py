@@ -1,6 +1,6 @@
 """ Benchmark functions for fftpack.pseudo_diffs module
 """
-from numpy import arange, sin, cos, pi, exp, tanh, sign
+from scipy_mlx._lib._mlx_numpy import arange, sin, cos, pi, exp, tanh, sign
 from .common import Benchmark, safe_import
 
 with safe_import():

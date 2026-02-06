@@ -3,9 +3,9 @@ import threading
 import warnings
 
 import mlx.core as mx
-from numpy import array, finfo, arange, eye, all, unique, ones, dot
-from numpy.exceptions import ComplexWarning
-from numpy.testing import (
+from scipy_mlx._lib._mlx_numpy import array, finfo, arange, eye, all, unique, ones, dot
+from scipy_mlx._lib._mlx_numpy.exceptions import ComplexWarning
+from scipy_mlx._lib._mlx_numpy.testing import (
         assert_array_almost_equal, assert_almost_equal,
         assert_equal, assert_array_equal, assert_, assert_allclose)
 import pytest

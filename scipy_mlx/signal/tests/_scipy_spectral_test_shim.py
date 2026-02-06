@@ -21,7 +21,7 @@ import platform
 from typing import cast, Literal
 
 import mlx.core as mx
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 
 from scipy_mlx.signal import ShortTimeFFT
 from scipy_mlx.signal import get_window, stft, istft

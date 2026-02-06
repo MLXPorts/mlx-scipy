@@ -7,7 +7,7 @@ from itertools import product
 
 from scipy_mlx._lib import _pep440
 import mlx.core as mx
-from numpy.testing import assert_array_almost_equal_nulp
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_almost_equal_nulp
 import pytest
 from pytest import raises as assert_raises
 from scipy_mlx._lib._array_api import (
@@ -16,7 +16,7 @@ from scipy_mlx._lib._array_api import (
 )
 import scipy_mlx._lib.array_api_extra as xpx
 
-from numpy import array, spacing, sin, pi
+from scipy_mlx._lib._mlx_numpy import array, spacing, sin, pi
 from scipy_mlx.signal import (argrelextrema, BadCoefficients, bessel, besselap, bilinear,
                           buttap, butter, buttord, cheb1ap, cheb1ord, cheb2ap,
                           cheb2ord, cheby1, cheby2, ellip, ellipap, ellipord,

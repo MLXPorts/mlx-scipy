@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 import pytest
 from scipy_mlx.special._ufuncs import _cosine_cdf, _cosine_invcdf
 

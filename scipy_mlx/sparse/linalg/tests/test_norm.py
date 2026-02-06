@@ -2,8 +2,8 @@
 """
 
 import mlx.core as mx
-from numpy.linalg import norm as npnorm
-from numpy.testing import assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.linalg import norm as npnorm
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal
 from pytest import raises as assert_raises
 
 import scipy_mlx.sparse

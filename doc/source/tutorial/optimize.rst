@@ -1466,8 +1466,7 @@ The problem we have can now be solved as follows:
     :alt: "This code generates a 2-D heatmap with Z values from 0 to 1. The graph resembles a smooth, dark blue-green, U shape, with an open yellow top. The right, bottom, and left edges have a value near zero and the top has a value close to 1. The center of the solution space has a value close to 0.8."
 
     import mlx.core as mx
-    from scipy.optimize import root
-    from numpy import cosh, zeros_like, mgrid, zeros
+    from scipy_mlx.optimize import root
 
     # parameters
     nx, ny = 75, 75
@@ -1477,8 +1476,8 @@ The problem we have can now be solved as follows:
     P_top, P_bottom = 1, 0
 
     def residual(P):
-       d2x = zeros_like(P)
-       d2y = zeros_like(P)
+       d2x = mx.zeros_like(P)
+       d2y = mx.zeros_like(P)
 
        d2x[1:-1] = (P[2:]   - 2*P[1:-1] + P[:-2]) / hx/hx
        d2x[0]    = (P[1]    - 2*P[0]    + P_left)/hx/hx
@@ -1488,10 +1487,12 @@ The problem we have can now be solved as follows:
        d2y[:,0]    = (P[:,1]  - 2*P[:,0]    + P_bottom)/hy/hy
        d2y[:,-1]   = (P_top   - 2*P[:,-1]   + P[:,-2])/hy/hy
 
-       return d2x + d2y + 5*cosh(P).mean()**2
+       mean_cosh = mx.cosh(P).mean()
+       term = mx.multiply(mx.array(5.0), mx.power(mean_cosh, mx.array(2.0)))
+       return mx.add(mx.add(d2x, d2y), term)
 
     # solve
-    guess = zeros((nx, ny), float)
+    guess = mx.zeros((nx, ny), dtype=mx.float64)
     sol = root(residual, guess, method='krylov', options={'disp': True})
     #sol = root(residual, guess, method='broyden2', options={'disp': True, 'max_rank': 50})
     #sol = root(residual, guess, method='anderson', options={'disp': True, 'M': 10})
@@ -1499,7 +1500,9 @@ The problem we have can now be solved as follows:
 
     # visualize
     import matplotlib.pyplot as plt
-    x, y = mgrid[0:1:(nx*1j), 0:1:(ny*1j)]
+    x_1d = mx.linspace(0.0, 1.0, nx)
+    y_1d = mx.linspace(0.0, 1.0, ny)
+    x, y = mx.meshgrid(x_1d, y_1d, indexing='ij')
     plt.pcolormesh(x, y, sol.x, shading='gouraud')
     plt.colorbar()
     plt.show()

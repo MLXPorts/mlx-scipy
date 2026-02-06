@@ -1,10 +1,9 @@
 import math
 
-import numpy.linalg as nl
-
+import scipy_mlx._lib._mlx_numpy.linalg as nl
 import mlx.core as mx
-from numpy.testing import assert_
-from numpy.random import rand
+from scipy_mlx._lib._mlx_numpy.testing import assert_
+from scipy_mlx._lib._mlx_numpy.random import rand
 
 from .common import Benchmark, safe_import
 

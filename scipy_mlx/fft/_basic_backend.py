@@ -1,5 +1,5 @@
 from scipy_mlx._lib._array_api import (
-    array_namespace, is_numpy, xp_unsupported_param_msg, is_complex, xp_float_to_complex
+    array_namespace, xp_unsupported_param_msg, is_complex, xp_float_to_complex
 )
 import mlx.core as mx
 
@@ -61,7 +61,7 @@ def _execute_1D(func_str, x, n, axis, norm, overwrite_x, workers, plan):
     xp = array_namespace(x)
     norm = _validate_fft_args(workers, plan, norm)
 
-    if not (xp is mx or getattr(xp, "__name__", "").endswith("array_api_compat.numpy") or is_numpy(xp)):
+    if xp is not mx:
         raise ValueError(xp_unsupported_param_msg("backend"))
 
     x = mx.array(x)
@@ -107,7 +107,7 @@ def _execute_nD(func_str, x, s, axes, norm, overwrite_x, workers, plan):
     xp = array_namespace(x)
     
     norm = _validate_fft_args(workers, plan, norm)
-    if not (xp is mx or getattr(xp, "__name__", "").endswith("array_api_compat.numpy") or is_numpy(xp)):
+    if xp is not mx:
         raise ValueError(xp_unsupported_param_msg("backend"))
 
     x = mx.array(x)

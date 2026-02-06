@@ -1,6 +1,6 @@
 import pytest
 import mlx.core as mx
-from numpy.testing import assert_, assert_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_, assert_equal, assert_allclose
 
 import scipy_mlx.special as sc
 from scipy_mlx.special._testutils import assert_func_equal

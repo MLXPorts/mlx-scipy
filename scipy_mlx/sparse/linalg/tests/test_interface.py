@@ -6,7 +6,7 @@ from itertools import product
 import operator
 import pytest
 from pytest import raises as assert_raises, warns
-from numpy.testing import assert_, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_, assert_equal
 
 import mlx.core as mx
 import scipy_mlx.sparse as sparse

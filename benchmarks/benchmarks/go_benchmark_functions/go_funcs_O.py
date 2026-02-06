@@ -1,4 +1,4 @@
-from numpy import sum, cos, exp, pi, asarray
+from scipy_mlx._lib._mlx_numpy import sum, cos, exp, pi, asarray
 from .go_benchmark import Benchmark
 
 

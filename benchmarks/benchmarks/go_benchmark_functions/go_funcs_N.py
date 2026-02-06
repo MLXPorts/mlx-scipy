@@ -1,4 +1,4 @@
-from numpy import cos, sqrt, sin, abs
+from scipy_mlx._lib._mlx_numpy import cos, sqrt, sin, abs
 from .go_benchmark import Benchmark
 
 

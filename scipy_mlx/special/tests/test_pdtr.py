@@ -1,6 +1,6 @@
 import mlx.core as mx
 import scipy_mlx.special as sc
-from numpy.testing import assert_allclose, assert_array_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_array_equal
 
 
 class TestPdtr:

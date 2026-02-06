@@ -1,7 +1,7 @@
 """Test the minimum spanning tree function"""
 import mlx.core as mx
-from numpy.testing import assert_
-import numpy.testing as npt
+from scipy_mlx._lib._mlx_numpy.testing import assert_
+import scipy_mlx._lib._mlx_numpy.testing as npt
 from scipy_mlx.sparse import csr_array
 from scipy_mlx.sparse.csgraph import minimum_spanning_tree
 

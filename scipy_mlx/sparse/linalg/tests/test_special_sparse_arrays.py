@@ -1,6 +1,6 @@
 import pytest
 import mlx.core as mx
-from numpy.testing import assert_array_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_equal, assert_allclose
 
 from scipy_mlx.sparse import diags, csgraph
 from scipy_mlx.linalg import eigh

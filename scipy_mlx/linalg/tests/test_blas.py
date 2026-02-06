@@ -5,11 +5,11 @@
 import math
 import pytest
 import mlx.core as mx
-from numpy.testing import (assert_equal, assert_almost_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_equal, assert_almost_equal,
                            assert_array_almost_equal, assert_allclose)
 from pytest import raises as assert_raises
 
-from numpy import (arange, triu, tril, zeros, tril_indices, ones,
+from scipy_mlx._lib._mlx_numpy import (arange, triu, tril, zeros, tril_indices, ones,
                    diag, append, eye, nonzero)
 
 import scipy_mlx

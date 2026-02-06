@@ -1,16 +1,16 @@
 # Created by Pearu Peterson, September 2002
 
-from numpy.testing import (assert_, assert_equal, assert_array_almost_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_, assert_equal, assert_array_almost_equal,
                            assert_array_almost_equal_nulp, assert_array_less)
 import pytest
 from pytest import raises as assert_raises
 from scipy_mlx.fftpack import ifft, fft, fftn, ifftn, rfft, irfft, fft2
 
-from numpy import (arange, array, asarray, zeros, dot, exp, pi,
+from scipy_mlx._lib._mlx_numpy import (arange, array, asarray, zeros, dot, exp, pi,
                    swapaxes, double, cdouble)
 import mlx.core as mx
-import numpy.fft
-from numpy.random import rand
+import scipy_mlx._lib._mlx_numpy as numpy
+from scipy_mlx._lib._mlx_numpy.random import rand
 
 # "large" composite numbers supported by FFTPACK
 LARGE_COMPOSITE_SIZES = [

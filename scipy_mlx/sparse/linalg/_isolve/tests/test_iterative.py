@@ -6,9 +6,9 @@ import platform
 import pytest
 
 import mlx.core as mx
-from numpy.testing import assert_array_equal, assert_allclose
-from numpy import zeros, arange, array, ones, eye, iscomplexobj
-from numpy.linalg import norm
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy import zeros, arange, array, ones, eye, iscomplexobj
+from scipy_mlx._lib._mlx_numpy.linalg import norm
 
 from scipy_mlx.sparse import dia_array, csr_array, kronsum
 

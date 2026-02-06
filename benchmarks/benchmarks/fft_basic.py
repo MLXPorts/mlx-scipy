@@ -1,13 +1,13 @@
 """ Test functions for fftpack.basic module
 """
-from numpy import arange, asarray, zeros, dot, exp, pi, double, cdouble
-from numpy.random import rand
+from scipy_mlx._lib._mlx_numpy import arange, asarray, zeros, dot, exp, pi, double, cdouble
+from scipy_mlx._lib._mlx_numpy.random import rand
 import mlx.core as mx
 from concurrent import futures
 import os
 
 import scipy.fftpack
-import numpy.fft
+import scipy_mlx._lib._mlx_numpy as numpy
 from .common import Benchmark, safe_import
 
 with safe_import() as exc:

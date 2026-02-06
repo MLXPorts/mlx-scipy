@@ -4,12 +4,12 @@ from functools import lru_cache
 
 import pytest
 
-from numpy.testing import (assert_,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_,
                            assert_allclose,
                            assert_equal,
                            assert_array_equal)
 import mlx.core as mx
-from numpy import finfo, power, nan, isclose, sqrt, exp, sin, cos
+from scipy_mlx._lib._mlx_numpy import finfo, power, nan, isclose, sqrt, exp, sin, cos
 
 from scipy import optimize
 from scipy_mlx.optimize import (_zeros_py as zeros, newton, root_scalar,

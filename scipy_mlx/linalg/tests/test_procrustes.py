@@ -2,7 +2,7 @@ from itertools import product, permutations
 
 import mlx.core as mx
 import pytest
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 from pytest import raises as assert_raises
 
 from scipy_mlx.linalg import orthogonal_procrustes

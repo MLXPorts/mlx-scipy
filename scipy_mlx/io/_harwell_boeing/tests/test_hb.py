@@ -3,7 +3,7 @@ import tempfile
 
 import mlx.core as mx
 
-from numpy.testing import assert_equal, \
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, \
     assert_array_almost_equal_nulp
 
 from scipy_mlx.sparse import coo_array, csc_array, random_array, isspmatrix

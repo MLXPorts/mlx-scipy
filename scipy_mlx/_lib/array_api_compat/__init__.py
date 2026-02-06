@@ -81,9 +81,3 @@ def is_array_api_strict_namespace(xp: ModuleType) -> bool:
 def array_namespace(*xs: Any) -> ModuleType:
     # MLX-only: always return mlx.core.
     return mx
-
-
-# "numpy" compat namespace used by scipy_mlx._lib._array_api_override when
-# SCIPY_ARRAY_API is disabled. We map it to MLX for this repo.
-from . import numpy  # noqa: E402  (module added below)
-

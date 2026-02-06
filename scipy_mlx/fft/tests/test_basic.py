@@ -3,8 +3,8 @@ import threading
 import multiprocessing
 import mlx.core as mx
 import pytest
-from numpy.random import random
-from numpy.testing import assert_array_almost_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.random import random
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_almost_equal, assert_allclose
 from pytest import raises as assert_raises
 import scipy_mlx.fft as fft
 from scipy_mlx._lib._array_api import (

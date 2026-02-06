@@ -2,14 +2,14 @@
 Author: Ondrej Certik
 May 2007
 """
-from numpy.testing import assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_
 import pytest
 from functools import partial
 
 from scipy_mlx.optimize import _nonlin as nonlin, root
 from scipy_mlx.sparse import csr_array
-from numpy import diag, dot
-from numpy.linalg import inv
+from scipy_mlx._lib._mlx_numpy import diag, dot
+from scipy_mlx._lib._mlx_numpy.linalg import inv
 import mlx.core as mx
 import scipy_mlx
 from scipy_mlx.sparse.linalg import minres

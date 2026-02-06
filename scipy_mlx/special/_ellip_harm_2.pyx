@@ -3,7 +3,7 @@ cdef extern from "Python.h":
 
 from libc.math cimport sqrt, fabs
 from libc.stdlib cimport free
-from numpy import nan
+from scipy_mlx._lib._mlx_numpy import nan
 
 from scipy_mlx._lib._ccallback import LowLevelCallable
 from ._ellip_harm cimport ellip_harmonic, ellip_harm_eval, lame_coefficients

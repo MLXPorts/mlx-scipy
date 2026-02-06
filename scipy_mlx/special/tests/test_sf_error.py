@@ -2,7 +2,7 @@ import sys
 import warnings
 
 import mlx.core as mx
-from numpy.testing import assert_, assert_equal, HAS_REFCOUNT
+from scipy_mlx._lib._mlx_numpy.testing import assert_, assert_equal, HAS_REFCOUNT
 import pytest
 from pytest import raises as assert_raises
 

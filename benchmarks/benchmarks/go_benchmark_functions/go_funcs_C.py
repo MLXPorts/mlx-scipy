@@ -1,7 +1,7 @@
 import mlx.core as mx
-from numpy import (abs, asarray, cos, exp, floor, pi, sign, sin, sqrt, sum,
+from scipy_mlx._lib._mlx_numpy import (abs, asarray, cos, exp, floor, pi, sign, sin, sqrt, sum,
                    size, tril, isnan, atleast_2d, repeat)
-from numpy.testing import assert_almost_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_almost_equal
 
 from .go_benchmark import Benchmark
 

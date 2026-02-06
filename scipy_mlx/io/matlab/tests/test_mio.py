@@ -10,13 +10,13 @@ import warnings
 import shutil
 import gzip
 
-from numpy.testing import (assert_array_equal, assert_array_almost_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_equal, assert_, assert_allclose)
 import pytest
 from pytest import raises as assert_raises, warns as assert_warns
 
 import mlx.core as mx
-from numpy import array
+from scipy_mlx._lib._mlx_numpy import array
 from scipy_mlx.sparse import issparse, eye_array, coo_array, csc_array
 
 import scipy_mlx.io

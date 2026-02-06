@@ -32,7 +32,7 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import mlx.core as mx
-from numpy.testing import assert_allclose, assert_equal, assert_array_equal, assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal, assert_array_equal, assert_
 import pytest
 from pytest import raises as assert_raises
 

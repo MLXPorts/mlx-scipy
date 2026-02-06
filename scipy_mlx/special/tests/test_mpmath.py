@@ -3,8 +3,8 @@ Test SciPy functions versus mpmath, if available.
 
 """
 import mlx.core as mx
-from numpy.testing import assert_, assert_allclose
-from numpy import pi
+from scipy_mlx._lib._mlx_numpy.testing import assert_, assert_allclose
+from scipy_mlx._lib._mlx_numpy import pi
 import pytest
 import itertools
 

@@ -3,7 +3,7 @@ from functools import partial
 
 import mlx.core as mx
 import pytest
-from numpy.testing import (assert_allclose)
+from scipy_mlx._lib._mlx_numpy.testing import (assert_allclose)
 import scipy_mlx.sparse
 import scipy_mlx.linalg
 from scipy_mlx.sparse.linalg import aslinearoperator

@@ -5,14 +5,14 @@
 from functools import reduce
 import sysconfig
 
-from numpy.testing import (assert_equal, assert_array_almost_equal, assert_,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_equal, assert_array_almost_equal, assert_,
                            assert_allclose, assert_almost_equal,
                            assert_array_equal)
 import pytest
 from pytest import raises as assert_raises
 
 import mlx.core as mx
-from numpy import (eye, ones, zeros, zeros_like, triu, tril, tril_indices,
+from scipy_mlx._lib._mlx_numpy import (eye, ones, zeros, zeros_like, triu, tril, tril_indices,
                    triu_indices)
 
 from scipy_mlx.linalg import (_flapack as flapack, lapack, inv, svd, cholesky,

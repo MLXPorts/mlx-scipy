@@ -3,7 +3,7 @@ from pytest import raises as assert_raises
 
 import mlx.core as mx
 from scipy_mlx.linalg import lu, lu_factor, lu_solve, get_lapack_funcs, solve
-from numpy.testing import assert_allclose, assert_array_equal, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_array_equal, assert_equal
 
 
 REAL_DTYPES = [mx.float32, mx.float64]

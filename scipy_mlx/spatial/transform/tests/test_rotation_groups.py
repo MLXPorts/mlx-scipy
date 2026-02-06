@@ -1,7 +1,7 @@
 import pytest
 
 import mlx.core as mx
-from numpy.testing import assert_array_almost_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_almost_equal
 from scipy_mlx.spatial.transform import Rotation
 from scipy_mlx.optimize import linear_sum_assignment
 from scipy_mlx.spatial.distance import cdist

@@ -1,4 +1,4 @@
-from numpy import abs, cos, exp, log, arange, pi, sin, sqrt, sum
+from scipy_mlx._lib._mlx_numpy import abs, cos, exp, log, arange, pi, sin, sqrt, sum
 from .go_benchmark import Benchmark
 
 

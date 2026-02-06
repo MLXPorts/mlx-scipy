@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy.testing import assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal
 import pytest
 
 from scipy_mlx.optimize._pava_pybind import pava

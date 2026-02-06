@@ -4,7 +4,7 @@ import tempfile
 
 import pytest
 from pytest import raises as assert_raises
-from numpy.testing import assert_equal, assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_
 
 from scipy_mlx.sparse import (sparray, csr_array, coo_array, save_npz, load_npz,
                           csc_matrix, csr_matrix, bsr_matrix, dia_matrix,

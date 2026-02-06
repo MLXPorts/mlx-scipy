@@ -1,11 +1,11 @@
 cimport mlx.core as mx
-from numpy cimport (
-    npy_float, npy_double, npy_longdouble,
-    npy_cfloat, npy_cdouble, npy_clongdouble,
-    npy_int, npy_long, npy_intp,
-    NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
-    NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE,
-    NPY_INT, NPY_LONG, NPY_INTP)
+# MLX port: removed NumPy Cython dependency
+# npy_float, npy_double, npy_longdouble,
+# npy_cfloat, npy_cdouble, npy_clongdouble,
+# npy_int, npy_long, npy_intp,
+# NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
+# NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE,
+# NPY_INT, NPY_LONG, NPY_INTP)
 
 ctypedef double complex double_complex
 

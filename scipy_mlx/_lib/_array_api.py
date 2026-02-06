@@ -29,7 +29,6 @@ from scipy_mlx._lib.array_api_compat import (
     is_jax_array,
     is_dask_array,
     size as xp_size,
-    numpy as np_compat,
     device as xp_device,
     is_numpy_namespace as is_numpy,
     is_cupy_namespace as is_cupy,
@@ -59,6 +58,10 @@ __all__ = [
     'xp_result_type', 'xp_promote',
     'make_xp_test_case', 'make_xp_pytest_marks', 'make_xp_pytest_param',
 ]
+
+# When Array API support is disabled, upstream SciPy defaults to a NumPy
+# namespace (`np_compat`). In this MLX-only fork, that default namespace is MLX.
+np_compat = mx
 
 
 Array: TypeAlias = Any  # To be changed to a Protocol later (see array-api#589)

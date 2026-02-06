@@ -3,7 +3,7 @@ from collections.abc import Callable
 from threading import Lock
 
 import mlx.core as mx
-from numpy.testing import (
+from scipy_mlx._lib._mlx_numpy.testing import (
     assert_array_almost_equal, assert_equal, assert_allclose)
 import pytest
 from pytest import raises as assert_raises

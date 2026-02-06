@@ -4,7 +4,7 @@ import gc
 import threading
 
 import mlx.core as mx
-from numpy.testing import assert_equal, assert_, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_, assert_allclose
 from scipy_mlx.sparse import (_sparsetools, coo_matrix, csr_matrix, csc_matrix,
                           bsr_matrix, dia_matrix)
 from scipy_mlx.sparse._sputils import supported_dtypes

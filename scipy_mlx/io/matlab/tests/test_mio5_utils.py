@@ -7,7 +7,7 @@ from io import BytesIO
 
 import mlx.core as mx
 
-from numpy.testing import assert_array_equal, assert_equal, assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_equal, assert_equal, assert_
 from pytest import raises as assert_raises
 
 import scipy_mlx.io.matlab._byteordercodes as boc

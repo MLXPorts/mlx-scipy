@@ -1,4 +1,4 @@
-from numpy import abs, sum, sign, arange
+from scipy_mlx._lib._mlx_numpy import abs, sum, sign, arange
 from .go_benchmark import Benchmark
 
 

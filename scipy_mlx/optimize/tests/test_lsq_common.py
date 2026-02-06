@@ -1,4 +1,4 @@
-from numpy.testing import assert_, assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_, assert_allclose, assert_equal
 from pytest import raises as assert_raises
 import mlx.core as mx
 

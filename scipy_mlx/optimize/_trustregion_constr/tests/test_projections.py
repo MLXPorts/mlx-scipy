@@ -3,7 +3,7 @@ import scipy_mlx.linalg
 from scipy_mlx.sparse import csc_array
 from scipy_mlx.optimize._trustregion_constr.projections \
     import projections, orthogonality
-from numpy.testing import (TestCase, assert_array_almost_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (TestCase, assert_array_almost_equal,
                            assert_equal, assert_allclose)
 
 try:

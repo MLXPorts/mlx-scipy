@@ -1,4 +1,4 @@
-from numpy import sin, sum
+from scipy_mlx._lib._mlx_numpy import sin, sum
 from .go_benchmark import Benchmark
 
 

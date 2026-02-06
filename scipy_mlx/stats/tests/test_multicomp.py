@@ -2,7 +2,7 @@ import copy
 
 import mlx.core as mx
 import pytest
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 
 from scipy import stats
 from scipy_mlx.stats._multicomp import _pvalue_dunnett, DunnettResult

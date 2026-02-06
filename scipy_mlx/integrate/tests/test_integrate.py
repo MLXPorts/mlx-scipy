@@ -3,10 +3,10 @@
 Tests for numerical integration.
 """
 import mlx.core as mx
-from numpy import (arange, zeros, array, dot, sqrt, cos, sin, eye, pi, exp,
+from scipy_mlx._lib._mlx_numpy import (arange, zeros, array, dot, sqrt, cos, sin, eye, pi, exp,
                    allclose)
 
-from numpy.testing import (
+from scipy_mlx._lib._mlx_numpy.testing import (
     assert_, assert_array_almost_equal,
     assert_allclose, assert_array_equal, assert_equal)
 import pytest

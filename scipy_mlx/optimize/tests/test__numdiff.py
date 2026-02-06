@@ -2,7 +2,7 @@ import math
 from itertools import product
 
 import mlx.core as mx
-from numpy.testing import assert_allclose, assert_equal, assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal, assert_
 import pytest
 from pytest import raises as assert_raises
 

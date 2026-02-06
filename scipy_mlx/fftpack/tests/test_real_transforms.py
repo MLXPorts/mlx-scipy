@@ -2,7 +2,7 @@ from os.path import join, dirname
 import threading
 
 import mlx.core as mx
-from numpy.testing import assert_array_almost_equal, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_almost_equal, assert_equal
 import pytest
 from pytest import raises as assert_raises
 

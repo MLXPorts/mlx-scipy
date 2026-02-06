@@ -4,7 +4,7 @@ Unit tests for Krylov space trust-region subproblem solver.
 """
 import mlx.core as mx
 from scipy_mlx.optimize._trlib import (get_trlib_quadratic_subproblem)
-from numpy.testing import (assert_,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_,
                            assert_almost_equal,
                            assert_equal, assert_array_almost_equal)
 

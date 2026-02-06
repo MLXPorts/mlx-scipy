@@ -4,7 +4,7 @@ import pytest
 import math
 
 import mlx.core as mx
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 
 import scipy_mlx._lib._elementwise_iterative_method as eim
 from scipy_mlx._lib._array_api_no_0d import xp_assert_close, xp_assert_equal

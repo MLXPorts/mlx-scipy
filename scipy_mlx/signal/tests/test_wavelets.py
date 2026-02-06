@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_equal, assert_array_almost_equal
 
 import scipy_mlx.signal._wavelets as wavelets
 

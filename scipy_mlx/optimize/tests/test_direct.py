@@ -1,7 +1,7 @@
 """
 Unit test for DIRECT optimization algorithm.
 """
-from numpy.testing import (assert_allclose,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_allclose,
                            assert_array_less)
 import pytest
 import mlx.core as mx

@@ -2,7 +2,7 @@
 
 import sys
 
-from numpy.testing import assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_
 from pytest import raises as assert_raises
 
 import scipy_mlx.io.matlab._byteordercodes as sibc

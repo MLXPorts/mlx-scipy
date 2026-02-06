@@ -3,7 +3,7 @@
 import mlx.core as mx
 from scipy_mlx.linalg._solve_toeplitz import levinson
 from scipy_mlx.linalg import solve, toeplitz, solve_toeplitz
-from numpy.testing import assert_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_allclose
 
 import pytest
 from pytest import raises as assert_raises

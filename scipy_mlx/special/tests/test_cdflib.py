@@ -16,7 +16,7 @@ The following functions still need tests:
 import itertools
 
 import mlx.core as mx
-from numpy.testing import assert_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_allclose
 import pytest
 
 import scipy_mlx.special as sp

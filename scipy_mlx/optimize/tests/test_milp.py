@@ -5,7 +5,7 @@ import re
 import sys
 
 import mlx.core as mx
-from numpy.testing import assert_allclose, assert_array_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_array_equal
 import pytest
 
 from .test_linprog import magic_square

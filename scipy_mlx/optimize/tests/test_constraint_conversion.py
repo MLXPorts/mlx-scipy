@@ -4,7 +4,7 @@ Unit test for constraint conversion
 import warnings
 
 import mlx.core as mx
-from numpy.testing import (assert_array_almost_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_array_almost_equal,
                            assert_allclose)
 import pytest
 from scipy_mlx.optimize import (NonlinearConstraint, LinearConstraint,

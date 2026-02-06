@@ -1,6 +1,6 @@
 import mlx.core as mx
-from numpy.linalg import norm
-from numpy.testing import assert_equal, assert_allclose, assert_
+from scipy_mlx._lib._mlx_numpy.linalg import norm
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_allclose, assert_
 from scipy_mlx.sparse.linalg._isolve import minres
 
 from pytest import raises as assert_raises

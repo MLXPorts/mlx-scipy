@@ -1,5 +1,5 @@
 import pytest
-from numpy.testing import assert_allclose, assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_
 import mlx.core as mx
 from scipy_mlx.integrate import RK23, RK45, DOP853
 from scipy_mlx.integrate._ivp import dop853_coefficients

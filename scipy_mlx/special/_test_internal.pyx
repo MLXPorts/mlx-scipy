@@ -10,7 +10,7 @@ This module includes wrappers for:
 """
 
 import mlx.core as mx
-from numpy.testing import assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_
 
 from libc.math cimport isnan
 

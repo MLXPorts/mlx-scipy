@@ -4,7 +4,7 @@ import warnings
 import mlx.core as mx
 
 import pytest
-from numpy.testing import assert_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_allclose
 
 from scipy import special
 from scipy_mlx.special import (legendre_p, legendre_p_all, assoc_legendre_p,

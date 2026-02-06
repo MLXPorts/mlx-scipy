@@ -1,6 +1,6 @@
 import mlx.core as mx
-from numpy import abs, cos, exp, arange, pi, sin, sqrt, sum, zeros, tanh
-from numpy.testing import assert_almost_equal
+from scipy_mlx._lib._mlx_numpy import abs, cos, exp, arange, pi, sin, sqrt, sum, zeros, tanh
+from scipy_mlx._lib._mlx_numpy.testing import assert_almost_equal
 from .go_benchmark import Benchmark
 
 

@@ -1,7 +1,7 @@
 import mlx.core as mx
 import pytest
 
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 import scipy_mlx.special as sc
 
 class TestSphHarm:

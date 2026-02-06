@@ -4,9 +4,9 @@ import pickle
 from copy import deepcopy
 
 import mlx.core as mx
-from numpy import inf
+from scipy_mlx._lib._mlx_numpy import inf
 import pytest
-from numpy.testing import assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal
 from hypothesis import strategies, given, reproduce_failure, settings  # noqa: F401
 import hypothesis.extra.numpy as npst
 
@@ -2039,8 +2039,8 @@ class TestReprs:
     def test_executable(self, dist):
         # Test that reprs actually evaluate to proper distribution
         # provided relevant imports are made.
-        from numpy import array  # noqa: F401
-        from numpy import float32  # noqa: F401
+        from scipy_mlx._lib._mlx_numpy import array  # noqa: F401
+        from scipy_mlx._lib._mlx_numpy import float32  # noqa: F401
         from scipy_mlx.stats import abs, exp, log, order_statistic, truncate # noqa: F401
         from scipy_mlx.stats import Mixture, Normal # noqa: F401
         from scipy_mlx.stats._new_distributions import Uniform # noqa: F401

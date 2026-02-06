@@ -1,7 +1,7 @@
 import pickle
 import pytest
 import mlx.core as mx
-from numpy.linalg import LinAlgError
+from scipy_mlx._lib._mlx_numpy.linalg import LinAlgError
 from scipy_mlx._lib._array_api import xp_assert_close
 from scipy_mlx.stats.qmc import Halton
 from scipy_mlx.spatial import cKDTree  # type: ignore[attr-defined]

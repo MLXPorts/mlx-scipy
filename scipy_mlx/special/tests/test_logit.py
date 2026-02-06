@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy.testing import assert_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_allclose
 from scipy_mlx.special import logit, expit, log_expit
 
 

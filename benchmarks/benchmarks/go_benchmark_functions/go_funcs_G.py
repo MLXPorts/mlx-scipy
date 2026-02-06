@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy import abs, sin, cos, exp, floor, log, arange, prod, sqrt, sum
+from scipy_mlx._lib._mlx_numpy import abs, sin, cos, exp, floor, log, arange, prod, sqrt, sum
 
 from .go_benchmark import Benchmark
 

@@ -3,7 +3,7 @@ import math
 import pytest
 
 import mlx.core as mx
-from numpy.testing import assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal
 from scipy_mlx.spatial.transform import Rotation, Slerp
 import scipy_mlx.spatial.transform._rotation_cy as cython_backend
 import scipy_mlx.spatial.transform._rotation_xp as xp_backend

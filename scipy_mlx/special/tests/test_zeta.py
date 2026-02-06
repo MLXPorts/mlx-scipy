@@ -4,7 +4,7 @@ import sys
 import mlx.core as mx
 import pytest
 
-from numpy.testing import assert_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_allclose
 
 
 def test_zeta():

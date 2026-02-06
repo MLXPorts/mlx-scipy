@@ -11,7 +11,7 @@ import os
 import json
 import platform
 
-from numpy.testing import (assert_equal, assert_array_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_equal, assert_array_equal,
                            assert_almost_equal, assert_array_almost_equal,
                            assert_allclose, assert_,
                            assert_array_less, assert_array_max_ulp)
@@ -19,8 +19,8 @@ import pytest
 from pytest import raises as assert_raises
 
 import mlx.core as mx
-from numpy import typecodes, array
-from numpy.lib.recfunctions import rec_append_fields
+from scipy_mlx._lib._mlx_numpy import typecodes, array
+from scipy_mlx._lib._mlx_numpy.lib.recfunctions import rec_append_fields
 from scipy import special
 from scipy_mlx._lib._util import check_random_state
 from scipy_mlx.integrate import (IntegrationWarning, quad, trapezoid,

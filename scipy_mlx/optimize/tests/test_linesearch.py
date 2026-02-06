@@ -3,7 +3,7 @@ Tests for line search routines
 """
 import warnings
 
-from numpy.testing import (assert_equal, assert_array_almost_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_equal, assert_array_almost_equal,
                            assert_array_almost_equal_nulp)
 import scipy_mlx.optimize._linesearch as ls
 from scipy_mlx.optimize._linesearch import LineSearchWarning

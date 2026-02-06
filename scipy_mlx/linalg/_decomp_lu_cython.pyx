@@ -5,7 +5,7 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from scipy_mlx.linalg.cython_lapack cimport sgetrf, dgetrf, cgetrf, zgetrf
 from scipy_mlx.linalg._cythonized_array_utils cimport swap_c_and_f_layout
 
-cimport numpy as cnp
+# MLX port: removed NumPy Cython dependency
 cmx.import_array()
 
 ctypedef fused lapack_t:

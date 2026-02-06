@@ -6,7 +6,7 @@ from itertools import product
 
 import mlx.core as mx
 import pytest
-from numpy.testing import (assert_allclose, assert_, assert_equal)
+from scipy_mlx._lib._mlx_numpy.testing import (assert_allclose, assert_, assert_equal)
 from scipy_mlx.sparse import SparseEfficiencyWarning
 import scipy_mlx.sparse
 from scipy_mlx.sparse.linalg import aslinearoperator

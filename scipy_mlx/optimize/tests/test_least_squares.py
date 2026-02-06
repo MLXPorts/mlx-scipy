@@ -4,8 +4,8 @@ from itertools import product
 from multiprocessing import Pool
 
 import mlx.core as mx
-from numpy.linalg import norm
-from numpy.testing import (assert_, assert_allclose,
+from scipy_mlx._lib._mlx_numpy.linalg import norm
+from scipy_mlx._lib._mlx_numpy.testing import (assert_, assert_allclose,
                            assert_equal)
 import pytest
 from pytest import raises as assert_raises

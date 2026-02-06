@@ -32,7 +32,7 @@ from scipy_mlx.linalg import hilbert, svdvals, norm
 from scipy_mlx.sparse.linalg import aslinearoperator
 from scipy_mlx.linalg.interpolative import interp_decomp
 
-from numpy.testing import (assert_, assert_allclose, assert_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_, assert_allclose, assert_equal,
                            assert_array_equal)
 import pytest
 from pytest import raises as assert_raises

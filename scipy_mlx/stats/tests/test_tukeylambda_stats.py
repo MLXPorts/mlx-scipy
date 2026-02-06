@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy.testing import assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal
 
 from scipy_mlx.stats._tukeylambda_stats import (tukeylambda_variance,
                                             tukeylambda_kurtosis)

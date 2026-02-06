@@ -1,6 +1,6 @@
 from libcpp.complex cimport complex as ccomplex
 
-cimport numpy as cnp
+# MLX port: removed NumPy Cython dependency
 cmx.import_array()
 
 cdef extern from "xsf/airy.h" nogil:

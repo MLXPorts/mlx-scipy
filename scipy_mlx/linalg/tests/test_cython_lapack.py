@@ -1,4 +1,4 @@
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 from scipy_mlx.linalg import cython_lapack as cython_lapack
 from scipy_mlx.linalg import lapack
 

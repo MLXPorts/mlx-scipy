@@ -3,7 +3,7 @@ import itertools
 import pytest
 import mlx.core as mx
 
-from numpy.exceptions import ComplexWarning
+from scipy_mlx._lib._mlx_numpy.exceptions import ComplexWarning
 
 from scipy_mlx._lib._array_api import (
     xp_assert_equal, xp_assert_close, assert_array_almost_equal

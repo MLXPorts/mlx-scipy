@@ -1,7 +1,7 @@
 import math
 
 import mlx.core as mx
-from numpy.testing import assert_allclose, assert_array_almost_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_array_almost_equal
 
 from scipy_mlx.optimize import (
     fmin_cobyla, minimize, Bounds, NonlinearConstraint, LinearConstraint,

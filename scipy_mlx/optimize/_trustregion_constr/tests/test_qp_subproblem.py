@@ -9,7 +9,7 @@ from scipy_mlx.optimize._trustregion_constr.qp_subproblem \
             modified_dogleg)
 from scipy_mlx.optimize._trustregion_constr.projections \
     import projections
-from numpy.testing import TestCase, assert_array_almost_equal, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import TestCase, assert_array_almost_equal, assert_equal
 import pytest
 
 

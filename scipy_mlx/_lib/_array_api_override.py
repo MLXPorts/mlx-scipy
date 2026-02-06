@@ -14,7 +14,6 @@ from typing import Any, TypeAlias
 import mlx.core as mx
 
 from scipy_mlx._lib import array_api_compat
-import scipy_mlx._lib.array_api_compat.numpy as np_compat
 from scipy_mlx._lib.array_api_compat import is_array_api_obj, is_jax_array
 from scipy_mlx._lib._sparse import SparseABC
 
@@ -78,7 +77,7 @@ def array_namespace(*arrays: Array) -> ModuleType:
     Wrapper around `array_api_compat.array_namespace`.
 
     1. Check for the global switch `SCIPY_ARRAY_API`. If disabled, just
-       return array_api_compat.numpy namespace and skip all compliance checks.
+       return the MLX namespace and skip all compliance checks.
 
     2. Check for known-bad array classes.
        The following subclasses are not supported and raise and error:
@@ -88,17 +87,17 @@ def array_namespace(*arrays: Array) -> ModuleType:
        - NumPy arrays which do not have a boolean or numerical dtype
        - `scipy.sparse` arrays
 
-    3. Coerce array-likes to NumPy arrays and check their dtype.
+    3. Coerce array-likes to MLX arrays and check their dtype.
        Note that non-scalar array-likes can't be mixed with non-NumPy Array
        API objects; e.g.
 
-       - `array_namespace([1, 2])` returns NumPy namespace;
-       - `array_namespace(mx.array([1, 2], [3, 4])` returns NumPy namespace;
+       - `array_namespace([1, 2])` returns MLX namespace;
+       - `array_namespace(mx.array([1, 2], [3, 4])` returns MLX namespace;
        - `array_namespace(cp.asarray([1, 2], [3, 4])` raises an error.
     """
     if not SCIPY_ARRAY_API:
         # here we could wrap the namespace if needed
-        return np_compat
+        return mx
 
     mlx_arrays = []
     api_arrays = []

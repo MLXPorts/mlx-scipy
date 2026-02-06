@@ -1,4 +1,4 @@
-from numpy import abs, sum, arange, sqrt
+from scipy_mlx._lib._mlx_numpy import abs, sum, arange, sqrt
 
 from .go_benchmark import Benchmark
 

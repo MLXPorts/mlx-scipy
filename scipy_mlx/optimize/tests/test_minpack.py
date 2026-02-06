@@ -5,11 +5,11 @@ import warnings
 import pytest
 import threading
 
-from numpy.testing import (assert_, assert_almost_equal, assert_array_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_, assert_almost_equal, assert_array_equal,
                            assert_array_almost_equal, assert_allclose)
 from pytest import raises as assert_raises
 import mlx.core as mx
-from numpy import array, float64
+from scipy_mlx._lib._mlx_numpy import array, float64
 from multiprocessing.pool import ThreadPool
 
 from scipy import optimize, linalg

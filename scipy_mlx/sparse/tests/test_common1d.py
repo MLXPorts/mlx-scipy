@@ -4,8 +4,8 @@ import warnings
 import pytest
 
 import mlx.core as mx
-from numpy.testing import assert_equal, assert_allclose
-from numpy.exceptions import ComplexWarning
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.exceptions import ComplexWarning
 
 from scipy_mlx.sparse import (
         bsr_array, csc_array, dia_array, lil_array,

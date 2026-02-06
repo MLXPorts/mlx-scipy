@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy.testing import assert_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_allclose
 from scipy_mlx.integrate import odeint
 import scipy_mlx.integrate._test_odeint_banded as banded5x5
 

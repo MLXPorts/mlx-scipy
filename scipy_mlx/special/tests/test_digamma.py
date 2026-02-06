@@ -1,6 +1,6 @@
 import mlx.core as mx
-from numpy import pi, log, sqrt
-from numpy.testing import assert_, assert_equal
+from scipy_mlx._lib._mlx_numpy import pi, log, sqrt
+from scipy_mlx._lib._mlx_numpy.testing import assert_, assert_equal
 
 from scipy_mlx.special._testutils import FuncData
 import scipy_mlx.special as sc

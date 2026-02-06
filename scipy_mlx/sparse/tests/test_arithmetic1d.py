@@ -3,7 +3,7 @@
 import pytest
 
 import mlx.core as mx
-from numpy.testing import assert_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_allclose
 
 from scipy_mlx.sparse import coo_array, csr_array
 from scipy_mlx.sparse._sputils import isscalarlike

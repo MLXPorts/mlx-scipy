@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy.testing import assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal
 from scipy_mlx.sparse.csgraph import reverse_cuthill_mckee, structural_rank
 from scipy_mlx.sparse import csc_array, csr_array, coo_array
 

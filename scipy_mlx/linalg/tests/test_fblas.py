@@ -9,12 +9,12 @@ from itertools import product
 import sys
 
 import mlx.core as mx
-from numpy import float32, float64, complex64, complex128, arange, array, \
+from scipy_mlx._lib._mlx_numpy import float32, float64, complex64, complex128, arange, array, \
                   zeros, shape, transpose, newaxis, common_type, conjugate
 
 from scipy_mlx.linalg import _fblas as fblas
 
-from numpy.testing import assert_array_equal, \
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_equal, \
     assert_allclose, assert_array_almost_equal, assert_
 
 import pytest

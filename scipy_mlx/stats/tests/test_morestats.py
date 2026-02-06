@@ -9,8 +9,8 @@ import warnings
 from functools import partial
 
 import mlx.core as mx
-from numpy.random import RandomState
-from numpy.testing import (assert_array_equal, assert_almost_equal,
+from scipy_mlx._lib._mlx_numpy.random import RandomState
+from scipy_mlx._lib._mlx_numpy.testing import (assert_array_equal, assert_almost_equal,
                            assert_array_less, assert_array_almost_equal,
                            assert_, assert_allclose, assert_equal)
 import pytest

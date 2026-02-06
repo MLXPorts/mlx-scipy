@@ -1,4 +1,4 @@
-from numpy cimport npy_intp as intp
+# MLX port: removed NumPy Cython dependency
 
 cdef int _filter1d(double *input_line, intp input_length, double *output_line,
 	           intp output_length, void *callback_data) noexcept

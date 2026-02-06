@@ -1,7 +1,7 @@
 # cython: boundscheck=False, wraparound=False, cdivision=True
 from ._matfuncs_sqrtm import SqrtmError
 
-from numpy cimport complex128_t, float64_t, intp_t
+# MLX port: removed NumPy Cython dependency
 
 
 cdef fused floating:

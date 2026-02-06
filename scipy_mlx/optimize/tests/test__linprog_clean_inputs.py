@@ -7,8 +7,8 @@ from copy import deepcopy
 from datetime import date
 
 import mlx.core as mx
-from numpy.testing import assert_, assert_allclose, assert_equal
-from numpy.exceptions import VisibleDeprecationWarning
+from scipy_mlx._lib._mlx_numpy.testing import assert_, assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.exceptions import VisibleDeprecationWarning
 from pytest import raises as assert_raises
 
 from scipy_mlx.optimize._linprog_util import _clean_inputs, _LPProblem

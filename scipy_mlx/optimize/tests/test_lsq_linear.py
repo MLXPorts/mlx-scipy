@@ -3,8 +3,8 @@ import warnings
 import pytest
 
 import mlx.core as mx
-from numpy.linalg import lstsq
-from numpy.testing import assert_allclose, assert_equal, assert_
+from scipy_mlx._lib._mlx_numpy.linalg import lstsq
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal, assert_
 
 from scipy_mlx.sparse import random_array, coo_array
 from scipy_mlx.sparse.linalg import aslinearoperator

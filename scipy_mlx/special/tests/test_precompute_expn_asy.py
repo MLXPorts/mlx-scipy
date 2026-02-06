@@ -1,4 +1,4 @@
-from numpy.testing import assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal
 
 from scipy_mlx.special._testutils import check_version, MissingModule
 from scipy_mlx.special._precompute.expn_asy import generate_A

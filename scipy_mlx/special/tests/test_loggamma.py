@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy.testing import assert_allclose, assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_
 
 from scipy_mlx.special._testutils import FuncData
 from scipy_mlx.special import gamma, gammaln, loggamma

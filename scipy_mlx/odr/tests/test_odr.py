@@ -4,8 +4,8 @@ import shutil
 import os
 
 import mlx.core as mx
-from numpy import pi
-from numpy.testing import (assert_array_almost_equal,
+from scipy_mlx._lib._mlx_numpy import pi
+from scipy_mlx._lib._mlx_numpy.testing import (assert_array_almost_equal,
                            assert_equal,
                            assert_allclose)
 import pytest

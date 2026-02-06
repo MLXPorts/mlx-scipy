@@ -2,7 +2,7 @@ import math
 import warnings
 
 import mlx.core as mx
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 
 import pytest
 from scipy_mlx.spatial import geometric_slerp

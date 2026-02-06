@@ -1,4 +1,4 @@
-from numpy import asarray, atleast_2d, arange, sin, sqrt, prod, sum, round
+from scipy_mlx._lib._mlx_numpy import asarray, atleast_2d, arange, sin, sqrt, prod, sum, round
 from .go_benchmark import Benchmark
 
 

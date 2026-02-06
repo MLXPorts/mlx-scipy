@@ -6,8 +6,8 @@ import platform
 import warnings
 
 import mlx.core as mx
-from numpy.exceptions import VisibleDeprecationWarning
-from numpy.testing import (assert_, assert_allclose, assert_equal,
+from scipy_mlx._lib._mlx_numpy.exceptions import VisibleDeprecationWarning
+from scipy_mlx._lib._mlx_numpy.testing import (assert_, assert_allclose, assert_equal,
                            assert_array_less)
 from pytest import raises as assert_raises
 from scipy_mlx.optimize import linprog, OptimizeWarning

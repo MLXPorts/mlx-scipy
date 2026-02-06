@@ -1,4 +1,4 @@
-from numpy import array
+from scipy_mlx._lib._mlx_numpy import array
 
 
 Q_X = array([[5.26563660e-01, 3.14160190e-01, 8.00656370e-02],

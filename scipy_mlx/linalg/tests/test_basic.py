@@ -2,10 +2,10 @@ import itertools
 import warnings
 
 import mlx.core as mx
-from numpy import (arange, array, dot, zeros, identity, conjugate, transpose,
+from scipy_mlx._lib._mlx_numpy import (arange, array, dot, zeros, identity, conjugate, transpose,
                    float32)
 
-from numpy.testing import (assert_equal, assert_almost_equal, assert_,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_equal, assert_almost_equal, assert_,
                            assert_array_almost_equal, assert_allclose,
                            assert_array_equal)
 import pytest

@@ -9,7 +9,7 @@ import sys
 import pytest
 import mlx.core as mx
 from typing import NamedTuple
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 
 from scipy_mlx.special import hyp2f1
 from scipy_mlx.special._testutils import check_version, MissingModule

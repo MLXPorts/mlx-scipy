@@ -1,4 +1,4 @@
-from numpy import sum, asarray, arange, exp
+from scipy_mlx._lib._mlx_numpy import sum, asarray, arange, exp
 from .go_benchmark import Benchmark
 
 

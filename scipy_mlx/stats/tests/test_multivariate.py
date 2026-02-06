@@ -5,7 +5,7 @@ Test functions for multivariate normal, t, and related distributions.
 import pickle
 from dataclasses import dataclass
 
-from numpy.testing import (assert_allclose, assert_almost_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_allclose, assert_almost_equal,
                            assert_array_almost_equal, assert_equal,
                            assert_array_less, assert_)
 import pytest

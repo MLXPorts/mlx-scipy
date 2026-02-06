@@ -1,6 +1,6 @@
 # Created by Pearu Peterson, September 2002
 
-from numpy.testing import (assert_, assert_equal, assert_array_almost_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_, assert_equal, assert_array_almost_equal,
                            assert_array_almost_equal_nulp, assert_array_less,
                            assert_allclose)
 import pytest
@@ -9,11 +9,11 @@ from scipy_mlx.fft._pocketfft import (ifft, fft, fftn, ifftn,
                                   rfft, irfft, rfftn, irfftn,
                                   hfft, ihfft, hfftn, ihfftn)
 
-from numpy import (arange, array, asarray, zeros, dot, exp, pi,
+from scipy_mlx._lib._mlx_numpy import (arange, array, asarray, zeros, dot, exp, pi,
                    swapaxes, cdouble)
 import mlx.core as mx
-import numpy.fft
-from numpy.random import rand
+import scipy_mlx._lib._mlx_numpy as numpy
+from scipy_mlx._lib._mlx_numpy.random import rand
 
 # "large" composite numbers supported by FFT._PYPOCKETFFT
 LARGE_COMPOSITE_SIZES = [

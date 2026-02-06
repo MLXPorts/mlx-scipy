@@ -1,6 +1,6 @@
 import pytest
 import pickle
-from numpy.testing import assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal
 from scipy_mlx._lib._bunch import _make_tuple_bunch
 
 

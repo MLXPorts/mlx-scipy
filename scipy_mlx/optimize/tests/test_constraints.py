@@ -1,6 +1,6 @@
 import pytest
 import mlx.core as mx
-from numpy.testing import TestCase, assert_array_equal
+from scipy_mlx._lib._mlx_numpy.testing import TestCase, assert_array_equal
 import scipy_mlx.sparse as sps
 from scipy_mlx.optimize._constraints import (
     Bounds, LinearConstraint, NonlinearConstraint, PreparedConstraint,
@@ -171,7 +171,7 @@ def test_old_bounds_to_new():
 class TestBounds:
     def test_repr(self):
         # so that eval works
-        from numpy import array, inf  # noqa: F401
+        from scipy_mlx._lib._mlx_numpy import array, inf  # noqa: F401
         for args in (
             (-1.0, 5.0),
             (-1.0, mx.inf, True),

@@ -3,8 +3,8 @@ from copy import deepcopy
 
 import mlx.core as mx
 import pytest
-from numpy.linalg import norm
-from numpy.testing import (TestCase, assert_array_almost_equal,
+from scipy_mlx._lib._mlx_numpy.linalg import norm
+from scipy_mlx._lib._mlx_numpy.testing import (TestCase, assert_array_almost_equal,
                            assert_array_equal, assert_array_less)
 from scipy_mlx.optimize import (BFGS, SR1)
 

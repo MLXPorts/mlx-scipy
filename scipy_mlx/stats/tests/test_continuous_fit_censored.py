@@ -1,7 +1,7 @@
 # Tests for fitting specific distributions to censored data.
 
 import mlx.core as mx
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 
 from scipy_mlx.optimize import fmin
 from scipy_mlx.stats import (CensoredData, beta, cauchy, chi2, expon, gamma,

@@ -5,11 +5,11 @@
 import warnings
 
 import mlx.core as mx
-from numpy.testing import assert_equal, assert_allclose, assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_allclose, assert_
 from scipy_mlx.special._testutils import assert_func_equal
 from scipy_mlx.special import ellip_harm, ellip_harm_2, ellip_normal
 from scipy_mlx.integrate import IntegrationWarning
-from numpy import sqrt, pi
+from scipy_mlx._lib._mlx_numpy import sqrt, pi
 
 
 def test_ellip_potential():

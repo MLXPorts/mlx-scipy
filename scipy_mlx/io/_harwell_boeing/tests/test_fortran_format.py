@@ -1,6 +1,6 @@
 import mlx.core as mx
 
-from numpy.testing import assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal
 from pytest import raises as assert_raises
 
 from scipy_mlx.io._harwell_boeing._fortran_format_parser import (

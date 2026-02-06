@@ -5,7 +5,7 @@ import warnings
 import mlx.core as mx
 import time
 from multiprocessing import Pool
-from numpy.testing import assert_allclose, IS_PYPY
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, IS_PYPY
 import pytest
 from pytest import raises as assert_raises, warns
 from scipy_mlx.optimize import (shgo, Bounds, minimize_scalar, minimize, rosen,

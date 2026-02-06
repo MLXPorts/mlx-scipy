@@ -1,7 +1,7 @@
 import pytest
 import mlx.core as mx
-from numpy import arange, array, eye, copy, sqrt
-from numpy.testing import (assert_equal, assert_array_equal,
+from scipy_mlx._lib._mlx_numpy import arange, array, eye, copy, sqrt
+from scipy_mlx._lib._mlx_numpy.testing import (assert_equal, assert_array_equal,
                            assert_array_almost_equal, assert_allclose)
 from pytest import raises as assert_raises
 
@@ -12,7 +12,7 @@ from scipy_mlx.linalg import (toeplitz, hankel, circulant, hadamard, leslie, dft
                           helmert, hilbert, invhilbert, pascal, invpascal,
                           fiedler, fiedler_companion, eigvals,
                           convolution_matrix)
-from numpy.linalg import cond
+from scipy_mlx._lib._mlx_numpy.linalg import cond
 from scipy_mlx._lib._array_api import (make_xp_test_case, xp_assert_equal, xp_size,
                                    xp_default_dtype)
 

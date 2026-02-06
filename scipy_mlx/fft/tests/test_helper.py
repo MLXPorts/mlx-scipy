@@ -5,7 +5,7 @@ Modified for Array API, 2023
 
 """
 from scipy_mlx.fft._helper import next_fast_len, prev_fast_len, _init_nd_shape_and_axes
-from numpy.testing import assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal
 from pytest import raises as assert_raises
 import pytest
 import mlx.core as mx

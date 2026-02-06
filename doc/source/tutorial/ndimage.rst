@@ -1874,7 +1874,7 @@ somewhat less boilerplate as follows:
 
    # example.pyx
 
-   from numpy cimport npy_intp as intp
+   from libc.stdint cimport intptr_t as intp
 
    cdef api int transform(intp *output_coordinates, double *input_coordinates,
                           int output_rank, int input_rank, void *user_data):
@@ -1891,7 +1891,7 @@ somewhat less boilerplate as follows:
 
    import ctypes
    import mlx.core as mx
-   from scipy import ndimage, LowLevelCallable
+   from scipy_mlx import ndimage, LowLevelCallable
 
    import example
 

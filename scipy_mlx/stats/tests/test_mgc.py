@@ -2,7 +2,7 @@ import pytest
 from pytest import raises as assert_raises, warns as assert_warns
 
 import mlx.core as mx
-from numpy.testing import assert_approx_equal, assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_approx_equal, assert_allclose, assert_equal
 
 from scipy_mlx.spatial.distance import cdist
 from scipy import stats

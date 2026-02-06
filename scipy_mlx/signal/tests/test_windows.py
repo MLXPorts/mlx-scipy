@@ -2,7 +2,7 @@ import math
 import warnings
 
 import mlx.core as mx
-from numpy import array
+from scipy_mlx._lib._mlx_numpy import array
 import pytest
 from pytest import raises as assert_raises
 

@@ -7,7 +7,7 @@ import cython
 from scipy_mlx.special import gammaincinv
 
 from libc.math cimport INFINITY, modf
-from numpy cimport npy_intp
+# MLX port: removed NumPy Cython dependency
 from scipy_mlx.special.cython_special cimport ndtri as phinv
 from scipy_mlx.special.cython_special cimport ndtr as phi
 

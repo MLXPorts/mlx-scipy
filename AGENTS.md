@@ -7,11 +7,6 @@ This document outlines the patterns and standards for converting SciPy modules f
 
 ### 1. Import Replacement
 ```python
-# Before
-import numpy as np
-from numpy import array, zeros, ones
-
-# After
 import mlx.core as mx
 from mlx.core import array, zeros, ones
 ```
@@ -34,22 +29,12 @@ Most NumPy functions have direct MLX equivalents:
 
 ### 3. Type Hint Updates
 ```python
-# Before
-import numpy.typing as npt
-def func(val: "npt.ArrayLike") -> Any: ...
-
-# After
 from typing import Any as ArrayLike
 def func(val: "ArrayLike") -> Any: ...
 ```
 
 ### 4. Docstring Examples
 ```python
-# Before
->>> import numpy as np
->>> convert_temperature(np.array([-40, 40]), 'Celsius', 'Kelvin')
-
-# After
 >>> import mlx.core as mx
 >>> convert_temperature(mx.array([-40, 40]), 'Celsius', 'Kelvin')
 ```
@@ -109,18 +94,15 @@ def flatnonzero(a):
 ## Testing Guidelines
 
 ### 9. Test File Updates
-Update test files to use MLX, but pytest assertions can remain:
+Update test files to use MLX, and use plain `pytest` assertions:
 ```python
 # Test files should import
 import mlx.core as mx
-
-# But can still use numpy.testing for assertions if needed
-# (though mlx arrays work with pytest's assert)
 ```
 
 ### 10. Verification Steps
 After conversion:
-1. ✅ No `import numpy` or `from numpy import` in compute paths
+1. ✅ No NumPy imports in compute paths
 2. ✅ No `.item()` or `.numpy()` calls mid-graph
 3. ✅ All literals wrapped in `mx.array()`
 4. ✅ Lazy execution preserved (no premature evaluation)
@@ -129,16 +111,6 @@ After conversion:
 7. ✅ Docstring examples updated
 
 ## Conversion Process Example
-
-### Before (NumPy):
-```python
-import numpy as np
-
-def compute(x, scale=2.0):
-    y = np.array(x)
-    result = np.exp(y) * scale + 1.0
-    return result.item()  # ❌ BAD
-```
 
 ### After (MLX):
 ```python
@@ -205,7 +177,7 @@ Complete migration of scipy.[module] from NumPy to MLX backend.
 ## Changes
 
 ### Core Replacements ([n] files):
-- Removed all `import numpy` and `from numpy import` statements
+- Removed all NumPy imports
 - Replaced NumPy functions with MLX equivalents:
   * Array creation: asarray, zeros, ones → mx.*
   * Array manipulation: reshape, concatenate → mx.*

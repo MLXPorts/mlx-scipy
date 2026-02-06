@@ -1,7 +1,7 @@
 import pytest
 
 import mlx.core as mx
-from numpy.testing import assert_allclose, assert_array_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_array_equal
 
 import scipy_mlx.special as sc
 from scipy_mlx.special._testutils import FuncData

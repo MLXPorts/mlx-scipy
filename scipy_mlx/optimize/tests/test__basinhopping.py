@@ -3,12 +3,12 @@ Unit tests for the basin hopping global minimization algorithm.
 """
 import copy
 
-from numpy.testing import (assert_almost_equal, assert_equal, assert_,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_almost_equal, assert_equal, assert_,
                            assert_allclose)
 import pytest
 from pytest import raises as assert_raises
 import mlx.core as mx
-from numpy import cos, sin
+from scipy_mlx._lib._mlx_numpy import cos, sin
 
 from scipy_mlx.optimize import basinhopping, OptimizeResult
 from scipy_mlx.optimize._basinhopping import (

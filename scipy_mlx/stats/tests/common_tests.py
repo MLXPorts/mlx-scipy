@@ -1,12 +1,11 @@
 import pickle
 
 import mlx.core as mx
-import numpy.testing as npt
-from numpy.testing import assert_allclose, assert_equal
+import scipy_mlx._lib._mlx_numpy.testing as npt
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal
 from pytest import raises as assert_raises
 
-import numpy.ma.testutils as ma_npt
-
+import scipy_mlx._lib._mlx_numpy.ma.testutils as ma_npt
 from scipy_mlx._lib._util import (
     getfullargspec_no_self as _getfullargspec, np_long
 )

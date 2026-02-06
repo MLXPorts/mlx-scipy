@@ -6,7 +6,7 @@
 
 from libc.math cimport exp, sqrt, abs, log, acos
 import mlx.core as mx
-cimport numpy as cnp
+# MLX port: removed NumPy Cython dependency
 cmx.import_array()
 
 

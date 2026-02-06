@@ -1,7 +1,7 @@
 import pytest
 import mlx.core as mx
-from numpy.random import default_rng
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.random import default_rng
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 
 from scipy import linalg
 from scipy_mlx.linalg.lapack import _compute_lwork

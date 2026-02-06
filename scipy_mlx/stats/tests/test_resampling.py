@@ -3,7 +3,7 @@ import warnings
 import pytest
 
 import mlx.core as mx
-from numpy.testing import assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal
 
 from scipy_mlx._lib._util import rng_integers
 from scipy_mlx._lib._array_api import is_numpy, make_xp_test_case, xp_default_dtype

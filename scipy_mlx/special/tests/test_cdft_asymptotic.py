@@ -2,7 +2,7 @@
 # Test stdtr and stdtrit with infinite df and large values of df
 
 import mlx.core as mx
-from numpy.testing import assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal
 from scipy_mlx.special import stdtr, stdtrit, ndtr, ndtri
 
 

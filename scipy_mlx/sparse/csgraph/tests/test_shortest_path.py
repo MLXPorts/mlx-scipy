@@ -1,7 +1,7 @@
 from io import StringIO
 import warnings
 import mlx.core as mx
-from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
 from pytest import raises as assert_raises
 from scipy_mlx.sparse.csgraph import (shortest_path, dijkstra, johnson,
                                   bellman_ford, construct_dist_matrix, yen,

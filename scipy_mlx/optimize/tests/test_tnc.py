@@ -2,7 +2,7 @@
 Unit tests for TNC optimization routine from tnc.py
 """
 import pytest
-from numpy.testing import assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal
 
 import mlx.core as mx
 from math import pow

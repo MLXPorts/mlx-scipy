@@ -30,7 +30,7 @@ cdef extern from "Python.h":
 from cpython cimport PyBytes_Size
 
 import mlx.core as mx
-cimport numpy as cnp
+# MLX port: removed NumPy Cython dependency
 
 cdef extern from "numpy/arrayobject.h":
     PyTypeObject PyArray_Type

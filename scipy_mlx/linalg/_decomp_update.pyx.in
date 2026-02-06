@@ -50,7 +50,7 @@ cimport libc.float
 from libc.math cimport sqrt, M_SQRT1_2
 from libc.string cimport memset
 
-cimport numpy as cnp
+# MLX port: removed NumPy Cython dependency
 
 from scipy_mlx.linalg import LinAlgError
 

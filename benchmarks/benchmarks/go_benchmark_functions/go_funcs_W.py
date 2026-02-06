@@ -1,4 +1,4 @@
-from numpy import atleast_2d, arange, sum, cos, exp, pi
+from scipy_mlx._lib._mlx_numpy import atleast_2d, arange, sum, cos, exp, pi
 from .go_benchmark import Benchmark
 
 

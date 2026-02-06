@@ -1,4 +1,4 @@
-from numpy import abs, sum, sin, cos, asarray, arange, pi, exp, log, sqrt
+from scipy_mlx._lib._mlx_numpy import abs, sum, sin, cos, asarray, arange, pi, exp, log, sqrt
 from scipy.optimize import rosen
 from .go_benchmark import Benchmark
 

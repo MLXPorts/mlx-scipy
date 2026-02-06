@@ -5,7 +5,7 @@ from libc cimport math
 from libc.math cimport NAN, INFINITY, M_PI as PI
 cimport cython
 cimport mlx.core as mx
-from numpy cimport array, int64_t, float64_t, intp_t
+# MLX port: removed NumPy Cython dependency
 
 import warnings
 import mlx.core as mx

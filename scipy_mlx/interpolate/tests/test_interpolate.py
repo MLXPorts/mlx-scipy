@@ -5,7 +5,7 @@ from scipy_mlx._lib._array_api import (
 from pytest import raises as assert_raises
 import pytest
 
-from numpy import mgrid, pi, sin, poly1d
+from scipy_mlx._lib._mlx_numpy import mgrid, pi, sin, poly1d
 import mlx.core as mx
 
 from scipy_mlx.interpolate import (interp1d, interp2d, lagrange, PPoly, BPoly,

@@ -6,8 +6,8 @@ import platform
 import sys
 import pytest
 import mlx.core as mx
-from numpy import ones, r_, diag
-from numpy.testing import (assert_almost_equal, assert_equal,
+from scipy_mlx._lib._mlx_numpy import ones, r_, diag
+from scipy_mlx._lib._mlx_numpy.testing import (assert_almost_equal, assert_equal,
                            assert_allclose, assert_array_less)
 
 from scipy import sparse

@@ -1,4 +1,4 @@
-from numpy import (abs, asarray, cos, exp, log, arange, pi, prod, sin, sqrt,
+from scipy_mlx._lib._mlx_numpy import (abs, asarray, cos, exp, log, arange, pi, prod, sin, sqrt,
                    sum, tan)
 from .go_benchmark import Benchmark, safe_import
 

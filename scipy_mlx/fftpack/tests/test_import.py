@@ -14,7 +14,7 @@ from pathlib import Path
 import re
 import tokenize
 import pytest
-from numpy.testing import assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_
 import scipy_mlx
 
 class TestFFTPackImport:

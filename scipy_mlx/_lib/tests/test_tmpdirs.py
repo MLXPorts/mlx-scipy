@@ -4,7 +4,7 @@ from os.path import realpath, abspath, dirname, isfile, join as pjoin, exists
 
 from scipy_mlx._lib._tmpdirs import tempdir, in_tempdir, in_dir
 
-from numpy.testing import assert_, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_, assert_equal
 
 import pytest
 

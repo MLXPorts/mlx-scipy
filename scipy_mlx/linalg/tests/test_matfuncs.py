@@ -9,8 +9,8 @@ import pytest
 import warnings
 
 import mlx.core as mx
-from numpy import array, identity, sqrt
-from numpy.testing import (assert_array_almost_equal, assert_allclose, assert_,
+from scipy_mlx._lib._mlx_numpy import array, identity, sqrt
+from scipy_mlx._lib._mlx_numpy.testing import (assert_array_almost_equal, assert_allclose, assert_,
                            assert_array_less, assert_array_equal)
 
 import scipy_mlx.linalg

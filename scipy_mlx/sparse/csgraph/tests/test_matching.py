@@ -1,7 +1,7 @@
 from itertools import product
 
 import mlx.core as mx
-from numpy.testing import assert_array_equal, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_equal, assert_equal
 import pytest
 
 from scipy_mlx.sparse import csr_array, coo_array, diags_array

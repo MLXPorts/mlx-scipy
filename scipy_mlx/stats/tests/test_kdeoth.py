@@ -1,6 +1,6 @@
 from scipy import stats, linalg, integrate
 import mlx.core as mx
-from numpy.testing import (assert_almost_equal, assert_, assert_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_almost_equal, assert_, assert_equal,
                            assert_array_almost_equal,
                            assert_array_almost_equal_nulp, assert_allclose)
 import pytest

@@ -4,7 +4,7 @@ import mlx.core as mx
 import pytest
 from scipy_mlx.linalg import block_diag
 from scipy_mlx.sparse import csc_array
-from numpy.testing import (assert_array_almost_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_array_almost_equal,
                            assert_array_less, assert_)
 from scipy_mlx.optimize import (NonlinearConstraint,
                             LinearConstraint,

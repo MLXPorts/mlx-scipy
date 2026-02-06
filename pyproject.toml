@@ -15,15 +15,10 @@
 # Run tools/generate_requirements.txt when making changes to any dependencies
 
 [build-system]
-build-backend = 'mesonpy'
+build-backend = "setuptools.build_meta"
 requires = [
-    "meson-python>=0.15.0",
-    "Cython>=3.0.8",        # when updating version, also update check in meson.build
-    "pybind11>=2.13.2",     # when updating version, also update check in scipy/meson.build
-    "pythran>=0.14.0",
-
-    # MLX requirement for wheel builds
-    "mlx>=0.20.0",
+    "setuptools>=68",
+    "wheel",
 ]
 
 [project]
@@ -123,8 +118,13 @@ tracker = "https://github.com/scipy/scipy/issues"
 [tool.spin]
 package = 'scipy_mlx'
 
-[tool.meson-python.args]
-install = ['--skip-subprojects']
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["scipy_mlx*"]
+exclude = ["scipy_mlx.*.tests*", "scipy_mlx.tests*"]
 
 [tool.cibuildwheel]
 skip = ["*_i686", "*_ppc64le", "*_s390x", "*_universal2"]

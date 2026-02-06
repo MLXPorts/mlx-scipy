@@ -9,7 +9,7 @@ from math import gcd
 import pytest
 from pytest import raises as assert_raises
 import mlx.core as mx
-from numpy.exceptions import ComplexWarning
+from scipy_mlx._lib._mlx_numpy.exceptions import ComplexWarning
 
 from scipy import fft as sp_fft
 from scipy_mlx.ndimage import correlate1d

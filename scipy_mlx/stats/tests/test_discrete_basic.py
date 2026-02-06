@@ -1,7 +1,7 @@
 import warnings
 
-import numpy.testing as npt
-from numpy.testing import assert_allclose
+import scipy_mlx._lib._mlx_numpy.testing as npt
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 
 import mlx.core as mx
 import pytest

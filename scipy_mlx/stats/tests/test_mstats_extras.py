@@ -1,8 +1,8 @@
 import mlx.core as mx
-import numpy.ma as ma
+import scipy_mlx._lib._mlx_numpy.ma as ma
 import scipy_mlx.stats.mstats as ms
 
-from numpy.testing import (assert_equal, assert_almost_equal, assert_,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_equal, assert_almost_equal, assert_,
                            assert_allclose)
 
 

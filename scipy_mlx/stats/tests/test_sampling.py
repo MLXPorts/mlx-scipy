@@ -8,7 +8,7 @@ import math
 import warnings
 
 import mlx.core as mx
-from numpy.testing import assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal
 from scipy_mlx.stats.sampling import (
     TransformedDensityRejection,
     DiscreteAliasUrn,

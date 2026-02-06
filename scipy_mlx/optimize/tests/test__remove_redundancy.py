@@ -7,7 +7,7 @@ Unit test for Linear Programming via Simplex Algorithm.
 # https://github.com/scipy/scipy/issues/6690
 
 import mlx.core as mx
-from numpy.testing import (
+from scipy_mlx._lib._mlx_numpy.testing import (
     assert_,
     assert_allclose,
     assert_equal)

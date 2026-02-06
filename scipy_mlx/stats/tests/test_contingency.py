@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy.testing import (assert_equal, assert_array_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_equal, assert_array_equal,
                            assert_array_almost_equal, assert_approx_equal,
                            assert_allclose)
 import pytest

@@ -5,7 +5,7 @@ import scipy_mlx.sparse as sp
 import scipy_mlx.sparse.csgraph as spgraph
 from scipy_mlx._lib import _pep440
 
-from numpy.testing import assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal
 
 try:
     import sparse

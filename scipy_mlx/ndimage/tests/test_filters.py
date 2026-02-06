@@ -7,7 +7,7 @@ import warnings
 
 import mlx.core as mx
 import pytest
-from numpy.testing import assert_allclose, assert_array_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_array_equal
 from hypothesis import strategies as st
 from hypothesis import given
 import hypothesis.extra.numpy as npst

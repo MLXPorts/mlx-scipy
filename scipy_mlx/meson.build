@@ -80,7 +80,7 @@ print(incdir)
 
   # We do need an absolute path to feed to `cc.find_library` below
   _incdir_numpy_abs = run_command(py3,
-    ['-c', 'import os; os.chdir(".."); import numpy; print(numpy.get_include())'],
+    ['-c', 'import os; os.chdir(".."); import mlx.core as mx; print(mx.get_include())'],
     check: true
   ).stdout().strip()
 else

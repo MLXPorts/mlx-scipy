@@ -2,7 +2,7 @@ from scipy_mlx.datasets._registry import registry
 from scipy_mlx.datasets._fetchers import data_fetcher
 from scipy_mlx.datasets._utils import _clear_cache
 from scipy_mlx.datasets import ascent, face, electrocardiogram, download_all
-from numpy.testing import assert_equal, assert_almost_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_almost_equal
 import os
 from threading import get_ident
 import pytest

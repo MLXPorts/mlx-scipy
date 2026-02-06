@@ -1,7 +1,7 @@
 import time
 
 import mlx.core as mx
-from numpy import sin, cos, pi, exp, sqrt, abs
+from scipy_mlx._lib._mlx_numpy import sin, cos, pi, exp, sqrt, abs
 from scipy.optimize import rosen
 
 

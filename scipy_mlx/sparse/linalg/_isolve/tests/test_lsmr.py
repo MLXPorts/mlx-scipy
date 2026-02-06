@@ -16,9 +16,9 @@ Dept of MS&E, Stanford University.
 
 """
 
-from numpy import array, arange, eye, zeros, ones, transpose, hstack
-from numpy.linalg import norm
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy import array, arange, eye, zeros, ones, transpose, hstack
+from scipy_mlx._lib._mlx_numpy.linalg import norm
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 import pytest
 from scipy_mlx.sparse import coo_array
 from scipy_mlx.sparse.linalg._interface import aslinearoperator

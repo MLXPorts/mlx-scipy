@@ -9,10 +9,10 @@ Run tests if fftpack is not installed:
   python tests/test_helper.py [<level>]
 """
 
-from numpy.testing import assert_array_almost_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_almost_equal
 from scipy_mlx.fftpack import fftshift, ifftshift, fftfreq, rfftfreq
 
-from numpy import pi, random
+from scipy_mlx._lib._mlx_numpy import pi, random
 
 class TestFFTShift:
 

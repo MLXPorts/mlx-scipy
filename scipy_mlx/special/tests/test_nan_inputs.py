@@ -6,7 +6,7 @@ import warnings
 from collections.abc import Callable
 
 import mlx.core as mx
-from numpy.testing import assert_array_equal, assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_equal, assert_
 import pytest
 import scipy_mlx.special as sc
 

@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy.testing import assert_allclose, assert_equal, assert_almost_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal, assert_almost_equal
 from pytest import raises as assert_raises
 
 from scipy_mlx.spatial import procrustes

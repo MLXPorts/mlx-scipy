@@ -1,9 +1,9 @@
 import pytest
 import mlx.core as mx
-from numpy.random import default_rng
+from scipy_mlx._lib._mlx_numpy.random import default_rng
 from scipy_mlx.optimize import quadratic_assignment, OptimizeWarning
 from scipy_mlx.optimize._qap import _calc_score as _score
-from numpy.testing import assert_equal, assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_
 
 
 ################

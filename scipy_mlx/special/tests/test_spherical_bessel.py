@@ -4,9 +4,9 @@
 import warnings
 
 import mlx.core as mx
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 import pytest
-from numpy import sin, cos, sinh, cosh, exp, inf, nan, r_, pi
+from scipy_mlx._lib._mlx_numpy import sin, cos, sinh, cosh, exp, inf, nan, r_, pi
 
 from scipy_mlx.special import spherical_jn, spherical_yn, spherical_in, spherical_kn
 from scipy_mlx.integrate import quad

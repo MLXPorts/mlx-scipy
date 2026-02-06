@@ -1,5 +1,5 @@
-from numpy import array, kron, diag
-from numpy.testing import assert_, assert_equal
+from scipy_mlx._lib._mlx_numpy import array, kron, diag
+from scipy_mlx._lib._mlx_numpy.testing import assert_, assert_equal
 
 from scipy_mlx.sparse import _spfuncs as spfuncs
 from scipy_mlx.sparse import csr_matrix, csc_matrix, bsr_matrix

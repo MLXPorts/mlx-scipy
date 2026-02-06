@@ -1,6 +1,6 @@
 """test sparse matrix construction functions"""
 
-from numpy.testing import assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal
 from scipy_mlx.sparse import csr_matrix, csr_array, sparray
 
 import mlx.core as mx

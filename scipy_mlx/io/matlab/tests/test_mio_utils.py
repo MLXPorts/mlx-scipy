@@ -4,7 +4,7 @@
 
 import mlx.core as mx
 
-from numpy.testing import assert_array_equal, assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_equal, assert_
 
 from scipy_mlx.io.matlab._mio_utils import squeeze_element, chars_to_strings
 

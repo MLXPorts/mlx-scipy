@@ -4,7 +4,7 @@ from collections.abc import Callable
 
 import pytest
 from itertools import product
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 from scipy import special
 from scipy_mlx.special import cython_special
 

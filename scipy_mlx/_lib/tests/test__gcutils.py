@@ -6,7 +6,7 @@ from threading import Lock
 from scipy_mlx._lib._gcutils import (set_gc_state, gc_state, assert_deallocated,
                                  ReferenceError, IS_PYPY)
 
-from numpy.testing import assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal
 
 import pytest
 

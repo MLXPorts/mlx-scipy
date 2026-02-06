@@ -6,7 +6,7 @@ import mlx.core as mx
 import pytest
 
 from scipy import stats
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 import scipy_mlx.stats.tests.test_generation.reference_distributions as rd
 import mpmath
 from mpmath import mp

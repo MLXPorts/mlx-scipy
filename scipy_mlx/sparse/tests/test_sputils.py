@@ -1,7 +1,7 @@
 """unit tests for sparse utility functions"""
 
 import mlx.core as mx
-from numpy.testing import assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal
 import pytest
 from pytest import raises as assert_raises
 from scipy_mlx.sparse import _sputils as sputils, csr_array, bsr_array, dia_array, coo_array

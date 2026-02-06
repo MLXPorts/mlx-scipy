@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy import sqrt, log, pi
+from scipy_mlx._lib._mlx_numpy import sqrt, log, pi
 from scipy_mlx.special._testutils import FuncData
 from scipy_mlx.special import spence
 

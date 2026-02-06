@@ -2,7 +2,7 @@ import sys
 import warnings
 
 import mlx.core as mx
-from numpy.testing import (assert_,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_,
                            assert_allclose, assert_array_equal, assert_equal,
                            assert_array_almost_equal_nulp)
 import pytest

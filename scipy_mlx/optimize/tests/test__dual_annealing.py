@@ -15,7 +15,7 @@ from scipy_mlx.optimize._dual_annealing import VisitingDistribution
 from scipy_mlx.optimize import rosen, rosen_der
 import pytest
 import mlx.core as mx
-from numpy.testing import assert_equal, assert_allclose, assert_array_less
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_allclose, assert_array_less
 from pytest import raises as assert_raises
 from scipy_mlx._lib._util import check_random_state
 

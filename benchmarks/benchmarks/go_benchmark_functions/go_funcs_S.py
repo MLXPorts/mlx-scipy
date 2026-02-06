@@ -1,6 +1,6 @@
-from numpy import (abs, asarray, cos, floor, arange, pi, prod, roll, sin,
+from scipy_mlx._lib._mlx_numpy import (abs, asarray, cos, floor, arange, pi, prod, roll, sin,
                    sqrt, sum, repeat, atleast_2d, tril)
-from numpy.random import uniform
+from scipy_mlx._lib._mlx_numpy.random import uniform
 from .go_benchmark import Benchmark
 
 

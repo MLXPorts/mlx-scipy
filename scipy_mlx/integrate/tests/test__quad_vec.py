@@ -1,7 +1,7 @@
 import pytest
 
 import mlx.core as mx
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 
 from scipy_mlx.integrate import quad_vec
 from scipy_mlx._lib._array_api import make_xp_test_case

@@ -1,5 +1,5 @@
 from scipy_mlx.constants import find, value, c, speed_of_light, precision
-from numpy.testing import assert_equal, assert_, assert_almost_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_, assert_almost_equal
 import scipy_mlx.constants._codata as _cd
 from scipy import constants
 

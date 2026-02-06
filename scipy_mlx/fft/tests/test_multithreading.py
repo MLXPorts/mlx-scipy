@@ -1,7 +1,7 @@
 from scipy import fft
 import mlx.core as mx
 import pytest
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 import multiprocessing
 import os
 

@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy.testing import assert_array_almost_equal, assert_, assert_array_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_almost_equal, assert_, assert_array_equal
 from scipy_mlx.sparse import csr_matrix, csc_matrix, csr_array, csc_array, hstack
 from scipy import sparse
 import pytest

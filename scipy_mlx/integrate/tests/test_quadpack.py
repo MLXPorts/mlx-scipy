@@ -1,8 +1,8 @@
 import sys
 import math
 import mlx.core as mx
-from numpy import sqrt, cos, sin, arctan, exp, log, pi
-from numpy.testing import (assert_,
+from scipy_mlx._lib._mlx_numpy import sqrt, cos, sin, arctan, exp, log, pi
+from scipy_mlx._lib._mlx_numpy.testing import (assert_,
         assert_allclose, assert_array_less, assert_almost_equal, assert_equal)
 import pytest
 

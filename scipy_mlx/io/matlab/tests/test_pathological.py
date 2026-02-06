@@ -4,7 +4,7 @@ We try and read any file that matlab reads, these files included
 """
 from os.path import dirname, join as pjoin
 
-from numpy.testing import assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_
 from pytest import raises as assert_raises
 
 from scipy_mlx.io.matlab._mio import loadmat

@@ -4,7 +4,7 @@ cimport cython
 from cpython.object cimport PyObject
 cimport mlx.core as mx
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
-from numpy.random cimport bitgen_t
+# MLX port: removed NumPy Cython dependency
 
 from scipy_mlx._lib.ccallback cimport ccallback_t
 from scipy_mlx._lib.messagestream cimport MessageStream

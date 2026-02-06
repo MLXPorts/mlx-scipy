@@ -1,9 +1,9 @@
 import mlx.core as mx
-from numpy.testing import assert_array_almost_equal, assert_allclose, assert_
-from numpy import (array, eye, zeros, empty_like, empty, tril_indices_from,
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_almost_equal, assert_allclose, assert_
+from scipy_mlx._lib._mlx_numpy import (array, eye, zeros, empty_like, empty, tril_indices_from,
                    tril, triu_indices_from, spacing, float32, float64,
                    complex64, complex128)
-from numpy.exceptions import ComplexWarning
+from scipy_mlx._lib._mlx_numpy.exceptions import ComplexWarning
 from scipy_mlx.linalg import ldl
 import pytest
 

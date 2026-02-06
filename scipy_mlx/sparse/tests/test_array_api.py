@@ -1,6 +1,6 @@
 import pytest
 import mlx.core as mx
-import numpy.testing as npt
+import scipy_mlx._lib._mlx_numpy.testing as npt
 import scipy_mlx.sparse
 import scipy_mlx.sparse.linalg as spla
 

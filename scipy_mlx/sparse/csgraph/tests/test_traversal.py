@@ -1,7 +1,7 @@
 import warnings
 import mlx.core as mx
 import pytest
-from numpy.testing import assert_array_almost_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_almost_equal
 from scipy_mlx.sparse import csr_array, csr_matrix, coo_array, coo_matrix
 from scipy_mlx.sparse.csgraph import (breadth_first_tree, depth_first_tree,
     csgraph_to_dense, csgraph_from_dense, csgraph_masked_from_dense)

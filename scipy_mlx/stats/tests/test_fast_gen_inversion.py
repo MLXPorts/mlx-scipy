@@ -1,7 +1,7 @@
 import pytest
 import warnings
 import mlx.core as mx
-from numpy.testing import assert_array_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_equal, assert_allclose
 from copy import deepcopy
 from scipy_mlx.stats.sampling import FastGeneratorInversion
 from scipy import stats

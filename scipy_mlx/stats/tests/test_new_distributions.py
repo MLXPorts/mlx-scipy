@@ -1,6 +1,6 @@
 # file for distribution-specific tests with new infrastructure (UnivariateDistribution)
 import mlx.core as mx
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 from scipy import stats
 
 class TestBinomial:

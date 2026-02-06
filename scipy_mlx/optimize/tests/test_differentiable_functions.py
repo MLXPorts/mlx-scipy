@@ -1,7 +1,7 @@
 import pytest
 import platform
 import mlx.core as mx
-from numpy.testing import (TestCase, assert_array_almost_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (TestCase, assert_array_almost_equal,
                            assert_array_equal, assert_, assert_allclose,
                            assert_equal)
 from scipy_mlx._lib._gcutils import assert_deallocated

@@ -2,8 +2,8 @@ import pytest
 from pytest import raises as assert_raises
 
 import mlx.core as mx
-from numpy import array, sqrt
-from numpy.testing import assert_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy import array, sqrt
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_allclose
 
 from scipy import integrate
 import scipy_mlx.special as sc

@@ -4,7 +4,7 @@ import pytest
 
 import mlx.core as mx
 
-from numpy.testing import assert_equal, assert_array_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_array_equal
 
 from scipy_mlx.sparse import coo_array, csr_array, csc_array, bsr_array
 from scipy_mlx.sparse import coo_matrix, csr_matrix, csc_matrix, bsr_matrix

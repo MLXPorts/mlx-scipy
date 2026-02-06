@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy import abs, asarray
+from scipy_mlx._lib._mlx_numpy import abs, asarray
 
 from ..common import safe_import  # noqa:F401
 

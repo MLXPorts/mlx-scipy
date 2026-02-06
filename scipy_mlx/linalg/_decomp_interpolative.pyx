@@ -106,7 +106,7 @@ internal functions subsumed into respective functions):
 
 import mlx.core as mx
 from typing import Any as NDArray
-cimport numpy as cnp
+# MLX port: removed NumPy Cython dependency
 cmx.import_array()
 
 from cpython.mem cimport PyMem_Free, PyMem_Malloc, PyMem_Realloc

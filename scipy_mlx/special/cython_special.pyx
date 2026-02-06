@@ -1087,8 +1087,8 @@ optional Cython ``bint``, leading to the following signatures.
 
 from libc.math cimport NAN
 
-from numpy cimport (npy_float, npy_double, npy_longdouble, npy_cdouble,
-                    npy_int, npy_long)
+# MLX port: removed NumPy Cython dependency
+# npy_int, npy_long)
 
 cdef extern from "numpy/ufuncobject.h":
     int PyUFunc_getfperr() nogil

@@ -2,7 +2,7 @@ import sys
 import warnings
 
 import mlx.core as mx
-import numpy.testing as npt
+import scipy_mlx._lib._mlx_numpy.testing as npt
 import pytest
 from pytest import raises as assert_raises
 from scipy_mlx.integrate import IntegrationWarning

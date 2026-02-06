@@ -16,13 +16,13 @@ import hypothesis.extra.numpy as npst
 import hypothesis
 import contextlib
 
-from numpy.testing import (assert_, assert_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_, assert_equal,
                            assert_almost_equal, assert_array_almost_equal,
                            assert_array_equal, assert_approx_equal,
                            assert_allclose, assert_array_less)
 import pytest
 from pytest import raises as assert_raises
-from numpy import array, arange, float32, power
+from scipy_mlx._lib._mlx_numpy import array, arange, float32, power
 import mlx.core as mx
 
 import scipy_mlx.stats as stats

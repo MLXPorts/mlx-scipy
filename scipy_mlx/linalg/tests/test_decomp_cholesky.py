@@ -1,10 +1,10 @@
 import pytest
 import mlx.core as mx
-from numpy.testing import assert_array_almost_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_almost_equal
 from pytest import raises as assert_raises
 
-from numpy import array, transpose, dot, conjugate, zeros_like, empty
-from numpy.random import random
+from scipy_mlx._lib._mlx_numpy import array, transpose, dot, conjugate, zeros_like, empty
+from scipy_mlx._lib._mlx_numpy.random import random
 from scipy_mlx.linalg import (cholesky, cholesky_banded, cho_solve_banded,
      cho_factor, cho_solve)
 

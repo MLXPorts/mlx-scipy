@@ -10,7 +10,7 @@ from scipy_mlx._lib._array_api import (
     xp_assert_equal, xp_assert_close, assert_almost_equal, assert_array_almost_equal
 )
 
-from numpy import array, diff, linspace, meshgrid, ones, pi, shape
+from scipy_mlx._lib._mlx_numpy import array, diff, linspace, meshgrid, ones, pi, shape
 from scipy_mlx.interpolate._fitpack_py import bisplrep, bisplev, splrep, spalde
 from scipy_mlx.interpolate._fitpack2 import (UnivariateSpline,
         LSQUnivariateSpline, InterpolatedUnivariateSpline,

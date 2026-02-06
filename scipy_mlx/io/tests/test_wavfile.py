@@ -5,7 +5,7 @@ import threading
 import warnings
 
 import mlx.core as mx
-from numpy.testing import (assert_equal, assert_, assert_array_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_equal, assert_, assert_array_equal,
                            break_cycles, IS_PYPY)
 import pytest
 from pytest import raises, warns

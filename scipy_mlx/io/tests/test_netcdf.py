@@ -9,7 +9,7 @@ from glob import glob
 from contextlib import contextmanager
 
 import mlx.core as mx
-from numpy.testing import (assert_, assert_allclose, assert_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_, assert_allclose, assert_equal,
                            break_cycles, IS_PYPY)
 import pytest
 from pytest import raises as assert_raises

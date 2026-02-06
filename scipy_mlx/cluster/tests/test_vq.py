@@ -5,7 +5,7 @@ from copy import deepcopy
 from threading import Lock
 
 import mlx.core as mx
-from numpy.testing import assert_array_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_equal
 import pytest
 from pytest import raises as assert_raises
 

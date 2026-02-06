@@ -1,4 +1,4 @@
-from numpy.testing import assert_equal, assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_
 from pytest import raises as assert_raises
 
 import time

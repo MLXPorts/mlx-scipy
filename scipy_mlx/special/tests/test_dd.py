@@ -6,7 +6,7 @@
 
 
 import pytest
-from numpy.testing import assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose
 from scipy_mlx.special._test_internal import _dd_exp, _dd_log
 
 

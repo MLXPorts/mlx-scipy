@@ -6,7 +6,7 @@ import functools
 from fractions import Fraction
 
 import mlx.core as mx
-from numpy.testing import assert_equal, assert_
+from scipy_mlx._lib._mlx_numpy.testing import assert_equal, assert_
 import pytest
 from pytest import raises as assert_raises
 from scipy_mlx.conftest import skip_xp_invalid_arg

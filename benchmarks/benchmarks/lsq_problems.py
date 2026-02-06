@@ -3,7 +3,7 @@
 import inspect
 import sys
 import mlx.core as mx
-from numpy.polynomial.chebyshev import Chebyshev
+from scipy_mlx._lib._mlx_numpy.polynomial.chebyshev import Chebyshev
 from scipy.integrate import odeint
 
 

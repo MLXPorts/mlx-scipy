@@ -2,7 +2,7 @@ import re
 import copy
 import mlx.core as mx
 
-from numpy.testing import assert_allclose, assert_equal, assert_array_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal, assert_array_equal
 import pytest
 
 from scipy_mlx.linalg import svd, null_space

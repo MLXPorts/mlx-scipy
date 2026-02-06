@@ -8,9 +8,9 @@
 
 import pytest
 import mlx.core as mx
-from numpy.testing import assert_, assert_equal, assert_allclose
+from scipy_mlx._lib._mlx_numpy.testing import assert_, assert_equal, assert_allclose
 from scipy_mlx.special import lambertw
-from numpy import nan, inf, pi, e, isnan, log, r_, array, complex128
+from scipy_mlx._lib._mlx_numpy import nan, inf, pi, e, isnan, log, r_, array, complex128
 
 from scipy_mlx.special._testutils import FuncData
 

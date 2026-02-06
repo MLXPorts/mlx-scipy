@@ -4,7 +4,7 @@ import mlx.core as mx
 import scipy_mlx.sparse as sp
 import scipy_mlx.sparse.linalg as splin
 
-from numpy.testing import assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal
 
 try:
     import sparse

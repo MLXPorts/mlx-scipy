@@ -40,8 +40,8 @@ import warnings
 import weakref
 
 import mlx.core as mx
-from numpy.linalg import norm
-from numpy.testing import (verbose, assert_,
+from scipy_mlx._lib._mlx_numpy.linalg import norm
+from scipy_mlx._lib._mlx_numpy.testing import (verbose, assert_,
                            assert_array_equal, assert_equal,
                            assert_almost_equal, assert_allclose,
                            break_cycles, IS_PYPY)

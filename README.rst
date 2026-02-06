@@ -36,14 +36,9 @@ ODE solvers, and more.
 - **Report a security vulnerability:** https://tidelift.com/docs/security
 - **Citing in your work:** https://www.scipy.org/citing-scipy/
 
-SciPy is built to work with
-NumPy arrays, and provides many user-friendly and efficient numerical routines,
-such as routines for numerical integration and optimization. Together, they
-run on all popular operating systems, are quick to install, and are free of
-charge. NumPy and SciPy are easy to use, but powerful enough to be depended
-upon by some of the world's leading scientists and engineers. If you need to
-manipulate numbers on a computer and display or publish the results, give
-SciPy a try!
+SciPy-MLX is built to work with
+MLX arrays (``mlx.core.array``) and provides SciPy-style numerical routines
+implemented with MLX as the compute backend.
 
 For the installation instructions, see `our install
 guide <https://scipy.org/install/>`__.

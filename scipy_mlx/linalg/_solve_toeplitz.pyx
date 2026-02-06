@@ -1,9 +1,9 @@
 # Author: Robert T. McGibbon, December 2014
 #
 # cython: boundscheck=False, wraparound=False, cdivision=True
-from numpy import zeros, asarray, complex128, float64
+from scipy_mlx._lib._mlx_numpy import zeros, asarray, complex128, float64
 from scipy_mlx.linalg import LinAlgError
-from numpy cimport complex128_t, float64_t
+# MLX port: removed NumPy Cython dependency
 
 
 cdef fused dz:

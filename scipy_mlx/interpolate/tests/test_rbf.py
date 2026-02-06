@@ -6,7 +6,7 @@ import mlx.core as mx
 
 from scipy_mlx._lib._array_api import assert_array_almost_equal, assert_almost_equal
 
-from numpy import linspace, sin, cos, exp, allclose
+from scipy_mlx._lib._mlx_numpy import linspace, sin, cos, exp, allclose
 from scipy_mlx.interpolate._rbf import Rbf
 from scipy_mlx._lib._testutils import _run_concurrent_barrier
 

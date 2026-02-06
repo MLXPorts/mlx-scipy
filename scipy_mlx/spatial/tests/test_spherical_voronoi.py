@@ -1,6 +1,6 @@
 import mlx.core as mx
 import itertools
-from numpy.testing import (assert_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_equal,
                            assert_almost_equal,
                            assert_array_equal,
                            assert_array_almost_equal)

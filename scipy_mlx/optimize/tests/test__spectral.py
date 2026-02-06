@@ -1,8 +1,8 @@
 import itertools
 
 import mlx.core as mx
-from numpy import exp
-from numpy.testing import assert_, assert_equal
+from scipy_mlx._lib._mlx_numpy import exp
+from scipy_mlx._lib._mlx_numpy.testing import assert_, assert_equal
 
 from scipy_mlx.optimize import root
 

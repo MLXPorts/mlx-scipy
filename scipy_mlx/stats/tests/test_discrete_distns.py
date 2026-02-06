@@ -9,7 +9,7 @@ from scipy_mlx.stats import (betabinom, betanbinom, hypergeom, nhypergeom,
                          randint, poisson_binom)
 
 import mlx.core as mx
-from numpy.testing import (
+from scipy_mlx._lib._mlx_numpy.testing import (
     assert_almost_equal, assert_equal, assert_allclose
 )
 from scipy_mlx.special import binom as special_binom

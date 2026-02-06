@@ -21,15 +21,15 @@ import pytest
 from pytest import raises as assert_raises
 
 import mlx.core as mx
-from numpy import (arange, zeros, array, dot, asarray,
+from scipy_mlx._lib._mlx_numpy import (arange, zeros, array, dot, asarray,
                    vstack, array, transpose, diag, kron, inf, conjugate,
                    int8)
 
 import random
-from numpy.testing import (assert_equal, assert_array_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_equal, assert_array_equal,
         assert_array_almost_equal, assert_almost_equal, assert_,
         assert_allclose)
-from numpy.exceptions import ComplexWarning
+from scipy_mlx._lib._mlx_numpy.exceptions import ComplexWarning
 
 from types import GenericAlias
 

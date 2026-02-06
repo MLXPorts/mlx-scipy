@@ -1,4 +1,4 @@
-cimport numpy as cnp
+# MLX port: removed NumPy Cython dependency
 
 ctypedef fused lapack_t:
     float

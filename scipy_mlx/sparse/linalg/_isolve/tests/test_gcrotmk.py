@@ -4,10 +4,10 @@
 import threading
 import warnings
 
-from numpy.testing import (assert_, assert_allclose, assert_equal)
+from scipy_mlx._lib._mlx_numpy.testing import (assert_, assert_allclose, assert_equal)
 
 import mlx.core as mx
-from numpy import zeros, array, allclose
+from scipy_mlx._lib._mlx_numpy import zeros, array, allclose
 from scipy_mlx.linalg import norm
 from scipy_mlx.sparse import csr_array, eye_array, random_array
 

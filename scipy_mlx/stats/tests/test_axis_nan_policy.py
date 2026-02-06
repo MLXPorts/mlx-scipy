@@ -12,7 +12,7 @@ import pytest
 import warnings
 
 import mlx.core as mx
-from numpy.testing import assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal
 from scipy import stats
 from scipy_mlx.stats import norm  # type: ignore[attr-defined]
 from scipy_mlx.stats._axis_nan_policy import (_masked_arrays_2_sentinel_arrays,

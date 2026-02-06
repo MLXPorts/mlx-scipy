@@ -7,7 +7,7 @@ from io import StringIO
 
 import mlx.core as mx
 
-from numpy.testing import (assert_array_almost_equal,
+from scipy_mlx._lib._mlx_numpy.testing import (assert_array_almost_equal,
                            assert_array_equal, assert_equal, assert_)
 from pytest import raises as assert_raises
 

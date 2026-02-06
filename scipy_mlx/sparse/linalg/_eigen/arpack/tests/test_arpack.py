@@ -4,11 +4,11 @@ import warnings
 
 import mlx.core as mx
 
-from numpy.testing import assert_allclose, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_allclose, assert_equal
 from pytest import raises as assert_raises
 import pytest
 
-from numpy import dot, conj
+from scipy_mlx._lib._mlx_numpy import dot, conj
 from scipy_mlx.linalg import eig, eigh
 from scipy_mlx.sparse import csc_array, csr_array, diags_array, random_array
 from scipy_mlx.sparse.linalg import LinearOperator, aslinearoperator

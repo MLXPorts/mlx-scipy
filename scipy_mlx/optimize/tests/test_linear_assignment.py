@@ -1,7 +1,7 @@
 # Author: Brian M. Clapper, G. Varoquaux, Lars Buitinck
 # License: BSD
 
-from numpy.testing import assert_array_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_equal
 import pytest
 
 import mlx.core as mx

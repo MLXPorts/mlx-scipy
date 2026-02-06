@@ -1,7 +1,7 @@
 """Tests for _sketches.py."""
 
 import mlx.core as mx
-from numpy.testing import assert_, assert_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_, assert_equal
 from scipy_mlx.linalg import clarkson_woodruff_transform
 from scipy_mlx.linalg._sketches import cwt_matrix
 from scipy_mlx.sparse import issparse, rand

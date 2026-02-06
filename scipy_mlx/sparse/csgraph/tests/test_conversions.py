@@ -1,5 +1,5 @@
 import mlx.core as mx
-from numpy.testing import assert_array_almost_equal
+from scipy_mlx._lib._mlx_numpy.testing import assert_array_almost_equal
 from scipy_mlx.sparse import csr_array
 from scipy_mlx.sparse.csgraph import csgraph_from_dense, csgraph_to_dense
 
