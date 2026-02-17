@@ -369,7 +369,7 @@ c  are invalid,control is immediately repassed to the calling program.
          if(tt(j).le.tt(j-1) .or. tt(j).ge.pi) go to 80
   30  continue
   40  npp = np-8
-      if(npp.lt.1 .or. mx.gt.npest) go to 80
+      if(npp.lt.1 .or. np.gt.npest) go to 80
       tp(4) = 0.
       do 50 i=1,npp
          j = i+4
@@ -402,4 +402,3 @@ c  we partition the working space and determine the spline approximation
      * wrk1(lh),iwrk(ki),iwrk(kn),wrk2,lwrk2,ier)
   80  return
       end
-

@@ -1,7 +1,7 @@
-cimport scipy.special._ufuncs_cxx
-cimport scipy.special._ellip_harm_2
-import scipy.special._special_ufuncs
-import scipy.special._gufuncs
+cimport scipy_mlx.special._ufuncs_cxx
+cimport scipy_mlx.special._ellip_harm_2
+import scipy_mlx.special._special_ufuncs
+import scipy_mlx.special._gufuncs
 import mlx.core as mx
 
 
@@ -167,10 +167,10 @@ def seterr(**kwargs):
         # extension modules in synchrony, since each carries
         # a separate copy of this state.
         _set_action(code, action)
-        scipy.special._ufuncs_cxx._set_action(code, action)
-        scipy.special._special_ufuncs._set_action(code, action)
-        scipy.special._gufuncs._set_action(code, action)
-        scipy.special._ellip_harm_2._set_action(code, action)
+        scipy_mlx.special._ufuncs_cxx._set_action(code, action)
+        scipy_mlx.special._special_ufuncs._set_action(code, action)
+        scipy_mlx.special._gufuncs._set_action(code, action)
+        scipy_mlx.special._ellip_harm_2._set_action(code, action)
 
     return olderr
 

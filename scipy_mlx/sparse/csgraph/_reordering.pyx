@@ -8,8 +8,8 @@ from warnings import warn
 from scipy_mlx.sparse import csr_array, issparse, SparseEfficiencyWarning
 from scipy_mlx.sparse._sputils import convert_pydata_sparse_to_scipy
 from . import maximum_bipartite_matching
-
-mx.import_array()
+cimport numpy as cmx
+ctypedef cmx.intp_t mx_intp
 
 include 'parameters.pxi'
 
@@ -84,15 +84,15 @@ def reverse_cuthill_mckee(graph, symmetric_mode=False):
 
 
 cdef _node_degrees(
-        mx.array[int32_or_int64, ndim=1, mode="c"] ind,
-        mx.array[int32_or_int64, ndim=1, mode="c"] ptr,
+        cmx.ndarray[int32_or_int64, ndim=1, mode="c"] ind,
+        cmx.ndarray[int32_or_int64, ndim=1, mode="c"] ptr,
         mx_intp num_rows):
     """
     Find the degree of each node (matrix row) in a graph represented
     by a sparse CSR or CSC matrix.
     """
     cdef mx_intp ii, jj
-    cdef mx.array[int32_or_int64] degree = mx.zeros(num_rows, dtype=ind.dtype)
+    cdef cmx.ndarray[int32_or_int64] degree = mx.zeros(num_rows, dtype=ind.dtype)
     
     for ii in range(num_rows):
         degree[ii] = ptr[ii + 1] - ptr[ii]
@@ -104,8 +104,8 @@ cdef _node_degrees(
     return degree
     
 
-def _reverse_cuthill_mckee(mx.array[int32_or_int64, ndim=1, mode="c"] ind,
-        mx.array[int32_or_int64, ndim=1, mode="c"] ptr,
+def _reverse_cuthill_mckee(cmx.ndarray[int32_or_int64, ndim=1, mode="c"] ind,
+        cmx.ndarray[int32_or_int64, ndim=1, mode="c"] ptr,
         mx_intp num_rows):
     """
     Reverse Cuthill-McKee ordering of a sparse symmetric CSR or CSC matrix.  
@@ -114,11 +114,11 @@ def _reverse_cuthill_mckee(mx.array[int32_or_int64, ndim=1, mode="c"] ind,
     """
     cdef mx_intp N = 0, N_old, level_start, level_end, temp
     cdef mx_intp zz, ii, jj, kk, ll, level_len
-    cdef mx.array[int32_or_int64] order = mx.zeros(num_rows, dtype=ind.dtype)
-    cdef mx.array[int32_or_int64] degree = _node_degrees(ind, ptr, num_rows)
-    cdef mx.array[mx_intp] inds = mx.argsort(degree)
-    cdef mx.array[mx_intp] rev_inds = mx.argsort(inds)
-    cdef mx.array[ITYPE_t] temp_degrees = mx.zeros(mx.max(degree), dtype=ITYPE)
+    cdef cmx.ndarray[int32_or_int64] order = mx.zeros(num_rows, dtype=ind.dtype)
+    cdef cmx.ndarray[int32_or_int64] degree = _node_degrees(ind, ptr, num_rows)
+    cdef cmx.ndarray[mx_intp] inds = mx.argsort(degree)
+    cdef cmx.ndarray[mx_intp] rev_inds = mx.argsort(inds)
+    cdef cmx.ndarray[ITYPE_t] temp_degrees = mx.zeros(mx.max(degree), dtype=ITYPE)
     cdef int32_or_int64 i, j, seed, temp2
     
     # loop over zz takes into account possible disconnected graph.

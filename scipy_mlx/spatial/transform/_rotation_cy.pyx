@@ -10,8 +10,6 @@ cimport cython
 from cython.view cimport array
 from libc.math cimport sqrt, sin, cos, atan2, acos, hypot, isnan, NAN, pi
 
-mx.import_array()
-
 # utilities for empty array initialization
 cdef inline double[:] _empty1(int n) noexcept:
     if n == 0:
@@ -189,7 +187,7 @@ cdef inline int _get_angles(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef double[:, :] _compute_euler_from_quat(
-    mx.array[double, ndim=2] quat,
+    object quat,
     const uchar[:] seq,
     bint extrinsic,
     bint suppress_warnings
@@ -251,8 +249,8 @@ cdef double[:, :] _compute_euler_from_quat(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef double[:, :] _compute_davenport_from_quat(
-    mx.array[double, ndim=2] quat, mx.array[double, ndim=1] n1,
-    mx.array[double, ndim=1] n2, mx.array[double, ndim=1] n3,
+    object quat, object n1,
+    object n2, object n3,
     bint extrinsic,
     bint suppress_warnings
 ):
@@ -832,7 +830,7 @@ def as_davenport(
     bint degrees=False,
     bint suppress_warnings=False
 ) -> double[:, :]:
-    cdef mx.array[double, ndim=2] q = mx.array(quat)
+    cdef object q = mx.array(quat)
 
     cdef bint extrinsic
     if order in ['e', 'extrinsic']:
@@ -850,7 +848,9 @@ def as_davenport(
     if axes.ndim != 2 or axes.shape[1] != 3:
         raise ValueError("Axes must be vectors of length 3.")
 
-    cdef mx.array[double, ndim=1] n1, n2, n3
+    cdef object n1
+    cdef object n2
+    cdef object n3
     n1, n2, n3 = mx.array(axes)
 
     # normalize axes
@@ -877,7 +877,7 @@ def as_davenport(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def inv(double[:, :] quat) -> double[:, :]:
-    cdef mx.array[double, ndim=2] q_inv = mx.array(quat, copy=True)
+    cdef object q_inv = mx.array(quat, copy=True)
     q_inv[:, 0] *= -1
     q_inv[:, 1] *= -1
     q_inv[:, 2] *= -1
@@ -1032,7 +1032,7 @@ def apply(double[:, :] quat, double[:, :] vectors, bint inverse=False) -> double
             f"Cannot broadcast {n_rotations} rotations to {n_vectors} vectors."
         )
 
-    cdef mx.array matrix = as_matrix(quat)
+    cdef object matrix = as_matrix(quat)
 
     if inverse:
         matrix = mx.swapaxes(matrix, -1, -2)

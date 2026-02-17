@@ -10,6 +10,7 @@ from libc.math cimport INFINITY, modf
 # MLX port: removed NumPy Cython dependency
 from scipy_mlx.special.cython_special cimport ndtri as phinv
 from scipy_mlx.special.cython_special cimport ndtr as phi
+from numpy cimport npy_intp
 
 
 #pythran export _qmvn_inner(float[:], float[:, :], int64, int64, float[:, :], float[:], float[:])  # noqa: E501

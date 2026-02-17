@@ -31,8 +31,6 @@ from libc.stdlib cimport malloc, free
 
 from scipy_mlx.spatial.distance import squareform, is_valid_y, is_valid_dm
 
-mx.import_array()
-
 @cython.profile(False)
 @cython.boundscheck(False)
 @cython.wraparound(False)

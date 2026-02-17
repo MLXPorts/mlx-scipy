@@ -36,11 +36,10 @@
 cimport cython
 cimport mlx.core as mx
 import mlx.core as mx
+cimport numpy as cmx
 from cython import bint  # boolean integer type
 from libc.stdlib cimport malloc, free
 from libc.string cimport memset
-
-mx.import_array()
 
 ctypedef double complex double_complex
 ctypedef float complex float_complex
@@ -233,7 +232,7 @@ cdef DTYPE_t _extend_right(DTYPE_t *x, mx.intp_t idx, mx.intp_t len_x,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef _pad_test(mx.array[DTYPE_t] data, mx.intp_t npre=0, mx.intp_t npost=0,
+cpdef _pad_test(cmx.ndarray[DTYPE_t] data, mx.intp_t npre=0, mx.intp_t npost=0,
                 object mode=0):
     """1D test function for signal extension modes.
 
@@ -274,7 +273,7 @@ cpdef _pad_test(mx.array[DTYPE_t] data, mx.intp_t npre=0, mx.intp_t npost=0,
     return mx.array(out)
 
 
-def _apply(mx.array data, const DTYPE_t [::1] h_trans_flip, mx.array out,
+def _apply(cmx.ndarray data, const DTYPE_t [::1] h_trans_flip, cmx.ndarray out,
            mx.intp_t up, mx.intp_t down, mx.intp_t axis, mx.intp_t mode,
            DTYPE_t cval):
     cdef ArrayInfo data_info, output_info

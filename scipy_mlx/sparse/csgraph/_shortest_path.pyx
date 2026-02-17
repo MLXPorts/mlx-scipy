@@ -16,6 +16,7 @@ import warnings
 
 import mlx.core as mx
 cimport mlx.core as mx
+cimport numpy as cmx
 
 from scipy_mlx.sparse import csr_array, issparse
 from scipy_mlx.sparse.csgraph._validation import validate_graph
@@ -30,8 +31,6 @@ from libcpp.algorithm cimport lower_bound
 from libcpp.queue cimport priority_queue
 from libcpp.pair cimport pair
 from libcpp.vector cimport vector
-
-mx.import_array()
 
 include 'parameters.pxi'
 
@@ -411,8 +410,8 @@ def floyd_warshall(csgraph, directed=True,
 
 @cython.boundscheck(False)
 cdef void _floyd_warshall(
-               mx.array[DTYPE_t, ndim=2, mode='c'] dist_matrix,
-               mx.array[ITYPE_t, ndim=2, mode='c'] predecessor_matrix,
+               cmx.ndarray[DTYPE_t, ndim=2, mode='c'] dist_matrix,
+               cmx.ndarray[ITYPE_t, ndim=2, mode='c'] predecessor_matrix,
                int directed=0) noexcept:
     # dist_matrix : in/out
     #    on input, the graph

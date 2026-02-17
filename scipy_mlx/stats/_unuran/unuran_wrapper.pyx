@@ -5,10 +5,12 @@ from cpython.object cimport PyObject
 cimport mlx.core as mx
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 # MLX port: removed NumPy Cython dependency
+from libc.stdint cimport uint64_t, uint32_t
 
 from scipy_mlx._lib.ccallback cimport ccallback_t
 from scipy_mlx._lib.messagestream cimport MessageStream
 from .unuran cimport *
+from numpy.random.bit_generator cimport bitgen_t
 import warnings
 import threading
 import functools
@@ -18,8 +20,6 @@ import scipy.stats as stats
 from scipy_mlx.stats._distn_infrastructure import argsreduce, rv_frozen
 from scipy_mlx._lib._util import check_random_state
 import warnings
-
-mx.import_array()
 
 __all__ = ['UNURANError', 'TransformedDensityRejection', 'DiscreteAliasUrn',
            'NumericalInversePolynomial']

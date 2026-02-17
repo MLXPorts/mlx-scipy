@@ -9,8 +9,6 @@ from scipy_mlx.sparse import csr_array, csr_matrix, spmatrix
 from scipy_mlx.sparse.csgraph._validation import validate_graph
 from scipy_mlx.sparse._sputils import is_pydata_spmatrix
 
-mx.import_array()
-
 include 'parameters.pxi'
 
 def minimum_spanning_tree(csgraph, overwrite=False):

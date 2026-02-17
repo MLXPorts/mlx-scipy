@@ -9,8 +9,6 @@ import mlx.core as mx
 
 cimport mlx.core as mx
 
-mx.import_array()
-
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

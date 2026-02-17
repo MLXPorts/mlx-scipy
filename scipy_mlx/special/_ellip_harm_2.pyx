@@ -187,9 +187,6 @@ def _ellipsoid_norm(double h2, double k2, int n, int p):
 
 cimport mlx.core as mx
 
-mx.import_array()
-mx.import_ufunc()
-
 cdef extern from "numpy/ufuncobject.h":
     int PyUFunc_getfperr() nogil
 

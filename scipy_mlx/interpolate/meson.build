@@ -63,7 +63,7 @@ fitpack_src = [
   'fitpack/fpsuev.f',
   'fitpack/fpsurf.f',
   'fitpack/fpsysy.f',
-  'fitpack/fptrmx.f',
+  'fitpack/fptrnp.f',
   'fitpack/fptrpe.f',
   'fitpack/insert.f',
   'fitpack/parcur.f',

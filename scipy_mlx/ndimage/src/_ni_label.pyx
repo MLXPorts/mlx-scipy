@@ -5,8 +5,7 @@
 
 import mlx.core as mx
 cimport mlx.core as mx
-
-mx.import_array()
+cimport numpy as cmx
 
 cdef extern from *:
    ctypedef int Py_intptr_t
@@ -90,13 +89,13 @@ cdef bint fused_write_line(data_t *p, mx.intp_t stride,
 ######################################################################
 # Function specializers
 ######################################################################
-def get_nonzero_line(mx.array[data_t] a):
+def get_nonzero_line(cmx.ndarray[data_t] a):
     return <Py_intptr_t> fused_nonzero_line[data_t]
 
-def get_read_line(mx.array[data_t] a):
+def get_read_line(cmx.ndarray[data_t] a):
     return <Py_intptr_t> fused_read_line[data_t]
 
-def get_write_line(mx.array[data_t] a):
+def get_write_line(cmx.ndarray[data_t] a):
     return <Py_intptr_t> fused_write_line[data_t]
 
 
@@ -197,9 +196,9 @@ cdef mx.uintp_t label_line_with_neighbor(mx.uintp_t *line,
 ######################################################################
 # Label regions
 ######################################################################
-cpdef _label(mx.array input,
-             mx.array structure,
-             mx.array output):
+cpdef _label(cmx.ndarray input,
+             cmx.ndarray structure,
+             cmx.ndarray output):
     # check dimensions
     # To understand the need for the casts to object in order to use
     # tuple.__eq__, see https://github.com/cython/cython/issues/863
@@ -249,7 +248,8 @@ cpdef _label(mx.array input,
         mx.intp_t total_offset
         mx.intp_t output_ndim, structure_ndim
         bint needs_self_labeling, valid, use_previous, overflowed
-        mx.array _line_buffer, _neighbor_buffer
+        cmx.ndarray _line_buffer
+        cmx.ndarray _neighbor_buffer
         mx.uintp_t *line_buffer
         mx.uintp_t *neighbor_buffer
         mx.uintp_t *tmp
@@ -275,8 +275,8 @@ cpdef _label(mx.array input,
     L = input.shape[axis]
     _line_buffer = mx.empty(L + 2, dtype=mx.uintp)
     _neighbor_buffer = mx.empty(L + 2, dtype=mx.uintp)
-    line_buffer = <mx.uintp_t *> _line_buffer.data
-    neighbor_buffer = <mx.uintp_t *> _neighbor_buffer.data
+    line_buffer = <mx.uintp_t *> cmx.PyArray_DATA(_line_buffer)
+    neighbor_buffer = <mx.uintp_t *> cmx.PyArray_DATA(_neighbor_buffer)
 
     # Add fenceposts with background values
     line_buffer[0] = neighbor_buffer[0] = BACKGROUND

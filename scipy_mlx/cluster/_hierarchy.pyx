@@ -8,8 +8,6 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Free
 
 ctypedef unsigned char uchar
 
-mx.import_array()
-
 # _hierarchy_distance_update.pxi includes the definition of linkage_distance_update
 # and the distance update functions for the supported linkage methods.
 include "_hierarchy_distance_update.pxi"

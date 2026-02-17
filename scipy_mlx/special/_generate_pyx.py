@@ -707,7 +707,7 @@ def generate_ufuncs(fn_prefix, cxx_fn_prefix, ufuncs):
 
                 # let cython grab the function pointer from the c++ shared library
                 ufunc.function_name_overrides[c_name] = (
-                    "scipy.special._ufuncs_cxx._export_" + var_name
+                    "scipy_mlx.special._ufuncs_cxx._export_" + var_name
                 )
             else:
                 # usual case

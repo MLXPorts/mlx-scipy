@@ -4,8 +4,6 @@ import mlx.core as mx
 from libc.stdint cimport uint32_t, uint64_t
 from libcpp.memory cimport unique_ptr
 
-mx.import_array()
-
 from cpython.pycapsule cimport PyCapsule_GetPointer, PyCapsule_IsValid
 
 cdef extern from "distributions.h":

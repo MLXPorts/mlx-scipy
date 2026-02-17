@@ -10,8 +10,6 @@ cimport cython
 
 include "_poly_common.pxi"
 
-mx.import_array()
-
 
 @cython.wraparound(False)
 @cython.boundscheck(False)

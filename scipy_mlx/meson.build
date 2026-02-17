@@ -67,11 +67,18 @@ if incdir_numpy == 'not-given'
       '-c',
       '''import os
 os.chdir(os.path.join("..", "tools"))
-import mlx.core as mx
 try:
-  incdir = os.path.relpath(mx.get_include())
+  import numpy as np
+  incdir = np.get_include()
+  import mlx.core as mx
+  if hasattr(mx, "get_include"):
+    try:
+      incdir = os.path.relpath(mx.get_include())
+    except Exception:
+      pass
 except Exception:
-  incdir = mx.get_include()
+  import numpy as np
+  incdir = np.get_include()
 print(incdir)
   '''
     ],
@@ -80,7 +87,21 @@ print(incdir)
 
   # We do need an absolute path to feed to `cc.find_library` below
   _incdir_numpy_abs = run_command(py3,
-    ['-c', 'import os; os.chdir(".."); import mlx.core as mx; print(mx.get_include())'],
+    [
+      '-c',
+      '''import numpy as np
+import os
+os.chdir("..")
+incdir = np.get_include()
+try:
+  import mlx.core as mx
+  if hasattr(mx, "get_include"):
+    incdir = mx.get_include()
+except Exception:
+  pass
+print(incdir)
+'''
+    ],
     check: true
   ).stdout().strip()
 else
@@ -96,6 +117,127 @@ np_dep = declare_dependency(include_directories: inc_np, compile_args: numpy_nod
 incdir_f2py = incdir_numpy / '..' / '..' / 'f2py' / 'src'
 inc_f2py = include_directories(incdir_f2py)
 fortranobject_c = incdir_f2py / 'fortranobject.c'
+
+mlx_dep = dependency('mlx', required: false)
+mlx_dep_list = []
+if get_option('build-vendored-mlx')
+  cmake = find_program('cmake', required: true)
+  _mlx_src = meson.current_source_dir() / 'vendor' / 'mlx-precise'
+  _mlx_build = meson.current_build_dir() / 'vendor-mlx-core'
+  _meson_buildtype = get_option('buildtype')
+  _mlx_build_type = 'Release'
+  if _meson_buildtype == 'debug'
+    _mlx_build_type = 'Debug'
+  elif _meson_buildtype == 'debugoptimized'
+    _mlx_build_type = 'RelWithDebInfo'
+  elif _meson_buildtype == 'minsize'
+    _mlx_build_type = 'MinSizeRel'
+  endif
+
+  # Prefer the vendored MLX build when requested, so conversion work links
+  # against the in-repo C++ sources.
+  run_command(
+    cmake,
+    '-S', _mlx_src,
+    '-B', _mlx_build,
+    '-DCMAKE_BUILD_TYPE=' + _mlx_build_type,
+    '-DBUILD_SHARED_LIBS=OFF',
+    '-DMLX_BUILD_TESTS=OFF',
+    '-DMLX_BUILD_EXAMPLES=OFF',
+    '-DMLX_BUILD_BENCHMARKS=OFF',
+    '-DMLX_BUILD_PYTHON_BINDINGS=OFF',
+    '-DMLX_BUILD_METAL=OFF',
+    '-DMLX_BUILD_CUDA=OFF',
+    '-DMLX_BUILD_GGUF=OFF',
+    '-DMLX_BUILD_SAFETENSORS=OFF',
+    '-DMLX_BUILD_CPU=ON',
+    '-DUSE_SYSTEM_FMT=ON',
+    check: true
+  )
+
+  run_command(
+    cmake,
+    '--build', _mlx_build,
+    '--target', 'mlx',
+    check: true
+  )
+
+  _mlx_header_paths = [
+    include_directories('vendor/mlx-precise'),
+    include_directories('vendor/mlx-precise/mlx'),
+    include_directories('_lib/mlx_abi/include'),
+  ]
+  _mlx_library = cpp.find_library('mlx', dirs: [
+    _mlx_build / 'Release' / 'lib',
+    _mlx_build / 'Debug' / 'lib',
+    _mlx_build / 'RelWithDebInfo' / 'lib',
+    _mlx_build / 'MinSizeRel' / 'lib',
+    _mlx_build / 'lib',
+    _mlx_build,
+  ], required: false)
+
+  if _mlx_library.found()
+    mlx_dep = declare_dependency(
+      dependencies: [_mlx_library],
+      include_directories: _mlx_header_paths,
+    )
+  else
+    _fallback_lib = ''
+    _candidates = [
+      _mlx_build / 'lib' / 'libmlx.a',
+      _mlx_build / 'libmlx.a',
+      _mlx_build / 'Release' / 'lib' / 'libmlx.a',
+      _mlx_build / 'Debug' / 'lib' / 'libmlx.a',
+      _mlx_build / 'RelWithDebInfo' / 'lib' / 'libmlx.a',
+      _mlx_build / 'MinSizeRel' / 'lib' / 'libmlx.a',
+      _mlx_build / 'lib' / 'libmlx.so',
+      _mlx_build / 'libmlx.so',
+      _mlx_build / 'Release' / 'lib' / 'libmlx.so',
+      _mlx_build / 'Debug' / 'lib' / 'libmlx.so',
+      _mlx_build / 'RelWithDebInfo' / 'lib' / 'libmlx.so',
+      _mlx_build / 'MinSizeRel' / 'lib' / 'libmlx.so',
+      _mlx_build / 'lib' / 'libmlx.dylib',
+      _mlx_build / 'libmlx.dylib',
+      _mlx_build / 'Release' / 'lib' / 'libmlx.dylib',
+      _mlx_build / 'Debug' / 'lib' / 'libmlx.dylib',
+      _mlx_build / 'RelWithDebInfo' / 'lib' / 'libmlx.dylib',
+      _mlx_build / 'MinSizeRel' / 'lib' / 'libmlx.dylib',
+      _mlx_build / 'lib' / 'mlx.lib',
+      _mlx_build / 'mlx.lib',
+      _mlx_build / 'Release' / 'lib' / 'mlx.lib',
+      _mlx_build / 'Debug' / 'lib' / 'mlx.lib',
+      _mlx_build / 'RelWithDebInfo' / 'lib' / 'mlx.lib',
+      _mlx_build / 'MinSizeRel' / 'lib' / 'mlx.lib',
+    ]
+    foreach _candidate : _candidates
+      if fs.exists(_candidate)
+        _fallback_lib = _candidate
+        break
+      endif
+    endforeach
+
+    if _fallback_lib == ''
+      if mlx_dep.found()
+        warning('Failed to use local MLX build from '
+                + _mlx_build.as_posix()
+                + '; falling back to system MLX dependency.')
+      else
+        error('Failed to find vendored MLX library after building '
+              + _mlx_src.as_posix())
+      endif
+    else
+      mlx_dep = declare_dependency(
+        link_args: [_fallback_lib],
+        include_directories: _mlx_header_paths,
+      )
+    endif
+  endif
+endif
+
+if mlx_dep.found()
+  mlx_dep_list = [mlx_dep]
+endif
+np_mlx_dep = [np_dep] + mlx_dep_list
 
 npymath_path = _incdir_numpy_abs / '..' / 'lib'
 npymath_lib = cc.find_library('npymath', dirs: npymath_path)
@@ -500,7 +642,10 @@ py3.install_sources(
 #_cython_tree = declare_dependency(sources: [
 _cython_tree = [fs.copyfile('__init__.py')]
 
-cython_args = ['-3', '--fast-fail', '--output-file', '@OUTPUT@', '--include-dir', '@BUILD_ROOT@', '@INPUT@']
+cython_args = ['-3', '--fast-fail', '--output-file', '@OUTPUT@',
+  '--include-dir', meson.current_source_dir(),
+  '--include-dir', '@BUILD_ROOT@',
+  '@INPUT@']
 if cy.version().version_compare('>=3.1.0')
   cython_args += ['-Xfreethreading_compatible=True']
 

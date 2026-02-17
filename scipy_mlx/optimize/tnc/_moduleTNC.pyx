@@ -4,9 +4,6 @@ from libc.string cimport memcpy
 import mlx.core as mx
 cimport mlx.core as mx
 
-
-mx.import_array()
-
 ctypedef mx.float64_t float64_t
 
 
@@ -119,11 +116,11 @@ cdef void callback_function(double x[], void *state) except *:
 
 
 def tnc_minimize(func_and_grad,
-                   mx.array[mx.float64_t] x0,
-                   mx.array[mx.float64_t] low,
-                   mx.array[mx.float64_t] up,
-                   mx.array[mx.float64_t] scale,
-                   mx.array[mx.float64_t] offset,
+                   x0,
+                   low,
+                   up,
+                   scale,
+                   offset,
                    int messages,
                    int maxCGit,
                    int maxfun,

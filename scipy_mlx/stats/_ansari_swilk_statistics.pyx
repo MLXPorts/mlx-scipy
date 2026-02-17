@@ -7,7 +7,14 @@
 from libc.math cimport exp, sqrt, abs, log, acos
 import mlx.core as mx
 # MLX port: removed NumPy Cython dependency
-cmx.import_array()
+from numpy cimport import_array
+cimport numpy as cmx
+import_array()
+
+"""
+Use MLX-backed arrays for runtime operations and NumPy C-API allocations
+for low-level typed buffers required by this translation unit.
+"""
 
 
 def gscale(int test, int other):
@@ -39,9 +46,9 @@ def gscale(int test, int other):
         # In the future, this can be cleaned-up with a better organization
         # of the helper functions. Here we only provided literal FORTRAN
         # translations to remove legacy code.
-        cmx.array a1 = cmx.PyArray_ZEROS(1, [LL], cmx.NPY_FLOAT32, 0)
-        cmx.array a2 = cmx.PyArray_ZEROS(1, [LL], cmx.NPY_FLOAT32, 0)
-        cmx.array a3 = cmx.PyArray_ZEROS(1, [LL], cmx.NPY_FLOAT32, 0)
+        cmx.ndarray a1 = cmx.PyArray_ZEROS(1, [LL], cmx.NPY_FLOAT32, 0)
+        cmx.ndarray a2 = cmx.PyArray_ZEROS(1, [LL], cmx.NPY_FLOAT32, 0)
+        cmx.ndarray a3 = cmx.PyArray_ZEROS(1, [LL], cmx.NPY_FLOAT32, 0)
         float[::1] a1v = a1  # memview of a1
         float[::1] a2v = a2  # memview of a2
         float[::1] a3v = a3  # memview of a3

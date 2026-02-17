@@ -4,9 +4,12 @@ import cython
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from scipy_mlx.linalg.cython_lapack cimport sgetrf, dgetrf, cgetrf, zgetrf
 from scipy_mlx.linalg._cythonized_array_utils cimport swap_c_and_f_layout
+from numpy cimport import_array
+cimport numpy as cmx
+import_array()
 
 # MLX port: removed NumPy Cython dependency
-cmx.import_array()
+
 
 ctypedef fused lapack_t:
     cmx.float32_t
@@ -19,8 +22,8 @@ ctypedef fused lapack_t:
 @cython.wraparound(False)
 @cython.boundscheck(False)
 @cython.initializedcheck(False)
-cdef void lu_decompose(cmx.array[lapack_t, ndim=2] a,
-                       cmx.array[lapack_t, ndim=2] lu,
+cdef void lu_decompose(cmx.ndarray[lapack_t, ndim=2] a,
+                       cmx.ndarray[lapack_t, ndim=2] lu,
                        int[::1] perm,
                        bint permute_l) noexcept:
     """LU decomposition and copy operations using ?getrf routines

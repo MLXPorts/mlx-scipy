@@ -107,7 +107,9 @@ internal functions subsumed into respective functions):
 import mlx.core as mx
 from typing import Any as NDArray
 # MLX port: removed NumPy Cython dependency
-cmx.import_array()
+from numpy cimport import_array
+cimport numpy as cmx
+import_array()
 
 from cpython.mem cimport PyMem_Free, PyMem_Malloc, PyMem_Realloc
 from libc.math cimport hypot
@@ -135,10 +137,10 @@ __all__ = ['idd_estrank', 'idd_reconid', 'iddp_aid',
 def idd_diffsnorm(A: LinearOperator, B: LinearOperator, *, rng, int its=20):
     cdef int n = A.shape[1], j = 0, intone = 1
     cdef cmx.float64_t snorm = 0.0
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] v1
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] v2
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] u1
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] u2
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] v1
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] v2
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] u1
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] u2
 
     v1 = rng.uniform(low=-1., high=1., size=n)
     v1 /= dnrm2(&n, &v1[0], &intone)
@@ -160,21 +162,21 @@ def idd_diffsnorm(A: LinearOperator, B: LinearOperator, *, rng, int its=20):
     return snorm
 
 
-def idd_estrank(cmx.array[cmx.float64_t, mode="c", ndim=2] a: NDArray, eps: float, *,
+def idd_estrank(cmx.ndarray[cmx.float64_t, mode="c", ndim=2] a: NDArray, eps: float, *,
                 rng):
     cdef int m = a.shape[0], n = a.shape[1]
     cdef int intone = 1, n2, nsteps = 3, row, r, nstep, cols, k, nulls
     cdef cmx.float64_t h, alpha, beta
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=3] albetas
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] tau_arr
-    cdef cmx.array[cmx.int64_t, mode='c', ndim=1] subselect
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=3] albetas
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] tau_arr
+    cdef cmx.ndarray[cmx.int64_t, mode='c', ndim=1] subselect
     cdef cmx.float64_t *aa
     cdef cmx.float64_t *ff
     cdef cmx.float64_t[:, ::1] Fmemview
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] giv2x2
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] rta
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] Fc
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] F
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] giv2x2
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] rta
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] Fc
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] F
 
     n2 = idd_poweroftwo(m)
 
@@ -283,7 +285,7 @@ def idd_findrank(A: LinearOperator, cmx.float64_t eps, *, rng):
     cdef int no_of_cols = 4, intone = 1, info = 0
     cdef cmx.float64_t[::1] tau = cmx.PyArray_ZEROS(1, [min(m, n)], cmx.NPY_FLOAT64, 0)
     cdef cmx.float64_t[::1] y = cmx.PyArray_ZEROS(1, [n], cmx.NPY_FLOAT64, 0)
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] retarr
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] retarr
 
     # The size of the QR decomposition is rank dependent which is unknown
     # at runtime. Hence we don't want to allocate a dense version of the
@@ -368,22 +370,22 @@ def idd_findrank(A: LinearOperator, cmx.float64_t eps, *, rng):
 
 
 def idd_id2svd(
-    cmx.array[cmx.float64_t, mode='c', ndim=2] cols,
-    cmx.array[cmx.int64_t, mode='c', ndim=1] perms,
-    cmx.array[cmx.float64_t, ndim=2] proj,
+    cmx.ndarray[cmx.float64_t, mode='c', ndim=2] cols,
+    cmx.ndarray[cmx.int64_t, mode='c', ndim=1] perms,
+    cmx.ndarray[cmx.float64_t, ndim=2] proj,
     ):
     cdef int m = cols.shape[0], krank = cols.shape[1]
     cdef int n = proj.shape[1] + krank, info, ci
-    cdef cmx.array[cmx.float64_t, mode='fortran', ndim=2] C
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] tau1
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] tau2
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] UU
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] S
-    cdef cmx.array[cmx.float64_t, ndim=2] V
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] VV
-    cdef cmx.array[cmx.npy_int64, ndim=1] inds1
-    cdef cmx.array[cmx.npy_int64, ndim=1] inds2
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] p
+    cdef cmx.ndarray[cmx.float64_t, mode='fortran', ndim=2] C
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] tau1
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] tau2
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] UU
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] S
+    cdef cmx.ndarray[cmx.float64_t, ndim=2] V
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] VV
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] inds1
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] inds2
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] p
 
     UU = cmx.PyArray_ZEROS(2, [m, krank], cmx.NPY_FLOAT64, 0)
     VV = cmx.PyArray_ZEROS(2, [n, krank], cmx.NPY_FLOAT64, 0)
@@ -460,8 +462,8 @@ def idd_snorm(A: LinearOperator, *, rng, int its=20):
     cdef int n = A.shape[1]
     cdef int j = 0, intone = 1
     cdef cmx.float64_t snorm = 0.0
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] v
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] u
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] v
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] u
 
     v = rng.uniform(low=-1., high=1., size=n)
     v /= dnrm2(&n, &v[0], &intone)
@@ -478,7 +480,7 @@ def idd_snorm(A: LinearOperator, *, rng, int its=20):
     return snorm
 
 
-def iddp_aid(cmx.array[cmx.float64_t, ndim=2] a: NDArray, eps: float, *, rng):
+def iddp_aid(cmx.ndarray[cmx.float64_t, ndim=2] a: NDArray, eps: float, *, rng):
     krank, proj = idd_estrank(a, eps, rng=rng)
     if krank != 0:
         proj = proj[:krank, :]
@@ -487,22 +489,22 @@ def iddp_aid(cmx.array[cmx.float64_t, ndim=2] a: NDArray, eps: float, *, rng):
     return iddp_id(a, eps=eps)
 
 
-def iddp_asvd(cmx.array[cmx.float64_t, ndim=2] a: NDArray, eps: float, *, rng):
+def iddp_asvd(cmx.ndarray[cmx.float64_t, ndim=2] a: NDArray, eps: float, *, rng):
     cdef int m = a.shape[0], n = a.shape[1]
     cdef int krank, info, ci
-    cdef cmx.array[cmx.float64_t, mode='fortran', ndim=2] C
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] tau1
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] tau2
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] UU
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] S
-    cdef cmx.array[cmx.float64_t, ndim=2] V
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] VV
-    cdef cmx.array[cmx.float64_t, ndim=2] proj
-    cdef cmx.array[cmx.npy_int64, ndim=1] perms
-    cdef cmx.array[cmx.npy_int64, ndim=1] inds1
-    cdef cmx.array[cmx.npy_int64, ndim=1] inds2
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] p
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] col
+    cdef cmx.ndarray[cmx.float64_t, mode='fortran', ndim=2] C
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] tau1
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] tau2
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] UU
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] S
+    cdef cmx.ndarray[cmx.float64_t, ndim=2] V
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] VV
+    cdef cmx.ndarray[cmx.float64_t, ndim=2] proj
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] perms
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] inds1
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] inds2
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] p
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] col
 
     krank, perms, proj = iddp_aid(a.copy(), eps, rng=rng)
 
@@ -551,7 +553,7 @@ def iddp_asvd(cmx.array[cmx.float64_t, ndim=2] a: NDArray, eps: float, *, rng):
     return UU, S, VV
 
 
-def iddp_id(cmx.array[cmx.float64_t, ndim=2] a: NDArray, eps: float):
+def iddp_id(cmx.ndarray[cmx.float64_t, ndim=2] a: NDArray, eps: float):
     cdef int n = a.shape[1], krank, tmp_int, p
     cdef cmx.float64_t one = 1
     krank, _, inds = iddp_qrpiv(a, eps)
@@ -590,7 +592,7 @@ def iddp_id(cmx.array[cmx.float64_t, ndim=2] a: NDArray, eps: float):
     return krank, mx.array(perms), a[:krank, krank:]
 
 
-def iddp_qrpiv(cmx.array[cmx.float64_t, mode="c", ndim=2] a, cmx.float64_t eps):
+def iddp_qrpiv(cmx.ndarray[cmx.float64_t, mode="c", ndim=2] a, cmx.float64_t eps):
     """
     This is a minimal version of ?GEQP3 from LAPACK with an
     additional early stopping criterion over given precision.
@@ -599,11 +601,11 @@ def iddp_qrpiv(cmx.array[cmx.float64_t, mode="c", ndim=2] a, cmx.float64_t eps):
     """
 
     cdef int m = a.shape[0], n = a.shape[1]
-    cdef cmx.array col_norms = cmx.PyArray_ZEROS(1, [n], cmx.NPY_FLOAT64, 0)
+    cdef cmx.ndarray col_norms = cmx.PyArray_ZEROS(1, [n], cmx.NPY_FLOAT64, 0)
     cdef int k = 0, kpiv = 0, i = 0, tmp_int = 0, int_n = 0
     cdef cmx.float64_t tmp_sca = 0.
-    cdef cmx.array taus = cmx.PyArray_ZEROS(1, [m], cmx.NPY_FLOAT64, 0)
-    cdef cmx.array ind = cmx.PyArray_ZEROS(1, [n], cmx.NPY_INT64, 0)
+    cdef cmx.ndarray taus = cmx.PyArray_ZEROS(1, [m], cmx.NPY_FLOAT64, 0)
+    cdef cmx.ndarray ind = cmx.PyArray_ZEROS(1, [n], cmx.NPY_INT64, 0)
     cdef cmx.float64_t[::1] taus_v = taus
     cdef cmx.float64_t feps = 0.1e-16  # mx.finfo(mx.float64).eps
     cdef cmx.float64_t ssmax, ssmaxin
@@ -678,10 +680,10 @@ def iddp_rid(A: LinearOperator, cmx.float64_t eps, *, rng):
 def iddp_rsvd(A: LinearOperator, cmx.float64_t eps, *, rng):
     cdef int n = A.shape[1]
     cdef int krank, j
-    cdef cmx.array[cmx.int64_t, mode='c', ndim=1] perms
-    cdef cmx.array[cmx.float64_t, ndim=2] proj
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] col
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] x
+    cdef cmx.ndarray[cmx.int64_t, mode='c', ndim=1] perms
+    cdef cmx.ndarray[cmx.float64_t, ndim=2] proj
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] col
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] x
 
     krank, perms, proj = iddp_rid(A, eps, rng=rng)
     if krank > 0:
@@ -700,12 +702,12 @@ def iddp_rsvd(A: LinearOperator, cmx.float64_t eps, *, rng):
     return None
 
 
-def iddp_svd(cmx.array[cmx.float64_t, ndim=2] a: NDArray, eps: float):
+def iddp_svd(cmx.ndarray[cmx.float64_t, ndim=2] a: NDArray, eps: float):
     """a is overwritten"""
     cdef int m = a.shape[0], krank, info
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] taus
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] UU
-    cdef cmx.array[cmx.float64_t, mode='fortran', ndim=2] C
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] taus
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] UU
+    cdef cmx.ndarray[cmx.float64_t, mode='fortran', ndim=2] C
 
     # Get the pivoted QR
     krank, taus, inds = iddp_qrpiv(a, eps)
@@ -733,16 +735,16 @@ def iddp_svd(cmx.array[cmx.float64_t, ndim=2] a: NDArray, eps: float):
     return UU, S, V
 
 
-def iddr_aid(cmx.array[cmx.float64_t, mode="c", ndim=2] a: NDArray, int krank, *,
+def iddr_aid(cmx.ndarray[cmx.float64_t, mode="c", ndim=2] a: NDArray, int krank, *,
              rng):
     cdef int m = a.shape[0], n = a.shape[1], n2, nsteps = 3, row, r, nstep, L
     cdef cmx.float64_t h, alpha, beta
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=3] albetas
-    cdef cmx.array[cmx.npy_int64, mode='c', ndim=1] subselect
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=3] albetas
+    cdef cmx.ndarray[cmx.npy_int64, mode='c', ndim=1] subselect
     cdef cmx.float64_t *aa
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] giv2x2
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] rta
-    cdef cmx.array[cmx.npy_int64, mode='c', ndim=1] marker
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] giv2x2
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] rta
+    cdef cmx.ndarray[cmx.npy_int64, mode='c', ndim=1] marker
 
     # idd_aidi
     L = krank + 8
@@ -885,23 +887,23 @@ def iddr_aid(cmx.array[cmx.float64_t, mode="c", ndim=2] a: NDArray, int krank, *
     return perms, proj
 
 
-def iddr_asvd(cmx.array[cmx.float64_t, mode="c", ndim=2] a: NDArray, int krank, *,
+def iddr_asvd(cmx.ndarray[cmx.float64_t, mode="c", ndim=2] a: NDArray, int krank, *,
               rng):
     cdef int m = a.shape[0], n = a.shape[1]
     cdef int info, ci
-    cdef cmx.array[cmx.float64_t, mode='fortran', ndim=2] C
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] tau1
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] tau2
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] UU
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] S
-    cdef cmx.array[cmx.float64_t, ndim=2] V
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] VV
-    cdef cmx.array[cmx.float64_t, ndim=2] proj
-    cdef cmx.array[cmx.npy_int64, ndim=1] perms
-    cdef cmx.array[cmx.npy_int64, ndim=1] inds1
-    cdef cmx.array[cmx.npy_int64, ndim=1] inds2
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] p
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] col
+    cdef cmx.ndarray[cmx.float64_t, mode='fortran', ndim=2] C
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] tau1
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] tau2
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] UU
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] S
+    cdef cmx.ndarray[cmx.float64_t, ndim=2] V
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] VV
+    cdef cmx.ndarray[cmx.float64_t, ndim=2] proj
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] perms
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] inds1
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] inds2
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] p
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] col
 
     perms, proj = iddr_aid(a.copy(), krank=krank, rng=rng)
 
@@ -948,12 +950,12 @@ def iddr_asvd(cmx.array[cmx.float64_t, mode="c", ndim=2] a: NDArray, int krank, 
     return UU, S, VV
 
 
-def iddr_id(cmx.array[cmx.float64_t, ndim=2] a, int krank):
+def iddr_id(cmx.ndarray[cmx.float64_t, ndim=2] a, int krank):
     cdef int n = a.shape[1]
     cdef int tmp_int
     cdef cmx.float64_t one = 1.0
-    cdef cmx.array[cmx.npy_int64, ndim=1] inds
-    cdef cmx.array[cmx.npy_int64, ndim=1] perms
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] inds
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] perms
 
     inds, _ = iddr_qrpiv(a, krank)
     perms = cmx.PyArray_Arange(0, n, 1, cmx.NPY_INT64)
@@ -974,13 +976,13 @@ def iddr_id(cmx.array[cmx.float64_t, ndim=2] a, int krank):
     return perms, a[:krank, krank:]
 
 
-def iddr_qrpiv(cmx.array[cmx.float64_t, mode="c", ndim=2] a: NDArray, krank: int):
+def iddr_qrpiv(cmx.ndarray[cmx.float64_t, mode="c", ndim=2] a: NDArray, krank: int):
     cdef int m = a.shape[0], n = a.shape[1]
-    cdef cmx.array col_norms = cmx.PyArray_ZEROS(1, [n], cmx.NPY_FLOAT64, 0)
+    cdef cmx.ndarray col_norms = cmx.PyArray_ZEROS(1, [n], cmx.NPY_FLOAT64, 0)
     cdef int loop = 0, loops, kpiv = 0, i = 0, tmp_int = 0, int_n = 0
     cdef cmx.float64_t tmp_sca = 0.
-    cdef cmx.array taus = cmx.PyArray_ZEROS(1, [m], cmx.NPY_FLOAT64, 0)
-    cdef cmx.array ind = cmx.PyArray_ZEROS(1, [n], cmx.NPY_INT64, 0)
+    cdef cmx.ndarray taus = cmx.PyArray_ZEROS(1, [m], cmx.NPY_FLOAT64, 0)
+    cdef cmx.ndarray ind = cmx.PyArray_ZEROS(1, [n], cmx.NPY_INT64, 0)
     cdef cmx.float64_t[::1] taus_v = taus
     cdef cmx.float64_t feps = 0.1e-16  # mx.finfo(mx.float64).eps
     cdef cmx.float64_t ssmax, ssmaxin
@@ -1047,7 +1049,7 @@ def iddr_qrpiv(cmx.array[cmx.float64_t, mode="c", ndim=2] a: NDArray, krank: int
 def iddr_rid(A: LinearOperator, int krank, *, rng):
     cdef int m = A.shape[0], n = A.shape[1], k = 0
     cdef int L = min(krank+2, min(m, n))
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] r
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] r
 
     r = cmx.PyArray_EMPTY(2, [L, n], cmx.NPY_FLOAT64, 0)
     for k in range(L):
@@ -1058,9 +1060,9 @@ def iddr_rid(A: LinearOperator, int krank, *, rng):
 
 def iddr_rsvd(A: LinearOperator, int krank, *, rng):
     cdef int m = A.shape[0], n = A.shape[1], j
-    cdef cmx.array[cmx.int64_t, mode='c', ndim=1] perms
-    cdef cmx.array[cmx.float64_t, ndim=2] proj
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] col
+    cdef cmx.ndarray[cmx.int64_t, mode='c', ndim=1] perms
+    cdef cmx.ndarray[cmx.float64_t, ndim=2] proj
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] col
 
     perms, proj = iddr_rid(A, krank, rng=rng)
     # idd_getcols
@@ -1074,11 +1076,11 @@ def iddr_rsvd(A: LinearOperator, int krank, *, rng):
     return idd_id2svd(cols=col, perms=perms, proj=proj)
 
 
-def iddr_svd(cmx.array[cmx.float64_t, mode="c", ndim=2] a: NDArray, int krank):
+def iddr_svd(cmx.ndarray[cmx.float64_t, mode="c", ndim=2] a: NDArray, int krank):
     cdef int m = a.shape[0], info = 0
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] taus
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] UU
-    cdef cmx.array[cmx.float64_t, mode='fortran', ndim=2] C
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] taus
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] UU
+    cdef cmx.ndarray[cmx.float64_t, mode='fortran', ndim=2] C
 
     # Get the pivoted QR
     inds, taus = iddr_qrpiv(a, krank)
@@ -1108,10 +1110,10 @@ def iddr_svd(cmx.array[cmx.float64_t, mode="c", ndim=2] a: NDArray, int krank):
 def idz_diffsnorm(A: LinearOperator, B: LinearOperator, *, rng, int its=20):
     cdef int n = A.shape[1], j = 0, intone = 1
     cdef cmx.float64_t snorm = 0.0
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] v1
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] v2
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] u1
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] u2
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] v1
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] v2
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] u1
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] u2
 
     v1 = rng.uniform(low=-1, high=1, size=(n, 2)).view(mx.complex128).ravel()
     v1 /= dznrm2(&n, &v1[0], &intone)
@@ -1133,17 +1135,17 @@ def idz_diffsnorm(A: LinearOperator, B: LinearOperator, *, rng, int its=20):
     return snorm
 
 
-def idz_estrank(cmx.array[cmx.complex128_t, mode='c', ndim=2] a: NDArray, eps: float, *,
+def idz_estrank(cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] a: NDArray, eps: float, *,
                 rng):
     cdef int m = a.shape[0], n = a.shape[1], n2, nsteps = 3, row, r, nstep, cols, k
     cdef cmx.float64_t h, alpha, beta
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=3] albetas
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] tau_arr
-    cdef cmx.array[cmx.npy_int64, mode='c', ndim=1] subselect
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=3] albetas
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] tau_arr
+    cdef cmx.ndarray[cmx.npy_int64, mode='c', ndim=1] subselect
     cdef double complex[:, ::1] ff
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=2] giv2x2
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] rta
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] F
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=2] giv2x2
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] rta
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] F
 
     n2 = idd_poweroftwo(m)
     # This part is the initialization that is done via idz_frmi
@@ -1231,8 +1233,8 @@ def idz_findrank(A: LinearOperator, cmx.float64_t eps, *, rng):
     cdef cmx.complex128_t[::1] tau = cmx.PyArray_ZEROS(1, [min(m, n)],
                                                        cmx.NPY_COMPLEX128, 0)
     cdef cmx.complex128_t[::1] y = cmx.PyArray_ZEROS(1, [n], cmx.NPY_COMPLEX128, 0)
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] retarr
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] x
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] retarr
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] x
 
     # The size of the QR decomposition is rank dependent which is unknown
     # at runtime. Hence we don't want to allocate a dense version of the
@@ -1318,22 +1320,22 @@ def idz_findrank(A: LinearOperator, cmx.float64_t eps, *, rng):
 
 
 def idz_id2svd(
-    cmx.array[cmx.complex128_t, mode='c', ndim=2] cols,
-    cmx.array[cmx.int64_t, mode='c', ndim=1] perms,
-    cmx.array[cmx.complex128_t, ndim=2] proj,
+    cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] cols,
+    cmx.ndarray[cmx.int64_t, mode='c', ndim=1] perms,
+    cmx.ndarray[cmx.complex128_t, ndim=2] proj,
     ):
     cdef int m = cols.shape[0], krank = cols.shape[1]
     cdef int n = proj.shape[1] + krank, info, ci
-    cdef cmx.array[cmx.complex128_t, mode='fortran', ndim=2] C
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] tau1
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] tau2
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] UU
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] S
-    cdef cmx.array[cmx.complex128_t, ndim=2] V
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] VV
-    cdef cmx.array[cmx.npy_int64, ndim=1] inds1
-    cdef cmx.array[cmx.npy_int64, ndim=1] inds2
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] p
+    cdef cmx.ndarray[cmx.complex128_t, mode='fortran', ndim=2] C
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] tau1
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] tau2
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] UU
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] S
+    cdef cmx.ndarray[cmx.complex128_t, ndim=2] V
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] VV
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] inds1
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] inds2
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] p
 
     if krank > 0:
         UU = cmx.PyArray_ZEROS(2, [m, krank], cmx.NPY_COMPLEX128, 0)
@@ -1396,8 +1398,8 @@ def idz_snorm(A: LinearOperator, *, rng, int its=20):
     cdef int n = A.shape[1]
     cdef int j = 0, intone = 1
     cdef cmx.float64_t snorm = 0.0
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] v
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] u
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] v
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] u
 
     v = rng.uniform(low=-1, high=1, size=(n, 2)).view(mx.complex128).ravel()
     v /= dznrm2(&n, &v[0], &intone)
@@ -1414,7 +1416,7 @@ def idz_snorm(A: LinearOperator, *, rng, int its=20):
     return snorm
 
 
-def idzp_aid(cmx.array[cmx.complex128_t, mode='c', ndim=2] a: NDArray, eps: float, *,
+def idzp_aid(cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] a: NDArray, eps: float, *,
              rng):
     krank, proj = idz_estrank(a, eps=eps, rng=rng)
     if krank != 0:
@@ -1424,23 +1426,23 @@ def idzp_aid(cmx.array[cmx.complex128_t, mode='c', ndim=2] a: NDArray, eps: floa
     return idzp_id(a, eps=eps)
 
 
-def idzp_asvd(cmx.array[cmx.complex128_t, mode='c', ndim=2] a, cmx.float64_t eps, *,
+def idzp_asvd(cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] a, cmx.float64_t eps, *,
               rng):
     cdef int m = a.shape[0], n = a.shape[1]
     cdef int krank, info, ci
-    cdef cmx.array[cmx.complex128_t, mode='fortran', ndim=2] C
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] tau1
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] tau2
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] UU
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] S
-    cdef cmx.array[cmx.complex128_t, ndim=2] V
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] VV
-    cdef cmx.array[cmx.complex128_t, ndim=2] proj
-    cdef cmx.array[cmx.npy_int64, ndim=1] perms
-    cdef cmx.array[cmx.npy_int64, ndim=1] inds1
-    cdef cmx.array[cmx.npy_int64, ndim=1] inds2
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] p
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] col
+    cdef cmx.ndarray[cmx.complex128_t, mode='fortran', ndim=2] C
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] tau1
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] tau2
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] UU
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] S
+    cdef cmx.ndarray[cmx.complex128_t, ndim=2] V
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] VV
+    cdef cmx.ndarray[cmx.complex128_t, ndim=2] proj
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] perms
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] inds1
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] inds2
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] p
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] col
 
     krank, perms, proj = idzp_aid(a.copy(), eps, rng=rng)
 
@@ -1491,7 +1493,7 @@ def idzp_asvd(cmx.array[cmx.complex128_t, mode='c', ndim=2] a, cmx.float64_t eps
     return UU, S, VV
 
 
-def idzp_id(cmx.array[cmx.complex128_t, mode="c", ndim=2] a, cmx.float64_t eps):
+def idzp_id(cmx.ndarray[cmx.complex128_t, mode="c", ndim=2] a, cmx.float64_t eps):
     cdef int n = a.shape[1], krank, tmp_int, p
     cdef double complex one = 1
     krank, _, inds = idzp_qrpiv(a, eps)
@@ -1514,13 +1516,13 @@ def idzp_id(cmx.array[cmx.complex128_t, mode="c", ndim=2] a, cmx.float64_t eps):
     return krank, perms, a[:krank, krank:]
 
 
-def idzp_qrpiv(cmx.array[cmx.complex128_t, mode="c", ndim=2] a, cmx.float64_t eps):
+def idzp_qrpiv(cmx.ndarray[cmx.complex128_t, mode="c", ndim=2] a, cmx.float64_t eps):
     cdef int m = a.shape[0], n = a.shape[1]
-    cdef cmx.array col_norms = cmx.PyArray_ZEROS(1, [n], cmx.NPY_FLOAT64, 0)
+    cdef cmx.ndarray col_norms = cmx.PyArray_ZEROS(1, [n], cmx.NPY_FLOAT64, 0)
     cdef int k = 0, kpiv = 0, i = 0, tmp_int = 0, int_n = 0
     cdef double complex tmp_sca = 0.
-    cdef cmx.array taus = cmx.PyArray_ZEROS(1, [m], cmx.NPY_COMPLEX128, 0)
-    cdef cmx.array ind = cmx.PyArray_ZEROS(1, [n], cmx.NPY_INT64, 0)
+    cdef cmx.ndarray taus = cmx.PyArray_ZEROS(1, [m], cmx.NPY_COMPLEX128, 0)
+    cdef cmx.ndarray ind = cmx.PyArray_ZEROS(1, [n], cmx.NPY_INT64, 0)
     cdef double complex[::1] taus_v = taus
     cdef cmx.float64_t feps = 0.1e-16  # Smaller than mx.finfo(mx.float64).eps
     cdef cmx.float64_t ssmax, ssmaxin
@@ -1600,10 +1602,10 @@ def idzp_rid(A: LinearOperator, cmx.float64_t eps, *, rng):
 def idzp_rsvd(A: LinearOperator, cmx.float64_t eps, *, rng):
     cdef int n = A.shape[1]
     cdef int krank, j
-    cdef cmx.array[cmx.int64_t, mode='c', ndim=1] perms
-    cdef cmx.array[cmx.complex128_t, ndim=2] proj
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] col
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] x
+    cdef cmx.ndarray[cmx.int64_t, mode='c', ndim=1] perms
+    cdef cmx.ndarray[cmx.complex128_t, ndim=2] proj
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] col
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] x
 
     krank, perms, proj = idzp_rid(A, eps, rng=rng)
 
@@ -1623,14 +1625,14 @@ def idzp_rsvd(A: LinearOperator, cmx.float64_t eps, *, rng):
     return None
 
 
-def idzp_svd(cmx.array[cmx.complex128_t, mode='c', ndim=2] a, cmx.float64_t eps):
+def idzp_svd(cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] a, cmx.float64_t eps):
     cdef int m = a.shape[0], krank, info
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] taus
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] UU
-    cdef cmx.array[cmx.complex128_t, ndim=2] V
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] r
-    cdef cmx.array[cmx.complex128_t, mode='fortran', ndim=2] C
-    cdef cmx.array[cmx.float64_t, ndim=1] S
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] taus
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] UU
+    cdef cmx.ndarray[cmx.complex128_t, ndim=2] V
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] r
+    cdef cmx.ndarray[cmx.complex128_t, mode='fortran', ndim=2] C
+    cdef cmx.ndarray[cmx.float64_t, ndim=1] S
 
     # Get the pivoted QR
     krank, taus, inds = idzp_qrpiv(a, eps)
@@ -1654,18 +1656,18 @@ def idzp_svd(cmx.array[cmx.complex128_t, mode='c', ndim=2] a, cmx.float64_t eps)
     return UU, S, V
 
 
-def idzr_aid(cmx.array[cmx.complex128_t, mode='c', ndim=2] a: NDArray, int krank, *,
+def idzr_aid(cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] a: NDArray, int krank, *,
              rng):
     cdef int m = a.shape[0], n2, L, nblock, nsteps = 3, mb
     cdef cmx.float64_t twopi = 2*mx.pi, fact
     cdef double complex twopii = twopi*1.j
-    cdef cmx.array[cmx.npy_int64, mode='c', ndim=1] ind
-    cdef cmx.array[cmx.npy_int64, mode='c', ndim=1] subselect
-    cdef cmx.array[cmx.npy_float64, mode='c', ndim=1] dm1
-    cdef cmx.array[cmx.npy_float64, mode='c', ndim=1] dm2
-    cdef cmx.array[cmx.npy_float64, mode='c', ndim=3] albetas
-    cdef cmx.array[cmx.npy_float64, mode='c', ndim=2] rta
-    cdef cmx.array[cmx.npy_float64, mode='c', ndim=2] giv2x2
+    cdef cmx.ndarray[cmx.npy_int64, mode='c', ndim=1] ind
+    cdef cmx.ndarray[cmx.npy_int64, mode='c', ndim=1] subselect
+    cdef cmx.ndarray[cmx.npy_float64, mode='c', ndim=1] dm1
+    cdef cmx.ndarray[cmx.npy_float64, mode='c', ndim=1] dm2
+    cdef cmx.ndarray[cmx.npy_float64, mode='c', ndim=3] albetas
+    cdef cmx.ndarray[cmx.npy_float64, mode='c', ndim=2] rta
+    cdef cmx.ndarray[cmx.npy_float64, mode='c', ndim=2] giv2x2
 
     n2 = 0
     L = krank + 8
@@ -1741,22 +1743,22 @@ def idzr_aid(cmx.array[cmx.complex128_t, mode='c', ndim=2] a: NDArray, int krank
     return idzr_id(V, krank)
 
 
-def idzr_asvd(cmx.array[cmx.complex128_t, mode="c", ndim=2] a, int krank, *, rng):
+def idzr_asvd(cmx.ndarray[cmx.complex128_t, mode="c", ndim=2] a, int krank, *, rng):
     cdef int m = a.shape[0], n = a.shape[1]
     cdef int info, ci
-    cdef cmx.array[cmx.complex128_t, mode='fortran', ndim=2] C
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] tau1
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] tau2
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] UU
-    cdef cmx.array[cmx.float64_t, mode='c', ndim=1] S
-    cdef cmx.array[cmx.complex128_t, ndim=2] V
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] VV
-    cdef cmx.array[cmx.complex128_t, ndim=2] proj
-    cdef cmx.array[cmx.npy_int64, ndim=1] perms
-    cdef cmx.array[cmx.npy_int64, ndim=1] inds1
-    cdef cmx.array[cmx.npy_int64, ndim=1] inds2
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] p
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] col
+    cdef cmx.ndarray[cmx.complex128_t, mode='fortran', ndim=2] C
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] tau1
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] tau2
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] UU
+    cdef cmx.ndarray[cmx.float64_t, mode='c', ndim=1] S
+    cdef cmx.ndarray[cmx.complex128_t, ndim=2] V
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] VV
+    cdef cmx.ndarray[cmx.complex128_t, ndim=2] proj
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] perms
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] inds1
+    cdef cmx.ndarray[cmx.npy_int64, ndim=1] inds2
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] p
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] col
     UU = cmx.PyArray_ZEROS(2, [m, krank], cmx.NPY_COMPLEX128, 0)
     VV = cmx.PyArray_ZEROS(2, [n, krank], cmx.NPY_COMPLEX128, 0)
     p = cmx.PyArray_ZEROS(2, [krank, n], cmx.NPY_COMPLEX128, 0)
@@ -1805,11 +1807,11 @@ def idzr_asvd(cmx.array[cmx.complex128_t, mode="c", ndim=2] a, int krank, *, rng
     return UU, S, VV
 
 
-def idzr_id(cmx.array[cmx.complex128_t, ndim=2] a, int krank):
+def idzr_id(cmx.ndarray[cmx.complex128_t, ndim=2] a, int krank):
     cdef int n = a.shape[1], tmp_int, p
     cdef double complex one = 1.0
-    cdef cmx.array[cmx.int64_t, ndim=1] inds
-    cdef cmx.array[cmx.int64_t, ndim=1] perms
+    cdef cmx.ndarray[cmx.int64_t, ndim=1] inds
+    cdef cmx.ndarray[cmx.int64_t, ndim=1] perms
 
     inds, _ = idzr_qrpiv(a, krank)
     perms = cmx.PyArray_Arange(0, n, 1, cmx.NPY_INT64)
@@ -1828,13 +1830,13 @@ def idzr_id(cmx.array[cmx.complex128_t, ndim=2] a, int krank):
     return perms, a[:krank, krank:]
 
 
-def idzr_qrpiv(cmx.array[cmx.complex128_t, mode="c", ndim=2] a, int krank):
+def idzr_qrpiv(cmx.ndarray[cmx.complex128_t, mode="c", ndim=2] a, int krank):
     cdef int m = a.shape[0], n = a.shape[1]
     cdef int loop = 0, loops, kpiv = 0, i = 0, tmp_int = 0
-    cdef cmx.array col_norms = cmx.PyArray_ZEROS(1, [n], cmx.NPY_FLOAT64, 0)
+    cdef cmx.ndarray col_norms = cmx.PyArray_ZEROS(1, [n], cmx.NPY_FLOAT64, 0)
     cdef double complex tmp_sca = 0.
-    cdef cmx.array taus = cmx.PyArray_ZEROS(1, [m], cmx.NPY_COMPLEX128, 0)
-    cdef cmx.array ind = cmx.PyArray_ZEROS(1, [n], cmx.NPY_INT64, 0)
+    cdef cmx.ndarray taus = cmx.PyArray_ZEROS(1, [m], cmx.NPY_COMPLEX128, 0)
+    cdef cmx.ndarray ind = cmx.PyArray_ZEROS(1, [n], cmx.NPY_INT64, 0)
     cdef double complex[::1] taus_v = taus
     cdef cmx.float64_t feps = 0.1e-16  # Smaller than mx.finfo(mx.float64).eps
     cdef cmx.float64_t ssmax, ssmaxin
@@ -1901,7 +1903,7 @@ def idzr_qrpiv(cmx.array[cmx.complex128_t, mode="c", ndim=2] a, int krank):
 def idzr_rid(A: LinearOperator, int krank, *, rng):
     cdef int m = A.shape[0], n = A.shape[1], k = 0
     cdef int L = min(krank+2, min(m, n))
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] r
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] r
 
     r = cmx.PyArray_EMPTY(2, [L, n], cmx.NPY_COMPLEX128, 0)
     for k in range(L):
@@ -1912,9 +1914,9 @@ def idzr_rid(A: LinearOperator, int krank, *, rng):
 
 def idzr_rsvd(A: LinearOperator, int krank, *, rng):
     cdef int n = A.shape[1], j
-    cdef cmx.array[cmx.int64_t, mode='c', ndim=1] perms
-    cdef cmx.array[cmx.complex128_t, ndim=2] proj
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] col
+    cdef cmx.ndarray[cmx.int64_t, mode='c', ndim=1] perms
+    cdef cmx.ndarray[cmx.complex128_t, ndim=2] proj
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] col
 
     perms, proj = idzr_rid(A, krank, rng=rng)
     # idd_getcols
@@ -1928,12 +1930,12 @@ def idzr_rsvd(A: LinearOperator, int krank, *, rng):
     return idz_id2svd(cols=col, perms=perms, proj=proj)
 
 
-def idzr_svd(cmx.array[cmx.complex128_t, mode="c", ndim=2] a, int krank):
+def idzr_svd(cmx.ndarray[cmx.complex128_t, mode="c", ndim=2] a, int krank):
     cdef int m = a.shape[0], n = a.shape[1], info = 0
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=1] taus
-    cdef cmx.array[cmx.int64_t, mode='c', ndim=1] inds
-    cdef cmx.array[cmx.complex128_t, mode='c', ndim=2] UU
-    cdef cmx.array[cmx.complex128_t, mode='fortran', ndim=2] C
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=1] taus
+    cdef cmx.ndarray[cmx.int64_t, mode='c', ndim=1] inds
+    cdef cmx.ndarray[cmx.complex128_t, mode='c', ndim=2] UU
+    cdef cmx.ndarray[cmx.complex128_t, mode='fortran', ndim=2] C
     UU = cmx.PyArray_ZEROS(2, [m, krank], cmx.NPY_COMPLEX128, 0)
 
     krank = min(krank, min(m, n))

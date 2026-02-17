@@ -14,8 +14,6 @@ import mlx.core as mx
 cimport mlx.core as mx
 cimport cython
 
-mx.import_array()
-
 __all__ = ['sort_vertices_of_regions']
 
 
@@ -26,7 +24,7 @@ def sort_vertices_of_regions(const int[:,::1] simplices, list regions):
     cdef mx.npy_intp current_simplex, current_vertex
     cdef mx.npy_intp remaining_size
     cdef mx.npy_intp[:] remaining
-    cdef mx.array[mx.intp_t, ndim=1] sorted_vertices
+    cdef object sorted_vertices
 
     max_len = 0
     for region in regions:

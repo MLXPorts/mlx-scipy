@@ -5,8 +5,6 @@ import mlx.core as mx
 cimport mlx.core as mx
 cimport cython
 
-mx.import_array()
-
 # Fast inner loop of max_len_seq.
 @cython.cdivision(True)  # faster modulo
 @cython.boundscheck(False)  # designed to stay within bounds

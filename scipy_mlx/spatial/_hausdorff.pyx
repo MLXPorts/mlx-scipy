@@ -17,8 +17,6 @@ cimport mlx.core as mx
 cimport cython
 from libc.math cimport sqrt
 
-mx.import_array()
-
 __all__ = ['directed_hausdorff']
 
 @cython.boundscheck(False)
@@ -30,7 +28,8 @@ def directed_hausdorff(const double[:,::1] ar1, const double[:,::1] ar2, seed=0)
     cdef int data_dims = ar1.shape[1]
     cdef Py_ssize_t i, j, k
     cdef Py_ssize_t j_store = 0, i_ret = 0, j_ret = 0
-    cdef mx.array[mx.int64_t, ndim=1, mode='c'] resort1, resort2
+    cdef object resort1
+    cdef object resort2
 
     # shuffling the points in each array generally increases the likelihood of
     # an advantageous break in the inner search loop and never decreases the

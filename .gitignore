@@ -30,11 +30,15 @@ venv/
 *.class
 *.dll
 *.exe
+*.dylib
 *.l[ao]
+*.lib
 *.o
 *.o.d
 *.py[ocd]
 *.so
+*.obj
+*.pyd
 _configtest.c
 
 # Packages #
@@ -59,6 +63,7 @@ _configtest.c
 # build directories
 build
 build-*
+_mlx-build
 # sphinx build directory
 doc/_build
 # cython files
@@ -303,3 +308,5 @@ scipy/special/_exprel.c
 scipy/optimize/_group_columns.c
 scipy/optimize/cython_optimize/_zeros.c
 scipy/optimize/cython_optimize/_zeros.pyx
+
+tmp/mlx-precise/

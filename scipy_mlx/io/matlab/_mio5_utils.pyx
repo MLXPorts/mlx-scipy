@@ -31,10 +31,13 @@ from cpython cimport PyBytes_Size
 
 import mlx.core as mx
 # MLX port: removed NumPy Cython dependency
+from numpy cimport import_array
+cimport numpy as cmx
+import_array()
 
 cdef extern from "numpy/arrayobject.h":
     PyTypeObject PyArray_Type
-    cmx.array PyArray_NewFromDescr(PyTypeObject *subtype,
+    object PyArray_NewFromDescr(PyTypeObject *subtype,
                                      cmx.dtype newdtype,
                                      int nd,
                                      cmx.npy_intp* dims,
@@ -44,11 +47,10 @@ cdef extern from "numpy/arrayobject.h":
                                      object parent)
 
 cdef extern from "numpy_rephrasing.h":
-    void PyArray_Set_BASE(cmx.array arr, object obj)
+    void PyArray_Set_BASE(object arr, object obj)
 
 # Numpy must be initialized before any code using the numpy C-API
 # directly
-cmx.import_array()
 
 # Constant from numpy - max number of array dimensions
 DEF _MAT_MAXDIMS = 32
@@ -405,7 +407,7 @@ cdef class VarReader5:
                 self.cstream.seek(8 - mod8, 1)
         return 0
 
-    cpdef cmx.array read_numeric(self, int copy=True, size_t nnz=-1):
+    cpdef object read_numeric(self, int copy=True, size_t nnz=-1):
         ''' Read numeric data element into array
 
         Reads element, then casts to array.
@@ -441,7 +443,7 @@ cdef class VarReader5:
         cdef cmx.uint32_t mdtype, byte_count
         cdef void *data_ptr
         cdef cmx.npy_intp el_count
-        cdef cmx.array el
+        cdef object el
         cdef object data = self.read_element(
             &mdtype, &byte_count, <void **>&data_ptr, copy)
         cdef cmx.dtype dt = <cmx.dtype>self.dtypes[mdtype]
@@ -749,10 +751,10 @@ cdef class VarReader5:
             shape = tuple([x for x in shape if x != 1])
         return shape
 
-    cpdef cmx.array read_real_complex(self, VarHeader5 header):
+    cpdef object read_real_complex(self, VarHeader5 header):
         ''' Read real / complex matrices from stream '''
         cdef:
-            cmx.array res, res_j
+            object res, res_j
         if header.is_complex:
             # avoid array copy to save memory
             res = self.read_numeric(False)
@@ -770,7 +772,7 @@ cdef class VarReader5:
 
     cdef object read_sparse(self, VarHeader5 header):
         ''' Read sparse matrices from stream '''
-        cdef cmx.array rowind, indptr, data, data_j
+        cdef object rowind, indptr, data, data_j
         cdef size_t M, N, nnz
         rowind = self.read_numeric()
         indptr = self.read_numeric()
@@ -801,7 +803,7 @@ cdef class VarReader5:
 
         return csc_array((data[:nnz], rowind[:nnz], indptr), shape=(M, N))
 
-    cpdef cmx.array read_char(self, VarHeader5 header):
+    cpdef object read_char(self, VarHeader5 header):
         ''' Read char matrices from stream as arrays
 
         Matrices of char are likely to be converted to matrices of
@@ -826,7 +828,7 @@ cdef class VarReader5:
             cmx.uint32_t mdtype, byte_count
             char *data_ptr
             object data, codec
-            cmx.array arr
+            object arr
             cmx.dtype dt
         cdef size_t length = self.size_from_header(header)
         data = self.read_element(
@@ -870,11 +872,11 @@ cdef class VarReader5:
                           buffer=arr,
                           order='F')
 
-    cpdef cmx.array read_cells(self, VarHeader5 header):
+    cpdef object read_cells(self, VarHeader5 header):
         ''' Read cell array from stream '''
         cdef:
             size_t i
-            cmx.array[object, ndim=1] result
+            object result
         # Account for fortran indexing of cells
         tupdims = tuple(header.dims[::-1])
         cdef size_t length = self.size_from_header(header)
@@ -926,7 +928,7 @@ cdef class VarReader5:
         n_names_ptr[0] = n_names
         return field_names
 
-    cpdef cmx.array read_struct(self, VarHeader5 header):
+    cpdef object read_struct(self, VarHeader5 header):
         ''' Read struct or object array from stream
 
         Objects are just structs with an extra field *classname*,
@@ -934,7 +936,7 @@ cdef class VarReader5:
         '''
         cdef:
             int i, n_names
-            cmx.array[object, ndim=1] result
+            object result
             object dt, tupdims
         # Read field names into list
         cdef object field_names = self.cread_fieldnames(&n_names)

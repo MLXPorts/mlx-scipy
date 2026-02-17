@@ -2,6 +2,7 @@
 from ._matfuncs_sqrtm import SqrtmError
 
 # MLX port: removed NumPy Cython dependency
+from numpy cimport complex128_t, float64_t, intp_t
 
 
 cdef fused floating:

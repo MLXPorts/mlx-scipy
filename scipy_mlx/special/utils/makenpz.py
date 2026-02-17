@@ -8,6 +8,7 @@ Build a npz containing all data files in the directory.
 import os
 import mlx.core as mx
 import argparse
+from typing import TextIO
 from stat import ST_MTIME
 
 
@@ -26,6 +27,36 @@ def newer(source, target):
     mtime2 = os.stat(target)[ST_MTIME]
 
     return mtime1 > mtime2
+
+
+def _loadtxt(file_obj: TextIO) -> mx.array:
+    """
+    MLX replacement for ``np.loadtxt`` used by this utility.
+    """
+    rows = []
+    for raw in file_obj:
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        values = [float(token) for token in line.split()]
+        if not values:
+            continue
+        rows.append(values)
+
+    if len(rows) == 0:
+        return mx.array([], dtype=mx.float64)
+
+    width = len(rows[0])
+    for row in rows:
+        if len(row) != width:
+            raise ValueError(
+                "all lines in the input file must have the same number of columns"
+            )
+
+    if width == 1:
+        values = [row[0] for row in rows]
+        return mx.array(values, dtype=mx.float64)
+    return mx.array(rows, dtype=mx.float64)
 
 
 def main():
@@ -79,7 +110,8 @@ def main():
 
     data = {}
     for key, fn in files:
-        data[key] = mx.loadtxt(fn)
+        with open(fn, encoding="utf-8") as fp:
+            data[key] = _loadtxt(fp)
 
     mx.savez_compressed(outp, **data)
 

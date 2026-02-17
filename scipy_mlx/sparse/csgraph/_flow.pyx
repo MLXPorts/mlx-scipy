@@ -10,8 +10,6 @@ cimport mlx.core as mx
 
 include 'parameters.pxi'
 
-mx.import_array()
-
 
 class MaximumFlowResult:
     """Represents the result of a maximum flow calculation.

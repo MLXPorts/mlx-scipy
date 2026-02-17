@@ -1,4 +1,2 @@
-cimport mlx.core as mx
-
-cpdef object squeeze_element(mx.array)
-cpdef mx.array chars_to_strings(object)
+cpdef object squeeze_element(object)
+cpdef object chars_to_strings(object)

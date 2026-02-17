@@ -117,7 +117,7 @@ cdef inline object tocsr(setlist_t *setlist):
     """
     cdef size_t i, j, pos
     cdef size_t total_size
-    cdef mx.array[mx.npy_int, ndim=1] indptr, data
+    cdef object indptr, data
 
     total_size = 0
     for j in range(setlist.n):

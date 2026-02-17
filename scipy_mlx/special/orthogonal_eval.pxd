@@ -25,6 +25,7 @@ References
 #------------------------------------------------------------------------------
 cimport cython
 from libc.math cimport sqrt, exp, floor, fabs, log, sin, isnan, NAN, M_PI as pi
+cimport mlx.core as mx
 
 # MLX port: removed NumPy Cython dependency
 from ._complexstuff cimport (
@@ -37,19 +38,19 @@ from . cimport sf_error
 
 
 cdef extern from "xsf_wrappers.h" nogil:
-    npy_cdouble xsf_chyp2f1(double a, double b, double c, npy_cdouble zp)
+    mx.npy_cdouble xsf_chyp2f1(double a, double b, double c, mx.npy_cdouble zp)
     double xsf_binom(double n, double k)
     double xsf_hyp2f1(double a, double b, double c, double x)
     double xsf_gamma(double x)
     double xsf_beta(double a, double b)
     double hyp1f1_wrap(double a, double b, double x) nogil
-    npy_cdouble chyp1f1_wrap( double a, double b, npy_cdouble z) nogil
+    mx.npy_cdouble chyp1f1_wrap( double a, double b, mx.npy_cdouble z) nogil
 
 
 # Fused type wrappers
 
 cdef inline number_t hyp2f1(double a, double b, double c, number_t z) noexcept nogil:
-    cdef npy_cdouble r
+    cdef mx.npy_cdouble r
     if number_t is double:
         return xsf_hyp2f1(a, b, c, z)
     else:
@@ -57,7 +58,7 @@ cdef inline number_t hyp2f1(double a, double b, double c, number_t z) noexcept n
         return double_complex_from_npy_cdouble(r)
 
 cdef inline number_t hyp1f1(double a, double b, number_t z) noexcept nogil:
-    cdef npy_cdouble r
+    cdef mx.npy_cdouble r
     if number_t is double:
         return hyp1f1_wrap(a, b, z)
     else:

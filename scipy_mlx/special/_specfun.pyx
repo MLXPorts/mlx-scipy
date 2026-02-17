@@ -1,4 +1,5 @@
 from libcpp.complex cimport complex as ccomplex
+cimport numpy as cmx
 
 # MLX port: removed NumPy Cython dependency
 cmx.import_array()

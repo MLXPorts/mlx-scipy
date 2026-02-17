@@ -10,8 +10,6 @@ from scipy_mlx.sparse import issparse, csr_array
 from scipy_mlx.sparse._sputils import (convert_pydata_sparse_to_scipy,
                                    safely_cast_index_arrays)
 
-mx.import_array()
-
 include "parameters.pxi"
 
 

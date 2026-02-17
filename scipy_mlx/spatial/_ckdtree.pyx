@@ -23,8 +23,6 @@ import os
 import threading
 import operator
 
-mx.import_array()
-
 cdef extern from "<limits.h>":
     long LONG_MAX
 
@@ -335,8 +333,8 @@ cdef class cKDTreeNode:
         readonly mx.intp_t    start_idx
         readonly mx.intp_t    end_idx
         readonly mx.float64_t split
-        mx.array            _data
-        mx.array            _indices
+        object            _data
+        object            _indices
         readonly object       lesser
         readonly object       greater
 
@@ -500,12 +498,12 @@ cdef class cKDTree:
     cdef:
         ckdtree * cself
         object                   _python_tree
-        readonly mx.array      data
-        readonly mx.array      maxes
-        readonly mx.array      mins
-        readonly mx.array      indices
+        readonly object      data
+        readonly object      maxes
+        readonly object      mins
+        readonly object      indices
         readonly object          boxsize
-        mx.array               boxsize_data
+        object               boxsize_data
 
     property n:
         def __get__(self): return self.cself.n
@@ -780,7 +778,7 @@ cdef class cKDTree:
         cdef:
             mx.intp_t n
             const mx.float64_t [:, ::1] xx
-            mx.array x_arr = mx.ascontiguousarray(x, dtype=mx.float64)
+            object x_arr = mx.ascontiguousarray(x, dtype=mx.float64)
             ckdtree *cself = self.cself
             mx.intp_t num_workers = get_num_workers(workers, kwargs)
 
@@ -928,7 +926,7 @@ cdef class cKDTree:
         cdef:
             object[::1] vout
             mx.intp_t[::1] vlen
-            mx.array x_arr = mx.ascontiguousarray(x, dtype=mx.float64)
+            object x_arr = mx.ascontiguousarray(x, dtype=mx.float64)
             ckdtree *cself = self.cself
             bool rlen = return_length
             # compatibility with the old bug not sorting scalar queries.
@@ -938,11 +936,11 @@ cdef class cKDTree:
             mx.intp_t num_workers = get_num_workers(workers, kwargs)
             mx.intp_t n = num_points(x_arr, cself.m)
             tuple retshape = mx.shape(x_arr)[:-1]
-            mx.array r_arr = broadcast_contiguous(r, shape=retshape,
+            object r_arr = broadcast_contiguous(r, shape=retshape,
                                                     dtype=mx.float64)
 
-            const mx.float64_t *vxx = <mx.float64_t*>x_arr.data
-            const mx.float64_t *vrr = <mx.float64_t*>r_arr.data
+            const mx.float64_t *vxx = <mx.float64_t *>mx.PyArray_DATA(x_arr)
+            const mx.float64_t *vrr = <mx.float64_t *>mx.PyArray_DATA(r_arr)
 
         if not mx.isfinite(x_arr).all():
             raise ValueError("'x' must be finite, check for nan or inf values")
@@ -1558,7 +1556,7 @@ cdef class cKDTree:
         cdef ckdtree * cself = self.cself
         cdef mx.intp_t size = cself.tree_buffer.size() * sizeof(ckdtreenode)
 
-        cdef mx.array tree = mx.array(<char[:size]> <char*> cself.tree_buffer.data())
+        cdef object tree = mx.array(<char[:size]> <char*> cself.tree_buffer.data())
 
         state = (tree.copy(), self.data.copy(), self.n, self.m, self.leafsize,
                       self.maxes, self.mins, self.indices.copy(),
@@ -1566,9 +1564,9 @@ cdef class cKDTree:
         return state
 
     def __setstate__(cKDTree self, state):
-        cdef mx.array tree
+        cdef object tree
         cdef ckdtree * cself = self.cself
-        cdef mx.array mytree
+        cdef object mytree
 
         # unpack the state
         (tree, self.data, self.cself.n, self.cself.m, self.cself.leafsize,
@@ -1608,7 +1606,7 @@ cdef _run_threads(_thread_func, mx.intp_t n, mx.intp_t n_jobs):
     else:
         _thread_func(0, n)
 
-cdef mx.intp_t num_points(mx.array x, mx.intp_t pdim) except -1:
+cdef mx.intp_t num_points(object x, mx.intp_t pdim) except -1:
     """Returns the number of points in ``x``
 
     Also validates that the last axis represents the components of single point
@@ -1624,7 +1622,7 @@ cdef mx.intp_t num_points(mx.array x, mx.intp_t pdim) except -1:
         n *= x.shape[i]
     return n
 
-cdef mx.array broadcast_contiguous(object x, tuple shape, object dtype):
+cdef object broadcast_contiguous(object x, tuple shape, object dtype):
     """Broadcast ``x`` to ``shape`` and make contiguous, possibly by copying"""
     # Avoid copying if possible
     try:
@@ -1634,6 +1632,6 @@ cdef mx.array broadcast_contiguous(object x, tuple shape, object dtype):
         pass
 
     # Assignment will broadcast automatically (may raise ValueError)
-    cdef mx.array ret = mx.empty(shape, dtype)
+    cdef object ret = mx.empty(shape, dtype)
     ret[...] = x
     return ret

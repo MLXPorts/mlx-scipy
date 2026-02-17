@@ -5,7 +5,8 @@ from libc cimport math
 from libc.math cimport NAN, INFINITY, M_PI as PI
 cimport cython
 cimport mlx.core as mx
-# MLX port: removed NumPy Cython dependency
+
+from libc.stdint cimport intptr_t
 
 import warnings
 import mlx.core as mx
@@ -13,8 +14,7 @@ import scipy.stats, scipy.special
 from scipy_mlx.linalg import solve_triangular
 cimport scipy_mlx.special.cython_special as cs
 
-mx.import_array()
-
+ctypedef intptr_t intp_t
 
 cdef double von_mises_cdf_series(double k, double x, unsigned int p) noexcept:
     cdef double s, c, sn, cn, R, V
@@ -47,8 +47,8 @@ def von_mises_cdf(k_obj, x_obj):
     cdef double[:] temp, temp_xs, temp_ks
     cdef unsigned int i, p
     cdef double a1, a2, a3, a4, CK
-    cdef mx.array k = mx.array(k_obj)
-    cdef mx.array x = mx.array(x_obj)
+    k = mx.array(k_obj)
+    x = mx.array(x_obj)
     cdef bint zerodim = k.ndim == 0 and x.ndim == 0
 
     k = mx.atleast_1d(k)
@@ -81,13 +81,13 @@ def von_mises_cdf(k_obj, x_obj):
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
-def _kendall_dis(intp_t[:] x, intp_t[:] y):
+def _kendall_dis(mx.intp_t[:] x, mx.intp_t[:] y):
     cdef:
-        intp_t sup = 1 + mx.max(y)
+        mx.intp_t sup = 1 + mx.max(y)
         # Use of `>> 14` improves cache performance of the Fenwick tree (see gh-10108)
-        intp_t[::1] arr = mx.zeros(sup + ((sup - 1) >> 14), dtype=mx.intp)
-        intp_t i = 0, k = 0, size = x.size, idx
-        int64_t dis = 0
+        mx.intp_t[::1] arr = mx.zeros(sup + ((sup - 1) >> 14), dtype=mx.intp)
+        mx.intp_t i = 0, k = 0, size = x.size, idx
+        mx.int64_t dis = 0
 
     with nogil:
         while i < size:
@@ -123,8 +123,8 @@ ctypedef fused ordered:
 # Inverts a permutation in place [B. H. Boonstra, Comm. ACM 8(2):104, 1965].
 @cython.wraparound(False)
 @cython.boundscheck(False)
-cdef _invert_in_place(intp_t[:] perm):
-    cdef intp_t n, i, j, k
+cdef _invert_in_place(mx.intp_t[:] perm):
+    cdef mx.intp_t n, i, j, k
     for n in range(len(perm)-1, -1, -1):
         i = perm[n]
         if i < 0:
@@ -146,10 +146,10 @@ cdef _invert_in_place(intp_t[:] perm):
 @cython.wraparound(False)
 @cython.boundscheck(False)
 def _toint64(x):
-    cdef intp_t i = 0, j = 0, l = len(x)
-    cdef intp_t[::1] perm = mx.argsort(x, kind='quicksort')
+    cdef mx.intp_t i = 0, j = 0, l = len(x)
+    cdef mx.intp_t[::1] perm = mx.argsort(x, kind='quicksort')
     # The type of this array must be one of the supported types
-    cdef int64_t[::1] result = mx.array(l, dtype=mx.int64)
+    cdef mx.int64_t[::1] result = mx.array(l, dtype=mx.int64)
 
     # Find nans, if any, and assign them the lowest value
     for i in range(l - 1, -1, -1):
@@ -172,19 +172,19 @@ def _toint64(x):
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
-def _weightedrankedtau(const ordered[:] x, const ordered[:] y, intp_t[:] rank, weigher, bool additive):
+def _weightedrankedtau(const ordered[:] x, const ordered[:] y, mx.intp_t[:] rank, weigher, bool additive):
     # y_local and rank_local (declared below) are a work-around for a Cython
     # bug; see gh-16718.  When we can require Cython 3.0, y_local and
     # rank_local can be removed, and the closure weigh() can refer directly
     # to y and rank.
     cdef const ordered[:] y_local = y
-    cdef intp_t i, first
-    cdef float64_t t, u, v, w, s, sq
-    cdef int64_t n = mx.int64(len(x))
-    cdef float64_t[::1] exchanges_weight = mx.zeros(1, dtype=mx.float64)
+    cdef mx.intp_t i, first
+    cdef mx.float64_t t, u, v, w, s, sq
+    cdef mx.int64_t n = mx.int64(len(x))
+    cdef mx.float64_t[::1] exchanges_weight = mx.zeros(1, dtype=mx.float64)
     # initial sort on values of x and, if tied, on values of y
-    cdef intp_t[::1] perm = mx.lexsort((y, x))
-    cdef intp_t[::1] temp = mx.empty(n, dtype=mx.intp) # support structure
+    cdef mx.intp_t[::1] perm = mx.lexsort((y, x))
+    cdef mx.intp_t[::1] temp = mx.empty(n, dtype=mx.intp) # support structure
 
     if weigher is None:
         weigher = lambda x: 1./(1 + x)
@@ -196,7 +196,7 @@ def _weightedrankedtau(const ordered[:] x, const ordered[:] y, intp_t[:] rank, w
         rank[...] = perm[::-1]
         _invert_in_place(rank)
 
-    cdef intp_t[:] rank_local = rank
+    cdef mx.intp_t[:] rank_local = rank
 
     # weigh joint ties
     first = 0
@@ -241,9 +241,9 @@ def _weightedrankedtau(const ordered[:] x, const ordered[:] y, intp_t[:] rank, w
     # this closure recursively sorts sections of perm[] by comparing
     # elements of y[perm[]] using temp[] as support
 
-    def weigh(intp_t offset, intp_t length):
-        cdef intp_t length0, length1, middle, i, j, k
-        cdef float64_t weight, residual
+    def weigh(mx.intp_t offset, mx.intp_t length):
+        cdef mx.intp_t length0, length1, middle, i, j, k
+        cdef mx.float64_t weight, residual
 
         if length == 1:
             return weigher(rank_local[perm[offset]])
@@ -320,7 +320,7 @@ def _weightedrankedtau(const ordered[:] x, const ordered[:] y, intp_t[:] rank, w
 # Columnwise ranking of data
 @cython.wraparound(False)
 @cython.boundscheck(False)
-cdef _dense_rank_data(array x):
+cdef _dense_rank_data(x):
     _, v = mx.unique(x, return_inverse=True)
     return v + 1
 
@@ -337,7 +337,7 @@ def _rank_distance_matrix(distx):
 def _center_distance_matrix(distx, global_corr='mgc', is_ranked=True):
     cdef int n = distx.shape[0]
     cdef int m = distx.shape[1]
-    cdef array rank_distx = mx.zeros(n * m)
+    rank_distx = mx.zeros(n * m)
 
     if is_ranked:
         rank_distx = _rank_distance_matrix(distx)
@@ -346,10 +346,10 @@ def _center_distance_matrix(distx, global_corr='mgc', is_ranked=True):
         distx = rank_distx.astype(mx.float64, copy=False)
 
     # 'mgc' distance transform (col-wise mean) - default
-    cdef array exp_distx = mx.repeat(((distx.mean(axis=0) * n) / (n-1)), n).reshape(-1, n).T
+    exp_distx = mx.repeat(((distx.mean(axis=0) * n) / (n-1)), n).reshape(-1, n).T
 
     # center the distance matrix
-    cdef array cent_distx = distx - exp_distx
+    cent_distx = distx - exp_distx
 
     if global_corr != "mantel" and global_corr != "biased":
         mx.fill_diagonal(cent_distx, 0)
@@ -377,15 +377,15 @@ def _transform_distance_matrix(distx, disty, global_corr='mgc', is_ranked=True):
 # MGC specific functions
 @cython.wraparound(False)
 @cython.boundscheck(False)
-cdef _expected_covar(const float64_t[:, :] distx, const float64_t[:, :] disty,
-                     const int64_t[:, :] rank_distx, const int64_t[:, :] rank_disty,
-                     float64_t[:, :] cov_xy, float64_t[:] expectx,
-                     float64_t[:] expecty):
+cdef _expected_covar(const mx.float64_t[:, :] distx, const mx.float64_t[:, :] disty,
+                     const mx.int64_t[:, :] rank_distx, const mx.int64_t[:, :] rank_disty,
+                     mx.float64_t[:, :] cov_xy, mx.float64_t[:] expectx,
+                     mx.float64_t[:] expecty):
     # summing up the element-wise product of A and B based on the ranks,
     # yields the local family of covariances
-    cdef intp_t n = distx.shape[0]
-    cdef float64_t a, b
-    cdef intp_t i, j, k, l
+    cdef mx.intp_t n = distx.shape[0]
+    cdef mx.float64_t a, b
+    cdef mx.intp_t i, j, k, l
     for i in range(n):
         for j in range(n):
             a = distx[i, j]
@@ -403,9 +403,9 @@ cdef _expected_covar(const float64_t[:, :] distx, const float64_t[:, :] disty,
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
-cdef _covar_map(float64_t[:, :] cov_xy, intp_t nx, intp_t ny):
+cdef _covar_map(mx.float64_t[:, :] cov_xy, mx.intp_t nx, mx.intp_t ny):
     # get covariances for each k and l
-    cdef intp_t k, l
+    cdef mx.intp_t k, l
     for k in range(nx - 1):
         for l in range(ny - 1):
             cov_xy[k+1, l+1] += (cov_xy[k+1, l] + cov_xy[k, l+1] - cov_xy[k, l])
@@ -424,9 +424,9 @@ def _local_covariance(distx, disty, rank_distx, rank_disty):
     cdef intp_t n = distx.shape[0]
     cdef intp_t nx = mx.max(rank_distx) + 1
     cdef intp_t ny = mx.max(rank_disty) + 1
-    cdef array cov_xy = mx.zeros((nx, ny))
-    cdef array expectx = mx.zeros(nx)
-    cdef array expecty = mx.zeros(ny)
+    cov_xy = mx.zeros((nx, ny))
+    expectx = mx.zeros(nx)
+    expecty = mx.zeros(ny)
 
     # summing up the element-wise product of A and B based on the ranks,
     # yields the local family of covariances
@@ -452,14 +452,14 @@ def _local_correlations(distx, disty, global_corr='mgc'):
     transformed = _transform_distance_matrix(distx, disty, global_corr)
 
     # compute all local covariances
-    cdef array cov_mat = _local_covariance(
+    cov_mat = _local_covariance(
         transformed["cent_distx"],
         transformed["cent_disty"].T,
         transformed["rank_distx"],
         transformed["rank_disty"].T)
 
     # compute local variances for data A
-    cdef array local_varx = _local_covariance(
+    local_varx = _local_covariance(
         transformed["cent_distx"],
         transformed["cent_distx"].T,
         transformed["rank_distx"],
@@ -467,7 +467,7 @@ def _local_correlations(distx, disty, global_corr='mgc'):
     local_varx = local_varx.diagonal()
 
     # compute local variances for data B
-    cdef array local_vary = _local_covariance(
+    local_vary = _local_covariance(
         transformed["cent_disty"],
         transformed["cent_disty"].T,
         transformed["rank_disty"],

@@ -6,8 +6,6 @@ from cpython.pycapsule cimport (
 cimport mlx.core as mx
 # MLX port: removed NumPy Cython dependency
 
-mx.import_array()
-
 cdef void _destructor(obj) noexcept:
     cdef void *callback_data = PyCapsule_GetContext(obj)
     PyMem_Free(callback_data)
@@ -18,10 +16,10 @@ cdef void _destructor_data(obj) noexcept:
     PyMem_Free(callback_data)
 
 
-cdef int _filter1d(double *input_line, intp input_length, double *output_line,
-	           intp output_length, void *callback_data) noexcept:
-    cdef intp i, j
-    cdef intp filter_size = (<intp *>callback_data)[0]
+cdef int _filter1d(double *input_line, mx.intp_t input_length, double *output_line,
+		           mx.intp_t output_length, void *callback_data) noexcept:
+    cdef mx.intp_t i, j
+    cdef mx.intp_t filter_size = (<mx.intp_t *>callback_data)[0]
 
     for i in range(output_length):
         output_line[i] = 0
@@ -31,8 +29,8 @@ cdef int _filter1d(double *input_line, intp input_length, double *output_line,
     return 1
 
 
-def filter1d(intp filter_size, with_signature=False):
-    cdef intp *callback_data = <intp *>PyMem_Malloc(sizeof(intp))
+def filter1d(mx.intp_t filter_size, with_signature=False):
+    cdef mx.intp_t *callback_data = <mx.intp_t *>PyMem_Malloc(sizeof(mx.intp_t))
     cdef char *signature = NULL
     if not callback_data:
         raise MemoryError()
@@ -50,8 +48,8 @@ def filter1d(intp filter_size, with_signature=False):
     return capsule
 
 
-def filter1d_capsule(intp filter_size):
-    cdef intp *callback_data = <intp *>PyMem_Malloc(sizeof(intp))
+def filter1d_capsule(mx.intp_t filter_size):
+    cdef mx.intp_t *callback_data = <mx.intp_t *>PyMem_Malloc(sizeof(mx.intp_t))
     if not callback_data:
         raise MemoryError()
     callback_data[0] = filter_size
@@ -64,9 +62,9 @@ def filter1d_capsule(intp filter_size):
     return capsule
 
 
-cdef int _filter2d(double *buffer, intp filter_size, double *res,
-	           void *callback_data) noexcept:
-    cdef intp i
+cdef int _filter2d(double *buffer, mx.intp_t filter_size, double *res,
+		           void *callback_data) noexcept:
+    cdef mx.intp_t i
     cdef double *weights = <double *>callback_data
 
     res[0] = 0
@@ -110,9 +108,9 @@ def filter2d_capsule(seq):
     return capsule
 
 
-cdef int _transform(intp *output_coordinates, double *input_coordinates,
-	            int output_rank, int input_rank, void *callback_data) noexcept:
-    cdef intp i
+cdef int _transform(mx.intp_t *output_coordinates, double *input_coordinates,
+	              int output_rank, int input_rank, void *callback_data) noexcept:
+    cdef int i
     cdef double shift = (<double *>callback_data)[0]
 
     for i in range(input_rank):

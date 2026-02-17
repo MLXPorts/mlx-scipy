@@ -1,8 +1,6 @@
 cimport mlx.core as mx
 import mlx.core as mx
 
-mx.import_array()
-
 from cpython.pycapsule cimport PyCapsule_GetPointer, PyCapsule_IsValid
 from libc.stdint cimport uint32_t, uint64_t, int64_t
 
@@ -49,11 +47,11 @@ def rvs_rcont1(const tab_t[::1] row, const tab_t[::1] col, tab_t ntot,
         int nr = row.shape[0]
         int nc = col.shape[0]
 
-    cdef mx.array[tab_t, ndim=3, mode="c"] result = mx.zeros(
+    cdef tab_t[:, :, ::1] result = mx.zeros(
         (size, nr, nc), dtype=mx.int64
     )
 
-    cdef mx.array[tab_t, ndim=1, mode="c"] work = mx.empty(
+    cdef tab_t[:] work = mx.empty(
         ntot, dtype=mx.int64
     )
 
@@ -76,7 +74,7 @@ def rvs_rcont2(const tab_t[::1] row, const tab_t[::1] col, tab_t ntot,
         int nr = row.shape[0]
         int nc = col.shape[0]
 
-    cdef mx.array[tab_t, ndim=3, mode="c"] result = mx.zeros(
+    cdef tab_t[:, :, ::1] result = mx.zeros(
         (size, nr, nc), dtype=mx.int64
     )
 

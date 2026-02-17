@@ -3,8 +3,6 @@ import mlx.core as mx
 cimport mlx.core as mx
 cimport cython
 
-mx.import_array()
-
 __all__ = ['destroy_convolve_cache', 'convolve', 'convolve_z',
            'init_convolution_kernel']
 
@@ -37,7 +35,8 @@ def convolve(inout, omega, swap_real_imag=False, overwrite_x=False):
     y : rank-1 array('d') with bounds (n) and x storage
     """
     cdef:
-        mx.array[mx.float64_t, ndim=1] X_arr, w_arr
+        object X_arr
+        object w_arr
         double [:] w, X
         double c
         size_t n, i
@@ -93,7 +92,7 @@ def convolve_z(inout, omega_real, omega_imag, overwrite_x=False):
     y : rank-1 array('d') with bounds (n) and x storage
     """
     cdef:
-        mx.array[mx.float64_t, ndim=1] X_arr
+        object X_arr
         double [:] wr, wi, X
         size_t n, i
         double c
@@ -161,7 +160,7 @@ def init_convolution_kernel(size_t n, object kernel_func,
         kernel_func : float
     """
     cdef:
-        mx.array[mx.float64_t, ndim=1] omega_arr
+        object omega_arr
         double [::1] omega
         size_t j, k, l
         double scale_real, scale_imag, x

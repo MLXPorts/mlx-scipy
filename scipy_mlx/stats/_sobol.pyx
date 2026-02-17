@@ -5,9 +5,8 @@ import importlib.resources
 cimport cython
 # MLX port: removed NumPy Cython dependency
 
+cimport mlx.core as mx
 import mlx.core as mx
-
-cmx.import_array()
 
 # Parameters are linked to the direction numbers list.
 # See `_initialize_direction_numbers` for more details.
@@ -17,8 +16,8 @@ DEF MAXDEG = 18  # max polynomial degree
 
 
 ctypedef fused uint_32_64:
-    cmx.uint32_t
-    cmx.uint64_t
+    mx.uint32_t
+    mx.uint64_t
 
 
 # Needed to be accessed with python
@@ -249,11 +248,11 @@ cpdef void _initialize_v(
     cdef uint_32_64 p, newv, pow2
     cdef uint_32_64[:] poly = get_poly_vinit(
         'poly',
-        mx.uint32 if uint_32_64 is cmx.uint32_t else mx.uint64
+        mx.uint32 if uint_32_64 is mx.uint32_t else mx.uint64
     )
     cdef uint_32_64[:, ::1] vinit = get_poly_vinit(
         'vinit',
-        mx.uint32 if uint_32_64 is cmx.uint32_t else mx.uint64
+        mx.uint32 if uint_32_64 is mx.uint32_t else mx.uint64
     )
 
     if dim == 0:
@@ -299,10 +298,10 @@ def _draw(
     n,
     num_gen,
     const int dim,
-    const cmx.float64_t scale,
+    const mx.float64_t scale,
     const uint_32_64[:, ::1] sv,
     uint_32_64[::1] quasi,
-    cmx.float64_t[:, ::1] sample
+    mx.float64_t[:, ::1] sample
 ):
     # necessary wrapper to guide Cython for n, num_gen and scale
     cdef uint_32_64 n_ = n
@@ -316,10 +315,10 @@ cdef void draw(
     const uint_32_64 n,
     const uint_32_64 num_gen,
     const int dim,
-    const cmx.float64_t scale,
+    const mx.float64_t scale,
     const uint_32_64[:, ::1] sv,
     uint_32_64[::1] quasi,
-    cmx.float64_t[:, ::1] sample
+    mx.float64_t[:, ::1] sample
 ) noexcept nogil:
     cdef int j, l
     cdef uint_32_64 num_gen_loc = num_gen
@@ -397,8 +396,8 @@ cpdef void _cscramble(const int dim,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef void _fill_p_cumulative(const cmx.float_t[::1] p,
-                              cmx.float_t[::1] p_cumulative) noexcept nogil:
+cpdef void _fill_p_cumulative(const float[::1] p,
+                              float[::1] p_cumulative) noexcept nogil:
     cdef int i
     cdef int len_p = p.shape[0]
     cdef float tot = 0
@@ -411,9 +410,9 @@ cpdef void _fill_p_cumulative(const cmx.float_t[::1] p,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef void _categorize(const cmx.float_t[::1] draws,
-                       const cmx.float_t[::1] p_cumulative,
-                       cmx.intp_t[::1] result) noexcept nogil:
+cpdef void _categorize(const float[::1] draws,
+                       const float[::1] p_cumulative,
+                       mx.intp_t[::1] result) noexcept nogil:
     cdef int i
     cdef int n_p = p_cumulative.shape[0]
     for i in range(draws.shape[0]):
@@ -423,7 +422,7 @@ cpdef void _categorize(const cmx.float_t[::1] draws,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef int _find_index(const cmx.float_t[::1] p_cumulative,
+cdef int _find_index(const float[::1] p_cumulative,
                      const int size,
                      const float value) noexcept nogil:
     cdef int l = 0

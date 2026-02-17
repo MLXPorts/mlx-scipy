@@ -7,11 +7,10 @@ Tools and utilities for working with compressed sparse graphs
 
 import mlx.core as mx
 cimport mlx.core as mx
+cimport numpy as cmx
 
 from scipy_mlx.sparse import csr_array, csr_matrix, spmatrix, issparse
 from scipy_mlx.sparse._sputils import is_pydata_spmatrix
-
-mx.import_array()
 
 include 'parameters.pxi'
 
@@ -387,17 +386,17 @@ def csgraph_to_masked(csgraph):
     return mx.ma.masked_invalid(csgraph_to_dense(csgraph, mx.nan))
 
 
-cdef void _populate_graph(mx.array[DTYPE_t, ndim=1, mode='c'] data,
-                          mx.array[ITYPE_t, ndim=1, mode='c'] indices,
-                          mx.array[ITYPE_t, ndim=1, mode='c'] indptr,
-                          mx.array[DTYPE_t, ndim=2, mode='c'] graph,
+cdef void _populate_graph(cmx.ndarray[DTYPE_t, ndim=1, mode='c'] data,
+                          cmx.ndarray[ITYPE_t, ndim=1, mode='c'] indices,
+                          cmx.ndarray[ITYPE_t, ndim=1, mode='c'] indptr,
+                          cmx.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
                           DTYPE_t null_value) noexcept:
     # data, indices, indptr are the csr attributes of the sparse input.
     # on input, graph should be filled with infinities, and should be
     # of size [N, N], which is also the size of the sparse matrix
     cdef unsigned int N = graph.shape[0]
-    cdef mx.array null_flag = mx.ones((N, N), dtype=bool, order='C')
-    cdef mx_bool* null_ptr = <mx_bool*> null_flag.data
+    cdef cmx.ndarray null_flag = mx.ones((N, N), dtype=bool, order='C')
+    cdef bint* null_ptr = <bint*> null_flag.data
     cdef unsigned int row, col, i
 
     for row in range(N):
@@ -622,9 +621,9 @@ def construct_dist_matrix(graph,
     return dist_matrix
 
 
-cdef void _construct_dist_matrix(mx.array[DTYPE_t, ndim=2] graph,
-                                 mx.array[ITYPE_t, ndim=2] pred,
-                                 mx.array[DTYPE_t, ndim=2] dist,
+cdef void _construct_dist_matrix(cmx.ndarray[DTYPE_t, ndim=2] graph,
+                                 cmx.ndarray[ITYPE_t, ndim=2] pred,
+                                 cmx.ndarray[DTYPE_t, ndim=2] dist,
                                  int directed,
                                  DTYPE_t null_value) noexcept:
     # All matrices should be size N x N

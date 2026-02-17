@@ -7,13 +7,12 @@ Routines for traversing graphs in compressed sparse format
 
 import mlx.core as mx
 cimport mlx.core as mx
+cimport numpy as cmx
 
 from scipy_mlx.sparse.csgraph._validation import validate_graph
 from scipy_mlx.sparse.csgraph._tools import reconstruct_path
 
 cimport cython
-
-mx.import_array()
 
 include 'parameters.pxi'
 
@@ -351,8 +350,8 @@ cpdef breadth_first_order(csgraph, i_start,
     csgraph = validate_graph(csgraph, directed, dense_output=False)
     cdef int N = csgraph.shape[0]
 
-    cdef mx.array node_list = mx.empty(N, dtype=ITYPE)
-    cdef mx.array predecessors = mx.empty(N, dtype=ITYPE)
+    cdef cmx.ndarray node_list = mx.empty(N, dtype=ITYPE)
+    cdef cmx.ndarray predecessors = mx.empty(N, dtype=ITYPE)
     node_list.fill(NULL_IDX)
     predecessors.fill(NULL_IDX)
 
@@ -375,20 +374,20 @@ cpdef breadth_first_order(csgraph, i_start,
 
 def _breadth_first_directed(
         unsigned int head_node,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indices,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indptr,
-        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
-        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors):
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indices,
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indptr,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors):
     return _breadth_first_directed2(head_node, indices, indptr,
                                     node_list, predecessors)
 
 
 cdef unsigned int _breadth_first_directed2(
         unsigned int head_node,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indices,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indptr,
-        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
-        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors) noexcept:
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indices,
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indptr,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors) noexcept:
     # Inputs:
     #  head_node: (input) index of the node from which traversal starts
     #  indices: (input) CSR indices of graph
@@ -423,23 +422,23 @@ cdef unsigned int _breadth_first_directed2(
 
 def _breadth_first_undirected(
         unsigned int head_node,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indices1,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indptr1,
-        mx.array[int32_or_int64_b, ndim=1, mode='c'] indices2,
-        mx.array[int32_or_int64_b, ndim=1, mode='c'] indptr2,
-        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
-        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors):
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indices1,
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indptr1,
+        cmx.ndarray[int32_or_int64_b, ndim=1, mode='c'] indices2,
+        cmx.ndarray[int32_or_int64_b, ndim=1, mode='c'] indptr2,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors):
     return _breadth_first_undirected2(head_node, indices1, indptr1, indices2,
                                       indptr2, node_list, predecessors)
 
 cdef unsigned int _breadth_first_undirected2(
         unsigned int head_node,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indices1,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indptr1,
-        mx.array[int32_or_int64_b, ndim=1, mode='c'] indices2,
-        mx.array[int32_or_int64_b, ndim=1, mode='c'] indptr2,
-        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
-        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors) noexcept:
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indices1,
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indptr1,
+        cmx.ndarray[int32_or_int64_b, ndim=1, mode='c'] indices2,
+        cmx.ndarray[int32_or_int64_b, ndim=1, mode='c'] indptr2,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors) noexcept:
     # Inputs:
     #  head_node: (input) index of the node from which traversal starts
     #  indices1: (input) CSR indices of graph
@@ -589,12 +588,12 @@ cpdef depth_first_order(csgraph, i_start,
 
 def _depth_first_directed(
         unsigned int head_node,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indices,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indptr,
-        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
-        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors,
-        mx.array[ITYPE_t, ndim=1, mode='c'] root_list,
-        mx.array[ITYPE_t, ndim=1, mode='c'] flag):
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indices,
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indptr,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] root_list,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] flag):
     return _depth_first_directed2(head_node, indices, indptr,
                                   node_list, predecessors,
                                   root_list, flag)
@@ -602,12 +601,12 @@ def _depth_first_directed(
 
 cdef unsigned int _depth_first_directed2(
         unsigned int head_node,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indices,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indptr,
-        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
-        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors,
-        mx.array[ITYPE_t, ndim=1, mode='c'] root_list,
-        mx.array[ITYPE_t, ndim=1, mode='c'] flag) noexcept:
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indices,
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indptr,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] root_list,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] flag) noexcept:
     cdef unsigned int i, i_nl_end, cnode, pnode
     cdef unsigned int N = node_list.shape[0]
     cdef int no_children, i_root
@@ -646,14 +645,14 @@ cdef unsigned int _depth_first_directed2(
 
 def _depth_first_undirected(
         unsigned int head_node,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indices1,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indptr1,
-        mx.array[int32_or_int64_b, ndim=1, mode='c'] indices2,
-        mx.array[int32_or_int64_b, ndim=1, mode='c'] indptr2,
-        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
-        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors,
-        mx.array[ITYPE_t, ndim=1, mode='c'] root_list,
-        mx.array[ITYPE_t, ndim=1, mode='c'] flag):
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indices1,
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indptr1,
+        cmx.ndarray[int32_or_int64_b, ndim=1, mode='c'] indices2,
+        cmx.ndarray[int32_or_int64_b, ndim=1, mode='c'] indptr2,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] root_list,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] flag):
     return _depth_first_undirected2(head_node, indices1, indptr1,
                                     indices2, indptr2,
                                     node_list, predecessors,
@@ -662,14 +661,14 @@ def _depth_first_undirected(
 
 cdef unsigned int _depth_first_undirected2(
         unsigned int head_node,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indices1,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indptr1,
-        mx.array[int32_or_int64_b, ndim=1, mode='c'] indices2,
-        mx.array[int32_or_int64_b, ndim=1, mode='c'] indptr2,
-        mx.array[ITYPE_t, ndim=1, mode='c'] node_list,
-        mx.array[ITYPE_t, ndim=1, mode='c'] predecessors,
-        mx.array[ITYPE_t, ndim=1, mode='c'] root_list,
-        mx.array[ITYPE_t, ndim=1, mode='c'] flag) noexcept:
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indices1,
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indptr1,
+        cmx.ndarray[int32_or_int64_b, ndim=1, mode='c'] indices2,
+        cmx.ndarray[int32_or_int64_b, ndim=1, mode='c'] indptr2,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] node_list,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] predecessors,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] root_list,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] flag) noexcept:
     cdef unsigned int i, i_nl_end, cnode, pnode
     cdef unsigned int N = node_list.shape[0]
     cdef int no_children, i_root
@@ -723,16 +722,16 @@ cdef unsigned int _depth_first_undirected2(
 
 
 def _connected_components_directed(
-        mx.array[int32_or_int64, ndim=1, mode='c'] indices,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indptr,
-        mx.array[ITYPE_t, ndim=1, mode='c'] labels):
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indices,
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indptr,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] labels):
     return _connected_components_directed2(indices, indptr, labels)
 
 
 cdef int _connected_components_directed2(
-        mx.array[int32_or_int64, ndim=1, mode='c'] indices,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indptr,
-        mx.array[ITYPE_t, ndim=1, mode='c'] labels) noexcept:
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indices,
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indptr,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] labels) noexcept:
     """
     Uses an iterative version of Tarjan's algorithm to find the
     strongly connected components of a directed graph represented as a
@@ -753,7 +752,7 @@ cdef int _connected_components_directed2(
     DEF VOID = -1
     DEF END = -2
     cdef int N = labels.shape[0]
-    cdef mx.array[ITYPE_t, ndim=1, mode="c"] SS, lowlinks, stack_f, stack_b
+    cdef cmx.ndarray[ITYPE_t, ndim=1, mode="c"] SS, lowlinks, stack_f, stack_b
 
     lowlinks = labels
     SS = mx.array((N,), dtype=ITYPE)
@@ -853,22 +852,22 @@ cdef int _connected_components_directed2(
 
 
 def _connected_components_undirected(
-        mx.array[int32_or_int64, ndim=1, mode='c'] indices1,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indptr1,
-        mx.array[int32_or_int64_b, ndim=1, mode='c'] indices2,
-        mx.array[int32_or_int64_b, ndim=1, mode='c'] indptr2,
-        mx.array[ITYPE_t, ndim=1, mode='c'] labels):
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indices1,
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indptr1,
+        cmx.ndarray[int32_or_int64_b, ndim=1, mode='c'] indices2,
+        cmx.ndarray[int32_or_int64_b, ndim=1, mode='c'] indptr2,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] labels):
     return _connected_components_undirected2(indices1, indptr1,
                                              indices2, indptr2,
                                              labels)
 
 
 cdef int _connected_components_undirected2(
-        mx.array[int32_or_int64, ndim=1, mode='c'] indices1,
-        mx.array[int32_or_int64, ndim=1, mode='c'] indptr1,
-        mx.array[int32_or_int64_b, ndim=1, mode='c'] indices2,
-        mx.array[int32_or_int64_b, ndim=1, mode='c'] indptr2,
-        mx.array[ITYPE_t, ndim=1, mode='c'] labels) noexcept:
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indices1,
+        cmx.ndarray[int32_or_int64, ndim=1, mode='c'] indptr1,
+        cmx.ndarray[int32_or_int64_b, ndim=1, mode='c'] indices2,
+        cmx.ndarray[int32_or_int64_b, ndim=1, mode='c'] indptr2,
+        cmx.ndarray[ITYPE_t, ndim=1, mode='c'] labels) noexcept:
 
     cdef int v, w, j, label, SS_head
     cdef int N = labels.shape[0]
@@ -879,7 +878,7 @@ cdef int _connected_components_undirected2(
 
     # Share memory for the stack and labels, since labels are only
     # applied once a node has been popped from the stack.
-    cdef mx.array[ITYPE_t, ndim=1, mode="c"] SS = labels
+    cdef cmx.ndarray[ITYPE_t, ndim=1, mode="c"] SS = labels
     SS_head = END
     for v in range(N):
         if labels[v] == VOID:

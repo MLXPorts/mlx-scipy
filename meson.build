@@ -159,7 +159,7 @@ add_global_arguments(_intel_fflags, language: 'fortran')
 # C++ code. See gh-15996 for details.
 version_link_args = []
 if cc.get_id() != 'clang-cl'
-  _linker_script = meson.project_source_root() / 'scipy/_build_utils/link-version-pyinit.map'
+  _linker_script = meson.project_source_root() / 'scipy_mlx/_build_utils/link-version-pyinit.map'
   vscript_link_args = ['-Wl,--version-script=' + _linker_script]
   # Note that FreeBSD only accepts version scripts when -shared is passed,
   # hence we need to pass that to `cc.links` explicitly (flag is already
@@ -170,7 +170,7 @@ if cc.get_id() != 'clang-cl'
 endif
 
 generate_f2pymod = find_program('tools/generate_f2pymod.py')
-tempita = find_program('scipy/_build_utils/tempita.py')
+tempita = find_program('scipy_mlx/_build_utils/tempita.py')
 
 use_pythran = get_option('use-pythran')
 if use_pythran

@@ -29,9 +29,6 @@ from libc.stdio cimport FILE
 
 from scipy_mlx.linalg.cython_lapack cimport dgetrf, dgetrs, dgecon
 
-mx.import_array()
-
-
 __all__ = ['Delaunay', 'ConvexHull', 'QhullError', 'Voronoi', 'HalfspaceIntersection', 'tsearch']
 
 #------------------------------------------------------------------------------
@@ -243,24 +240,24 @@ cdef class _Qhull:
 
     cdef readonly int ndim
     cdef int numpoints, _is_delaunay, _is_halfspaces
-    cdef mx.array _ridge_points
+    cdef object _ridge_points
 
     cdef list _ridge_vertices
     cdef object _ridge_error
     cdef int _nridges
 
-    cdef mx.array _ridge_equations
+    cdef object _ridge_equations
     cdef PyThread_type_lock _lock
 
     @cython.final
     def __init__(self,
                  bytes mode_option,
-                 mx.array[mx.double_t, ndim=2] points,
+                 object points,
                  bytes options=None,
                  bytes required_options=None,
                  furthest_site=False,
                  incremental=False,
-                 mx.array[mx.double_t, ndim=1] interior_point=None):
+                 object interior_point=None):
         cdef int exitcode
 
         self._lock = PyThread_allocate_lock()
@@ -332,22 +329,25 @@ cdef class _Qhull:
         options = b"qhull "  + mode_option +  b" " + self.options
 
         options_c = <char*>options
+        cdef realT *points_data
+        cdef coordT *coord
 
         self._messages.clear()
 
-        cdef coordT* coord
+        points_data = <realT*>mx.PyArray_DATA(points)
+        if interior_point is not None:
+            coord = <coordT *>mx.PyArray_DATA(interior_point)
+        else:
+            coord = NULL
+
         with nogil:
             self._qh = <qhT*>stdlib.malloc(sizeof(qhT))
             if self._qh == NULL:
                 with gil:
                     raise MemoryError("memory allocation failed")
             qh_zero(self._qh, self._messages.handle)
-            if interior_point is not None:
-                coord = <coordT*>interior_point.data
-            else:
-                coord = NULL
             exitcode = qh_new_qhull_scipy(self._qh, self.ndim, self.numpoints,
-                                          <realT*>points.data, 0,
+                                          points_data, 0,
                                           options_c, NULL, self._messages.handle, coord)
 
         if exitcode != 0:
@@ -437,7 +437,8 @@ cdef class _Qhull:
         cdef facetT *facet
         cdef double bestdist
         cdef boolT isoutside
-        cdef mx.array arr
+        cdef object arr
+        cdef int point_stride
 
         self.acquire_lock()
 
@@ -462,6 +463,7 @@ cdef class _Qhull:
                 arr = mx.array(points, dtype=mx.double, order="C", copy=True)
 
             self._messages.clear()
+            point_stride = <int>arr.shape[1]
 
             try:
                 # nonlocal error handling
@@ -473,9 +475,9 @@ cdef class _Qhull:
                 # add points to triangulation
                 if self._is_delaunay:
                     # lift to paraboloid
-                    qh_setdelaunay(self._qh, arr.shape[1], arr.shape[0], <realT*>arr.data)
+                    qh_setdelaunay(self._qh, arr.shape[1], arr.shape[0], <realT*>mx.PyArray_DATA(arr))
 
-                p = <realT*>arr.data
+                p = <realT*>mx.PyArray_DATA(arr)
 
                 for j in range(arr.shape[0]):
                     facet = qh_findbestfacet(self._qh, p, 0, &bestdist, &isoutside)
@@ -487,7 +489,7 @@ cdef class _Qhull:
                         # maintain the point IDs
                         qh_setappend(self._qh, &self._qh[0].other_points, p)
 
-                    p += arr.shape[1]
+                    p += point_stride
 
                 qh_check_maxout(self._qh)
                 self._qh[0].hasTriangulation = 0
@@ -584,12 +586,13 @@ cdef class _Qhull:
         cdef pointT *point
         cdef int i, j, ipoint, ncoplanar
         cdef object tmp
-        cdef mx.array[mx.npy_int, ndim=2] facets
-        cdef mx.array[mx.npy_int, ndim=1] good
-        cdef mx.array[mx.npy_int, ndim=2] neighbors
-        cdef mx.array[mx.npy_int, ndim=2] coplanar
-        cdef mx.array[mx.double_t, ndim=2] equations
-        cdef mx.array[mx.npy_int, ndim=1] id_map
+        cdef object facets
+        cdef object good
+        cdef object neighbors
+        cdef object coplanar
+        cdef int coplanar_capacity
+        cdef object equations
+        cdef object id_map
         cdef double dist
         cdef int facet_ndim
         cdef unsigned int lower_bound
@@ -610,26 +613,24 @@ cdef class _Qhull:
             id_map = mx.empty(self._qh[0].facet_id, dtype=mx.intc)
 
             # Compute facet indices
-            with nogil:
-                for i in range(self._qh[0].facet_id):
-                    id_map[i] = -1
+            for i in range(self._qh[0].facet_id):
+                id_map[i] = -1
 
-                facet = self._qh[0].facet_list
-                j = 0
-                while facet and facet.next:
-                    if not self._is_delaunay or facet.upperdelaunay == self._qh[0].UPPERdelaunay:
-                        if not facet.simplicial and ( \
-                            qh_setsize(self._qh, facet.vertices) != facet_ndim or \
-                            qh_setsize(self._qh, facet.neighbors) != facet_ndim):
-                            with gil:
-                                raise QhullError(
-                                    "non-simplical facet encountered: %r vertices"
-                                    % (qh_setsize(self._qh, facet.vertices),))
+            facet = self._qh[0].facet_list
+            j = 0
+            while facet and facet.next:
+                if not self._is_delaunay or facet.upperdelaunay == self._qh[0].UPPERdelaunay:
+                    if not facet.simplicial and ( \
+                        qh_setsize(self._qh, facet.vertices) != facet_ndim or \
+                        qh_setsize(self._qh, facet.neighbors) != facet_ndim):
+                        raise QhullError(
+                            "non-simplical facet encountered: %r vertices"
+                            % (qh_setsize(self._qh, facet.vertices),))
 
-                        id_map[facet.id] = j
-                        j += 1
+                    id_map[facet.id] = j
+                    j += 1
 
-                    facet = facet.next
+                facet = facet.next
 
             # Allocate output
             facets = mx.zeros((j, facet_ndim), dtype=mx.intc)
@@ -639,7 +640,7 @@ cdef class _Qhull:
 
             ncoplanar = 0
             coplanar = mx.zeros((10, 3), dtype=mx.intc)
-            coplanar_shape = coplanar.shape
+            coplanar_capacity = 10
 
             # Retrieve facet information
             with nogil:
@@ -662,11 +663,13 @@ cdef class _Qhull:
                             swapped_index = 1 ^ i
                             vertex = <vertexT*>facet.vertices.e[i].p
                             ipoint = qh_pointid(self._qh, vertex.point)
-                            facets[j, swapped_index] = ipoint
+                            with gil:
+                                facets[j, swapped_index] = ipoint
 
                             # Save the neighbor info
                             neighbor = <facetT*>facet.neighbors.e[i].p
-                            neighbors[j, swapped_index] = id_map[neighbor.id]
+                            with gil:
+                                neighbors[j, swapped_index] = id_map[neighbor.id]
 
                         lower_bound = 2
 
@@ -674,16 +677,19 @@ cdef class _Qhull:
                         # Save the vertex info
                         vertex = <vertexT*>facet.vertices.e[i].p
                         ipoint = qh_pointid(self._qh, vertex.point)
-                        facets[j, i] = ipoint
+                        with gil:
+                            facets[j, i] = ipoint
 
                         # Save the neighbor info
                         neighbor = <facetT*>facet.neighbors.e[i].p
-                        neighbors[j, i] = id_map[neighbor.id]
+                        with gil:
+                            neighbors[j, i] = id_map[neighbor.id]
 
                     # Save simplex equation info
-                    for i in range(facet_ndim):
-                        equations[j, i] = facet.normal[i]
-                    equations[j, facet_ndim] = facet.offset
+                    with gil:
+                        for i in range(facet_ndim):
+                            equations[j, i] = facet.normal[i]
+                        equations[j, facet_ndim] = facet.offset
 
                     # Save coplanar info
                     if facet.coplanarset:
@@ -691,21 +697,24 @@ cdef class _Qhull:
                             point = <pointT*>facet.coplanarset.e[i].p
                             vertex = qh_nearvertex(self._qh, facet, point, &dist)
 
-                            if ncoplanar >= coplanar_shape[0]:
+                            if ncoplanar >= coplanar_capacity:
                                 with gil:
                                     tmp = coplanar
                                     coplanar = None
                                     # The array is always safe to resize
                                     tmp.resize(2 * ncoplanar + 1, 3, refcheck=False)
                                     coplanar = tmp
+                                    coplanar_capacity = 2 * ncoplanar + 1
 
-                            coplanar[ncoplanar, 0] = qh_pointid(self._qh, point)
-                            coplanar[ncoplanar, 1] = id_map[facet.id]
-                            coplanar[ncoplanar, 2] = qh_pointid(self._qh, vertex.point)
+                            with gil:
+                                coplanar[ncoplanar, 0] = qh_pointid(self._qh, point)
+                                coplanar[ncoplanar, 1] = id_map[facet.id]
+                                coplanar[ncoplanar, 2] = qh_pointid(self._qh, vertex.point)
                             ncoplanar += 1
 
                     # Save good info
-                    good[j] = facet.good
+                    with gil:
+                        good[j] = facet.good
 
                     j += 1
                     facet = facet.next
@@ -731,7 +740,7 @@ cdef class _Qhull:
         """
         cdef pointT *point
         cdef int i, j, numpoints, point_ndim
-        cdef mx.array[mx.npy_double, ndim=2] points
+        cdef object points
 
         self.acquire_lock()
 
@@ -749,12 +758,11 @@ cdef class _Qhull:
             numpoints = self._qh.num_points
             points = mx.empty((numpoints, point_ndim))
 
-            with nogil:
-                point = self._qh.first_point
-                for i in range(numpoints):
-                    for j in range(point_ndim):
-                        points[i,j] = point[j]
-                    point += self._qh.hull_dim
+            point = self._qh.first_point
+            for i in range(numpoints):
+                for j in range(point_ndim):
+                    points[i, j] = point[j]
+                point += self._qh.hull_dim
 
             return points
         finally:
@@ -777,7 +785,7 @@ cdef class _Qhull:
         cdef facetT *facet
         cdef vertexT* vertex
         cdef int i, j, numfacets, facet_ndim
-        cdef mx.array[mx.double_t, ndim=2] equations
+        cdef object equations
         cdef list facets, facetsi
 
         self.acquire_lock()
@@ -857,8 +865,8 @@ cdef class _Qhull:
         cdef facetT *facet
 
         cdef object tmp
-        cdef mx.array[mx.double_t, ndim=2] voronoi_vertices
-        cdef mx.array[mx.intp_t, ndim=1] point_region
+        cdef object voronoi_vertices
+        cdef object point_region
         cdef int nvoronoi_vertices
         cdef pointT *point
         cdef pointT *center
@@ -1067,7 +1075,7 @@ cdef void _visit_voronoi(qhT *_qh, FILE *ptr, vertexT *vertex, vertexT *vertexA,
     point_1 = qh_pointid(_qh, vertex.point)
     point_2 = qh_pointid(_qh, vertexA.point)
 
-    p = <int*>qh._ridge_points.data
+    p = <int*>mx.PyArray_DATA(qh._ridge_points)
     p[2*qh._nridges + 0] = point_1
     p[2*qh._nridges + 1] = point_2
 
@@ -1097,8 +1105,8 @@ cdef void qh_order_vertexneighbors_nd(qhT *qh, int nd, vertexT *vertex) noexcept
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
-def _get_barycentric_transforms(mx.array[mx.double_t, ndim=2] points,
-                                mx.array[mx.npy_int, ndim=2] simplices,
+def _get_barycentric_transforms(object points,
+                                object simplices,
                                 double eps):
     """
     Compute barycentric affine coordinate transformations for given
@@ -1131,8 +1139,8 @@ def _get_barycentric_transforms(mx.array[mx.double_t, ndim=2] points,
     These are stacked into the `Tinvs` returned.
 
     """
-    cdef mx.array[mx.double_t, ndim=2] T
-    cdef mx.array[mx.double_t, ndim=3] Tinvs
+    cdef object T
+    cdef object Tinvs
     cdef int isimplex
     cdef int i, j
     cdef CBLAS_INT n, nrhs, lda, ldb
@@ -1156,45 +1164,44 @@ def _get_barycentric_transforms(mx.array[mx.double_t, ndim=2] points,
     # of the digits be significant, to be safe
     rcond_limit = 1000*eps
 
-    with nogil:
-        for isimplex in range(nsimplex):
-            for i in range(ndim):
-                Tinvs[isimplex,ndim,i] = points[simplices[isimplex,ndim],i]
+    for isimplex in range(nsimplex):
+        for i in range(ndim):
+            Tinvs[isimplex,ndim,i] = points[simplices[isimplex,ndim],i]
+            for j in range(ndim):
+                T[i,j] = (points[simplices[isimplex,j],i]
+                          - Tinvs[isimplex,ndim,i])
+            Tinvs[isimplex,i,i] = 1
+
+        # compute 1-norm for estimating condition number
+        anorm = _matrix_norm1(ndim, <double*>mx.PyArray_DATA(T))
+
+        # LU decomposition
+        n = ndim
+        nrhs = ndim
+        lda = ndim
+        ldb = ndim
+        dgetrf(&n, &n, <double*>mx.PyArray_DATA(T), &lda, ipiv, &info)
+
+        # Check condition number
+        if info == 0:
+            dgecon("1", &n, <double*>mx.PyArray_DATA(T), &lda, &anorm, &rcond,
+                   work, iwork, &info)
+
+            if rcond < rcond_limit:
+                # The transform seems singular
+                info = 1
+
+        # Compute transform
+        if info == 0:
+            dgetrs("N", &n, &nrhs, <double*>mx.PyArray_DATA(T), &lda, ipiv,
+                      (<double*>mx.PyArray_DATA(Tinvs)) + ndim*(ndim+1)*isimplex,
+                      &ldb, &info)
+
+        # Deal with degenerate simplices
+        if info != 0:
+            for i in range(ndim+1):
                 for j in range(ndim):
-                    T[i,j] = (points[simplices[isimplex,j],i]
-                              - Tinvs[isimplex,ndim,i])
-                Tinvs[isimplex,i,i] = 1
-
-            # compute 1-norm for estimating condition number
-            anorm = _matrix_norm1(ndim, <double*>T.data)
-
-            # LU decomposition
-            n = ndim
-            nrhs = ndim
-            lda = ndim
-            ldb = ndim
-            dgetrf(&n, &n, <double*>T.data, &lda, ipiv, &info)
-
-            # Check condition number
-            if info == 0:
-                dgecon("1", &n, <double*>T.data, &lda, &anorm, &rcond,
-                       work, iwork, &info)
-
-                if rcond < rcond_limit:
-                    # The transform seems singular
-                    info = 1
-
-            # Compute transform
-            if info == 0:
-                dgetrs("N", &n, &nrhs, <double*>T.data, &lda, ipiv,
-                          (<double*>Tinvs.data) + ndim*(ndim+1)*isimplex,
-                          &ldb, &info)
-
-            # Deal with degenerate simplices
-            if info != 0:
-                for i in range(ndim+1):
-                    for j in range(ndim):
-                        Tinvs[isimplex,i,j] = NAN
+                    Tinvs[isimplex,i,j] = NAN
 
     return Tinvs
 
@@ -1948,8 +1955,8 @@ class Delaunay(_QhullUser):
         :type: *array of int, shape (npoints,)*
         """
         cdef int isimplex, k, ivertex, nsimplex, ndim
-        cdef mx.array[mx.npy_int, ndim=2] simplices
-        cdef mx.array[mx.npy_int, ndim=1] arr
+        cdef object simplices
+        cdef object arr
 
         if self._vertex_to_simplex is None:
             self._vertex_to_simplex = mx.empty((self.npoints,), dtype=mx.intc)
@@ -1965,12 +1972,11 @@ class Delaunay(_QhullUser):
             nsimplex = self.nsimplex
             ndim = self.ndim
 
-            with nogil:
-                for isimplex in range(nsimplex):
-                    for k in range(ndim+1):
-                        ivertex = simplices[isimplex, k]
-                        if arr[ivertex] == -1:
-                            arr[ivertex] = isimplex
+            for isimplex in range(nsimplex):
+                for k in range(ndim+1):
+                    ivertex = simplices[isimplex, k]
+                    if arr[ivertex] == -1:
+                        arr[ivertex] = isimplex
 
         return self._vertex_to_simplex
 
@@ -1987,7 +1993,7 @@ class Delaunay(_QhullUser):
         """
         cdef int i, j, k
         cdef int nsimplex, npoints, ndim
-        cdef mx.array[mx.npy_int, ndim=2] simplices
+        cdef object simplices
         cdef setlist.setlist_t sets
 
         if self._vertex_neighbor_vertices is None:
@@ -1999,14 +2005,12 @@ class Delaunay(_QhullUser):
             setlist.init(&sets, npoints, ndim+1)
 
             try:
-                with nogil:
-                    for i in range(nsimplex):
-                        for j in range(ndim+1):
-                            for k in range(ndim+1):
-                                if simplices[i,j] != simplices[i,k]:
-                                    if setlist.add(&sets, simplices[i,j], simplices[i,k]):
-                                        with gil:
-                                            raise MemoryError
+                for i in range(nsimplex):
+                    for j in range(ndim+1):
+                        for k in range(ndim+1):
+                            if simplices[i,j] != simplices[i,k]:
+                                if setlist.add(&sets, simplices[i,j], simplices[i,k]):
+                                    raise MemoryError
 
                 self._vertex_neighbor_vertices = setlist.tocsr(&sets)
             finally:
@@ -2035,9 +2039,9 @@ class Delaunay(_QhullUser):
         """
         cdef int isimplex, k, j, ndim, nsimplex, m, msize
         cdef object out
-        cdef mx.array[mx.npy_int, ndim=2] arr
-        cdef mx.array[mx.npy_int, ndim=2] neighbors
-        cdef mx.array[mx.npy_int, ndim=2] simplices
+        cdef object arr
+        cdef object neighbors
+        cdef object simplices
 
         neighbors = self.neighbors
         simplices = self.simplices
@@ -2109,8 +2113,8 @@ class Delaunay(_QhullUser):
         cdef double eps, eps_broad
         cdef int start
         cdef int k
-        cdef mx.array[mx.double_t, ndim=2] x
-        cdef mx.array[mx.npy_int, ndim=1] out_
+        cdef object x
+        cdef object out_
 
         xi = mx.asanyarray(xi)
 
@@ -2135,20 +2139,18 @@ class Delaunay(_QhullUser):
         _get_delaunay_info(&info, self, 1, 0, 0)
 
         if bruteforce:
-            with nogil:
-                for k in range(x_shape[0]):
-                    isimplex = _find_simplex_bruteforce(
-                        &info, c,
-                        <double*>x.data + info.ndim*k,
-                        eps, eps_broad)
-                    out_[k] = isimplex
+            for k in range(x_shape[0]):
+                isimplex = _find_simplex_bruteforce(
+                    &info, c,
+                    <double*>mx.PyArray_DATA(x) + info.ndim*k,
+                    eps, eps_broad)
+                out_[k] = isimplex
         else:
-            with nogil:
-                for k in range(x_shape[0]):
-                    isimplex = _find_simplex(&info, c,
-                                             <double*>x.data + info.ndim*k,
-                                             &start, eps, eps_broad)
-                    out_[k] = isimplex
+            for k in range(x_shape[0]):
+                isimplex = _find_simplex(&info, c,
+                                         <double*>mx.PyArray_DATA(x) + info.ndim*k,
+                                         &start, eps, eps_broad)
+                out_[k] = isimplex
 
         return out.reshape(xi_shape[:-1])
 
@@ -2160,8 +2162,8 @@ class Delaunay(_QhullUser):
         Compute hyperplane distances to the point `xi` from all simplices.
 
         """
-        cdef mx.array[mx.double_t, ndim=2] x
-        cdef mx.array[mx.double_t, ndim=2] out_
+        cdef object x
+        cdef object out_
         cdef DelaunayInfo_t info
         cdef double z[NPY_MAXDIMS+1]
         cdef int i, j
@@ -2180,11 +2182,10 @@ class Delaunay(_QhullUser):
         out = mx.zeros((x.shape[0], info.nsimplex), dtype=mx.double)
         out_ = out
 
-        with nogil:
-            for i in range(x_shape[0]):
-                for j in range(info.nsimplex):
-                    _lift_point(&info, (<double*>x.data) + info.ndim*i, z)
-                    out_[i,j] = _distplane(&info, j, z)
+        for i in range(x_shape[0]):
+            for j in range(info.nsimplex):
+                _lift_point(&info, <double*>mx.PyArray_DATA(x) + info.ndim*i, z)
+                out_[i,j] = _distplane(&info, j, z)
 
         return out.reshape(xi_shape[:-1] + (self.nsimplex,))
 
@@ -2275,44 +2276,44 @@ cdef int _get_delaunay_info(DelaunayInfo_t *info,
                             int compute_transform,
                             int compute_vertex_to_simplex,
                             int compute_vertex_neighbor_vertices) except -1:
-    cdef mx.array[mx.double_t, ndim=3] transform
-    cdef mx.array[mx.npy_int, ndim=1] vertex_to_simplex
-    cdef mx.array[mx.npy_int, ndim=1] vn_indices, vn_indptr
-    cdef mx.array[mx.double_t, ndim=2] points = obj.points
-    cdef mx.array[mx.npy_int, ndim=2] simplices = obj.simplices
-    cdef mx.array[mx.npy_int, ndim=2] neighbors = obj.neighbors
-    cdef mx.array[mx.double_t, ndim=2] equations = obj.equations
-    cdef mx.array[mx.double_t, ndim=1] min_bound = obj.min_bound
-    cdef mx.array[mx.double_t, ndim=1] max_bound = obj.max_bound
+    cdef object transform
+    cdef object vertex_to_simplex
+    cdef object vn_indices, vn_indptr
+    cdef object points = obj.points
+    cdef object simplices = obj.simplices
+    cdef object neighbors = obj.neighbors
+    cdef object equations = obj.equations
+    cdef object min_bound = obj.min_bound
+    cdef object max_bound = obj.max_bound
 
     info.ndim = points.shape[1]
     info.npoints = points.shape[0]
     info.nsimplex = simplices.shape[0]
-    info.points = <double*>points.data
-    info.simplices = <int*>simplices.data
-    info.neighbors = <int*>neighbors.data
-    info.equations = <double*>equations.data
+    info.points = <double*>mx.PyArray_DATA(points)
+    info.simplices = <int*>mx.PyArray_DATA(simplices)
+    info.neighbors = <int*>mx.PyArray_DATA(neighbors)
+    info.equations = <double*>mx.PyArray_DATA(equations)
     info.paraboloid_scale = obj.paraboloid_scale
     info.paraboloid_shift = obj.paraboloid_shift
     if compute_transform:
         transform = obj.transform
-        info.transform = <double*>transform.data
+        info.transform = <double*>mx.PyArray_DATA(transform)
     else:
         info.transform = NULL
     if compute_vertex_to_simplex:
         vertex_to_simplex = obj.vertex_to_simplex
-        info.vertex_to_simplex = <int*>vertex_to_simplex.data
+        info.vertex_to_simplex = <int*>mx.PyArray_DATA(vertex_to_simplex)
     else:
         info.vertex_to_simplex = NULL
     if compute_vertex_neighbor_vertices:
         vn_indptr, vn_indices = obj.vertex_neighbor_vertices
-        info.vertex_neighbors_indices = <int*>vn_indices.data
-        info.vertex_neighbors_indptr = <int*>vn_indptr.data
+        info.vertex_neighbors_indices = <int*>mx.PyArray_DATA(vn_indices)
+        info.vertex_neighbors_indptr = <int*>mx.PyArray_DATA(vn_indptr)
     else:
         info.vertex_neighbors_indices = NULL
         info.vertex_neighbors_indptr = NULL
-    info.min_bound = <double*>min_bound.data
-    info.max_bound = <double*>max_bound.data
+    info.min_bound = <double*>mx.PyArray_DATA(min_bound)
+    info.max_bound = <double*>mx.PyArray_DATA(max_bound)
 
     return 0
 

@@ -11,8 +11,6 @@ try:
 except ImportError:
     from time import clock as timer
 
-mx.import_array()
-
 __all__ = ['LU', 'BGLU']
 
 @cython.boundscheck(False)
@@ -184,9 +182,9 @@ cdef class LU:
     Represents PLU factorization of a basis matrix with naive rank-one updates
     """
 
-    cdef public mx.array A
-    cdef public mx.array b
-    cdef public mx.array B
+    cdef public object A
+    cdef public object b
+    cdef public object B
     cdef public int m
     cdef public int n
 
@@ -220,10 +218,10 @@ cdef class BGLU(LU):
     """
 
     cdef public tuple plu
-    cdef public mx.array L
-    cdef public mx.array U
-    cdef public mx.array pi
-    cdef public mx.array pit
+    cdef public object L
+    cdef public object U
+    cdef public object pi
+    cdef public object pit
     cdef public list ops_list
     cdef public double bglu_time
     cdef public int solves

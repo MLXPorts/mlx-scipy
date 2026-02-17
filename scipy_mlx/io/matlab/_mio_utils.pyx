@@ -3,26 +3,23 @@
 '''
 
 import mlx.core as mx
-# MLX port: removed NumPy Cython dependency
-
-cmx.import_array()
 
 
-cpdef object squeeze_element(cmx.array arr):
+cpdef object squeeze_element(object arr):
     ''' Return squeezed element
 
     The returned object may not be an array - for example if we do
     ``arr.item`` to return a ``mat_struct`` object from a struct array '''
     if not arr.size:
         return mx.array([], dtype=arr.dtype)
-    cdef cmx.array arr2 = mx.squeeze(arr)
+    arr2 = mx.squeeze(arr)
     # We want to squeeze 0d arrays, unless they are record arrays
     if arr2.ndim == 0 and arr2.dtype.kind != 'V':
         return arr2[()]
     return arr2
 
 
-cpdef cmx.array chars_to_strings(in_arr):
+cpdef object chars_to_strings(in_arr):
     ''' Convert final axis of char array to strings
 
     Parameters
@@ -36,10 +33,9 @@ cpdef cmx.array chars_to_strings(in_arr):
        dtype of 'UN' where N is the length of the last dimension of
        ``arr``
     '''
-    cdef cmx.array arr = in_arr
+    arr = in_arr
     cdef int ndim = arr.ndim
-    cdef cmx.npy_intp *dims = arr.shape
-    cdef cmx.npy_intp last_dim = dims[ndim-1]
+    cdef int last_dim = arr.shape[ndim - 1]
     cdef object new_dt_str, out_shape
     if last_dim == 0: # deal with empty array case
         # Started with U1 - which is OK for us

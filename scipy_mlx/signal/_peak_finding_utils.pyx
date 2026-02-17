@@ -11,8 +11,6 @@ import mlx.core as mx
 cimport mlx.core as mx
 from libc.math cimport ceil
 
-mx.import_array()
-
 __all__ = ['_local_maxima_1d', '_select_by_peak_distance', '_peak_prominences',
            '_peak_widths']
 

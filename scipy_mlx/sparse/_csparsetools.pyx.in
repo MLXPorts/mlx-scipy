@@ -64,7 +64,24 @@ cimport cython
 # MLX port: removed NumPy Cython dependency
 import mlx.core as mx
 
+from numpy cimport int8_t, int16_t, int32_t, int64_t
+from numpy cimport uint8_t, uint16_t, uint32_t, uint64_t
+from numpy cimport float32_t, float64_t
+cimport numpy as cmx
+ctypedef cmx.intp_t cmx_intp
+ctypedef cmx.int32_t cmx_int32
+ctypedef cmx.int64_t cmx_int64
+ctypedef cmx.int8_t cmx_int8
+ctypedef cmx.uint8_t cmx_uint8
+ctypedef cmx.int16_t cmx_int16
+ctypedef cmx.uint16_t cmx_uint16
+ctypedef cmx.uint32_t cmx_uint32
+ctypedef cmx.uint64_t cmx_uint64
+ctypedef cmx.float32_t cmx_float32
+ctypedef cmx.float64_t cmx_float64
+ctypedef bint cmx_bool
 
+ 
 cmx.import_array()
 
 
@@ -161,14 +178,14 @@ cpdef int lil_insert(cmx_intp M, cmx_intp N, object[:] rows,
             data[pos] = x
 
 def lil_get_lengths(object[:] input,
-                    cmx.array output):
+                    cmx.ndarray output):
     return _LIL_GET_LENGTHS_DISPATCH[output.dtype](input, output)
 
 {{for NAME, T in get_dispatch(IDX_TYPES)}}
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _lil_get_lengths_{{NAME}}(object[:] input,
-                    cmx.array[{{T}}] output):
+                    cmx.ndarray[{{T}}] output):
     for i in range(len(input)):
         output[i] = len(input[i])
 
@@ -185,13 +202,13 @@ ctypedef fused obj_fused:
     double
 
 def lil_flatten_to_array(const obj_fused[:] input,
-                         cmx.array output):
+                         cmx.ndarray output):
     return _LIL_FLATTEN_TO_ARRAY_DISPATCH[output.dtype](input, output)
 
 {{for NAME, T in get_dispatch(VALUE_TYPES)}}
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def _lil_flatten_to_array_{{NAME}}(object[:] input not None, cmx.array[{{T}}] output not None):
+def _lil_flatten_to_array_{{NAME}}(object[:] input not None, cmx.ndarray[{{T}}] output not None):
     cdef list row
     cdef size_t pos = 0
     for i in range(len(input)):
@@ -209,8 +226,8 @@ def lil_fancy_get(cmx_intp M, cmx_intp N,
                   object[:] datas,
                   object[:] new_rows,
                   object[:] new_datas,
-                  cmx.array i_idx,
-                  cmx.array j_idx):
+                  cmx.ndarray i_idx,
+                  cmx.ndarray j_idx):
     """
     Get multiple items at given indices in LIL matrix and store to
     another LIL.
@@ -269,9 +286,9 @@ def _lil_fancy_get_{{NAME}}(cmx_intp M, cmx_intp N,
 def lil_fancy_set(cmx_intp M, cmx_intp N,
                   object[:] rows,
                   object[:] data,
-                  cmx.array i_idx,
-                  cmx.array j_idx,
-                  cmx.array values):
+                  cmx.ndarray i_idx,
+                  cmx.ndarray j_idx,
+                  cmx.ndarray values):
     """
     Set multiple items to a LIL matrix.
 

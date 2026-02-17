@@ -24,10 +24,6 @@ ctypedef fused vq_type:
     float32_t
     float64_t
 
-# Initialize the NumPy C API
-mx.import_array()
-
-
 cdef inline vq_type vec_sqr(int n, vq_type *p) noexcept:
     cdef vq_type result = 0.0
     cdef int i
@@ -87,17 +83,18 @@ cdef int _vq(vq_type *obs, vq_type *code_book,
     cdef vq_type *p_obs
     cdef vq_type *p_codes
     cdef vq_type dist_sqr
-    cdef mx.array[vq_type, ndim=1] obs_sqr, codes_sqr
-    cdef mx.array[vq_type, ndim=2] M
+    cdef vq_type[:] obs_sqr
+    cdef vq_type[:] codes_sqr
+    cdef vq_type[:, :] M
 
     if vq_type is float32_t:
-        obs_sqr = mx.array(nobs, mx.float32)
-        codes_sqr = mx.array(ncodes, mx.float32)
-        M = mx.array((nobs, ncodes), mx.float32)
+        obs_sqr = mx.zeros((nobs,), dtype=mx.float32)
+        codes_sqr = mx.zeros((ncodes,), dtype=mx.float32)
+        M = mx.zeros((nobs, ncodes), dtype=mx.float32)
     else:
-        obs_sqr = mx.array(nobs, mx.float64)
-        codes_sqr = mx.array(ncodes, mx.float64)
-        M = mx.array((nobs, ncodes), mx.float64)
+        obs_sqr = mx.zeros((nobs,), dtype=mx.float64)
+        codes_sqr = mx.zeros((ncodes,), dtype=mx.float64)
+        M = mx.zeros((nobs, ncodes), dtype=mx.float64)
 
     p_obs = obs
     for i in range(nobs):
@@ -113,7 +110,7 @@ cdef int _vq(vq_type *obs, vq_type *code_book,
 
     # M[i][j] is the inner product of the i-th obs and j-th code
     # M = obs * codes.T
-    cal_M(nobs, ncodes, nfeat, obs, code_book, <vq_type *>M.data)
+    cal_M(nobs, ncodes, nfeat, obs, code_book, <vq_type *>(&M[0, 0]))
 
     for i in range(nobs):
         for j in range(ncodes):
@@ -174,7 +171,7 @@ cdef void _vq_small_nf(vq_type *obs, vq_type *code_book,
         obs_offset += nfeat
 
 
-def vq(mx.array obs, mx.array codes):
+def vq(object obs, object codes):
     """
     Vector quantization array wrapper. Only support float32 and float64.
 
@@ -192,7 +189,19 @@ def vq(mx.array obs, mx.array codes):
     arrays are supported.
     """
     cdef int nobs, ncodes, nfeat
-    cdef mx.array outcodes, outdists
+    cdef object outcodes
+    cdef object outdists
+    cdef float32_t[:] obs_arr1_f
+    cdef float32_t[:, :] obs_arr2_f
+    cdef float32_t[:] codes_arr1_f
+    cdef float32_t[:, :] codes_arr2_f
+    cdef float32_t[:] outdists_arr_f
+    cdef float64_t[:] obs_arr1_d
+    cdef float64_t[:, :] obs_arr2_d
+    cdef float64_t[:] codes_arr1_d
+    cdef float64_t[:, :] codes_arr2_d
+    cdef float64_t[:] outdists_arr_d
+    cdef int32_t[:] outcodes_arr
 
     # Ensure the arrays are contiguous
     obs = mx.ascontiguousarray(obs)
@@ -225,22 +234,51 @@ def vq(mx.array obs, mx.array codes):
     outdists = mx.empty((nobs,), dtype=obs.dtype)
     outcodes = mx.empty((nobs,), dtype=mx.int32)
     outdists.fill(mx.inf)
+    outcodes_arr = outcodes
+    if obs.ndim == 1:
+        if obs.dtype.type is mx.float32:
+            obs_arr1_f = obs
+            codes_arr1_f = codes
+            outdists_arr_f = outdists
+        else:
+            obs_arr1_d = obs
+            codes_arr1_d = codes
+            outdists_arr_d = outdists
+    else:
+        if obs.dtype.type is mx.float32:
+            obs_arr2_f = obs
+            codes_arr2_f = codes
+            outdists_arr_f = outdists
+        else:
+            obs_arr2_d = obs
+            codes_arr2_d = codes
+            outdists_arr_d = outdists
 
     if obs.dtype.type is mx.float32:
-        _vq(<float32_t *>obs.data, <float32_t *>codes.data,
-            ncodes, nfeat, nobs, <int32_t *>outcodes.data,
-            <float32_t *>outdists.data)
+        if obs.ndim == 1:
+            _vq(<float32_t *>(&obs_arr1_f[0]), <float32_t *>(&codes_arr1_f[0]),
+                ncodes, nfeat, nobs, <int32_t *>(&outcodes_arr[0]),
+                <float32_t *>(&outdists_arr_f[0]))
+        else:
+            _vq(<float32_t *>(&obs_arr2_f[0, 0]), <float32_t *>(&codes_arr2_f[0, 0]),
+                ncodes, nfeat, nobs, <int32_t *>(&outcodes_arr[0]),
+                <float32_t *>(&outdists_arr_f[0]))
     elif obs.dtype.type is mx.float64:
-        _vq(<float64_t *>obs.data, <float64_t *>codes.data,
-            ncodes, nfeat, nobs, <int32_t *>outcodes.data,
-            <float64_t *>outdists.data)
+        if obs.ndim == 1:
+            _vq(<float64_t *>(&obs_arr1_d[0]), <float64_t *>(&codes_arr1_d[0]),
+                ncodes, nfeat, nobs, <int32_t *>(&outcodes_arr[0]),
+                <float64_t *>(&outdists_arr_d[0]))
+        else:
+            _vq(<float64_t *>(&obs_arr2_d[0, 0]), <float64_t *>(&codes_arr2_d[0, 0]),
+                ncodes, nfeat, nobs, <int32_t *>(&outcodes_arr[0]),
+                <float64_t *>(&outdists_arr_d[0]))
 
     return outcodes, outdists
 
 
 @cython.cdivision(True)
-cdef mx.array _update_cluster_means(vq_type *obs, int32_t *labels,
-                                      vq_type *cb, int nobs, int nc, int nfeat):
+cdef object _update_cluster_means_float32(float32_t *obs, int32_t *labels,
+                                         float32_t *cb, int nobs, int nc, int nfeat):
     """
     The underlying function (template) of _vq.update_cluster_means.
 
@@ -265,9 +303,9 @@ cdef mx.array _update_cluster_means(vq_type *obs, int32_t *labels,
         A boolean array indicating which clusters have members.
     """
     cdef mx.npy_intp i, j, cluster_size, label
-    cdef vq_type *obs_p
-    cdef vq_type *cb_p
-    cdef mx.array[int, ndim=1] obs_count
+    cdef float32_t *obs_p
+    cdef float32_t *cb_p
+    cdef object obs_count
 
     # Calculate the sums the numbers of obs in each cluster
     obs_count = mx.zeros(nc, mx.intc)
@@ -298,7 +336,66 @@ cdef mx.array _update_cluster_means(vq_type *obs, int32_t *labels,
     return obs_count > 0
 
 
-def update_cluster_means(mx.array obs, mx.array labels, int nc):
+cdef object _update_cluster_means_float64(float64_t *obs, int32_t *labels,
+                                         float64_t *cb, int nobs, int nc, int nfeat):
+    """
+    The underlying function (template) of _vq.update_cluster_means.
+
+    Parameters
+    ----------
+    obs : float64_t*
+        The pointer to the observation matrix.
+    labels : int32_t*
+        The pointer to the array of the labels (codes) of the observations.
+    cb : float64_t*
+        The pointer to the new code book matrix.
+    nobs : int
+        The number of observations.
+    nc : int
+        The number of centroids (codes).
+    nfeat : int
+        The number of features of each observation.
+
+    Returns
+    -------
+    has_members : array
+        A boolean array indicating which clusters have members.
+    """
+    cdef mx.npy_intp i, j, cluster_size, label
+    cdef float64_t *obs_p
+    cdef float64_t *cb_p
+    cdef object obs_count
+
+    # Calculate the sums the numbers of obs in each cluster
+    obs_count = mx.zeros(nc, mx.intc)
+    obs_p = obs
+    for i in range(nobs):
+        label = labels[i]
+        cb_p = cb + nfeat * label
+
+        for j in range(nfeat):
+            cb_p[j] += obs_p[j]
+
+        # Count the obs in each cluster
+        obs_count[label] += 1
+        obs_p += nfeat
+
+    cb_p = cb
+    for i in range(nc):
+        cluster_size = obs_count[i]
+
+        if cluster_size > 0:
+            # Calculate the centroid of each cluster
+            for j in range(nfeat):
+                cb_p[j] /= cluster_size
+
+        cb_p += nfeat
+
+    # Return a boolean array indicating which clusters have members
+    return obs_count > 0
+
+
+def update_cluster_means(object obs, object labels, int nc):
     """
     The update-step of K-means. Calculate the mean of observations in each
     cluster.
@@ -326,8 +423,18 @@ def update_cluster_means(mx.array obs, mx.array labels, int nc):
     in `has_members` will be `False`. The upper level function should decide
     how to deal with them.
     """
-    cdef mx.array has_members, cb
+    cdef object has_members
+    cdef object cb
     cdef int nfeat
+    cdef float32_t[:] obs_arr1_f
+    cdef float32_t[:, :] obs_arr2_f
+    cdef float64_t[:] obs_arr1_d
+    cdef float64_t[:, :] obs_arr2_d
+    cdef int32_t[:] labels_arr2
+    cdef float32_t[:] cb_arr_f
+    cdef float32_t[:, :] cb_arr2_f
+    cdef float64_t[:] cb_arr_d
+    cdef float64_t[:, :] cb_arr2_d
 
     # Ensure the arrays are contiguous
     obs = mx.ascontiguousarray(obs)
@@ -349,15 +456,43 @@ def update_cluster_means(mx.array obs, mx.array labels, int nc):
     else:
         raise ValueError('ndim different than 1 or 2 are not supported')
 
+    labels_arr2 = labels
     if obs.dtype.type is mx.float32:
-        has_members = _update_cluster_means(<float32_t *>obs.data,
-                                            <int32_t *>labels.data,
-                                            <float32_t *>cb.data,
-                                            obs.shape[0], nc, nfeat)
+        if obs.ndim == 1:
+            obs_arr1_f = obs
+            cb_arr_f = cb
+        else:
+            obs_arr2_f = obs
+            cb_arr2_f = cb
+    else:
+        if obs.ndim == 1:
+            obs_arr1_d = obs
+            cb_arr_d = cb
+        else:
+            obs_arr2_d = obs
+            cb_arr2_d = cb
+
+    if obs.dtype.type is mx.float32:
+        if obs.ndim == 1:
+            has_members = _update_cluster_means_float32(<float32_t *>(&obs_arr1_f[0]),
+                                                       <int32_t *>(&labels_arr2[0]),
+                                                       <float32_t *>(&cb_arr_f[0]),
+                                                       obs.shape[0], nc, nfeat)
+        else:
+            has_members = _update_cluster_means_float32(<float32_t *>(&obs_arr2_f[0, 0]),
+                                                       <int32_t *>(&labels_arr2[0]),
+                                                       <float32_t *>(&cb_arr2_f[0, 0]),
+                                                       obs.shape[0], nc, nfeat)
     elif obs.dtype.type is mx.float64:
-        has_members = _update_cluster_means(<float64_t *>obs.data,
-                                            <int32_t *>labels.data,
-                                            <float64_t *>cb.data,
-                                            obs.shape[0], nc, nfeat)
+        if obs.ndim == 1:
+            has_members = _update_cluster_means_float64(<float64_t *>(&obs_arr1_d[0]),
+                                                       <int32_t *>(&labels_arr2[0]),
+                                                       <float64_t *>(&cb_arr_d[0]),
+                                                       obs.shape[0], nc, nfeat)
+        else:
+            has_members = _update_cluster_means_float64(<float64_t *>(&obs_arr2_d[0, 0]),
+                                                       <int32_t *>(&labels_arr2[0]),
+                                                       <float64_t *>(&cb_arr2_d[0, 0]),
+                                                       obs.shape[0], nc, nfeat)
 
     return cb, has_members

@@ -21,15 +21,13 @@ It helps ensure that Ember ML code remains pure, efficient, and maintainable.
 # Set this to False to force EmberLint to always check all issues
 ALLOW_SINGLE_ISSUE_LINTING = False
 
+import ast
+import argparse
 import os
 import re
-import ast
 import sys
-import argparse
-import importlib
-import subprocess
-from typing import List, Dict, Tuple, Set, Optional, Any, Union
 from pathlib import Path
+from typing import List, Dict, Tuple, Set, Optional, Any, Union
 
 # Try to import optional dependencies
 try:
@@ -47,14 +45,114 @@ except ImportError:
 # We no longer need to import analyze_backend_operations
 # since we've implemented the functionality directly in this file
 
+SKIP_DIRS = {
+    ".git",
+    ".github",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".venv",
+    ".eggs",
+    "__pycache__",
+    "build",
+    "dist",
+    "tmp",
+    "subprojects",
+    "_build",
+    "_mlx-build",
+    ".mesonpy",
+}
+
+SOURCE_EXTENSIONS = {
+    ".py",
+    ".pyx",
+    ".pxd",
+    ".pxi",
+    ".cpp",
+    ".cc",
+    ".c",
+    ".h",
+    ".hpp",
+}
+
+PYTHON_EXTENSIONS = {".py"}
+CYTHON_EXTENSIONS = {".pyx", ".pxd", ".pxi"}
+CPP_EXTENSIONS = {".cpp", ".cc", ".c", ".h", ".hpp"}
+
+RE_IMPORT_NUMPY = re.compile(r"^\s*(?:import|from)\s+numpy\b[^\n]*$", re.MULTILINE)
+RE_MLX_AS_NP = re.compile(r"^\s*(?:from\s+mlx(?:\.core)?\s+import|cimport\s+mlx(?:\.core)?|import\s+mlx(?:\.core)?)(?:[^\n]*\s+as|\s+as)\s+np\b", re.MULTILINE)
+RE_MLX_AS_NP_CYTHON = re.compile(r"^\s*cimport\s+mlx(?:\.core)?\s+as\s+np\b", re.MULTILINE)
+RE_NUMPY_CIMPORT = re.compile(r"^\s*(?:from|cimport)\s+numpy\s+(?:cimport|import|)?[^\n]*$", re.MULTILINE)
+RE_NUMPY_HEADERS = re.compile(r"^\s*#\s*include\s*[<\"]numpy/", re.MULTILINE)
+RE_NUMPY_TYPE_USAGE = re.compile(r"\bnpy_[A-Za-z_]+\b")
+RE_MLX_CORE_PXD_ALIAS = re.compile(r"^\s*from\s+mlx\.core\s+cimport[^\n]*$", re.MULTILINE)
+RE_MLX_CAPI = re.compile(r"\bfrom\s+mlx\.core\s+cimport")
+RE_ARRAY_API_CALL = re.compile(r"\bnp\.\w+\b")
+
+
+def read_file_content(file_path: str) -> str:
+    """Read file contents with a single shared path helper."""
+    return Path(file_path).read_text(encoding="utf-8")
+
+
+def find_files(directory: str, extensions: Set[str]) -> list[str]:
+    """Find files with requested extensions, skipping non-code and vendored build trees."""
+    files = []
+    for root, dirs, filenames in os.walk(directory):
+        dirs[:] = [d for d in dirs if d not in SKIP_DIRS and not d.startswith(".")]
+        for filename in filenames:
+            _, ext = os.path.splitext(filename)
+            if ext in extensions:
+                files.append(os.path.join(root, filename))
+    return files
+
+
+def scan_source_patterns(file_path: str, content: str) -> list[str]:
+    """Return backend migration-oriented findings for a source file."""
+    issues = []
+    ext = Path(file_path).suffix
+    normalized_ext = ext.lower()
+
+    has_mlx_alias_np = bool(RE_MLX_AS_NP.search(content)) or bool(RE_MLX_AS_NP_CYTHON.search(content))
+    if has_mlx_alias_np:
+        issues.append("mlx_alias_np")
+
+    if normalized_ext in PYTHON_EXTENSIONS:
+        if RE_IMPORT_NUMPY.search(content):
+            issues.append("numpy_import")
+        if RE_ARRAY_API_CALL.search(content):
+            issues.append("np_symbol_usage")
+
+    if normalized_ext in CYTHON_EXTENSIONS:
+        if RE_NUMPY_CIMPORT.search(content):
+            issues.append("numpy_cimport")
+        if RE_NUMPY_HEADERS.search(content):
+            issues.append("numpy_headers")
+        if RE_NUMPY_TYPE_USAGE.search(content):
+            issues.append("numpy_c_types")
+        if RE_MLX_CORE_PXD_ALIAS.search(content):
+            issues.append("mlx_core_pxd_alias")
+
+    if normalized_ext in CPP_EXTENSIONS:
+        if "mlx" in content and ("mlx/" in content or "MLX" in content):
+            issues.append("mlx_cpp_api_present")
+        if "numpy" in content and "PyArray" in content:
+            issues.append("numpy_pyarray_c_api")
+
+    # De-duplicate while keeping deterministic order.
+    return list(dict.fromkeys(issues))
+
+
+def summarize_scan_results(scan_results: list[tuple[str, list[str]]]) -> dict[str, int]:
+    """Summarize issue counters for reporting."""
+    summary: dict[str, int] = {}
+    for _, issues in scan_results:
+        for issue in issues:
+            summary[issue] = summary.get(issue, 0) + 1
+    return summary
+
 def find_python_files(directory: str) -> List[str]:
     """Find all Python files in the given directory and its subdirectories."""
-    python_files = []
-    for root, _, files in os.walk(directory):
-        for file in files:
-            if file.endswith('.py'):
-                python_files.append(os.path.join(root, file))
-    return python_files
+    return find_files(directory, PYTHON_EXTENSIONS)
 
 def check_syntax(file_path: str) -> Tuple[bool, List[str]]:
     """Check if the file has syntax errors."""
@@ -694,13 +792,125 @@ def check_frontend_backend_violation(file_path: str) -> Tuple[bool, List[Dict]]:
     
     return False, []
 
+
+def analyze_source_file(file_path: str, scan_only: bool = False) -> Dict:
+    """Analyze supported source files and include migration-pattern findings."""
+    _, ext = os.path.splitext(file_path)
+    if ext not in PYTHON_EXTENSIONS:
+        content = read_file_content(file_path)
+        findings = scan_source_patterns(file_path, content)
+        has_numpy = any(
+            item in findings
+            for item in {"numpy_import", "numpy_cimport", "numpy_headers", "numpy_c_types", "numpy_pyarray_c_api"}
+        )
+        return {
+            "file": file_path,
+            "syntax_valid": True,
+            "syntax_errors": [],
+            "compilation_valid": True,
+            "compilation_errors": [],
+            "imports_valid": True,
+            "import_errors": [],
+            "style_valid": True,
+            "style_errors": [],
+            "types_valid": True,
+            "type_errors": [],
+            "has_numpy": has_numpy,
+            "imports": [],
+            "usages": [],
+            "precision_casts": [],
+            "tensor_conversions": [],
+            "python_operators": [],
+            "unused_imports": [],
+            "backend_consistent": True,
+            "inconsistent_operations": [],
+            "has_backend_specific": False,
+            "backend_imports": [],
+            "backend_usage": [],
+            "frontend_backend_violation": False,
+            "violations": [],
+            "scan_findings": findings,
+        }
+    content = read_file_content(file_path)
+    findings = scan_source_patterns(file_path, content)
+    if scan_only:
+        has_numpy = any(
+            item in findings
+            for item in {"numpy_import", "np_symbol_usage", "numpy_cimport", "numpy_headers", "numpy_c_types", "numpy_pyarray_c_api"}
+        )
+        return {
+            "file": file_path,
+            "syntax_valid": True,
+            "syntax_errors": [],
+            "compilation_valid": True,
+            "compilation_errors": [],
+            "imports_valid": True,
+            "import_errors": [],
+            "style_valid": True,
+            "style_errors": [],
+            "types_valid": True,
+            "type_errors": [],
+            "has_numpy": has_numpy,
+            "imports": [],
+            "usages": [],
+            "precision_casts": [],
+            "tensor_conversions": [],
+            "python_operators": [],
+            "unused_imports": [],
+            "backend_consistent": True,
+            "inconsistent_operations": [],
+            "has_backend_specific": False,
+            "backend_imports": [],
+            "backend_usage": [],
+            "frontend_backend_violation": False,
+            "violations": [],
+            "scan_findings": findings,
+        }
+    return analyze_file(file_path)
+
 def analyze_file(file_path: str) -> Dict:
     """Analyze a file for various issues."""
+    try:
+        content = read_file_content(file_path)
+    except (OSError, UnicodeDecodeError):
+        return {
+            "file": file_path,
+            "syntax_valid": False,
+            "syntax_errors": ["Unable to read file"],
+            "compilation_valid": False,
+            "compilation_errors": ["Unable to read file"],
+            "imports_valid": False,
+            "import_errors": ["Unable to read file"],
+            "style_valid": True,
+            "style_errors": [],
+            "types_valid": True,
+            "type_errors": ["Type check skipped due to read failure"],
+            "has_numpy": False,
+            "imports": [],
+            "usages": [],
+            "precision_casts": [],
+            "tensor_conversions": [],
+            "python_operators": [],
+            "unused_imports": [],
+            "backend_consistent": True,
+            "inconsistent_operations": [],
+            "has_backend_specific": False,
+            "backend_imports": [],
+            "backend_usage": [],
+            "frontend_backend_violation": False,
+            "violations": [],
+            "scan_findings": [],
+        }
+
     # Check for syntax errors
     syntax_valid, syntax_errors = check_syntax(file_path)
     
     # Check for compilation errors
-    compilation_valid, compilation_errors = check_compilation(file_path)
+    try:
+        compile(content, file_path, 'exec')
+        compilation_valid, compilation_errors = True, []
+    except SyntaxError as e:
+        compilation_valid, compilation_errors = False, [str(e)]
     
     # Check for import errors
     imports_valid, import_errors = check_imports(file_path)
@@ -767,20 +977,21 @@ def analyze_file(file_path: str) -> Dict:
         "backend_imports": all_backend_imports,
         "backend_usage": backend_usage,
         "frontend_backend_violation": frontend_backend_violation,
-        "violations": violations
+        "violations": violations,
+        "scan_findings": scan_source_patterns(file_path, content),
     }
 
-def analyze_directory(directory: str, exclude_dirs: Optional[List[str]] = None) -> List[Dict]:
+def analyze_directory(directory: str, exclude_dirs: Optional[List[str]] = None, scan_only: bool = False) -> List[Dict]:
     """Analyze all Python files in a directory for various issues."""
     if exclude_dirs is None:
         exclude_dirs = []
     
-    # Find all Python files
-    python_files = find_python_files(directory)
+    # Find all supported source files
+    source_files = find_files(directory, SOURCE_EXTENSIONS)
     
-    # Filter out excluded directories
+    # Filter out excluded directories and ensure requested path filter applies consistently
     filtered_files = []
-    for file_path in python_files:
+    for file_path in source_files:
         exclude = False
         for exclude_dir in exclude_dirs:
             if exclude_dir in file_path:
@@ -792,7 +1003,7 @@ def analyze_directory(directory: str, exclude_dirs: Optional[List[str]] = None) 
     # Analyze each file
     results = []
     for file_path in filtered_files:
-        result = analyze_file(file_path)
+        result = analyze_source_file(file_path, scan_only=scan_only)
         results.append(result)
     
     return results
@@ -818,6 +1029,7 @@ def print_results(results: List[Dict], verbose: bool = False, show_all: bool = T
     files_with_backend_inconsistencies = [result for result in results if not result["backend_consistent"]]
     files_with_backend_specific = [result for result in results if result["has_backend_specific"]]
     files_with_frontend_backend_violation = [result for result in results if result["frontend_backend_violation"]]
+    files_with_scan_findings = [result for result in results if result["scan_findings"]]
     
     print(f"Total files analyzed: {len(results)}")
     if len(results) > 0:
@@ -846,6 +1058,8 @@ def print_results(results: List[Dict], verbose: bool = False, show_all: bool = T
         if show_all or show_frontend_backend:
             print(f"Files with backend-specific code in frontend: {len(files_with_backend_specific)} ({len(files_with_backend_specific)/len(results)*100:.2f}%)")
             print(f"Files violating frontend-backend separation: {len(files_with_frontend_backend_violation)} ({len(files_with_frontend_backend_violation)/len(results)*100:.2f}%)")
+        if show_all or show_numpy:
+            print(f"Files with migration findings: {len(files_with_scan_findings)} ({len(files_with_scan_findings)/len(results)*100:.2f}%)")
     
     if verbose:
         if (show_all or show_syntax) and files_with_syntax_errors:
@@ -946,6 +1160,13 @@ def print_results(results: List[Dict], verbose: bool = False, show_all: bool = T
                 print(f"\n{result['file']}:")
                 for violation in result["violations"]:
                     print(f"  {violation['violation']}")
+
+        if (show_all or show_numpy) and files_with_scan_findings:
+            print("\nFiles with migration scan findings:")
+            for result in files_with_scan_findings:
+                print(f"\n{result['file']}:")
+                for finding in result["scan_findings"]:
+                    print(f"  {finding}")
     
     # Print summary by directory
     print("\nSummary by directory:")
@@ -1064,11 +1285,12 @@ def main():
     parser.add_argument("--unused-only", action="store_true", help="Only check for unused imports")
     parser.add_argument("--backend-only", action="store_true", help="Only check for backend inconsistencies")
     parser.add_argument("--frontend-backend-only", action="store_true", help="Only check for frontend-backend separation violations")
+    parser.add_argument("--scan-only", action="store_true", help="Only run fast migration-pattern scan (no AST/type checks)")
     
     args = parser.parse_args()
 
-    # If single-issue linting is disabled, ignore the --*-only flags
-    if not ALLOW_SINGLE_ISSUE_LINTING:
+    # If single-issue linting is disabled, ignore the --*-only flags unless scan-only was requested.
+    if not ALLOW_SINGLE_ISSUE_LINTING and not args.scan_only:
         if any([args.syntax_only, args.compilation_only, args.imports_only, 
                 args.style_only, args.types_only, args.numpy_only,
                 args.precision_only, args.conversion_only, args.operators_only,
@@ -1082,11 +1304,11 @@ def main():
     # Check if the path is a file or directory
     if os.path.isfile(args.path) and args.path.endswith('.py'):
         # Analyze a single file
-        result = analyze_file(args.path)
+        result = analyze_source_file(args.path, scan_only=args.scan_only)
         results = [result]
     else:
         # Analyze a directory
-        results = analyze_directory(args.path, args.exclude)
+        results = analyze_directory(args.path, args.exclude, scan_only=args.scan_only)
     
     # Determine what to display based on flags
     show_all = not (args.syntax_only or args.compilation_only or args.imports_only or 

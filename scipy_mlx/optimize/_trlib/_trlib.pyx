@@ -5,8 +5,6 @@ cimport mlx.core as mx
 
 from scipy_mlx._lib.messagestream cimport MessageStream
 
-mx.import_array()
-
 class TRLIBQuadraticSubproblem(BaseQuadraticSubproblem):
 
     def __init__(self, x, fun, jac, hess, hessp, tol_rel_i=-2.0, tol_rel_b=-3.0,

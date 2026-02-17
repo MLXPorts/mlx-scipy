@@ -29,7 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "numpy/arrayobject.h"
-#include "numpy/arraytypes.h"
 #include "rectangular_lsap/rectangular_lsap.h"
 
 

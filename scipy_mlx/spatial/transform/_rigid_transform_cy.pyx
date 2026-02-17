@@ -9,9 +9,6 @@ from ._rotation_cy import as_matrix, as_quat, as_rotvec, compose_quat
 cimport mlx.core as mx
 cimport cython
 
-mx.import_array()
-
-
 @cython.embedsignature(True)
 @cython.boundscheck(False)
 def from_matrix(double[:, :, :] matrix, bint normalize=True, bint copy=True):
@@ -313,7 +310,7 @@ def normalize_dual_quaternion(double[:, :] dual_quat):
     return mx.concatenate((real, dual), axis=-1)
 
 
-cdef _normalize_dual_quaternion(mx.array[double, ndim=2] real_part, mx.array[double, ndim=2] dual_part):
+cdef _normalize_dual_quaternion(object real_part, object dual_part):
     """Ensure that the dual quaternion has unit norm.
 
     The norm is a dual number and must be 1 + 0 * epsilon, which means that

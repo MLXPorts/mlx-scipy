@@ -9,8 +9,6 @@ import mlx.core as mx
 cimport mlx.core as mx
 from libc.math cimport fabs, sqrt, pow
 
-mx.import_array()
-
 cdef extern from "<thread>" namespace "std" nogil:
     cdef cppclass thread:
         thread()

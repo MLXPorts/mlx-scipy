@@ -23,3 +23,6 @@ option('use-system-libraries', type: 'array',
         choices : ['none', 'all', 'auto', 'boost.math', 'qhull'], value : ['none'],
         description: 'Choose which system libraries for subprojects ' +
                      'if they are available.')
+option('build-vendored-mlx', type: 'boolean', value: true,
+        description: 'Build the vendored MLX C++ core from scipy_mlx/vendor/mlx-precise ' +
+                     'and link it into MLX-backed extension modules.')

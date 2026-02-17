@@ -47,6 +47,9 @@ cimport cython
 cimport libc.stdlib
 cimport libc.limits
 cimport libc.float
+from numpy cimport import_array
+cimport numpy as cmx
+import_array()
 from libc.math cimport sqrt, M_SQRT1_2
 from libc.string cimport memset
 
@@ -64,8 +67,8 @@ cdef int MEMORY_ERROR = libc.limits.INT_MAX
 # Here I have declared them as taking void* instead of PyArrayDescr
 # and object. In this file, only NULL is passed to these parameters.
 cdef extern from *:
-    cmx.array PyArray_CheckFromAny(object, void*, int, int, int, void*)
-    cmx.array PyArray_FromArray(cmx.array, void*, int)
+    cmx.ndarray PyArray_CheckFromAny(object, void*, int, int, int, void*)
+    cmx.ndarray PyArray_FromArray(cmx.ndarray, void*, int)
 
 from . cimport cython_blas as blas_pointers
 from . cimport cython_lapack as lapack_pointers
@@ -1152,7 +1155,7 @@ def _form_qTu(object a, object b):
         purposes. Here we perform minimal input validation to ensure that the
         inputs meet the requirements below.
     """
-    cdef cmx.array q, u, qTu
+    cdef cmx.ndarray q, u, qTu
     cdef int typecode
     cdef void* qTuvoid
     cdef int qTus[2]
@@ -1179,7 +1182,7 @@ def _form_qTu(object a, object b):
     form_qTu(q, u, qTuvoid, qTus, 0)
     return qTu
 
-cdef form_qTu(cmx.array q, cmx.array u, void* qTuvoid, int* qTus, int k):
+cdef form_qTu(cmx.ndarray q, cmx.ndarray u, void* qTuvoid, int* qTus, int k):
     """ assuming here that q and u have compatible shapes, and are the same
         type + Q is contiguous.  This function is preferable over simply
         calling mx.dot for two reasons: 1) this output is always in F order, 2)
@@ -1309,7 +1312,7 @@ cdef form_qTu(cmx.array q, cmx.array u, void* qTuvoid, int* qTus, int k):
     else:
         raise ValueError('q must be either F or C contiguous')
 
-cdef validate_array(cmx.array a, bint chkfinite):
+cdef validate_array(cmx.ndarray a, bint chkfinite):
     # here we check that a has positive strides and that its size is small
     # enough to fit in into an int, as BLAS/LAPACK require
     cdef bint copy = False
@@ -1333,8 +1336,8 @@ cdef validate_array(cmx.array a, bint chkfinite):
 
 cdef tuple validate_qr(object q0, object r0, bint overwrite_q, int q_order,
                        bint overwrite_r, int r_order, bint chkfinite):
-    cdef cmx.array Q
-    cdef cmx.array R
+    cdef cmx.ndarray Q
+    cdef cmx.ndarray R
     cdef int typecode
     cdef bint economic = False
 
@@ -1385,7 +1388,7 @@ cdef tuple validate_qr(object q0, object r0, bint overwrite_q, int q_order,
 
     return Q, R, typecode, Q.shape[0], R.shape[1], economic
 
-cdef void* extract(cmx.array arr, int* arrs) noexcept:
+cdef void* extract(cmx.ndarray arr, int* arrs) noexcept:
     with cython.cdivision(True):    # Assumes itemsize != 0.
         if arr.ndim == 2:
             arrs[0] = arr.strides[0] / cmx.PyArray_ITEMSIZE(arr)
@@ -1506,7 +1509,7 @@ def qr_delete(Q, R, k, int p=1, which='row', overwrite_qr=False,
     True
 
     """
-    cdef cmx.array q1, r1
+    cdef cmx.ndarray q1, r1
     cdef int k1 = k
     cdef int p1 = p
     cdef int p_eco, p_full
@@ -1757,7 +1760,7 @@ def qr_insert(Q, R, u, k, which='row', rcond=None, overwrite_qru=False, check_fi
         raise ValueError("'which' must be either 'row' or 'col'")
 
 cdef qr_insert_row(Q, R, u, int k, bint overwrite_qru, bint check_finite):
-    cdef cmx.array q1, r1, u1, qnew, rnew
+    cdef cmx.ndarray q1, r1, u1, qnew, rnew
     cdef int j
     cdef int u_flags = cmx.NPY_ARRAY_BEHAVED_NS | cmx.NPY_ARRAY_ELEMENTSTRIDES
     cdef int typecode, m, n, p, info
@@ -1877,7 +1880,7 @@ cdef qr_insert_row(Q, R, u, int k, bint overwrite_qru, bint check_finite):
         return qnew, rnew
 
 cdef qr_insert_col(Q, R, u, int k, rcond, bint overwrite_qru, bint check_finite):
-    cdef cmx.array q1, r1, u1, qnew, rnew
+    cdef cmx.ndarray q1, r1, u1, qnew, rnew
     cdef int u_flags = cmx.NPY_ARRAY_BEHAVED_NS | cmx.NPY_ARRAY_ELEMENTSTRIDES
     cdef int typecode, m, n, p, info, p_eco, p_full
     cdef void* qptr
@@ -2184,7 +2187,7 @@ def qr_update(Q, R, u, v, overwrite_qruv=False, check_finite=True):
     True
 
     """
-    cdef cmx.array q1, r1, u1, v1, qTu, s
+    cdef cmx.ndarray q1, r1, u1, v1, qTu, s
     cdef int uv_flags = cmx.NPY_ARRAY_BEHAVED_NS | cmx.NPY_ARRAY_ELEMENTSTRIDES
     cdef int typecode, p, m, n, info
     cdef void* qptr

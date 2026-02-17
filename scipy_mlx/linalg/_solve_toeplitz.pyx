@@ -4,6 +4,7 @@
 from scipy_mlx._lib._mlx_numpy import zeros, asarray, complex128, float64
 from scipy_mlx.linalg import LinAlgError
 # MLX port: removed NumPy Cython dependency
+from numpy cimport complex128_t, float64_t
 
 
 cdef fused dz:
