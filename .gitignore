@@ -37,9 +37,25 @@ venv/
 *.o.d
 *.py[ocd]
 *.so
+*.so.*
 *.obj
 *.pyd
+*.dll.a
+*.a.*
+*.dylib.*
+*.lib.*
+*.exe.*
+*.obj.*
+*.out
+*.out.*
+*.bin
+*.run
+*.so.[0-9]*
 _configtest.c
+*.pdb
+*.ipdb
+*.swp
+*.lock-*.json
 
 # Packages #
 ############

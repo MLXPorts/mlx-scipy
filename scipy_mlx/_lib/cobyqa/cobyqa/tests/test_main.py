@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import pytest
 from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint
 from scipy.optimize._minimize import standardize_constraints
@@ -28,8 +28,8 @@ class TestMinimize:
             constraints=constraints,
             options=self.options,
         )
-        solution = [np.sqrt(25.0 - 4.0 / 9.0), 2.0 / 3.0]
-        np.testing.assert_allclose(res.x, solution, atol=1e-4)
+        solution = [mx.sqrt(25.0 - 4.0 / 9.0), 2.0 / 3.0]
+        assert mx.allclose(res.x, solution, atol=1e-4)
         assert res.success, res.message
         assert res.maxcv < 1e-7, res
         assert res.nfev <= 100, res
@@ -46,8 +46,8 @@ class TestMinimize:
             constraints=constraints,
             options=self.options,
         )
-        solution = [np.sqrt(25.0 - 4.0 / 9.0), 2.0 / 3.0]
-        np.testing.assert_allclose(res.x, solution, atol=1e-4)
+        solution = [mx.sqrt(25.0 - 4.0 / 9.0), 2.0 / 3.0]
+        assert mx.allclose(res.x, solution, atol=1e-4)
         assert res.success, res.message
         assert res.status == 0, res
         assert res.maxcv < 1e-8, res
@@ -75,7 +75,7 @@ class TestMinimize:
             constraints=constraints,
             options=self.options,
         )
-        np.testing.assert_array_equal(res.x, res_alt.x)
+        assert mx.array_equal(res.x, res_alt.x)
         assert res.status == res_alt.status, res
         assert res.nfev == res_alt.nfev, res
         assert res.nit == res_alt.nit, res
@@ -88,8 +88,8 @@ class TestMinimize:
             constraints=constraints,
             options=self.options,
         )
-        solution = [(4 - np.sqrt(7)) / 3, (np.sqrt(7) - 1) / 3]
-        np.testing.assert_allclose(res.x, solution, atol=1e-4)
+        solution = [(4 - mx.sqrt(7)) / 3, (mx.sqrt(7) - 1) / 3]
+        assert mx.allclose(res.x, solution, atol=1e-4)
         assert res.success, res.message
         assert res.status == 0, res
         assert res.maxcv < 1e-6, res
@@ -114,7 +114,7 @@ class TestMinimize:
             constraints=constraints_alt,
             options=self.options,
         )
-        np.testing.assert_array_equal(res.x, res_alt.x)
+        assert mx.array_equal(res.x, res_alt.x)
         assert res.status == res_alt.status, res
         assert res.nfev == res_alt.nfev, res
         assert res.nit == res_alt.nit, res
@@ -128,8 +128,8 @@ class TestMinimize:
             constraints=constraints,
             options=self.options,
         )
-        solution = [np.sqrt(25.0 - 4.0 / 36.0), 2.0 / 6.0]
-        np.testing.assert_allclose(res.x, solution, atol=1e-4)
+        solution = [mx.sqrt(25.0 - 4.0 / 36.0), 2.0 / 6.0]
+        assert mx.allclose(res.x, solution, atol=1e-4)
         assert res.success, res.message
         assert res.status == 0, res
         assert res.maxcv < 1e-8, res
@@ -143,8 +143,8 @@ class TestMinimize:
 
             def __call__(self, x):
                 self.n_eval += 1
-                solution = np.array([np.sqrt(25.0 - 4.0 / 9.0), 2.0 / 3.0])
-                if np.allclose(x, solution, atol=1e-4):
+                solution = mx.array([mx.sqrt(25.0 - 4.0 / 9.0), 2.0 / 3.0])
+                if mx.allclose(x, solution, atol=1e-4):
                     raise StopIteration
 
         callback = Callback()
@@ -179,7 +179,7 @@ class TestMinimize:
             bounds=bounds,
             options=self.options,
         )
-        np.testing.assert_allclose(res.x, [4.5, 0.6], atol=1e-4)
+        assert mx.allclose(res.x, [4.5, 0.6], atol=1e-4)
         assert res.success, res.message
         assert res.status > 0, res
         assert res.maxcv < 1e-8, res

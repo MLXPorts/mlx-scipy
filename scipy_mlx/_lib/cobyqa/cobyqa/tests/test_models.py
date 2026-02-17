@@ -1,4 +1,4 @@
-import numpy as np
+import mlx.core as mx
 import pytest
 from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, rosen
 from concurrent.futures import ThreadPoolExecutor
@@ -28,20 +28,20 @@ class TestInterpolation:
         interpolation = Interpolation(problem, options)
         assert interpolation.n == problem.n
         assert interpolation.npt == options[Options.NPT]
-        np.testing.assert_allclose(
+        assert mx.allclose(
             interpolation.x_base,
             problem.x0,
             atol=1e-13,
         )
         for k in range(interpolation.npt):
             point = interpolation.point(k)
-            np.testing.assert_allclose(
-                np.maximum(point, problem.bounds.xl),
+            assert mx.allclose(
+                mx.maximum(point, problem.bounds.xl),
                 point,
                 atol=1e-13,
             )
-            np.testing.assert_allclose(
-                np.minimum(point, problem.bounds.xu),
+            assert mx.allclose(
+                mx.minimum(point, problem.bounds.xu),
                 point,
                 atol=1e-13,
             )
@@ -55,35 +55,35 @@ class TestInterpolation:
             Options.DEBUG.value: True,
         }
         interpolation = Interpolation(problem, options)
-        np.testing.assert_allclose(
+        assert mx.allclose(
             interpolation.x_base,
             problem.x0,
             atol=1e-13,
         )
         problem = get_problem([0.1, 0.5])
         interpolation = Interpolation(problem, options)
-        np.testing.assert_allclose(
+        assert mx.allclose(
             interpolation.x_base,
             [0.0, 0.5],
             atol=1e-13,
         )
         problem = get_problem([0.3, 0.5])
         interpolation = Interpolation(problem, options)
-        np.testing.assert_allclose(
+        assert mx.allclose(
             interpolation.x_base,
             [0.5, 0.5],
             atol=1e-13,
         )
         problem = get_problem([0.9, 0.5])
         interpolation = Interpolation(problem, options)
-        np.testing.assert_allclose(
+        assert mx.allclose(
             interpolation.x_base,
             [1.0, 0.5],
             atol=1e-13,
         )
         problem = get_problem([0.7, 0.5])
         interpolation = Interpolation(problem, options)
-        np.testing.assert_allclose(
+        assert mx.allclose(
             interpolation.x_base,
             [0.5, 0.5],
             atol=1e-13,
@@ -113,7 +113,7 @@ class TestInterpolation:
         ]
         for interpolation, expected_x in \
                 zip(interpolation_list, expected_x_values):
-            np.testing.assert_allclose(
+            assert mx.allclose(
                 interpolation.x_base,
                 expected_x,
                 atol=1e-13,
@@ -138,22 +138,22 @@ class TestInterpolation:
             (expected_eig_values, expected_eig_vectors) = expected
         actual_a, actual_right_scaling, \
             (actual_eig_values, actual_eig_vectors) = actual
-        np.testing.assert_allclose(
+        assert mx.allclose(
             actual_a,
             expected_a,
             rtol=0
         )
-        np.testing.assert_allclose(
+        assert mx.allclose(
             actual_right_scaling,
             expected_right_scaling,
             rtol=0,
         )
-        np.testing.assert_allclose(
+        assert mx.allclose(
             actual_eig_values,
             expected_eig_values,
             rtol=0,
         )
-        np.testing.assert_allclose(
+        assert mx.allclose(
             actual_eig_vectors,
             expected_eig_vectors,
             rtol=0,
@@ -171,30 +171,30 @@ class TestQuadratic:
             Options.DEBUG.value: True,
         }
         interpolation = Interpolation(problem, options)
-        values = np.arange(interpolation.npt)
+        values = mx.arange(interpolation.npt)
         model = Quadratic(interpolation, values, True)
         assert model.n == problem.n
         assert model.npt == interpolation.npt
         for k in range(interpolation.npt):
-            np.testing.assert_allclose(
+            assert mx.allclose(
                 model(interpolation.point(k), interpolation),
                 values[k],
                 atol=1e-13,
             )
         hess = model.hess(interpolation)
         for i in range(model.n):
-            np.testing.assert_allclose(
+            assert mx.allclose(
                 hess[:, i],
                 model.hess_prod(
-                    np.squeeze(np.eye(1, model.n, i)),
+                    mx.squeeze(mx.eye(1, model.n, i)),
                     interpolation,
                 ),
                 atol=1e-13,
             )
-            np.testing.assert_allclose(
+            assert mx.allclose(
                 hess[i, i],
                 model.curv(
-                    np.squeeze(np.eye(1, model.n, i)),
+                    mx.squeeze(mx.eye(1, model.n, i)),
                     interpolation,
                 ),
                 atol=1e-13,
@@ -209,7 +209,7 @@ class TestQuadratic:
             Options.DEBUG.value: True,
         }
         interpolation = Interpolation(problem, options)
-        values = np.zeros(interpolation.npt)
+        values = mx.zeros(interpolation.npt)
         with pytest.raises(ValueError):
             Quadratic(interpolation, values, True)
 
@@ -249,7 +249,7 @@ class TestModels:
 
     def test_feasibility_problem(self):
         obj = ObjectiveFunction(None, False, True)
-        bounds = BoundConstraints(Bounds(2 * [-np.inf], 2 * [np.inf]))
+        bounds = BoundConstraints(Bounds(2 * [-mx.inf], 2 * [mx.inf]))
         linear_constraints = LinearConstraints([], 2, True)
         nonlinear_constraints = NonlinearConstraints([], False, True)
         problem = Problem(
@@ -280,7 +280,7 @@ class TestModels:
 
     def test_target(self):
         obj = ObjectiveFunction(rosen, False, True)
-        bounds = BoundConstraints(Bounds(2 * [-np.inf], 2 * [np.inf]))
+        bounds = BoundConstraints(Bounds(2 * [-mx.inf], 2 * [mx.inf]))
         linear_constraints = LinearConstraints([], 2, True)
         nonlinear_constraints = NonlinearConstraints([], False, True)
         problem = Problem(
@@ -323,8 +323,8 @@ def get_problem(x0):
     )
     nonlinear_constraints = NonlinearConstraints(
         [
-            NonlinearConstraint(np.cos, [-0.5, -0.5], [0.0, 0.0]),
-            NonlinearConstraint(np.sin, [0.0, 0.0], [0.0, 0.0]),
+            NonlinearConstraint(mx.cos, [-0.5, -0.5], [0.0, 0.0]),
+            NonlinearConstraint(mx.sin, [0.0, 0.0], [0.0, 0.0]),
         ],
         False,
         True,

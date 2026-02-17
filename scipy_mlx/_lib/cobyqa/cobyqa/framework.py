@@ -1,6 +1,6 @@
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from scipy.optimize import lsq_linear
 
 from .models import Models, Quadratic
@@ -14,10 +14,11 @@ from .subsolvers import (
 )
 from .subsolvers.optim import qr_tangential_byrd_omojokun
 from .utils import get_arrays_tol
+from .utils import mx_block, mx_nanmax, mx_nanmin
 
 
-TINY = np.finfo(float).tiny
-EPS = np.finfo(float).eps
+TINY = mx.finfo(float).tiny
+EPS = mx.finfo(float).eps
 
 
 class TrustRegion:
@@ -63,10 +64,10 @@ class TrustRegion:
         self.set_best_index()
 
         # Set the initial Lagrange multipliers.
-        self._lm_linear_ub = np.zeros(self.m_linear_ub)
-        self._lm_linear_eq = np.zeros(self.m_linear_eq)
-        self._lm_nonlinear_ub = np.zeros(self.m_nonlinear_ub)
-        self._lm_nonlinear_eq = np.zeros(self.m_nonlinear_eq)
+        self._lm_linear_ub = mx.zeros(self.m_linear_ub)
+        self._lm_linear_eq = mx.zeros(self.m_linear_eq)
+        self._lm_nonlinear_ub = mx.zeros(self.m_nonlinear_ub)
+        self._lm_nonlinear_eq = mx.zeros(self.m_nonlinear_eq)
         self.set_multipliers(self.x_best)
 
         # Set the initial trust-region radius and the resolution.
@@ -471,8 +472,8 @@ class TrustRegion:
         m_val = fun_val
         if self._penalty > 0.0:
             c_val = self._pb.violation(x, cub_val=cub_val, ceq_val=ceq_val)
-            if np.count_nonzero(c_val):
-                m_val += self._penalty * np.linalg.norm(c_val)
+            if mx.count_nonzero(c_val):
+                m_val += self._penalty * mx.linalg.norm(c_val)
         return m_val
 
     def get_constraint_linearizations(self, x):
@@ -495,25 +496,25 @@ class TrustRegion:
         `numpy.ndarray`, shape (m_linear_eq + m_nonlinear_eq,)
             Right-hand side vector of the linearized equality constraints.
         """
-        aub = np.block(
+        aub = mx_block(
             [
                 [self._pb.linear.a_ub],
                 [self.models.cub_grad(x)],
             ]
         )
-        bub = np.block(
+        bub = mx_block(
             [
                 self._pb.linear.b_ub - self._pb.linear.a_ub @ x,
                 -self.models.cub(x),
             ]
         )
-        aeq = np.block(
+        aeq = mx_block(
             [
                 [self._pb.linear.a_eq],
                 [self.models.ceq_grad(x)],
             ]
         )
-        beq = np.block(
+        beq = mx_block(
             [
                 self._pb.linear.b_eq - self._pb.linear.a_eq @ x,
                 -self.models.ceq(x),
@@ -568,14 +569,14 @@ class TrustRegion:
         )
         if options[Options.DEBUG]:
             tol = get_arrays_tol(xl, xu)
-            if (np.any(normal_step + tol < xl)
-                    or np.any(xu < normal_step - tol)):
+            if (mx.any(normal_step + tol < xl)
+                    or mx.any(xu < normal_step - tol)):
                 warnings.warn(
                     "the normal step does not respect the bound constraint.",
                     RuntimeWarning,
                     2,
                 )
-            if np.linalg.norm(normal_step) > 1.1 * radius:
+            if mx.linalg.norm(normal_step) > 1.1 * radius:
                 warnings.warn(
                     "the normal step does not respect the trust-region "
                     "constraint.",
@@ -584,10 +585,10 @@ class TrustRegion:
                 )
 
         # Evaluate the tangential step.
-        radius = np.sqrt(self.radius**2.0 - normal_step @ normal_step)
+        radius = mx.sqrt(self.radius**2.0 - normal_step @ normal_step)
         xl -= normal_step
         xu -= normal_step
-        bub = np.maximum(bub - aub @ normal_step, 0.0)
+        bub = mx.maximum(bub - aub @ normal_step, 0.0)
         g_best = self.models.fun_grad(self.x_best) + self.lag_model_hess_prod(
             normal_step
         )
@@ -616,7 +617,7 @@ class TrustRegion:
             )
         if options[Options.DEBUG]:
             tol = get_arrays_tol(xl, xu)
-            if np.any(tangential_step + tol < xl) or np.any(
+            if mx.any(tangential_step + tol < xl) or mx.any(
                 xu < tangential_step - tol
             ):
                 warnings.warn(
@@ -626,8 +627,8 @@ class TrustRegion:
                     2,
                 )
             if (
-                np.linalg.norm(normal_step + tangential_step)
-                > 1.1 * np.sqrt(2.0) * self.radius
+                mx.linalg.norm(normal_step + tangential_step)
+                > 1.1 * mx.sqrt(2.0) * self.radius
             ):
                 warnings.warn(
                     "The trial step does not respect the trust-region "
@@ -674,7 +675,7 @@ class TrustRegion:
             ), "The index `k_new` must be different from the best index."
 
         # Build the k_new-th Lagrange polynomial.
-        coord_vec = np.squeeze(np.eye(1, self.models.npt, k_new))
+        coord_vec = mx.squeeze(mx.eye(1, self.models.npt, k_new))
         lag = Quadratic(
             self.models.interpolation,
             coord_vec,
@@ -701,7 +702,7 @@ class TrustRegion:
         # of the determinant of the interpolation system in absolute value.
         xpt = (
             self.models.interpolation.xpt
-            - self.models.interpolation.xpt[:, self.best_index, np.newaxis]
+            - self.models.interpolation.xpt[:, self.best_index, mx.newaxis]
         )
         xpt[:, [0, self.best_index]] = xpt[:, [self.best_index, 0]]
         step_alt = spider_geometry(
@@ -741,45 +742,45 @@ class TrustRegion:
                 free_ub,
             )
             g_lag_proj = q[:, n_act:] @ (q[:, n_act:].T @ g_lag)
-            norm_g_lag_proj = np.linalg.norm(g_lag_proj)
+            norm_g_lag_proj = mx.linalg.norm(g_lag_proj)
             if 0 < n_act < self._pb.n and norm_g_lag_proj > TINY * self.radius:
                 step_alt = (self.radius / norm_g_lag_proj) * g_lag_proj
                 if lag.curv(step_alt, self.models.interpolation) < 0.0:
                     step_alt = -step_alt
 
                 # Evaluate the constraint violation at the Cauchy step.
-                cbd = np.block([xl - step_alt, step_alt - xu])
+                cbd = mx_block([xl - step_alt, step_alt - xu])
                 cub = aub @ step_alt - bub
                 ceq = aeq @ step_alt - beq
                 maxcv_val = max(
-                    np.max(array, initial=0.0)
-                    for array in [cbd, cub, np.abs(ceq)]
+                    mx.max(array, initial=0.0)
+                    for array in [cbd, cub, mx.abs(ceq)]
                 )
 
                 # Accept the new step if it is nearly feasible and do not
                 # drastically worsen the determinant of the interpolation
                 # system in absolute value.
-                tol = np.max(np.abs(step_alt[~free_xl]), initial=0.0)
-                tol = np.max(np.abs(step_alt[~free_xu]), initial=tol)
-                tol = np.max(np.abs(aub[~free_ub, :] @ step_alt), initial=tol)
-                tol = min(10.0 * tol, 1e-2 * np.linalg.norm(step_alt))
+                tol = mx.max(mx.abs(step_alt[~free_xl]), initial=0.0)
+                tol = mx.max(mx.abs(step_alt[~free_xu]), initial=tol)
+                tol = mx.max(mx.abs(aub[~free_ub, :] @ step_alt), initial=tol)
+                tol = min(10.0 * tol, 1e-2 * mx.linalg.norm(step_alt))
                 if maxcv_val <= tol:
                     sigma_alt = self.models.determinants(
                         self.x_best + step_alt, k_new
                     )
                     if abs(sigma_alt) >= 0.1 * abs(sigma):
-                        step = np.clip(step_alt, xl, xu)
+                        step = mx.clip(step_alt, xl, xu)
 
         if options[Options.DEBUG]:
             tol = get_arrays_tol(xl, xu)
-            if np.any(step + tol < xl) or np.any(xu < step - tol):
+            if mx.any(step + tol < xl) or mx.any(xu < step - tol):
                 warnings.warn(
                     "The geometry step does not respect the bound "
                     "constraints.",
                     RuntimeWarning,
                     2,
                 )
-            if np.linalg.norm(step) > 1.1 * self.radius:
+            if mx.linalg.norm(step) > 1.1 * self.radius:
                 warnings.warn(
                     "The geometry step does not respect the "
                     "trust-region constraint.",
@@ -808,7 +809,7 @@ class TrustRegion:
         aub, bub, aeq, beq = self.get_constraint_linearizations(self.x_best)
         xl = self._pb.bounds.xl - self.x_best
         xu = self._pb.bounds.xu - self.x_best
-        radius = np.linalg.norm(step)
+        radius = mx.linalg.norm(step)
         soc_step = normal_byrd_omojokun(
             aub,
             bub,
@@ -822,14 +823,14 @@ class TrustRegion:
         )
         if options[Options.DEBUG]:
             tol = get_arrays_tol(xl, xu)
-            if np.any(soc_step + tol < xl) or np.any(xu < soc_step - tol):
+            if mx.any(soc_step + tol < xl) or mx.any(xu < soc_step - tol):
                 warnings.warn(
                     "The second-order correction step does not "
                     "respect the bound constraints.",
                     RuntimeWarning,
                     2,
                 )
-            if np.linalg.norm(soc_step) > 1.1 * radius:
+            if mx.linalg.norm(soc_step) > 1.1 * radius:
                 warnings.warn(
                     "The second-order correction step does not "
                     "respect the trust-region constraint.",
@@ -897,18 +898,18 @@ class TrustRegion:
         """
         aub, bub, aeq, beq = self.get_constraint_linearizations(self.x_best)
         viol_diff = max(
-            np.linalg.norm(
-                np.block(
+            mx.linalg.norm(
+                mx_block(
                     [
-                        np.maximum(0.0, -bub),
+                        mx.maximum(0.0, -bub),
                         beq,
                     ]
                 )
             )
-            - np.linalg.norm(
-                np.block(
+            - mx.linalg.norm(
+                mx_block(
                     [
-                        np.maximum(0.0, aub @ step - bub),
+                        mx.maximum(0.0, aub @ step - bub),
                         aeq @ step - beq,
                     ]
                 )
@@ -917,8 +918,8 @@ class TrustRegion:
         )
         sqp_val = self.sqp_fun(step)
 
-        threshold = np.linalg.norm(
-            np.block(
+        threshold = mx.linalg.norm(
+            mx_block(
                 [
                     self._lm_linear_ub,
                     self._lm_linear_eq,
@@ -1016,10 +1017,10 @@ class TrustRegion:
         `numpy.linalg.LinAlgError`
             If the computation of a determinant fails.
         """
-        dist_sq = np.sum(
+        dist_sq = mx.sum(
             (
                 self.models.interpolation.xpt
-                - self.models.interpolation.xpt[:, self.best_index, np.newaxis]
+                - self.models.interpolation.xpt[:, self.best_index, mx.newaxis]
             )
             ** 2.0,
             axis=0,
@@ -1030,7 +1031,7 @@ class TrustRegion:
         else:
             sigma = self.models.determinants(x_new)
             weights = (
-                np.maximum(
+                mx.maximum(
                     1.0,
                     dist_sq
                     / max(
@@ -1043,8 +1044,8 @@ class TrustRegion:
                 ** 3.0
             )
             weights[self.best_index] = -1.0  # do not remove the best point
-        k_max = np.argmax(weights * np.abs(sigma))
-        return k_max, np.sqrt(dist_sq[k_max])
+        k_max = mx.argmax(weights * mx.abs(sigma))
+        return k_max, mx.sqrt(dist_sq[k_max])
 
     def update_radius(self, step, ratio):
         """
@@ -1057,7 +1058,7 @@ class TrustRegion:
         ratio : float
             Reduction ratio.
         """
-        s_norm = np.linalg.norm(step)
+        s_norm = mx.linalg.norm(step)
         if ratio <= self._constants[Constants.LOW_RATIO]:
             self.radius *= self._constants[Constants.DECREASE_RADIUS_FACTOR]
         elif ratio <= self._constants[Constants.HIGH_RATIO]:
@@ -1100,7 +1101,7 @@ class TrustRegion:
             * options[Options.RHOEND]
             < self.resolution
         ):
-            self.resolution = np.sqrt(self.resolution
+            self.resolution = mx.sqrt(self.resolution
                                       * options[Options.RHOEND])
         else:
             self.resolution = options[Options.RHOEND]
@@ -1120,7 +1121,7 @@ class TrustRegion:
         options : dict
             Options of the solver.
         """
-        self.models.shift_x_base(np.copy(self.x_best), options)
+        self.models.shift_x_base(mx.copy(self.x_best), options)
 
     def set_multipliers(self, x):
         """
@@ -1139,17 +1140,17 @@ class TrustRegion:
         incl_nonlinear_ub = self.cub_best >= 0.0
         incl_xl = self._pb.bounds.xl >= x
         incl_xu = self._pb.bounds.xu <= x
-        m_linear_ub = np.count_nonzero(incl_linear_ub)
-        m_nonlinear_ub = np.count_nonzero(incl_nonlinear_ub)
-        m_xl = np.count_nonzero(incl_xl)
-        m_xu = np.count_nonzero(incl_xu)
+        m_linear_ub = mx.count_nonzero(incl_linear_ub)
+        m_nonlinear_ub = mx.count_nonzero(incl_nonlinear_ub)
+        m_xl = mx.count_nonzero(incl_xl)
+        m_xu = mx.count_nonzero(incl_xu)
 
         if (
             m_linear_ub + m_nonlinear_ub + self.m_linear_eq
                 + self.m_nonlinear_eq > 0
         ):
-            identity = np.eye(self._pb.n)
-            c_jac = np.r_[
+            identity = mx.eye(self._pb.n)
+            c_jac = mx.r_[
                 -identity[incl_xl, :],
                 identity[incl_xu, :],
                 self._pb.linear.a_ub[incl_linear_ub, :],
@@ -1160,12 +1161,12 @@ class TrustRegion:
 
             # Solve the least-squares problem.
             g_best = self.models.fun_grad(x)
-            xl_lm = np.full(c_jac.shape[0], -np.inf)
+            xl_lm = mx.full(c_jac.shape[0], -mx.inf)
             xl_lm[: m_xl + m_xu + m_linear_ub + m_nonlinear_ub] = 0.0
             res = lsq_linear(
                 c_jac.T,
                 -g_best,
-                bounds=(xl_lm, np.inf),
+                bounds=(xl_lm, mx.inf),
                 method="bvls",
             )
 
@@ -1198,20 +1199,20 @@ class TrustRegion:
             ]
 
     def _get_low_penalty(self):
-        r_val_ub = np.c_[
+        r_val_ub = mx.c_[
             (
-                self.models.interpolation.x_base[np.newaxis, :]
+                self.models.interpolation.x_base[mx.newaxis, :]
                 + self.models.interpolation.xpt.T
             )
             @ self._pb.linear.a_ub.T
-            - self._pb.linear.b_ub[np.newaxis, :],
+            - self._pb.linear.b_ub[mx.newaxis, :],
             self.models.cub_val,
         ]
         r_val_eq = (
-            self.models.interpolation.x_base[np.newaxis, :]
+            self.models.interpolation.x_base[mx.newaxis, :]
             + self.models.interpolation.xpt.T
-        ) @ self._pb.linear.a_eq.T - self._pb.linear.b_eq[np.newaxis, :]
-        r_val_eq = np.block(
+        ) @ self._pb.linear.a_eq.T - self._pb.linear.b_eq[mx.newaxis, :]
+        r_val_eq = mx_block(
             [
                 r_val_eq,
                 -r_val_eq,
@@ -1219,22 +1220,22 @@ class TrustRegion:
                 -self.models.ceq_val,
             ]
         )
-        r_val = np.block([r_val_ub, r_val_eq])
-        c_min = np.nanmin(r_val, axis=0)
-        c_max = np.nanmax(r_val, axis=0)
+        r_val = mx_block([r_val_ub, r_val_eq])
+        c_min = mx_nanmin(r_val, axis=0)
+        c_max = mx_nanmax(r_val, axis=0)
         indices = (
             c_min
             < self._constants[Constants.THRESHOLD_RATIO_CONSTRAINTS] * c_max
         )
-        if np.any(indices):
-            f_min = np.nanmin(self.models.fun_val)
-            f_max = np.nanmax(self.models.fun_val)
-            c_min_neg = np.minimum(0.0, c_min[indices])
-            c_diff = np.min(c_max[indices] - c_min_neg)
+        if mx.any(indices):
+            f_min = mx_nanmin(self.models.fun_val)
+            f_max = mx_nanmax(self.models.fun_val)
+            c_min_neg = mx.minimum(0.0, c_min[indices])
+            c_diff = mx.min(c_max[indices] - c_min_neg)
             if c_diff > TINY * (f_max - f_min):
                 penalty = (f_max - f_min) / c_diff
             else:
-                penalty = np.inf
+                penalty = mx.inf
         else:
             penalty = 0.0
         return penalty

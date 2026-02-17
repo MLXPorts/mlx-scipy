@@ -1,11 +1,11 @@
 import inspect
 
-import numpy as np
+import mlx.core as mx
 
-from ..utils import get_arrays_tol
+from ..utils import MLX_ARRAY_TYPE, get_arrays_tol
 
 
-TINY = np.finfo(float).tiny
+TINY = mx.finfo(float).tiny
 
 
 def cauchy_geometry(const, grad, curv, xl, xu, delta, debug):
@@ -68,18 +68,18 @@ def cauchy_geometry(const, grad, curv, xl, xu, delta, debug):
     """
     if debug:
         assert isinstance(const, float)
-        assert isinstance(grad, np.ndarray) and grad.ndim == 1
+        assert isinstance(grad, MLX_ARRAY_TYPE) and grad.ndim == 1
         assert inspect.signature(curv).bind(grad)
-        assert isinstance(xl, np.ndarray) and xl.shape == grad.shape
-        assert isinstance(xu, np.ndarray) and xu.shape == grad.shape
+        assert isinstance(xl, MLX_ARRAY_TYPE) and xl.shape == grad.shape
+        assert isinstance(xu, MLX_ARRAY_TYPE) and xu.shape == grad.shape
         assert isinstance(delta, float)
         assert isinstance(debug, bool)
         tol = get_arrays_tol(xl, xu)
-        assert np.all(xl <= tol)
-        assert np.all(xu >= -tol)
-        assert np.isfinite(delta) and delta > 0.0
-    xl = np.minimum(xl, 0.0)
-    xu = np.maximum(xu, 0.0)
+        assert mx.all(xl <= tol)
+        assert mx.all(xu >= -tol)
+        assert mx.isfinite(delta) and delta > 0.0
+    xl = mx.minimum(xl, 0.0)
+    xu = mx.maximum(xu, 0.0)
 
     # To maximize the absolute value of a quadratic function, we maximize the
     # function itself or its negative, and we choose the solution that provides
@@ -97,9 +97,9 @@ def cauchy_geometry(const, grad, curv, xl, xu, delta, debug):
     step = step1 if abs(q_val1) >= abs(q_val2) else step2
 
     if debug:
-        assert np.all(xl <= step)
-        assert np.all(step <= xu)
-        assert np.linalg.norm(step) < 1.1 * delta
+        assert mx.all(xl <= step)
+        assert mx.all(step <= xu)
+        assert mx.linalg.norm(step) < 1.1 * delta
     return step
 
 
@@ -165,28 +165,28 @@ def spider_geometry(const, grad, curv, xpt, xl, xu, delta, debug):
     """
     if debug:
         assert isinstance(const, float)
-        assert isinstance(grad, np.ndarray) and grad.ndim == 1
+        assert isinstance(grad, MLX_ARRAY_TYPE) and grad.ndim == 1
         assert inspect.signature(curv).bind(grad)
         assert (
-            isinstance(xpt, np.ndarray)
+            isinstance(xpt, MLX_ARRAY_TYPE)
             and xpt.ndim == 2
             and xpt.shape[0] == grad.size
         )
-        assert isinstance(xl, np.ndarray) and xl.shape == grad.shape
-        assert isinstance(xu, np.ndarray) and xu.shape == grad.shape
+        assert isinstance(xl, MLX_ARRAY_TYPE) and xl.shape == grad.shape
+        assert isinstance(xu, MLX_ARRAY_TYPE) and xu.shape == grad.shape
         assert isinstance(delta, float)
         assert isinstance(debug, bool)
         tol = get_arrays_tol(xl, xu)
-        assert np.all(xl <= tol)
-        assert np.all(xu >= -tol)
-        assert np.isfinite(delta) and delta > 0.0
-    xl = np.minimum(xl, 0.0)
-    xu = np.maximum(xu, 0.0)
+        assert mx.all(xl <= tol)
+        assert mx.all(xu >= -tol)
+        assert mx.isfinite(delta) and delta > 0.0
+    xl = mx.minimum(xl, 0.0)
+    xu = mx.maximum(xu, 0.0)
 
     # Iterate through the straight lines.
-    step = np.zeros_like(grad)
+    step = mx.zeros_like(grad)
     q_val = const
-    s_norm = np.linalg.norm(xpt, axis=0)
+    s_norm = mx.linalg.norm(xpt, axis=0)
 
     # Set alpha_xl to the step size for the lower-bound constraint and
     # alpha_xu to the step size for the upper-bound constraint.
@@ -194,37 +194,37 @@ def spider_geometry(const, grad, curv, xpt, xl, xu, delta, debug):
     # xl.shape = (N,)
     # xpt.shape = (N, M)
     # i_xl_pos.shape = (M, N)
-    i_xl_pos = (xl > -np.inf) & (xpt.T > -TINY * xl)
-    i_xl_neg = (xl > -np.inf) & (xpt.T < TINY * xl)
-    i_xu_pos = (xu < np.inf) & (xpt.T > TINY * xu)
-    i_xu_neg = (xu < np.inf) & (xpt.T < -TINY * xu)
+    i_xl_pos = (xl > -mx.inf) & (xpt.T > -TINY * xl)
+    i_xl_neg = (xl > -mx.inf) & (xpt.T < TINY * xl)
+    i_xu_pos = (xu < mx.inf) & (xpt.T > TINY * xu)
+    i_xu_neg = (xu < mx.inf) & (xpt.T < -TINY * xu)
 
     # (M, N)
-    alpha_xl_pos = np.atleast_2d(
-        np.broadcast_to(xl, i_xl_pos.shape)[i_xl_pos] / xpt.T[i_xl_pos]
+    alpha_xl_pos = mx.atleast_2d(
+        mx.broadcast_to(xl, i_xl_pos.shape)[i_xl_pos] / xpt.T[i_xl_pos]
     )
     # (M,)
-    alpha_xl_pos = np.max(alpha_xl_pos, axis=1, initial=-np.inf)
+    alpha_xl_pos = mx.max(alpha_xl_pos, axis=1, initial=-mx.inf)
     # make sure it's (M,)
-    alpha_xl_pos = np.broadcast_to(np.atleast_1d(alpha_xl_pos), xpt.shape[1])
+    alpha_xl_pos = mx.broadcast_to(mx.atleast_1d(alpha_xl_pos), xpt.shape[1])
 
-    alpha_xl_neg = np.atleast_2d(
-        np.broadcast_to(xl, i_xl_neg.shape)[i_xl_neg] / xpt.T[i_xl_neg]
+    alpha_xl_neg = mx.atleast_2d(
+        mx.broadcast_to(xl, i_xl_neg.shape)[i_xl_neg] / xpt.T[i_xl_neg]
     )
-    alpha_xl_neg = np.max(alpha_xl_neg, axis=1, initial=np.inf)
-    alpha_xl_neg = np.broadcast_to(np.atleast_1d(alpha_xl_neg), xpt.shape[1])
+    alpha_xl_neg = mx.max(alpha_xl_neg, axis=1, initial=mx.inf)
+    alpha_xl_neg = mx.broadcast_to(mx.atleast_1d(alpha_xl_neg), xpt.shape[1])
 
-    alpha_xu_neg = np.atleast_2d(
-        np.broadcast_to(xu, i_xu_neg.shape)[i_xu_neg] / xpt.T[i_xu_neg]
+    alpha_xu_neg = mx.atleast_2d(
+        mx.broadcast_to(xu, i_xu_neg.shape)[i_xu_neg] / xpt.T[i_xu_neg]
     )
-    alpha_xu_neg = np.max(alpha_xu_neg, axis=1, initial=-np.inf)
-    alpha_xu_neg = np.broadcast_to(np.atleast_1d(alpha_xu_neg), xpt.shape[1])
+    alpha_xu_neg = mx.max(alpha_xu_neg, axis=1, initial=-mx.inf)
+    alpha_xu_neg = mx.broadcast_to(mx.atleast_1d(alpha_xu_neg), xpt.shape[1])
 
-    alpha_xu_pos = np.atleast_2d(
-        np.broadcast_to(xu, i_xu_pos.shape)[i_xu_pos] / xpt.T[i_xu_pos]
+    alpha_xu_pos = mx.atleast_2d(
+        mx.broadcast_to(xu, i_xu_pos.shape)[i_xu_pos] / xpt.T[i_xu_pos]
     )
-    alpha_xu_pos = np.max(alpha_xu_pos, axis=1, initial=np.inf)
-    alpha_xu_pos = np.broadcast_to(np.atleast_1d(alpha_xu_pos), xpt.shape[1])
+    alpha_xu_pos = mx.max(alpha_xu_pos, axis=1, initial=mx.inf)
+    alpha_xu_pos = mx.broadcast_to(mx.atleast_1d(alpha_xu_pos), xpt.shape[1])
 
     for k in range(xpt.shape[1]):
         # Set alpha_tr to the step size for the trust-region constraint.
@@ -249,7 +249,7 @@ def spider_geometry(const, grad, curv, xpt, xl, xu, delta, debug):
         ):
             alpha_quad_pos = max(-grad_step / curv_step, 0.0)
         else:
-            alpha_quad_pos = np.inf
+            alpha_quad_pos = mx.inf
         if (
             grad_step >= 0.0
             and curv_step > TINY * grad_step
@@ -258,7 +258,7 @@ def spider_geometry(const, grad, curv, xpt, xl, xu, delta, debug):
         ):
             alpha_quad_neg = min(-grad_step / curv_step, 0.0)
         else:
-            alpha_quad_neg = -np.inf
+            alpha_quad_neg = -mx.inf
 
         # Select the step that provides the largest value of the objective
         # function if it improves the current best. The best positive step is
@@ -296,16 +296,16 @@ def spider_geometry(const, grad, curv, xpt, xl, xu, delta, debug):
                 alpha_neg = alpha_quad_neg
                 q_val_neg = q_val_quad_neg
         if abs(q_val_pos) >= abs(q_val_neg) and abs(q_val_pos) > abs(q_val):
-            step = np.clip(alpha_pos * xpt[:, k], xl, xu)
+            step = mx.clip(alpha_pos * xpt[:, k], xl, xu)
             q_val = q_val_pos
         elif abs(q_val_neg) > abs(q_val_pos) and abs(q_val_neg) > abs(q_val):
-            step = np.clip(alpha_neg * xpt[:, k], xl, xu)
+            step = mx.clip(alpha_neg * xpt[:, k], xl, xu)
             q_val = q_val_neg
 
     if debug:
-        assert np.all(xl <= step)
-        assert np.all(step <= xu)
-        assert np.linalg.norm(step) < 1.1 * delta
+        assert mx.all(xl <= step)
+        assert mx.all(step <= xu)
+        assert mx.linalg.norm(step) < 1.1 * delta
     return step
 
 
@@ -318,15 +318,15 @@ def _cauchy_geom(const, grad, curv, xl, xu, delta, debug):
     fixed_xu = (xu > 0.0) & (grad < 0.0)
 
     # Calculate the Cauchy step.
-    cauchy_step = np.zeros_like(grad)
+    cauchy_step = mx.zeros_like(grad)
     cauchy_step[fixed_xl] = xl[fixed_xl]
     cauchy_step[fixed_xu] = xu[fixed_xu]
-    if np.linalg.norm(cauchy_step) > delta:
+    if mx.linalg.norm(cauchy_step) > delta:
         working = fixed_xl | fixed_xu
         while True:
             # Calculate the Cauchy step for the directions in the working set.
-            g_norm = np.linalg.norm(grad[working])
-            delta_reduced = np.sqrt(
+            g_norm = mx.linalg.norm(grad[working])
+            delta_reduced = mx.sqrt(
                 delta**2.0 - cauchy_step[~working] @ cauchy_step[~working]
             )
             if g_norm > TINY * abs(delta_reduced):
@@ -338,7 +338,7 @@ def _cauchy_geom(const, grad, curv, xl, xu, delta, debug):
             # Update the working set.
             fixed_xl = working & (cauchy_step < xl)
             fixed_xu = working & (cauchy_step > xu)
-            if not np.any(fixed_xl) and not np.any(fixed_xu):
+            if not mx.any(fixed_xl) and not mx.any(fixed_xu):
                 # Stop the calculations as the Cauchy step is now feasible.
                 break
             cauchy_step[fixed_xl] = xl[fixed_xl]
@@ -349,7 +349,7 @@ def _cauchy_geom(const, grad, curv, xl, xu, delta, debug):
     grad_step = grad @ cauchy_step
     if grad_step >= 0.0:
         # Set alpha_tr to the step size for the trust-region constraint.
-        s_norm = np.linalg.norm(cauchy_step)
+        s_norm = mx.linalg.norm(cauchy_step)
         if s_norm > TINY * delta:
             alpha_tr = max(delta / s_norm, 0.0)
         else:
@@ -361,27 +361,27 @@ def _cauchy_geom(const, grad, curv, xl, xu, delta, debug):
         if curv_step < -TINY * grad_step:
             alpha_quad = max(-grad_step / curv_step, 0.0)
         else:
-            alpha_quad = np.inf
+            alpha_quad = mx.inf
 
         # Set alpha_bd to the step size for the bound constraints.
-        i_xl = (xl > -np.inf) & (cauchy_step < TINY * xl)
-        i_xu = (xu < np.inf) & (cauchy_step > TINY * xu)
-        alpha_xl = np.min(xl[i_xl] / cauchy_step[i_xl], initial=np.inf)
-        alpha_xu = np.min(xu[i_xu] / cauchy_step[i_xu], initial=np.inf)
+        i_xl = (xl > -mx.inf) & (cauchy_step < TINY * xl)
+        i_xu = (xu < mx.inf) & (cauchy_step > TINY * xu)
+        alpha_xl = mx.min(xl[i_xl] / cauchy_step[i_xl], initial=mx.inf)
+        alpha_xu = mx.min(xu[i_xu] / cauchy_step[i_xu], initial=mx.inf)
         alpha_bd = min(alpha_xl, alpha_xu)
 
         # Calculate the solution and the corresponding function value.
         alpha = min(alpha_tr, alpha_quad, alpha_bd)
-        step = np.clip(alpha * cauchy_step, xl, xu)
+        step = mx.clip(alpha * cauchy_step, xl, xu)
         q_val = const + alpha * grad_step + 0.5 * alpha**2.0 * curv_step
     else:
         # This case is never reached in exact arithmetic. It prevents this
         # function to return a step that decreases the objective function.
-        step = np.zeros_like(grad)
+        step = mx.zeros_like(grad)
         q_val = const
 
     if debug:
-        assert np.all(xl <= step)
-        assert np.all(step <= xu)
-        assert np.linalg.norm(step) < 1.1 * delta
+        assert mx.all(xl <= step)
+        assert mx.all(step <= xu)
+        assert mx.linalg.norm(step) < 1.1 * delta
     return step, q_val

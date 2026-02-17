@@ -1,6 +1,6 @@
 import warnings
 
-import numpy as np
+import mlx.core as mx
 from scipy.optimize import (
     Bounds,
     LinearConstraint,
@@ -31,6 +31,7 @@ from .settings import (
     DEFAULT_CONSTANTS,
     PRINT_OPTIONS,
 )
+from .utils import mx_printoptions
 
 
 def minimize(
@@ -307,8 +308,7 @@ def minimize(
 
     .. testsetup::
 
-        import numpy as np
-        np.set_printoptions(precision=3, suppress=True)
+        mx.set_printoptions(precision=3, suppress=True)
 
     >>> from cobyqa import minimize
     >>> from scipy.optimize import rosen
@@ -334,7 +334,7 @@ def minimize(
                                         & \quad x_2 \ge 0.
         \end{aligned}
 
-    >>> import numpy as np
+    >>> import mlx.core as mx
     >>> from scipy.optimize import Bounds, LinearConstraint
 
     Its objective function can be implemented as:
@@ -345,12 +345,12 @@ def minimize(
     This problem can be solved using `minimize` as:
 
     >>> x0 = [2.0, 0.0]
-    >>> bounds = Bounds([0.0, 0.0], np.inf)
+    >>> bounds = Bounds([0.0, 0.0], mx.inf)
     >>> constraints = LinearConstraint([
     ...     [-1.0, 2.0],
     ...     [1.0, 2.0],
     ...     [1.0, -2.0],
-    ... ], -np.inf, [2.0, 6.0, 2.0])
+    ... ], -mx.inf, [2.0, 6.0, 2.0])
     >>> res = minimize(fun, x0, bounds=bounds, constraints=constraints)
     >>> res.x
     array([1.4, 1.7])
@@ -379,7 +379,7 @@ def minimize(
     This problem can be solved using `minimize` as:
 
     >>> x0 = [1.0, 1.0]
-    >>> constraints = NonlinearConstraint(cub, -np.inf, [0.0, 1.0])
+    >>> constraints = NonlinearConstraint(cub, -mx.inf, [0.0, 1.0])
     >>> res = minimize(fun, x0, constraints=constraints)
     >>> res.x
     array([0.707, 0.707])
@@ -411,9 +411,9 @@ def minimize(
     ...     LinearConstraint(
     ...         [[5.0, -1.0, 1.0], [-5.0, -1.0, 1.0]],
     ...         [0.0, 0.0],
-    ...         np.inf,
+    ...         mx.inf,
     ...     ),
-    ...     NonlinearConstraint(cub, -np.inf, 0.0),
+    ...     NonlinearConstraint(cub, -mx.inf, 0.0),
     ... ]
     >>> res = minimize(fun, x0, constraints=constraints)
     >>> res.x
@@ -564,7 +564,7 @@ def minimize(
             0,
             options,
         )
-    except np.linalg.LinAlgError:
+    except mx.linalg.LinAlgError:
         # The construction of the initial interpolation set failed.
         return _build_result(
             pb,
@@ -593,7 +593,7 @@ def minimize(
 
         # Update the point around which the quadratic models are built.
         if (
-            np.linalg.norm(
+            mx.linalg.norm(
                 framework.x_best - framework.models.interpolation.x_base
             )
             >= constants[Constants.LARGE_SHIFT_FACTOR] * framework.radius
@@ -604,7 +604,7 @@ def minimize(
         radius_save = framework.radius
         normal_step, tangential_step = framework.get_trust_region_step(options)
         step = normal_step + tangential_step
-        s_norm = np.linalg.norm(step)
+        s_norm = mx.linalg.norm(step)
 
         # If the trial step is too short, we do not attempt to evaluate the
         # objective and constraint functions. Instead, we reduce the
@@ -633,7 +633,7 @@ def minimize(
             else:
                 try:
                     k_new, dist_new = framework.get_index_to_remove()
-                except np.linalg.LinAlgError:
+                except mx.linalg.LinAlgError:
                     status = ExitStatus.LINALG_ERROR
                     break
                 improve_geometry = dist_new > max(
@@ -682,14 +682,14 @@ def minimize(
                 if (
                     pb.type == "nonlinearly constrained"
                     and merit_new > merit_old
-                    and np.linalg.norm(normal_step)
+                    and mx.linalg.norm(normal_step)
                     > constants[Constants.BYRD_OMOJOKUN_FACTOR] ** 2.0
                     * framework.radius
                 ):
                     soc_step = framework.get_second_order_correction_step(
                         step, options
                     )
-                    if np.linalg.norm(soc_step) > 0.0:
+                    if mx.linalg.norm(soc_step) > 0.0:
                         step += soc_step
 
                         # Evaluate the objective and constraint functions.
@@ -729,7 +729,7 @@ def minimize(
                     k_new = framework.get_index_to_remove(
                         framework.x_best + step
                     )[0]
-                except np.linalg.LinAlgError:
+                except mx.linalg.LinAlgError:
                     status = ExitStatus.LINALG_ERROR
                     break
 
@@ -739,7 +739,7 @@ def minimize(
                         k_new, framework.x_best + step, fun_val, cub_val,
                         ceq_val
                     )
-                except np.linalg.LinAlgError:
+                except mx.linalg.LinAlgError:
                     status = ExitStatus.LINALG_ERROR
                     break
                 framework.set_best_index()
@@ -758,17 +758,17 @@ def minimize(
                             grad_alt = framework.models.fun_alt_grad(
                                 framework.x_best
                             )
-                        except np.linalg.LinAlgError:
+                        except mx.linalg.LinAlgError:
                             status = ExitStatus.LINALG_ERROR
                             break
-                        if np.linalg.norm(grad) < constants[
+                        if mx.linalg.norm(grad) < constants[
                             Constants.LARGE_GRADIENT_FACTOR
-                        ] * np.linalg.norm(grad_alt):
+                        ] * mx.linalg.norm(grad_alt):
                             n_alt_models = 0
                         if n_alt_models >= 3:
                             try:
                                 framework.models.reset_models()
-                            except np.linalg.LinAlgError:
+                            except mx.linalg.LinAlgError:
                                 status = ExitStatus.LINALG_ERROR
                                 break
                             n_alt_models = 0
@@ -779,7 +779,7 @@ def minimize(
                 # Check whether the resolution should be enhanced.
                 try:
                     k_new, dist_new = framework.get_index_to_remove()
-                except np.linalg.LinAlgError:
+                except mx.linalg.LinAlgError:
                     status = ExitStatus.LINALG_ERROR
                     break
                 improve_geometry = (
@@ -831,7 +831,7 @@ def minimize(
         if improve_geometry:
             try:
                 step = framework.get_geometry_step(k_new, options)
-            except np.linalg.LinAlgError:
+            except mx.linalg.LinAlgError:
                 status = ExitStatus.LINALG_ERROR
                 break
 
@@ -863,7 +863,7 @@ def minimize(
                     cub_val,
                     ceq_val,
                 )
-            except np.linalg.LinAlgError:
+            except mx.linalg.LinAlgError:
                 status = ExitStatus.LINALG_ERROR
                 break
             framework.set_best_index()
@@ -883,13 +883,13 @@ def _get_bounds(bounds, n):
     Uniformize the bounds.
     """
     if bounds is None:
-        return Bounds(np.full(n, -np.inf), np.full(n, np.inf))
+        return Bounds(mx.full(n, -mx.inf), mx.full(n, mx.inf))
     elif isinstance(bounds, Bounds):
         if bounds.lb.shape != (n,) or bounds.ub.shape != (n,):
             raise ValueError(f"The bounds must have {n} elements.")
         return Bounds(bounds.lb, bounds.ub)
     elif hasattr(bounds, "__len__"):
-        bounds = np.asarray(bounds)
+        bounds = mx.asarray(bounds)
         if bounds.shape != (n, 2):
             raise ValueError(
                 "The shape of the bounds is not compatible with "
@@ -926,7 +926,7 @@ def _get_constraints(constraints):
             linear_constraints.append(
                 LinearConstraint(
                     constraint.A,
-                    *np.broadcast_arrays(lb, ub),
+                    *mx.broadcast_arrays(lb, ub),
                 )
             )
         elif isinstance(constraint, NonlinearConstraint):
@@ -945,7 +945,7 @@ def _get_constraints(constraints):
             nonlinear_constraints.append(
                 NonlinearConstraint(
                     constraint.fun,
-                    *np.broadcast_arrays(lb, ub),
+                    *mx.broadcast_arrays(lb, ub),
                 )
             )
         elif isinstance(constraint, dict):
@@ -987,14 +987,14 @@ def _set_default_options(options, n):
                 "than or equal to the final trust-region radius."
             )
     elif Options.RHOBEG in options:
-        options[Options.RHOEND.value] = np.min(
+        options[Options.RHOEND.value] = mx.min(
             [
                 DEFAULT_OPTIONS[Options.RHOEND],
                 options[Options.RHOBEG],
             ]
         )
     elif Options.RHOEND in options:
-        options[Options.RHOBEG.value] = np.max(
+        options[Options.RHOBEG.value] = mx.max(
             [
                 DEFAULT_OPTIONS[Options.RHOBEG],
                 options[Options.RHOEND],
@@ -1024,7 +1024,7 @@ def _set_default_options(options, n):
         )
     options.setdefault(
         Options.MAX_EVAL.value,
-        np.max(
+        mx.max(
             [
                 DEFAULT_OPTIONS[Options.MAX_EVAL](n),
                 options[Options.NPT] + 1,
@@ -1134,14 +1134,14 @@ def _set_default_constants(**kwargs):
                 "less than increase_radius_factor."
             )
     elif Constants.INCREASE_RADIUS_FACTOR in constants:
-        constants[Constants.DECREASE_RADIUS_THRESHOLD.value] = np.min(
+        constants[Constants.DECREASE_RADIUS_THRESHOLD.value] = mx.min(
             [
                 DEFAULT_CONSTANTS[Constants.DECREASE_RADIUS_THRESHOLD],
                 0.5 * (1.0 + constants[Constants.INCREASE_RADIUS_FACTOR]),
             ]
         )
     elif Constants.DECREASE_RADIUS_THRESHOLD in constants:
-        constants[Constants.INCREASE_RADIUS_FACTOR.value] = np.max(
+        constants[Constants.INCREASE_RADIUS_FACTOR.value] = mx.max(
             [
                 DEFAULT_CONSTANTS[Constants.INCREASE_RADIUS_FACTOR],
                 2.0 * constants[Constants.DECREASE_RADIUS_THRESHOLD],
@@ -1196,14 +1196,14 @@ def _set_default_constants(**kwargs):
                 "must be at most large_resolution_threshold."
             )
     elif Constants.LARGE_RESOLUTION_THRESHOLD in constants:
-        constants[Constants.MODERATE_RESOLUTION_THRESHOLD.value] = np.min(
+        constants[Constants.MODERATE_RESOLUTION_THRESHOLD.value] = mx.min(
             [
                 DEFAULT_CONSTANTS[Constants.MODERATE_RESOLUTION_THRESHOLD],
                 constants[Constants.LARGE_RESOLUTION_THRESHOLD],
             ]
         )
     elif Constants.MODERATE_RESOLUTION_THRESHOLD in constants:
-        constants[Constants.LARGE_RESOLUTION_THRESHOLD.value] = np.max(
+        constants[Constants.LARGE_RESOLUTION_THRESHOLD.value] = mx.max(
             [
                 DEFAULT_CONSTANTS[Constants.LARGE_RESOLUTION_THRESHOLD],
                 constants[Constants.MODERATE_RESOLUTION_THRESHOLD],
@@ -1236,14 +1236,14 @@ def _set_default_constants(**kwargs):
                 "The constant low_ratio must be at most high_ratio."
             )
     elif Constants.LOW_RATIO in constants:
-        constants[Constants.HIGH_RATIO.value] = np.max(
+        constants[Constants.HIGH_RATIO.value] = mx.max(
             [
                 DEFAULT_CONSTANTS[Constants.HIGH_RATIO],
                 constants[Constants.LOW_RATIO],
             ]
         )
     elif Constants.HIGH_RATIO in constants:
-        constants[Constants.LOW_RATIO.value] = np.min(
+        constants[Constants.LOW_RATIO.value] = mx.min(
             [
                 DEFAULT_CONSTANTS[Constants.LOW_RATIO],
                 constants[Constants.HIGH_RATIO],
@@ -1299,14 +1299,14 @@ def _set_default_constants(**kwargs):
                 "penalty_increase_threshold."
             )
     elif Constants.PENALTY_INCREASE_THRESHOLD in constants:
-        constants[Constants.PENALTY_INCREASE_FACTOR.value] = np.max(
+        constants[Constants.PENALTY_INCREASE_FACTOR.value] = mx.max(
             [
                 DEFAULT_CONSTANTS[Constants.PENALTY_INCREASE_FACTOR],
                 constants[Constants.PENALTY_INCREASE_THRESHOLD],
             ]
         )
     elif Constants.PENALTY_INCREASE_FACTOR in constants:
-        constants[Constants.PENALTY_INCREASE_THRESHOLD.value] = np.min(
+        constants[Constants.PENALTY_INCREASE_THRESHOLD.value] = mx.min(
             [
                 DEFAULT_CONSTANTS[Constants.PENALTY_INCREASE_THRESHOLD],
                 constants[Constants.PENALTY_INCREASE_FACTOR],
@@ -1444,7 +1444,7 @@ def _build_result(pb, penalty, success, status, n_iter, options):
     """
     # Build the result.
     x, fun, maxcv = pb.best_eval(penalty)
-    success = success and np.isfinite(fun) and np.isfinite(maxcv)
+    success = success and mx.isfinite(fun) and mx.isfinite(maxcv)
     if status not in [ExitStatus.TARGET_SUCCESS, ExitStatus.FEASIBLE_SUCCESS]:
         success = success and maxcv <= options[Options.FEASIBILITY_TOL]
     result = OptimizeResult()
@@ -1502,5 +1502,5 @@ def _print_step(message, pb, x, fun_val, r_val, n_eval, n_iter):
     if not pb.is_feasibility:
         print(f"Least value of {pb.fun_name}: {fun_val}.")
     print(f"Maximum constraint violation: {r_val}.")
-    with np.printoptions(**PRINT_OPTIONS):
+    with mx_printoptions(**PRINT_OPTIONS):
         print(f"Corresponding point: {x}.")
